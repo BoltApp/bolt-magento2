@@ -442,7 +442,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace parent quote with immutable quote in checkout session.
-        $this->sessionHelper->loadSession($this->quote);
+        $this->sessionHelper->loadSession($this->quote, $cart['metadata']);
 
         $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
 

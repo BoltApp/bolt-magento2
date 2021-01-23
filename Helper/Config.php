@@ -2088,4 +2088,24 @@ class Config extends AbstractHelper
         }
         return explode(",", $commaSeparateList);
     }
+
+    /**
+     * @param $data
+     *
+     * @return string
+     */
+    public function encrypt($data)
+    {
+        return $this->encryptor->encrypt($data);
+    }
+
+    /**
+     * @param $data
+     *
+     * @return string
+     */
+    public function decrypt($data)
+    {
+        return $this->encryptor->decrypt($data);
+    }
 }

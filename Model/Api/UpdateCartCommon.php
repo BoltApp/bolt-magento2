@@ -328,17 +328,20 @@ abstract class UpdateCartCommon
 
         return $products;
     }
-    
+
     /**
      * Load logged in customer checkout and customer sessions from cached session id.
      * Replace the quote with $parentQuote in checkout session.
      * In this way, the quote object can be associated with cart properly as well.
-     * 
+     *
      * @param Quote $quote
+     * @param array $metadata
+     *
+     * @throws LocalizedException
      */
-    public function updateSession($quote)
+    public function updateSession($quote, $metadata = [])
     {
-        $this->sessionHelper->loadSession($quote);
+        $this->sessionHelper->loadSession($quote, $metadata);
         $this->cartHelper->resetCheckoutSession($this->sessionHelper->getCheckoutSession());
     }
 

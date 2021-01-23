@@ -1021,8 +1021,6 @@ class Cart extends AbstractHelper
             $hints['prefill'] = array_merge($hints['prefill'], $prefill);
         };
 
-
-
         // Logged in customes.
         // Merchant scope and prefill.
         if ($this->customerSession->isLoggedIn()) {
@@ -1701,6 +1699,20 @@ class Cart extends AbstractHelper
 
         //Store immutable quote id in metadata of cart
         $cart['metadata']['immutable_quote_id'] = $immutableQuote->getId();
+
+        // Transmit session ID via cart metadata, making it available for session emulation in API calls
+        if ($this->deciderHelper->isAddSessionIdToCartMetadata()) {
+            $cart['metadata'][SessionHelper::ENCRYPTED_SESSION_ID_KEY] = $this->encryptMetadataValue(
+                $this->checkoutSession->getSessionId()
+            );
+        }
+
+        $sessionData = $this->eventsForThirdPartyModules->runFilter('collectSessionData', [], $quote, $immutableQuote);
+        if (!empty($sessionData)) {
+            $cart['metadata'][Session::ENCRYPTED_SESSION_DATA_KEY] = $this->encryptMetadataValue(
+                json_encode($sessionData)
+            );
+        }
 
         //store order id from session to add support for order edit
         if ($this->checkoutSession->getOrderId()) {
@@ -2499,5 +2511,15 @@ class Cart extends AbstractHelper
         if (empty($code)) {
             $this->bugsnag->notifyError('Empty discount code', "Info: {$description}");
         }
+    }
+
+    /**
+     * @param string $data
+     *
+     * @return string encrypted version of the provided data string
+     */
+    protected function encryptMetadataValue($data)
+    {
+        return base64_encode($this->configHelper->encrypt($data));
     }
 }

@@ -226,6 +226,14 @@ class EventsForThirdPartyModules
                 ],
             ]
         ],
+        "restoreSessionData" => [
+            "listeners" => [
+                [
+                    "module"      => "IDme_GroupVerification",
+                    "boltClass"   => IDme_GroupVerification::class,
+                ],
+            ],
+        ],
     ];
 
     const filterListeners = [
@@ -577,6 +585,14 @@ class EventsForThirdPartyModules
                     "module" => "Mirasvit_Credit",
                     "checkClasses" => ["Mirasvit\Credit\Helper\Data"],
                     "boltClass" => Mirasvit_Credit::class,
+                ],
+            ],
+        ],
+        "collectSessionData" => [
+            "listeners" => [
+                [
+                    "module"      => "IDme_GroupVerification",
+                    "boltClass"   => IDme_GroupVerification::class,
                 ],
             ],
         ],
