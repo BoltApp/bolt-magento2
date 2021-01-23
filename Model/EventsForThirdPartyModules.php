@@ -186,6 +186,46 @@ class EventsForThirdPartyModules
                 ],
             ]
         ],
+        'clearExternalData' => [
+            "listeners" => [
+                'Amasty Giftcard V2' => [
+                    "module"    => "Amasty_GiftCardAccount",
+                    "boltClass" => Amasty_GiftCardAccount::class,
+                ],
+                'Amasty Giftcard V1' => [
+                    "module"       => "Amasty_GiftCard",
+                    "checkClasses" => self::AMASTY_GIFTCARD_V1_CHECK_CLASSES,
+                    "boltClass"    => Amasty_GiftCard::class,
+                ],
+            ]
+        ],
+        'deleteRedundantDiscounts' => [
+            "listeners" => [
+                'Amasty Giftcard V2' => [
+                    "module"    => "Amasty_GiftCardAccount",
+                    "boltClass" => Amasty_GiftCardAccount::class,
+                ],
+                'Amasty Giftcard V1' => [
+                    "module"       => "Amasty_GiftCard",
+                    "checkClasses" => self::AMASTY_GIFTCARD_V1_CHECK_CLASSES,
+                    "boltClass"    => Amasty_GiftCard::class,
+                ],
+            ]
+        ],
+        'removeAmastyGiftCard' => [
+            "listeners" => [
+                'Amasty Giftcard V2' => [
+                    "module"    => "Amasty_GiftCardAccount",
+                    "sendClasses" => ["Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardAccountManagement"],
+                    "boltClass" => Amasty_GiftCardAccount::class,
+                ],
+                'Amasty Giftcard V1' => [
+                    "module"       => "Amasty_GiftCard",
+                    "checkClasses" => self::AMASTY_GIFTCARD_V1_CHECK_CLASSES,
+                    "boltClass"    => Amasty_GiftCard::class,
+                ],
+            ]
+        ],
         "restoreSessionData" => [
             "listeners" => [
                 [

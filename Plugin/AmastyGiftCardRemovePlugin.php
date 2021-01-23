@@ -18,9 +18,9 @@
 namespace Bolt\Boltpay\Plugin;
 
 use Magento\Framework\App\Action\Action;
-use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\Framework\App\ResponseInterface;
 use Magento\Framework\Controller\ResultInterface;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class AmastyGiftCardRemovePlugin
@@ -29,19 +29,18 @@ use Magento\Framework\Controller\ResultInterface;
  */
 class AmastyGiftCardRemovePlugin
 {
-    /**
-     * @var DiscountHelper
-     */
-    private $discountHelper;
+    
+    /** @var EventsForThirdPartyModules  */
+    private $eventsForThirdPartyModules;
 
     /**
      * AmastyGiftCardRemovePlugin constructor.
-     * @param DiscountHelper $discountHelper
+     * @param EventsForThirdPartyModules   $eventsForThirdPartyModules
      */
     public function __construct(
-        DiscountHelper $discountHelper
+        EventsForThirdPartyModules $eventsForThirdPartyModules
     ) {
-        $this->discountHelper = $discountHelper;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
 
     /**
@@ -63,7 +62,7 @@ class AmastyGiftCardRemovePlugin
         $quote = $getQuoteProxy->call($subject);
 
         // Remove Amasty Gift Cart from the parent (session) quote
-        $this->discountHelper->removeAmastyGiftCard($codeId, $quote);
+        $this->eventsForThirdPartyModules->dispatchEvent("removeAmastyGiftCard", $codeId, $quote);
 
         // Access protected updateTotalsInQuote method with a Closure proxy
         $updateTotalsInQuoteProxy = function () use ($subject, $quote) {

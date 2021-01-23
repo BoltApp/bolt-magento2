@@ -133,6 +133,7 @@ class GiftCard
                 $giftcardQuotes = $giftcardQuoteCollectionFactory->create()->joinAccount()
                     ->getGiftCardsByQuoteId($quote->getId());
                 /** @var \Amasty\GiftCard\Model\Quote|\Amasty\GiftCard\Model\Account $giftcard */
+                $discountType = $this->discountHelper->getBoltDiscountType('by_fixed');
                 foreach ($giftcardQuotes->getItems() as $giftcard) {
                     $amount = abs($giftcard->getCurrentValue());
                     $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
@@ -142,9 +143,9 @@ class GiftCard
                         'amount'            => $roundedAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                         'reference'         => $giftCardCode,
-                        'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                        'discount_type'     => $discountType,
                         // For v1/discounts.code.apply and v2/cart.update
-                        'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                        'type'              => $discountType,
                         // For v1/merchant/order
                     ];
                     $discountAmount += $amount;
@@ -325,6 +326,76 @@ class GiftCard
         } catch (\Zend_Db_Statement_Exception $e) {
             $connection->rollBack();
             $this->bugsnagHelper->notifyException($e);
+        }
+    }
+    
+    /**
+     * @param Quote $quote
+     */
+    public function clearExternalData($quote)
+    {
+        $connection = $this->resourceConnection->getConnection();
+        try {
+            $giftCardTable = $this->resourceConnection->getTableName('amasty_amgiftcard_quote');
+
+            $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :quote_id";
+            $bind = [
+                'quote_id' => $quote->getId()
+            ];
+
+            $connection->query($sql, $bind);
+        } catch (\Zend_Db_Statement_Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+    
+    /**
+     * @param Quote $quote
+     */
+    public function deleteRedundantDiscounts($quote)
+    {
+        $connection = $this->resourceConnection->getConnection();
+        try {
+            $giftCardTable = $this->resourceConnection->getTableName('amasty_amgiftcard_quote');
+            $quoteTable = $this->resourceConnection->getTableName('quote');
+
+            $sql = "DELETE FROM {$giftCardTable} WHERE quote_id IN 
+                    (SELECT entity_id FROM {$quoteTable} 
+                    WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
+            
+            $bind = [
+                'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
+                'entity_id' => $quote->getBoltParentQuoteId()
+            ];
+
+            $connection->query($sql, $bind);
+        } catch (\Zend_Db_Statement_Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+    
+    /**
+     * Remove Amasty Gift Card and update quote totals
+     *
+     * @param int $codeId
+     * @param Quote $quote
+     */
+    public function removeAmastyGiftCard($codeId, $quote)
+    {
+        try {
+            $connection = $this->resourceConnection->getConnection();
+
+            $giftCardTable = $this->resourceConnection->getTableName('amasty_amgiftcard_quote');
+
+            $sql = "DELETE FROM {$giftCardTable} WHERE code_id = :code_id AND quote_id = :quote_id";
+            $connection->query($sql, ['code_id' => $codeId, 'quote_id' => $quote->getId()]);
+
+            $this->updateTotals($quote);
+            
+        } catch (\Zend_Db_Statement_Exception $e) {
+            $this->bugsnag->notifyException($e);
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
         }
     }
 }

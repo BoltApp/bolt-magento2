@@ -103,84 +103,6 @@
         </arguments>
     </virtualType>
 
-    <!-- For Amasty Gift Card v1.8.15 and before -->
-    <virtualType name="boltAmastyLegacyAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
-            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\Account</argument>
-        </arguments>
-    </virtualType>
-    <!-- For Amasty Gift Card v1.8.15 and before -->
-    <virtualType name="boltAmastyLegacyAccountFactory" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
-            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\AccountFactory</argument>
-        </arguments>
-    </virtualType>
-    <!-- For Amasty Gift Card v1.8.15 and before -->
-    <virtualType name="boltAmastyLegacyGiftCardManagement" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
-            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\GiftCardManagement</argument>
-        </arguments>
-    </virtualType>
-    <!-- For Amasty Gift Card v1.8.15 and before -->
-    <virtualType name="boltAmastyLegacyQuoteFactory" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
-            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\QuoteFactory</argument>
-        </arguments>
-    </virtualType>
-    <!-- For Amasty Gift Card v1.8.15 and before -->
-    <virtualType name="boltAmastyLegacyQuoteResource" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
-            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\ResourceModel\Quote</argument>
-        </arguments>
-    </virtualType>
-    <!-- For Amasty Gift Card v1.8.15 and before -->
-    <virtualType name="boltAmastyLegacyQuoteRepository" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
-            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\Repository\QuoteRepository</argument>
-        </arguments>
-    </virtualType>
-    <!-- For Amasty Gift Card v1.8.15 and before -->
-    <virtualType name="boltAmastyLegacyAccountCollection" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Amasty_GiftCard</argument>
-            <argument name="className" xsi:type="string">Amasty\GiftCard\Model\ResourceModel\Account\Collection</argument>
-        </arguments>
-    </virtualType>
-    <!-- For Amasty Gift Card v2.0.0 and later -->
-    <virtualType name="boltAmastyAccountFactory" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Amasty_GiftCardAccount</argument>
-            <argument name="className" xsi:type="string">Amasty\GiftCardAccount\Model\GiftCardAccount\RepositoryFactory</argument>
-        </arguments>
-    </virtualType>
-    <!-- For Amasty Gift Card v2.0.0 and later -->
-    <virtualType name="boltAmastyGiftCardAccountManagement" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Amasty_GiftCardAccount</argument>
-            <argument name="className" xsi:type="string">Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardAccountManagement</argument>
-        </arguments>
-    </virtualType>
-    <!-- For Amasty Gift Card v2.0.0 and later -->
-    <virtualType name="boltAmastyGiftCardAccountCollection" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Amasty_GiftCardAccount</argument>
-            <argument name="className" xsi:type="string">Amasty\GiftCardAccount\Model\GiftCardAccount\ResourceModel\Collection</argument>
-        </arguments>
-    </virtualType>
-    <!-- For Amasty Gift Card v2.0.0 and later -->
-    <virtualType name="boltAmastyGiftCardAccountQuoteExtensionRepository" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Amasty_GiftCardAccount</argument>
-            <argument name="className" xsi:type="string">Amasty\GiftCardAccount\Model\GiftCardExtension\Quote\Repository</argument>
-        </arguments>
-    </virtualType>
-
     <type name="Mirasvit\Rewards\Model\Purchase">
         <plugin name="Bolt_Boltpay_Mirasvit_Rewards_Model_PurchasePlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin" sortOrder="1" />
     </type>
@@ -213,18 +135,6 @@
 
     <type name="Bolt\Boltpay\Helper\Discount">
         <arguments>
-            <!-- For Amasty Gift Card v1.8.15 and before -->
-            <argument name="amastyLegacyAccountFactory" xsi:type="object">boltAmastyLegacyAccountFactory</argument>
-            <argument name="amastyLegacyGiftCardManagement" xsi:type="object">boltAmastyLegacyGiftCardManagement</argument>
-            <argument name="amastyLegacyQuoteFactory" xsi:type="object">boltAmastyLegacyQuoteFactory</argument>
-            <argument name="amastyLegacyQuoteResource" xsi:type="object">boltAmastyLegacyQuoteResource</argument>
-            <argument name="amastyLegacyQuoteRepository" xsi:type="object">boltAmastyLegacyQuoteRepository</argument>
-            <argument name="amastyLegacyAccountCollection" xsi:type="object">boltAmastyLegacyAccountCollection</argument>            
-            <!-- For Amasty Gift Card v2.0.0 and later -->
-            <argument name="amastyAccountFactory" xsi:type="object">boltAmastyAccountFactory</argument>
-            <argument name="amastyGiftCardAccountManagement" xsi:type="object">boltAmastyGiftCardAccountManagement</argument>
-            <argument name="amastyGiftCardAccountCollection" xsi:type="object">boltAmastyGiftCardAccountCollection</argument>
-            <argument name="amastyGiftCardAccountQuoteExtensionRepository" xsi:type="object">boltAmastyGiftCardAccountQuoteExtensionRepository</argument>
             <argument name="amastyRewardsResourceQuote" xsi:type="object">boltAmastyRewardsResourceQuote</argument>
             <argument name="amastyRewardsQuote" xsi:type="object">boltAmastyRewardsQuote</argument>
             <argument name="moduleGiftCardAccount" xsi:type="object">boltMagentoGiftCardAccount</argument>
