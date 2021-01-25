@@ -828,8 +828,8 @@ class Cart extends AbstractHelper
     /**
      * Create order on bolt
      *
-     * @param bool   $paymentOnly              flag that represents the type of checkout
-     * @param string $placeOrderPayload        additional data collected from the (one page checkout) page,
+     * @param bool        $paymentOnly         flag that represents the type of checkout
+     * @param null|string $placeOrderPayload   additional data collected from the (one page checkout) page,
      *                                         i.e. billing address to be saved with the order
      * @param null|int    $storeId             The ID of the Magento store
      *
@@ -837,7 +837,7 @@ class Cart extends AbstractHelper
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function getBoltpayOrder($paymentOnly, $placeOrderPayload, $storeId = null)
+    public function getBoltpayOrder($paymentOnly, $placeOrderPayload = null, $storeId = null)
     {
         //Get cart data
         $cart = $this->getCartData($paymentOnly, $placeOrderPayload);
@@ -1021,7 +1021,7 @@ class Cart extends AbstractHelper
             $hints['prefill'] = array_merge($hints['prefill'], $prefill);
         };
 
-        // Logged in customes.
+        // Logged in customers.
         // Merchant scope and prefill.
         if ($this->customerSession->isLoggedIn()) {
             $customer = $this->customerSession->getCustomer();
@@ -1579,16 +1579,16 @@ class Cart extends AbstractHelper
      * Get cart data.
      * The reference of total methods: dev/tests/api-functional/testsuite/Magento/Quote/Api/CartTotalRepositoryTest.php
      *
-     * @param bool $paymentOnly             flag that represents the type of checkout
-     * @param string $placeOrderPayload     additional data collected from the (one page checkout) page,
-     *                                         i.e. billing address to be saved with the order
-     * @param Quote $immutableQuote         If passed do not create new clone, get data existing one data.
-     *                                          discount validation, bugsnag report
+     * @param bool        $paymentOnly       flag that represents the type of checkout
+     * @param string|null $placeOrderPayload additional data collected from the (one page checkout) page,
+     *                                       i.e. billing address to be saved with the order
+     * @param Quote|null  $immutableQuote    If passed do not create new clone, get data existing one data.
+     *                                       discount validation, bugsnag report
      *
      * @return array
      * @throws \Exception
      */
-    public function getCartData($paymentOnly, $placeOrderPayload, $immutableQuote = null)
+    public function getCartData($paymentOnly, $placeOrderPayload = null, $immutableQuote = null)
     {
 
         // If the immutable quote is passed (i.e. discount code validation, bugsnag report generation)
@@ -1677,12 +1677,12 @@ class Cart extends AbstractHelper
     /**
      * Build cart data from quote.
      *
-     * @param Quote $quote
-     * @param Quote $immutableQuote
-     * @param array $items
-     * @param bool $paymentOnly             flag that represents the type of checkout
+     * @param Quote  $quote
+     * @param Quote  $immutableQuote
+     * @param array  $items
+     * @param bool   $paymentOnly           flag that represents the type of checkout
      * @param string $placeOrderPayload     additional data collected from the (one page checkout) page,
-     * @param bool $requireBillingAddress   require that the billing address is set
+     * @param bool   $requireBillingAddress require that the billing address is set
      *
      * @return array
      * @throws \Exception
@@ -2521,5 +2521,22 @@ class Cart extends AbstractHelper
     protected function encryptMetadataValue($data)
     {
         return base64_encode($this->configHelper->encrypt($data));
+    }
+
+    /**
+     * Retrieves customer by email and website id
+     *
+     * @param string   $email
+     * @param int|null $websiteId
+     *
+     * @return false|\Magento\Customer\Api\Data\CustomerInterface
+     */
+    public function getCustomerByEmail($email, $websiteId = null)
+    {
+        try {
+            return $this->customerRepository->get($email, $websiteId);
+        } catch (LocalizedException $e) {
+            return false;
+        }
     }
 }

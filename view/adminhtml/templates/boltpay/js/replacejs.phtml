@@ -276,36 +276,34 @@ require([
 
 
     var isValidToken = function () {
-        var errors = [],
-            // shipping address mask overlay
-            addressShippingOverlay = $('#address-shipping-overlay')[0],
-            // if the shipping address is not masked (i.e. overlay is not visible) shipping is required
-            shippingRequired = addressShippingOverlay && addressShippingOverlay.offsetParent === null,
-            isShippingMethodSelected = $('input[name="order[shipping_method]"][type=radio]:checked').length,
-            email = $('input[name="order[account][email]"]').val();
+        try {
+            var // shipping address mask overlay
+                addressShippingOverlay = $('#address-shipping-overlay')[0],
+                // if the shipping address is not masked (i.e. overlay is not visible) shipping is required
+                shippingRequired = addressShippingOverlay && addressShippingOverlay.offsetParent === null,
+                isShippingMethodSelected = $('input[name="order[shipping_method]"][type=radio]:checked').length;
 
-        if (!cart.orderToken) {
-            errors.push('Invalid Order Token');
-        }
+            if (create_request) {
+                throw '<?php echo __('There is a pending Bolt Cart creation request, please wait.'); ?>';
+            }
 
-        if (!email || !email.trim()) {
-            errors.push('Please specify the "Email"!');
-        }
+            if (cart.errorMessage) {
+                throw cart.errorMessage;
+            }
 
-        if (shippingRequired && ! isShippingMethodSelected) {
-            errors.push('Please specify the "Shipping Method"!');
-        }
-
-        if (errors.length) {
-            var errorMsg = errors.join(', ');
-
-            console.error('BoltPay Check: ', errorMsg);
-            alert(errorMsg);
-
+            if (shippingRequired && !isShippingMethodSelected) {
+                throw '<?php echo __('Please specify the "Shipping Method"!'); ?>';
+            }
+            return true;
+        } catch (e) {
+            if (typeof e === 'string') {
+                console.error('BoltPay Check: ', e);
+                require(['Magento_Ui/js/modal/alert'], function (alert) {
+                    alert({ content: e });
+                });
+            }
             return false;
         }
-
-        return true;
     };
 
     var callbacks = {
@@ -332,7 +330,7 @@ require([
                 callback();
             };
 
-            if (settings.is_pre_auth) {
+            if (settings.isPreAuth) {
                 processSuccess();
                 return;
             }
@@ -383,32 +381,29 @@ require([
         params = params.join('&');
 
         // set cart and hints data in a response callback
-        var onSuccess = function(data){
+        var onSuccess = function(data) {
 
             cart = data.cart;
-            create_request = null;
 
-            var prefill = isObject(data.hints.prefill) ?
-                deepMergeObjects(hints.prefill, data.hints.prefill)
+            var prefill = isObject(data.hints.prefill)
+                ? deepMergeObjects(hints.prefill, data.hints.prefill)
                 : hints.prefill;
             hints = deepMergeObjects(hints, data.hints);
             hints.prefill = prefill;
 
             settings.storeId = data.storeId;
-            settings.is_pre_auth = data.isPreAuth;
+            settings.isPreAuth = data.isPreAuth;
 
             if (data.backOfficeKey) {
                 insertConnectScript(data.backOfficeKey);
             }
-            if (data.paymentOnlyKey && settings.pay_by_link_url && data.cart.orderToken ) {
+            if (data.paymentOnlyKey && settings.pay_by_link_url && cart.orderToken) {
+                $(".bolt-checkout-options-separator").toggle(!!data.backOfficeKey);
                 $(".bolt-checkout-pay-by-link").html("Send <a id='bolt-pay-by-link' href='"
-                    + settings.pay_by_link_url + "?publishable_key=" + data.paymentOnlyKey
-                    + "&token=" + data.cart.orderToken
+                    + settings.pay_by_link_url + "?" + $.param({ publishable_key: data.paymentOnlyKey, token: cart.orderToken })
                     + "'>this link</a> to consumer to receive payment");
             }
-            if (data.backOfficeKey && data.paymentOnlyKey && settings.pay_by_link_url) {
-                $(".bolt-checkout-options-separator").show();
-            }
+            create_request = null;
         };
 
         var onError = function(error) {
@@ -546,28 +541,14 @@ require([
     }
     /////////////////////////////////////////////////////////////////////
 
-    /////////////////////////////////////////////////////
-    // Call Bolt order creation Magento endpoint on
-    // customer email change, storing the live page data in Bolt cart.
-    // Email change triggers saving the email to quote in
-    // Magento ajax call. Add a delay (setTimeout) to ensure
-    // that Magento call runs first and the email is saved
-    // before it is read in Bolt order creation.
-    /////////////////////////////////////////////////////
-    var customer_email_selector  = 'input[name="order[account][email]"]';
-    var customer_email_value;
-    $(customer_email_selector).on("change", function() {
-        setTimeout(
-            function() {
-                var email = $(customer_email_selector).val().trim();
-                if (email === "") return;
-                if (email !== customer_email_value) {
-                    customer_email_value = email;
-                    createOrder();
-                }
-            },
-            1500
-        );
+    require(['Magento_Sales/order/create/form'], function() {
+        window.order.loadArea = function () {
+            var result = AdminOrder.prototype.loadArea.apply(window.order, arguments);
+            if (arguments[0] == false && arguments[1] == false) {
+                result.then(createOrder);
+            }
+            return result;
+        }
     });
 });
 

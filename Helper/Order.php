@@ -38,6 +38,7 @@ use Magento\Quote\Model\QuoteManagement;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
+use Magento\Sales\Model\AdminOrder\Create;
 use Magento\Sales\Model\Order as OrderModel;
 use Magento\Sales\Model\Order\Email\Container\InvoiceIdentity as InvoiceEmailIdentity;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
@@ -272,6 +273,11 @@ class Order extends AbstractHelper
     private $orderIncrementIdChecker;
 
     /**
+     * @var Create|null
+     */
+    private $adminOrderCreateModel;
+
+    /**
      * Order constructor.
      *
      * @param Context                             $context
@@ -305,6 +311,7 @@ class Order extends AbstractHelper
      * @param EventsForThirdPartyModules          $eventsForThirdPartyModules
      * @param OrderManagementInterface|null       $orderManagement
      * @param OrderIncrementIdChecker|null        $orderIncrementIdChecker
+     * @param Create|null                         $adminOrderCreateModel
      */
     public function __construct(
         Context $context,
@@ -337,7 +344,8 @@ class Order extends AbstractHelper
         CreditmemoManagementInterface $creditmemoManagement,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
         OrderManagementInterface $orderManagement = null,
-        OrderIncrementIdChecker $orderIncrementIdChecker = null
+        OrderIncrementIdChecker $orderIncrementIdChecker = null,
+        Create $adminOrderCreateModel = null
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -372,6 +380,8 @@ class Order extends AbstractHelper
             ?: \Magento\Framework\App\ObjectManager::getInstance()->get(OrderManagementInterface::class);
         $this->orderIncrementIdChecker = $orderIncrementIdChecker
             ?: \Magento\Framework\App\ObjectManager::getInstance()->get(OrderIncrementIdChecker::class);
+        $this->adminOrderCreateModel = $adminOrderCreateModel
+            ?: \Magento\Framework\App\ObjectManager::getInstance()->get(Create::class);
     }
 
     /**
@@ -532,7 +542,7 @@ class Order extends AbstractHelper
     private function addCustomerDetails($quote, $email)
     {
         $quote->setCustomerEmail($email);
-        if (!$quote->getCustomerId()) {
+        if (!$quote->getCustomerId() && $quote->getData('bolt_checkout_type') !== CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
             $quote->setCustomerId(null);
             $quote->setCheckoutMethod('guest');
             $quote->setCustomerIsGuest(true);
@@ -1527,6 +1537,15 @@ class Order extends AbstractHelper
                 ]
             ]);
         });
+
+        if ($quote->getData('bolt_checkout_type') == \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
+            $quote->getCustomer()->setGroupId($quote->getCustomerGroupId());
+            $this->adminOrderCreateModel->setData(
+                ['account' => ['email' => $quote->getCustomerEmail(), 'group_id' => $quote->getCustomerGroupId()]]
+            )
+                ->setQuote($quote)
+                ->_prepareCustomer();
+        }
 
         return $quote;
     }

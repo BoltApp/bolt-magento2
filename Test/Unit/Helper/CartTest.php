@@ -6536,4 +6536,47 @@ ORDER
 
         $this->assertEquals($expected, $currentMock->calculateCartAndHints());
         }
+
+    /**
+     * @test
+     * that getCustomerByEmail returns customer model by email if it exists
+     *
+     * @covers ::getCustomerByEmail
+     */
+    public function getCustomerByEmail_withExistingCustomerEmail_returnsCustomerModel()
+    {
+        $this->customerRepository->expects(static::once())->method('get')->with(self::EMAIL_ADDRESS, self::WEBSITE_ID)
+            ->willReturn($this->customerMock);
+        static::assertEquals(
+            $this->customerMock,
+            $this->currentMock->getCustomerByEmail(self::EMAIL_ADDRESS, self::WEBSITE_ID)
+        );
+    }
+
+    /**
+     * @test
+     * that getCustomerByEmail returns false if unable to retrieve customer by email address
+     *
+     * @covers ::getCustomerByEmail
+     */
+    public function getCustomerByEmail_withExceptionOnGettingTheCustomer_returnsFalse()
+    {
+        $this->customerRepository->expects(static::once())->method('get')->with(self::EMAIL_ADDRESS, self::WEBSITE_ID)
+            ->willThrowException(
+                new NoSuchEntityException(
+                    __(
+                        'No such entity with %fieldName = %fieldValue, %field2Name = %field2Value',
+                        [
+                            'fieldName' => 'email',
+                            'fieldValue' => self::EMAIL_ADDRESS,
+                            'field2Name' => 'websiteId',
+                            'field2Value' => self::WEBSITE_ID
+                        ]
+                    )
+                )
+            );
+        static::assertFalse(
+            $this->currentMock->getCustomerByEmail(self::EMAIL_ADDRESS, self::WEBSITE_ID)
+        );
+    }
 }

@@ -220,4 +220,10 @@
                 type="Bolt\Boltpay\Plugin\Magento\Quote\Observer\Frontend\Quote\Address\AddressCollectTotalsObserverPlugin"
                 sortOrder="10"/>
     </type>
+
+    <type name="Bolt\Boltpay\Helper\Order">
+        <arguments>
+            <argument name="adminOrderCreateModel" xsi:type="object">Magento\Sales\Model\AdminOrder\Create\Proxy</argument>
+        </arguments>
+    </type>
 </config>
