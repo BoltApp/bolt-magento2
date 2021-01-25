@@ -75,14 +75,6 @@ class DebugInfo implements \JsonSerializable
     }
 
     /**
-     * @return string
-     */
-    public function getComposerVersion()
-    {
-        return $this->composerVersion;
-    }
-
-    /**
      * @param string $composerVersion
      * @return $this
      */
@@ -90,6 +82,14 @@ class DebugInfo implements \JsonSerializable
     {
         $this->composerVersion = $composerVersion;
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getComposerVersion()
+    {
+        return $this->composerVersion;
     }
 
     /**
@@ -119,7 +119,7 @@ class DebugInfo implements \JsonSerializable
     }
 
     /**
-     * @param \Bolt\Boltpay\Model\Api\Data\BoltConfigSetting[] $boltConfigSettings
+     * @param \Bolt\Boltpay\Model\Api\Data\BoltConfigSetting[]
      * @return $this
      */
     public function setBoltConfigSettings($boltConfigSettings)
@@ -137,7 +137,7 @@ class DebugInfo implements \JsonSerializable
     }
 
     /**
-     * @param \Bolt\Boltpay\Model\Api\Data\PluginVersion[] $otherPluginVersions
+     * @param \Bolt\Boltpay\Model\Api\Data\PluginVersion[]
      * @return $this
      */
     public function setOtherPluginVersions($otherPluginVersions)
