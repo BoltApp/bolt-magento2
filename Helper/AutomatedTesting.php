@@ -109,7 +109,7 @@ class AutomatedTesting extends AbstractHelper
 
             $storeItems[] = $simpleStoreItem;
             if ($virtualStoreItem !== null) {
-                array_push($storeItems, $virtualStoreItem);
+                $storeItems[] = $virtualStoreItem;
             }
 
             return $config->setStoreItems($storeItems);
