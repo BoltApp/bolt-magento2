@@ -81,7 +81,7 @@ class AutomatedTesting extends AbstractHelper
     /**
      * Generate and return automated testing config
      *
-     * @return Config|null
+     * @return Config
      */
     public function getAutomatedTestingConfig()
     {
@@ -89,7 +89,7 @@ class AutomatedTesting extends AbstractHelper
         try {
             $simpleProduct = $this->getProduct(\Magento\Catalog\Model\Product\Type::TYPE_SIMPLE);
             if ($simpleProduct === null) {
-                return null;
+                return;
             }
 
             $virtualProduct = $this->getProduct(\Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL);
@@ -115,7 +115,6 @@ class AutomatedTesting extends AbstractHelper
             return $config->setStoreItems($storeItems);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            return null;
         }
     }
 
