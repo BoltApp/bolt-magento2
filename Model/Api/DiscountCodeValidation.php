@@ -113,6 +113,12 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         $request = $this->getRequestContent();
 
         $requestArray = json_decode(json_encode($request), true);
+
+        // V2 webhooks send requests as {"type": ... "data":{requestContent}} so we need to extract the data we want
+        if (isset($requestArray['data'])) {
+            $requestArray = $requestArray['data'];
+        }
+
         if (isset($requestArray['cart']['order_reference'])) {
             $parentQuoteId = $requestArray['cart']['order_reference'];
             $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($requestArray['cart']);
@@ -153,7 +159,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         
         $parentQuote->getStore()->setCurrentCurrencyCode($parentQuote->getQuoteCurrencyCode());
         
-        $this->updateSession($parentQuote);
+        $this->updateSession($parentQuote, $requestArray['cart']['metadata']);
      
         // Set the shipment if request payload has that info.
         if (!empty($requestArray['cart']['shipments'][0]['reference'])) {

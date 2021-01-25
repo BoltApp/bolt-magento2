@@ -217,6 +217,28 @@ class OrderManagement implements OrderManagementInterface
     }
 
     /**
+     * public function for universal API use of cart.create
+     * 
+     * @param mixed $items
+     * @param mixed $currency
+     * 
+     */
+    public function createCart($items = null, $currency = null)
+    {
+        if ($items == null) {
+            throw new BoltException(
+                __('An unknown error occured when fetching the cart'),
+                null,
+                6300 //const not yet made for this error code
+            );
+        }
+
+        $this->handleCartCreateApiCall(true);
+
+        $this->response->sendResponse();
+    }
+
+    /**
      * Save or Update magento Order by data from hook
      *
      * @param $reference
@@ -260,12 +282,17 @@ class OrderManagement implements OrderManagementInterface
             return;
         }
 
+        $request = $this->request->getBodyParams();
+        if (isset($request['data'])) {
+            $request = $request['data'];
+        }
+
         list(, $order) = $this->orderHelper->saveUpdateOrder(
             $reference,
             $storeId,
             $this->request->getHeader(ConfigHelper::BOLT_TRACE_ID_HEADER),
             $type,
-            $this->request->getBodyParams()
+            $request
         );
 
         $orderData = json_encode($order->getData());
@@ -294,12 +321,19 @@ class OrderManagement implements OrderManagementInterface
      * - generate quote by item data
      * - create bolt order
      * - return order in Bolt format
+     * 
+     * @param boolean $isUniversal
      *
      * @throws \Exception
      */
-    private function handleCartCreateApiCall()
+    private function handleCartCreateApiCall($isUniversal = false)
     {
         $request = $this->request->getBodyParams();
+
+        if ($isUniversal)
+        {
+            $request = $request['data'];
+        }
 
         if (!isset($request['items'][0])) {
             throw new LocalizedException(
@@ -309,9 +343,19 @@ class OrderManagement implements OrderManagementInterface
 
         $cart = $this->cartHelper->createCartByRequest($request);
         $this->response->setHttpResponseCode(200);
-        $this->response->setBody(json_encode([
-            'status' => 'success',
-            'cart' => $cart,
-        ]));
+        if ($isUniversal) {
+            $this->response->setBody(json_encode([
+                'event' => 'cart.create',
+                'status' => 'success',
+                'data' => [
+                    'cart' => $cart,
+                ]
+            ]));
+        } else {
+            $this->response->setBody(json_encode([
+                'status' => 'success',
+                'cart' => $cart,
+            ]));
+        }
     }
 }

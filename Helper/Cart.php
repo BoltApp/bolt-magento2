@@ -821,7 +821,7 @@ class Cart extends AbstractHelper
      */
     protected function clearExternalData($quote)
     {
-        $this->discountHelper->clearAmastyGiftCard($quote);
+        $this->eventsForThirdPartyModules->dispatchEvent("clearExternalData", $quote);
         $this->discountHelper->clearAmastyRewardPoints($quote);
     }
 
@@ -1020,8 +1020,6 @@ class Cart extends AbstractHelper
 
             $hints['prefill'] = array_merge($hints['prefill'], $prefill);
         };
-
-
 
         // Logged in customes.
         // Merchant scope and prefill.
@@ -1356,10 +1354,10 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 // Load item product object
                 ////////////////////////////////////
-                $_product = $item->getProduct();
+                $_product = $this->productRepository->get(trim($item->getSku()));
 
-                $product['reference']    = $item->getProductId();
-                $product['name']         = $item->getName();
+                $product['reference']    = $_product->getId();
+                $product['name']         = $_product->getName();
                 $product['total_amount'] = $roundedTotalAmount;
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = round($item->getQty());
@@ -1701,6 +1699,25 @@ class Cart extends AbstractHelper
 
         //Store immutable quote id in metadata of cart
         $cart['metadata']['immutable_quote_id'] = $immutableQuote->getId();
+
+        // Transmit session ID via cart metadata, making it available for session emulation in API calls
+        if ($this->deciderHelper->isAddSessionIdToCartMetadata()) {
+            $cart['metadata'][SessionHelper::ENCRYPTED_SESSION_ID_KEY] = $this->encryptMetadataValue(
+                $this->checkoutSession->getSessionId()
+            );
+        }
+
+        $sessionData = $this->eventsForThirdPartyModules->runFilter('collectSessionData', [], $quote, $immutableQuote);
+        if (!empty($sessionData)) {
+            $cart['metadata'][Session::ENCRYPTED_SESSION_DATA_KEY] = $this->encryptMetadataValue(
+                json_encode($sessionData)
+            );
+        }
+
+        //store order id from session to add support for order edit
+        if ($this->checkoutSession->getOrderId()) {
+            $cart['metadata']['original_order_entity_id'] = $this->checkoutSession->getOrderId();
+        }
 
         //Currency
         $currencyCode = $immutableQuote->getQuoteCurrencyCode();
@@ -2494,5 +2511,15 @@ class Cart extends AbstractHelper
         if (empty($code)) {
             $this->bugsnag->notifyError('Empty discount code', "Info: {$description}");
         }
+    }
+
+    /**
+     * @param string $data
+     *
+     * @return string encrypted version of the provided data string
+     */
+    protected function encryptMetadataValue($data)
+    {
+        return base64_encode($this->configHelper->encrypt($data));
     }
 }

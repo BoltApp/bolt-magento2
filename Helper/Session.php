@@ -42,6 +42,8 @@ class Session extends AbstractHelper
 {
     const BOLT_SESSION_PREFIX  = 'BOLT_SESSION_';
     const BOLT_SESSION_PREFIX_FORM_KEY  = 'BOLT_SESSION_FORM_KEY_';
+    const ENCRYPTED_SESSION_DATA_KEY = 'encrypted_session_data';
+    const ENCRYPTED_SESSION_ID_KEY = 'encrypted_session_id';
 
     /** @var CheckoutSession */
     private $checkoutSession;
@@ -134,10 +136,13 @@ class Session extends AbstractHelper
     /**
      * Emulate session from cached session id
      *
-     * @param mixed $session
-     * @param string $sessionID
+     * @param \Magento\Framework\Session\SessionManager $session
+     * @param string                                    $sessionID
+     * @param int                                       $storeId
+     *
+     * @throws \Magento\Framework\Exception\SessionException
      */
-    private function setSession($session, $sessionID, $storeId)
+    protected function setSession($session, $sessionID, $storeId)
     {
         if (! $this->configHelper->isSessionEmulationEnabled($storeId)) {
             return;
@@ -164,9 +169,11 @@ class Session extends AbstractHelper
      * Replace parent quote with immutable quote in checkout session.
      *
      * @param Quote $quote
-     * @throws \Magento\Framework\Exception\SessionException
+     * @param array $metadata
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public function loadSession($quote)
+    public function loadSession($quote, $metadata = [])
     {
         // not an API call, no need to emulate session
         if ($this->appState->getAreaCode() != \Magento\Framework\App\Area::AREA_WEBAPI_REST) {
@@ -177,6 +184,26 @@ class Session extends AbstractHelper
         $customerId = $quote->getCustomerId();
         $cacheIdentifier = self::BOLT_SESSION_PREFIX . $quote->getBoltParentQuoteId();
 
+        if (key_exists(self::ENCRYPTED_SESSION_DATA_KEY, $metadata)) {
+            $sessionData = json_decode(
+                $this->configHelper->decrypt(base64_decode($metadata[self::ENCRYPTED_SESSION_DATA_KEY])),
+                true
+            );
+            $this->eventsForThirdPartyModules->dispatchEvent('restoreSessionData', $sessionData, $quote);
+        }
+
+        if (key_exists(self::ENCRYPTED_SESSION_ID_KEY, $metadata)) {
+            $sessionID = $this->configHelper->decrypt(base64_decode($metadata[self::ENCRYPTED_SESSION_ID_KEY]));
+            $storeId = $quote->getStoreId();
+            if ($quote->getData('bolt_checkout_type') == \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
+                $this->setSession($this->adminCheckoutSession, $sessionID, $storeId);
+            } else {
+                $this->setSession($this->checkoutSession, $sessionID, $storeId);
+                $this->setSession($this->customerSession, $sessionID, $storeId);
+            }
+        }
+        // @todo remove when update.cart hook starts supporting metadata
+        else
         if ($serialized = $this->cache->load($cacheIdentifier)) {
             $sessionData = $this->serialize->unserialize($serialized);
             $sessionID = $sessionData["sessionID"];
@@ -185,10 +212,8 @@ class Session extends AbstractHelper
             if ($sessionData["sessionType"] == "frontend") {
                 // shipping and tax, orphaned transaction
                 // cart belongs to logged in customer?
-                if ($customerId) {
-                    $this->setSession($this->checkoutSession, $sessionID, $storeId);
-                    $this->setSession($this->customerSession, $sessionID, $storeId);
-                }
+                $this->setSession($this->checkoutSession, $sessionID, $storeId);
+                $this->setSession($this->customerSession, $sessionID, $storeId);
             } else {
                 // orphaned transaction
                 $this->setSession($this->adminCheckoutSession, $sessionID, $storeId);

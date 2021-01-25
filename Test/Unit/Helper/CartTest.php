@@ -89,6 +89,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 use Zend\Serializer\Adapter\PhpSerialize as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\SalesRule\Model\RuleRepository;
+use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
@@ -166,6 +167,9 @@ class CartTest extends BoltTestCase
     const COUPON_CODE = 'testcoupon';
 
     const COUPON_DESCRIPTION = 'test coupon';
+
+    /** @var int Test original order entity id when editing orders */
+    const ORIGINAL_ORDER_ENTITY_ID = 234567;
 
     /** @var Context|MockObject */
     private $contextHelper;
@@ -390,7 +394,7 @@ class CartTest extends BoltTestCase
             'assignCustomer','setIsActive','getGiftMessageId',
             'getGwId'
         ]);
-        $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote', 'getBoltCollectSaleRuleDiscounts']);
+        $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote', 'getBoltCollectSaleRuleDiscounts', 'getOrderId']);
         $this->productRepository = $this->createPartialMock(ProductRepository::class, ['get', 'getbyId']);
 
         $this->apiHelper = $this->createMock(ApiHelper::class);
@@ -442,7 +446,7 @@ class CartTest extends BoltTestCase
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer']);
         $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(Serialize::class);
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class,
-            ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical', 'isIncludeUserGroupIntoCart']);
+            ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical', 'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata']);
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
         $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
@@ -1470,7 +1474,6 @@ class CartTest extends BoltTestCase
      */
     public function clearExternalData_always_callsDiscountHelperMethods()
     {
-        $this->discountHelper->expects(static::once())->method('clearAmastyGiftCard')->with($this->quoteMock);
         $this->discountHelper->expects(static::once())->method('clearAmastyRewardPoints')->with($this->quoteMock);
         TestHelper::invokeMethod($this->currentMock, 'clearExternalData', [$this->quoteMock]);
     }
@@ -2557,19 +2560,27 @@ ORDER
 
         /**
         * @test
+        * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
         * @covers ::getCartData
         */
-        public function getCartData_inMultistepWithNoDiscount_returnsCartData()
-        {
+        public function getCartData_inMultistepWithNoDiscount_returnsCartData(
+            $addSessionIdToMetadataValue,
+            $metadataSessionIdAssertMethod
+        ) {
             $this->skipTestInUnitTestsFlow();
             $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
-            TestUtils::setQuoteToSession($quote);
             $product = TestUtils::getSimpleProduct();
             $this->objectsToClean[] = $product;
             $quote->addProduct($product,1);
+            TestUtils::setQuoteToSession($quote);
 
+            $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(
+                Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA,
+                $addSessionIdToMetadataValue
+            );
             $result = $boltHelperCart->getCartData(false, "");
+            TestUtils::cleanupFeatureSwitch($sessionToMetadataSwitch);
 
             // check that created immutuble quote has correct parent quote id
             $immutable_quote_id = $result['metadata']['immutable_quote_id'];
@@ -2583,9 +2594,14 @@ ORDER
             );
             unset($result['items'][0]['image_url']);
 
+            // check that session id is saved in metadata
+            $encrypted_session_id = $result['metadata']['encrypted_session_id'] ?? null;
+            static::$metadataSessionIdAssertMethod($encrypted_session_id);
+            unset($result['metadata']['encrypted_session_id']);
+
             $expected = [
                 'order_reference' => $quote->getId(),
-                'display_id'      => $quote->getBoltReservedOrderId(),
+                'display_id'      => '',
                 'currency'        => self::CURRENCY_CODE,
                 'items'           => [
                     [
@@ -2594,7 +2610,7 @@ ORDER
                         'total_amount' => 10000,
                         'unit_price'   => 10000,
                         'quantity'     => 1,
-                        'sku'          => self::PRODUCT_SKU,
+                        'sku'          => $product->getSku(),
                         'type'         => 'physical',
                         'description'  => 'Product Description',
                     ]
@@ -2609,6 +2625,13 @@ ORDER
 
             static::assertEquals($expected, $result);
         }
+
+    public function dataProvider_sessionIdToCartMetadataSwitch() {
+        return [
+            [true, 'assertNotEmpty'],
+            [false, 'assertEmpty'],
+        ];
+    }
 
         /**
         * @test
@@ -2650,11 +2673,13 @@ ORDER
         * that getCartData returns expected cart data when checkout type is payment and order payload is valid
         *
         * @covers ::getCartData
-        *
+        * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
         * @throws Exception from tested method
         */
-        public function getCartData_whenPaymentOnlyAndHasOrderPayload_returnsCartData()
-        {
+        public function getCartData_whenPaymentOnlyAndHasOrderPayload_returnsCartData(
+            $addSessionIdToMetadataValue,
+            $metadataSessionIdAssertMethod
+        ) {
         $this->skipTestInUnitTestsFlow();
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -2669,7 +2694,13 @@ ORDER
 
         $quote->getShippingAddress()->setShippingMethod('flatrate_flatrate')->setCollectShippingRates(true);
         $quote->collectTotals()->save();
+
         TestUtils::setQuoteToSession($quote);
+
+        $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(
+            Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA,
+            $addSessionIdToMetadataValue
+        );
         $result = $boltHelperCart->getCartData(
             true,
             json_encode(
@@ -2690,12 +2721,18 @@ ORDER
                 ]
             )
         );
+        TestUtils::cleanupFeatureSwitch($sessionToMetadataSwitch);
 
         // check image url
         static::assertRegExp("|http://localhost/pub/static/version\d+/frontend/Magento/luma/en_US/Magento_Catalog/images/product/placeholder/small_image.jpg|",
                 $result['items'][0]['image_url']
         );
         unset($result['items'][0]['image_url']);
+
+        // check that session id is saved in metadata
+        $encrypted_session_id = $result['metadata']['encrypted_session_id'] ?? null;
+        static::$metadataSessionIdAssertMethod($encrypted_session_id);
+        unset($result['metadata']['encrypted_session_id']);
 
         static::assertEquals(
             [
@@ -2709,7 +2746,7 @@ ORDER
                         'total_amount' => 10000.0,
                         'unit_price'   => 10000,
                         'quantity'     => 1.0,
-                        'sku'          => 'TestProduct',
+                        'sku'          => $product->getSku(),
                         'type'         => 'physical',
                         'description'  => 'Product Description',
                     ]
@@ -2792,11 +2829,13 @@ ORDER
         * that getCartData returns expected cart data when checkout type is payment and quote is virtual
         *
         * @covers ::getCartData
-        *
+        * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
         * @throws Exception from tested method
         */
-        public function getCartData_whenPaymentOnlyAndVirtualQuote_returnsCartData()
-        {
+        public function getCartData_whenPaymentOnlyAndVirtualQuote_returnsCartData(
+            $addSessionIdToMetadataValue,
+            $metadataSessionIdAssertMethod
+        ) {
         $this->skipTestInUnitTestsFlow();
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -2811,7 +2850,10 @@ ORDER
 
         TestUtils::setQuoteToSession($quote);
 
-
+        $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(
+            Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA,
+            $addSessionIdToMetadataValue
+        );
         $result = $boltHelperCart->getCartData(
             true,
             json_encode(
@@ -2832,7 +2874,14 @@ ORDER
                 ]
             )
         );
+        TestUtils::cleanupFeatureSwitch($sessionToMetadataSwitch);
         unset($result['items'][0]['image_url']);
+
+        // check that session id is saved in metadata
+        $encrypted_session_id = $result['metadata']['encrypted_session_id'] ?? null;
+        static::$metadataSessionIdAssertMethod($encrypted_session_id);
+        unset($result['metadata']['encrypted_session_id']);
+
         static::assertEquals(
             [
                 'order_reference' => $quote->getId(),
@@ -2845,7 +2894,7 @@ ORDER
                         'total_amount' => 10000.0,
                         'unit_price'   => 10000,
                         'quantity'     => 1.0,
-                        'sku'          => 'TestProduct',
+                        'sku'          => $product->getSku(),
                         'type'         => 'digital',
                         'description'  => 'Product Description',
                     ]
@@ -2886,7 +2935,7 @@ ORDER
         {
         $this->checkoutSession = $this->createPartialMock(
             \Magento\Backend\Model\Session\Quote::class,
-            ['getStore', 'getCustomerGroupId', 'getQuote']
+            ['getStore', 'getCustomerGroupId', 'getQuote', 'getOrderId']
         );
         $testItem = [
             'reference'    => self::PRODUCT_ID,
@@ -2954,6 +3003,7 @@ ORDER
                 ]
             )
         );
+        $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $currentMock->getCartData(
             true,
             json_encode(
@@ -2976,6 +3026,100 @@ ORDER
         );
         }
 
+    /**
+     * @test
+     * that getCartData adds original_order_entity_id for edited orders (order id is present on session)
+     *
+     * @covers ::getCartData
+     * @covers ::buildCartFromQuote
+     */
+    public function getCartData_forEditedBackendOrders_addsOriginalOrderEntityIdToMetadata()
+    {
+        $this->checkoutSession = $this->createPartialMock(
+            \Magento\Backend\Model\Session\Quote::class,
+            ['getStore', 'getCustomerGroupId', 'getQuote', 'getOrderId']
+        );
+        $testItem = [
+            'reference'    => self::PRODUCT_ID,
+            'name'         => 'Test Product',
+            'total_amount' => 12345,
+            'unit_price'   => 12345,
+            'quantity'     => 1.0,
+            'sku'          => self::PRODUCT_SKU,
+            'type'         => 'physical',
+            'description'  => '',
+        ];
+        $getCartItemsResult = [[$testItem], 12345, 0];
+        $collectDiscountsResult = [[], 12345, 0];
+        $currentMock = $this->getCurrentMock(
+            [
+                'setLastImmutableQuote',
+                'getCartItems',
+                'getQuoteById',
+                'collectDiscounts',
+                'createImmutableQuote',
+                'getCalculationAddress'
+            ]
+        );
+        $this->setUpAddressMock($this->quoteBillingAddress);
+        $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
+            ->willReturn($this->immutableQuoteMock);
+        $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
+            ->willReturn($this->quoteBillingAddress);
+        $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
+        $currentMock->expects(static::once())->method('collectDiscounts')->willReturn($collectDiscountsResult);
+        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
+        $this->quoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
+        $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
+        $this->quoteMock->expects(static::any())->method('getShippingAddress')
+            ->willReturn($this->quoteShippingAddress);
+        $this->immutableQuoteMock->expects(static::once())->method('isVirtual')->willReturn(true);
+        $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
+            ->willReturn($this->quoteBillingAddress);
+        $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
+            ->willReturn($this->getAddressMock());
+        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
+            ->willReturn(self::PARENT_QUOTE_ID);
+        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
+            ->willReturn(self::IMMUTABLE_QUOTE_ID);
+        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
+            ->willReturn(self::CURRENCY_CODE);
+        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getCustomerGroupId')
+            ->willReturn(null);
+
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getId')->willReturn(self::STORE_ID);
+        $storeMock->method('getWebsiteId')->willReturn(1);
+
+        $this->checkoutSession->method('getStore')->willReturn($storeMock);
+        $this->checkoutSession->method('getCustomerGroupId')
+            ->willReturn(\Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID);
+
+        $this->checkoutSession->method('getOrderId')->willReturn(self::ORIGINAL_ORDER_ENTITY_ID);
+        $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
+        $result = $currentMock->getCartData(
+            true,
+            json_encode(
+                [
+                    'billingAddress' => [
+                        'firstname' => "IntegrationBolt",
+                        'lastname'  => "BoltTest",
+                        'company'   => "Bolt",
+                        'telephone' => "132 231 1234",
+                        'street'    => ["228 7th Avenue", "228 7th Avenue"],
+                        'city'      => "New York",
+                        'region'    => "New York",
+                        'country'   => "United States",
+                        'countryId' => "US",
+                        'email'     => self::EMAIL_ADDRESS,
+                        'postcode'  => "10011",
+                    ]
+                ]
+            )
+        );
+        static::assertEquals(self::ORIGINAL_ORDER_ENTITY_ID, $result['metadata']['original_order_entity_id']);
+    }
+
         /**
         * @test
         * that getCartData populates registry rule_data when executed from backend
@@ -2986,7 +3130,7 @@ ORDER
         {
         $this->checkoutSession = $this->createPartialMock(
             \Magento\Backend\Model\Session\Quote::class,
-            ['getStore', 'getCustomerGroupId', 'getQuote']
+            ['getStore', 'getCustomerGroupId', 'getQuote', 'getOrderId']
         );
         $testItem = [
             'reference'    => self::PRODUCT_ID,
@@ -3053,6 +3197,7 @@ ORDER
                 ]
             )
         );
+        $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $currentMock->getCartData(
             true,
             json_encode(
@@ -3163,6 +3308,7 @@ ORDER
         );
         $this->bugsnag->expects(static::once())->method('notifyError')
             ->with('Cart Totals Mismatch', 'Totals adjusted by 123.');
+        $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $result = $currentMock->getCartData(
             true,
             json_encode(
@@ -3218,6 +3364,7 @@ ORDER
                 'tax_amount'      => 0,
                 'metadata'        => [
                     'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                    'encrypted_session_id' => ''
                 ],
             ],
             $result
@@ -3262,6 +3409,7 @@ ORDER
         $this->quoteShippingAddress->expects(static::any())->method('getShippingMethod')
             ->willReturn('flatrate_flatrate');
         $this->quoteShippingAddress->expects(static::any())->method('setShippingMethod')->with('flatrate_flatrate');
+        $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $result = $currentMock->getCartData(
             true,
             json_encode(
@@ -3315,6 +3463,7 @@ ORDER
                 'tax_amount'      => 0,
                 'metadata'        => [
                     'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                    'encrypted_session_id' => ''
                 ],
             ],
             $result
@@ -3432,6 +3581,7 @@ ORDER
         $this->quoteShippingAddress->expects(static::any())->method('setShippingMethod')->with('flatrate_flatrate');
         $this->bugsnag->expects(static::once())->method('notifyError')
             ->with('Order create error', 'Shipping address data insufficient.');
+        $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $result = $currentMock->getCartData(true, json_encode([]));
         static::assertEquals([], $result);
         }
@@ -3499,6 +3649,7 @@ ORDER
         ];
         $currentMock->expects(static::once())->method('getCartItems')->willReturn([$testItems, 123456, 0]);
         $currentMock->expects(static::once())->method('collectDiscounts')->willReturn([[], 12345, 0]);
+        $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $result = $currentMock->getCartData(true, json_encode([]), $this->immutableQuoteMock);
         static::assertEquals(self::EMAIL_ADDRESS, $result['shipments'][0]['shipping_address']['email']);
         }
@@ -4194,6 +4345,9 @@ ORDER
         $this->productMock->method('getDescription')->willReturn('Product Description');
         $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
 
+        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
+            ->willReturn($this->productMock);
+
         $quoteItemMock = $this->getQuoteItemMock();
         $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItemMock]);
         $this->quoteMock->method('getQuoteCurrencyCode')->willReturn(self::CURRENCY_CODE);
@@ -4267,14 +4421,8 @@ ORDER
         $this->imageHelper->method('getUrl')->willReturn('no-image');
 
         $this->configHelper->method('getProductAttributesList')->willReturn([$attributeName]);
-        $productMock = $this->getMockBuilder(Product::class)
-                                          ->setMethods(['getData', 'getAttributeText'])
-                                          ->disableOriginalConstructor()
-                                          ->getMock();
-        $productMock->method('getData')->with($attributeName)->willReturn(true);
-        $productMock->method('getAttributeText')->with($attributeName)->willReturn('Yes');
 
-        $this->productRepository->method('get')->with(self::PRODUCT_SKU, false, self::STORE_ID)->willReturn($productMock);
+        $this->productRepository->method('get')->with(self::PRODUCT_SKU)->willReturn($this->productMock);
 
         list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
             $this->quoteMock,
@@ -4287,7 +4435,6 @@ ORDER
         static::assertEquals(
             [
                 (object)['name' => 'Size', 'value' => 'S'],
-                (object)['name' => 'test_attribute', 'value' => 'Yes', 'type' => 'attribute'],
             ],
             $resultProductProperties
         );
@@ -4316,6 +4463,10 @@ ORDER
             ]
         );
         $productMock = $this->createMock(Product::class);
+        $productMock->method('getId')->willReturn(self::PRODUCT_ID);
+        $productMock->method('getName')->willReturn('Test Product');
+        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
+            ->willReturn($productMock);
         $quoteItem->method('getName')->willReturn('Test Product');
         $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
         $quoteItem->method('getQty')->willReturn(1);
@@ -4406,6 +4557,10 @@ ORDER
             ]
         );
         $productMock = $this->createMock(Product::class);
+        $productMock->method('getId')->willReturn(self::PRODUCT_ID);
+        $productMock->method('getName')->willReturn('Test Product');
+        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
+            ->willReturn($productMock);
         $quoteItem->method('getName')->willReturn('Test Product');
         $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
         $quoteItem->method('getQty')->willReturn(1);
@@ -4468,6 +4623,10 @@ ORDER
               ]
           );
           $productMock = $this->createMock(Product::class);
+          $productMock->method('getId')->willReturn(self::PRODUCT_ID);
+          $productMock->method('getName')->willReturn('Test Product');
+          $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
+            ->willReturn($productMock);
           $quoteItem->method('getName')->willReturn('Test Product');
           $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
           $quoteItem->method('getQty')->willReturn(1);
