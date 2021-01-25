@@ -52,7 +52,7 @@ class DebugInfo implements \JsonSerializable
     private $logs;
 
     /**
-     * @var AutomatedTestingConfig|null
+     * @var AutomatedTestingConfig
      */
     private $automatedTestingConfig;
 
