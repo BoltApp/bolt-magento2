@@ -25,9 +25,9 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Exception\BoltException;
-use Magento\Quote\Api\ShippingMethodManagementInterface;
 use \Magento\Quote\Api\Data\ShippingMethodInterface;
-use Magento\Quote\Api\Data\EstimateAddressInterfaceFactory;
+use Magento\Quote\Api\Data\AddressInterfaceFactory;
+use Magento\Quote\Api\ShipmentEstimationInterface;
 
 /**
  * Class Shipping
@@ -47,7 +47,7 @@ class Shipping extends ShippingTax implements ShippingInterface
     protected $shippingDataFactory;
 
     /**
-     * @var ShippingMethodManagementInterface
+     * @var ShipmentEstimationInterface
      */
     protected $shippingMethodManagement;
 
@@ -57,9 +57,9 @@ class Shipping extends ShippingTax implements ShippingInterface
     protected $shippingTaxContext;
 
     /**
-     * @var EstimateAddressInterfaceFactory
+     * @var AddressInterfaceFactory
      */
-    protected $estimateAddressFactory;
+    protected $addressFactory;
 
     /**
      * Assigns local references to global resources
@@ -67,20 +67,20 @@ class Shipping extends ShippingTax implements ShippingInterface
      * @param ShippingTaxContext $shippingTaxContext
      *
      * @param ShippingDataInterfaceFactory $shippingDataFactory
-     * @param ShippingMethodManagementInterface $shippingMethodManagement
-     * @param EstimateAddressInterfaceFactory $estimateAddressFactory
+     * @param ShipmentEstimationInterface $shippingMethodManagement
+     * @param AddressInterfaceFactory $addressFactory
      */
     public function __construct(
         ShippingTaxContext $shippingTaxContext,
         ShippingDataInterfaceFactory $shippingDataFactory,
-        ShippingMethodManagementInterface $shippingMethodManagement,
-        EstimateAddressInterfaceFactory $estimateAddressFactory
+        ShipmentEstimationInterface $shippingMethodManagement,
+        AddressInterfaceFactory $addressFactory
     ) {
         parent::__construct($shippingTaxContext);
 
         $this->shippingDataFactory = $shippingDataFactory;
         $this->shippingMethodManagement = $shippingMethodManagement;
-        $this->estimateAddressFactory = $estimateAddressFactory;
+        $this->addressFactory = $addressFactory;
     }
 
     /**
@@ -148,18 +148,20 @@ class Shipping extends ShippingTax implements ShippingInterface
     {
         list(,$addressData) = $this->populateAddress($addressData);
 
-        $estimateAddress = $this->estimateAddressFactory->create();
+        $address = $this->addressFactory->create();
 
-        $estimateAddress->setRegionId($addressData['region_id'] ?? null);
-        $estimateAddress->setRegion($addressData['region'] ?? null);
-        $estimateAddress->setCountryId($addressData['country_id'] ?? null);
-        $estimateAddress->setPostcode($addressData['postcode'] ?? null);
+        $address->setRegionId($addressData['region_id'] ?? null);
+        $address->setRegion($addressData['region'] ?? null);
+        $address->setCountryId($addressData['country_id'] ?? null);
+        $address->setPostcode($addressData['postcode'] ?? null);
+        $address->setCity($addressData['city'] ?? null);
+        $address->setStreet($addressData['street'] ?? null);
 
         /**
          * @var ShippingMethodInterface[] $shippingOptionsArray
          */
         $shippingOptionsArray = $this->shippingMethodManagement
-            ->estimateByAddress($this->quote->getId(), $estimateAddress);
+            ->estimateByExtendedAddress($this->quote->getId(), $address);
         $currencyCode = $this->quote->getQuoteCurrencyCode();
 
         list($shippingOptions, $errors) = $this->formatResult($shippingOptionsArray, $currencyCode);
