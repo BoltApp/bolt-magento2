@@ -50,6 +50,11 @@ class UniversalWebhook implements UniversalWebhookInterface
     private $logHelper;
 
     /**
+     * @var BoltErrorResponse
+     */
+    protected $errorResponse;
+
+    /**
      * @var Response
      */
     private $response;
@@ -59,6 +64,7 @@ class UniversalWebhook implements UniversalWebhookInterface
         Result $result,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
+        BoltErrorResponse $errorResponse,
         Response $response
     )
     {
@@ -66,6 +72,7 @@ class UniversalWebhook implements UniversalWebhookInterface
         $this->result = $result;
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
+        $this->errorResponse = $errorResponse;
         $this->response = $response;
     }
 
@@ -119,11 +126,13 @@ class UniversalWebhook implements UniversalWebhookInterface
      */
     private function formatResponse($result)
     {
-        //formats the response from the api result interface. may not be necessary
+        //formats the response from the api result interface.
         $response = [
             'status' => $this->result->getStatus()
         ];
 
+        //currently this is never used as error response is handled separately
+        //leaving as failsafe
         if ($response['status'] == "failed")
         {
             $response['error'] = $this->result->getError();
@@ -143,11 +152,8 @@ class UniversalWebhook implements UniversalWebhookInterface
      */
     protected function sendErrorResponse($errCode, $message, $httpStatusCode)
     {
-        //TODO: additional error response according to handler being called
-        $additionalErrorResponseData = [];
-
         $encodeErrorResult = $this->errorResponse
-            ->prepareErrorMessage($errCode, $message, $additionalErrorResponseData);
+            ->prepareErrorMessage($errCode, $message);
 
         $this->logHelper->addInfoLog('### sendErrorResponse');
         $this->logHelper->addInfoLog($encodeErrorResult);

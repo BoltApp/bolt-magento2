@@ -61,7 +61,7 @@ class UniversalWebhookResult implements UniversalWebhookResultInterface
      * Get error string
      * 
      * @api
-     * @return string
+     * @return array
      */
 
     public function getError()
@@ -73,7 +73,7 @@ class UniversalWebhookResult implements UniversalWebhookResultInterface
      * Set error string
      * 
      * @api
-     * @param string $error  
+     * @param array $error  
      * @return $this
      */
     public function setError($error)
