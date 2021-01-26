@@ -542,7 +542,7 @@ class Order extends AbstractHelper
     private function addCustomerDetails($quote, $email)
     {
         $quote->setCustomerEmail($email);
-        if (!$quote->getCustomerId() && $quote->getData('bolt_checkout_type') !== CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
+        if (!$quote->getCustomerId() && $quote->getData('bolt_checkout_type') != CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
             $quote->setCustomerId(null);
             $quote->setCheckoutMethod('guest');
             $quote->setCustomerIsGuest(true);
@@ -947,7 +947,7 @@ class Order extends AbstractHelper
 
         if ($parentQuote) {
             $this->dispatchPostCheckoutEvents($order, $parentQuote);
-            
+
             $this->eventsForThirdPartyModules->dispatchEvent("deleteRedundantDiscounts", $parentQuote);
 
             // If Amasty Reward Points Extension is present
