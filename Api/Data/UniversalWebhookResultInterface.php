@@ -39,19 +39,19 @@ interface UniversalWebhookResultInterface
     public function setStatus($status);
 
     /**
-     * Get error string
+     * Get error object
      * 
      * @api
-     * @return string
+     * @return array
      */
 
     public function getError();
 
     /**
-     * Set error string
+     * Set error object
      * 
      * @api
-     * @param string $error
+     * @param array $error
      * @return $this
      */
 

@@ -27,7 +27,7 @@ class UniversalWebhookResult implements UniversalWebhookResultInterface
     private $status;
 
     /**
-     * @var string
+     * @var array
      */
     private $error;
 
@@ -58,7 +58,7 @@ class UniversalWebhookResult implements UniversalWebhookResultInterface
     }
 
     /**
-     * Get error string
+     * Get error object
      * 
      * @api
      * @return array
@@ -70,7 +70,7 @@ class UniversalWebhookResult implements UniversalWebhookResultInterface
     }
 
     /**
-     * Set error string
+     * Set error object
      * 
      * @api
      * @param array $error  
