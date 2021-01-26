@@ -29,7 +29,7 @@ use Magento\Quote\Api\ShipmentEstimationInterface;
 use Magento\Quote\Model\Quote;
 use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Model\Api\Shipping;
-use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\TestCase;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Magento\Quote\Api\Data\ShippingMethodInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
@@ -39,7 +39,7 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Shipping
  */
-class ShippingTest extends BoltTestCase
+class ShippingTest extends TestCase
 {
     const IMMUTABLE_QUOTE_ID = 1001;
     const PARENT_QUOTE_ID = 1000;
@@ -72,7 +72,7 @@ class ShippingTest extends BoltTestCase
      */
     private $currentMock;
 
-    protected function setUpInternal()
+    protected function setUp()
     {
         $this->shippingTaxContext = $this->createMock(ShippingTaxContext::class);
         $this->shippingDataFactory = $this->createMock(ShippingDataInterfaceFactory::class);
@@ -125,12 +125,12 @@ class ShippingTest extends BoltTestCase
     {
         $this->initCurrentMock();
 
-        static::assertAttributeInstanceOf(
+        $this->assertAttributeInstanceOf(
             ShippingDataInterfaceFactory::class,
             'shippingDataFactory',
             $this->currentMock
         );
-        static::assertAttributeInstanceOf(
+        $this->assertAttributeInstanceOf(
             ShipmentEstimationInterface::class,
             'shippingMethodManagement',
             $this->currentMock
@@ -276,7 +276,7 @@ class ShippingTest extends BoltTestCase
         $this->initCurrentMock(['populateAddress', 'formatResult']);
 
         $this->currentMock->expects(self::once())->method('populateAddress')->with($addressData)
-            ->willReturn([null,$reformattedAddressData]);
+            ->willReturn([null, $reformattedAddressData]);
 
         $quote = $this->getQuoteMock();
 
@@ -438,7 +438,7 @@ class ShippingTest extends BoltTestCase
         $parentQuoteId = self::PARENT_QUOTE_ID
     ) {
         $quoteMethods = array_merge([
-            'getId', 'getBoltParentQuoteId', 'getStoreId', 'getQuoteCurrencyCode'
+            'getId', 'getBoltParentQuoteId', 'getReservedOrderId', 'getStoreId', 'getQuoteCurrencyCode'
         ], $methods);
 
         $quote = $this->getMockBuilder(Quote::class)
@@ -449,6 +449,8 @@ class ShippingTest extends BoltTestCase
             ->willReturn($quoteId);
         $quote->method('getBoltParentQuoteId')
             ->willReturn($parentQuoteId);
+        $quote->method('getReservedOrderId')
+            ->willReturn(self::INCREMENT_ID);
         $quote->method('getStoreId')
             ->willReturn(self::STORE_ID);
         $quote->method('getQuoteCurrencyCode')

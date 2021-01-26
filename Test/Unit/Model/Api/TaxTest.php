@@ -186,7 +186,7 @@ class TaxTest extends TestCase
 
         $address = $this->createMock(\Magento\Quote\Model\Quote\Address::class);
         $this->currentMock->expects(self::once())->method('populateAddress')
-            ->with($addressData)->willReturn($address);
+            ->with($addressData)->willReturn([$address, $addressData]);
 
         $this->addressInformation->expects(self::once())->method('setAddress')
             ->with($address);
@@ -229,7 +229,7 @@ class TaxTest extends TestCase
 
         $address = $this->createMock(\Magento\Quote\Model\Quote\Address::class);
         $this->currentMock->expects(self::once())->method('populateAddress')
-            ->with($addressData)->willReturn($address);
+            ->with($addressData)->willReturn([$address, $addressData]);
 
         $this->addressInformation->expects(self::once())->method('setAddress')
             ->with($address);
