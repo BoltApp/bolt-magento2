@@ -940,10 +940,6 @@ class Order extends AbstractHelper
             
             $this->eventsForThirdPartyModules->dispatchEvent("deleteRedundantDiscounts", $parentQuote);
 
-            // If Amasty Reward Points Extension is present
-            // clear reward points applied to immutable quotes
-            $this->discountHelper->deleteRedundantAmastyRewardPoints($parentQuote);
-
             // Delete redundant cloned quotes
             $this->deleteRedundantQuotes($parentQuote);
         }
