@@ -22,9 +22,11 @@ use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Customer\Model\Session;
+use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Class GroupVerificationTest
+ *
  * @package Bolt\Boltpay\Test\Unit\ThirdPartyModules\IDme
  * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\IDme\GroupVerification
  */
@@ -35,17 +37,17 @@ class GroupVerificationTest extends BoltTestCase
     const IDME_SUBGROUP = 'IDME_SUBGROUP';
 
     /**
-     * @var Session
+     * @var Session|MockObject
      */
     private $customerSession;
 
     /**
-     * @var Quote
+     * @var Quote|MockObject
      */
     private $quote;
 
     /**
-     * @var GroupVerification
+     * @var GroupVerification|MockObject
      */
     private $currentMock;
 
@@ -54,16 +56,24 @@ class GroupVerificationTest extends BoltTestCase
      */
     public function setUpInternal()
     {
-        $this->customerSession = $this->quote = $this->createPartialMock(Session::class, [
-            'setIdmeUuid',
-            'setIdmeGroup',
-            'setIdmeSubgroups',
-        ]);
-        $this->quote = $this->createPartialMock(Quote::class, [
-            'getIdmeUuid',
-            'getIdmeGroup',
-            'getIdmeSubgroups',
-        ]);
+        $this->customerSession = $this->quote = $this->createPartialMock(
+            Session::class,
+            [
+                'setIdmeUuid',
+                'setIdmeGroup',
+                'setIdmeSubgroups',
+                'getData',
+                'setData'
+            ]
+        );
+        $this->quote = $this->createPartialMock(
+            Quote::class,
+            [
+                'getIdmeUuid',
+                'getIdmeGroup',
+                'getIdmeSubgroups',
+            ]
+        );
         $this->currentMock = (new ObjectManager($this))->getObject(
             GroupVerification::class,
             [
@@ -83,7 +93,62 @@ class GroupVerificationTest extends BoltTestCase
         $this->quote->expects(self::once())->method('getIdmeSubgroups')->willReturn(self::IDME_SUBGROUP);
         $this->customerSession->expects(self::once())->method('setIdmeUuid')->with(self::IDME_UUID)->willReturnSelf();
         $this->customerSession->expects(self::once())->method('setIdmeGroup')->with(self::IDME_GROUP)->willReturnSelf();
-        $this->customerSession->expects(self::once())->method('setIdmeSubgroups')->with(self::IDME_SUBGROUP)->willReturnSelf();
+        $this->customerSession->expects(self::once())->method('setIdmeSubgroups')
+            ->with(self::IDME_SUBGROUP)->willReturnSelf();
         $this->currentMock->beforeApplyDiscount($this->quote);
+    }
+
+    /**
+     * @test
+     * that collectSessionData will collect IDMe related data from session and append it to the provided $sessionData
+     *
+     * @covers ::collectSessionData
+     */
+    public function collectSessionData_withIDMeDataInSession_appendsTheDataToCollectedSessionData()
+    {
+        $idmeUuid = sha1('idme_uuid');
+        $idmeGroup = sha1('idme_group');
+        $idmeSubgroups = sha1('idme_subgroups');
+        $this->customerSession->expects(static::exactly(6))->method('getData')->willReturnMap(
+            [
+                ['idme_uuid', false, $idmeUuid],
+                ['idme_group', false, $idmeGroup],
+                ['idme_subgroups', false, $idmeSubgroups],
+            ]
+        );
+        $result = $this->currentMock->collectSessionData([], $this->quote, $this->quote);
+        static::assertEquals(
+            [
+                'idme_uuid'      => $idmeUuid,
+                'idme_group'     => $idmeGroup,
+                'idme_subgroups' => $idmeSubgroups,
+            ],
+            $result
+        );
+    }
+
+    /**
+     * @test
+     * that restoreSessionData will restore IDMe related data from provided array onto the customer session
+     *
+     * @covers ::restoreSessionData
+     */
+    public function restoreSessionData_withIDMeDataInSession_appendsTheDataToRestoredSessionData()
+    {
+        $idmeUuid = sha1('idme_uuid');
+        $idmeGroup = sha1('idme_group');
+        $idmeSubgroups = sha1('idme_subgroups');
+        $this->customerSession->expects(static::exactly(3))->method('setData')->withConsecutive(
+            ['idme_uuid', $idmeUuid],
+            ['idme_group', $idmeGroup],
+            ['idme_subgroups', $idmeSubgroups]
+        );
+        $this->currentMock->restoreSessionData(
+            [
+                'idme_uuid'      => $idmeUuid,
+                'idme_group'     => $idmeGroup,
+                'idme_subgroups' => $idmeSubgroups,
+            ]
+        );
     }
 }
