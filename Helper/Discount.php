@@ -76,16 +76,6 @@ class Discount extends AbstractHelper
     protected $unirgyGiftCertHelper;
 
     /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $amastyRewardsResourceQuote;
-
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $amastyRewardsQuote;
-
-    /**
      * @var CartRepositoryInterface
      */
     protected $quoteRepository;
@@ -146,8 +136,6 @@ class Discount extends AbstractHelper
      * @param ResourceConnection $resource
      * @param ThirdPartyModuleFactory $unirgyCertRepository
      * @param ThirdPartyModuleFactory $unirgyGiftCertHelper
-     * @param ThirdPartyModuleFactory $amastyRewardsResourceQuote
-     * @param ThirdPartyModuleFactory $amastyRewardsQuote
      * @param ThirdPartyModuleFactory $moduleGiftCardAccount
      * @param ThirdPartyModuleFactory $moduleGiftCardAccountHelper
      * @param CartRepositoryInterface $quoteRepository
@@ -165,8 +153,6 @@ class Discount extends AbstractHelper
         ResourceConnection $resource,
         ThirdPartyModuleFactory $unirgyCertRepository,
         ThirdPartyModuleFactory $unirgyGiftCertHelper,
-        ThirdPartyModuleFactory $amastyRewardsResourceQuote,
-        ThirdPartyModuleFactory $amastyRewardsQuote,
         ThirdPartyModuleFactory $moduleGiftCardAccount,
         ThirdPartyModuleFactory $moduleGiftCardAccountHelper,
         CartRepositoryInterface $quoteRepository,
@@ -183,8 +169,6 @@ class Discount extends AbstractHelper
         $this->resource = $resource;
         $this->unirgyCertRepository = $unirgyCertRepository;
         $this->unirgyGiftCertHelper = $unirgyGiftCertHelper;
-        $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
-        $this->amastyRewardsQuote = $amastyRewardsQuote;
         $this->quoteRepository = $quoteRepository;
         $this->configHelper = $configHelper;
         $this->bugsnag = $bugsnag;
@@ -320,101 +304,6 @@ class Discount extends AbstractHelper
     }
 
     /**
-     * Check whether the Amasty Reward Points module is available (installed and enabled)
-     *
-     * @return bool
-     */
-    public function isAmastyRewardPointsAvailable()
-    {
-        return $this->amastyRewardsQuote->isAvailable();
-    }
-
-    /**
-     * Copy Amasty Reward Points data from source to destination quote.
-     * The reward points are fetched from the 3rd party module DB table (amasty_rewards_quote)
-     * and assigned to the destination quote temporarily (not persistent to the quote table).
-     * This is the reason there are cases when the reward points data is read for and applied
-     * to the (source) quote itself. The data is needed to be set before the quote totals are calculated,
-     * for example in the Shipping and Tax call.
-     *
-     * @param Quote $source
-     * @param Quote|null $destination
-     */
-    public function setAmastyRewardPoints($source, $destination = null)
-    {
-        if (! $this->isAmastyRewardPointsAvailable()) {
-            return;
-        }
-        if ($destination === null) {
-            $destination = $source;
-        }
-        $amastyQuoteResourceModel = $this->amastyRewardsResourceQuote->getInstance();
-        $amastyQuoteModel = $this->amastyRewardsQuote->getInstance();
-
-        $amastyQuote = $amastyQuoteResourceModel->loadByQuoteId($source->getId());
-
-        if ($amastyQuote) {
-            $amastyRewardPoints = $amastyQuoteResourceModel->getUsedRewards($source->getId());
-            $amastyQuoteModel->addReward($destination->getId(), $amastyRewardPoints);
-            $destination->setAmrewardsPoint($amastyRewardPoints);
-        }
-    }
-
-    /**
-     * Try to clear Amasty Reward Points data for the immutable quotes
-     *
-     * @param Quote $quote parent quote
-     */
-    public function deleteRedundantAmastyRewardPoints($quote)
-    {
-        if (! $this->isAmastyRewardPointsAvailable()) {
-            return;
-        }
-        $connection = $this->resource->getConnection();
-        try {
-            $rewardsTable = $this->resource->getTableName('amasty_rewards_quote');
-            $quoteTable = $this->resource->getTableName('quote');
-
-            $sql = "DELETE FROM {$rewardsTable} WHERE quote_id IN
-                    (SELECT entity_id FROM {$quoteTable}
-                    WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
-            $bind = [
-                'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
-                'entity_id' => $quote->getBoltParentQuoteId()
-            ];
-
-            $connection->query($sql, $bind);
-        } catch (\Zend_Db_Statement_Exception $e) {
-            $this->bugsnag->notifyException($e);
-        }
-    }
-
-    /**
-     * Remove Amasty Reward Points quote info
-     *
-     * @param Quote $quote
-     */
-    public function clearAmastyRewardPoints($quote)
-    {
-        if (! $this->isAmastyRewardPointsAvailable()) {
-            return;
-        }
-        $connection = $this->resource->getConnection();
-        try {
-            $rewardsTable = $this->resource->getTableName('amasty_rewards_quote');
-
-            $sql = "DELETE FROM {$rewardsTable} WHERE quote_id = :quote_id";
-            $bind = [
-                'quote_id' => $quote->getId()
-            ];
-
-            $connection->query($sql, $bind);
-        } catch (\Zend_Db_Statement_Exception $e) {
-            $this->bugsnag->notifyException($e);
-        }
-    }
-
-    /**
      * Some 3rd party discounts are not stored with the quote / totals. They are held in other tables
      * and applied to quote temporarily in checkout / customer session via magic set methods.
      * There is need in API calls (shipping & tax and webhook) to explicitly fetch and set this data
@@ -424,11 +313,6 @@ class Discount extends AbstractHelper
      */
     public function applyExternalDiscountData($quote)
     {
-        // Amasty reward points are held in a separate table
-        // and are not assigned to the quote / totals directly out of the customer session.
-        $this->setAmastyRewardPoints($quote);
-        // Miravist reward points are held in a separate table
-        // and are not assigned to the quote
         $this->eventsForThirdPartyModules->dispatchEvent("applyExternalDiscountData", $quote);
     }
     

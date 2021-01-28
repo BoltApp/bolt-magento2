@@ -924,8 +924,16 @@ class CartTest extends BoltTestCase
      */
     public function saveQuote_always_savesQuoteUsingQuoteRepository()
     {
-        $this->quoteRepository->expects(static::once())->method('save')->with($this->quoteMock);
-        $this->currentMock->saveQuote($this->quoteMock);
+        $this->skipTestInUnitTestsFlow();
+        $quote = TestUtils::createQuote();
+        $quote->setCustomerEmail('johnmc+testing@bolt.com');
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $boltHelperCart->saveQuote($quote);
+        $quoteId = $quote->getId();
+        self::assertEquals(
+            'johnmc+testing@bolt.com',
+            TestUtils::getQuoteById($quoteId)->getCustomerEmail()
+        );
     }
 
     /**
@@ -936,8 +944,14 @@ class CartTest extends BoltTestCase
      */
     public function deleteQuote_always_deletesQuoteUsingQuoteRepository()
     {
-        $this->quoteRepository->expects(static::once())->method('delete')->with($this->quoteMock);
-        $this->currentMock->deleteQuote($this->quoteMock);
+        $this->skipTestInUnitTestsFlow();
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $boltHelperCart->deleteQuote($quote);
+        $this->expectException(NoSuchEntityException::class);
+        $this->expectExceptionMessage('No such entity with cartId = '.$quoteId);
+        TestUtils::getQuoteById($quoteId);
     }
 
     /**
@@ -950,8 +964,17 @@ class CartTest extends BoltTestCase
      */
     public function quoteResourceSave_always_savesQuoteUsingResource()
     {
-        $this->quoteResource->expects(static::once())->method('save')->with($this->quoteMock);
-        $this->currentMock->quoteResourceSave($this->quoteMock);
+        $this->skipTestInUnitTestsFlow();
+        $quote = TestUtils::createQuote();
+        $quote->setCustomerEmail('johnmc+testing@bolt.com');
+        $quote->save();
+        $quoteId = $quote->getId();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $boltHelperCart->quoteResourceSave($quote);
+        self::assertEquals(
+            'johnmc+testing@bolt.com',
+            TestUtils::getQuoteById($quoteId)->getCustomerEmail()
+        );
     }
 
     /**
@@ -1465,21 +1488,6 @@ class CartTest extends BoltTestCase
 
     /**
      * @test
-     * that clearExternalData calls {@see \Bolt\Boltpay\Helper\Discount::clearAmastyGiftCard} and
-     * {@see \Bolt\Boltpay\Helper\Discount::clearAmastyRewardPoints}
-     *
-     * @covers ::clearExternalData
-     *
-     * @throws ReflectionException if clearExternalData method does not exist
-     */
-    public function clearExternalData_always_callsDiscountHelperMethods()
-    {
-        $this->discountHelper->expects(static::once())->method('clearAmastyRewardPoints')->with($this->quoteMock);
-        TestHelper::invokeMethod($this->currentMock, 'clearExternalData', [$this->quoteMock]);
-    }
-
-    /**
-     * @test
      * that getSignResponse sends provided data to be signed to the appropriate endpoint
      *
      * @covers ::getSignResponse
@@ -1715,8 +1723,6 @@ class CartTest extends BoltTestCase
         $sourceQuote->getBillingAddress()->method('getData')->willReturn([]);
         $sourceQuote->getShippingAddress()->method('getData')->willReturn([]);
         $currentMock->expects(static::once())->method('quoteResourceSave')->with($destinationQuote);
-        $this->discountHelper->expects(static::once())->method('setAmastyRewardPoints')
-            ->with($sourceQuote, $destinationQuote);
         $currentMock->replicateQuoteData($sourceQuote, $destinationQuote);
     }
 
@@ -1911,6 +1917,7 @@ class CartTest extends BoltTestCase
         $sessionObject,
         $expectedResult
     ) {
+        $this->skipTestInUnitTestsFlow();
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         TestHelper::setProperty($cartHelper, 'checkoutSession', $sessionObject);
         static::assertEquals($expectedResult, TestHelper::invokeMethod($cartHelper, 'isBackendSession'));
@@ -1938,30 +1945,117 @@ class CartTest extends BoltTestCase
 
     /**
      * @test
-     * that getCalculationAddress returns billing address for virtual quotes, otherwise shipping address
+     * that getCalculationAddress returns billing address for virtual quotes
      *
      * @covers ::getCalculationAddress
      *
-     * @dataProvider getCalculationAddress_withVariousQuoteStatesProvider
+     * @throws ReflectionException if getCalculationAddress method is not defined
+     */
+    public function getCalculationAddress_withQuoteIsVirtual_returnBillingAddress()
+    {
+        $shippingAddress = [
+            'region'                     => 'CA',
+            'country_code'               => 'US',
+            'email_address'              => 'shippingaddress@bolt.com',
+            'street_address1'            => 'Test Street 11',
+            'street_address2'            => 'Test Street 22',
+            'locality'                   => 'Beverly Hills',
+            'postal_code'                => '90210',
+            'phone_number'               => '0123456789',
+            'company'                    => 'Bolt',
+            'random_empty_field'         => '',
+            'another_random_empty_field' => [],
+        ];
+
+        $billingAddress = [
+            'region'                     => 'CA',
+            'country_code'               => 'US',
+            'email_address'              => 'billingaddress@bolt.com',
+            'street_address1'            => 'Test Street 1',
+            'street_address2'            => 'Test Street 2',
+            'locality'                   => 'Beverly Hills',
+            'postal_code'                => '90210',
+            'phone_number'               => '0123456789',
+            'company'                    => 'Bolt',
+            'random_empty_field'         => '',
+            'another_random_empty_field' => [],
+        ];
+
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+        $product = TestUtils::createVirtualProduct();
+        $this->objectsToClean[] = $product;
+        $quote->addProduct($product, 1);
+        $quote->setIsVirtual(true);
+        $quote->getShippingAddress()->addData($shippingAddress);
+        $quote->getBillingAddress()->addData($billingAddress);
+        $quote->save();
+
+        static::assertEquals(
+            'billingaddress@bolt.com',
+            TestHelper::invokeMethod(
+                $cartHelper,
+                'getCalculationAddress',
+                [$quote]
+            )->getEmailAddress()
+        );
+    }
+
+    /**
+     * @test
+     * that getCalculationAddress returns shipping address for quotes which is not virtual
      *
-     * @param bool $isVirtual flag whether the quote is virtual
+     * @covers ::getCalculationAddress
      *
      * @throws ReflectionException if getCalculationAddress method is not defined
      */
-    public function getCalculationAddress_withVariousQuoteStates_returnsCalculationAddress($isVirtual)
+    public function getCalculationAddress_withQuoteIsNotVirtual_returnShippingAddress()
     {
-        $billingAddress = $this->createMock(Quote\Address::class);
-        $shippingAddress = $this->createMock(Quote\Address::class);
-        $this->quoteMock->method('isVirtual')->willReturn($isVirtual);
-        $this->quoteMock->method('getBillingAddress')->willReturn($billingAddress);
-        $this->quoteMock->method('getShippingAddress')->willReturn($shippingAddress);
+        $shippingAddress = [
+            'region'                     => 'CA',
+            'country_code'               => 'US',
+            'email_address'              => 'shippingaddress@bolt.com',
+            'street_address1'            => 'Test Street 11',
+            'street_address2'            => 'Test Street 22',
+            'locality'                   => 'Beverly Hills',
+            'postal_code'                => '90210',
+            'phone_number'               => '0123456789',
+            'company'                    => 'Bolt',
+            'random_empty_field'         => '',
+            'another_random_empty_field' => [],
+        ];
+
+        $billingAddress = [
+            'region'                     => 'CA',
+            'country_code'               => 'US',
+            'email_address'              => 'billingaddress@bolt.com',
+            'street_address1'            => 'Test Street 1',
+            'street_address2'            => 'Test Street 2',
+            'locality'                   => 'Beverly Hills',
+            'postal_code'                => '90210',
+            'phone_number'               => '0123456789',
+            'company'                    => 'Bolt',
+            'random_empty_field'         => '',
+            'another_random_empty_field' => [],
+        ];
+
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+        $quote->getShippingAddress()->addData($shippingAddress);
+        $quote->getBillingAddress()->addData($billingAddress);
+        $quote->save();
+
         static::assertEquals(
-            $isVirtual ? $billingAddress : $shippingAddress,
+            'shippingaddress@bolt.com',
             TestHelper::invokeMethod(
-                $this->currentMock,
+                $cartHelper,
                 'getCalculationAddress',
-                [$this->quoteMock]
-            )
+                [$quote]
+            )->getEmailAddress()
         );
     }
 
@@ -2043,8 +2137,10 @@ class CartTest extends BoltTestCase
      */
     public function handleSpecialAddressCases_withPuertoRicoAddress_handlessPuertoRicoAddressSpecialCase()
     {
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $addressData = ['country_code' => 'PR'];
-        $result = $this->currentMock->handleSpecialAddressCases($addressData);
+        $result = $cartHelper->handleSpecialAddressCases($addressData);
         static::assertEquals(
             ['country_code' => 'US', 'country' => 'United States', 'region' => 'Puerto Rico'],
             $result
@@ -2061,8 +2157,10 @@ class CartTest extends BoltTestCase
      */
     public function hasProductRestrictions_withToggleCheckoutEmpty_returnsFalse()
     {
-        $this->configHelper->expects(static::once())->method('getToggleCheckout')->willReturn(null);
-        static::assertFalse($this->currentMock->hasProductRestrictions($this->quoteMock));
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote();
+        static::assertFalse($cartHelper->hasProductRestrictions($quote));
     }
 
     /**
@@ -2075,10 +2173,16 @@ class CartTest extends BoltTestCase
      */
     public function hasProductRestrictions_withNoProductAndItemRestrictionMethods_returnsFalse()
     {
-        $this->configHelper->expects(static::once())->method('getToggleCheckout')->willReturn(
-            (object)['active' => true, 'productRestrictionMethods' => [], 'itemRestrictionMethods' => []]
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote();
+        $configWriter = Bootstrap::getObjectManager()->create(\Magento\Framework\App\Config\Storage\WriterInterface::class);
+        $configWriter->save(
+            ConfigHelper::XML_PATH_ADDITIONAL_CONFIG,
+            json_encode(['toggleCheckout' => ['active' => true, 'productRestrictionMethods' => [], 'itemRestrictionMethods' => []]], true)
         );
-        static::assertFalse($this->currentMock->hasProductRestrictions($this->quoteMock));
+
+        static::assertFalse($cartHelper->hasProductRestrictions($quote));
     }
 
     /**
@@ -2091,15 +2195,22 @@ class CartTest extends BoltTestCase
      */
     public function hasProductRestrictions_withNoQuoteItems_returnsFalse()
     {
-        $this->configHelper->expects(static::once())->method('getToggleCheckout')->willReturn(
-            (object)[
-                'active'                    => true,
-                'productRestrictionMethods' => ['getIsRestricted'],
-                'itemRestrictionMethods'    => []
-            ]
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote();
+        $configWriter = Bootstrap::getObjectManager()->create(\Magento\Framework\App\Config\Storage\WriterInterface::class);
+        $configWriter->save(
+            ConfigHelper::XML_PATH_ADDITIONAL_CONFIG,
+            json_encode([
+                'toggleCheckout' => [
+                    'active'                    => true,
+                    'productRestrictionMethods' => ['getIsRestricted'],
+                    'itemRestrictionMethods'    => []
+                ]
+            ], true)
         );
-        $this->quoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn([]);
-        static::assertFalse($this->currentMock->hasProductRestrictions($this->quoteMock));
+
+        static::assertFalse($cartHelper->hasProductRestrictions($quote));
     }
 
     /**
@@ -2330,19 +2441,11 @@ ORDER
         */
         public function deactivateSessionQuote_ifQuoteIsActive_deactivatesQuote()
         {
-        $quoteMock = $this->createPartialMock(Quote::class, ['getIsActive', 'getId', 'setIsActive', 'save']);
-
-        $quoteMock->expects(self::once())->method('getIsActive')->willReturn(true);
-        $quoteMock->expects(self::once())->method('getId')->willReturn(self::QUOTE_ID);
-        $quoteMock->expects(self::once())->method('setIsActive')->with(false)->willReturnSelf();
-        $quoteMock->expects(self::once())->method('save')->willReturnSelf();
-
-        $this->bugsnag->method('notifyError')
-            ->with('Deactivate quote that associates with an existing order', 'QuoteId: ' . self::QUOTE_ID);
-
-        $this->checkoutSession->expects(static::any())->method('getQuote')->willReturn($quoteMock);
-
-        $this->currentMock->deactivateSessionQuote($quoteMock);
+            $this->skipTestInUnitTestsFlow();
+            $quote = TestUtils::createQuote(['is_active'=> true]);
+            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            $cartHelper->deactivateSessionQuote($quote);
+            self::assertFalse($quote->getIsActive());
         }
 
         /**
@@ -6172,14 +6275,17 @@ ORDER
         */
         public function assignQuoteCustomerByEncryptedUserId_withInvalidEncryptedUserId_throwsException($encryptedUserId)
         {
-        $this->expectExceptionMessage("Incorrect encrypted_user_id");
-        $this->expectExceptionCode(6306);
-        $this->expectException(\Magento\Framework\Webapi\Exception::class);
-        TestHelper::invokeMethod(
-            $this->currentMock,
-            'assignQuoteCustomerByEncryptedUserId',
-            [$this->quoteMock, $encryptedUserId]
-        );
+            $this->skipTestInUnitTestsFlow();
+            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            $quote = TestUtils::createQuote();
+            $this->expectExceptionMessage("Incorrect encrypted_user_id");
+            $this->expectExceptionCode(6306);
+            $this->expectException(\Magento\Framework\Webapi\Exception::class);
+            TestHelper::invokeMethod(
+                $cartHelper,
+                'assignQuoteCustomerByEncryptedUserId',
+                [$quote, $encryptedUserId]
+            );
         }
 
         /**
@@ -6212,17 +6318,19 @@ ORDER
         */
         public function assignQuoteCustomerByEncryptedUserId_withInvalidSignature_throwsException()
         {
-        $this->expectExceptionMessage("Incorrect signature");
-        $this->expectException(\Magento\Framework\Webapi\Exception::class);
-        $this->expectExceptionCode(6306);
-        $payload = ['user_id' => 1, 'timestamp' => time() - 3600 - 1];
-        $encryptedUserId = json_encode($payload + ['signature' => 'incorrect_signature']);
-        $this->hookHelper->expects(self::once())->method('verifySignature')->willReturn(false);
-        TestHelper::invokeMethod(
-            $this->currentMock,
-            'assignQuoteCustomerByEncryptedUserId',
-            [$this->quoteMock, $encryptedUserId]
-        );
+            $this->skipTestInUnitTestsFlow();
+            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            $quote = TestUtils::createQuote();
+            $this->expectExceptionMessage("Incorrect signature");
+            $this->expectException(\Magento\Framework\Webapi\Exception::class);
+            $this->expectExceptionCode(6306);
+            $payload = ['user_id' => 1, 'timestamp' => time() - 3600 - 1];
+            $encryptedUserId = json_encode($payload + ['signature' => 'incorrect_signature']);
+            TestHelper::invokeMethod(
+                $cartHelper,
+                'assignQuoteCustomerByEncryptedUserId',
+                [$quote, $encryptedUserId]
+            );
         }
 
         /**
