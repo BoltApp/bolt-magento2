@@ -1105,6 +1105,12 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                         // We haven't seen magento cart yet. If Magento cart isn't set it means that bolt cart is unactual
                         return;
                     }
+                    
+                    if (data.hints === undefined) {
+                        // In some contexts, the data only has data_id.
+                        return;
+                    }
+                    
                     boltCartDataID = data.data_id;
                     if (BoltState.magentoCart.data_id > boltCartDataID) {
                         // bolt cart is unactual
