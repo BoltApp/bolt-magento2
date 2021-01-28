@@ -119,6 +119,12 @@ class EventsForThirdPartyModules
                     "checkClasses"       => self::AMASTY_GIFTCARD_V1_CHECK_CLASSES,
                     "boltClass"   => Amasty_GiftCard::class,
                 ],
+                [
+                    "module" => "Amasty_Rewards",
+                    "sendClasses" => ["Amasty\Rewards\Model\ResourceModel\Quote",
+                                      "Amasty\Rewards\Model\Quote"],
+                    "boltClass" => Amasty_Rewards::class,
+                ],
             ]
         ],
         'applyExternalDiscountData' => [
@@ -131,6 +137,12 @@ class EventsForThirdPartyModules
                                       "Mirasvit\Rewards\Model\Config",
                                       "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"],
                     "boltClass" => Mirasvit_Rewards::class,
+                ],
+                [
+                    "module" => "Amasty_Rewards",
+                    "sendClasses" => ["Amasty\Rewards\Model\ResourceModel\Quote",
+                                      "Amasty\Rewards\Model\Quote"],
+                    "boltClass" => Amasty_Rewards::class,
                 ],
             ]
         ],
@@ -197,6 +209,11 @@ class EventsForThirdPartyModules
                     "checkClasses" => self::AMASTY_GIFTCARD_V1_CHECK_CLASSES,
                     "boltClass"    => Amasty_GiftCard::class,
                 ],
+                [
+                    "module" => "Amasty_Rewards",
+                    "checkClasses" => ["Amasty\Rewards\Model\ResourceModel\Quote"],
+                    "boltClass" => Amasty_Rewards::class,
+                ],
             ]
         ],
         'deleteRedundantDiscounts' => [
@@ -209,6 +226,11 @@ class EventsForThirdPartyModules
                     "module"       => "Amasty_GiftCard",
                     "checkClasses" => self::AMASTY_GIFTCARD_V1_CHECK_CLASSES,
                     "boltClass"    => Amasty_GiftCard::class,
+                ],
+                [
+                    "module" => "Amasty_Rewards",
+                    "checkClasses" => ["Amasty\Rewards\Model\ResourceModel\Quote"],
+                    "boltClass" => Amasty_Rewards::class,
                 ],
             ]
         ],

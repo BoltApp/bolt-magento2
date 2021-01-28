@@ -1488,21 +1488,6 @@ class CartTest extends BoltTestCase
 
     /**
      * @test
-     * that clearExternalData calls {@see \Bolt\Boltpay\Helper\Discount::clearAmastyGiftCard} and
-     * {@see \Bolt\Boltpay\Helper\Discount::clearAmastyRewardPoints}
-     *
-     * @covers ::clearExternalData
-     *
-     * @throws ReflectionException if clearExternalData method does not exist
-     */
-    public function clearExternalData_always_callsDiscountHelperMethods()
-    {
-        $this->discountHelper->expects(static::once())->method('clearAmastyRewardPoints')->with($this->quoteMock);
-        TestHelper::invokeMethod($this->currentMock, 'clearExternalData', [$this->quoteMock]);
-    }
-
-    /**
-     * @test
      * that getSignResponse sends provided data to be signed to the appropriate endpoint
      *
      * @covers ::getSignResponse
@@ -1738,8 +1723,6 @@ class CartTest extends BoltTestCase
         $sourceQuote->getBillingAddress()->method('getData')->willReturn([]);
         $sourceQuote->getShippingAddress()->method('getData')->willReturn([]);
         $currentMock->expects(static::once())->method('quoteResourceSave')->with($destinationQuote);
-        $this->discountHelper->expects(static::once())->method('setAmastyRewardPoints')
-            ->with($sourceQuote, $destinationQuote);
         $currentMock->replicateQuoteData($sourceQuote, $destinationQuote);
     }
 

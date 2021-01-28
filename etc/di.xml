@@ -119,24 +119,8 @@
         <plugin name="Bolt_Boltpay_Mirasvit_Store_Credit_Model_Total_Quote_CreditPlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Credit\Model\Total\Quote\CreditPlugin" sortOrder="1" />
     </type>
 
-    <virtualType name="boltAmastyRewardsResourceQuote" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Amasty_Rewards</argument>
-            <argument name="className" xsi:type="string">Amasty\Rewards\Model\ResourceModel\Quote</argument>
-        </arguments>
-    </virtualType>
-
-    <virtualType name="boltAmastyRewardsQuote" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Amasty_Rewards</argument>
-            <argument name="className" xsi:type="string">Amasty\Rewards\Model\Quote</argument>
-        </arguments>
-    </virtualType>
-
     <type name="Bolt\Boltpay\Helper\Discount">
         <arguments>
-            <argument name="amastyRewardsResourceQuote" xsi:type="object">boltAmastyRewardsResourceQuote</argument>
-            <argument name="amastyRewardsQuote" xsi:type="object">boltAmastyRewardsQuote</argument>
             <argument name="moduleGiftCardAccount" xsi:type="object">boltMagentoGiftCardAccount</argument>
             <argument name="moduleGiftCardAccountHelper" xsi:type="object">boltMagentoGiftCardAccountHelper</argument>
             <argument name="unirgyCertRepository" xsi:type="object">boltUnirgyGiftCert</argument>
