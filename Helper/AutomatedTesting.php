@@ -17,23 +17,26 @@
 
 namespace Bolt\Boltpay\Helper;
 
-use Magento\Framework\App\Helper\AbstractHelper;
-use Magento\Framework\App\Helper\Context;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\CartFactory;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\CartItemFactory;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Config as AutomatedTestingConfig;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\ConfigFactory;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\PriceProperty;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\PricePropertyFactory;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\StoreItem;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\StoreItemFactory;
 use Magento\Catalog\Api\ProductRepositoryInterface as ProductRepository;
 use Magento\Catalog\Model\Product;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Api\SortOrder;
-use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\ConfigFactory;
-use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\StoreItemFactory;
-use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\CartFactory;
-use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\CartItemFactory;
-use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\ShippingMethodFactory;
-use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\ShippingMethod;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\Quote\Model\QuoteFactory;
-use Magento\Quote\Model\Quote;
+use Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Framework\App\Helper\Context;
+use Magento\Quote\Api\CartManagementInterface;
+use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Quote\Model\Cart\ShippingMethodConverter;
-use Magento\Quote\Model\Quote\Address;
+use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\QuoteFactory;
+use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Helper for automated testing
@@ -76,9 +79,9 @@ class AutomatedTesting extends AbstractHelper
     private $cartItemFactory;
 
     /**
-     * @var ShippingMethodFactory
+     * @var PricePropertyFactory
      */
-    private $shippingMethodFactory;
+    private $pricePropertyFactory;
 
     /**
      * @var ShippingMethodConverter
@@ -101,6 +104,16 @@ class AutomatedTesting extends AbstractHelper
     private $quoteFactory;
 
     /**
+     * @var CartManagementInterface
+     */
+    private $quoteManagement;
+
+    /**
+     * @var QuoteRepository
+     */
+    private $quoteRepository;
+
+    /**
      * @param Context $context
      * @param ProductRepository $productRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
@@ -109,10 +122,12 @@ class AutomatedTesting extends AbstractHelper
      * @param StoreItemFactory $storeItemFactory
      * @param CartFactory $cartFactory
      * @param CartItemFactory $cartItemFactory
-     * @param ShippingMethodFactory $shippingMethodFactory
+     * @param PricePropertyFactory $pricePropertyFactory
+     * @param ShippingMethodConverter $shippingMethodConverter
      * @param Bugsnag $bugsnag
      * @param StoreManagerInterface $storeManager
-     * @param ShippingMethodConverter $shippingMethodConverter
+     * @param CartManagementInterface $quoteManagement
+     * @param QuoteRepository $quoteRepository
      */
     public function __construct(
         Context $context,
@@ -123,11 +138,13 @@ class AutomatedTesting extends AbstractHelper
         StoreItemFactory $storeItemFactory,
         CartFactory $cartFactory,
         CartItemFactory $cartItemFactory,
-        ShippingMethodFactory $shippingMethodFactory,
+        PricePropertyFactory $pricePropertyFactory,
+        ShippingMethodConverter $shippingMethodConverter,
         Bugsnag $bugsnag,
         StoreManagerInterface $storeManager,
         QuoteFactory $quoteFactory,
-        ShippingMethodConverter $shippingMethodConverter
+        CartManagementInterface $quoteManagement,
+        QuoteRepository $quoteRepository
     ) {
         parent::__construct($context);
         $this->productRepository = $productRepository;
@@ -137,68 +154,60 @@ class AutomatedTesting extends AbstractHelper
         $this->storeItemFactory = $storeItemFactory;
         $this->cartFactory = $cartFactory;
         $this->cartItemFactory = $cartItemFactory;
-        $this->shippingMethodFactory = $shippingMethodFactory;
+        $this->pricePropertyFactory = $pricePropertyFactory;
+        $this->shippingMethodConverter = $shippingMethodConverter;
         $this->bugsnag = $bugsnag;
         $this->storeManager = $storeManager;
         $this->quoteFactory = $quoteFactory;
-        $this->shippingMethodConverter = $shippingMethodConverter;
+        $this->quoteManagement = $quoteManagement;
+        $this->quoteRepository = $quoteRepository;
     }
 
     /**
      * Generate and return automated testing config
      *
-     * @return Config
+     * @return AutomatedTestingConfig|string
      */
     public function getAutomatedTestingConfig()
     {
         try {
             $simpleProduct = $this->getProduct(\Magento\Catalog\Model\Product\Type::TYPE_SIMPLE);
             if ($simpleProduct === null) {
-                return;
+                return 'no simple products found';
             }
 
             $virtualProduct = $this->getProduct(\Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL);
-
-            $simpleProductPrice = $this->formatPrice($simpleProduct->getPrice(), false);
-            $simpleStoreItem = $this->storeItemFactory->create()
-                                                      ->setItemUrl($simpleProduct->getProductUrl())
-                                                      ->setName(trim($simpleProduct->getName()))
-                                                      ->setPrice($simpleProductPrice)
-                                                      ->setType('simple');
-            $virtualStoreItem = $virtualProduct === null
-                ? null
-                : $this->storeItemFactory->create()
-                                         ->setItemUrl($virtualProduct->getProductUrl())
-                                         ->setName(trim($virtualProduct->getName()))
-                                         ->setPrice($this->formatPrice($virtualProduct->getPrice(), false))
-                                         ->setType('virtual');
-
+            $simpleStoreItem = $this->getStoreItem($simpleProduct, 'simple');
+            $virtualStoreItem = $this->getStoreItem($virtualProduct, 'virtual');
             $storeItems[] = $simpleStoreItem;
             if ($virtualStoreItem !== null) {
                 $storeItems[] = $virtualStoreItem;
             }
 
             $quote = $this->createQuoteWithItem($simpleProduct);
-            $shippingMethods = $this->getShippingMethods($quote->getShippingAddress());
+            $shippingMethods = $this->getShippingMethods($quote);
             if (empty($shippingMethods)) {
-                return null;
+                return 'no shipping methods found';
             }
 
+            $quote->collectTotals();
+            $this->quoteRepository->save($quote);
             $simpleCartItem = $this->cartItemFactory->create()
-                                                    ->setName(trim($simpleProduct->getName()))
-                                                    ->setPrice($simpleProductPrice)
+                                                    ->setName($simpleStoreItem->getName())
+                                                    ->setPrice($simpleStoreItem->getPrice())
                                                     ->setQuantity(1);
             $cart = $this->cartFactory->create()
                                       ->setItems([$simpleCartItem])
                                       ->setShipping(reset($shippingMethods))
                                       ->setExpectedShippingMethods($shippingMethods)
-                                      ->setSubTotal($simpleProductPrice);
+                                      ->setTax($this->formatPrice($quote->getShippingAddress()->getTaxAmount(), false))
+                                      ->setSubTotal($this->formatPrice($quote->getSubtotal(), false));
+            $this->quoteRepository->delete($quote);
 
-            return $this->configFactory->create()
-                                       ->setStoreItems($storeItems)
-                                       ->setCart($cart);
+            return $this->configFactory->create()->setStoreItems($storeItems)->setCart($cart);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
+            return 'error retrieving automated testing config';
         }
     }
 
@@ -215,6 +224,7 @@ class AutomatedTesting extends AbstractHelper
 
         $searchCriteria = $this->searchCriteriaBuilder
             ->addFilter('type_id', $type)
+            ->addFilter('visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq')
             ->setSortOrders([$this->sortOrder])
             ->create();
 
@@ -226,6 +236,26 @@ class AutomatedTesting extends AbstractHelper
     }
 
     /**
+     * Convert $product to a StoreItem
+     *
+     * @param Product|null $product
+     * @param string $type
+     *
+     * @return StoreItem|null
+     */
+    private function getStoreItem($product, $type)
+    {
+        if ($product === null) {
+            return null;
+        }
+        return $this->storeItemFactory->create()
+                                      ->setItemUrl($product->getProductUrl())
+                                      ->setName(trim($product->getName()))
+                                      ->setPrice($this->formatPrice($product->getPrice(), false))
+                                      ->setType($type);
+    }
+
+    /**
      * Create a quote containing $product and add the shipping address used by integration tests
      *
      * @param Product $product
@@ -234,9 +264,9 @@ class AutomatedTesting extends AbstractHelper
      */
     private function createQuoteWithItem($product)
     {
-        $store = $this->storeManager->getStore();
-        $quote = $this->quoteFactory->create();
-        $quote->setStore($store);
+        $quoteId = $this->quoteManagement->createEmptyCart();
+        $quote = $this->quoteFactory->create()->load($quoteId);
+        $quote->setStoreId($this->storeManager->getStore()->getId());
         $quote->addProduct($product, 1);
         $quote->getShippingAddress()->addData([
             'street'     => '1235 Howard St Ste D',
@@ -245,43 +275,59 @@ class AutomatedTesting extends AbstractHelper
             'region'     => 'CA',
             'postcode'   => '94103'
         ]);
+        $this->quoteRepository->save($quote);
         return $quote;
     }
 
     /**
      * Return the shipping methods for $quote
      *
-     * @param Address $address
+     * @param Quote $quote
      *
-     * @return ShippingMethod[]
+     * @return PriceProperty[]
      */
-    private function getShippingMethods($address)
+    private function getShippingMethods($quote)
     {
-        $shippingRates = $address->getGroupedAllShippingRates();
-        $shippingMethods = [];
-        foreach ($shippingRates as $carrierRates) {
+        $address = $quote->getShippingAddress();
+
+        $flattenedRates = [];
+        foreach ($address->getGroupedAllShippingRates() as $carrierRates) {
             foreach ($carrierRates as $rate) {
-                $convertedShippingMethod = $this->shippingMethodConverter->modelToDataObject($rate, 'USD');
-                $shippingMethodName = $convertedShippingMethod->getCarrierTitle() . ' - ' . $convertedShippingMethod->getMethodTitle();
-                $shippingMethodPrice = $this->formatPrice($convertedShippingMethod->getAmount(), true);
-                $shippingMethods[] = $this->shippingMethodFactory->create()
-                                                                 ->setName($shippingMethodName)
-                                                                 ->setPrice($shippingMethodPrice);
+                $flattenedRates[] = $this->shippingMethodConverter->modelToDataObject($rate, 'USD');
             }
         }
+
+        if (empty($flattenedRates)) {
+            return [];
+        }
+
+        $firstShippingMethod = reset($flattenedRates);
+        $address->setCollectShippingRates(true)
+                ->setShippingMethod($firstShippingMethod->getCarrierCode() . '_' . $firstShippingMethod->getMethodCode())
+                ->save();
+
+        $shippingMethods = [];
+        foreach ($flattenedRates as $rate) {
+            $shippingMethodName = $rate->getCarrierTitle() . ' - ' . $rate->getMethodTitle();
+            $shippingMethodPrice = $this->formatPrice($rate->getAmount(), true);
+            $shippingMethods[] = $this->pricePropertyFactory->create()
+                                                            ->setName($shippingMethodName)
+                                                            ->setPrice($shippingMethodPrice);
+        }
+
         return $shippingMethods;
     }
 
     /**
-     * Format the price for automated testing config
+     * Format price
      *
      * @param float $price
-     * @param bool $isShippingPrice
+     * @param bool $isShipping
      *
      * @return string
      */
-    private function formatPrice($price, $isShippingPrice)
+    private function formatPrice($price, $isShipping)
     {
-        return $isShippingPrice && $price === 0 ? 'FREE' : '$' . number_format($price, 2, '.', '');
+        return $price === 0.0 && $isShipping ? 'Free' : '$' . number_format($price, 2, '.', '');
     }
 }

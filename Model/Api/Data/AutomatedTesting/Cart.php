@@ -25,14 +25,19 @@ class Cart implements \JsonSerializable
     private $items;
 
     /**
-     * @var ShippingMethod
+     * @var PriceProperty
      */
     private $shipping;
 
     /**
-     * @var ShippingMethod[]
+     * @var PriceProperty[]
      */
     private $expectedShippingMethods;
+
+    /**
+     * @var PriceProperty
+     */
+    private $tax;
 
     /**
      * @var string
@@ -58,7 +63,7 @@ class Cart implements \JsonSerializable
     }
 
     /**
-     * @return ShippingMethod
+     * @return PriceProperty
      */
     public function getShipping()
     {
@@ -66,7 +71,7 @@ class Cart implements \JsonSerializable
     }
 
     /**
-     * @param ShippingMethod $shipping
+     * @param PriceProperty $shipping
      * @return $this
      */
     public function setShipping($shipping)
@@ -76,7 +81,7 @@ class Cart implements \JsonSerializable
     }
 
     /**
-     * @return ShippingMethod[]
+     * @return PriceProperty[]
      */
     public function getExpectedShippingMethods()
     {
@@ -84,12 +89,30 @@ class Cart implements \JsonSerializable
     }
 
     /**
-     * @param ShippingMethod[] $expectedShippingMethods
+     * @param PriceProperty[] $expectedShippingMethods
      * @return $this
      */
     public function setExpectedShippingMethods($expectedShippingMethods)
     {
         $this->expectedShippingMethods = $expectedShippingMethods;
+        return $this;
+    }
+
+    /**
+     * @return PriceProperty
+     */
+    public function getTax()
+    {
+        return $this->tax;
+    }
+
+    /**
+     * @param PriceProperty $tax
+     * @return $this
+     */
+    public function setTax($tax)
+    {
+        $this->tax = $tax;
         return $this;
     }
 
@@ -120,6 +143,7 @@ class Cart implements \JsonSerializable
             'items' => $this->items,
             'shipping' => $this->shipping,
             'expectedShippingMethods' => $this->expectedShippingMethods,
+            'tax' => $this->tax,
             'subTotal' => $this->subTotal
         ];
     }

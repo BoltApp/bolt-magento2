@@ -52,7 +52,7 @@ class DebugInfo implements \JsonSerializable
     private $logs;
 
     /**
-     * @var AutomatedTestingConfig
+     * @var AutomatedTestingConfig|string
      */
     private $automatedTestingConfig;
 
@@ -166,7 +166,7 @@ class DebugInfo implements \JsonSerializable
     }
 
     /**
-     * @return AutomatedTestingConfig
+     * @return AutomatedTestingConfig|string
      */
     public function getAutomatedTestingConfig()
     {
@@ -174,7 +174,7 @@ class DebugInfo implements \JsonSerializable
     }
 
     /**
-     * @param AutomatedTestingConfig $automatedTestingConfig
+     * @param AutomatedTestingConfig|string $automatedTestingConfig
      * @return $this
      */
     public function setAutomatedTestingConfig($automatedTestingConfig)

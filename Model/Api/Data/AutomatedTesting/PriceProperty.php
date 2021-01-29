@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Model\Api\Data\AutomatedTesting;
 
-class ShippingMethod implements \JsonSerializable
+class PriceProperty implements \JsonSerializable
 {
     /**
      * @var string
