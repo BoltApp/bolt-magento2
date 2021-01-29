@@ -177,8 +177,8 @@ class AutomatedTesting extends AbstractHelper
             }
 
             $virtualProduct = $this->getProduct(\Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL);
-            $simpleStoreItem = $this->getStoreItem($simpleProduct, 'simple');
-            $virtualStoreItem = $this->getStoreItem($virtualProduct, 'virtual');
+            $simpleStoreItem = $this->convertToStoreItem($simpleProduct, 'simple');
+            $virtualStoreItem = $this->convertToStoreItem($virtualProduct, 'virtual');
             $storeItems[] = $simpleStoreItem;
             if ($virtualStoreItem !== null) {
                 $storeItems[] = $virtualStoreItem;
@@ -243,7 +243,7 @@ class AutomatedTesting extends AbstractHelper
      *
      * @return StoreItem|null
      */
-    private function getStoreItem($product, $type)
+    private function convertToStoreItem($product, $type)
     {
         if ($product === null) {
             return null;
