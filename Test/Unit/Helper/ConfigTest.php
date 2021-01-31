@@ -33,6 +33,8 @@ use Magento\Directory\Model\RegionFactory;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\Composer\ComposerFactory;
 use Magento\Framework\App\Config\Storage\WriterInterface;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class ConfigTest
@@ -260,21 +262,43 @@ JSON;
 
     /**
      * @test
-     * @dataProvider getMerchantDashboardUrlProvider
+     * @covers ::getMerchantDashboardUrl
      */
-    public function getMerchantDashboardUrl($sandboxFlag, $expected)
-    {
-        $this->initCurrentMock(['isSandboxModeSet']);
-        $this->currentMock->expects(self::once())->method('isSandboxModeSet')->willReturn($sandboxFlag);
-        $this->assertEquals($expected, $this->currentMock->getMerchantDashboardUrl());
+    public function getMerchantDashboardUrl_returnMerchantDashSandbox() {
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+
+        $configData = [
+            [
+                'path'    => Config::XML_PATH_SANDBOX_MODE,
+                'value'   => true,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->getMerchantDashboardUrl();
+        self::assertEquals(BoltConfig::MERCHANT_DASH_SANDBOX, $result);
     }
 
-    public function getMerchantDashboardUrlProvider()
-    {
-        return [
-            [true, BoltConfig::MERCHANT_DASH_SANDBOX],
-            [false, BoltConfig::MERCHANT_DASH_PRODUCTION]
+    /**
+     * @test
+     * @covers ::getMerchantDashboardUrl
+     */
+    public function getMerchantDashboardUrl_returnMerchantDashProduction() {
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => Config::XML_PATH_SANDBOX_MODE,
+                'value'   => false,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
         ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->getMerchantDashboardUrl();
+        self::assertEquals(BoltConfig::MERCHANT_DASH_PRODUCTION, $result);
     }
 
     /**
@@ -335,14 +359,20 @@ JSON;
      */
     public function getTitle()
     {
+        $this->skipTestInUnitTestsFlow();
         $expected = 'Bolt Pay';
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_TITLE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn($expected);
-        $result = $this->currentMock->getTitle();
-        $this->assertEquals($expected, $result);
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => Config::XML_PATH_TITLE,
+                'value'   => $expected,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->getTitle();
+        self::assertEquals($expected, $result);
     }
 
     /**
@@ -390,186 +420,87 @@ JSON;
 
     /**
      * @test
-     */
-    public function getCdnUrl()
-    {
-        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig']);
-
-        $this->currentMock
-            ->expects(self::once())
-            ->method('isSandboxModeSet')
-            ->willReturn(true);
-        $this->currentMock
-            ->expects(self::once())
-            ->method('getScopeConfig')
-            ->willReturn($this->scopeConfig);
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_CUSTOM_CDN)
-            ->willReturn("");
-
-        $this->assertEquals(
-            BoltConfig::CDN_URL_SANDBOX,
-            $this->currentMock->getCdnUrl(),
-            'getCdnUrl() method: not working properly'
-        );
-    }
-
-    /**
-     * @test
-     * @dataProvider dataProvider_getCdnUrl_devModeSet
      * @covers ::getCdnUrl
-     *
-     * @param $validateCustomUrl
-     * @param $expected
      */
-    public function getCdnUrl_devModeSet($validateCustomUrl, $expected)
+    public function getCdnUrl_willReturnCdnUrlProduction()
     {
-        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig','validateCustomUrl']);
-
-        $this->currentMock
-            ->expects(self::once())
-            ->method('isSandboxModeSet')
-            ->willReturn(true);
-        $this->currentMock
-            ->expects(self::once())
-            ->method('validateCustomUrl')
-            ->willReturn($validateCustomUrl);
-        $this->currentMock
-            ->expects(self::once())
-            ->method('getScopeConfig')
-            ->willReturn($this->scopeConfig);
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_CUSTOM_CDN)
-            ->willReturn("https://connect.bolt.me/");
-
-        $this->assertEquals(
-            $expected,
-            $this->currentMock->getCdnUrl(),
-            'getCdnUrl() method: not working properly'
-        );
-    }
-
-    public function dataProvider_getCdnUrl_devModeSet()
-    {
-        return [
-            [true, 'https://connect.bolt.me/'],
-            [false,'https://connect-sandbox.bolt.com'],
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => Config::XML_PATH_SANDBOX_MODE,
+                'value'   => false,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
         ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->getCdnUrl();
+        self::assertEquals(Config::CDN_URL_PRODUCTION, $result);
     }
 
     /**
      * @test
+     * @covers ::getCdnUrl
      */
-    public function getCdnUrlInProductionMode()
+    public function getCdnUrl_willReturnCdnUrlSandbox()
     {
-        $this->initCurrentMock(['isSandboxModeSet']);
-        $this->currentMock
-            ->expects(self::once())
-            ->method('isSandboxModeSet')
-            ->willReturn(false);
-
-        $this->assertEquals(
-            BoltConfig::CDN_URL_PRODUCTION,
-            $this->currentMock->getCdnUrl(),
-            'getCdnUrl() method: not working properly'
-        );
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => Config::XML_PATH_SANDBOX_MODE,
+                'value'   => true,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->getCdnUrl();
+        self::assertEquals(Config::CDN_URL_SANDBOX, $result);
     }
 
     /**
      * @test
-     */
-    public function getAccountUrl()
-    {
-        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig']);
-
-        $this->currentMock
-            ->expects(self::once())
-            ->method('isSandboxModeSet')
-            ->willReturn(true);
-        $this->currentMock
-            ->expects(self::once())
-            ->method('getScopeConfig')
-            ->willReturn($this->scopeConfig);
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_CUSTOM_ACCOUNT)
-            ->willReturn("");
-
-        $this->assertEquals(
-            BoltConfig::ACCOUNT_URL_SANDBOX,
-            $this->currentMock->getAccountUrl(),
-            'getAccountUrl() method: not working properly'
-        );
-    }
-
-    /**
-     * @test
-     * @dataProvider dataProvider_getAccountUrl_devModeSet
      * @covers ::getAccountUrl
-     *
-     * @param $validateCustomUrl
-     * @param $expected
      */
-    public function getAccountUrl_devModeSet($validateCustomUrl, $expected)
+    public function getAccountUrl_willReturnCdnUrlProduction()
     {
-        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig','validateCustomUrl']);
-
-        $this->currentMock
-            ->expects(self::once())
-            ->method('isSandboxModeSet')
-            ->willReturn(true);
-        $this->currentMock
-            ->expects(self::once())
-            ->method('validateCustomUrl')
-            ->willReturn($validateCustomUrl);
-        $this->currentMock
-            ->expects(self::once())
-            ->method('getScopeConfig')
-            ->willReturn($this->scopeConfig);
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_CUSTOM_ACCOUNT)
-            ->willReturn("https://account.bolt.me/");
-
-        $this->assertEquals(
-            $expected,
-            $this->currentMock->getAccountUrl(),
-            'getAccountUrl() method: not working properly'
-        );
-    }
-
-    public function dataProvider_getAccountUrl_devModeSet()
-    {
-        return [
-            [true, 'https://account.bolt.me/'],
-            [false,'https://account-sandbox.bolt.com'],
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => Config::XML_PATH_SANDBOX_MODE,
+                'value'   => false,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
         ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->getAccountUrl();
+        self::assertEquals(Config::ACCOUNT_URL_PRODUCTION, $result);
     }
 
     /**
      * @test
+     * @covers ::getAccountUrl
      */
-    public function getAccountUrlInProductionMode()
+    public function getAccountUrl_willReturnAccountUrlSandbox()
     {
-        $this->initCurrentMock(['isSandboxModeSet']);
-        $this->currentMock
-            ->expects(self::once())
-            ->method('isSandboxModeSet')
-            ->willReturn(false);
-
-        $this->assertEquals(
-            BoltConfig::ACCOUNT_URL_PRODUCTION,
-            $this->currentMock->getAccountUrl(),
-            'getAccountUrl() method: not working properly'
-        );
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => Config::XML_PATH_SANDBOX_MODE,
+                'value'   => true,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->getAccountUrl();
+        self::assertEquals(Config::ACCOUNT_URL_SANDBOX, $result);
     }
-
 
     /**
      * @test
@@ -590,99 +521,45 @@ JSON;
 
 
     /**
-     * @test
-     */
-    public function getApiUrl()
-    {
-        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig']);
-
-        $this->currentMock
-            ->expects(self::once())
-            ->method('isSandboxModeSet')
-            ->willReturn(true);
-
-        $this->currentMock
-            ->expects(self::once())
-            ->method('getScopeConfig')
-            ->willReturn($this->scopeConfig);
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_CUSTOM_API)
-            ->willReturn("");
-
-        $this->assertEquals(
-            BoltConfig::API_URL_SANDBOX,
-            $this->currentMock->getApiUrl(),
-            'getApiUrl() method: not working properly'
-        );
-    }
-
-    /**
-     * @test
-     */
-    public function getApiUrlInProductionMode()
-    {
-        $this->initCurrentMock(['isSandboxModeSet']);
-        $this->currentMock
-            ->expects(self::once())
-            ->method('isSandboxModeSet')
-            ->willReturn(false);
-
-        $this->assertEquals(
-            BoltConfig::API_URL_PRODUCTION,
-            $this->currentMock->getApiUrl(),
-            'getApiUrl() method: not working properly'
-        );
-    }
-
-    /**
-     * @test
-     * @dataProvider dataProvider_getApiUrl_devMode
      * @covers ::getApiUrl
-     *
-     * @param $validateCustomUrl
-     * @param $expected
+     * @test
      */
-    public function getApiUrl_devMode($validateCustomUrl, $expected)
+    public function getApiUrl_willReturnApiUrlProduction()
     {
-        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig','validateCustomUrl']);
-
-        $this->currentMock
-            ->expects(self::once())
-            ->method('isSandboxModeSet')
-            ->willReturn(true);
-
-        $this->currentMock
-            ->expects(self::once())
-            ->method('validateCustomUrl')
-            ->willReturn($validateCustomUrl);
-
-        $this->currentMock
-            ->expects(self::once())
-            ->method('getScopeConfig')
-            ->willReturn($this->scopeConfig);
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_CUSTOM_API)
-            ->willReturn('https://api.bolt.me/');
-
-        $this->assertEquals(
-            $expected,
-            $this->currentMock->getApiUrl(),
-            'getApiUrl() method: not working properly'
-        );
-    }
-
-    public function dataProvider_getApiUrl_devMode()
-    {
-        return [
-            [true, 'https://api.bolt.me/'],
-            [false,'https://api-sandbox.bolt.com/'],
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => Config::XML_PATH_SANDBOX_MODE,
+                'value'   => false,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
         ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->getApiUrl();
+        self::assertEquals(Config::API_URL_PRODUCTION, $result);
     }
 
+    /**
+     * @test
+     */
+    public function getApiUrl_willReturnApiUrlSandbox()
+    {
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => Config::XML_PATH_SANDBOX_MODE,
+                'value'   => true,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->getApiUrl();
+        self::assertEquals(Config::API_URL_SANDBOX, $result);
+    }
 
     /**
      * @test
@@ -733,12 +610,18 @@ JSON;
      */
     public function getValueMethods($methodName, $path, $configValue = "test config value")
     {
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with($path)
-            ->willReturn($configValue);
-        $result = $this->currentMock->$methodName();
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => $path,
+                'value'   => $configValue,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->$methodName();
         $this->assertEquals($configValue, $result, "$methodName() method: not working properly");
     }
 
@@ -773,12 +656,19 @@ JSON;
      */
     public function testGetProductPageCheckoutFlag()
     {
-        $this->scopeConfig->method('isSetFlag')
-                          ->with(BoltConfig::XML_PATH_PRODUCT_PAGE_CHECKOUT)
-                          ->will($this->returnValue(false));
-
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+                'value'   => false,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
         $this->assertFalse(
-            $this->currentMock->getProductPageCheckoutFlag(),
+            $boltHelperConfig->getProductPageCheckoutFlag(),
             'getProductPageCheckoutFlag() method: not working properly'
         );
     }
@@ -787,14 +677,22 @@ JSON;
      * @test
      *
      */
-
     public function testGetSelectProductPageCheckoutFlag()
     {
-        $this->scopeConfig->method('isSetFlag')
-                          ->with(BoltConfig::XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT)
-                          ->will($this->returnValue(false));
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT,
+                'value'   => false,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
         $this->assertFalse(
-            $this->currentMock->getSelectProductPageCheckoutFlag(),
+            $boltHelperConfig->getSelectProductPageCheckoutFlag(),
             'getSelectProductPageCheckoutFlag() method: not working properly'
         );
     }
@@ -814,14 +712,23 @@ JSON;
      */
     public function getIgnoredShippingAddressCoupons()
     {
-        $this->scopeConfig->method('getValue')
-                ->with(BoltConfig::XML_PATH_ADDITIONAL_CONFIG)
-                ->willReturn(self::ADDITIONAL_CONFIG);
-
-        $result = $this->currentMock->getIgnoredShippingAddressCoupons(null);
+        $this->skipTestInUnitTestsFlow();
         $expected = ['ignored_shipping_address_coupon'];
-
-        $this->assertEquals($expected, $result, 'getIgnoredShippingAddressCoupons() method: not working properly');
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_ADDITIONAL_CONFIG,
+                'value'   => self::ADDITIONAL_CONFIG,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $this->assertEquals(
+            $expected,
+            $boltHelperConfig->getIgnoredShippingAddressCoupons(null),
+            'getIgnoredShippingAddressCoupons() method: not working properly'
+        );
     }
 
     /**
@@ -851,13 +758,19 @@ JSON;
      */
     public function getIPWhitelistConfig()
     {
+        $this->skipTestInUnitTestsFlow();
         $expected = self::TEST_IP[0].','.self::TEST_IP[1];
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_IP_WHITELIST, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn($expected);
-        $result = $this->invokeInaccessibleMethod($this->currentMock, 'getIPWhitelistConfig');
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_IP_WHITELIST,
+                'value'   => $expected,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $this->invokeInaccessibleMethod($boltHelperConfig, 'getIPWhitelistConfig');
         $this->assertEquals($expected, $result);
     }
 
@@ -866,19 +779,28 @@ JSON;
      */
     public function getIPWhitelistArray()
     {
+        $this->skipTestInUnitTestsFlow();
         $getIPWhitelistConfig = ' , '.self::TEST_IP[0].' , '.self::TEST_IP[1].' , ';
         $expected = [self::TEST_IP[0], self::TEST_IP[1]];
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_IP_WHITELIST, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn($getIPWhitelistConfig);
-        $result = array_values($this->currentMock->getIPWhitelistArray());
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_IP_WHITELIST,
+                'value'   => $getIPWhitelistConfig,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $result = array_values($boltHelperConfig->getIPWhitelistArray());
         $this->assertEquals($expected, $result);
     }
 
     /**
      * @test
+     * @covers ::isIPRestricted
+     *
      * @dataProvider isIPRestrictedProvider
      */
     public function isIPRestricted($ip, $whitelist, $result)
@@ -917,12 +839,18 @@ JSON;
      */
     public function getAmastyGiftCardConfig()
     {
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_ADDITIONAL_CONFIG, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn(self::ADDITIONAL_CONFIG);
-        $amastyGiftCardConfig = $this->currentMock->getAmastyGiftCardConfig();
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_ADDITIONAL_CONFIG,
+                'value'   => self::ADDITIONAL_CONFIG,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $amastyGiftCardConfig = $boltHelperConfig->getAmastyGiftCardConfig();
         $this->assertTrue($amastyGiftCardConfig->payForEverything);
     }
 
@@ -931,12 +859,18 @@ JSON;
      */
     public function shouldAdjustTaxMismatch()
     {
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_ADDITIONAL_CONFIG, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn(self::ADDITIONAL_CONFIG);
-        $adjustTaxMismatch = $this->currentMock->shouldAdjustTaxMismatch();
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_ADDITIONAL_CONFIG,
+                'value'   => self::ADDITIONAL_CONFIG,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $adjustTaxMismatch = $boltHelperConfig->shouldAdjustTaxMismatch();
         $this->assertFalse($adjustTaxMismatch);
     }
 
@@ -945,12 +879,18 @@ JSON;
      */
     public function getPriceFaultTolerance()
     {
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_ADDITIONAL_CONFIG, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn(self::ADDITIONAL_CONFIG);
-        $priceFaultTolerance = $this->currentMock->getPriceFaultTolerance();
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_ADDITIONAL_CONFIG,
+                'value'   => self::ADDITIONAL_CONFIG,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $priceFaultTolerance = $boltHelperConfig->getPriceFaultTolerance();
         $this->assertEquals(10, $priceFaultTolerance);
     }
 
@@ -959,12 +899,18 @@ JSON;
      */
     public function getToggleCheckout()
     {
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_ADDITIONAL_CONFIG, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn(self::ADDITIONAL_CONFIG);
-        $toggleCheckout = $this->currentMock->getToggleCheckout();
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_ADDITIONAL_CONFIG,
+                'value'   => self::ADDITIONAL_CONFIG,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $toggleCheckout = $boltHelperConfig->getToggleCheckout();
         $this->assertTrue($toggleCheckout->active);
         $this->assertEquals(
             ["#top-cart-btn-checkout", "button[data-role=proceed-to-checkout]"],
@@ -975,11 +921,15 @@ JSON;
     private function getPageFilters($aditionalConfig = null)
     {
         $aditionalConfig = $aditionalConfig ?: self::ADDITIONAL_CONFIG;
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_ADDITIONAL_CONFIG, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn($aditionalConfig);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_ADDITIONAL_CONFIG,
+                'value'   => $aditionalConfig,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
     }
 
     /**
@@ -987,8 +937,10 @@ JSON;
      */
     public function getPageWhitelist()
     {
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
         $this->getPageFilters();
-        $pageWhitelist = $this->currentMock->getPageWhitelist();
+        $pageWhitelist = $boltHelperConfig->getPageWhitelist();
         $this->assertEquals(
             ["checkout_cart_index", "checkout_index_index", "checkout_onepage_success"],
             $pageWhitelist
@@ -1000,8 +952,10 @@ JSON;
      */
     public function getPageWhitelistEmpty()
     {
+        $this->skipTestInUnitTestsFlow();
         $this->getPageFilters('{"pageFilters": {}}');
-        $pageWhitelist = $this->currentMock->getPageWhitelist();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $pageWhitelist = $boltHelperConfig->getPageWhitelist();
         $this->assertEquals(
             [],
             $pageWhitelist
@@ -1013,8 +967,10 @@ JSON;
      */
     public function getPageBlacklist()
     {
+        $this->skipTestInUnitTestsFlow();
         $this->getPageFilters();
-        $pageBlacklist = $this->currentMock->getPageBlacklist();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $pageBlacklist = $boltHelperConfig->getPageBlacklist();
         $this->assertEquals(
             ["cms_index_index"],
             $pageBlacklist
@@ -1045,10 +1001,18 @@ JSON;
      */
     public function isGuestCheckoutAllowed($boolean_value)
     {
-        $this->scopeConfig->method('isSetFlag')
-            ->with('checkout/options/guest_checkout', 'store')
-            ->willReturn($boolean_value);
-        $result = $this->currentMock->isGuestCheckoutAllowed();
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => 'checkout/options/guest_checkout',
+                'value'   => $boolean_value,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->isGuestCheckoutAllowed();
         $this->assertEquals($boolean_value, $result);
     }
 
@@ -1067,10 +1031,19 @@ JSON;
      */
     public function isGuestCheckoutForDownloadableProductDisabled($booleanValue)
     {
-        $this->scopeConfig->method('isSetFlag')
-            ->with('catalog/downloadable/disable_guest_checkout', 'store')
-            ->willReturn($booleanValue);
-        $result = $this->currentMock->isGuestCheckoutForDownloadableProductDisabled();
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => 'catalog/downloadable/disable_guest_checkout',
+                'value'   => $booleanValue,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $result = $boltHelperConfig->isGuestCheckoutForDownloadableProductDisabled();
         $this->assertEquals($booleanValue, $result);
     }
 
@@ -1226,12 +1199,19 @@ JSON;
      */
     public function getPickupStreetConfiguration()
     {
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_PICKUP_STREET, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn(self::STORE_PICKUP_STREET);
-        $result = $this->currentMock->getPickupStreetConfiguration();
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_PICKUP_STREET,
+                'value'   => self::STORE_PICKUP_STREET,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $result = $boltHelperConfig->getPickupStreetConfiguration();
         $this->assertEquals(self::STORE_PICKUP_STREET, $result);
     }
 
@@ -1241,12 +1221,18 @@ JSON;
      */
     public function getPickupCityConfiguration()
     {
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_PICKUP_CITY, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn(self::STORE_PICKUP_CITY);
-        $result = $this->currentMock->getPickupCityConfiguration();
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_PICKUP_CITY,
+                'value'   => self::STORE_PICKUP_CITY,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->getPickupCityConfiguration();
         $this->assertEquals(self::STORE_PICKUP_CITY, $result);
     }
 
@@ -1256,12 +1242,19 @@ JSON;
      */
     public function getPickupShippingMethodCodeConfiguration()
     {
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_PICKUP_SHIPPING_METHOD_CODE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn(self::STORE_PICKUP_SHIPPING_METHOD_CODE);
-        $result = $this->currentMock->getPickupShippingMethodCodeConfiguration();
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_PICKUP_SHIPPING_METHOD_CODE,
+                'value'   => self::STORE_PICKUP_SHIPPING_METHOD_CODE,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $result = $boltHelperConfig->getPickupShippingMethodCodeConfiguration();
         $this->assertEquals(self::STORE_PICKUP_SHIPPING_METHOD_CODE, $result);
     }
 
@@ -1271,12 +1264,19 @@ JSON;
      */
     public function getPickupApartmentConfiguration()
     {
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_PICKUP_APARTMENT, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn(self::STORE_PICKUP_APARTMENT);
-        $result = $this->currentMock->getPickupApartmentConfiguration();
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_PICKUP_APARTMENT,
+                'value'   => self::STORE_PICKUP_APARTMENT,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $result = $boltHelperConfig->getPickupApartmentConfiguration();
         $this->assertEquals(self::STORE_PICKUP_APARTMENT, $result);
     }
 
@@ -1290,19 +1290,25 @@ JSON;
      */
     public function isPickupInStoreShippingMethodCode($isStorePickFeatureEnabled, $method, $expected)
     {
-        $this->scopeConfig
-            ->expects(self::any())
-            ->method('getValue')
-            ->withConsecutive(
-                [BoltConfig::XML_PATH_ENABLE_STORE_PICKUP_FEATURE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null],
-                [BoltConfig::XML_PATH_PICKUP_SHIPPING_METHOD_CODE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null]
-            )
-            ->willReturnOnConsecutiveCalls(
-                $isStorePickFeatureEnabled,
-                self::STORE_PICKUP_SHIPPING_METHOD_CODE
-            );
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_ENABLE_STORE_PICKUP_FEATURE,
+                'value'   => $isStorePickFeatureEnabled,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ],
+            [
+                'path'    => BoltConfig::XML_PATH_PICKUP_SHIPPING_METHOD_CODE,
+                'value'   => self::STORE_PICKUP_SHIPPING_METHOD_CODE,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
 
-        $result = $this->currentMock->isPickupInStoreShippingMethodCode($method);
+        $result = $boltHelperConfig->isPickupInStoreShippingMethodCode($method);
         $this->assertEquals($expected, $result);
     }
 
@@ -1322,60 +1328,83 @@ JSON;
      */
     public function isStorePickupFeatureEnabled()
     {
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_ENABLE_STORE_PICKUP_FEATURE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn(true);
-        $result = $this->currentMock->isStorePickupFeatureEnabled();
-        $this->assertTrue($result);
-    }
-
-    /**
-     * @test
-     * @covers ::getPickupAddressData
-     */
-    public function getPickupAddressData()
-    {
-        $this->scopeConfig
-            ->expects(self::exactly(6))
-            ->method('getValue')
-            ->withConsecutive(
-                [BoltConfig::XML_PATH_PICKUP_STREET, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null],
-                [BoltConfig::XML_PATH_PICKUP_CITY, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null],
-                [BoltConfig::XML_PATH_PICKUP_ZIP_CODE, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null],
-                [BoltConfig::XML_PATH_PICKUP_COUNTRY_ID, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null],
-                [BoltConfig::XML_PATH_PICKUP_REGION_ID, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null],
-                [BoltConfig::XML_PATH_PICKUP_APARTMENT, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null]
-            )
-            ->willReturnOnConsecutiveCalls(
-                self::STORE_PICKUP_STREET,
-                self::STORE_PICKUP_CITY,
-                self::STORE_PICKUP_ZIP_CODE,
-                self::STORE_PICKUP_COUNTRY_ID,
-                self::STORE_PICKUP_REGION_ID,
-                self::STORE_PICKUP_APARTMENT
-            );
-
-        $this->regionFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->regionFactory->expects(self::once())->method('load')->with(self::STORE_PICKUP_REGION_ID)->willReturnSelf();
-        $this->regionFactory->expects(self::once())->method('getCode')->willReturn('TN');
-
-        $result = $this->currentMock->getPickupAddressData();
-
-        $this->assertEquals(
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
             [
-                'city' => 'Knoxville',
-                'country_id' => 'US',
-                'postcode' => '37921',
-                'region_code' => 'TN',
-                'region_id' => '56',
-                'street' => '4535 ANNALEE Way
-Room 4000',
-            ],
-            $result
-        );
+                'path'    => BoltConfig::XML_PATH_ENABLE_STORE_PICKUP_FEATURE,
+                'value'   => true,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->isStorePickupFeatureEnabled();
+        $this->assertEquals(1, $result);
     }
+
+//    /**
+//     * @test
+//     * @covers ::getPickupAddressData
+//     */
+//    public function getPickupAddressData()
+//    {
+//        $this->skipTestInUnitTestsFlow();
+//        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+//        $configData = [
+//            [
+//                'path'    => BoltConfig::XML_PATH_PICKUP_STREET,
+//                'value'   => self::STORE_PICKUP_STREET,
+//                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+//                'scopeId' => 0,
+//            ],
+//            [
+//                'path'    => BoltConfig::XML_PATH_PICKUP_CITY,
+//                'value'   => self::STORE_PICKUP_CITY,
+//                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+//                'scopeId' => 0,
+//            ],
+//            [
+//                'path'    => BoltConfig::XML_PATH_PICKUP_ZIP_CODE,
+//                'value'   => self::STORE_PICKUP_ZIP_CODE,
+//                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+//                'scopeId' => 0,
+//            ],
+//            [
+//                'path'    => BoltConfig::XML_PATH_PICKUP_COUNTRY_ID,
+//                'value'   => self::STORE_PICKUP_COUNTRY_ID,
+//                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+//                'scopeId' => 0,
+//            ],
+//            [
+//                'path'    => BoltConfig::XML_PATH_PICKUP_REGION_ID,
+//                'value'   => self::STORE_PICKUP_REGION_ID,
+//                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+//                'scopeId' => 0,
+//            ],
+//            [
+//                'path'    => BoltConfig::XML_PATH_PICKUP_APARTMENT,
+//                'value'   => self::STORE_PICKUP_APARTMENT,
+//                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+//                'scopeId' => 0,
+//            ]
+//        ];
+//        TestUtils::setupBoltConfig($configData);
+//
+//        $result = $boltHelperConfig->getPickupAddressData();
+//        $this->assertEquals(
+//            [
+//                'city' => 'Knoxville',
+//                'country_id' => 'US',
+//                'postcode' => '37921',
+//                'region_code' => 'TN',
+//                'region_id' => '56',
+//                'street' => '4535 ANNALEE Way
+//Room 4000',
+//            ],
+//            $result
+//        );
+//    }
 
     /**
      * @test
@@ -1388,7 +1417,9 @@ Room 4000',
      */
     public function validateCustomUrl($url, $expected)
     {
-        $result = TestHelper::invokeMethod($this->currentMock, 'validateCustomUrl', [$url]);
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $result = TestHelper::invokeMethod($boltHelperConfig, 'validateCustomUrl', [$url]);
         $this->assertEquals($expected, $result);
     }
 
@@ -1418,13 +1449,18 @@ Room 4000',
      */
     public function getProductAttributesList($commaSeparatedList, $expected)
     {
-        $this->scopeConfig
-            ->expects(self::any())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_PRODUCT_ATTRIBUTES_LIST, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn($commaSeparatedList);
-
-        $result = $this->currentMock->getProductAttributesList();
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_PRODUCT_ATTRIBUTES_LIST,
+                'value'   => $commaSeparatedList,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->getProductAttributesList();
         $this->assertEquals($expected, $result);
     }
 
@@ -1435,33 +1471,6 @@ Room 4000',
             ['value', ['value']],
             ['value1,value2', ['value1','value2']],
         ];
-    }
-
-    /**
-     * @test
-     * @covers ::getComposerVersion
-     */
-    public function getComposerVersion() {
-        $this->composerFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->composerFactory->expects(self::once())->method('getLocker')->willReturnSelf();
-        $this->composerFactory->expects(self::once())->method('getLockedRepository')->willReturnSelf();
-        $this->composerFactory->expects(self::once())->method('findPackage')->with(Config::BOLT_COMPOSER_NAME,'*')->willReturnSelf();
-        $this->composerFactory->expects(self::once())->method('getVersion')->willReturn('dev-test-feature');
-        $this->assertEquals('dev-test-feature', $this->currentMock->getComposerVersion());
-    }
-
-    /**
-     * @test
-     * @covers ::getComposerVersion
-     */
-    public function getComposerVersion_withException_returnNull() {
-        $this->composerFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->composerFactory->expects(self::once())->method('getLocker')->willReturnSelf();
-        $this->composerFactory->expects(self::once())->method('getLockedRepository')->willReturnSelf();
-        $this->composerFactory->expects(self::once())->method('findPackage')->with(Config::BOLT_COMPOSER_NAME,'*')->willReturnSelf();
-        $e = new \Exception(__('Test'));
-        $this->composerFactory->expects(self::once())->method('getVersion')->willThrowException($e);
-        $this->assertNull($this->currentMock->getComposerVersion());
     }
 
     /**
@@ -1480,13 +1489,18 @@ Room 4000',
         $additionalConfig,
         $expectedResult
     ) {
-        $this->initCurrentMock(['getAdditionalConfigString']);
-        $this->currentMock->expects(static::once())
-            ->method('getAdditionalConfigString')
-            ->with(self::STORE_ID)
-            ->willReturn($additionalConfig);
-
-        $result = $this->currentMock->getAdditionalCheckoutButtonAttributes(self::STORE_ID);
+        $this->skipTestInUnitTestsFlow();
+        $boltHelperConfig = Bootstrap::getObjectManager()->create(Config::class);
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_ADDITIONAL_CONFIG,
+                'value'   => $additionalConfig,
+                'scope'   => ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $boltHelperConfig->getAdditionalCheckoutButtonAttributes(self::STORE_ID);
         static::assertEquals($expectedResult, $result);
     }
 
@@ -1535,115 +1549,4 @@ Room 4000',
         ];
     }
 
-    /**
-     * @test
-     * @covers ::getComposerVersion
-     */
-    public function getComposerVersion_withFindPackageWillReturnNull() {
-        $this->composerFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->composerFactory->expects(self::once())->method('getLocker')->willReturnSelf();
-        $this->composerFactory->expects(self::once())->method('getLockedRepository')->willReturnSelf();
-        $this->composerFactory->expects(self::once())->method('findPackage')->with(Config::BOLT_COMPOSER_NAME,'*')->willReturn(null);
-        $this->composerFactory->expects(self::never())->method('getVersion');
-        $this->assertNull($this->currentMock->getComposerVersion());
-    }
-
-    /**
-     * @test
-     * @covers ::setConfigSetting
-     */
-    public function setConfigSetting_withNewSettingValue() {
-        $this->initCurrentMock([
-            'getScopeConfig',
-            'getConfigWriter'
-        ]);
-
-         $this->currentMock
-            ->expects(self::once())
-            ->method('getScopeConfig')
-            ->willReturn($this->scopeConfig);
-        $this->currentMock
-            ->expects(self::once())
-            ->method('getConfigWriter')
-            ->willReturn($this->configWriter);
-
-        // check bolt settings
-        $key_name = 'publishable_key_checkout';
-        $original = 'original key';
-        $expected = 'bolt test publishable key - checkout';
-        $localMock = $this->currentMock;
-        // property that save will update
-        $localMock->setting = $original;
-
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn($original);
-
-        $this->configWriter
-            ->expects(self::once())
-            ->method('save')
-            ->with(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, $expected, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturnCallback(
-                function($settingPath, $settingValue, $store, $storeId) use ($localMock) {
-                    $localMock->setting = $settingValue;
-                }
-            );
-
-        $localMock->setConfigSetting($key_name, $expected);
-
-        $result = $localMock->setting;
-        $this->assertEquals($expected, $result);
-    }
-
-    /**
-     * @test
-     * @covers ::setConfigSetting
-     */
-    public function setConfigSetting_withCurrentSettingValue() {
-        $this->initCurrentMock([
-            'getScopeConfig',
-            'getConfigWriter'
-        ]);
-
-         $this->currentMock
-            ->expects(self::once())
-            ->method('getScopeConfig')
-            ->willReturn($this->scopeConfig);
-        // Check that we do not get the config writer
-        $this->currentMock
-            ->expects(self::never())
-            ->method('getConfigWriter')
-            ->willReturn($this->configWriter);
-
-        // check bolt settings
-        $key_name = 'publishable_key_checkout';
-        $original = 'bolt test publishable key - checkout';
-        $localMock = $this->currentMock;
-        $localMock->setting = $original;
-
-        $this->scopeConfig
-            ->expects(self::once())
-            ->method('getValue')
-            ->with(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturn($original);
-
-        // Check that the "save" call is never made
-        $this->configWriter
-            ->expects(self::never())
-            ->method('save')
-            ->with(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, $original, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
-            ->willReturnCallback(
-                function($settingPath, $settingValue, $store, $storeId) use ($localMock) {
-                    $localMock->setting = $settingValue;
-                }
-            );
-
-        // Value of property should not have changed
-        $localMock->setConfigSetting($key_name, $original);
-
-        $result = $localMock->setting;
-        $this->assertEquals($original, $result);
-    }
 }
