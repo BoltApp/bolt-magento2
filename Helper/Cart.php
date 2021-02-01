@@ -218,7 +218,6 @@ class Cart extends AbstractHelper
     /////////////////////////////////////////////////////////////////////////////
     protected $discountTypes = [
         Discount::GIFT_VOUCHER_AFTER_TAX => '',
-        Discount::GIFT_CARD_ACCOUNT => '',
         Discount::UNIRGY_GIFT_CERT => '',
         Discount::GIFT_VOUCHER => ''
     ];
@@ -2140,24 +2139,6 @@ class Cart extends AbstractHelper
                     ];
                     $this->logEmptyDiscountCode($gcCode, $gcDescription);
                     $discounts[] = $discountItem;
-                } elseif ($discount == Discount::GIFT_CARD_ACCOUNT) {
-                    $giftCardCodes = $this->discountHelper->getMagentoGiftCardAccountGiftCardData($quote);
-                    foreach($giftCardCodes as $giftCardCode => $giftCardAmount) {
-                        $amount = abs($giftCardAmount);
-                        $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-                        $discountItem = [
-                            'description'       => 'Gift Card: ' . $giftCardCode,
-                            'amount'            => $roundedAmount,
-                            'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                            'reference'         => (string)$giftCardCode,
-                            'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                            'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
-                        ];
-                        $this->logEmptyDiscountCode($giftCardCode, 'Gift Card: ' . $giftCardCode);
-                        $discountAmount += $amount;
-                        $roundedDiscountAmount += $roundedAmount;
-                        $discounts[] = $discountItem;
-                    }
                 } else {
                     $discountAmount = abs($amount);
                     $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
@@ -2502,7 +2483,7 @@ class Cart extends AbstractHelper
      * @param $code
      * @param $description
      */
-    private function logEmptyDiscountCode($code, $description)
+    public function logEmptyDiscountCode($code, $description)
     {
         if (empty($code)) {
             $this->bugsnag->notifyError('Empty discount code', "Info: {$description}");

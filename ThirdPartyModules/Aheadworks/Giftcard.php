@@ -90,15 +90,16 @@ class Giftcard
      * @param $result
      * @param $aheadworksGiftcardRepository
      * @param $code
-     * @param $storeId
+     * @param $quote
      * @return null
      */
-    public function loadGiftcard($result, $aheadworksGiftcardRepository, $code, $storeId)
+    public function loadGiftcard($result, $aheadworksGiftcardRepository, $code, $quote)
     {
         if (!empty($result)) {
             return $result;
         }
         try {
+            $storeId = $quote->getStoreId();
             return $aheadworksGiftcardRepository->getByCode($code, $storeId);
         } catch (LocalizedException $e) {
             return null;

@@ -106,16 +106,6 @@ class Discount extends AbstractHelper
     private $logHelper;
     
     /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $moduleGiftCardAccount;
-    
-    /**
-     * @var ThirdPartyModuleFactory
-     */
-    protected $moduleGiftCardAccountHelper;
-    
-    /**
      * @var CouponFactory
      */
     protected $couponFactory;
@@ -136,8 +126,6 @@ class Discount extends AbstractHelper
      * @param ResourceConnection $resource
      * @param ThirdPartyModuleFactory $unirgyCertRepository
      * @param ThirdPartyModuleFactory $unirgyGiftCertHelper
-     * @param ThirdPartyModuleFactory $moduleGiftCardAccount
-     * @param ThirdPartyModuleFactory $moduleGiftCardAccountHelper
      * @param CartRepositoryInterface $quoteRepository
      * @param Config $configHelper
      * @param Bugsnag $bugsnag
@@ -153,8 +141,6 @@ class Discount extends AbstractHelper
         ResourceConnection $resource,
         ThirdPartyModuleFactory $unirgyCertRepository,
         ThirdPartyModuleFactory $unirgyGiftCertHelper,
-        ThirdPartyModuleFactory $moduleGiftCardAccount,
-        ThirdPartyModuleFactory $moduleGiftCardAccountHelper,
         CartRepositoryInterface $quoteRepository,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
@@ -175,8 +161,6 @@ class Discount extends AbstractHelper
         $this->appState = $appState;
         $this->sessionHelper = $sessionHelper;
         $this->logHelper = $logHelper;
-        $this->moduleGiftCardAccount = $moduleGiftCardAccount;
-        $this->moduleGiftCardAccountHelper = $moduleGiftCardAccountHelper;
         $this->couponFactory = $couponFactory;
         $this->ruleRepository = $ruleRepository;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
@@ -314,88 +298,6 @@ class Discount extends AbstractHelper
     public function applyExternalDiscountData($quote)
     {
         $this->eventsForThirdPartyModules->dispatchEvent("applyExternalDiscountData", $quote);
-    }
-    
-    /**
-     * Check if Magento_GiftCardAccount module is available
-     *
-     * @return bool true if module is available, else false
-     */
-    public function isMagentoGiftCardAccountAvailable()
-    {
-        return $this->moduleGiftCardAccount->isAvailable();
-    }
-    
-    /**
-     * Load the Magento_GiftCardAccount by code
-     *
-     * @param string $code
-     * @param string|int $websiteId
-     *
-     * @return \Magento\GiftCardAccount\Model\Giftcardaccount|null
-     */
-    public function loadMagentoGiftCardAccount($code, $websiteId)
-    {
-        if (!$this->isMagentoGiftCardAccountAvailable()) {
-            return null;
-        }
-
-        /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardAccountResource */
-        $giftCardAccountResource = $this->moduleGiftCardAccount->getInstance();
-        
-        if (!$giftCardAccountResource) {
-            return null;
-        }
-
-        $this->logHelper->addInfoLog('### GiftCard ###');
-        $this->logHelper->addInfoLog('# Code: ' . $code);
-
-        /** @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $giftCardsCollection */
-        $giftCardsCollection = $giftCardAccountResource
-            ->addFieldToFilter('code', ['eq' => $code])
-            ->addWebsiteFilter([0, $websiteId]);
-
-        /** @var \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard */
-        $giftCard = $giftCardsCollection->getFirstItem();
-
-        $result = (!$giftCard->isEmpty() && $giftCard->isValid()) ? $giftCard : null;
-
-        $this->logHelper->addInfoLog('# loadMagentoGiftCardAccount Result is empty: '. ((!$result) ? 'yes' : 'no'));
-
-        return $result;
-    }
-    
-    /**
-     * Get the Magento_GiftCardAccount Gift Card data from quote
-     *
-     * @param Quote $quote
-     *
-     * @return array
-     */
-    public function getMagentoGiftCardAccountGiftCardData($quote)
-    {
-        if (! $this->isMagentoGiftCardAccountAvailable()) {
-            return [];
-        }
-        /** @var \Magento\GiftCardAccount\Helper\Data */
-        $giftCardAccountHelper = $this->moduleGiftCardAccountHelper->getInstance();
-        
-        if (!$giftCardAccountHelper) {
-            return [];
-        }
-        
-        $cards = $giftCardAccountHelper->getCards($quote);
-
-        if (!$cards) {
-            $cards = [];
-        } else {
-            $cards = array_column($cards,
-                                  defined( '\Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT' ) ? \Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT : 'a',
-                                  defined( '\Magento\GiftCardAccount\Model\Giftcardaccount::CODE' ) ? \Magento\GiftCardAccount\Model\Giftcardaccount::CODE : 'c'
-                                );
-        }
-      
-        return $cards;
     }
     
     /**

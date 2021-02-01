@@ -32,6 +32,7 @@ use Bolt\Boltpay\ThirdPartyModules\Aheadworks\StoreCredit as Aheadworks_StoreCre
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\GiftCard as Mageplaza_GiftCard;
 use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Rewards as Mirasvit_Rewards;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\StoreCredit as Amasty_StoreCredit;
+use Bolt\Boltpay\ThirdPartyModules\Magento\GiftCardAccount as Magento_GiftCardAccount;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -388,6 +389,13 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass"   => Amasty_GiftCard::class,
                 ],
+                [
+                    "module" => "Magento_GiftCardAccount",
+                    "sendClasses" => [
+                        "Magento\GiftCardAccount\Helper\Data",
+                    ],
+                    "boltClass" => Magento_GiftCardAccount::class,
+                ],
             ],
         ],
         /** @see \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::verifyCouponCode */
@@ -417,6 +425,13 @@ class EventsForThirdPartyModules
                         'Amasty\GiftCard\Model\AccountFactory',
                     ],
                     "boltClass"   => Amasty_GiftCard::class,
+                ],
+                [
+                    "module" => "Magento_GiftCardAccount",
+                    "sendClasses" => [
+                        "Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection",
+                    ],
+                    "boltClass" => Magento_GiftCardAccount::class,
                 ],
             ],
         ],
