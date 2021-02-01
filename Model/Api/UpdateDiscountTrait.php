@@ -441,17 +441,23 @@ trait UpdateDiscountTrait
      */
     protected function removeDiscount($couponCode, $discounts, $quote, $websiteId, $storeId)
     {
-        try{
-            if(array_key_exists($couponCode, $discounts)){
+        try {
+            if (array_key_exists($couponCode, $discounts)) {
                 if ($discounts[$couponCode] == 'coupon') {
                     //sends response
                     $this->removeCouponCode($quote);
-                } else if ($discounts[$couponCode] == DiscountHelper::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT) {
+                } elseif ($discounts[$couponCode] == DiscountHelper::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT) {
                     //handles exceptions already, no return value
-                    $this->eventsForThirdPartyModules->dispatchEvent("removeAppliedStoreCredit", $couponCode, $quote, $websiteId, $storeId);
+                    $this->eventsForThirdPartyModules->dispatchEvent(
+                        "removeAppliedStoreCredit",
+                        $couponCode,
+                        $quote,
+                        $websiteId,
+                        $storeId
+                    );
                 } else {
                     //throws BoltException that will be caught in UpdateCart::execute()
-                    $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);        
+                    $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);
                     list(, $giftCard) = $result;
                     //sends response
                     $this->removeGiftCardCode($couponCode, $giftCard, $quote);
@@ -469,7 +475,7 @@ trait UpdateDiscountTrait
 
             return false;
         }
-        
+
         return true;
     }
     
