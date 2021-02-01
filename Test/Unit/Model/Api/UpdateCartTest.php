@@ -501,7 +501,7 @@ class UpdateCartTest extends BoltTestCase
             );
 
         $this->currentMock->expects(self::once())->method('verifyCouponCode')
-            ->with(self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID)
+            ->with(self::COUPON_CODE, $parentQuoteMock)
             ->willReturn([$this->couponMock, null]);
         
         $this->currentMock->expects(self::once())->method('applyDiscount')
