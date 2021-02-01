@@ -368,7 +368,7 @@ class DiscountCodeValidationTest extends BoltTestCase
             ->willReturn([$parentQuote, $immutableQuote]);
         
         $this->currentMock->expects(self::once())->method('verifyCouponCode')
-            ->with($couponCode, self::WEBSITE_ID, self::STORE_ID)->willReturn([$this->couponMock, null]);
+            ->with($couponCode, $parentQuote)->willReturn([$this->couponMock, null]);
             
         $applyCouponResult = [
             'status'          => 'success',
@@ -494,7 +494,7 @@ class DiscountCodeValidationTest extends BoltTestCase
             ->willReturn([$parentQuote, $immutableQuote]);
         
         $this->currentMock->expects(self::once())->method('verifyCouponCode')
-            ->with($couponCode, self::WEBSITE_ID, self::STORE_ID)->willReturn([$this->couponMock, null]);
+            ->with($couponCode, $parentQuote)->willReturn([$this->couponMock, null]);
         
         $this->currentMock->expects(self::once())->method('updateSession')
             ->with($parentQuote);
@@ -680,7 +680,7 @@ class DiscountCodeValidationTest extends BoltTestCase
         $this->configureCouponMockMethods();
 
         $this->currentMock->expects(self::once())->method('verifyCouponCode')
-            ->with(self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID)->willReturn([$this->couponMock, null]);
+            ->with(self::COUPON_CODE, $parentQuoteMock)->willReturn([$this->couponMock, null]);
         
         $this->discountHelper->expects(self::once())->method('convertToBoltDiscountType')
             ->with(self::COUPON_CODE)->willReturn('fixed_amount');
@@ -775,7 +775,7 @@ class DiscountCodeValidationTest extends BoltTestCase
             ->with('by_fixed')->willReturn('fixed_amount');
       
         $this->currentMock->expects(self::once())->method('verifyCouponCode')
-            ->with(self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID)->willReturn([null, $giftcardMock]);
+            ->with(self::COUPON_CODE, $parentQuoteMock)->willReturn([null, $giftcardMock]);
 
         $this->expectSuccessResponse($result);
 
@@ -833,7 +833,7 @@ class DiscountCodeValidationTest extends BoltTestCase
             ->with($parentQuoteMock);
 
         $this->currentMock->expects(self::once())->method('verifyCouponCode')
-            ->with(self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID)->willReturn([null, null]);
+            ->with(self::COUPON_CODE, $parentQuoteMock)->willReturn([null, null]);
 
         self::assertFalse($this->currentMock->validate());
     }
