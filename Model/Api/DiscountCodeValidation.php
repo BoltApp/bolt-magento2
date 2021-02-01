@@ -168,7 +168,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
 
         // Verify if the code is coupon or gift card and return proper object
         $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);
-        
+
         list($coupon, $giftCard) = $result;
 
         $this->eventsForThirdPartyModules->dispatchEvent("beforeApplyDiscount", $parentQuote);
