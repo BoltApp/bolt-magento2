@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -27,12 +27,12 @@ use Bolt\Boltpay\Model\Api\Data\DebugInfo;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
 use Bolt\Boltpay\Model\Api\Data\PluginVersion;
 use Bolt\Boltpay\Model\Api\Debug;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class CreateOrderTest
@@ -218,9 +218,9 @@ class DebugTest extends BoltTestCase
                 'logs' => [
                     ['Line 1 of log'],
                     ['Line 2 of log']
-                ]
+                ],
+                'automated_testing_config' => null
             ]
-
         ]);
 
         $this->responseMock->expects($this->once())->method('setBody')->with($this->equalTo($expectedJson));
