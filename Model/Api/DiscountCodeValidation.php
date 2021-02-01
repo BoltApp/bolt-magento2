@@ -153,7 +153,6 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         list($parentQuote, $immutableQuote) = $result;
         
         $storeId = $parentQuote->getStoreId();
-        $websiteId = $parentQuote->getStore()->getWebsiteId();
 
         $this->preProcessWebhook($storeId);
         
@@ -167,7 +166,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         }
 
         // Verify if the code is coupon or gift card and return proper object
-        $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);
+        $result = $this->verifyCouponCode($couponCode, $parentQuote);
         
         list($coupon, $giftCard) = $result;
 
