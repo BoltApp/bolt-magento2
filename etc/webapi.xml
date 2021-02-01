@@ -19,9 +19,16 @@
 <!-- Rest API router. Web hooks and Shipping and Tax. -->
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
-    <!-- V2 Universal hook -->
+    <!-- V2 Universal API -->
     <route url="/V2/bolt/boltpay/api" method="POST">
         <service class="Bolt\Boltpay\Api\UniversalApiInterface" method="execute"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
+    <!-- V2 Universal Hook -->
+    <route url="/V2/bolt/boltpay/webhook" method="POST">
+        <service class="Bolt\Boltpay\Api\UniversalWebhookInterface" method="execute"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
