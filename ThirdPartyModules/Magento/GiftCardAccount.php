@@ -179,4 +179,21 @@ class GiftCardAccount
             return null;
         }
     }
+    
+    public function getAdditionalJS($result)
+    {
+        $result .= '$(document).on("submit","form#giftcard-form",function(){
+            boltMagentoGiftInvalidateCart();
+        });         
+        $(document).on("click",".totals.giftcard .action.delete",function(){
+            boltMagentoGiftInvalidateCart();
+        });
+        function boltMagentoGiftInvalidateCart() {
+            if (localStorage) {
+                localStorage.setItem("bolt_cart_is_invalid", "true");
+                return;
+            }
+        }';
+        return $result;
+    }
 }
