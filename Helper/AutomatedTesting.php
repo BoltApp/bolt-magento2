@@ -200,8 +200,8 @@ class AutomatedTesting extends AbstractHelper
                                       ->setItems([$simpleCartItem])
                                       ->setShipping(reset($shippingMethods))
                                       ->setExpectedShippingMethods($shippingMethods)
-                                      ->setTax($this->formatPrice($quote->getShippingAddress()->getTaxAmount(), false))
-                                      ->setSubTotal($this->formatPrice($quote->getSubtotal(), false));
+                                      ->setTax($this->formatPrice($quote->getShippingAddress()->getTaxAmount()))
+                                      ->setSubTotal($this->formatPrice($quote->getSubtotal()));
             $this->quoteRepository->delete($quote);
 
             return $this->configFactory->create()->setStoreItems($storeItems)->setCart($cart);
@@ -251,7 +251,7 @@ class AutomatedTesting extends AbstractHelper
         return $this->storeItemFactory->create()
                                       ->setItemUrl($product->getProductUrl())
                                       ->setName(trim($product->getName()))
-                                      ->setPrice($this->formatPrice($product->getPrice(), false))
+                                      ->setPrice($this->formatPrice($product->getPrice()))
                                       ->setType($type);
     }
 
@@ -326,7 +326,7 @@ class AutomatedTesting extends AbstractHelper
      *
      * @return string
      */
-    private function formatPrice($price, $isShipping)
+    private function formatPrice($price, $isShipping = false)
     {
         return $price === 0.0 && $isShipping ? 'Free' : '$' . number_format($price, 2, '.', '');
     }
