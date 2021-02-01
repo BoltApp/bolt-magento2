@@ -272,10 +272,10 @@ class GiftCard
      * @param $result
      * @param $mageplazaGiftCardFactory
      * @param $code
-     * @param $storeId
+     * @param $quote
      * @return null
      */
-    public function loadGiftcard($result, $mageplazaGiftCardFactory, $code, $storeId)
+    public function loadGiftcard($result, $mageplazaGiftCardFactory, $code, $quote)
     {
         $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
 
@@ -283,6 +283,7 @@ class GiftCard
             return $result;
         }
         try {
+            $storeId = $quote->getStoreId();
             return $this->loadMageplazaGiftCard($code, $storeId);
         } catch (LocalizedException $e) {
             return null;

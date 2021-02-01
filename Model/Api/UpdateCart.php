@@ -119,7 +119,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 $discount_code = $discount_codes_to_add[0];
                 $couponCode = trim($discount_code);
 
-                $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);
+                $result = $this->verifyCouponCode($couponCode, $parentQuote);
 
                 list($coupon, $giftCard) = $result;
 
@@ -334,7 +334,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             // Get the coupon code
             $couponCode = trim($discount_code);
 
-            $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);
+            $result = $this->verifyCouponCode($couponCode, $parentQuote);
 
             list($coupon, $giftCard) = $result;
 
