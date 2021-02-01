@@ -164,10 +164,10 @@ class GiftCardAccount
      * @param null                                                           $result
      * @param \Amasty\GiftCardAccount\Api\GiftCardAccountRepositoryInterface $giftcardAccountRepository
      * @param string                                                         $couponCode
-     * @param string                                                         $storeId
+     * @param Quote                                                          $quote
      * @return GiftCardAccountInterface|null
      */
-    public function loadGiftcard($result, $giftcardAccountRepository, $couponCode, $storeId)
+    public function loadGiftcard($result, $giftcardAccountRepository, $couponCode, $quote)
     {
         try {
             return $giftcardAccountRepository->getByCode($couponCode);

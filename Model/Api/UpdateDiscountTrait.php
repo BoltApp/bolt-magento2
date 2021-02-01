@@ -126,14 +126,13 @@ trait UpdateDiscountTrait
      * Verify if the code is coupon or gift card and return proper object
      *
      * @param string $couponCode
-     * @param string|int $websiteId
-     * @param string|int $storeId
+     * @param Quote $quote
      *
      * @throws BoltException
      * 
      * @return object|null
      */
-    protected function verifyCouponCode( $couponCode, $websiteId, $storeId )
+    protected function verifyCouponCode( $couponCode, $quote )
     {
         // Check if empty coupon was sent
         if ($couponCode === '') {
@@ -143,17 +142,17 @@ trait UpdateDiscountTrait
                 BoltErrorResponse::ERR_CODE_INVALID
             );
         }
-
-        // Load the Magento_GiftCardAccount object
-        $giftCard = $this->discountHelper->loadMagentoGiftCardAccount($couponCode, $websiteId);
         
+        $storeId = $quote->getStoreId();
+        $websiteId = $quote->getStore()->getWebsiteId();
+   
         // Load the Unirgy_GiftCert object
         if (empty($giftCard)) {
             $giftCard = $this->discountHelper->loadUnirgyGiftCertData($couponCode, $storeId);
         }
-        
+       
         if (empty($giftCard)) {
-            $giftCard = $this->eventsForThirdPartyModules->runFilter("loadGiftcard", null, $couponCode, $storeId);
+            $giftCard = $this->eventsForThirdPartyModules->runFilter("loadGiftcard", null, $couponCode, $quote);
         }
 
         $coupon = null;
@@ -451,7 +450,7 @@ trait UpdateDiscountTrait
                     $this->eventsForThirdPartyModules->dispatchEvent("removeAppliedStoreCredit", $couponCode, $quote, $websiteId, $storeId);
                 } else {
                     //throws BoltException that will be caught in UpdateCart::execute()
-                    $result = $this->verifyCouponCode($couponCode, $websiteId, $storeId);        
+                    $result = $this->verifyCouponCode($couponCode, $quote);        
                     list(, $giftCard) = $result;
                     //sends response
                     $this->removeGiftCardCode($couponCode, $giftCard, $quote);

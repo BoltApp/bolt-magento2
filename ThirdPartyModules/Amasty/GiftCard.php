@@ -167,10 +167,10 @@ class GiftCard
      * @param mixed|null                            $result
      * @param \Amasty\GiftCard\Model\AccountFactory $giftcardAccountFactory
      * @param string                                $couponCode
-     * @param string                                $storeId
+     * @param Quote                                 $quote
      * @return \Amasty\GiftCard\Model\Account
      */
-    public function loadGiftcard($result, $giftcardAccountFactory, $couponCode, $storeId)
+    public function loadGiftcard($result, $giftcardAccountFactory, $couponCode, $quote)
     {
         try {
             $giftcardAccount = $giftcardAccountFactory->create()->loadByCode($couponCode);

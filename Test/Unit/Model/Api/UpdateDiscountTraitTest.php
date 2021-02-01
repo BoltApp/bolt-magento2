@@ -296,6 +296,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
                 [
                     'getId',
                     'getStore',
+                    'getStoreId',
                     'getWebsiteId',
                     'getCustomerId',
                     'getCouponCode',
@@ -310,6 +311,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $quote->method('getId')->willReturn($quoteId);
         $quote->method('getStore')->willReturnSelf();
+        $quote->method('getStoreId')->willReturn(self::STORE_ID);
         $quote->method('getWebsiteId')->willReturn(self::WEBSITE_ID);
         $quote->method('getCustomerId')->willReturn($customerId);
         $quote->method('getCouponCode')->willReturn($couponCode);
@@ -426,8 +428,9 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $this->expectExceptionMessage('No coupon code provided');
         $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_INVALID);
         $this->expectException(BoltException::class);
+        $quote = $this->getQuoteMock();
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', ['', self::WEBSITE_ID, self::STORE_ID]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', ['', $quote]);
     }
 
     /**
@@ -436,14 +439,14 @@ class UpdateDiscountTraitTest extends BoltTestCase
      */
     public function verifyCouponCode_returnMagentoGiftCardAccount()
     {
+        global $ifRunFilter;
         $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
             ->disableOriginalConstructor()
             ->getMock();
+        $ifRunFilter = $giftcardMock;
+        $quote = $this->getQuoteMock();
 
-        $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
-            ->willReturn($giftcardMock);
-
-        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, $quote]);
 
         $this->assertEquals([null,$giftcardMock], $result);
     }
@@ -460,11 +463,11 @@ class UpdateDiscountTraitTest extends BoltTestCase
             ->getMock();
         $ifRunFilter = $giftcardMock;
 
-        $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
-            ->willReturn(null);
         $this->discountHelper->expects(static::once())->method('loadUnirgyGiftCertData')->with(self::COUPON_CODE, self::STORE_ID)
             ->willReturn(null);
-        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID]);
+        $quote = $this->getQuoteMock();
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, $quote]);
 
         $this->assertEquals([null,$giftcardMock], $result);
     }
@@ -480,16 +483,15 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_INVALID);
         $this->expectException(BoltException::class);
 
-        $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
-            ->willReturn(null);
-
         $this->discountHelper->expects(static::once())->method('loadUnirgyGiftCertData')->with(self::COUPON_CODE, self::STORE_ID)
             ->willReturn(null);
 
         $this->discountHelper->expects(static::once())->method('loadCouponCodeData')->with(self::COUPON_CODE)
             ->willReturn(null);
+        
+        $quote = $this->getQuoteMock();
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, $quote]);
     }
 
     /**
@@ -510,16 +512,15 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_INVALID);
         $this->expectException(BoltException::class);
 
-        $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
-            ->willReturn(null);
-
         $this->discountHelper->expects(static::once())->method('loadUnirgyGiftCertData')->with(self::COUPON_CODE, self::STORE_ID)
             ->willReturn(null);
 
         $this->discountHelper->expects(static::once())->method('loadCouponCodeData')->with(self::COUPON_CODE)
             ->willReturn($coupon);
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID]);
+        $quote = $this->getQuoteMock();
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, $quote]);
     }
 
     /**
@@ -534,16 +535,15 @@ class UpdateDiscountTraitTest extends BoltTestCase
                 ]
             ]);
 
-        $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with(self::COUPON_CODE, self::WEBSITE_ID)
-            ->willReturn(null);
-
         $this->discountHelper->expects(static::once())->method('loadUnirgyGiftCertData')->with(self::COUPON_CODE, self::STORE_ID)
             ->willReturn(null);
 
         $this->discountHelper->expects(static::once())->method('loadCouponCodeData')->with(self::COUPON_CODE)
             ->willReturn($coupon);
+        
+        $quote = $this->getQuoteMock();
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, self::WEBSITE_ID, self::STORE_ID]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, $quote]);
 
         $this->assertEquals([$coupon, null], $result);
     }
@@ -1156,31 +1156,6 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $quote = $this->getQuoteMock();
 
         $result = TestHelper::invokeMethod($this->currentMock, 'removeDiscount', ['amstorecredit', $discounts, $quote, self::WEBSITE_ID, self::STORE_ID]);
-
-        $this->assertTrue($result);
-    }
-
-    /**
-     * @test
-     *
-     */
-    public function removeDiscount_removeGiftCard()
-    {
-        $couponCode = 'giftcard1234';
-        $discounts = [
-            $couponCode => 'gift_card',
-        ];
-        $quote = $this->getQuoteMock();
-
-        $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
-            ->setMethods(['removeFromCart', 'addToCart'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->discountHelper->expects(static::once())->method('loadMagentoGiftCardAccount')->with($couponCode, self::WEBSITE_ID)
-            ->willReturn($giftcardMock);
-
-        $result = TestHelper::invokeMethod($this->currentMock, 'removeDiscount', [$couponCode, $discounts, $quote, self::WEBSITE_ID, self::STORE_ID]);
 
         $this->assertTrue($result);
     }

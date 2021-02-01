@@ -75,20 +75,6 @@
     <preference for="Bolt\Boltpay\Api\Data\CartDataInterface"   type="Bolt\Boltpay\Model\Api\Data\CartData" />
     <preference for="Bolt\Boltpay\Api\Data\UpdateCartResultInterface" type="Bolt\Boltpay\Model\Api\Data\UpdateCartResult" />
 
-    <virtualType name="boltMagentoGiftCardAccount" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Magento_GiftCardAccount</argument>
-            <argument name="className" xsi:type="string">Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection</argument>
-        </arguments>
-    </virtualType>
-    
-    <virtualType name="boltMagentoGiftCardAccountHelper" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Magento_GiftCardAccount</argument>
-            <argument name="className" xsi:type="string">Magento\GiftCardAccount\Helper\Data</argument>
-        </arguments>
-    </virtualType>
-
     <virtualType name="boltUnirgyGiftCert" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Unirgy_Giftcert</argument>
@@ -121,8 +107,6 @@
 
     <type name="Bolt\Boltpay\Helper\Discount">
         <arguments>
-            <argument name="moduleGiftCardAccount" xsi:type="object">boltMagentoGiftCardAccount</argument>
-            <argument name="moduleGiftCardAccountHelper" xsi:type="object">boltMagentoGiftCardAccountHelper</argument>
             <argument name="unirgyCertRepository" xsi:type="object">boltUnirgyGiftCert</argument>
             <argument name="unirgyGiftCertHelper" xsi:type="object">boltUnirgyGiftCertHelper</argument>
         </arguments>
