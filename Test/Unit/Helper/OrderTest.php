@@ -33,6 +33,7 @@ use Bolt\Boltpay\Model\Response;
 use Bolt\Boltpay\Model\Service\InvoiceService;
 use Bugsnag\Report;
 use Exception;
+use Magento\Customer\Model\Customer;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\DataObject;
 use Magento\Framework\DB\Adapter\Pdo\Mysql;
@@ -44,6 +45,7 @@ use Magento\Framework\Exception\SessionException;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Api\Data\TransactionInterface as TransactionInterface;
+use Magento\Sales\Model\AdminOrder\Create;
 use Magento\Sales\Model\Order\Email\Container\InvoiceIdentity as InvoiceEmailIdentity;
 use Magento\Sales\Model\Order\Invoice as Invoice;
 use Magento\Sales\Model\Order as OrderModel;
@@ -264,6 +266,11 @@ class OrderTest extends BoltTestCase
     private $orderIncrementIdChecker;
 
     /**
+     * @var Create|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $adminOrderCreateModelMock;
+
+    /**
      * Setup test dependencies, called before each test
      *
      * @throws ReflectionException from initRequiredMocks and initCurrentMock methods
@@ -340,6 +347,7 @@ class OrderTest extends BoltTestCase
                     $this->eventsForThirdPartyModules,
                     $this->orderManagementMock,
                     $this->orderIncrementIdChecker,
+                    $this->adminOrderCreateModelMock
                 ]
             )
             ->setMethods($methods);
@@ -427,7 +435,21 @@ class OrderTest extends BoltTestCase
 
         $this->quoteMock = $this->getMockBuilder(Quote::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getCustomerId','getReservedOrderId','getId','isVirtual','setUpdatedAt','getStoreId','getBillingAddress','setIsActive','getIsActive', 'getBoltCheckoutType', 'setBoltCheckoutType'])
+            ->setMethods(
+                [
+                    'getCustomerId',
+                    'getReservedOrderId',
+                    'getId',
+                    'isVirtual',
+                    'setUpdatedAt',
+                    'getStoreId',
+                    'getBillingAddress',
+                    'setIsActive',
+                    'getIsActive',
+                    'getBoltCheckoutType',
+                    'setBoltCheckoutType'
+                ]
+            )
             ->getMock();
 
         $this->scopeConfigMock = $this->getMockBuilder(ScopeConfigInterface::class)
@@ -509,6 +531,8 @@ class OrderTest extends BoltTestCase
             ->disableOriginalConstructor()
             ->setMethods(['isIncrementIdUsed'])
             ->getMock();
+
+        $this->adminOrderCreateModelMock = $this->createMock(Create::class);
     }
 
     /**
@@ -2579,20 +2603,22 @@ class OrderTest extends BoltTestCase
 
     /**
      * @test
-     * @dataProvider trueAndFalseDataProvider
+     * @dataProvider prepareQuoteProvider
      *
      * @covers ::prepareQuote
      * @covers ::addCustomerDetails
      * @covers ::setPaymentMethod
      *
-     * @throws LocalizedException
-     * @throws ReflectionException
+     * @param int $boltCheckoutType
+     *
      * @throws AlreadyExistsException
+     * @throws LocalizedException
      * @throws NoSuchEntityException
+     * @throws ReflectionException
      * @throws SessionException
      * @throws Zend_Validate_Exception
      */
-    public function prepareQuote($isProductPage)
+    public function prepareQuote($boltCheckoutType)
     {
         $this->initCurrentMock(
             [
@@ -2621,12 +2647,20 @@ class OrderTest extends BoltTestCase
                 ]
             )
         );
-        $quoteMockMethodsList = ['getBoltParentQuoteId', 'getPayment', 'setPaymentMethod', 'getId'];
+        $quoteMockMethodsList = [
+            'getBoltParentQuoteId',
+            'getPayment',
+            'setPaymentMethod',
+            'getId',
+            'getData',
+            'getCustomer',
+            'getCustomerGroupId',
+        ];
         /** @var MockObject|Quote $immutableQuote */
         $immutableQuote = $this->createPartialMock(Quote::class, $quoteMockMethodsList);
         $immutableQuote->expects(self::any())->method('getId')->willReturn(self::IMMUTABLE_QUOTE_ID);
 
-        if ($isProductPage) {
+        if ($boltCheckoutType == CartHelper::BOLT_CHECKOUT_TYPE_PPC) {
             // immutableQuote the same object as parentQuote
             $immutableQuote->expects(self::once())->method('getBoltParentQuoteId')->willReturn(null);
             /** @var MockObject|Quote $parentQuote */
@@ -2678,7 +2712,33 @@ class OrderTest extends BoltTestCase
             }
         );
 
+        $parentQuote->method('getData')->willReturnMap([['bolt_checkout_type', null, $boltCheckoutType]]);
+
+        $customerMock = $this->createPartialMock(Customer::class, ['setGroupId']);
+
+        if ($boltCheckoutType == CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
+            $parentQuote->expects(static::once())->method('getCustomer')->willReturn($customerMock);
+            $parentQuote->expects(static::exactly(2))->method('getCustomerGroupId')->willReturn(1);
+            $customerMock->expects(static::once())->method('setGroupId')->with(1);
+            $this->adminOrderCreateModelMock->expects(static::once())->method('setData')->willReturnSelf();
+            $this->adminOrderCreateModelMock->expects(static::once())->method('setQuote')->willReturnSelf();
+            $this->adminOrderCreateModelMock->expects(static::once())->method('_prepareCustomer')->willReturnSelf();
+        }
+
         static::assertSame($parentQuote, $this->currentMock->prepareQuote($immutableQuote, $transaction));
+    }
+
+    /**
+     * @return array[]
+     */
+    public function prepareQuoteProvider()
+    {
+        return [
+            ['boltCheckoutType' => CartHelper::BOLT_CHECKOUT_TYPE_MULTISTEP],
+            ['boltCheckoutType' => CartHelper::BOLT_CHECKOUT_TYPE_PPC],
+            ['boltCheckoutType' => CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE],
+            ['boltCheckoutType' => CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE],
+        ];
     }
 
     /**
