@@ -404,18 +404,6 @@ trait UpdateDiscountTrait
             if ($result) {
                 return true;
             }
-
-            if ($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
-                try {
-                    // on subsequest validation calls from Bolt checkout
-                    // try removing the gift card before adding it
-                    $giftCard->removeFromCart(true, $quote);
-                } catch (\Exception $e) {
-
-                } finally {
-                    $giftCard->addToCart(true, $quote);
-                }
-            }
         } catch (\Exception $e) {
             throw new BoltException(
                 $e->getMessage(),
@@ -519,11 +507,7 @@ trait UpdateDiscountTrait
                 return true;
             }
 
-            if ($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
-                $giftCard->removeFromCart(true, $quote);
-            } else {
-                throw new \Exception(__('The GiftCard %1 does not support removal', $couponCode));             
-            }
+            throw new \Exception(__('Failed to apply the GiftCard %1', $couponCode));
         } catch (\Exception $e) {
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
