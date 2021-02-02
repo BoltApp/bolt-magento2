@@ -470,6 +470,11 @@ class EventsForThirdPartyModules
                     "module" => "Amasty_Rewards",
                     "boltClass" => Amasty_Rewards::class,
                 ],
+                [
+                    "module" => "Magento_GiftCardAccount",
+                    "checkClasses" => ["Magento\GiftCardAccount\Helper\Data"],
+                    "boltClass" => Magento_GiftCardAccount::class,
+                ],
             ],
         ],
         "filterApplyingGiftCardCode" => [
