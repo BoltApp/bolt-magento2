@@ -94,7 +94,7 @@ JSON;
     const STORE_ID = 1;
 
     /**
-     * @var EncryptorInterface
+     * @var EncryptorInterface|MockObject
      */
     private $encryptor;
 
@@ -1645,5 +1645,33 @@ Room 4000',
 
         $result = $localMock->setting;
         $this->assertEquals($original, $result);
+    }
+
+    /**
+     * @test
+     * that encrypt will encrypt the provided data using the Magento built-in encryption utility
+     * @see \Magento\Framework\Encryption\EncryptorInterface::encrypt
+     *
+     * @covers ::encrypt
+     */
+    public function encrypt_always_encryptsDataUsingTheBuiltInUtility()
+    {
+        $data = sha1('bolt');
+        $this->encryptor->expects(static::once())->method('encrypt')->willReturn($data);
+        static::assertEquals($data, $this->currentMock->encrypt($data));
+    }
+
+    /**
+     * @test
+     * that decrypt will decrypt the provided data using the Magento built-in decryption utility
+     * @see \Magento\Framework\Encryption\EncryptorInterface::decrypt
+     *
+     * @covers ::decrypt
+     */
+    public function decrypt_always_decryptsDataUsingTheBuiltInUtility()
+    {
+        $data = sha1('bolt');
+        $this->encryptor->expects(static::once())->method('decrypt')->willReturn($data);
+        static::assertEquals($data, $this->currentMock->decrypt($data));
     }
 }
