@@ -11,14 +11,14 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
-use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\DebugInfo;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
  * Class DebugInfoTest
@@ -103,6 +103,7 @@ class DebugInfoTest extends BoltTestCase
                 'php_version' => '7.1',
                 'composer_version' => 'composer_version',
                 'platform_version' => 'magento231',
+                'automated_testing_config' => null
             ],
             $this->debugInfo->jsonSerialize()
         );
