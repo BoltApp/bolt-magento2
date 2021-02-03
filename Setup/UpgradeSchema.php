@@ -245,6 +245,13 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'ID'
             )
             ->addColumn(
+                'customer_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['nullable' => false],
+                'Customer ID'
+            )
+            ->addColumn(
                 'external_id',
                 \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
                 255,
