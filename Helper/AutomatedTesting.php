@@ -25,10 +25,11 @@ use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\PriceProperty;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\PricePropertyFactory;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\StoreItem;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\StoreItemFactory;
+use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface as ProductRepository;
 use Magento\Catalog\Model\Product;
+use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
-use Magento\Framework\Api\SortOrder;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Quote\Api\CartManagementInterface;
@@ -52,11 +53,6 @@ class AutomatedTesting extends AbstractHelper
      * @var SearchCriteriaBuilder
      */
     private $searchCriteriaBuilder;
-
-    /**
-     * @var SortOrder
-     */
-    private $sortOrder;
 
     /**
      * @var ConfigFactory
@@ -114,10 +110,14 @@ class AutomatedTesting extends AbstractHelper
     private $quoteRepository;
 
     /**
+     * @var StockRegistryInterface
+     */
+    private $stockRegistry;
+
+    /**
      * @param Context $context
      * @param ProductRepository $productRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param SortOrder $sortOrder
      * @param ConfigFactory $configFactory
      * @param StoreItemFactory $storeItemFactory
      * @param CartFactory $cartFactory
@@ -128,12 +128,12 @@ class AutomatedTesting extends AbstractHelper
      * @param StoreManagerInterface $storeManager
      * @param CartManagementInterface $quoteManagement
      * @param QuoteRepository $quoteRepository
+     * @param StockRegistryInterface $stockRegistry
      */
     public function __construct(
         Context $context,
         ProductRepository $productRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
-        SortOrder $sortOrder,
         ConfigFactory $configFactory,
         StoreItemFactory $storeItemFactory,
         CartFactory $cartFactory,
@@ -144,12 +144,12 @@ class AutomatedTesting extends AbstractHelper
         StoreManagerInterface $storeManager,
         QuoteFactory $quoteFactory,
         CartManagementInterface $quoteManagement,
-        QuoteRepository $quoteRepository
+        QuoteRepository $quoteRepository,
+        StockRegistryInterface $stockRegistry
     ) {
         parent::__construct($context);
         $this->productRepository = $productRepository;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
-        $this->sortOrder = $sortOrder;
         $this->configFactory = $configFactory;
         $this->storeItemFactory = $storeItemFactory;
         $this->cartFactory = $cartFactory;
@@ -161,6 +161,7 @@ class AutomatedTesting extends AbstractHelper
         $this->quoteFactory = $quoteFactory;
         $this->quoteManagement = $quoteManagement;
         $this->quoteRepository = $quoteRepository;
+        $this->stockRegistry = $stockRegistry;
     }
 
     /**
@@ -205,9 +206,9 @@ class AutomatedTesting extends AbstractHelper
             $this->quoteRepository->delete($quote);
 
             return $this->configFactory->create()->setStoreItems($storeItems)->setCart($cart);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            return 'error retrieving automated testing config';
+            return $e->getMessage();
         }
     }
 
@@ -220,19 +221,22 @@ class AutomatedTesting extends AbstractHelper
      */
     protected function getProduct($type)
     {
-        $this->sortOrder->setField('price')->setDirection('DESC');
-
         $searchCriteria = $this->searchCriteriaBuilder
             ->addFilter('type_id', $type)
             ->addFilter('visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq')
-            ->setSortOrders([$this->sortOrder])
             ->create();
 
         $products = $this->productRepository
             ->getList($searchCriteria)
             ->getItems();
 
-        return empty($products) ? null : reset($products);
+        foreach ($products as $product) {
+            if ($this->stockRegistry->getStockItem($product->getId())->getIsInStock()) {
+                return $product;
+            }
+        }
+
+        return null;
     }
 
     /**

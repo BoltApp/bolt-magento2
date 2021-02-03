@@ -34,8 +34,8 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface as ProductRepository;
 use Magento\Catalog\Model\Product;
+use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
-use Magento\Framework\Api\SortOrder;
 use Magento\Framework\App\Helper\Context;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
@@ -60,11 +60,6 @@ class AutomatedTestingTest extends BoltTestCase
      * @var SearchCriteriaBuilder|MockObject
      */
     private $searchCriteriaBuilder;
-
-    /**
-     * @var SortOrder|MockObject
-     */
-    private $sortOrder;
 
     /**
      * @var ConfigFactory|MockObject
@@ -122,6 +117,11 @@ class AutomatedTestingTest extends BoltTestCase
     private $quoteRepository;
 
     /**
+     * @var StockRegistryInterface|MockObject
+     */
+    private $stockRegistry;
+
+    /**
      * @var AutomatedTestingHelper|MockObject
      */
     private $currentMock;
@@ -134,7 +134,6 @@ class AutomatedTestingTest extends BoltTestCase
         $this->context = $this->createMock(Context::class);
         $this->productRepository = $this->createMock(ProductRepository::class);
         $this->searchCriteriaBuilder = $this->createMock(SearchCriteriaBuilder::class);
-        $this->sortOrder = $this->createMock(SortOrder::class);
         $this->configFactory = $this->createMock(ConfigFactory::class);
         $this->storeItemFactory = $this->createMock(StoreItemFactory::class);
         $this->cartFactory = $this->createMock(CartFactory::class);
@@ -146,6 +145,7 @@ class AutomatedTestingTest extends BoltTestCase
         $this->quoteFactory = $this->createMock(QuoteFactory::class);
         $this->quoteManagement = $this->createMock(CartManagementInterface::class);
         $this->quoteRepository = $this->createMock(QuoteRepository::class);
+        $this->stockRegistry = $this->createMock(StockRegistryInterface::class);
 
         $this->currentMock = $this->getMockBuilder(AutomatedTestingHelper::class)
             ->setMethods(['getAutomatedTestingConfig', 'getProduct', 'convertToStoreItem', 'createQuoteWithItem', 'getShippingMethods'])
@@ -153,7 +153,6 @@ class AutomatedTestingTest extends BoltTestCase
                 $this->context,
                 $this->productRepository,
                 $this->searchCriteriaBuilder,
-                $this->sortOrder,
                 $this->configFactory,
                 $this->storeItemFactory,
                 $this->cartFactory,
@@ -164,7 +163,8 @@ class AutomatedTestingTest extends BoltTestCase
                 $this->storeManager,
                 $this->quoteFactory,
                 $this->quoteManagement,
-                $this->quoteRepository
+                $this->quoteRepository,
+                $this->stockRegistry
             ])
             ->getMock();
     }
@@ -174,10 +174,10 @@ class AutomatedTestingTest extends BoltTestCase
      */
     public function getAutomatedTestingConfig_exceptionThrown_returnsErrorString()
     {
-        $this->currentMock->expects(static::once())->method('getProduct')->willThrowException(new Exception());
+        $this->currentMock->expects(static::once())->method('getProduct')->willThrowException(new Exception('test error'));
         $this->bugsnag->expects(static::once())->method('notifyException');
         static::assertEquals(
-            'error retrieving automated testing config',
+            'test error',
             TestHelper::invokeMethod($this->currentMock, 'getAutomatedTestingConfig')
         );
     }
