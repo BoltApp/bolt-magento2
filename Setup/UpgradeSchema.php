@@ -245,18 +245,18 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'ID'
             )
             ->addColumn(
-                'customer_id',
-                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
-                null,
-                ['nullable' => false],
-                'Customer ID'
-            )
-            ->addColumn(
                 'external_id',
                 \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
                 255,
                 ['nullable' => false],
                 'External ID'
+            )
+            ->addColumn(
+                'customer_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['nullable' => false],
+                'Customer ID'
             )->setComment("Bolt External Customer Entity table");
         $setup->getConnection()->createTable($table);
     }
