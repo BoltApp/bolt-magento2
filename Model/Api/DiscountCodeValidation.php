@@ -199,7 +199,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
 
     /**
      * @param $code
-     * @param \Magento\GiftCardAccount\Model\Giftcardaccount|\Unirgy\Giftcert\Model\Cert $giftCard
+     * @param $giftCard
      * @param Quote $immutableQuote
      * @param Quote $parentQuote
      * @return array
@@ -223,33 +223,6 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 $this->discountHelper->addUnirgyGiftCertToQuote($this->checkoutSession->getQuote(), $giftCard);
 
                 $giftAmount = $giftCard->getBalance();
-            } elseif ($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
-                if ($immutableQuote->getGiftCardsAmountUsed() == 0) {
-                    try {
-                        // on subsequest validation calls from Bolt checkout
-                        // try removing the gift card before adding it
-                        $giftCard->removeFromCart(true, $immutableQuote);
-                    } catch (\Exception $e) {
-                        // gift card not added yet
-                    } finally {
-                        $giftCard->addToCart(true, $immutableQuote);
-                    }
-                }
-
-                if ($parentQuote->getGiftCardsAmountUsed() == 0) {
-                    try {
-                        // on subsequest validation calls from Bolt checkout
-                        // try removing the gift card before adding it
-                        $giftCard->removeFromCart(true, $parentQuote);
-                    } catch (\Exception $e) {
-                        // gift card not added yet
-                    } finally {
-                        $giftCard->addToCart(true, $parentQuote);
-                    }
-                }
-
-                // Send the whole GiftCard Amount.
-                $giftAmount = $parentQuote->getGiftCardsAmount();
             } else {
                 // TODO: move all cases above into filter
                 $result = $this->eventsForThirdPartyModules->runFilter(
