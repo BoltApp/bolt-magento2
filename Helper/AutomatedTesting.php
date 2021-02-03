@@ -218,7 +218,7 @@ class AutomatedTesting extends AbstractHelper
      *
      * @return Product|null
      */
-    private function getProduct($type)
+    protected function getProduct($type)
     {
         $this->sortOrder->setField('price')->setDirection('DESC');
 
@@ -243,7 +243,7 @@ class AutomatedTesting extends AbstractHelper
      *
      * @return StoreItem|null
      */
-    private function convertToStoreItem($product, $type)
+    protected function convertToStoreItem($product, $type)
     {
         if ($product === null) {
             return null;
@@ -262,7 +262,7 @@ class AutomatedTesting extends AbstractHelper
      *
      * @return Quote
      */
-    private function createQuoteWithItem($product)
+    protected function createQuoteWithItem($product)
     {
         $quoteId = $this->quoteManagement->createEmptyCart();
         $quote = $this->quoteFactory->create()->load($quoteId);
@@ -286,7 +286,7 @@ class AutomatedTesting extends AbstractHelper
      *
      * @return PriceProperty[]
      */
-    private function getShippingMethods($quote)
+    protected function getShippingMethods($quote)
     {
         $address = $quote->getShippingAddress();
 
