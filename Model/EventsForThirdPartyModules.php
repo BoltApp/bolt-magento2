@@ -32,6 +32,7 @@ use Bolt\Boltpay\ThirdPartyModules\Mageplaza\GiftCard as Mageplaza_GiftCard;
 use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Rewards as Mirasvit_Rewards;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\StoreCredit as Amasty_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\Magento\GiftCardAccount as Magento_GiftCardAccount;
+use Bolt\Boltpay\ThirdPartyModules\Magento\SalesRuleStaging as Magento_SalesRuleStaging;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -635,6 +636,14 @@ class EventsForThirdPartyModules
                 [
                     "module"      => "IDme_GroupVerification",
                     "boltClass"   => IDme_GroupVerification::class,
+                ],
+            ],
+        ],
+        "verifyRuleTimeFrame" => [
+            "listeners" => [
+                [
+                    "module"      => "Magento_SalesRuleStaging",
+                    "boltClass"   => Magento_SalesRuleStaging::class,
                 ],
             ],
         ],

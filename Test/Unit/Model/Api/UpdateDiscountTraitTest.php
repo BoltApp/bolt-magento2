@@ -193,7 +193,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules
             ->method('runFilter')
-            ->will($this->returnCallback(function($class, $result, $couponCode, $quote) {
+            ->will($this->returnCallback(function($class, $result, $couponCode = null, $quote = null) {
                 global $ifRunFilter;
                 if ($ifRunFilter) {
                     return $ifRunFilter;
@@ -466,7 +466,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $this->discountHelper->expects(static::once())->method('loadUnirgyGiftCertData')->with(self::COUPON_CODE, self::STORE_ID)
             ->willReturn(null);
         $quote = $this->getQuoteMock();
-        
+
         $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, $quote]);
 
         $this->assertEquals([null,$giftcardMock], $result);
@@ -488,7 +488,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->discountHelper->expects(static::once())->method('loadCouponCodeData')->with(self::COUPON_CODE)
             ->willReturn(null);
-        
+
         $quote = $this->getQuoteMock();
 
         $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, $quote]);
@@ -519,7 +519,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
             ->willReturn($coupon);
 
         $quote = $this->getQuoteMock();
-        
+
         $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, $quote]);
     }
 
@@ -540,7 +540,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->discountHelper->expects(static::once())->method('loadCouponCodeData')->with(self::COUPON_CODE)
             ->willReturn($coupon);
-        
+
         $quote = $this->getQuoteMock();
 
         $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, $quote]);
@@ -717,7 +717,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
-    
+
     /**
      * @test
      *
@@ -848,7 +848,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $this->expectException(BoltException::class);
         $this->expectExceptionMessage(sprintf('The code [%s] has exceeded usage limit', self::COUPON_CODE));
         $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_LIMIT_REACHED);
-        
+
         TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
 
@@ -1044,7 +1044,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
     }
-    
+
     /**
      * @test
      *
@@ -1072,7 +1072,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->dataObjectMock->method('getCouponId')->willReturn(self::COUPON_ID);
         $this->dataObjectMock->method('getTimesUsed')->willReturn(1);
-        
+
         $quoteCouponCode = 'OTHER';
         $quote = $this->getQuoteMock($quoteCouponCode);
 
