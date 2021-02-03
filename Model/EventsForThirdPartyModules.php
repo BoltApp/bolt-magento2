@@ -288,6 +288,13 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass"          => Amasty_GiftCard::class,
                 ],
+                [
+                    "module" => "Magento_GiftCardAccount",
+                    "checkClasses" => [
+                        "Magento\GiftCardAccount\Model\Giftcardaccount",
+                    ],
+                    "boltClass" => Magento_GiftCardAccount::class,
+                ],
             ],
         ],
         "collectDiscounts" => [
@@ -473,7 +480,7 @@ class EventsForThirdPartyModules
                 ],
                 [
                     "module" => "Magento_GiftCardAccount",
-                    "checkClasses" => ["Magento\GiftCardAccount\Helper\Data"],
+                    "checkClasses" => ["Magento\GiftCardAccount\Model\Giftcardaccount"],
                     "boltClass" => Magento_GiftCardAccount::class,
                 ],
             ],
@@ -505,6 +512,11 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass"          => Amasty_GiftCard::class,
                 ],
+                [
+                    "module" => "Magento_GiftCardAccount",
+                    "checkClasses" => ["Magento\GiftCardAccount\Model\Giftcardaccount"],
+                    "boltClass" => Magento_GiftCardAccount::class,
+                ],
             ],
         ],
         'filterRemovingGiftCardCode' => [
@@ -533,6 +545,11 @@ class EventsForThirdPartyModules
                         'Amasty\GiftCard\Model\GiftCardManagement'
                     ],
                     "boltClass"          => Amasty_GiftCard::class,
+                ],
+                [
+                    "module" => "Magento_GiftCardAccount",
+                    "checkClasses" => ["Magento\GiftCardAccount\Model\Giftcardaccount"],
+                    "boltClass" => Magento_GiftCardAccount::class,
                 ],
             ],
         ],

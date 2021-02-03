@@ -594,32 +594,6 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
     /**
      * @test
-     *
-     */
-    public function applyDiscount_applyGiftCard_returnTrue()
-    {
-        $quote = $this->getQuoteMock();
-
-        $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
-            ->disableOriginalConstructor()
-            ->setMethods(['getId', 'removeFromCart', 'addToCart'])
-            ->getMock();
-
-        $giftcardMock->method('getId')->willReturn(123);
-
-        $giftcardMock->expects(self::once())->method('removeFromCart')
-            ->with(true, $quote);
-
-        $giftcardMock->expects(self::once())->method('addToCart')
-            ->with(true, $quote);
-
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyDiscount', [self::COUPON_CODE, null, $giftcardMock, $quote]);
-
-        $this->assertTrue(!empty($result));
-    }
-
-    /**
-     * @test
      */
     public function applyDiscount_applyCoupon_throwException()
     {
@@ -1109,26 +1083,6 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
-    public function applyingGiftCardCode_magentoGiftCard()
-    {
-        $quote = $this->getQuoteMock();
-
-        $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
-            ->setMethods(['removeFromCart', 'addToCart'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $giftcardMock->expects(static::once())->method('removeFromCart')->with(true, $quote);
-        $giftcardMock->expects(static::once())->method('addToCart')->with(true, $quote);
-
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyingGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
-
-        $this->assertTrue($result);
-    }
-
-    /**
-     * @test
-     *
-     */
     public function removeDiscount_removeCoupon()
     {
         $discounts = [
@@ -1233,41 +1187,6 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $result = TestHelper::invokeMethod($this->currentMock, 'removeGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
 
         $this->assertTrue($result);
-    }
-
-    /**
-     * @test
-     *
-     */
-    public function removeGiftCardCode_magentoGiftCard()
-    {
-        $codeId = 100;
-        $quote = $this->getQuoteMock();
-        $giftcardMock = $this->getMockBuilder('\Magento\GiftCardAccount\Model\Giftcardaccount')
-            ->setMethods(['removeFromCart'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $giftcardMock->expects(static::once())->method('removeFromCart')->with(true, $quote);
-
-        $result = TestHelper::invokeMethod($this->currentMock, 'removeGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
-
-        $this->assertTrue($result);
-    }
-
-    /**
-     * @test
-     *
-     */
-    public function removeGiftCardCode_throwException()
-    {
-        $quote = $this->getQuoteMock();
-
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_SERVICE,'The GiftCard '.self::COUPON_CODE.' does not support removal',422,$quote);
-
-        $result = TestHelper::invokeMethod($this->currentMock, 'removeGiftCardCode', [self::COUPON_CODE, null, $quote]);
-
-        $this->assertFalse($result);
     }
 
     /**
