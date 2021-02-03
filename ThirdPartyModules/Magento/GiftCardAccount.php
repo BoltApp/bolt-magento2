@@ -310,8 +310,6 @@ class GiftCardAccount
         }
         
         try {
-            // on subsequest validation calls from Bolt checkout
-            // try removing the gift card before adding it
             $giftCard->removeFromCart(true, $quote);
             return true;
         } catch (\Exception $e) {
