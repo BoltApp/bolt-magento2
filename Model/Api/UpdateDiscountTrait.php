@@ -415,8 +415,6 @@ trait UpdateDiscountTrait
                 BoltErrorResponse::ERR_SERVICE
             );
         }
-
-        return true;
     }
     
     /**
