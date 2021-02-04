@@ -102,6 +102,8 @@ class Giftcard
         try {
             $storeId = $quote->getStoreId();
             return $aheadworksGiftcardRepository->getByCode($code, $storeId);
+        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+            return null;
         } catch (\Exception $e) {
             return $e;
         }
