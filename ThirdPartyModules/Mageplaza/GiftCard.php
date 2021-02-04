@@ -237,7 +237,7 @@ class GiftCard
      */
     public function filterApplyingGiftCardCode($result, $mageplazaGiftCardCheckoutHelper, $couponCode, $giftCard, $quote)
     {
-        if ($result || $result instanceof \Exception || !($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard)) {
+        if ($result || !($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard)) {
             return $result;
         }
         

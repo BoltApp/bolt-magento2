@@ -277,7 +277,7 @@ class GiftCardAccount
         $giftCard,
         $quote
     ) {
-        if ($result || $result instanceof \Exception || !($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount)) {
+        if ($result || !($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount)) {
             return $result;
         }
         

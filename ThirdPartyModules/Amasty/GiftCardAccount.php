@@ -247,7 +247,7 @@ class GiftCardAccount
         $giftCard,
         $quote
     ) {
-        if ($result || $result instanceof \Exception || !($giftCard instanceof GiftCardAccountInterface)) {
+        if ($result || !($giftCard instanceof GiftCardAccountInterface)) {
             return $result;
         }
 
