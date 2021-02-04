@@ -11,14 +11,14 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 namespace Bolt\Boltpay\Setup;
 
-use Magento\Framework\Setup\UpgradeSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
+use Magento\Framework\Setup\UpgradeSchemaInterface;
 
 class UpgradeSchema implements UpgradeSchemaInterface
 {
@@ -103,6 +103,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
         $this->updateWebhookLogTable($setup);
 
+        $this->setupExternalCustomerEntityTable($setup);
+
         $setup->endSetup();
     }
 
@@ -142,7 +144,6 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 ['nullable' => false, 'default' => '0'],
                 'number of the missing quote failed hooks'
             )->setComment("Bolt Webhook Log table");
-
         $setup->getConnection()->createTable($table);
     }
 
@@ -154,7 +155,6 @@ class UpgradeSchema implements UpgradeSchemaInterface
         // once during install. This makes debugging harder.
         // However upgrade schema is triggered on every update and we get a chance to make changes as needed.
         $tableCreated = $setup->getConnection()->isTableExists('bolt_customer_credit_cards');
-
         if ($tableCreated) {
             return;
         }
@@ -214,14 +214,11 @@ class UpgradeSchema implements UpgradeSchemaInterface
     private function updateWebhookLogTable($setup)
     {
         $tableCreated = $setup->getConnection()->isTableExists('bolt_webhook_log');
-
         if (!$tableCreated) {
             return;
         }
 
-        $connection = $setup->getConnection();
-
-        $connection->addColumn(
+        $setup->getConnection()->addColumn(
             $setup->getTable('bolt_webhook_log'),
             'updated_at',
             [
@@ -229,5 +226,38 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'comment' => 'Updated At'
             ]
         );
+    }
+
+    private function setupExternalCustomerEntityTable($setup)
+    {
+        $tableCreated = $setup->getConnection()->isTableExists('bolt_external_customer_entity');
+        if ($tableCreated) {
+            return;
+        }
+
+        $table = $setup->getConnection()
+            ->newTable($setup->getTable('bolt_external_customer_entity'))
+            ->addColumn(
+                'id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
+                'ID'
+            )
+            ->addColumn(
+                'external_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'External ID'
+            )
+            ->addColumn(
+                'customer_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['nullable' => false],
+                'Customer ID'
+            )->setComment("Bolt External Customer Entity table");
+        $setup->getConnection()->createTable($table);
     }
 }
