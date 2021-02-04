@@ -400,13 +400,17 @@ trait UpdateDiscountTrait
                 $giftCard,
                 $quote
             );
-
-            if ($result) {
-                return true;
+            
+            if ($result instanceof \Exception) {
+                throw $result;
+            } elseif (!$result) {
+                throw new \Exception(__('The GiftCard %1 is not supported', $couponCode));
             }
+
+            return true;
         } catch (\Exception $e) {
             throw new BoltException(
-                $e->getMessage(),
+                __($e->getMessage()),
                 null,
                 BoltErrorResponse::ERR_SERVICE
             );

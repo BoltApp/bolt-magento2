@@ -277,7 +277,7 @@ class GiftCardAccount
         $giftCard,
         $quote
     ) {
-        if ($result || !$giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
+        if ($result || $result instanceof \Exception || !($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount)) {
             return $result;
         }
         
@@ -287,9 +287,13 @@ class GiftCardAccount
             $giftCard->removeFromCart(true, $quote);
         } catch (\Exception $e) {
             // gift card not added yet
-        } finally {
+        }
+        
+        try {
             $giftCard->addToCart(true, $quote);
             return true;
+        } catch (\Exception $e) {         
+            return $e;
         }
     }
     
