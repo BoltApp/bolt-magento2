@@ -230,13 +230,13 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
     private function setupExternalCustomerEntityTable($setup)
     {
-        $tableCreated = $setup->getConnection()->isTableExists('external_customer_entity');
+        $tableCreated = $setup->getConnection()->isTableExists('bolt_external_customer_entity');
         if ($tableCreated) {
             return;
         }
 
         $table = $setup->getConnection()
-            ->newTable($setup->getTable('external_customer_entity'))
+            ->newTable($setup->getTable('bolt_external_customer_entity'))
             ->addColumn(
                 'id',
                 \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
