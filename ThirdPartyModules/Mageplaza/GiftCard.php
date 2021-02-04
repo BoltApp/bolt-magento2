@@ -277,18 +277,18 @@ class GiftCard
      */
     public function loadGiftcard($result, $mageplazaGiftCardFactory, $code, $quote)
     {
-        $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
-
-        if (!empty($result)) {
+        if ($result !== null) {
             return $result;
         }
+        
+        $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
+
         try {
             $storeId = $quote->getStoreId();
             return $this->loadMageplazaGiftCard($code, $storeId);
-        } catch (LocalizedException $e) {
-            return null;
+        } catch (\Exception $e) {
+            return $e;
         }
-        return null;
     }
 
     /**

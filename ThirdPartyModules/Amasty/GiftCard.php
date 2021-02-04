@@ -172,11 +172,15 @@ class GiftCard
      */
     public function loadGiftcard($result, $giftcardAccountFactory, $couponCode, $quote)
     {
+        if ($result !== null) {
+            return $result;
+        }
+        
         try {
             $giftcardAccount = $giftcardAccountFactory->create()->loadByCode($couponCode);
             return $giftcardAccount->getAccountId() ? $giftcardAccount : $result;
-        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
-            return $result;
+        } catch (\Exception $e) {
+            return $e;
         }
     }
 
