@@ -87,7 +87,7 @@ class EventsForThirdPartyModules
                 ],
                 [
                     "module" => "Aheadworks_RewardPoints",
-                    "sendClasses" => ["\Aheadworks\RewardPoints\Plugin\Model\Service\OrderServicePlugin"],
+                    "sendClasses" => ["Aheadworks\RewardPoints\Plugin\Model\Service\OrderServicePlugin"],
                     "boltClass" => Aheadworks_RewardPoints::class,
                 ],
             ],
@@ -316,8 +316,8 @@ class EventsForThirdPartyModules
                 "Aheadworks_RewardPoints" => [
                     "module" => "Aheadworks_RewardPoints",
                     "sendClasses" => [
-                        "\Aheadworks\RewardPoints\Api\CustomerRewardPointsManagementInterface",
-                        "\Aheadworks\RewardPoints\Model\Config"
+                        "Aheadworks\RewardPoints\Api\CustomerRewardPointsManagementInterface",
+                        "Aheadworks\RewardPoints\Model\Config"
                     ],
                     "boltClass" => Aheadworks_RewardPoints::class,
                 ],
@@ -681,6 +681,7 @@ class EventsForThirdPartyModules
             "listeners" => [
                 "Aheadworks_RewardPoints" => [
                     "module"      => "Aheadworks_RewardPoints",
+                    "sendClasses" => ["Aheadworks\RewardPoints\Api\CustomerRewardPointsManagementInterface"],
                     "boltClass"   => Aheadworks_RewardPoints::class,
                 ],
             ]
@@ -806,8 +807,6 @@ class EventsForThirdPartyModules
             }
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-        } catch (\ArgumentCountError $error) {
-            $this->bugsnag->notifyException($error);
         } finally {
             return $result;
         }
@@ -837,8 +836,6 @@ class EventsForThirdPartyModules
             }
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-        } catch (\ArgumentCountError $error) {
-            $this->bugsnag->notifyException($error);
         }
     }
 

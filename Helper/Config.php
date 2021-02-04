@@ -312,6 +312,11 @@ class Config extends AbstractHelper
     const XML_PATH_AMASTY_STORE_CREDIT = 'payment/boltpay/amasty_store_credit';
 
     /**
+     * Use Aheadworks Reward Points on Shopping Cart configuration path
+     */
+    const XML_PATH_AHEADWORKS_REWARD_POINTS_ON_CART = 'payment/boltpay/aheadworks_reward_points_on_cart';
+
+    /**
      * Use Reward Points on Shopping Cart configuration path
      */
     const XML_PATH_REWARD_POINTS = 'payment/boltpay/reward_points';
@@ -2108,4 +2113,20 @@ class Config extends AbstractHelper
     {
         return $this->encryptor->decrypt($data);
     }
+
+    /**
+     * Get Use Aheadworks Reward Points on Shopping Cart configuration
+     *
+     * @param int|string|Store $store
+     * @return bool
+     */
+    public function getUseAheadworksRewardPointsConfig($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_AHEADWORKS_REWARD_POINTS_ON_CART,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
 }

@@ -71,6 +71,7 @@ tr.shipping.totals td.amount span.price,
                 <track_checkout_funnel>0</track_checkout_funnel>
                 <enable_store_pickup_feature>0</enable_store_pickup_feature>
                 <always_present_checkout>0</always_present_checkout>
+                <aheadworks_reward_points_on_cart>1</aheadworks_reward_points_on_cart>
             </boltpay>
         </payment>
     </default>
