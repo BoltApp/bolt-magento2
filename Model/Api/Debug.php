@@ -26,6 +26,7 @@ use Magento\Framework\App\ProductMetadataInterface;
 use Bolt\Boltpay\Helper\LogRetriever;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
+use Bolt\Boltpay\Helper\AutomatedTesting as AutomatedTestingHelper;
 
 class Debug implements DebugInterface
 {
@@ -70,6 +71,11 @@ class Debug implements DebugInterface
     private $logRetriever;
 
     /**
+     * @var AutomatedTestingHelper
+     */
+    private $automatedTestingHelper;
+
+    /**
      * @param Response $response
      * @param DebugInfoFactory $debugInfoFactory
      * @param StoreManagerInterface $storeManager
@@ -78,6 +84,7 @@ class Debug implements DebugInterface
      * @param ConfigHelper $configHelper
      * @param ModuleRetriever $moduleRetriever
      * @param LogRetriever $logRetriever
+     * @param AutomatedTestingHelper $automatedTestingHelper
      */
     public function __construct(
         Response $response,
@@ -87,7 +94,8 @@ class Debug implements DebugInterface
         ProductMetadataInterface $productMetadata,
         ConfigHelper $configHelper,
         ModuleRetriever $moduleRetriever,
-        LogRetriever $logRetriever
+        LogRetriever $logRetriever,
+        AutomatedTestingHelper $automatedTestingHelper
     ) {
         $this->response = $response;
         $this->debugInfoFactory = $debugInfoFactory;
@@ -97,6 +105,7 @@ class Debug implements DebugInterface
         $this->configHelper = $configHelper;
         $this->moduleRetriever = $moduleRetriever;
         $this->logRetriever = $logRetriever;
+        $this->automatedTestingHelper = $automatedTestingHelper;
     }
 
     /**
@@ -133,6 +142,9 @@ class Debug implements DebugInterface
         # populate log
         # parameters exist for getLog, default to exception.php last 100 lines
         $result->setLogs($this->logRetriever->getLogs());
+
+        # populate automated testing config
+        $result->setAutomatedTestingConfig($this->automatedTestingHelper->getAutomatedTestingConfig());
 
         // prepare response
         $this->response->setHeader('Content-Type', 'json');
