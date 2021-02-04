@@ -267,9 +267,10 @@ class GiftCard
         $giftCard,
         $quote
     ) {
-        if (!$giftCard instanceof \Amasty\GiftCard\Model\Account) {
+        if ($result || $result instanceof \Exception || !($giftCard instanceof \Amasty\GiftCard\Model\Account)) {
             return $result;
         }
+
         try {
             $giftCardTable = $this->resourceConnection->getTableName('amasty_amgiftcard_quote');
 
@@ -287,8 +288,8 @@ class GiftCard
             $quote->collectTotals();
             $quote->setDataChanges(true);
             return true;
-        } catch (\Magento\Framework\Exception\LocalizedException $e) {
-            return false;
+        } catch (\Exception $e) {
+            return $e;
         }
     }
 

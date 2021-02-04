@@ -190,13 +190,16 @@ class Giftcard
      */
     public function filterRemovingGiftCardCode($result, $aheadworksGiftcardCartService, $giftCard, $quote)
     {
-        if ($giftCard instanceof \Aheadworks\Giftcard\Model\Giftcard) {
-            $aheadworksGiftcardCartService->remove($quote->getId(), $giftCard->getCode(), false);
-
-            $result = true;
+        if ($result || $result instanceof \Exception || !($giftCard instanceof \Aheadworks\Giftcard\Model\Giftcard)) {
+            return $result;
         }
-
-        return $result;
+        
+        try {
+            $aheadworksGiftcardCartService->remove($quote->getId(), $giftCard->getCode(), false);
+            return true;
+        } catch (\Exception $e) {
+            return $e;
+        }
     }
 
     /**
