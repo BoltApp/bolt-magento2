@@ -170,7 +170,7 @@ class Discount extends AbstractHelper
      * Collect and update quote totals.
      * @param Quote $quote
      */
-    private function updateTotals(Quote $quote)
+    public function updateTotals(Quote $quote)
     {
         $quote->getShippingAddress()->setCollectShippingRates(true);
         $quote->setTotalsCollectedFlag(false);
