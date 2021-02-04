@@ -297,6 +297,13 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass"          => Amasty_GiftCard::class,
                 ],
+                [
+                    "module" => "Magento_GiftCardAccount",
+                    "checkClasses" => [
+                        "Magento\GiftCardAccount\Model\Giftcardaccount",
+                    ],
+                    "boltClass" => Magento_GiftCardAccount::class,
+                ],
             ],
         ],
         "collectDiscounts" => [
@@ -488,6 +495,11 @@ class EventsForThirdPartyModules
                     "module" => "Amasty_Rewards",
                     "boltClass" => Amasty_Rewards::class,
                 ],
+                [
+                    "module" => "Magento_GiftCardAccount",
+                    "checkClasses" => ["Magento\GiftCardAccount\Model\Giftcardaccount"],
+                    "boltClass" => Magento_GiftCardAccount::class,
+                ],
             ],
         ],
         "filterApplyingGiftCardCode" => [
@@ -517,6 +529,11 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass"          => Amasty_GiftCard::class,
                 ],
+                [
+                    "module" => "Magento_GiftCardAccount",
+                    "checkClasses" => ["Magento\GiftCardAccount\Model\Giftcardaccount"],
+                    "boltClass" => Magento_GiftCardAccount::class,
+                ],
             ],
         ],
         'filterRemovingGiftCardCode' => [
@@ -545,6 +562,11 @@ class EventsForThirdPartyModules
                         'Amasty\GiftCard\Model\GiftCardManagement'
                     ],
                     "boltClass"          => Amasty_GiftCard::class,
+                ],
+                [
+                    "module" => "Magento_GiftCardAccount",
+                    "checkClasses" => ["Magento\GiftCardAccount\Model\Giftcardaccount"],
+                    "boltClass" => Magento_GiftCardAccount::class,
                 ],
             ],
         ],

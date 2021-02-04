@@ -130,6 +130,10 @@ trait UpdateCartItemTrait
             $qtyToCheck = ($updateItem['update'] == 'add')
                     ? (int)$quoteItem['quantity'] + (int)$updateItem['quantity']
                     : (int)$quoteItem['quantity'] - (int)$updateItem['quantity'];
+            
+            if ($updateItem['update'] == 'remove' && $qtyToCheck == 0) {
+                return true;
+            }
 
             // The module Magento_InventorySales has plugin to replace legacy quote item check,
             // so we send $qtyToCheck as $itemQty to follow its logic

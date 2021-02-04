@@ -390,7 +390,7 @@ class GiftCard
             $sql = "DELETE FROM {$giftCardTable} WHERE code_id = :code_id AND quote_id = :quote_id";
             $connection->query($sql, ['code_id' => $codeId, 'quote_id' => $quote->getId()]);
 
-            $this->updateTotals($quote);
+            $this->discountHelper->updateTotals($quote);
             
         } catch (\Zend_Db_Statement_Exception $e) {
             $this->bugsnag->notifyException($e);

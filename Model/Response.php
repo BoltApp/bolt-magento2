@@ -21,6 +21,10 @@ use Magento\Framework\DataObject;
 
 /**
  * Response object
+ *
+ * @method \stdClass getResponse
+ * @method int getStoreId
+ * @method $this setStoreId(int $storeId)
  */
 class Response extends DataObject
 {

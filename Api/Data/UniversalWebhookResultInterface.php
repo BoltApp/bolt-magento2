@@ -15,16 +15,45 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\Model\ThirdPartyEvents;
+namespace Bolt\Boltpay\Api\Data;
 
-trait CollectsSessionData
+interface UniversalWebhookResultInterface
 {
     /**
-     * @param array                      $sessionData
-     * @param \Magento\Quote\Model\Quote $quote
-     * @param \Magento\Quote\Model\Quote $immutableQuote
-     *
+     * Get status string
+     * 
+     * @api
+     * @return string
+     */
+
+    public function getStatus();
+
+    /**
+     * Set status string
+     * 
+     * @api
+     * @param string $status
+     * @return $this
+     */
+
+    public function setStatus($status);
+
+    /**
+     * Get error object
+     * 
+     * @api
      * @return array
      */
-    abstract public function collectSessionData($sessionData, $quote, $immutableQuote);
+
+    public function getError();
+
+    /**
+     * Set error object
+     * 
+     * @api
+     * @param array $error
+     * @return $this
+     */
+
+    public function setError($error);
 }

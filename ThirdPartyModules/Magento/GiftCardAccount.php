@@ -179,4 +179,142 @@ class GiftCardAccount
             return null;
         }
     }
+    
+    public function getAdditionalJS($result)
+    {
+        $result .= '$(document).on("submit","form#giftcard-form",function(){
+            boltMagentoGiftInvalidateCart();
+        });         
+        $(document).on("click",".totals.giftcard .action.delete",function(){
+            boltMagentoGiftInvalidateCart();
+        });
+        function boltMagentoGiftInvalidateCart() {
+            if (localStorage) {
+                localStorage.setItem("bolt_cart_is_invalid", "true");
+                return;
+            }
+        }';
+        return $result;
+    }
+    
+    /**
+     * @see \Bolt\Boltpay\Model\Api\DiscountCodeValidation::applyingGiftCardCode
+     *
+     *
+     * @param mixed                                            $result
+     * @param string                                           $code
+     * @param \Magento\GiftCardAccount\Model\Giftcardaccount   $giftCard
+     * @param Quote                                            $immutableQuote
+     * @param Quote                                            $parentQuote
+     * @return array
+     */
+    public function applyGiftcard(
+        $result,
+        $code,
+        $giftCard,
+        $immutableQuote,
+        $parentQuote
+    ) {
+        if (!$giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
+            return $result;
+        }
+        try {
+            if ($immutableQuote->getGiftCardsAmountUsed() == 0) {
+                try {
+                    // on subsequest validation calls from Bolt checkout
+                    // try removing the gift card before adding it
+                    $giftCard->removeFromCart(true, $immutableQuote);
+                } catch (\Exception $e) {
+                    // gift card not added yet
+                } finally {
+                    $giftCard->addToCart(true, $immutableQuote);
+                }
+            }
+
+            if ($parentQuote->getGiftCardsAmountUsed() == 0) {
+                try {
+                    // on subsequest validation calls from Bolt checkout
+                    // try removing the gift card before adding it
+                    $giftCard->removeFromCart(true, $parentQuote);
+                } catch (\Exception $e) {
+                    // gift card not added yet
+                } finally {
+                    $giftCard->addToCart(true, $parentQuote);
+                }
+            }
+
+            // Send the whole GiftCard Amount.
+            $giftAmount = $parentQuote->getGiftCardsAmount();
+            $currencyCode = $parentQuote->getQuoteCurrencyCode();
+
+            return [
+                'status'          => 'success',
+                'discount_code'   => $code,
+                'discount_amount' => abs(
+                    CurrencyUtils::toMinor($giftAmount, $currencyCode)
+                ),
+                'description'     => __('Gift Card (%1)', $code),
+                'discount_type'   => 'fixed_amount',
+            ];
+        } catch (\Exception $e) {
+            return [
+                'status'        => 'failure',
+                'error_message' => $e->getMessage(),
+            ];
+        }
+    }
+    
+    /**
+     * @param bool                                           $result
+     * @param string                                         $couponCode
+     * @param \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard
+     * @param Quote                                          $quote
+     * @return bool
+     */
+    public function filterApplyingGiftCardCode(
+        $result,
+        $couponCode,
+        $giftCard,
+        $quote
+    ) {
+        if ($result || !$giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
+            return $result;
+        }
+        
+        try {
+            // on subsequest validation calls from Bolt checkout
+            // try removing the gift card before adding it
+            $giftCard->removeFromCart(true, $quote);
+        } catch (\Exception $e) {
+            // gift card not added yet
+        } finally {
+            $giftCard->addToCart(true, $quote);
+            return true;
+        }
+    }
+    
+    /**
+     * @param bool                                          $result
+     * @param Magento\GiftCardAccount\Model\Giftcardaccount $giftCard
+     * @param Quote                                         $quote
+     *
+     * @return bool
+     */
+    public function filterRemovingGiftCardCode(
+        $result,
+        $giftCard,
+        $quote
+    ) {
+        if ($result || !$giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
+            return $result;
+        }
+        
+        try {
+            $giftCard->removeFromCart(true, $quote);
+            return true;
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+            return false;
+        }
+    }
 }

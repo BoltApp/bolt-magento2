@@ -7,24 +7,31 @@
  * that is bundled with this package in the file LICENSE.txt.
  * It is also available through the world-wide-web at this URL:
  * http://opensource.org/licenses/osl-3.0.php
- * @category Bolt
- * @Package Bolt_Boltpay
+ *
+ * @category  Bolt
+ * @Package   Bolt_Boltpay
  * @copyright Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
- * @license http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ * @license   http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Controller\Adminhtml\Cart;
 
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Exception;
-use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
+use Magento\Backend\Model\View\Result\ForwardFactory;
+use Magento\Catalog\Helper\Product;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
+use Magento\Framework\Escaper;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\View\Result\PageFactory;
+use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Class Data.
@@ -32,10 +39,11 @@ use Bolt\Boltpay\Helper\MetricsClient;
  *
  * Called from the replace.phtml javascript block on checkout button click.
  */
-class Data extends Action
+class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
 {
     /**
      * @var JsonFactory
+     * @deprecated
      */
     private $resultJsonFactory;
 
@@ -61,17 +69,29 @@ class Data extends Action
 
     /**
      * @var DataObjectFactory
+     *
+     * @deprecated
      */
     private $dataObjectFactory;
 
     /**
-     * @param Context $context
-     * @param JsonFactory $resultJsonFactory
-     * @param CartHelper $cartHelper
-     * @param ConfigHelper $configHelper
-     * @param Bugsnag $bugsnag
-     * @param MetricsClient $metricsClient
-     * @param DataObjectFactory $dataObjectFactory
+     * @var StoreManagerInterface|null
+     */
+    private $storeManager;
+
+    /**
+     * @param Context                    $context
+     * @param JsonFactory                $resultJsonFactory
+     * @param CartHelper                 $cartHelper
+     * @param ConfigHelper               $configHelper
+     * @param Bugsnag                    $bugsnag
+     * @param MetricsClient              $metricsClient
+     * @param DataObjectFactory          $dataObjectFactory
+     * @param Product|null               $productHelper
+     * @param Escaper|null               $escaper
+     * @param PageFactory|null           $resultPageFactory
+     * @param ForwardFactory|null        $resultForwardFactory
+     * @param StoreManagerInterface|null $storeManager
      */
     public function __construct(
         Context $context,
@@ -80,15 +100,27 @@ class Data extends Action
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
         MetricsClient $metricsClient,
-        DataObjectFactory $dataObjectFactory
+        DataObjectFactory $dataObjectFactory,
+        Product $productHelper = null,
+        Escaper $escaper = null,
+        PageFactory $resultPageFactory = null,
+        ForwardFactory $resultForwardFactory = null,
+        StoreManagerInterface $storeManager = null
     ) {
-        parent::__construct($context);
+        parent::__construct(
+            $context,
+            $productHelper ?: ObjectManager::getInstance()->get(Product::class),
+            $escaper ?: ObjectManager::getInstance()->get(Escaper::class),
+            $resultPageFactory ?: ObjectManager::getInstance()->get(PageFactory::class),
+            $resultForwardFactory ?: ObjectManager::getInstance()->get(ForwardFactory::class)
+        );
         $this->resultJsonFactory = $resultJsonFactory;
-        $this->cartHelper        = $cartHelper;
-        $this->configHelper      = $configHelper;
-        $this->bugsnag           = $bugsnag;
+        $this->cartHelper = $cartHelper;
+        $this->configHelper = $configHelper;
+        $this->bugsnag = $bugsnag;
         $this->metricsClient = $metricsClient;
         $this->dataObjectFactory = $dataObjectFactory;
+        $this->storeManager = $storeManager ?: ObjectManager::getInstance()->get(StoreManagerInterface::class);
     }
 
     /**
@@ -101,12 +133,33 @@ class Data extends Action
     {
         $startTime = $this->metricsClient->getCurrentTime();
         try {
-            // call the Bolt API
-            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true, '');
+            $storeId = $this->_getSession()->getStoreId();
+            if (!$storeId) {
+                throw new LocalizedException(__('Order creation not initialized'));
+            }
+            $this->_initSession();
 
+            $quote = $this->_getOrderCreateModel()->getQuote();
+            $this->storeManager->setCurrentStore($storeId);
+
+            $backOfficeKey = $this->configHelper->getPublishableKeyBackOffice();
+            $paymentOnlyKey = $this->configHelper->getPublishableKeyPayment();
+            $isPreAuth = $this->configHelper->getIsPreAuth();
+
+            $customerEmail = $quote->getCustomerEmail();
+            if (!$quote->getCustomerId() && $this->cartHelper->getCustomerByEmail($customerEmail)) {
+                throw new LocalizedException(
+                    __('A customer with the same email address already exists in an associated website.')
+                );
+            }
+            $this->_getOrderCreateModel()->getBillingAddress()->setEmail($customerEmail);
+            $quote->setCustomerEmail($customerEmail);
+            $this->_getOrderCreateModel()->saveQuote();
+
+            // call the Bolt API
+            $boltpayOrder = $this->cartHelper->getBoltpayOrder(true);
             // If empty cart - order_token not fetched because doesn't exist. Not a failure.
             if ($boltpayOrder) {
-                $responseData = json_decode(json_encode($boltpayOrder->getResponse()), true);
                 $this->metricsClient->processMetric(
                     "back_office_order_token.success",
                     1,
@@ -115,27 +168,36 @@ class Data extends Action
                 );
             }
 
-            $storeId = $this->cartHelper->getSessionQuoteStoreId();
-            $backOfficeKey = $this->configHelper->getPublishableKeyBackOffice($storeId);
-            $paymentOnlyKey = $this->configHelper->getPublishableKeyPayment($storeId);
-            $isPreAuth = $this->configHelper->getIsPreAuth($storeId);
-
             // format and send the response
-            $cart = [
-                'orderToken'  => $boltpayOrder ? $responseData['token'] : '',
-            ];
-
             $hints = $this->cartHelper->getHints();
 
-            $result = $this->dataObjectFactory->create();
-            $result->setData('cart', $cart);
-            $result->setData('hints', $hints);
-            $result->setData('backOfficeKey', $backOfficeKey);
-            $result->setData('paymentOnlyKey', $paymentOnlyKey);
-            $result->setData('storeId', $storeId);
-            $result->setData('isPreAuth', $isPreAuth);
-
-            return $this->resultJsonFactory->create()->setData($result->getData());
+            if (!$boltpayOrder || !$boltpayOrder->getResponse() || !$boltpayOrder->getResponse()->token) {
+                throw new LocalizedException(
+                    __('Bolt order was not created successfully')
+                );
+            }
+            return $this->resultJsonFactory->create()
+                ->setData(
+                    [
+                        'cart'           => ['orderToken' => $boltpayOrder->getResponse()->token],
+                        'hints'          => $hints,
+                        'backOfficeKey'  => $backOfficeKey,
+                        'paymentOnlyKey' => $paymentOnlyKey,
+                        'storeId'        => $storeId,
+                        'isPreAuth'      => $isPreAuth,
+                    ]
+                );
+        } catch (LocalizedException $e) {
+            return $this->resultJsonFactory->create()->setData(
+                [
+                    'cart'           => ['errorMessage' => $e->getMessage()],
+                    'hints'          => $hints ?? [],
+                    'backOfficeKey'  => $backOfficeKey ?? '',
+                    'paymentOnlyKey' => $paymentOnlyKey ?? '',
+                    'storeId'        => $storeId ?? '',
+                    'isPreAuth'      => $isPreAuth ?? '',
+                ]
+            );
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->metricsClient->processMetric(

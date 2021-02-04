@@ -37,6 +37,8 @@
     <!-- For V2 universal endpoint -->
     <preference for="Bolt\Boltpay\Api\UniversalApiInterface" type="Bolt\Boltpay\Model\Api\UniversalApi" />
     <preference for="Bolt\Boltpay\Api\Data\UniversalApiResultInterface" type="Bolt\Boltpay\Model\Api\Data\UniversalApiResult" />
+    <preference for="Bolt\Boltpay\Api\UniversalWebhookInterface" type="Bolt\Boltpay\Model\Api\UniversalWebhook" />
+    <preference for="Bolt\Boltpay\Api\Data\UniversalWebhookResultInterface" type="Bolt\Boltpay\Model\Api\Data\UniversalWebhookResult" />
 
     <!-- For rest api hook integration -->
     <preference for="Bolt\Boltpay\Api\OrderManagementInterface" type="Bolt\Boltpay\Model\Api\OrderManagement" />
@@ -187,5 +189,11 @@
         <plugin name="bolt_boltpay_magento_quote_observer_frontend_quote_address_collect_totals_observer_plugin"
                 type="Bolt\Boltpay\Plugin\Magento\Quote\Observer\Frontend\Quote\Address\AddressCollectTotalsObserverPlugin"
                 sortOrder="10"/>
+    </type>
+
+    <type name="Bolt\Boltpay\Helper\Order">
+        <arguments>
+            <argument name="adminOrderCreateModel" xsi:type="object">Magento\Sales\Model\AdminOrder\Create\Proxy</argument>
+        </arguments>
     </type>
 </config>
