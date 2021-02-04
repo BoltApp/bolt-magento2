@@ -190,7 +190,7 @@ class Giftcard
      */
     public function filterRemovingGiftCardCode($result, $aheadworksGiftcardCartService, $giftCard, $quote)
     {
-        if ($result || $result instanceof \Exception || !($giftCard instanceof \Aheadworks\Giftcard\Model\Giftcard)) {
+        if ($result || !($giftCard instanceof \Aheadworks\Giftcard\Model\Giftcard)) {
             return $result;
         }
         

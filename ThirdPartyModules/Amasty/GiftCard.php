@@ -267,7 +267,7 @@ class GiftCard
         $giftCard,
         $quote
     ) {
-        if ($result || $result instanceof \Exception || !($giftCard instanceof \Amasty\GiftCard\Model\Account)) {
+        if ($result || !($giftCard instanceof \Amasty\GiftCard\Model\Account)) {
             return $result;
         }
 
