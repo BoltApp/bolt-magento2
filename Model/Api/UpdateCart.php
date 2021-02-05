@@ -341,6 +341,10 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             $result = $this->applyDiscount($couponCode, $coupon, $giftCard, $parentQuote);
         }
 
+        $this->cartHelper->replicateQuoteData($parentQuote, $immutableQuote);
+
+        $this->cache->clean([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . $parentQuote->getId()]);
+
         //need to rename one of the keys of the result array for universal api
         $result['discount_description'] = $result['description'];
         unset($result['description']);
