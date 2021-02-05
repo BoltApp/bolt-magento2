@@ -471,6 +471,29 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->assertEquals([null,$giftcardMock], $result);
     }
+    
+    /**
+     * @test
+     *
+     */
+    public function verifyCouponCode_loadGiftcard_returnException()
+    {
+        global $ifRunFilter;
+        $giftcardMock = $this->getMockBuilder('\Amasty\GiftCard\Model\Account')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $ifRunFilter = new \Exception('Testing Error');
+
+        $this->discountHelper->expects(static::once())->method('loadUnirgyGiftCertData')->with(self::COUPON_CODE, self::STORE_ID)
+            ->willReturn(null);
+        $quote = $this->getQuoteMock();
+        
+        $this->expectExceptionMessage('Testing Error');
+        $this->expectExceptionCode(BoltErrorResponse::ERR_SERVICE);
+        $this->expectException(BoltException::class);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, $quote]);
+    }
 
     /**
      * @test
