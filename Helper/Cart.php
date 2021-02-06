@@ -84,6 +84,8 @@ class Cart extends AbstractHelper
     const BOLT_CHECKOUT_TYPE_PPC = 2;
     const BOLT_CHECKOUT_TYPE_BACKOFFICE = 3;
     const BOLT_CHECKOUT_TYPE_PPC_COMPLETE = 4;
+    
+    const MAGENTO_SKU_DELIMITER = '-';
 
     /** @var CacheInterface */
     private $cache;
@@ -1349,7 +1351,15 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 // Load item product object
                 ////////////////////////////////////
-                $_product = $this->productRepository->get(trim($item->getSku()));
+                $itemProduct = $item->getProduct();
+                $customizableOptions = $this->getProductCustomizableOptions($itemProduct);
+                $itemSku = trim($item->getSku());
+
+                if ($customizableOptions) {
+                    $itemSku = $this->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
+                }
+                
+                $_product = $this->productRepository->get($itemSku);
 
                 $product['reference']    = $_product->getId();
                 $product['name']         = $_product->getName();
@@ -1390,6 +1400,16 @@ class Cart extends AbstractHelper
                         }
                     }
                 }
+                
+                if ($customizableOptions) {
+                    foreach ($customizableOptions as $customizableOption) {
+                        $properties[] = (object) [
+                            'name' => $customizableOption['title'],
+                            'value' => $customizableOption['value']
+                        ];
+                    }
+                }
+                
                 foreach ($this->getAdditionalAttributes($item->getSku(),$storeId, $additionalAttributes) as $attribute ) {
                     $properties[] = $attribute;
                 }
@@ -1459,6 +1479,63 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         return [$products, $totalAmount, $diff];
+    }
+    
+    /**
+     * Return the selected customizable options of quote item.
+     * 
+     * @param $product
+     * 
+     * @return array
+     */
+    public function getProductCustomizableOptions($product)
+    {
+        $optionIds = $product->getCustomOption('option_ids');
+        if (!$optionIds) {
+            return [];
+        }
+        
+        $customizableOptions = [];
+        foreach (explode(',', $optionIds->getValue()) as $optionId) {
+            $option = $product->getOptionById($optionId);
+            if ($option) {
+                $confItemOption = $product->getCustomOption(\Magento\Catalog\Model\Product\Type\AbstractType::OPTION_PREFIX . $optionId);
+
+                $group = $option->groupFactory($option->getType())
+                    ->setOption($option)
+                    ->setListener(new \Magento\Framework\DataObject());
+
+                $optionSku = $group->getOptionSku($confItemOption->getValue(), self::MAGENTO_SKU_DELIMITER);
+                
+                $customizableOptions[] = [
+                    'title' => $option->getTitle(),
+                    'value' => $group->getFormattedOptionValue($confItemOption->getValue()),
+                    'sku'   => $optionSku ?: ''
+                ];
+            }
+        }
+        
+        return $customizableOptions;
+    }
+    
+    /**
+     * If the product has customizable options, the sku of selected option would be appended to product sku for quote item,
+     * this function is to remove the sku of options and return actual sku of product.
+     * 
+     * @param string $sku
+     * @param array $customizableOptions
+     * 
+     * @return string
+     */
+    public function getProductActualSkuByCustomizableOptions($sku, $customizableOptions)
+    {
+        $skuElements = explode(self::MAGENTO_SKU_DELIMITER, $sku);
+        foreach ($customizableOptions as $customizableOption) {
+            if ($customizableOption['sku'] && ($skuKey = array_search($customizableOption['sku'], $skuElements)) !== false) {
+                unset($skuElements[$skuKey]);
+            }
+        }
+        return implode(self::MAGENTO_SKU_DELIMITER, $skuElements);
     }
 
     /**
