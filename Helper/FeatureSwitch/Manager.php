@@ -17,11 +17,11 @@
 
 namespace Bolt\Boltpay\Helper\FeatureSwitch;
 
-use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\GraphQL\Client as GQL;
 use Bolt\Boltpay\Model\FeatureSwitchRepository;
 use Magento\Framework\App\Helper\AbstractHelper;
-use \Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * This package manages feature switches. As much as possible this package should NOT
@@ -35,7 +35,6 @@ use \Magento\Framework\Exception\LocalizedException;
  */
 class Manager extends AbstractHelper
 {
-
     /**
      * @var GQL
      */

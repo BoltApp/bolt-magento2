@@ -27,10 +27,10 @@ namespace Bolt\Boltpay\Helper\FeatureSwitch;
  */
 class Definitions
 {
-    const NAME_KEY="name";
-    const VAL_KEY="value";
-    const DEFAULT_VAL_KEY="default_value";
-    const ROLLOUT_KEY="rollout_percentage";
+    const NAME_KEY = "name";
+    const VAL_KEY = "value";
+    const DEFAULT_VAL_KEY = "default_value";
+    const ROLLOUT_KEY = "rollout_percentage";
 
     /**
      * This switch is a sample of how to set up a feature switch.
@@ -152,32 +152,37 @@ class Definitions
      */
     const M2_ADD_SESSION_ID_TO_CART_METADATA = "M2_ADD_SESSION_ID_TO_CART_METADATA";
 
+    /**
+     * Enable Bolt SSO
+     */
+    const M2_ENABLE_BOLT_SSO = "M2_ENABLE_BOLT_SSO";
+
     const DEFAULT_SWITCH_VALUES = [
-        self::M2_SAMPLE_SWITCH_NAME =>  [
-          self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
-          self::VAL_KEY             => true,
-          self::DEFAULT_VAL_KEY     => false,
-          self::ROLLOUT_KEY         => 0
+        self::M2_SAMPLE_SWITCH_NAME => [
+            self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
         ],
-        self::M2_BOLT_ENABLED =>  [
-          self::NAME_KEY            => self::M2_BOLT_ENABLED,
-          self::VAL_KEY             => true,
-          self::DEFAULT_VAL_KEY     => false,
-          self::ROLLOUT_KEY         => 100
+        self::M2_BOLT_ENABLED => [
+            self::NAME_KEY            => self::M2_BOLT_ENABLED,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 100
         ],
-        self::M2_LOG_MISSING_QUOTE_FAILED_HOOKS =>  [
+        self::M2_LOG_MISSING_QUOTE_FAILED_HOOKS => [
             self::NAME_KEY            => self::M2_LOG_MISSING_QUOTE_FAILED_HOOKS,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 100
         ],
-        self::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER =>  [
+        self::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER => [
             self::NAME_KEY            => self::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
         ],
-        self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED =>  [
+        self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED => [
             self::NAME_KEY            => self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
@@ -195,25 +200,25 @@ class Definitions
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
         ],
-        self::M2_ORDER_MANAGEMENT =>  [
+        self::M2_ORDER_MANAGEMENT => [
             self::NAME_KEY            => self::M2_ORDER_MANAGEMENT,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 100
         ],
-        self::M2_PAY_BY_LINK =>  [
+        self::M2_PAY_BY_LINK => [
             self::NAME_KEY            => self::M2_PAY_BY_LINK,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 100
         ],
-        self::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION =>  [
+        self::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION => [
             self::NAME_KEY            => self::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
         ],
-        self::M2_IGNORE_HOOK_FOR_INVOICE_CREATION =>  [
+        self::M2_IGNORE_HOOK_FOR_INVOICE_CREATION => [
             self::NAME_KEY            => self::M2_IGNORE_HOOK_FOR_INVOICE_CREATION,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
@@ -243,7 +248,7 @@ class Definitions
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
         ],
-        self::M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER =>  [
+        self::M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER => [
             self::NAME_KEY            => self::M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
@@ -261,35 +266,41 @@ class Definitions
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
         ],
-        self::M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED =>  [
+        self::M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED => [
             self::NAME_KEY            => self::M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 100
         ],
-        self::M2_PREFETCH_SHIPPING =>  [
+        self::M2_PREFETCH_SHIPPING => [
             self::NAME_KEY            => self::M2_PREFETCH_SHIPPING,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
         ],
-        self::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN =>  [
+        self::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN => [
             self::NAME_KEY            => self::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
         ],
-        self::M2_CANCEL_FAILED_PAYMENT_ORDERS_INSTEAD_OF_DELETING =>  [
+        self::M2_CANCEL_FAILED_PAYMENT_ORDERS_INSTEAD_OF_DELETING => [
             self::NAME_KEY            => self::M2_CANCEL_FAILED_PAYMENT_ORDERS_INSTEAD_OF_DELETING,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
         ],
-        self::M2_ADD_SESSION_ID_TO_CART_METADATA =>  [
+        self::M2_ADD_SESSION_ID_TO_CART_METADATA => [
             self::NAME_KEY            => self::M2_ADD_SESSION_ID_TO_CART_METADATA,
             self::VAL_KEY             => true,
             self::DEFAULT_VAL_KEY     => false,
             self::ROLLOUT_KEY         => 0
         ],
+        self::M2_ENABLE_BOLT_SSO => [
+            self::NAME_KEY            => self::M2_ENABLE_BOLT_SSO,
+            self::VAL_KEY             => true,
+            self::DEFAULT_VAL_KEY     => false,
+            self::ROLLOUT_KEY         => 0
+        ]
     ];
 }

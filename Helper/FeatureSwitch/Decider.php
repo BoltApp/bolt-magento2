@@ -17,14 +17,14 @@
 
 namespace Bolt\Boltpay\Helper\FeatureSwitch;
 
-use Bolt\Boltpay\Model\FeatureSwitchRepository;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Model\FeatureSwitchFactory;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Session\SessionManagerInterface as CoreSession;
-use Magento\Framework\App\State;
+use Bolt\Boltpay\Model\FeatureSwitchRepository;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\App\State;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Session\SessionManagerInterface as CoreSession;
 
 class Decider extends AbstractHelper
 {
@@ -33,10 +33,14 @@ class Decider extends AbstractHelper
      */
     private $_manager;
 
-    /** @var State */
+    /**
+     * @var State
+     */
     private $_state;
 
-    /** @var CoreSession */
+    /**
+     * @var CoreSession
+     */
     private $_session;
 
     /**
@@ -50,11 +54,11 @@ class Decider extends AbstractHelper
     private $_fsFactory;
 
     /**
-     * @param Context              $context
-     * @param CoreSession          $coreSession
-     * @param State                $state
-     * @param Manager              $manager
-     * @param FeatureSwitchFactory $fsFactory
+     * @param Context                 $context
+     * @param CoreSession             $coreSession
+     * @param State                   $state
+     * @param Manager                 $manager
+     * @param FeatureSwitchFactory    $fsFactory
      * @param FeatureSwitchRepository $fsRepo
      */
     public function __construct(
@@ -84,7 +88,8 @@ class Decider extends AbstractHelper
      *   and compare with rolloutPercentage to decide if in bucket.
      *
      * @param string $switchName
-     * @param int $rolloutPercentage
+     * @param int    $rolloutPercentage
+     *
      * @return bool
      */
     private function _isInBucket(string $switchName, int $rolloutPercentage)
@@ -145,12 +150,11 @@ class Decider extends AbstractHelper
 
         if ($switch->getRolloutPercentage() == 0) {
             $isSwitchEnabled = $switch->getDefaultValue();
-        } else if ($switch->getRolloutPercentage() == 100) {
+        } elseif ($switch->getRolloutPercentage() == 100) {
             $isSwitchEnabled = $switch->getValue();
         } else {
-            $isInBucket = $this
-                ->_isInBucket($switchName, $switch->getRolloutPercentage());
-            $isSwitchEnabled =$isInBucket ? $switch->getValue() : $switch->getDefaultValue();
+            $isInBucket = $this->_isInBucket($switchName, $switch->getRolloutPercentage());
+            $isSwitchEnabled = $isInBucket ? $switch->getValue() : $switch->getDefaultValue();
         }
 
         return (bool) $isSwitchEnabled;
@@ -250,27 +254,33 @@ class Decider extends AbstractHelper
         return $this->isSwitchEnabled(Definitions::M2_ALWAYS_PRESENT_CHECKOUT);
     }
 
-    public function ifShouldDisablePrefillAddressForLoggedInCustomer() {
+    public function ifShouldDisablePrefillAddressForLoggedInCustomer()
+    {
         return $this->isSwitchEnabled(Definitions::M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER);
     }
 
-    public function handleVirtualProductsAsPhysical() {
+    public function handleVirtualProductsAsPhysical()
+    {
         return $this->isSwitchEnabled(Definitions::M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL);
     }
 
-    public function isIncludeUserGroupIntoCart() {
+    public function isIncludeUserGroupIntoCart()
+    {
         return $this->isSwitchEnabled(Definitions::M2_INCLUDE_USER_GROUP_ID_INTO_CART);
     }
 
-    public function isCaptureEmailToListrakEnabled() {
+    public function isCaptureEmailToListrakEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED);
     }
 
-    public function isPrefetchShippingEnabled() {
+    public function isPrefetchShippingEnabled()
+    {
         return $this->isSwitchEnabled(Definitions::M2_PREFETCH_SHIPPING);
     }
 
-    public function ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn() {
+    public function ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn()
+    {
         return $this->isSwitchEnabled(Definitions::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN);
     }
 
@@ -282,5 +292,10 @@ class Decider extends AbstractHelper
     public function isAddSessionIdToCartMetadata()
     {
         return $this->isSwitchEnabled(Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA);
+    }
+
+    public function isBoltSSOEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_ENABLE_BOLT_SSO);
     }
 }
