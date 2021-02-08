@@ -694,13 +694,13 @@ class UpdateCartCommonTest extends BoltTestCase
         $this->initCurrentMock();
         
         $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
-            ->setMethods(['getProductId', 'getQty', 'getId', 'getSku', 'getCalculationPrice', 'getProduct'])
+            ->setMethods(['getProductId', 'getQty', 'getId', 'getSku', 'getCalculationPrice'])
             ->disableOriginalConstructor()
             ->getMock();
         $quoteItem->method('getProductId')->willReturn(100);
         $quoteItem->method('getQty')->willReturn(1);
         $quoteItem->method('getId')->willReturn(60);
-        $quoteItem->method('getSku')->willReturn('psku-option');
+        $quoteItem->method('getSku')->willReturn('psku');
         $quoteItem->method('getCalculationPrice')->willReturn(1000);
         
         $productMock = $this->createMock(Product::class);
@@ -708,15 +708,6 @@ class UpdateCartCommonTest extends BoltTestCase
         $this->productRepositoryInterface->expects(static::once())->method('get')->with('psku')
             ->willReturn($productMock);
         
-        $quoteItem->method('getProduct')->willReturn($productMock);
-        
-        $customizableOptions = ['customizableOptions'];
-        
-        $this->cartHelper->expects(self::once())->method('getProductCustomizableOptions')
-            ->with($productMock)->willReturn($customizableOptions);
-        $this->cartHelper->expects(self::once())->method('getProductActualSkuByCustomizableOptions')
-            ->with('psku-option', $customizableOptions)->willReturn('psku');
-            
         $quote = $this->getQuoteMock(
             self::PARENT_QUOTE_ID,
             self::PARENT_QUOTE_ID,
