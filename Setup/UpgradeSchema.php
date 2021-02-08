@@ -14,6 +14,7 @@
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 namespace Bolt\Boltpay\Setup;
 
 use Magento\Framework\Setup\ModuleContextInterface;
@@ -34,11 +35,11 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $setup->getTable('quote'),
             'bolt_parent_quote_id',
             [
-                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                'type'     => \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
                 'nullable' => true,
-                'default' => null,
+                'default'  => null,
                 'unsigned' => true,
-                'comment' => 'Original Quote ID'
+                'comment'  => 'Original Quote ID'
             ]
         );
 
@@ -46,10 +47,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $setup->getTable('quote'),
             'bolt_reserved_order_id',
             [
-                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
-                'length' => 64,
+                'type'     => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                'length'   => 64,
                 'nullable' => true,
-                'comment' => 'Bolt Reserved Order Id'
+                'comment'  => 'Bolt Reserved Order Id'
             ]
         );
 
@@ -62,11 +63,11 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $setup->getTable('quote'),
             'bolt_checkout_type',
             [
-                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_SMALLINT,
+                'type'     => \Magento\Framework\DB\Ddl\Table::TYPE_SMALLINT,
                 'unsigned' => true,
                 'nullable' => false,
-                'default' => '1',
-                'comment' => '1 - multi-step, 2 - PPC, 3 - back office, 4 - PPC complete'
+                'default'  => '1',
+                'comment'  => '1 - multi-step, 2 - PPC, 3 - back office, 4 - PPC complete'
             ]
         );
 
@@ -80,10 +81,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $setup->getTable('sales_order'),
             'bolt_transaction_reference',
             [
-                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
-                'length' => 64,
+                'type'     => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                'length'   => 64,
                 'nullable' => true,
-                'comment' => 'Bolt Transaction Reference'
+                'comment'  => 'Bolt Transaction Reference'
             ]
         );
 
@@ -91,13 +92,13 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $setup->getTable('quote'),
             'bolt_dispatched',
             [
-                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
+                'type'     => \Magento\Framework\DB\Ddl\Table::TYPE_BOOLEAN,
                 'nullable' => true,
-                'comment' => 'Order dispatched flag'
+                'comment'  => 'Order dispatched flag'
             ]
         );
 
-        $this->setUpFeatureBoltCustomerCreditCardsTable($setup);
+        $this->setupFeatureBoltCustomerCreditCardsTable($setup);
 
         $this->setupWebhookLogTable($setup);
 
@@ -106,45 +107,6 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $this->setupExternalCustomerEntityTable($setup);
 
         $setup->endSetup();
-    }
-
-    private function setupWebhookLogTable($setup)
-    {
-        $tableCreated = $setup->getConnection()->isTableExists('bolt_webhook_log');
-        if ($tableCreated) {
-            return;
-        }
-
-        $table = $setup->getConnection()
-            ->newTable($setup->getTable('bolt_webhook_log'))
-            ->addColumn(
-                'id',
-                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
-                null,
-                ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
-                'ID'
-            )
-            ->addColumn(
-                'transaction_id',
-                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
-                255,
-                ['nullable' => false],
-                'transaction id'
-            )->addColumn(
-                'hook_type',
-                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
-                255,
-                ['nullable' => false],
-                'Hook type'
-            )
-            ->addColumn(
-                'number_of_missing_quote_failed_hooks',
-                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
-                null,
-                ['nullable' => false, 'default' => '0'],
-                'number of the missing quote failed hooks'
-            )->setComment("Bolt Webhook Log table");
-        $setup->getConnection()->createTable($table);
     }
 
     private function setupFeatureBoltCustomerCreditCardsTable(SchemaSetupInterface $setup)
@@ -211,6 +173,45 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $setup->getConnection()->createTable($table);
     }
 
+    private function setupWebhookLogTable($setup)
+    {
+        $tableCreated = $setup->getConnection()->isTableExists('bolt_webhook_log');
+        if ($tableCreated) {
+            return;
+        }
+
+        $table = $setup->getConnection()
+            ->newTable($setup->getTable('bolt_webhook_log'))
+            ->addColumn(
+                'id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
+                'ID'
+            )
+            ->addColumn(
+                'transaction_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'transaction id'
+            )->addColumn(
+                'hook_type',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'Hook type'
+            )
+            ->addColumn(
+                'number_of_missing_quote_failed_hooks',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['nullable' => false, 'default' => '0'],
+                'number of the missing quote failed hooks'
+            )->setComment("Bolt Webhook Log table");
+        $setup->getConnection()->createTable($table);
+    }
+
     private function updateWebhookLogTable($setup)
     {
         $tableCreated = $setup->getConnection()->isTableExists('bolt_webhook_log');
@@ -222,7 +223,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $setup->getTable('bolt_webhook_log'),
             'updated_at',
             [
-                'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TIMESTAMP,
+                'type'    => \Magento\Framework\DB\Ddl\Table::TYPE_TIMESTAMP,
                 'comment' => 'Updated At'
             ]
         );

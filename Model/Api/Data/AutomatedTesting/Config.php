@@ -39,6 +39,7 @@ class Config implements \JsonSerializable
 
     /**
      * @param StoreItem[] $storeItems
+     *
      * @return $this
      */
     public function setStoreItems($storeItems)
@@ -57,6 +58,7 @@ class Config implements \JsonSerializable
 
     /**
      * @param Cart $cart
+     *
      * @return $this
      */
     public function setCart($cart)
@@ -72,7 +74,7 @@ class Config implements \JsonSerializable
     {
         return [
             'storeItems' => $this->storeItems,
-            'cart' => $this->cart
+            'cart'       => $this->cart
         ];
     }
 }
