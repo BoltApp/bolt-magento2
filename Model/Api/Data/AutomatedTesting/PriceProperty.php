@@ -39,6 +39,7 @@ class PriceProperty implements \JsonSerializable
 
     /**
      * @param string $name
+     *
      * @return $this
      */
     public function setName($name)
@@ -57,6 +58,7 @@ class PriceProperty implements \JsonSerializable
 
     /**
      * @param string $price
+     *
      * @return $this
      */
     public function setPrice($price)
