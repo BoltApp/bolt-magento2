@@ -22,6 +22,15 @@
             <block class="Bolt\Boltpay\Block\Js" name="bolt.checkout.button" before="-" template="Bolt_Boltpay::button.phtml" />
         </referenceContainer>
 
+        <referenceContainer name="cart.discount">
+            <block class="Bolt\Boltpay\Block\Js" name="bolt.checkout.discount"
+                   template="Bolt_Boltpay::checkout/cart/discounts.phtml" after="-">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">Bolt\Boltpay\ViewModel\CartDiscounts</argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+
         <referenceBlock name="checkout.cart.totals">
             <arguments>
                 <argument name="jsLayout" xsi:type="array">

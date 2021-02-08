@@ -41,11 +41,11 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 /**
  * Trait UpdateDiscountTrait
- * 
+ *
  * @package Bolt\Boltpay\Model\Api
  */
 trait UpdateDiscountTrait
-{  
+{
     /**
      * @var RuleRepository
      */
@@ -90,12 +90,12 @@ trait UpdateDiscountTrait
      * @var TotalsCollector
      */
     protected $totalsCollector;
-    
+
     /**
      * @var SessionHelper
      */
     protected $sessionHelper;
-    
+
     /**
      * @var EventsForThirdPartyModules
      */
@@ -121,7 +121,7 @@ trait UpdateDiscountTrait
         $this->sessionHelper = $updateCartContext->getSessionHelper();
         $this->eventsForThirdPartyModules = $updateCartContext->getEventsForThirdPartyModules();
     }
-    
+
     /**
      * Verify if the code is coupon or gift card and return proper object
      *
@@ -129,7 +129,7 @@ trait UpdateDiscountTrait
      * @param Quote $quote
      *
      * @throws BoltException
-     * 
+     *
      * @return object|null
      */
     protected function verifyCouponCode( $couponCode, $quote )
@@ -142,15 +142,15 @@ trait UpdateDiscountTrait
                 BoltErrorResponse::ERR_CODE_INVALID
             );
         }
-        
+
         $storeId = $quote->getStoreId();
         $websiteId = $quote->getStore()->getWebsiteId();
-   
+
         // Load the Unirgy_GiftCert object
         if (empty($giftCard)) {
             $giftCard = $this->discountHelper->loadUnirgyGiftCertData($couponCode, $storeId);
         }
-       
+
         if (empty($giftCard)) {
             $giftCard = $this->eventsForThirdPartyModules->runFilter("loadGiftcard", null, $couponCode, $quote);
         }
@@ -169,10 +169,10 @@ trait UpdateDiscountTrait
                 BoltErrorResponse::ERR_CODE_INVALID
             );
         }
-        
+
         return [$coupon, $giftCard];
     }
-    
+
     /**
      * Apply discount to quote
      *
@@ -192,7 +192,7 @@ trait UpdateDiscountTrait
         } else {
             throw new WebApiException(__('Something happened with current code.'));
         }
-        
+
         return $result;
     }
 
@@ -234,7 +234,7 @@ trait UpdateDiscountTrait
                 $quote
             );
         }
-        
+
         if (!$rule->getIsActive()) {
             $this->logHelper->addInfoLog('Error: coupon is inactive.');
             throw new BoltException(
@@ -357,7 +357,7 @@ trait UpdateDiscountTrait
         $address = $quote->isVirtual() ?
             $quote->getBillingAddress() :
             $quote->getShippingAddress();
-            
+
         $boltCollectSaleRuleDiscounts = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
         if (!isset($boltCollectSaleRuleDiscounts[$ruleId])) {
             throw new BoltException(
@@ -369,7 +369,7 @@ trait UpdateDiscountTrait
         }
 
         $description = $rule->getDescription();
-        $display = $description != '' ? $description : 'Discount (' . $couponCode . ')'; 
+        $display = $description != '' ? $description : 'Discount (' . $couponCode . ')';
 
         $result = [
             'status'          => 'success',
@@ -378,7 +378,7 @@ trait UpdateDiscountTrait
             'description'     => $display,
             'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
         ];
-    
+
         return $result;
     }
 
@@ -386,7 +386,7 @@ trait UpdateDiscountTrait
      * @param string $couponCode
      * @param object $giftCard
      * @param Quote $quote
-     * 
+     *
      * @return boolean
      * @throws BoltException
      */
@@ -414,7 +414,7 @@ trait UpdateDiscountTrait
 
         return true;
     }
-    
+
     /**
      * Remove discount from quote
      *
@@ -428,17 +428,23 @@ trait UpdateDiscountTrait
      */
     protected function removeDiscount($couponCode, $discounts, $quote, $websiteId, $storeId)
     {
-        try{
-            if(array_key_exists($couponCode, $discounts)){
+        try {
+            if (array_key_exists($couponCode, $discounts)) {
                 if ($discounts[$couponCode] == 'coupon') {
                     //sends response
                     $this->removeCouponCode($quote);
-                } else if ($discounts[$couponCode] == DiscountHelper::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT) {
+                } elseif ($discounts[$couponCode] == DiscountHelper::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT) {
                     //handles exceptions already, no return value
-                    $this->eventsForThirdPartyModules->dispatchEvent("removeAppliedStoreCredit", $couponCode, $quote, $websiteId, $storeId);
+                    $this->eventsForThirdPartyModules->dispatchEvent(
+                        "removeAppliedStoreCredit",
+                        $couponCode,
+                        $quote,
+                        $websiteId,
+                        $storeId
+                    );
                 } else {
                     //throws BoltException that will be caught in UpdateCart::execute()
-                    $result = $this->verifyCouponCode($couponCode, $quote);        
+                    $result = $this->verifyCouponCode($couponCode, $quote);
                     list(, $giftCard) = $result;
                     //sends response
                     $this->removeGiftCardCode($couponCode, $giftCard, $quote);
@@ -456,15 +462,15 @@ trait UpdateDiscountTrait
 
             return false;
         }
-        
+
         return true;
     }
-    
+
     /**
      * Remove coupon from quote
      *
      * @param Quote $quote
-     * 
+     *
      * @return boolean
      */
     protected function removeCouponCode($quote)
@@ -484,7 +490,7 @@ trait UpdateDiscountTrait
 
         return true;
     }
-    
+
     /**
      * Remove gift card from quote
      *
@@ -521,7 +527,7 @@ trait UpdateDiscountTrait
 
         return true;
     }
-    
+
     /**
      *
      * @param string $couponCode
@@ -533,7 +539,7 @@ trait UpdateDiscountTrait
     {
         try {
             $availableStoreCredits = $this->eventsForThirdPartyModules->runFilter("filterVerifyAppliedStoreCredit", [], $couponCode, $quote);
- 
+
             if (in_array($couponCode, $availableStoreCredits)) {
                 return [
                     [

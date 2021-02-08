@@ -36,7 +36,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         __construct as private UpdateDiscountTraitConstructor;
         applyingGiftCardCode as private UpdateDiscountTraitApplyingGiftCardCode;
     }
-    
+
     /**
      * @var array
      */
@@ -124,7 +124,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
             $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($requestArray['cart']);
             if (!$immutableQuoteId) {
                 $immutableQuoteId = $parentQuoteId;
-            }                
+            }
         } else {
             throw new BoltException(
                 __('The cart.order_reference is not set or empty.'),
@@ -132,7 +132,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
             );
         }
-        
+
         // Get the coupon code
         $discount_code = $requestArray['discount_code'] ?? $requestArray['cart']['discount_code'] ?? null;
         $couponCode = trim($discount_code);
@@ -145,21 +145,21 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 BoltErrorResponse::ERR_CODE_INVALID
             );
         }
-        
+
         $this->requestArray = $requestArray;
 
         $result = $this->validateQuote($immutableQuoteId);
 
         list($parentQuote, $immutableQuote) = $result;
-        
+
         $storeId = $parentQuote->getStoreId();
 
         $this->preProcessWebhook($storeId);
-        
+
         $parentQuote->getStore()->setCurrentCurrencyCode($parentQuote->getQuoteCurrencyCode());
-        
+
         $this->updateSession($parentQuote, $requestArray['cart']['metadata']);
-     
+
         // Set the shipment if request payload has that info.
         if (!empty($requestArray['cart']['shipments'][0]['reference'])) {
             $this->setShipment($requestArray['cart']['shipments'][0], $immutableQuote);
@@ -167,7 +167,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
 
         // Verify if the code is coupon or gift card and return proper object
         $result = $this->verifyCouponCode($couponCode, $parentQuote);
-        
+
         list($coupon, $giftCard) = $result;
 
         $this->eventsForThirdPartyModules->dispatchEvent("beforeApplyDiscount", $parentQuote);
@@ -184,7 +184,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
             throw new WebApiException(__('Something happened with current code.'));
         }
 
-        // we shouldn't be able to get inside this if statement. Anything resulting in it 
+        // we shouldn't be able to get inside this if statement. Anything resulting in it
         // evaluating to true would have thrown an exception already
         if (!$result || (isset($result['status']) && $result['status'] === 'error')) {
             // Already sent a response with error, so just return.
@@ -304,7 +304,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
 
         $this->logHelper->addInfoLog('### sendErrorResponse');
         $this->logHelper->addInfoLog($encodeErrorResult);
-        
+
         $this->bugsnag->notifyException(new \Exception($message));
 
         $this->response->setHttpResponseCode($httpStatusCode);
@@ -332,7 +332,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         return $result;
     }
 
-    
+
 
     /**
      * @param string $couponCode

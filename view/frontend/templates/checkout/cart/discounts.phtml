@@ -1,0 +1,22 @@
+<?php
+/** @var \Bolt\Boltpay\Block\Js $block */
+/** @var \Bolt\Boltpay\ViewModel\CartDiscounts $cartDiscounts */
+
+$cartDiscounts = $block->getViewModel();
+$jsLayout = $cartDiscounts->getJsLayout();
+if (!$jsLayout) {
+    return;
+}
+?>
+<div id="<?php echo $cartDiscounts->getId(); ?>"
+     data-bind="scope: '<?php echo $cartDiscounts->getId(); ?>'"
+     class="block">
+    <!-- ko template: getTemplate() --><!-- /ko -->
+    <script type="text/x-magento-init">
+        {
+            "#<?php echo $cartDiscounts->getId(); ?>": {
+                "Magento_Ui/js/core/app": <?php echo $jsLayout; ?>
+            }
+        }
+    </script>
+</div>
