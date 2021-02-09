@@ -33,7 +33,7 @@ use ReflectionException;
 class UpgradeSchemaTest extends BoltTestCase
 {
     /**
-     *  @var AdapterInterface|MockObject mocked instance of the database connection class
+     * @var AdapterInterface|MockObject mocked instance of the database connection class
      */
     private $dbAdapter;
 
