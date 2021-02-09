@@ -510,7 +510,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonPending()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         global $apiRequestResult;
         
@@ -574,7 +574,7 @@ class OrderManagementTest extends BoltTestCase
 
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_PAYMENT_REVIEW, $order->getState());
-        $this->assertRegexp('/update was successful/', $responseData['message']);
+        $this->assertMatchesRegularExpression('/update was successful/', $responseData['message']);
     }
     
     /**
@@ -585,7 +585,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonAuth()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         global $apiRequestResult;
         
@@ -651,7 +651,7 @@ class OrderManagementTest extends BoltTestCase
         
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_PROCESSING, $order->getState());
-        $this->assertRegexp('/update was successful/', $responseData['message']);
+        $this->assertMatchesRegularExpression('/update was successful/', $responseData['message']);
     }
     
     /**
@@ -662,7 +662,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonCapture()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         global $apiRequestResult;
         
@@ -739,7 +739,7 @@ class OrderManagementTest extends BoltTestCase
         
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_PROCESSING, $order->getState());
-        $this->assertRegexp('/update was successful/', $responseData['message']);
+        $this->assertMatchesRegularExpression('/update was successful/', $responseData['message']);
     }
     
     /**
@@ -750,7 +750,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonCaptureIgnoreHookForInvoiceCreationIsEnabled()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         global $apiRequestResult;
         
@@ -851,7 +851,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonFailedPayment()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         global $apiRequestResult;
         
@@ -925,7 +925,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonFailedPaymentCancelled()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         global $apiRequestResult;
         
@@ -1025,7 +1025,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonFailedPaymentCancelledInvalidOrderState()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         global $apiRequestResult;
         
@@ -1116,7 +1116,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonRejectedIrreversible()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         global $apiRequestResult;
         
@@ -1186,7 +1186,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonRejectedIrreversibleOrderNotExist()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         global $apiRequestResult;
         
@@ -1248,7 +1248,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonCredit()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         global $apiRequestResult;
         
@@ -1354,7 +1354,7 @@ class OrderManagementTest extends BoltTestCase
 
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_CLOSED, $order->getState());
-        $this->assertRegexp('/update was successful/', $responseData['message']);
+        $this->assertMatchesRegularExpression('/update was successful/', $responseData['message']);
     }
     
     /**
@@ -1365,7 +1365,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonCreditIgnoreHookForCreditMemoCreationIsEnabled()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         global $apiRequestResult;
         
@@ -1481,7 +1481,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonVoid()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         global $apiRequestResult;
         
@@ -1541,7 +1541,7 @@ class OrderManagementTest extends BoltTestCase
 
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_CANCELED, $order->getState());
-        $this->assertRegexp('/update was successful/', $responseData['message']);
+        $this->assertMatchesRegularExpression('/update was successful/', $responseData['message']);
     }
     
     /**
@@ -1552,7 +1552,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonRejectedReversible()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         global $apiRequestResult;
         
@@ -1612,7 +1612,7 @@ class OrderManagementTest extends BoltTestCase
 
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_PAYMENT_REVIEW, $order->getState());
-        $this->assertRegexp('/update was successful/', $responseData['message']);
+        $this->assertMatchesRegularExpression('/update was successful/', $responseData['message']);
     }
     
     /**
@@ -1623,7 +1623,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonCartCreate()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
@@ -1689,7 +1689,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonCartCreateError()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
@@ -1737,7 +1737,7 @@ class OrderManagementTest extends BoltTestCase
 
         $this->assertEquals('error', $responseData['status']);
         $this->assertEquals(6009, $responseData['code']);
-        $this->assertEquals('Unprocessable Entity: The product that was requested doesn\'t exist. Verify the product and try again.', $responseData['message']);
+        $this->assertMatchesRegularExpression('/Unprocessable Entity/', $responseData['message']);
     }
     
     /**
@@ -1748,7 +1748,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManagePreconditionFailed()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         global $apiRequestResult;
         
@@ -1843,7 +1843,7 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageEmptyReference()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
         

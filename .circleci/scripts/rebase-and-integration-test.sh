@@ -14,10 +14,10 @@ fi
 
 export TEST_ENV="php72"
 export MAGENTO_VERSION="2.2.8"
-export COMPOSER_MEMORY_LIMIT=3G
+export COMPOSER_MEMORY_LIMIT=5G
 
-echo "Start unit tests..."
-if ! ./Test/scripts/ci-unit.sh; then
+echo "Start Bolt Integration Tests..."
+if ! ./Test/scripts/ci-magento-integration.sh; then
   echo "unit tests failed"
   exit 1
 fi
