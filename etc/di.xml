@@ -69,6 +69,9 @@
     <!-- For debug endpoint -->
     <preference for="Bolt\Boltpay\Api\DebugInterface" type="Bolt\Boltpay\Model\Api\Debug" />
 
+    <!-- For debug endpoint -->
+    <preference for="Bolt\Boltpay\Api\OAuthRedirectInterface" type="Bolt\Boltpay\Model\Api\OAuthRedirect" />
+
     <!-- For debug save endpoint -->
     <preference for="Bolt\Boltpay\Api\UpdateSettingsInterface" type="Bolt\Boltpay\Model\Api\UpdateSettings" />
     

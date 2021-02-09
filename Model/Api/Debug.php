@@ -147,7 +147,7 @@ class Debug implements DebugInterface
         $result->setAutomatedTestingConfig($this->automatedTestingHelper->getAutomatedTestingConfig());
 
         // prepare response
-        $this->response->setHeader('Content-Type', 'json');
+        $this->response->setHeader('Content-Type', 'application/json');
         $this->response->setHttpResponseCode(200);
         $this->response->setBody(
             json_encode([

@@ -169,7 +169,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'entity_id',
                 \Magento\Framework\DB\Ddl\Table::ACTION_CASCADE
             )
-            ->setComment("Bolt customer credit cards");
+            ->setComment('Bolt customer credit cards');
         $setup->getConnection()->createTable($table);
     }
 
@@ -208,7 +208,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 null,
                 ['nullable' => false, 'default' => '0'],
                 'number of the missing quote failed hooks'
-            )->setComment("Bolt Webhook Log table");
+            )->setComment('Bolt Webhook Log table');
         $setup->getConnection()->createTable($table);
     }
 
@@ -258,7 +258,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 null,
                 ['nullable' => false],
                 'Customer ID'
-            )->setComment("Bolt External Customer Entity table");
+            )->setComment('Bolt External Customer Entity table');
         $setup->getConnection()->createTable($table);
     }
 }

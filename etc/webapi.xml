@@ -104,7 +104,7 @@
         </resources>
     </route>
     <!--OAuth Redirect Endpoint-->
-    <route url="/V1/bolt/boltpay/oauthredirect" method="POST">
+    <route url="/V1/bolt/boltpay/oauth_redirect" method="POST">
         <service class="Bolt\Boltpay\Api\OAuthRedirectInterface" method="login"/>
         <resources>
             <resource ref="anonymous" />
