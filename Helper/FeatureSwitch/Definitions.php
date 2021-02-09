@@ -159,148 +159,148 @@ class Definitions
 
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
-            self::NAME_KEY            => self::M2_SAMPLE_SWITCH_NAME,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_BOLT_ENABLED => [
-            self::NAME_KEY            => self::M2_BOLT_ENABLED,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 100
+            self::NAME_KEY        => self::M2_BOLT_ENABLED,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
         ],
         self::M2_LOG_MISSING_QUOTE_FAILED_HOOKS => [
-            self::NAME_KEY            => self::M2_LOG_MISSING_QUOTE_FAILED_HOOKS,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 100
+            self::NAME_KEY        => self::M2_LOG_MISSING_QUOTE_FAILED_HOOKS,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
         ],
         self::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER => [
-            self::NAME_KEY            => self::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED => [
-            self::NAME_KEY            => self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_TRACK_SHIPMENT => [
-            self::NAME_KEY            => self::M2_TRACK_SHIPMENT,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 100
+            self::NAME_KEY        => self::M2_TRACK_SHIPMENT,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
         ],
         self::M2_TRACK_NON_BOLT => [
-            self::NAME_KEY            => self::M2_TRACK_NON_BOLT,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_TRACK_NON_BOLT,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_ORDER_MANAGEMENT => [
-            self::NAME_KEY            => self::M2_ORDER_MANAGEMENT,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 100
+            self::NAME_KEY        => self::M2_ORDER_MANAGEMENT,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
         ],
         self::M2_PAY_BY_LINK => [
-            self::NAME_KEY            => self::M2_PAY_BY_LINK,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 100
+            self::NAME_KEY        => self::M2_PAY_BY_LINK,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
         ],
         self::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION => [
-            self::NAME_KEY            => self::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_IGNORE_HOOK_FOR_CREDIT_MEMO_CREATION,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_IGNORE_HOOK_FOR_INVOICE_CREATION => [
-            self::NAME_KEY            => self::M2_IGNORE_HOOK_FOR_INVOICE_CREATION,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_IGNORE_HOOK_FOR_INVOICE_CREATION,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_MERCHANT_METRICS => [
-            self::NAME_KEY            => self::M2_MERCHANT_METRICS,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 100
+            self::NAME_KEY        => self::M2_MERCHANT_METRICS,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
         ],
         self::M2_INSTANT_BOLT_CHECKOUT_BUTTON => [
-            self::NAME_KEY            => self::M2_INSTANT_BOLT_CHECKOUT_BUTTON,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_INSTANT_BOLT_CHECKOUT_BUTTON,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_SAVE_HINTS_IN_SECTIONS => [
-            self::NAME_KEY            => self::M2_SAVE_HINTS_IN_SECTIONS,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 100
+            self::NAME_KEY        => self::M2_SAVE_HINTS_IN_SECTIONS,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
         ],
         self::M2_ALWAYS_PRESENT_CHECKOUT => [
-            self::NAME_KEY            => self::M2_ALWAYS_PRESENT_CHECKOUT,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_ALWAYS_PRESENT_CHECKOUT,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER => [
-            self::NAME_KEY            => self::M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_IF_SHOULD_DISABLE_PREFILL_ADDRESS_FROM_BOLT_FOR_LOGGED_IN_CUSTOMER,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL => [
-            self::NAME_KEY            => self::M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_INCLUDE_USER_GROUP_ID_INTO_CART => [
-            self::NAME_KEY            => self::M2_INCLUDE_USER_GROUP_ID_INTO_CART,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_INCLUDE_USER_GROUP_ID_INTO_CART,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED => [
-            self::NAME_KEY            => self::M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 100
+            self::NAME_KEY        => self::M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
         ],
         self::M2_PREFETCH_SHIPPING => [
-            self::NAME_KEY            => self::M2_PREFETCH_SHIPPING,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_PREFETCH_SHIPPING,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN => [
-            self::NAME_KEY            => self::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_CANCEL_FAILED_PAYMENT_ORDERS_INSTEAD_OF_DELETING => [
-            self::NAME_KEY            => self::M2_CANCEL_FAILED_PAYMENT_ORDERS_INSTEAD_OF_DELETING,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_CANCEL_FAILED_PAYMENT_ORDERS_INSTEAD_OF_DELETING,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_ADD_SESSION_ID_TO_CART_METADATA => [
-            self::NAME_KEY            => self::M2_ADD_SESSION_ID_TO_CART_METADATA,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_ADD_SESSION_ID_TO_CART_METADATA,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_ENABLE_BOLT_SSO => [
-            self::NAME_KEY            => self::M2_ENABLE_BOLT_SSO,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => false,
-            self::ROLLOUT_KEY         => 0
+            self::NAME_KEY        => self::M2_ENABLE_BOLT_SSO,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ]
     ];
 }
