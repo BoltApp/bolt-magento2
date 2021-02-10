@@ -1639,6 +1639,50 @@ class CartTest extends BoltTestCase
 
         TestHelper::invokeMethod($currentMock, 'transferData', [$this->quoteMock, $childQuoteMock]);
     }
+    
+    /**
+     * @test
+     * that transferData with default email and exclude fields parameters transfers data from provided parent Address to child Address, and unset cached_items_all field
+     *
+     * @covers ::transferData
+     *
+     * @throws ReflectionException if transferData method is not defined
+     */
+    public function transferData_withDefaultFields_transfersDataFromParentAddressToChildAddressAndSavesTheChild()
+    {
+        $currentMock = $this->getCurrentMock(['validateEmail']);
+
+        $addressParentShippingAddress = $this->createMock(Quote\Address::class);
+        
+        $addressParentShippingAddress->expects(static::once())->method('getData')->willReturn(
+            [
+                'email'     => $this->testAddressData['email'],
+                'firstname' => $this->testAddressData['first_name'],
+                'lastname'  => $this->testAddressData['last_name'],
+                'street'    => $this->testAddressData['street_address1'],
+                'city'      => $this->testAddressData['locality'],
+                'region'    => $this->testAddressData['region'],
+                'postcode'  => $this->testAddressData['postal_code'],
+            ]
+        );
+
+        $addressChildShippingAddress = $this->createMock(Quote\Address::class);
+        
+        $addressChildShippingAddress->expects(static::atLeastOnce())->method('setData')->withConsecutive(
+            ['email', $this->testAddressData['email']],
+            ['firstname', $this->testAddressData['first_name']],
+            ['lastname', $this->testAddressData['last_name']],
+            ['street', $this->testAddressData['street_address1']],
+            ['city', $this->testAddressData['locality']],
+            ['region', $this->testAddressData['region']],
+            ['postcode', $this->testAddressData['postal_code']]
+        );
+        $addressChildShippingAddress->expects(static::once())->method('save');
+        
+        $currentMock->expects(static::once())->method('validateEmail')->with($this->testAddressData['email'])->willReturn(true);
+
+        TestHelper::invokeMethod($currentMock, 'transferData', [$addressParentShippingAddress, $addressChildShippingAddress]);
+    }
 
     /**
      * Setup method for tests covering {@see \Bolt\Boltpay\Helper\Cart::replicateQuoteData}

@@ -1120,6 +1120,12 @@ class Cart extends AbstractHelper
 
             $child->setData($key, $value);
         }
+        
+        // Reset the calculated items of address, so address->getAllItems() can return up-to-date data.
+        if ($child instanceof \Magento\Customer\Model\Address\AbstractAddress) {
+            $child->unsetData("cached_items_all");
+        }
+        
         if ($save) {
             $child->save();
         }
