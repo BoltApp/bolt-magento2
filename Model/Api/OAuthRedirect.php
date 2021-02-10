@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\OAuthRedirectInterface;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Rest\Response;
 
 class OAuthRedirect implements OAuthRedirectInterface
@@ -53,21 +54,18 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param string $authorization_code
      *
      * @return void
+     *
+     * @throws NoSuchEntityException
      */
     public function login($authorization_code = '')
     {
         if (!$this->deciderHelper->isBoltSSOEnabled()) {
-            $this->sendErrorResponse('Bolt SSO feature not enabled');
+            throw new NoSuchEntityException(__('Request does not match any route.'));
         }
 
-        $this->sendErrorResponse('Not implemented');
-    }
-
-    private function sendErrorResponse($message)
-    {
         $this->response->setHeader('Content-Type', 'application/json');
         $this->response->setHttpResponseCode(500);
-        $this->response->setBody(json_encode(['message' => $message]));
+        $this->response->setBody(json_encode(['message' => 'Not implemented']));
         $this->response->sendResponse();
     }
 }

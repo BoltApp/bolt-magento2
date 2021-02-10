@@ -69,7 +69,7 @@
     <!-- For debug endpoint -->
     <preference for="Bolt\Boltpay\Api\DebugInterface" type="Bolt\Boltpay\Model\Api\Debug" />
 
-    <!-- For debug endpoint -->
+    <!-- For oauth_redirect endpoint -->
     <preference for="Bolt\Boltpay\Api\OAuthRedirectInterface" type="Bolt\Boltpay\Model\Api\OAuthRedirect" />
 
     <!-- For debug save endpoint -->
