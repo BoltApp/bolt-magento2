@@ -72,7 +72,7 @@ class Recurring implements InstallSchemaInterface
                 null,
                 ['nullable' => false, 'default' => '0'],
                 'rollout percentage'
-            )->setComment("Bolt feature switch table");
+            )->setComment('Bolt feature switch table');
         $setup->getConnection()->createTable($table);
     }
 }

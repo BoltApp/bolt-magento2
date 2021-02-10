@@ -79,9 +79,9 @@ class RecurringData implements InstallDataInterface
             $this->_logHelper->addInfoLog('RecurringData: failed updating feature switches');
             $this->_logHelper->addInfoLog($encodedError);
             $this->_metricsClient->processMetric(
-                "feature_switch.recurring.failure",
+                'feature_switch.recurring.failure',
                 1,
-                "feature_switch.recurring.latency",
+                'feature_switch.recurring.latency',
                 $startTime
             );
             return;
