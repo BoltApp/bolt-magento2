@@ -52,6 +52,11 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
 class AutomatedTestingTest extends BoltTestCase
 {
     /**
+     * @var Context|MockObject
+     */
+    private $context;
+
+    /**
      * @var ProductRepository|MockObject
      */
     private $productRepository;
