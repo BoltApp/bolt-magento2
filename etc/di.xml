@@ -12,7 +12,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 -->
@@ -68,6 +68,9 @@
 
     <!-- For debug endpoint -->
     <preference for="Bolt\Boltpay\Api\DebugInterface" type="Bolt\Boltpay\Model\Api\Debug" />
+
+    <!-- For oauth_redirect endpoint -->
+    <preference for="Bolt\Boltpay\Api\OAuthRedirectInterface" type="Bolt\Boltpay\Model\Api\OAuthRedirect" />
 
     <!-- For debug save endpoint -->
     <preference for="Bolt\Boltpay\Api\UpdateSettingsInterface" type="Bolt\Boltpay\Model\Api\UpdateSettings" />

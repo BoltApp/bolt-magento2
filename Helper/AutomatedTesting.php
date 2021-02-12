@@ -115,20 +115,20 @@ class AutomatedTesting extends AbstractHelper
     private $stockRegistry;
 
     /**
-     * @param Context $context
-     * @param ProductRepository $productRepository
-     * @param SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param ConfigFactory $configFactory
-     * @param StoreItemFactory $storeItemFactory
-     * @param CartFactory $cartFactory
-     * @param CartItemFactory $cartItemFactory
-     * @param PricePropertyFactory $pricePropertyFactory
+     * @param Context                 $context
+     * @param ProductRepository       $productRepository
+     * @param SearchCriteriaBuilder   $searchCriteriaBuilder
+     * @param ConfigFactory           $configFactory
+     * @param StoreItemFactory        $storeItemFactory
+     * @param CartFactory             $cartFactory
+     * @param CartItemFactory         $cartItemFactory
+     * @param PricePropertyFactory    $pricePropertyFactory
      * @param ShippingMethodConverter $shippingMethodConverter
-     * @param Bugsnag $bugsnag
-     * @param StoreManagerInterface $storeManager
+     * @param Bugsnag                 $bugsnag
+     * @param StoreManagerInterface   $storeManager
      * @param CartManagementInterface $quoteManagement
-     * @param QuoteRepository $quoteRepository
-     * @param StockRegistryInterface $stockRegistry
+     * @param QuoteRepository         $quoteRepository
+     * @param StockRegistryInterface  $stockRegistry
      */
     public function __construct(
         Context $context,
@@ -243,7 +243,7 @@ class AutomatedTesting extends AbstractHelper
      * Convert $product to a StoreItem
      *
      * @param Product|null $product
-     * @param string $type
+     * @param string       $type
      *
      * @return StoreItem|null
      */
@@ -326,7 +326,7 @@ class AutomatedTesting extends AbstractHelper
      * Format price
      *
      * @param float $price
-     * @param bool $isShipping
+     * @param bool  $isShipping
      *
      * @return string
      */

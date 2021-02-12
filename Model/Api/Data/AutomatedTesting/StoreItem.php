@@ -49,6 +49,7 @@ class StoreItem implements \JsonSerializable
 
     /**
      * @param string $itemUrl
+     *
      * @return $this
      */
     public function setItemUrl($itemUrl)
@@ -67,6 +68,7 @@ class StoreItem implements \JsonSerializable
 
     /**
      * @param string $name
+     *
      * @return $this
      */
     public function setName($name)
@@ -85,6 +87,7 @@ class StoreItem implements \JsonSerializable
 
     /**
      * @param string $price
+     *
      * @return $this
      */
     public function setPrice($price)
@@ -103,6 +106,7 @@ class StoreItem implements \JsonSerializable
 
     /**
      * @param string $type
+     *
      * @return $this
      */
     public function setType($type)

@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -1638,6 +1638,50 @@ class CartTest extends BoltTestCase
         )->willReturnOnConsecutiveCalls(true, false);
 
         TestHelper::invokeMethod($currentMock, 'transferData', [$this->quoteMock, $childQuoteMock]);
+    }
+    
+    /**
+     * @test
+     * that transferData with default email and exclude fields parameters transfers data from provided parent Address to child Address, and unset cached_items_all field
+     *
+     * @covers ::transferData
+     *
+     * @throws ReflectionException if transferData method is not defined
+     */
+    public function transferData_withDefaultFields_transfersDataFromParentAddressToChildAddressAndSavesTheChild()
+    {
+        $currentMock = $this->getCurrentMock(['validateEmail']);
+
+        $addressParentShippingAddress = $this->createMock(Quote\Address::class);
+        
+        $addressParentShippingAddress->expects(static::once())->method('getData')->willReturn(
+            [
+                'email'     => $this->testAddressData['email'],
+                'firstname' => $this->testAddressData['first_name'],
+                'lastname'  => $this->testAddressData['last_name'],
+                'street'    => $this->testAddressData['street_address1'],
+                'city'      => $this->testAddressData['locality'],
+                'region'    => $this->testAddressData['region'],
+                'postcode'  => $this->testAddressData['postal_code'],
+            ]
+        );
+
+        $addressChildShippingAddress = $this->createMock(Quote\Address::class);
+        
+        $addressChildShippingAddress->expects(static::atLeastOnce())->method('setData')->withConsecutive(
+            ['email', $this->testAddressData['email']],
+            ['firstname', $this->testAddressData['first_name']],
+            ['lastname', $this->testAddressData['last_name']],
+            ['street', $this->testAddressData['street_address1']],
+            ['city', $this->testAddressData['locality']],
+            ['region', $this->testAddressData['region']],
+            ['postcode', $this->testAddressData['postal_code']]
+        );
+        $addressChildShippingAddress->expects(static::once())->method('save');
+        
+        $currentMock->expects(static::once())->method('validateEmail')->with($this->testAddressData['email'])->willReturn(true);
+
+        TestHelper::invokeMethod($currentMock, 'transferData', [$addressParentShippingAddress, $addressChildShippingAddress]);
     }
 
     /**
@@ -4374,9 +4418,11 @@ ORDER
         $productTypeConfigurableMock->method('getOrderOptions')->willReturn($quoteItemOptions);
 
         $this->productMock = $this->getMockBuilder(Product::class)
-            ->setMethods(['getId', 'getDescription', 'getTypeInstance'])
+            ->setMethods(['getId', 'getDescription', 'getTypeInstance', 'getCustomOption'])
             ->disableOriginalConstructor()
             ->getMock();
+        
+        $this->productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
         $this->productMock->method('getDescription')->willReturn('Product Description');
         $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
 
@@ -4440,11 +4486,12 @@ ORDER
         $productTypeConfigurableMock->method('getOrderOptions')->willReturn($quoteItemOptions);
 
         $this->productMock = $this->getMockBuilder(Product::class)
-                                  ->setMethods(['getId', 'getDescription', 'getTypeInstance'])
+                                  ->setMethods(['getId', 'getDescription', 'getTypeInstance', 'getCustomOption'])
                                   ->disableOriginalConstructor()
                                   ->getMock();
         $this->productMock->method('getDescription')->willReturn('Product Description');
         $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
+        $this->productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
 
         $quoteItemMock = $this->getQuoteItemMock();
         $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItemMock]);
@@ -4500,6 +4547,8 @@ ORDER
         $productMock = $this->createMock(Product::class);
         $productMock->method('getId')->willReturn(self::PRODUCT_ID);
         $productMock->method('getName')->willReturn('Test Product');
+        $productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
+        
         $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
             ->willReturn($productMock);
         $quoteItem->method('getName')->willReturn('Test Product');
@@ -4594,6 +4643,8 @@ ORDER
         $productMock = $this->createMock(Product::class);
         $productMock->method('getId')->willReturn(self::PRODUCT_ID);
         $productMock->method('getName')->willReturn('Test Product');
+        $productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
+        
         $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
             ->willReturn($productMock);
         $quoteItem->method('getName')->willReturn('Test Product');
@@ -4660,6 +4711,7 @@ ORDER
           $productMock = $this->createMock(Product::class);
           $productMock->method('getId')->willReturn(self::PRODUCT_ID);
           $productMock->method('getName')->willReturn('Test Product');
+          $productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
           $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
             ->willReturn($productMock);
           $quoteItem->method('getName')->willReturn('Test Product');

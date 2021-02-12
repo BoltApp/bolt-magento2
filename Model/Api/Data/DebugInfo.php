@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -66,21 +66,12 @@ class DebugInfo implements \JsonSerializable
 
     /**
      * @param string $phpVersion
+     *
      * @return $this
      */
     public function setPhpVersion($phpVersion)
     {
         $this->phpVersion = $phpVersion;
-        return $this;
-    }
-
-    /**
-     * @param string $composerVersion
-     * @return $this
-     */
-    public function setComposerVersion($composerVersion)
-    {
-        $this->composerVersion = $composerVersion;
         return $this;
     }
 
@@ -93,6 +84,17 @@ class DebugInfo implements \JsonSerializable
     }
 
     /**
+     * @param string $composerVersion
+     *
+     * @return $this
+     */
+    public function setComposerVersion($composerVersion)
+    {
+        $this->composerVersion = $composerVersion;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getPlatformVersion()
@@ -102,6 +104,7 @@ class DebugInfo implements \JsonSerializable
 
     /**
      * @param string $platformVersion
+     *
      * @return $this
      */
     public function setPlatformVersion($platformVersion)
@@ -120,6 +123,7 @@ class DebugInfo implements \JsonSerializable
 
     /**
      * @param \Bolt\Boltpay\Model\Api\Data\BoltConfigSetting[]
+     *
      * @return $this
      */
     public function setBoltConfigSettings($boltConfigSettings)
@@ -138,6 +142,7 @@ class DebugInfo implements \JsonSerializable
 
     /**
      * @param \Bolt\Boltpay\Model\Api\Data\PluginVersion[]
+     *
      * @return $this
      */
     public function setOtherPluginVersions($otherPluginVersions)
@@ -156,6 +161,7 @@ class DebugInfo implements \JsonSerializable
 
     /**
      * @param array $logs
+     *
      * @return $this
      */
 
@@ -175,6 +181,7 @@ class DebugInfo implements \JsonSerializable
 
     /**
      * @param AutomatedTestingConfig|string $automatedTestingConfig
+     *
      * @return $this
      */
     public function setAutomatedTestingConfig($automatedTestingConfig)
@@ -189,12 +196,12 @@ class DebugInfo implements \JsonSerializable
     public function jsonSerialize()
     {
         return [
-            'php_version' => $this->phpVersion,
-            'composer_version' => $this->composerVersion,
-            'platform_version' => $this->platformVersion,
-            'bolt_config_settings' => $this->boltConfigSettings,
-            'other_plugin_versions' => $this->otherPluginVersions,
-            'logs' => $this->logs,
+            'php_version'              => $this->phpVersion,
+            'composer_version'         => $this->composerVersion,
+            'platform_version'         => $this->platformVersion,
+            'bolt_config_settings'     => $this->boltConfigSettings,
+            'other_plugin_versions'    => $this->otherPluginVersions,
+            'logs'                     => $this->logs,
             'automated_testing_config' => $this->automatedTestingConfig
         ];
     }

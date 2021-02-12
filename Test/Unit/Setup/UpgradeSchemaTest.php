@@ -11,20 +11,20 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Test\Unit\Setup;
 
-use Bolt\Boltpay\Test\Unit\TestHelper;
-use Magento\Framework\Setup\ModuleContextInterface;
-use PHPUnit\Framework\MockObject\MockObject;
-use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Setup\UpgradeSchema;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\DB\Adapter\AdapterInterface;
-use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Framework\DB\Ddl\Table;
+use Magento\Framework\Setup\ModuleContextInterface;
+use Magento\Framework\Setup\SchemaSetupInterface;
+use PHPUnit\Framework\MockObject\MockObject;
 use ReflectionException;
 
 /**
@@ -32,20 +32,24 @@ use ReflectionException;
  */
 class UpgradeSchemaTest extends BoltTestCase
 {
-
-    /** @var AdapterInterface|MockObject mocked instance of the database connection class */
+    /**
+     * @var AdapterInterface|MockObject mocked instance of the database connection class
+     */
     private $dbAdapter;
 
     /**
-     * @var SchemaSetupInterface|MockObject mocked instance of the setup class, provided to
-     * {@see \Bolt\Boltpay\Setup\UpgradeSchema::upgrade} 
+     * @var SchemaSetupInterface|MockObject mocked instance of the setup class, provided to {@see \Bolt\Boltpay\Setup\UpgradeSchema::upgrade}
      */
     private $schemaSetup;
 
-    /** @var Table|MockObject mocked instance of the database table model */
+    /**
+     * @var Table|MockObject mocked instance of the database table model
+     */
     private $customTable;
 
-    /** @var MockObject|UpgradeSchema mocked instance of the class tested */
+    /**
+     * @var MockObject|UpgradeSchema mocked instance of the class tested
+     */
     private $currentMock;
 
     /**
@@ -101,10 +105,10 @@ class UpgradeSchemaTest extends BoltTestCase
      * 1. Start setup
      * 2. Add bolt_parent_quote_id, bolt_reserved_order_id, bolt_is_backend_order, bolt_checkout_type columns to quote table
      * 3. Add index for bolt_parent_quote_id column to quote table
-     * 4. Setup feature switch table by calling {@see \Bolt\Boltpay\Setup\UpgradeSchema::setupFeatureSwitchTable}
-     * 5. Setup customer credit cards table by calling {@see \Bolt\Boltpay\Setup\UpgradeSchema::setupFeatureBoltCustomerCreditCardsTable}
-     * 6. Setup webhook log table by calling {@see \Bolt\Boltpay\Setup\UpgradeSchema::setupWebhookLogTable}
-     * 7. Update webhook log table by calling {@see \Bolt\Boltpay\Setup\UpgradeSchema::updateWebhookLogTable}
+     * 4. Setup customer credit cards table by calling {@see \Bolt\Boltpay\Setup\UpgradeSchema::setupFeatureBoltCustomerCreditCardsTable}
+     * 5. Setup webhook log table by calling {@see \Bolt\Boltpay\Setup\UpgradeSchema::setupWebhookLogTable}
+     * 6. Update webhook log table by calling {@see \Bolt\Boltpay\Setup\UpgradeSchema::updateWebhookLogTable}
+     * 7. Setup external customer entity table by calling {@see \Bolt\Boltpay\Setup\UpgradeSchema::setupExternalCustomerEntityTable}
      * 8. End setup
      *
      * @covers ::upgrade
@@ -119,13 +123,11 @@ class UpgradeSchemaTest extends BoltTestCase
         $this->schemaSetup->expects(static::atLeastOnce())->method('getConnection')->willReturnSelf();
         $quoteTable = 'quote';
         $boltWebhookTable = 'bolt_webhook_log';
-        $this->schemaSetup->expects(static::atLeastOnce())->method('getTable')
-            ->willReturnCallback(
-                function ($tableName) {
-                    return $tableName;
-                }
-            )
-        ;
+        $this->schemaSetup->expects(static::atLeastOnce())->method('getTable')->willReturnCallback(
+            function ($tableName) {
+                return $tableName;
+            }
+        );
 
         $this->schemaSetup->expects(static::atLeastOnce())->method('addColumn')->withConsecutive(
             [
@@ -164,10 +166,10 @@ class UpgradeSchemaTest extends BoltTestCase
                 'sales_order',
                 'bolt_transaction_reference',
                 [
-                    'type' => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
-                    'length' => 64,
+                    'type'     => \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                    'length'   => 64,
                     'nullable' => true,
-                    'comment' => 'Bolt Transaction Reference'
+                    'comment'  => 'Bolt Transaction Reference'
                 ],
             ],
             [
@@ -230,6 +232,10 @@ class UpgradeSchemaTest extends BoltTestCase
                 'methodName' => 'setupFeatureBoltCustomerCreditCardsTable',
                 'tableName'  => 'bolt_customer_credit_cards',
             ],
+            [
+                'methodName' => 'setupExternalCustomerEntityTable',
+                'tableName'  => 'bolt_external_customer_entity',
+            ]
         ];
     }
 
@@ -246,21 +252,20 @@ class UpgradeSchemaTest extends BoltTestCase
      * @dataProvider setupMethods_withTablesAlreadyCreatedProvider
      *
      * @param string $methodName method name to be tested
-     * @param string $tableName associated with the tested method
+     * @param string $tableName  associated with the tested method
      *
      * @throws ReflectionException if $methodName method doesn't exist
      */
-    public function setupMethods_withTablesAlreadyCreated_doNotAlterTheDatabase($methodName, $tableName) {
+    public function setupMethods_withTablesAlreadyCreated_doNotAlterTheDatabase($methodName, $tableName)
+    {
         $this->schemaSetup->expects(static::once())->method('getConnection')->willReturnSelf();
-        $this->schemaSetup->expects(static::once())->method('isTableExists')->with($tableName)
-            ->willReturn(true);
-        $this->schemaSetup->expects(static::never())
-            ->method(
-                static::logicalAnd(
-                    static::logicalNot(static::equalTo('getConnection')),
-                    static::logicalNot(static::equalTo('isTableExists'))
-                )
-            );
+        $this->schemaSetup->expects(static::once())->method('isTableExists')->with($tableName)->willReturn(true);
+        $this->schemaSetup->expects(static::never())->method(
+            static::logicalAnd(
+                static::logicalNot(static::equalTo('getConnection')),
+                static::logicalNot(static::equalTo('isTableExists'))
+            )
+        );
         TestHelper::invokeMethod($this->currentMock, $methodName, [$this->schemaSetup]);
     }
 
@@ -286,37 +291,36 @@ class UpgradeSchemaTest extends BoltTestCase
             ->with('bolt_webhook_log')
             ->willReturn($boltWebhookTable);
         $this->schemaSetup->expects(static::once())->method('newTable')->with($boltWebhookTable)->willReturnSelf();
-        $this->schemaSetup->expects(static::exactly(4))->method('addColumn')
-            ->withConsecutive(
-                [
-                    'id',
-                    Table::TYPE_INTEGER,
-                    null,
-                    ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
-                    'ID',
-                ],
-                [
-                    'transaction_id',
-                    Table::TYPE_TEXT,
-                    255,
-                    ['nullable' => false],
-                    'transaction id',
-                ],
-                [
-                    'hook_type',
-                    Table::TYPE_TEXT,
-                    255,
-                    ['nullable' => false],
-                    'Hook type',
-                ],
-                [
-                    'number_of_missing_quote_failed_hooks',
-                    Table::TYPE_INTEGER,
-                    null,
-                    ['nullable' => false, 'default' => '0'],
-                    'number of the missing quote failed hooks',
-                ]
-            )->willReturnSelf();
+        $this->schemaSetup->expects(static::exactly(4))->method('addColumn')->withConsecutive(
+            [
+                'id',
+                Table::TYPE_INTEGER,
+                null,
+                ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
+                'ID',
+            ],
+            [
+                'transaction_id',
+                Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'transaction id',
+            ],
+            [
+                'hook_type',
+                Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'Hook type',
+            ],
+            [
+                'number_of_missing_quote_failed_hooks',
+                Table::TYPE_INTEGER,
+                null,
+                ['nullable' => false, 'default' => '0'],
+                'number of the missing quote failed hooks',
+            ]
+        )->willReturnSelf();
 
         $this->schemaSetup->expects(static::once())
             ->method('setComment')
@@ -345,8 +349,7 @@ class UpgradeSchemaTest extends BoltTestCase
             ->with('bolt_webhook_log')
             ->willReturn(true);
 
-        $this->schemaSetup->expects(static::once())->method('getTable')->with('bolt_webhook_log')
-            ->willReturn('bolt_webhook_log');
+        $this->schemaSetup->expects(static::once())->method('getTable')->with('bolt_webhook_log')->willReturn('bolt_webhook_log');
         $this->schemaSetup->expects(static::once())->method('addColumn')->with(
             'bolt_webhook_log',
             'updated_at',
@@ -378,58 +381,55 @@ class UpgradeSchemaTest extends BoltTestCase
         $this->schemaSetup->method('getTable')->willReturnArgument(0);
 
         $this->customTable->expects(static::once())->method('setComment')->with('Bolt customer credit cards')->willReturnSelf();
-        $this->customTable->expects(static::exactly(5))->method('addColumn')
-            ->withConsecutive(
-                [
-                    'id',
-                    Table::TYPE_INTEGER,
-                    null,
-                    ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
-                    'ID'
-                ],
-                [
-                    'card_info',
-                    Table::TYPE_TEXT,
-                    Table::MAX_TEXT_SIZE,
-                    ['nullable' => false],
-                    'Card Info'
-                ],
-                [
-                    'customer_id',
-                    Table::TYPE_INTEGER,
-                    null,
-                    ['identity' => false, 'unsigned' => true, 'nullable' => false, 'primary' => false],
-                    'Customer ID'
-                ],
-                [
-                    'consumer_id',
-                    Table::TYPE_TEXT,
-                    Table::DEFAULT_TEXT_SIZE,
-                    ['nullable' => false],
-                    'Consumer Id'
-                ],
-                [
-                    'credit_card_id',
-                    Table::TYPE_TEXT,
-                    Table::DEFAULT_TEXT_SIZE,
-                    ['nullable' => false],
-                    'Credit Card ID'
-                ]
-            )
-            ->willReturnSelf();
+        $this->customTable->expects(static::exactly(5))->method('addColumn')->withConsecutive(
+            [
+                'id',
+                Table::TYPE_INTEGER,
+                null,
+                ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
+                'ID'
+            ],
+            [
+                'card_info',
+                Table::TYPE_TEXT,
+                Table::MAX_TEXT_SIZE,
+                ['nullable' => false],
+                'Card Info'
+            ],
+            [
+                'customer_id',
+                Table::TYPE_INTEGER,
+                null,
+                ['identity' => false, 'unsigned' => true, 'nullable' => false, 'primary' => false],
+                'Customer ID'
+            ],
+            [
+                'consumer_id',
+                Table::TYPE_TEXT,
+                Table::DEFAULT_TEXT_SIZE,
+                ['nullable' => false],
+                'Consumer Id'
+            ],
+            [
+                'credit_card_id',
+                Table::TYPE_TEXT,
+                Table::DEFAULT_TEXT_SIZE,
+                ['nullable' => false],
+                'Credit Card ID'
+            ]
+        )->willReturnSelf();
         $this->customTable->expects(static::once())->method('addForeignKey')->with(
-                $this->schemaSetup->getFkName(
-                    'bolt_customer_credit_cards',
-                    'customer_id',
-                    'customer_entity',
-                    'entity_id'
-                ),
+            $this->schemaSetup->getFkName(
+                'bolt_customer_credit_cards',
                 'customer_id',
                 'customer_entity',
-                'entity_id',
-                Table::ACTION_CASCADE
-            )
-            ->willReturnSelf();
+                'entity_id'
+            ),
+            'customer_id',
+            'customer_entity',
+            'entity_id',
+            Table::ACTION_CASCADE
+        )->willReturnSelf();
         $this->dbAdapter->expects(static::once())->method('createTable')->with($this->customTable);
         TestHelper::invokeMethod($this->currentMock, 'setupFeatureBoltCustomerCreditCardsTable', [$this->schemaSetup]);
     }
@@ -445,16 +445,70 @@ class UpgradeSchemaTest extends BoltTestCase
     public function updateWebhookLogTable_ifTableDoesNotExist_doesNotAlterTheDatabase()
     {
         $this->schemaSetup->expects(static::once())->method('getConnection')->willReturnSelf();
-        $this->schemaSetup->expects(static::once())->method('isTableExists')->with('bolt_webhook_log')
-            ->willReturn(false);
+        $this->schemaSetup->expects(static::once())->method('isTableExists')->with('bolt_webhook_log')->willReturn(false);
         // expect nothing apart from getConnection and isTableExists to be called
-        $this->schemaSetup->expects(static::never())
-            ->method(
-                static::logicalAnd(
-                    static::logicalNot(static::equalTo('getConnection')),
-                    static::logicalNot(static::equalTo('isTableExists'))
-                )
-            );
+        $this->schemaSetup->expects(static::never())->method(
+            static::logicalAnd(
+                static::logicalNot(static::equalTo('getConnection')),
+                static::logicalNot(static::equalTo('isTableExists'))
+            )
+        );
         TestHelper::invokeMethod($this->currentMock, 'updateWebhookLogTable', [$this->schemaSetup]);
+    }
+
+    /**
+     * @test
+     * that setupExternalCustomerEntityTable creates bolt_external_customer_entity table if it does not exist already
+     *
+     * @covers ::setupExternalCustomerEntityTable
+     *
+     * @throws ReflectionException if setupExternalCustomerEntityTable method doesn't exist
+     */
+    public function setupExternalCustomerEntityTable_ifBoltExternalCustomerEntityTableDoesNotExist_createsTable()
+    {
+        $this->schemaSetup->expects(static::exactly(3))->method('getConnection')->willReturnSelf();
+        $this->schemaSetup->expects(static::once())
+            ->method('isTableExists')
+            ->with('bolt_external_customer_entity')
+            ->willReturn(false);
+
+        $boltExternalCustomerEntityTable = 'bolt_external_customer_entity';
+        $this->schemaSetup->expects(static::once())
+            ->method('getTable')
+            ->with('bolt_external_customer_entity')
+            ->willReturn($boltExternalCustomerEntityTable);
+        $this->schemaSetup->expects(static::once())->method('newTable')->with($boltExternalCustomerEntityTable)->willReturnSelf();
+        $this->schemaSetup->expects(static::exactly(3))->method('addColumn')->withConsecutive(
+            [
+                'id',
+                Table::TYPE_INTEGER,
+                null,
+                ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
+                'ID',
+            ],
+            [
+                'external_id',
+                Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'External ID',
+            ],
+            [
+                'customer_id',
+                Table::TYPE_INTEGER,
+                null,
+                ['nullable' => false],
+                'Customer ID',
+            ]
+        )->willReturnSelf();
+
+        $this->schemaSetup->expects(static::once())
+            ->method('setComment')
+            ->with('Bolt External Customer Entity table')
+            ->willReturn($this->customTable);
+
+        $this->schemaSetup->expects(static::once())->method('createTable')->with($this->customTable)->willReturnSelf();
+
+        TestHelper::invokeMethod($this->currentMock, 'setupExternalCustomerEntityTable', [$this->schemaSetup]);
     }
 }

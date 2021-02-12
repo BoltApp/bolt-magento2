@@ -11,18 +11,19 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 namespace Bolt\Boltpay\Setup;
 
 use Bolt\Boltpay\Helper\FeatureSwitch\Manager;
-use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\MetricsClient;
+use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Framework\Setup\InstallDataInterface;
-use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
+use Magento\Framework\Setup\ModuleDataSetupInterface;
 
 class RecurringData implements InstallDataInterface
 {
@@ -30,14 +31,17 @@ class RecurringData implements InstallDataInterface
      * @var Manager
      */
     protected $_fsManager;
+
     /**
      * @var LogHelper
      */
     protected $_logHelper;
+
     /**
      * @var MetricsClient
      */
     protected $_metricsClient;
+
     /**
      * @var BoltErrorResponse
      */
@@ -60,30 +64,26 @@ class RecurringData implements InstallDataInterface
      * switches from Bolt.
      *
      * @param ModuleDataSetupInterface $setup
-     * @param ModuleContextInterface $context
+     * @param ModuleContextInterface   $context
      */
-    public function install(
-        ModuleDataSetupInterface $setup,
-        ModuleContextInterface $context
-    ) {
+    public function install(ModuleDataSetupInterface $setup, ModuleContextInterface $context)
+    {
         $startTime = $this->_metricsClient->getCurrentTime();
         try {
             $this->_fsManager->updateSwitchesFromBolt();
         } catch (\Exception $e) {
-            $encodedError =  $this->_errorResponse->prepareErrorMessage(
+            $encodedError = $this->_errorResponse->prepareErrorMessage(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage()
             );
-            $this->_logHelper
-                ->addInfoLog('RecurringData: failed updating feature switches');
+            $this->_logHelper->addInfoLog('RecurringData: failed updating feature switches');
             $this->_logHelper->addInfoLog($encodedError);
-            $this->_metricsClient
-                ->processMetric(
-                    "feature_switch.recurring.failure",
-                    1,
-                    "feature_switch.recurring.latency",
-                    $startTime
-                );
+            $this->_metricsClient->processMetric(
+                'feature_switch.recurring.failure',
+                1,
+                'feature_switch.recurring.latency',
+                $startTime
+            );
             return;
         }
     }

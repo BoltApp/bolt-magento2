@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -340,6 +340,10 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
             $result = $this->applyDiscount($couponCode, $coupon, $giftCard, $parentQuote);
         }
+
+        $this->cartHelper->replicateQuoteData($parentQuote, $immutableQuote);
+
+        $this->cache->clean([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . $parentQuote->getId()]);
 
         //need to rename one of the keys of the result array for universal api
         $result['discount_description'] = $result['description'];

@@ -27,12 +27,12 @@ class Recurring implements InstallSchemaInterface
 
     /**
      * @param SchemaSetupInterface $setup
+     *
      * @throws \Zend_Db_Exception
      */
     private function setupFeatureSwitchTable(SchemaSetupInterface $setup)
     {
         $tableCreated = $setup->getConnection()->isTableExists('bolt_feature_switches');
-
         if ($tableCreated) {
             return;
         }
@@ -72,7 +72,7 @@ class Recurring implements InstallSchemaInterface
                 null,
                 ['nullable' => false, 'default' => '0'],
                 'rollout percentage'
-            )->setComment("Bolt feature switch table");
+            )->setComment('Bolt feature switch table');
         $setup->getConnection()->createTable($table);
     }
 }

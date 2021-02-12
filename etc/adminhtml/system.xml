@@ -12,7 +12,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 -->
@@ -256,12 +256,6 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <if_module_enabled>Magento_Reward</if_module_enabled>
                     </field>
-                    <field id="amasty_store_credit" translate="label" type="select" sortOrder="250" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Use Amasty Store Credit on Shopping Cart</label>
-                        <config_path>payment/boltpay/amasty_store_credit</config_path>
-                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                        <if_module_enabled>Amasty_StoreCredit</if_module_enabled>
-                    </field>
                     <field id="bolt_order_caching" translate="label" type="select" sortOrder="260" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Cache Bolt Order Token (Performance Optimization)</label>
                         <config_path>payment/boltpay/bolt_order_caching</config_path>
@@ -370,6 +364,21 @@
                         <label>Product attributes</label>
                         <config_path>payment/boltpay/product_attributes_list</config_path>
                         <comment>Comma separated list of product attributes that we send to bolt server. Leave empty for include only standard attributes.</comment>
+                    </field>
+                </group>
+                <group id="third_party_modules" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Third Party Modules Support</label>
+                    <field id="amasty_store_credit" translate="label" type="select" sortOrder="0" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use Amasty Store Credit on Shopping Cart</label>
+                        <config_path>payment/boltpay/amasty_store_credit</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <if_module_enabled>Amasty_StoreCredit</if_module_enabled>
+                    </field>
+                    <field id="aheadworks_reward_points" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use Aheadworks Reward Points on Shopping Cart</label>
+                        <config_path>payment/boltpay/aheadworks_reward_points_on_cart</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <if_module_enabled>Aheadworks_RewardPoints</if_module_enabled>
                     </field>
                 </group>
             </group>

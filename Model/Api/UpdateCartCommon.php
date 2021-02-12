@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -314,8 +314,16 @@ abstract class UpdateCartCommon
 
         foreach ($items as $item) {
             $product = [];
-                
-            $_product = $this->productRepository->get(trim($item->getSku()));           
+            
+            $itemProduct = $item->getProduct();
+            $customizableOptions = $this->cartHelper->getProductCustomizableOptions($itemProduct);
+            $itemSku = trim($item->getSku());
+
+            if ($customizableOptions) {
+                $itemSku = $this->cartHelper->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
+            }
+            
+            $_product = $this->productRepository->get($itemSku);         
 
             $product['reference']    = $_product->getId();
             $product['quantity']     = round($item->getQty());

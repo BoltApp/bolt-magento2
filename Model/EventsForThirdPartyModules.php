@@ -11,13 +11,14 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Model;
 
 use Bolt\Boltpay\ThirdPartyModules\Aheadworks\Giftcard as Aheadworks_Giftcard;
+use Bolt\Boltpay\ThirdPartyModules\Aheadworks\RewardPoints as Aheadworks_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\ShippingRestriction as Mageplaza_ShippingRestriction;
 use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Credit as Mirasvit_Credit;
 use Bolt\Boltpay\ThirdPartyModules\IDme\GroupVerification as IDme_GroupVerification;
@@ -84,6 +85,11 @@ class EventsForThirdPartyModules
                     "module" => "Aheadworks_Giftcard",
                     "sendClasses" => ["\Aheadworks\Giftcard\Plugin\Model\Service\OrderServicePlugin"],
                     "boltClass" => Aheadworks_Giftcard::class,
+                ],
+                [
+                    "module" => "Aheadworks_RewardPoints",
+                    "sendClasses" => ["Aheadworks\RewardPoints\Plugin\Model\Service\OrderServicePlugin"],
+                    "boltClass" => Aheadworks_RewardPoints::class,
                 ],
             ],
         ],
@@ -160,6 +166,10 @@ class EventsForThirdPartyModules
                     "module" => "Aheadworks_StoreCredit",
                     "checkClasses" => ["Aheadworks\StoreCredit\Model\TransactionRepository"],
                     "boltClass" => Aheadworks_StoreCredit::class,
+                ],
+                [
+                    "module" => "Aheadworks_RewardPoints",
+                    "boltClass" => Aheadworks_RewardPoints::class,
                 ],
                 [
                     "module" => "Amasty_Rewards",
@@ -303,6 +313,14 @@ class EventsForThirdPartyModules
                     "module" => "Aheadworks_Giftcard",
                     "sendClasses" => ["Aheadworks\Giftcard\Api\GiftcardCartManagementInterface"],
                     "boltClass" => Aheadworks_Giftcard::class,
+                ],
+                "Aheadworks_RewardPoints" => [
+                    "module" => "Aheadworks_RewardPoints",
+                    "sendClasses" => [
+                        "Aheadworks\RewardPoints\Api\CustomerRewardPointsManagementInterface",
+                        "Aheadworks\RewardPoints\Model\Config"
+                    ],
+                    "boltClass" => Aheadworks_RewardPoints::class,
                 ],
                 [
                     "module" => "Mirasvit_Rewards",
@@ -604,6 +622,10 @@ class EventsForThirdPartyModules
                     "boltClass" => Aheadworks_StoreCredit::class,
                 ],
                 [
+                    "module" => "Aheadworks_RewardPoints",
+                    "boltClass" => Aheadworks_RewardPoints::class,
+                ],
+                [
                     "module" => "MW_RewardPoints",
                     "checkClasses" => ["MW\RewardPoints\Helper\Data"],
                     "boltClass" => MW_RewardPoints::class,
@@ -664,6 +686,15 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        "collectCartDiscountJsLayout" => [
+            "listeners" => [
+                "Aheadworks_RewardPoints" => [
+                    "module"      => "Aheadworks_RewardPoints",
+                    "sendClasses" => ["Aheadworks\RewardPoints\Api\CustomerRewardPointsManagementInterface"],
+                    "boltClass"   => Aheadworks_RewardPoints::class,
+                ],
+            ]
+        ]
     ];
 
     /**

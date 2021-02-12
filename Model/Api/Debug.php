@@ -11,22 +11,22 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\DebugInterface;
+use Bolt\Boltpay\Helper\AutomatedTesting as AutomatedTestingHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Helper\LogRetriever;
 use Bolt\Boltpay\Helper\ModuleRetriever;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
 use Magento\Framework\App\ProductMetadataInterface;
-use Bolt\Boltpay\Helper\LogRetriever;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
-use Bolt\Boltpay\Helper\AutomatedTesting as AutomatedTestingHelper;
 
 class Debug implements DebugInterface
 {
@@ -76,15 +76,15 @@ class Debug implements DebugInterface
     private $automatedTestingHelper;
 
     /**
-     * @param Response $response
-     * @param DebugInfoFactory $debugInfoFactory
-     * @param StoreManagerInterface $storeManager
-     * @param HookHelper $hookHelper
+     * @param Response                 $response
+     * @param DebugInfoFactory         $debugInfoFactory
+     * @param StoreManagerInterface    $storeManager
+     * @param HookHelper               $hookHelper
      * @param ProductMetadataInterface $productMetadata
-     * @param ConfigHelper $configHelper
-     * @param ModuleRetriever $moduleRetriever
-     * @param LogRetriever $logRetriever
-     * @param AutomatedTestingHelper $automatedTestingHelper
+     * @param ConfigHelper             $configHelper
+     * @param ModuleRetriever          $moduleRetriever
+     * @param LogRetriever             $logRetriever
+     * @param AutomatedTestingHelper   $automatedTestingHelper
      */
     public function __construct(
         Response $response,
@@ -147,13 +147,13 @@ class Debug implements DebugInterface
         $result->setAutomatedTestingConfig($this->automatedTestingHelper->getAutomatedTestingConfig());
 
         // prepare response
-        $this->response->setHeader('Content-Type', 'json');
+        $this->response->setHeader('Content-Type', 'application/json');
         $this->response->setHttpResponseCode(200);
         $this->response->setBody(
             json_encode([
                 'status' => 'success',
-                'event' => 'integration.debug',
-                'data' => $result
+                'event'  => 'integration.debug',
+                'data'   => $result
             ])
         );
         $this->response->sendResponse();

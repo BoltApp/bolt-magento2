@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -310,6 +310,11 @@ class Config extends AbstractHelper
      * Use Store Credit on Shopping Cart configuration path
      */
     const XML_PATH_AMASTY_STORE_CREDIT = 'payment/boltpay/amasty_store_credit';
+
+    /**
+     * Use Aheadworks Reward Points on Shopping Cart configuration path
+     */
+    const XML_PATH_AHEADWORKS_REWARD_POINTS_ON_CART = 'payment/boltpay/aheadworks_reward_points_on_cart';
 
     /**
      * Use Reward Points on Shopping Cart configuration path
@@ -2108,4 +2113,20 @@ class Config extends AbstractHelper
     {
         return $this->encryptor->decrypt($data);
     }
+
+    /**
+     * Get Use Aheadworks Reward Points on Shopping Cart configuration
+     *
+     * @param int|string|Store $store
+     * @return bool
+     */
+    public function getUseAheadworksRewardPointsConfig($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_AHEADWORKS_REWARD_POINTS_ON_CART,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
 }

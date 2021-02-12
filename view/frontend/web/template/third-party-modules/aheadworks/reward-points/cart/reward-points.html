@@ -1,0 +1,44 @@
+<div if="isDisplayed()" class="block discount"
+     data-bind="mageInit: {'collapsible':{'openedState': 'active'}}">
+    <div class="title" data-role="title">
+        <strong class="action action-toggle" role="heading" aria-level="2">
+            <!-- ko i18n: 'Reward points'--><!-- /ko -->
+        </strong>
+    </div>
+    <div class="content" data-role="content">
+        <!-- ko foreach: getRegion('messages') -->
+        <!-- ko template: getTemplate() --><!-- /ko -->
+        <!--/ko-->
+        <!-- ko ifnot: isCustomerLoggedIn() -->
+        <div class="payment-option-inner">
+            <div class="field"><!-- ko i18n: 'Please login for use reward points'--><!-- /ko --></div>
+        </div>
+        <!--/ko-->
+        <!-- ko if: isCustomerLoggedIn() -->
+        <form class="form form-reward-points" id="reward-points-form" data-bind="blockLoader: isLoading">
+            <div class="actions-toolbar">
+                <label class="label" for="">
+                    <!-- ko ifnot: isApplied() -->
+                        <span data-bind="text: getAvailablePointsText()"></span>
+                    <!-- /ko -->
+                    <!-- ko if: isApplied() -->
+                        <span data-bind="text: getUsedPointsText()"></span>
+                    <!-- /ko -->    
+                </label>
+                <div class="primary">
+                    <!-- ko ifnot: isApplied() -->
+                        <button class="action action-apply" type="submit" data-bind="'value': $t('Use reward points'), click: apply">
+                            <span><!-- ko i18n: 'Use reward points'--><!-- /ko --></span>
+                        </button>
+                    <!-- /ko -->
+                    <!-- ko if: isApplied() -->
+                        <button class="action action-cancel" type="submit" data-bind="'value': $t('Remove reward points'), click: remove">
+                            <span><!-- ko i18n: 'Remove reward points'--><!-- /ko --></span>
+                        </button>
+                    <!-- /ko -->
+                </div>
+            </div>
+        </form>
+        <!--/ko-->
+    </div>
+</div>

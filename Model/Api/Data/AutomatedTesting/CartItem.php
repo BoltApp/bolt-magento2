@@ -44,6 +44,7 @@ class CartItem implements \JsonSerializable
 
     /**
      * @param string $name
+     *
      * @return $this
      */
     public function setName($name)
@@ -62,6 +63,7 @@ class CartItem implements \JsonSerializable
 
     /**
      * @param string $price
+     *
      * @return $this
      */
     public function setPrice($price)
@@ -80,6 +82,7 @@ class CartItem implements \JsonSerializable
 
     /**
      * @param int $quantity
+     *
      * @return $this
      */
     public function setQuantity($quantity)
