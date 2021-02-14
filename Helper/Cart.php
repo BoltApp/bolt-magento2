@@ -1866,7 +1866,7 @@ class Cart extends AbstractHelper
         if ($paymentOnly) {
             if ($immutableQuote->isVirtual()) {
                 if (!empty($cart['billing_address'])) {
-                    $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
+                    $this->collectAddressTotals($immutableQuote, $address);
                     $address->save();
                 } elseif ($requireBillingAddress) {
                     $this->logAddressData($cartBillingAddress);
@@ -1892,7 +1892,7 @@ class Cart extends AbstractHelper
                     return [];
                 }
 
-                $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
+                $this->collectAddressTotals($immutableQuote, $address);
                 $address->save();
 
                 // Shipping address
@@ -2598,5 +2598,11 @@ class Cart extends AbstractHelper
         } catch (LocalizedException $e) {
             return false;
         }
+    }
+    
+    public function collectAddressTotals($quote, $address)
+    {
+        $quote->setCartFixedRules([]);
+        $this->totalsCollector->collectAddressTotals($quote, $address);
     }
 }
