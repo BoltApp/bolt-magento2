@@ -21,7 +21,6 @@ use Bolt\Boltpay\Api\Data\ShippingOptionsInterface;
 use Bolt\Boltpay\Api\ShippingMethodsInterface;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Magento\Quote\Model\Quote\TotalsCollector;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Api\Data\ShippingOptionsInterfaceFactory;
@@ -83,11 +82,6 @@ class ShippingMethods implements ShippingMethodsInterface
      * @var ShippingTaxInterfaceFactory
      */
     private $shippingTaxInterfaceFactory;
-
-    /**
-     * @var TotalsCollector
-     */
-    private $totalsCollector;
 
     /**
      * Shipping method converter
@@ -185,7 +179,6 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param ShippingOptionsInterfaceFactory $shippingOptionsInterfaceFactory
      * @param ShippingTaxInterfaceFactory     $shippingTaxInterfaceFactory
      * @param CartHelper                      $cartHelper
-     * @param TotalsCollector                 $totalsCollector
      * @param ShippingMethodConverter         $converter
      * @param ShippingOptionInterfaceFactory  $shippingOptionInterfaceFactory
      * @param Bugsnag                         $bugsnag
@@ -209,7 +202,6 @@ class ShippingMethods implements ShippingMethodsInterface
         ShippingOptionsInterfaceFactory $shippingOptionsInterfaceFactory,
         ShippingTaxInterfaceFactory $shippingTaxInterfaceFactory,
         CartHelper $cartHelper,
-        TotalsCollector $totalsCollector,
         ShippingMethodConverter $converter,
         ShippingOptionInterfaceFactory $shippingOptionInterfaceFactory,
         Bugsnag $bugsnag,
@@ -232,7 +224,6 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->regionModel = $regionModel;
         $this->shippingOptionsInterfaceFactory = $shippingOptionsInterfaceFactory;
         $this->shippingTaxInterfaceFactory = $shippingTaxInterfaceFactory;
-        $this->totalsCollector = $totalsCollector;
         $this->converter = $converter;
         $this->shippingOptionInterfaceFactory = $shippingOptionInterfaceFactory;
         $this->bugsnag = $bugsnag;
