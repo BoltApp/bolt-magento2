@@ -2600,8 +2600,20 @@ class Cart extends AbstractHelper
         }
     }
     
+    /**
+     * Collect address total.
+     *
+     * @param \Magento\Quote\Model\Quote   $quote
+     * @param \Magento\Quote\Model\Quote\Address $address
+     *
+     */
     public function collectAddressTotals($quote, $address)
     {
+        /**
+         * To calculate a right discount value
+         * before calculate totals
+         * need to reset Cart Fixed Rules in the quote
+         */
         $quote->setCartFixedRules([]);
         $this->totalsCollector->collectAddressTotals($quote, $address);
     }
