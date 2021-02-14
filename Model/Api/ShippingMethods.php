@@ -21,7 +21,6 @@ use Bolt\Boltpay\Api\Data\ShippingOptionsInterface;
 use Bolt\Boltpay\Api\ShippingMethodsInterface;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Magento\Quote\Model\Quote\TotalsCollector;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Api\Data\ShippingOptionsInterfaceFactory;
@@ -83,11 +82,6 @@ class ShippingMethods implements ShippingMethodsInterface
      * @var ShippingTaxInterfaceFactory
      */
     private $shippingTaxInterfaceFactory;
-
-    /**
-     * @var TotalsCollector
-     */
-    private $totalsCollector;
 
     /**
      * Shipping method converter
@@ -185,7 +179,6 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param ShippingOptionsInterfaceFactory $shippingOptionsInterfaceFactory
      * @param ShippingTaxInterfaceFactory     $shippingTaxInterfaceFactory
      * @param CartHelper                      $cartHelper
-     * @param TotalsCollector                 $totalsCollector
      * @param ShippingMethodConverter         $converter
      * @param ShippingOptionInterfaceFactory  $shippingOptionInterfaceFactory
      * @param Bugsnag                         $bugsnag
@@ -209,7 +202,6 @@ class ShippingMethods implements ShippingMethodsInterface
         ShippingOptionsInterfaceFactory $shippingOptionsInterfaceFactory,
         ShippingTaxInterfaceFactory $shippingTaxInterfaceFactory,
         CartHelper $cartHelper,
-        TotalsCollector $totalsCollector,
         ShippingMethodConverter $converter,
         ShippingOptionInterfaceFactory $shippingOptionInterfaceFactory,
         Bugsnag $bugsnag,
@@ -232,7 +224,6 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->regionModel = $regionModel;
         $this->shippingOptionsInterfaceFactory = $shippingOptionsInterfaceFactory;
         $this->shippingTaxInterfaceFactory = $shippingTaxInterfaceFactory;
-        $this->totalsCollector = $totalsCollector;
         $this->converter = $converter;
         $this->shippingOptionInterfaceFactory = $shippingOptionInterfaceFactory;
         $this->bugsnag = $bugsnag;
@@ -711,7 +702,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             $quote->collectTotals();
 
-            $this->totalsCollector->collectAddressTotals($quote, $billingAddress);
+            $this->cartHelper->collectAddressTotals($quote, $billingAddress);
             $taxAmount = CurrencyUtils::toMinor($billingAddress->getTaxAmount(), $quote->getQuoteCurrencyCode());
 
             return [
@@ -732,7 +723,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $shippingAddress->setShippingMethod(null);
 
         $quote->collectTotals();
-        $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
+        $this->cartHelper->collectAddressTotals($quote, $shippingAddress);
 
         $shippingMethodArray = $this->generateShippingMethodArray($quote, $shippingAddress);
 
@@ -761,7 +752,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 $quote->setCouponCode($appliedQuoteCouponCode)->collectTotals()->save();
             }
 
-            $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
+            $this->cartHelper->collectAddressTotals($quote, $shippingAddress);
             if ($this->doesDiscountApplyToShipping($quote)) {
                 /**
                  * Unset values for shipping_amount_for_discount and base_shipping_amount_for_discount to allow
@@ -776,7 +767,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 // Being a bug in Magento, or a bug in the tested store version, shipping discounts
                 // are not collected the first time the method is called.
                 // There was one loop step delay in applying discount to shipping options when method was called once.
-                $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
+                $this->cartHelper->collectAddressTotals($quote, $shippingAddress);
             }
 
             $discountAmount = $this->eventsForThirdPartyModules->runFilter("collectShippingDiscounts", $shippingAddress->getShippingDiscountAmount(), $quote, $shippingAddress);
@@ -849,7 +840,7 @@ class ShippingMethods implements ShippingMethodsInterface
         }
 
         $shippingAddress->setShippingMethod(null);
-        $this->totalsCollector->collectAddressTotals($quote, $shippingAddress);
+        $this->cartHelper->collectAddressTotals($quote, $shippingAddress);
         $shippingAddress->save();
 
         if ($errors) {

@@ -1860,7 +1860,7 @@ class Cart extends AbstractHelper
         if ($paymentOnly) {
             if ($immutableQuote->isVirtual()) {
                 if (!empty($cart['billing_address'])) {
-                    $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
+                    $this->collectAddressTotals($immutableQuote, $address);
                     $address->save();
                 } elseif ($requireBillingAddress) {
                     $this->logAddressData($cartBillingAddress);
@@ -1886,7 +1886,7 @@ class Cart extends AbstractHelper
                     return [];
                 }
 
-                $this->totalsCollector->collectAddressTotals($immutableQuote, $address);
+                $this->collectAddressTotals($immutableQuote, $address);
                 $address->save();
 
                 // Shipping address
@@ -2592,5 +2592,23 @@ class Cart extends AbstractHelper
         } catch (LocalizedException $e) {
             return false;
         }
+    }
+    
+    /**
+     * Collect address total.
+     *
+     * @param \Magento\Quote\Model\Quote   $quote
+     * @param \Magento\Quote\Model\Quote\Address $address
+     *
+     */
+    public function collectAddressTotals($quote, $address)
+    {
+        /**
+         * To calculate a right discount value
+         * before calculate totals
+         * need to reset Cart Fixed Rules in the quote
+         */
+        $quote->setCartFixedRules([]);
+        $this->totalsCollector->collectAddressTotals($quote, $address);
     }
 }
