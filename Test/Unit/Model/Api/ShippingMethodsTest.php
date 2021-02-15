@@ -25,7 +25,6 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\Quote;
-use Magento\Quote\Model\Quote\TotalsCollector;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Api\Data\ShippingOptionsInterfaceFactory;
@@ -94,11 +93,6 @@ class ShippingMethodsTest extends BoltTestCase
      * @var ShippingOptionInterfaceFactory|MockObject
      */
     private $shippingOptionInterfaceFactory;
-
-    /**
-     * @var TotalsCollector
-     */
-    private $totalsCollector;
 
     /**
      * @var ShippingMethodConverter
@@ -200,14 +194,6 @@ class ShippingMethodsTest extends BoltTestCase
     {
         $this->createFactoryMocks();
 
-        $this->totalsCollector = $this->getMockBuilder(TotalsCollector::class)
-            ->setMethods(['collectAddressTotals'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->totalsCollector->method('collectAddressTotals')
-            ->withAnyParameters()
-            ->willReturnSelf();
-
         $this->cartHelper = $this->getMockBuilder(CartHelper::class)
             ->setMethods([
                 'getQuoteById',
@@ -216,6 +202,7 @@ class ShippingMethodsTest extends BoltTestCase
                 'handleSpecialAddressCases',
                 'getCartItems',
                 'getImmutableQuoteIdFromBoltCartArray',
+                'collectAddressTotals',
             ])->disableOriginalConstructor()
             ->getMock();
 
@@ -1130,7 +1117,7 @@ Room 4000',
         $this->currentMock->expects(static::once())->method('doesDiscountApplyToShipping')->with($quote)
             ->willReturn(true);
 
-        $this->totalsCollector->expects(static::exactly(4))->method('collectAddressTotals')
+        $this->cartHelper->expects(static::exactly(4))->method('collectAddressTotals')
             ->with($quote, $shippingAddress);
 
         $addressData = [
@@ -1211,7 +1198,7 @@ Room 4000',
             );
 
         $collectAddressTotalsMatcher = self::exactly(3);
-        $this->totalsCollector->expects($collectAddressTotalsMatcher)->method('collectAddressTotals')
+        $this->cartHelper->expects($collectAddressTotalsMatcher)->method('collectAddressTotals')
             ->willReturnCallback(
                 function () use ($storage, $collectAddressTotalsMatcher) {
                     $invocationCountToShippingMethod = [
@@ -1277,7 +1264,7 @@ Room 4000',
         $quote->expects(self::once())->method('getBillingAddress')->willReturn($billingAddress);
         $quote->expects(self::once())->method('collectTotals');
 
-        $this->totalsCollector->expects(self::once())->method('collectAddressTotals')
+        $this->cartHelper->expects(self::once())->method('collectAddressTotals')
             ->with($quote, $billingAddress);
 
         $this->setupShippingOptionFactory(
@@ -1646,7 +1633,6 @@ Room 4000',
                 $this->factoryShippingOptionsMock,
                 $this->shippingTaxInterfaceFactory,
                 $this->cartHelper,
-                $this->totalsCollector,
                 $this->converter,
                 $this->shippingOptionInterfaceFactory,
                 $this->bugsnag,
