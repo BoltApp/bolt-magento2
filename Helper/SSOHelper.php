@@ -17,11 +17,81 @@
 
 namespace Bolt\Boltpay\Helper;
 
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Framework\App\Helper\Context;
+use Magento\Store\Model\StoreManagerInterface;
+
 /**
  * Helper for SSO
  */
-class SSOHelper
+class SSOHelper extends AbstractHelper
 {
+    /**
+     * @var ConfigHelper
+     */
+    private $configHelper;
+
+    /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
+
+    /**
+     * @param Context               $context
+     * @param ConfigHelper          $configHelper
+     * @param StoreManagerInterface $storeManager
+     */
+    public function __construct(
+        Context $context,
+        ConfigHelper $configHelper,
+        StoreManagerInterface $storeManager
+    ) {
+        parent::__construct($context);
+        $this->configHelper = $configHelper;
+        $this->storeManager = $storeManager;
+    }
+
+    /**
+     * Return information needed for oauth exchange
+     *
+     * @return mixed
+     */
+    public function getOAuthConfiguration()
+    {
+        $storeId = $this->storeManager->getStore()->getId();
+
+        $publishableKey = $this->configHelper->getPublishableKeyCheckout($storeId);
+        $publishableKeySplit = explode('.', $publishableKey);
+        $clientID = end($publishableKeySplit);
+
+        $clientSecret = $this->configHelper->getApiKey($storeId);
+
+        //TODO
+        $boltPublicKey = '';
+
+        return [
+            'clientID'      => $clientID,
+            'clientSecret'  => $clientSecret,
+            'boltPublicKey' => $boltPublicKey
+        ];
+    }
+
+    /**
+     * Call Bolt's oauth token exchange endpoint and return the result
+     *
+     * @param string $code         the authorization code received
+     * @param string $scope        scope for the oauth workflow, currently only openid is supported
+     * @param string $clientId     client id for the oauth workflow, should be the same as merchant publishable key
+     * @param string $clientSecret client secret for the oauth workflow, should be the same as merchant API key
+     *
+     * @return mixed|null
+     */
+    public function exchangeToken($code, $scope, $clientId, $clientSecret)
+    {
+        return null;
+    }
+
     /**
      * Reference document: https://auth0.com/docs/tokens/json-web-tokens/validate-json-web-tokens#manually-implement-checks
      *
@@ -31,7 +101,7 @@ class SSOHelper
      *
      * @return mixed|null object in JWT token body, return null if validation fails
      */
-    public static function parseAndValidateJWT($token, $audience, $pubkey)
+    public function parseAndValidateJWT($token, $audience, $pubkey)
     {
         // 1. Check JWT is well-formed
 
