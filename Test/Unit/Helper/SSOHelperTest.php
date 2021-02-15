@@ -19,12 +19,37 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\SSOHelper;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\Framework\App\Helper\Context;
+use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\SSOHelper
  */
 class SSOHelperTest extends BoltTestCase
 {
+    /**
+     * @var Context|MockObject
+     */
+    private $context;
+
+    /**
+     * @var SSOHelper|MockObject
+     */
+    private $currentMock;
+
+    /**
+     * @inheritdoc
+     */
+    public function setUpInternal()
+    {
+        $this->context = $this->createMock(Context::class);
+        $this->currentMock = $this->getMockBuilder(SSOHelper::class)
+            ->setMethods(['parseAndValidateJWT'])
+            ->setConstructorArgs([$this->context])
+            ->getMock();
+    }
+
     /**
      * @test
      *
@@ -39,7 +64,7 @@ class SSOHelperTest extends BoltTestCase
      */
     public function parseAndValidateJWT_returnsCorrectValue_forAllCases($token, $audience, $pubkey, $expected)
     {
-        $this->assertEquals($expected, SSOHelper::parseAndValidateJWT($token, $audience, $pubkey));
+        $this->assertEquals($expected, TestHelper::invokeMethod($this->currentMock, 'parseAndValidateJWT', [$token, $audience, $pubkey]));
     }
 
     /**
