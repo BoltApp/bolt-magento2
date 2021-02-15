@@ -239,9 +239,9 @@ class Order extends AbstractHelper
     private $checkboxesHandler;
 
     /**
-     * @var CustomFieldsHandler
+     * @var CustomfieldsHandler
      */
-    private $customFieldsHandler;
+    private $customfieldsHandler;
 
     /**
      * @var CustomerCreditCardFactory
@@ -309,7 +309,7 @@ class Order extends AbstractHelper
      * @param WebhookLogFactory                   $webhookLogFactory
      * @param Decider                             $featureSwitches
      * @param CheckboxesHandler                   $checkboxesHandler
-     * @param CustomFieldsHandler                 $customFieldsHandler
+     * @param CustomfieldsHandler                 $customfieldsHandler
      * @param CustomerCreditCardFactory           $customerCreditCardFactory
      * @param CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory
      * @param CreditmemoFactory                   $creditmemoFactory
@@ -343,8 +343,7 @@ class Order extends AbstractHelper
         WebhookLogCollectionFactory $webhookLogCollectionFactory,
         WebhookLogFactory $webhookLogFactory,
         Decider $featureSwitches,
-        CheckboxesHandler $checkboxesHandler,
-        CustomFieldsHandler $customFieldsHandler,
+        CheckboxesHandler $checkboxesHandler,       
         CustomerCreditCardFactory $customerCreditCardFactory,
         CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory,
         CreditmemoFactory $creditmemoFactory,
@@ -352,7 +351,8 @@ class Order extends AbstractHelper
         EventsForThirdPartyModules $eventsForThirdPartyModules,
         OrderManagementInterface $orderManagement = null,
         OrderIncrementIdChecker $orderIncrementIdChecker = null,
-        Create $adminOrderCreateModel = null
+        Create $adminOrderCreateModel = null,
+        CustomfieldsHandler $customfieldsHandler
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -378,7 +378,7 @@ class Order extends AbstractHelper
         $this->webhookLogFactory = $webhookLogFactory;
         $this->featureSwitches = $featureSwitches;
         $this->checkboxesHandler = $checkboxesHandler;
-        $this->customFieldsHandler = $customFieldsHandler;
+        $this->customfieldsHandler = $customfieldsHandler;
         $this->customerCreditCardFactory = $customerCreditCardFactory;
         $this->customerCreditCardCollectionFactory = $customerCreditCardCollectionFactory;
         $this->creditmemoFactory = $creditmemoFactory;
@@ -2167,9 +2167,9 @@ class Order extends AbstractHelper
                 $this->checkboxesHandler->handle($order, $hookPayload['checkboxes']);
             }
 
-            if (isset($hookPayload['custom_fields']) && $hookPayload['custom_fields']) {
-                $this->customFieldsHandler->handle($order, $hookPayload['custom_fields']);
-            }
+            //if (isset($hookPayload['custom_fields']) && $hookPayload['custom_fields']) {
+            //    $this->customFieldsHandler->handle($order, $hookPayload['custom_fields']);
+            //}
 
 
             // set order state and status
