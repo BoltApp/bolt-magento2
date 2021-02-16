@@ -160,6 +160,7 @@ class OAuthRedirect implements OAuthRedirectInterface
                 throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
             }
 
+            $this->externalCustomerEntityRepository->create($payload['sub'], $customer->getId());
             $this->customerSession->setCustomerAsLoggedIn($customer);
             // redirect
         }
@@ -169,15 +170,16 @@ class OAuthRedirect implements OAuthRedirectInterface
         }
 
         try {
-            $customer = $this->customerInterfaceFactory->create();
-            $customer->setWebsiteId($websiteId);
-            $customer->setStoreId($storeId);
-            $customer->setFirstname($payload['first_name']);
-            $customer->setLastname($payload['last_name']);
-            $customer->setEmail($payload['email']);
-            $customer->setConfirmation(null);
+            $newCustomer = $this->customerInterfaceFactory->create();
+            $newCustomer->setWebsiteId($websiteId);
+            $newCustomer->setStoreId($storeId);
+            $newCustomer->setFirstname($payload['first_name']);
+            $newCustomer->setLastname($payload['last_name']);
+            $newCustomer->setEmail($payload['email']);
+            $newCustomer->setConfirmation(null);
             $customer = $this->customerRepository->save($customer);
 
+            $this->externalCustomerEntityRepository->create($payload['sub'], $customer->getId());
             $this->customerSession->setCustomerAsLoggedIn($customer);
             // redirect
         } catch (Exception $e) {
