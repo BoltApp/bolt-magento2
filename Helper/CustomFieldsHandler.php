@@ -78,10 +78,9 @@ class CustomFieldsHandler extends AbstractHelper
                 $comment .= '<br>' . $customField['label'] . ': ' . $customField['value'];
             }
 
-            if (isset($customField['features']) && in_array($customField['features'], FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER))  {
-                $needSubscribe = true;
-            }         
+            $needSubscribe = isset($customField['features']) && in_array($customField['features'], FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER);
         }
+        
         if ($comment) {
             $order->addCommentToStatusHistory(self::COMMENT_PREFIX_TEXT.$comment);
             $order->save();
