@@ -82,7 +82,7 @@ class SSOHelper extends AbstractHelper
      *
      * @param string $code         the authorization code received
      * @param string $scope        scope for the oauth workflow, currently only openid is supported
-     * @param string $clientId     client id for the oauth workflow, should be the same as merchant publishable key
+     * @param string $clientId     client id for the oauth workflow, should be the last part of merchant publishable key
      * @param string $clientSecret client secret for the oauth workflow, should be the same as merchant API key
      *
      * @return mixed|null
