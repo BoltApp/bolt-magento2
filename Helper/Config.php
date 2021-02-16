@@ -1249,7 +1249,7 @@ class Config extends AbstractHelper
     /**
      * Get Additional Config property
      *
-     * @param string     $name    of the additional config property
+     * @param string     $name    name of the additional config property
      * @param int|string $storeId scope for which to retrieve additional config property
      *
      * @return mixed value of the requested property in the Additional COnfig
@@ -1477,8 +1477,15 @@ class Config extends AbstractHelper
      */
     public function getClientIp()
     {
-        foreach (['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP',
-            'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR',] as $key) {
+        foreach ([
+            'HTTP_CLIENT_IP',
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_FORWARDED',
+            'HTTP_X_CLUSTER_CLIENT_IP',
+            'HTTP_FORWARDED_FOR',
+            'HTTP_FORWARDED',
+            'REMOTE_ADDR'
+        ] as $key) {
             if ($ips = $this->_request->getServer($key, false)) {
                 foreach (explode(',', $ips) as $ip) {
                     $ip = trim($ip); // just to be safe
