@@ -213,7 +213,7 @@ class Config extends AbstractHelper
     const XML_PATH_CUSTOM_MERCHANT_DASH = 'payment/boltpay/custom_merchant_dash';
 
     /**
-     * Path for custom merchant dash, used only for dev mode.
+     * Path for custom cdn, used only for dev mode.
      */
     const XML_PATH_CUSTOM_CDN = 'payment/boltpay/custom_cdn';
 
