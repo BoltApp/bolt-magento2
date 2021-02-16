@@ -72,6 +72,9 @@
     <!-- For oauth_redirect endpoint -->
     <preference for="Bolt\Boltpay\Api\OAuthRedirectInterface" type="Bolt\Boltpay\Model\Api\OAuthRedirect" />
 
+    <preference for="Bolt\Boltpay\Api\Data\ExternalCustomerEntityInterface" type="Bolt\Boltpay\Model\ExternalCustomerEntity"/>
+    <preference for="Bolt\Boltpay\Api\ExternalCustomerEntityRepositoryInterface" type="Bolt\Boltpay\Model\ExternalCustomerEntityRepository"/>
+
     <!-- For debug save endpoint -->
     <preference for="Bolt\Boltpay\Api\UpdateSettingsInterface" type="Bolt\Boltpay\Model\Api\UpdateSettings" />
     
