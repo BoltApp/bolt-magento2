@@ -18,16 +18,16 @@
 namespace Bolt\Boltpay\Helper;
 
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
+use Exception;
+use Magento\Directory\Model\RegionFactory;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\Composer\ComposerFactory;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ResourceInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\Store;
-use Magento\Directory\Model\RegionFactory;
-use Magento\Framework\Composer\ComposerFactory;
-use Magento\Framework\App\Config\Storage\WriterInterface;
 
 /**
  * Boltpay Configuration helper
@@ -223,6 +223,11 @@ class Config extends AbstractHelper
     const XML_PATH_CUSTOM_ACCOUNT = 'payment/boltpay/custom_account';
 
     /**
+     * Path for custom public key, used only for dev mode.
+     */
+    const XML_PATH_CUSTOM_PUBLIC_KEY = 'payment/boltpay/custom_public_key';
+
+    /**
      * Bolt sandbox url
      */
     const API_URL_SANDBOX = 'https://api-sandbox.bolt.com/';
@@ -361,7 +366,7 @@ class Config extends AbstractHelper
 
     const XML_PATH_PICKUP_STREET = 'payment/boltpay/pickup_street';
 
-    const XML_PATH_PICKUP_APARTMENT  = 'payment/boltpay/pickup_apartment';
+    const XML_PATH_PICKUP_APARTMENT = 'payment/boltpay/pickup_apartment';
 
     const XML_PATH_PICKUP_CITY = 'payment/boltpay/pickup_city';
 
@@ -402,49 +407,49 @@ class Config extends AbstractHelper
      * Map of human-readable config names to their XML paths
      */
     const CONFIG_SETTING_PATHS = [
-        "publishable_key_checkout" => self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
-        "active" => self::XML_PATH_ACTIVE,
-        "title" => self::XML_PATH_TITLE,
-        "api_key" => self::XML_PATH_API_KEY,
-        "signing_secret" => self::XML_PATH_SIGNING_SECRET,
-        "publishable_key_checkout" => self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
-        "publishable_key_payment" => self::XML_PATH_PUBLISHABLE_KEY_PAYMENT,
-        "publishable_key_back_office" => self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE,
-        "sandbox_mode" => self::XML_PATH_SANDBOX_MODE,
-        "is_pre_auth" => self::XML_PATH_IS_PRE_AUTH,
-        "product_page_checkout" => self::XML_PATH_PRODUCT_PAGE_CHECKOUT,
-        "select_product_page_checkout" => self::XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT,
-        "geolocation_api_key" => self::XML_PATH_GEOLOCATION_API_KEY,
-        "replace_selectors" => self::XML_PATH_REPLACE_SELECTORS,
-        "totals_change_selectors" => self::XML_PATH_TOTALS_CHANGE_SELECTORS,
-        "global_css" => self::XML_PATH_GLOBAL_CSS,
-        "additional_checkout_button_class" => self::XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS,
-        "success_page" => self::XML_PATH_SUCCESS_PAGE_REDIRECT,
-        "prefetch_shipping" => self::XML_PATH_PREFETCH_SHIPPING,
-        "prefetch_address_fields" => self::XML_PATH_PREFETCH_ADDRESS_FIELDS,
-        "reset_shipping_calculation" => self::XML_PATH_RESET_SHIPPING_CALCULATION,
-        "javascript_success" => self::XML_PATH_JAVASCRIPT_SUCCESS,
-        "debug" => self::XML_PATH_DEBUG,
-        "additional_js" => self::XML_PATH_ADDITIONAL_JS,
-        "track_on_checkout_start" => self::XML_PATH_TRACK_CHECKOUT_START,
-        "track_on_email_enter" => self::XML_PATH_TRACK_EMAIL_ENTER,
-        "track_on_shipping_details_complete" => self::XML_PATH_TRACK_SHIPPING_DETAILS_COMPLETE,
-        "track_on_shipping_options_complete" => self::XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE,
-        "track_on_payment_submit" => self::XML_PATH_TRACK_PAYMENT_SUBMIT,
-        "track_on_success" => self::XML_PATH_TRACK_SUCCESS,
-        "track_on_close" => self::XML_PATH_TRACK_CLOSE,
-        "additional_config" => self::XML_PATH_ADDITIONAL_CONFIG,
-        "minicart_support" => self::XML_PATH_MINICART_SUPPORT,
-        "ip_whitelist" => self::XML_PATH_IP_WHITELIST,
-        "store_credit" => self::XML_PATH_STORE_CREDIT,
-        "reward_points" => self::XML_PATH_REWARD_POINTS,
-        "reward_points_minicart" => self::XML_PATH_REWARD_POINTS_MINICART,
-        "enable_payment_only_checkout" => self::XML_PATH_PAYMENT_ONLY_CHECKOUT,
-        "bolt_order_caching" => self::XML_PATH_BOLT_ORDER_CACHING,
-        "api_emulate_session" => self::XML_PATH_API_EMULATE_SESSION,
-        "should_minify_javascript" => self::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
-        "capture_merchant_metrics" => self::XML_PATH_CAPTURE_MERCHANT_METRICS,
-        "track_checkout_funnel" => self::XML_PATH_TRACK_CHECKOUT_FUNNEL
+        'publishable_key_checkout'           => self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
+        'active'                             => self::XML_PATH_ACTIVE,
+        'title'                              => self::XML_PATH_TITLE,
+        'api_key'                            => self::XML_PATH_API_KEY,
+        'signing_secret'                     => self::XML_PATH_SIGNING_SECRET,
+        'publishable_key_checkout'           => self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
+        'publishable_key_payment'            => self::XML_PATH_PUBLISHABLE_KEY_PAYMENT,
+        'publishable_key_back_office'        => self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE,
+        'sandbox_mode'                       => self::XML_PATH_SANDBOX_MODE,
+        'is_pre_auth'                        => self::XML_PATH_IS_PRE_AUTH,
+        'product_page_checkout'              => self::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+        'select_product_page_checkout'       => self::XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT,
+        'geolocation_api_key'                => self::XML_PATH_GEOLOCATION_API_KEY,
+        'replace_selectors'                  => self::XML_PATH_REPLACE_SELECTORS,
+        'totals_change_selectors'            => self::XML_PATH_TOTALS_CHANGE_SELECTORS,
+        'global_css'                         => self::XML_PATH_GLOBAL_CSS,
+        'additional_checkout_button_class'   => self::XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS,
+        'success_page'                       => self::XML_PATH_SUCCESS_PAGE_REDIRECT,
+        'prefetch_shipping'                  => self::XML_PATH_PREFETCH_SHIPPING,
+        'prefetch_address_fields'            => self::XML_PATH_PREFETCH_ADDRESS_FIELDS,
+        'reset_shipping_calculation'         => self::XML_PATH_RESET_SHIPPING_CALCULATION,
+        'javascript_success'                 => self::XML_PATH_JAVASCRIPT_SUCCESS,
+        'debug'                              => self::XML_PATH_DEBUG,
+        'additional_js'                      => self::XML_PATH_ADDITIONAL_JS,
+        'track_on_checkout_start'            => self::XML_PATH_TRACK_CHECKOUT_START,
+        'track_on_email_enter'               => self::XML_PATH_TRACK_EMAIL_ENTER,
+        'track_on_shipping_details_complete' => self::XML_PATH_TRACK_SHIPPING_DETAILS_COMPLETE,
+        'track_on_shipping_options_complete' => self::XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE,
+        'track_on_payment_submit'            => self::XML_PATH_TRACK_PAYMENT_SUBMIT,
+        'track_on_success'                   => self::XML_PATH_TRACK_SUCCESS,
+        'track_on_close'                     => self::XML_PATH_TRACK_CLOSE,
+        'additional_config'                  => self::XML_PATH_ADDITIONAL_CONFIG,
+        'minicart_support'                   => self::XML_PATH_MINICART_SUPPORT,
+        'ip_whitelist'                       => self::XML_PATH_IP_WHITELIST,
+        'store_credit'                       => self::XML_PATH_STORE_CREDIT,
+        'reward_points'                      => self::XML_PATH_REWARD_POINTS,
+        'reward_points_minicart'             => self::XML_PATH_REWARD_POINTS_MINICART,
+        'enable_payment_only_checkout'       => self::XML_PATH_PAYMENT_ONLY_CHECKOUT,
+        'bolt_order_caching'                 => self::XML_PATH_BOLT_ORDER_CACHING,
+        'api_emulate_session'                => self::XML_PATH_API_EMULATE_SESSION,
+        'should_minify_javascript'           => self::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
+        'capture_merchant_metrics'           => self::XML_PATH_CAPTURE_MERCHANT_METRICS,
+        'track_checkout_funnel'              => self::XML_PATH_TRACK_CHECKOUT_FUNNEL
     ];
 
     /**
@@ -475,13 +480,13 @@ class Config extends AbstractHelper
     private $composerFactory;
 
     /**
-     * @param Context $context
-     * @param EncryptorInterface $encryptor
-     * @param ResourceInterface $moduleResource
+     * @param Context                  $context
+     * @param EncryptorInterface       $encryptor
+     * @param ResourceInterface        $moduleResource
      * @param ProductMetadataInterface $productMetadata
      * @param BoltConfigSettingFactory $boltConfigSettingFactory
-     * @param RegionFactory $regionFactory
-     * @param ComposerFactory $composerFactory
+     * @param RegionFactory            $regionFactory
+     * @param ComposerFactory          $composerFactory
      */
     public function __construct(
         Context $context,
@@ -506,7 +511,7 @@ class Config extends AbstractHelper
      *
      * @param null|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getApiUrl($storeId = null)
     {
@@ -523,7 +528,7 @@ class Config extends AbstractHelper
      *
      * @param null|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getMerchantDashboardUrl($storeId = null)
     {
@@ -540,7 +545,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getCdnUrl($storeId = null)
     {
@@ -557,7 +562,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getAccountUrl($storeId = null)
     {
@@ -570,7 +575,30 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get Bolt public key
+     *
+     * @param null|string $storeId
+     *
+     * @return string
+     */
+    public function getPublicKey($storeId = null)
+    {
+        // Sandbox public key is hardcoded
+        if ($this->isSandboxModeSet($storeId)) {
+            return $this->getScopeConfig()->getValue(
+                self::XML_PATH_CUSTOM_PUBLIC_KEY,
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            ) ?: 'MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAumrI98nQ0thJELhOa0AI4fQkEEuh9gHOFEQUjVZzSZO/O5x42mugJyMq3hDGwJBOH2FUgT5WnGt9tHJ9NbTwfZtljOyRkmoTUGFkQIcRZy/b0fD9/IfFXuAXJebflCIVFO/UnFRN4Z9RQqx+vffAE+qNnQV/V/455Qw0+/HW5n06Df0UVYXiZ1+2RXfGIinPcUgMS59r12kJDahELTWWcwa1gJE1UnSUiwTO7dDp1IjgGml6cpbynYcROyuz4wNumIj7w6tH+krmPguTYXPmKVSmZtqFCh1reXonSZBQ9XvuWhQbY3skf7X2AELHB6nkUNaUlVlSbG/DiHjxSAvSr3HSKLHiaYuB3VA/FWgfSWvg9kZVE9d1Qg+JhYL8kIxcWIgH37onIR5gh7lep0u73WlgFy97tjy9uiTmcjrzBBXtxl5PsLGaTJGPkZnAON4BH0Njuq23G/ZHXcJvX8uFs4VlfItq838SjJqzCrWS5eK4mKX669dYEXenjv8mqqkKSD3PNZl4ixwfMkhmVAeYA0qPnq5rt7XA5mVlr5BNkpal29fL/s6CcdfAylzvzS3C1a6z3ZpZSl2yGAfDgceC4+h+iLJmyeZM3Jz1jttE9BTUxwlhQvO/xIDkJXGgU9y8TMy/rNcPS/qOW1k4DDcTM/eCqsISa58WWiCO0WQUW6ECAwEAAQ==';
+        }
+
+        // Production public key has not been generated yet
+        return '';
+    }
+
+    /**
      * Get module version
+     *
      * @return false|string
      */
     public function getModuleVersion()
@@ -580,7 +608,7 @@ class Config extends AbstractHelper
 
     /**
      * @return string
-     * @throws \Exception
+     * @throws Exception
      */
     public function getComposerVersion()
     {
@@ -591,13 +619,14 @@ class Config extends AbstractHelper
                 ->findPackage(self::BOLT_COMPOSER_NAME, '*');
 
             return ($boltPackage) ? $boltPackage->getVersion() : null;
-        }catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return null;
         }
     }
 
     /**
      * Get store version
+     *
      * @return false|string
      */
     public function getStoreVersion()
@@ -609,15 +638,15 @@ class Config extends AbstractHelper
      * Helper method to Get Encrypted Key from config.
      * Return decrypted.
      *
-     * @param string $path
+     * @param string     $path
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     private function getEncryptedKey($path, $storeId = null)
     {
         //Get management key
-        $key =  $this->getScopeConfig()->getValue(
+        $key = $this->getScopeConfig()->getValue(
             $path,
             ScopeInterface::SCOPE_STORE,
             $storeId
@@ -633,7 +662,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getAnyPublishableKey($storeId = null)
     {
@@ -645,7 +674,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getTitle($storeId = null)
     {
@@ -661,7 +690,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getApiKey($storeId = null)
     {
@@ -673,7 +702,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getSigningSecret($storeId = null)
     {
@@ -685,7 +714,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getPublishableKeyCheckout($storeId = null)
     {
@@ -697,7 +726,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getPublishableKeyPayment($storeId = null)
     {
@@ -709,7 +738,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getPublishableKeyBackOffice($storeId = null)
     {
@@ -720,6 +749,7 @@ class Config extends AbstractHelper
      * Get Bolt color from config
      *
      * @param int|string $storeId
+     *
      * @return string
      */
     public function getButtonColor($storeId = null)
@@ -736,7 +766,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getReplaceSelectors($storeId = null)
     {
@@ -752,7 +782,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getTotalsChangeSelectors($storeId = null)
     {
@@ -768,7 +798,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getGlobalCSS($storeId = null)
     {
@@ -782,7 +812,7 @@ class Config extends AbstractHelper
     /**
      * Get show card type in the order grid
      *
-     * @return  string
+     * @return string
      */
     public function getShowCcTypeInOrderGrid()
     {
@@ -819,11 +849,11 @@ class Config extends AbstractHelper
      * @param int|string $storeId scope for which to retrieve additional checkout button attributes
      *
      * @return object containing additional checkout button attributes if available in Additional Configuration,
-     * otherwise an empty object
+     *                otherwise an empty object
      */
     public function getAdditionalCheckoutButtonAttributes($storeId = null)
     {
-        return $this->getAdditionalConfigProperty('checkoutButtonAttributes', $storeId) ?: (object)[];
+        return $this->getAdditionalConfigProperty('checkoutButtonAttributes', $storeId) ?: (object) [];
     }
 
     /**
@@ -831,7 +861,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getPrefetchAddressFields($storeId = null)
     {
@@ -847,7 +877,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getSuccessPageRedirect($storeId = null)
     {
@@ -863,7 +893,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getJavascriptSuccess($storeId = null)
     {
@@ -879,7 +909,7 @@ class Config extends AbstractHelper
      *
      * @param int|string|Store $store
      *
-     * @return  boolean
+     * @return boolean
      */
     public function getProductPageCheckoutFlag($store = null)
     {
@@ -893,7 +923,9 @@ class Config extends AbstractHelper
     /**
      * Get select product page checkout flag from config.
      * Used to specify if product page is only enabled for specific products.
+     *
      * @param int|string|Store $store
+     *
      * @return boolean
      */
 
@@ -911,7 +943,7 @@ class Config extends AbstractHelper
      *
      * @param int|string|Store $store
      *
-     * @return  boolean
+     * @return boolean
      */
     public function isOrderManagementEnabled($store = null)
     {
@@ -927,7 +959,7 @@ class Config extends AbstractHelper
      *
      * @param int|string|Store $store
      *
-     * @return  string
+     * @return string
      */
     public function getOrderManagementSelector($store = null)
     {
@@ -943,7 +975,7 @@ class Config extends AbstractHelper
      *
      * @param int|string|Store $store
      *
-     * @return  boolean
+     * @return boolean
      */
     public function getPrefetchShipping($store = null)
     {
@@ -959,7 +991,7 @@ class Config extends AbstractHelper
      *
      * @param int|string|Store $store
      *
-     * @return  boolean
+     * @return boolean
      */
     public function getResetShippingCalculation($store = null)
     {
@@ -975,7 +1007,7 @@ class Config extends AbstractHelper
      *
      * @param int|string|Store $store
      *
-     * @return  boolean
+     * @return boolean
      */
     public function isActive($store = null)
     {
@@ -991,7 +1023,7 @@ class Config extends AbstractHelper
      *
      * @param int|string|Store $store
      *
-     * @return  boolean
+     * @return boolean
      */
     public function isDebugModeOn($store = null)
     {
@@ -1008,7 +1040,6 @@ class Config extends AbstractHelper
      * @param int|string|Store $store
      *
      * @return bool
-     * @SuppressWarnings(PHPMD.BooleanGetMethodName)
      */
     public function isSandboxModeSet($store = null)
     {
@@ -1022,6 +1053,7 @@ class Config extends AbstractHelper
     /**
      * @param $path
      * @param $default
+     *
      * @return mixed
      */
     public function getCustomURLValueOrDefault($path, $default)
@@ -1033,6 +1065,7 @@ class Config extends AbstractHelper
 
     /**
      * @param $url
+     *
      * @return bool
      */
     protected function validateCustomUrl($url)
@@ -1064,7 +1097,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getGeolocationApiKey($storeId = null)
     {
@@ -1076,7 +1109,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getAdditionalJS($storeId = null)
     {
@@ -1190,7 +1223,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     public function getAdditionalConfigString($storeId = null)
     {
@@ -1216,7 +1249,7 @@ class Config extends AbstractHelper
     /**
      * Get Additional Config property
      *
-     * @param string $name of the additional config property
+     * @param string     $name    of the additional config property
      * @param int|string $storeId scope for which to retrieve additional config property
      *
      * @return mixed value of the requested property in the Additional COnfig
@@ -1232,7 +1265,7 @@ class Config extends AbstractHelper
      *
      * @param int|string|Store $store
      *
-     * @return  boolean
+     * @return boolean
      */
     public function getIsPreAuth($store = null)
     {
@@ -1302,7 +1335,7 @@ class Config extends AbstractHelper
      *
      * @param int|string|Store $store
      *
-     * @return  boolean
+     * @return boolean
      */
     public function getMinicartSupport($store = null)
     {
@@ -1335,15 +1368,16 @@ class Config extends AbstractHelper
     /**
      * Get filter specified by name from "pageFilters" additional configuration
      *
-     * @param string $filterName 'whitelist'|'blacklist'
+     * @param string     $filterName 'whitelist'|'blacklist'
      * @param int|string $storeId
+     *
      * @return array
      */
     private function getPageFilter($filterName, $storeId = null)
     {
         $pageFilters = $this->getPageFilters($storeId);
         if ($pageFilters && isset($pageFilters->$filterName)) {
-            return (array)$pageFilters->$filterName;
+            return (array) $pageFilters->$filterName;
         }
         return [];
     }
@@ -1388,7 +1422,7 @@ class Config extends AbstractHelper
      */
     public function shouldAdjustTaxMismatch($storeId = null)
     {
-        return (bool)$this->getAdditionalConfigProperty('adjustTaxMismatch', $storeId);
+        return (bool) $this->getAdditionalConfigProperty('adjustTaxMismatch', $storeId);
     }
 
     /**
@@ -1412,7 +1446,7 @@ class Config extends AbstractHelper
      *
      * @param int|string $storeId
      *
-     * @return  string
+     * @return string
      */
     private function getIPWhitelistConfig($storeId = null)
     {
@@ -1439,12 +1473,12 @@ class Config extends AbstractHelper
      * Gets the IP address of the requesting customer.
      * This is used instead of simply $_SERVER['REMOTE_ADDR'] to give more accurate IPs if a proxy is being used.
      *
-     * @return string  The IP address of the customer
+     * @return string The IP address of the customer
      */
     public function getClientIp()
     {
         foreach (['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP',
-                     'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR',] as $key) {
+            'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR',] as $key) {
             if ($ips = $this->_request->getServer($key, false)) {
                 foreach (explode(',', $ips) as $ip) {
                     $ip = trim($ip); // just to be safe
@@ -1477,6 +1511,7 @@ class Config extends AbstractHelper
      * Get Use Store Credit on Shopping Cart configuration
      *
      * @param int|string|Store $store
+     *
      * @return bool
      */
     public function useStoreCreditConfig($store = null)
@@ -1492,6 +1527,7 @@ class Config extends AbstractHelper
      * Get Use Amasty Store Credit on Shopping Cart configuration
      *
      * @param int|string|Store $store
+     *
      * @return bool
      */
     public function useAmastyStoreCreditConfig($store = null)
@@ -1506,7 +1542,7 @@ class Config extends AbstractHelper
     /**
      * Get Use Reward Points on Shopping Cart configuration
      *
-     * @param  int|string|Store $store
+     * @param int|string|Store $store
      *
      * @return bool
      */
@@ -1539,6 +1575,7 @@ class Config extends AbstractHelper
      * Get Payment Only Checkout Enabled configuration
      *
      * @param int|string|Store $store
+     *
      * @return bool
      */
     public function isPaymentOnlyCheckoutEnabled($store = null)
@@ -1558,11 +1595,12 @@ class Config extends AbstractHelper
      * }
      *
      * @param int|string $storeId
+     *
      * @return array
      */
     public function getIgnoredShippingAddressCoupons($storeId)
     {
-        $coupons = (array)$this->getAdditionalConfigProperty('ignoredShippingAddressCoupons', $storeId);
+        $coupons = (array) $this->getAdditionalConfigProperty('ignoredShippingAddressCoupons', $storeId);
 
         $coupons = array_map(function ($coupon) {
             return strtolower($coupon);
@@ -1576,7 +1614,7 @@ class Config extends AbstractHelper
      *
      * @param int|string|Store $store
      *
-     * @return  boolean
+     * @return boolean
      */
     public function isBoltOrderCachingEnabled($store = null)
     {
@@ -1591,7 +1629,7 @@ class Config extends AbstractHelper
      *
      * @param int|string|Store $store
      *
-     * @return  boolean
+     * @return boolean
      */
     public function isSessionEmulationEnabled($store = null)
     {
@@ -1607,7 +1645,7 @@ class Config extends AbstractHelper
      *
      * @param int|string|Store $store
      *
-     * @return  boolean
+     * @return boolean
      */
     public function shouldMinifyJavascript($store = null)
     {
@@ -1624,7 +1662,7 @@ class Config extends AbstractHelper
      *
      * @param int|string|Store $store
      *
-     * @return  boolean
+     * @return boolean
      */
     public function shouldCaptureMetrics($store = null)
     {
@@ -1639,6 +1677,7 @@ class Config extends AbstractHelper
      * Get minimum order amount configuration
      *
      * @param int|string|Store $storeId
+     *
      * @return float|int
      */
     public function getMinimumOrderAmount($storeId = null)
@@ -1655,7 +1694,7 @@ class Config extends AbstractHelper
      *
      * @param int|string|Store $store
      *
-     * @return  boolean
+     * @return boolean
      */
     public function shouldTrackCheckoutFunnel($store = null)
     {
@@ -1681,6 +1720,7 @@ class Config extends AbstractHelper
 
     /**
      * Check if guest checkout for downloadable product is disabled
+     *
      * @return bool
      */
     public function isGuestCheckoutForDownloadableProductDisabled()
@@ -1831,7 +1871,7 @@ class Config extends AbstractHelper
         // Client IP Restriction
         $boltSettings[] = $this->boltConfigSettingFactory->create()
                                                          ->setName('ip_whitelist')
-                                                         ->setValue(implode(", ", $this->getIPWhitelistArray()));
+                                                         ->setValue(implode(', ', $this->getIPWhitelistArray()));
         // Store Credit
         $boltSettings[] = $this->boltConfigSettingFactory->create()
                                                          ->setName('store_credit')
@@ -1879,8 +1919,9 @@ class Config extends AbstractHelper
     /**
      * Set config setting name to the given value
      *
-     * @param string $settingName
-     * @param mixed $settingValue
+     * @param string      $settingName
+     * @param mixed       $settingValue
+     * @param null|string $storeId
      */
     public function setConfigSetting($settingName, $settingValue = null, $storeId = null)
     {
@@ -1901,7 +1942,8 @@ class Config extends AbstractHelper
     }
 
     /**
-     * @param null $storeId
+     * @param null|string $storeId
+     *
      * @return mixed
      */
     public function getPickupStreetConfiguration($storeId = null)
@@ -1914,7 +1956,8 @@ class Config extends AbstractHelper
     }
 
     /**
-     * @param null $storeId
+     * @param null|string $storeId
+     *
      * @return mixed
      */
     public function getPickupCityConfiguration($storeId = null)
@@ -1927,7 +1970,8 @@ class Config extends AbstractHelper
     }
 
     /**
-     * @param null $storeId
+     * @param null|string $storeId
+     *
      * @return mixed
      */
     public function getPickupZipCodeConfiguration($storeId = null)
@@ -1940,7 +1984,8 @@ class Config extends AbstractHelper
     }
 
     /**
-     * @param null $storeId
+     * @param null|string $storeId
+     *
      * @return mixed
      */
     public function getPickupCountryIdConfiguration($storeId = null)
@@ -1953,7 +1998,8 @@ class Config extends AbstractHelper
     }
 
     /**
-     * @param null $storeId
+     * @param null|string $storeId
+     *
      * @return mixed
      */
     public function getPickupRegionIdConfiguration($storeId = null)
@@ -1966,7 +2012,8 @@ class Config extends AbstractHelper
     }
 
     /**
-     * @param null $storeId
+     * @param null|string $storeId
+     *
      * @return mixed
      */
     public function getPickupShippingMethodCodeConfiguration($storeId = null)
@@ -1979,7 +2026,8 @@ class Config extends AbstractHelper
     }
 
     /**
-     * @param null $storeId
+     * @param null|string $storeId
+     *
      * @return mixed
      */
     public function getPickupApartmentConfiguration($storeId = null)
@@ -1992,7 +2040,8 @@ class Config extends AbstractHelper
     }
 
     /**
-     * @param null $storeId
+     * @param null|string $storeId
+     *
      * @return mixed
      */
     public function isStorePickupFeatureEnabled($storeId = null)
@@ -2006,7 +2055,9 @@ class Config extends AbstractHelper
 
     /**
      * Get config value for whether or not always present checkout is enabled
+     *
      * @param int|string|Store $storeId
+     *
      * @return boolean
      */
     public function isAlwaysPresentCheckoutEnabled($storeId = null)
@@ -2045,11 +2096,11 @@ class Config extends AbstractHelper
         }
 
         $addressData = [
-            'street' => trim($street),
-            'city' => $city,
-            'postcode' => $postCode,
-            'country_id' => $countryId,
-            'region_id' => $regionId,
+            'street'      => trim($street),
+            'city'        => $city,
+            'postcode'    => $postCode,
+            'country_id'  => $countryId,
+            'region_id'   => $regionId,
             'region_code' => $regionCode,
         ];
 
@@ -2057,7 +2108,8 @@ class Config extends AbstractHelper
     }
 
     /**
-     * @param $rateCode
+     * @param string $rateCode
+     *
      * @return bool
      */
     public function isPickupInStoreShippingMethodCode($rateCode)
@@ -2078,12 +2130,13 @@ class Config extends AbstractHelper
     }
 
     /**
-     * @param null $storeId
+     * @param null|string $storeId
+     *
      * @return array
      */
     public function getProductAttributesList($storeId = null)
     {
-        $commaSeparateList =  $this->getScopeConfig()->getValue(
+        $commaSeparateList = $this->getScopeConfig()->getValue(
             self::XML_PATH_PRODUCT_ATTRIBUTES_LIST,
             ScopeInterface::SCOPE_STORE,
             $storeId
@@ -2091,7 +2144,7 @@ class Config extends AbstractHelper
         if (!$commaSeparateList) {
             return [];
         }
-        return explode(",", $commaSeparateList);
+        return explode(',', $commaSeparateList);
     }
 
     /**
@@ -2118,6 +2171,7 @@ class Config extends AbstractHelper
      * Get Use Aheadworks Reward Points on Shopping Cart configuration
      *
      * @param int|string|Store $store
+     *
      * @return bool
      */
     public function getUseAheadworksRewardPointsConfig($store = null)
@@ -2128,5 +2182,4 @@ class Config extends AbstractHelper
             $store
         );
     }
-
 }
