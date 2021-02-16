@@ -17,12 +17,12 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
-use Bolt\Boltpay\Api\ExternalCustomerEntityRepositoryInterface;
+use Bolt\Boltpay\Api\ExternalCustomerEntityRepositoryInterface as ExternalCustomerEntityRepository;
 use Bolt\Boltpay\Api\OAuthRedirectInterface;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Bolt\Boltpay\Helper\SSOHelper;
 use Exception;
-use Magento\Customer\Api\CustomerRepositoryInterface;
+use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Customer\Api\Data\CustomerInterfaceFactory;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -48,14 +48,14 @@ class OAuthRedirect implements OAuthRedirectInterface
     private $ssoHelper;
 
     /**
-     * @var ExternalCustomerEntityRepositoryInterface
+     * @var ExternalCustomerEntityRepository
      */
-    private $externalCustomerEntityRepositoryInterface;
+    private $externalCustomerEntityRepository;
 
     /**
-     * @var CustomerRepositoryInterface
+     * @var CustomerRepository
      */
-    private $customerRepositoryInterface;
+    private $customerRepository;
 
     /**
      * @var StoreManagerInterface
@@ -73,21 +73,21 @@ class OAuthRedirect implements OAuthRedirectInterface
     private $customerInterfaceFactory;
 
     /**
-     * @param Response                                  $response
-     * @param DeciderHelper                             $deciderHelper
-     * @param SSOHelper                                 $ssoHelper
-     * @param ExternalCustomerEntityRepositoryInterface $externalCustomerEntityRepositoryInterface
-     * @param CustomerRepositoryInterface               $customerRepositoryInterface
-     * @param StoreManagerInterface                     $storeManager
-     * @param CustomerSession                           $customerSession
-     * @param CustomerInterfaceFactory                  $customerInterfaceFactory
+     * @param Response                         $response
+     * @param DeciderHelper                    $deciderHelper
+     * @param SSOHelper                        $ssoHelper
+     * @param ExternalCustomerEntityRepository $externalCustomerEntityRepository
+     * @param CustomerRepository               $customerRepository
+     * @param StoreManagerInterface            $storeManager
+     * @param CustomerSession                  $customerSession
+     * @param CustomerInterfaceFactory         $customerInterfaceFactory
      */
     public function __construct(
         Response $response,
         DeciderHelper $deciderHelper,
         SSOHelper $ssoHelper,
-        ExternalCustomerEntityRepositoryInterface $externalCustomerEntityRepositoryInterface,
-        CustomerRepositoryInterface $customerRepositoryInterface,
+        ExternalCustomerEntityRepository $externalCustomerEntityRepository,
+        CustomerRepository $customerRepository,
         StoreManagerInterface $storeManager,
         CustomerSession $customerSession,
         CustomerInterfaceFactory $customerInterfaceFactory
@@ -95,8 +95,8 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->response = $response;
         $this->deciderHelper = $deciderHelper;
         $this->ssoHelper = $ssoHelper;
-        $this->externalCustomerEntityRepositoryInterface = $externalCustomerEntityRepositoryInterface;
-        $this->customerRepositoryInterface = $customerRepositoryInterface;
+        $this->externalCustomerEntityRepository = $externalCustomerEntityRepository;
+        $this->customerRepository = $customerRepository;
         $this->storeManager = $storeManager;
         $this->customerSession = $customerSession;
         $this->customerInterfaceFactory = $customerInterfaceFactory;
@@ -147,11 +147,11 @@ class OAuthRedirect implements OAuthRedirectInterface
         $externalCustomerEntity = null;
         $customer = null;
         try {
-            $externalCustomerEntity = $this->externalCustomerEntityRepositoryInterface->getByExternalID($payload['sub']);
+            $externalCustomerEntity = $this->externalCustomerEntityRepository->getByExternalID($payload['sub']);
         } catch (NoSuchEntityException $nsee) {
         }
         try {
-            $customer = $this->customerRepositoryInterface->get($payload['email'], $websiteId);
+            $customer = $this->customerRepository->get($payload['email'], $websiteId);
         } catch (NoSuchEntityException $nsee) {
         }
 
