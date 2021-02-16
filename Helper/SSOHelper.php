@@ -67,8 +67,7 @@ class SSOHelper extends AbstractHelper
 
         $clientSecret = $this->configHelper->getApiKey($storeId);
 
-        //TODO
-        $boltPublicKey = '';
+        $boltPublicKey = $this->configHelper->getPublicKey();
 
         return [
             'clientID'      => $clientID,
