@@ -75,13 +75,11 @@ class CustomfieldsHandler extends AbstractHelper
             if ($customField['type'] === self::TYPE_CHECKBOX) {
                 $comment .= '<br>' . $customField['label'] . ': ' . ($customField['value'] ? 'Yes' : 'No');
             } else if ($customField['type'] === self::TYPE_DROPDOWN) {
-                $comment .= '<br/> ' .serialize($customField);
                 $comment .= '<br>' . $customField['label'] . ': ' . $customField['value'];
             }
             
-            $comment .= '<br/>' . serialize($customField);
             if (isset($customField['features']) && in_array($customField['features'], FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER)) {
-                //$needSubscribe = true;
+                $needSubscribe = true;
             } 
         }
 
