@@ -343,7 +343,8 @@ class Order extends AbstractHelper
         WebhookLogCollectionFactory $webhookLogCollectionFactory,
         WebhookLogFactory $webhookLogFactory,
         Decider $featureSwitches,
-        CheckboxesHandler $checkboxesHandler,       
+        CheckboxesHandler $checkboxesHandler,   
+        CustomfieldsHandler $customfieldsHandler,    
         CustomerCreditCardFactory $customerCreditCardFactory,
         CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory,
         CreditmemoFactory $creditmemoFactory,
@@ -351,8 +352,7 @@ class Order extends AbstractHelper
         EventsForThirdPartyModules $eventsForThirdPartyModules,
         OrderManagementInterface $orderManagement = null,
         OrderIncrementIdChecker $orderIncrementIdChecker = null,
-        Create $adminOrderCreateModel = null,
-        CustomfieldsHandler $customfieldsHandler
+        Create $adminOrderCreateModel = null       
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
@@ -2162,15 +2162,14 @@ class Order extends AbstractHelper
         $this->setOrderPaymentInfoData($payment, $transaction);
 
         if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
-            // handle checkboxes
+            // handle checkboxes and custom fields
             if (isset($hookPayload['checkboxes']) && $hookPayload['checkboxes']) {
                 $this->checkboxesHandler->handle($order, $hookPayload['checkboxes']);
             }
 
-            //if (isset($hookPayload['custom_fields']) && $hookPayload['custom_fields']) {
-            //    $this->customfieldsHandler->handle($order, $hookPayload['custom_fields']);
-            //}
-
+            if (isset($hookPayload['custom_fields']) && $hookPayload['custom_fields']) {
+                $this->customfieldsHandler->handle($order, $hookPayload['custom_fields']);
+            }
 
             // set order state and status
             $this->resetOrderState($order);
