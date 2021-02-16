@@ -69,6 +69,12 @@ class CheckboxesHandler extends AbstractHelper
         $comment = '';
         $needSubscribe = false;
         foreach ($checkboxes as $checkbox) {
+            
+            // custom fields of type CHECKBOX will be processed by the customFieldsHandler
+            if ($checkbox['is_custom_field']) {
+                continue;
+            }
+
             if ($checkbox['category'] == self::CATEGORY_NEWSLETTER && $checkbox['value']
                 && $checkbox['features'] && in_array(self::FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER, $checkbox['features'])) {
                 $needSubscribe = true;

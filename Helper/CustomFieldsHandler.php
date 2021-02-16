@@ -68,19 +68,23 @@ class CustomfieldsHandler extends AbstractHelper
      */
     public function handle($order, $customFields)
     {
-        $comment = '';
+        $comment = ''; 
         $needSubscribe = false;
         foreach ($customFields as $customField) {
             // Currently only CHECKBOX and DROPDOWN custom fields are supported
             if ($customField['type'] === self::TYPE_CHECKBOX) {
                 $comment .= '<br>' . $customField['label'] . ': ' . ($customField['value'] ? 'Yes' : 'No');
             } else if ($customField['type'] === self::TYPE_DROPDOWN) {
+                $comment .= '<br/> ' .serialize($customField);
                 $comment .= '<br>' . $customField['label'] . ': ' . $customField['value'];
             }
             
-            //$needSubscribe = $customField['features'] 
-            //&& in_array($customField['features'], FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER);
+            $comment .= '<br/>' . serialize($customField);
+            if (isset($customField['features']) && in_array($customField['features'], FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER)) {
+                //$needSubscribe = true;
+            } 
         }
+
         if ($comment) {
             $order->addCommentToStatusHistory(self::COMMENT_PREFIX_TEXT.$comment);
             $order->save();
