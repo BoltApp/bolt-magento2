@@ -301,6 +301,10 @@
                         <config_path>payment/boltpay/custom_account</config_path>
                         <validate>validate-custom-url-api</validate>
                     </field>
+                    <field id="custom_public_key" translate="label" type="text" sortOrder="295" showInDefault="0" showInWebsite="0" showInStore="0">
+                        <label>Custom Public Key</label>
+                        <config_path>payment/boltpay/custom_public_key</config_path>
+                    </field>
                     <field id="enable_store_pickup_feature" translate="label" sortOrder="300" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Enable In-Store Pickup Feature</label>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>

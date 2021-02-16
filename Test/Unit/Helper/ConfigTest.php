@@ -570,6 +570,42 @@ JSON;
         );
     }
 
+    /**
+     * @test
+     */
+    public function getPublicKey_returnsConfiguredPublicKey_ifSandboxModeSet()
+    {
+        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig']);
+        $this->currentMock->expects(self::once())->method('isSandboxModeSet')->willReturn(true);
+        $this->currentMock->expects(self::once())->method('getScopeConfig')->willReturn($this->scopeConfig);
+        $this->scopeConfig->expects(self::once())->method('getValue')->with(BoltConfig::XML_PATH_CUSTOM_PUBLIC_KEY)->willReturn('test public key');
+        $this->assertEquals('test public key', $this->currentMock->getPublicKey());
+    }
+
+    /**
+     * @test
+     */
+    public function getPublicKey_returnsHardcodedPublicKey_ifSandboxModeSetAndNoCustomPublicKeyConfigured()
+    {
+        $this->initCurrentMock(['isSandboxModeSet', 'getScopeConfig']);
+        $this->currentMock->expects(self::once())->method('isSandboxModeSet')->willReturn(true);
+        $this->currentMock->expects(self::once())->method('getScopeConfig')->willReturn($this->scopeConfig);
+        $this->scopeConfig->expects(self::once())->method('getValue')->with(BoltConfig::XML_PATH_CUSTOM_PUBLIC_KEY)->willReturn('');
+        $this->assertEquals(
+            'MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAumrI98nQ0thJELhOa0AI4fQkEEuh9gHOFEQUjVZzSZO/O5x42mugJyMq3hDGwJBOH2FUgT5WnGt9tHJ9NbTwfZtljOyRkmoTUGFkQIcRZy/b0fD9/IfFXuAXJebflCIVFO/UnFRN4Z9RQqx+vffAE+qNnQV/V/455Qw0+/HW5n06Df0UVYXiZ1+2RXfGIinPcUgMS59r12kJDahELTWWcwa1gJE1UnSUiwTO7dDp1IjgGml6cpbynYcROyuz4wNumIj7w6tH+krmPguTYXPmKVSmZtqFCh1reXonSZBQ9XvuWhQbY3skf7X2AELHB6nkUNaUlVlSbG/DiHjxSAvSr3HSKLHiaYuB3VA/FWgfSWvg9kZVE9d1Qg+JhYL8kIxcWIgH37onIR5gh7lep0u73WlgFy97tjy9uiTmcjrzBBXtxl5PsLGaTJGPkZnAON4BH0Njuq23G/ZHXcJvX8uFs4VlfItq838SjJqzCrWS5eK4mKX669dYEXenjv8mqqkKSD3PNZl4ixwfMkhmVAeYA0qPnq5rt7XA5mVlr5BNkpal29fL/s6CcdfAylzvzS3C1a6z3ZpZSl2yGAfDgceC4+h+iLJmyeZM3Jz1jttE9BTUxwlhQvO/xIDkJXGgU9y8TMy/rNcPS/qOW1k4DDcTM/eCqsISa58WWiCO0WQUW6ECAwEAAQ==',
+            $this->currentMock->getPublicKey()
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function getPublicKey_returnsEmptyString_ifSandboxModeNotSet()
+    {
+        $this->initCurrentMock(['isSandboxModeSet']);
+        $this->currentMock->expects(self::once())->method('isSandboxModeSet')->willReturn(false);
+        $this->assertEquals('', $this->currentMock->getPublicKey());
+    }
 
     /**
      * @test
