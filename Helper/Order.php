@@ -239,7 +239,7 @@ class Order extends AbstractHelper
     private $checkboxesHandler;
 
     /**
-     * @var CustomfieldsHandler
+     * @var CustomFieldsHandler
      */
     private $customfieldsHandler;
 
@@ -352,7 +352,7 @@ class Order extends AbstractHelper
         OrderManagementInterface $orderManagement = null,
         OrderIncrementIdChecker $orderIncrementIdChecker = null,
         Create $adminOrderCreateModel = null,
-        CustomfieldsHandler $customfieldsHandler
+        CustomFieldsHandler $customfieldsHandler
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
