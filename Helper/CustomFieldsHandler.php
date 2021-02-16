@@ -30,7 +30,7 @@ use Magento\Newsletter\Model\SubscriberFactory;
 class CustomfieldsHandler extends AbstractHelper
 {
     const CATEGORY_NEWSLETTER = 'NEWSLETTER';
-    const COMMENT_PREFIX_TEXT = 'BOLTPAY INFO :: CustomFields';
+    const COMMENT_PREFIX_TEXT = 'BOLTPAY INFO :: customfields';
     const FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER = 'subscribe_to_platform_newsletter';
     const TYPE_CHECKBOX = 'CHECKBOX';
     const TYPE_DROPDOWN = 'DROPDOWN';
@@ -64,20 +64,22 @@ class CustomfieldsHandler extends AbstractHelper
      * Handle custom fields
      *
      * @param OrderModel $order
-     * @param array $customFields
+     * @param array $customFields 
      */
     public function handle($order, $customFields)
     {
         $comment = '';
         $needSubscribe = false;
         foreach ($customFields as $customField) {
+            // Currently only CHECKBOX and DROPDOWN custom fields are supported
             if ($customField['type'] === self::TYPE_CHECKBOX) {
                 $comment .= '<br>' . $customField['label'] . ': ' . ($customField['value'] ? 'Yes' : 'No');
             } else if ($customField['type'] === self::TYPE_DROPDOWN) {
-                //$comment .= '<br>' . $customField['label'] . ': ' . ($customField['value'] ? 'Yes' : 'No');
-            } else {
-                // shouldn't get here. report this.
-            }                      
+                $comment .= '<br>' . $customField['label'] . ': ' . $customField['value'];
+            }
+            
+            //$needSubscribe = $customField['features'] 
+            //&& in_array($customField['features'], FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER);
         }
         if ($comment) {
             $order->addCommentToStatusHistory(self::COMMENT_PREFIX_TEXT.$comment);
