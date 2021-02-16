@@ -130,8 +130,8 @@ class OrderTest extends BoltTestCase
     const USER_ID = 1;
     const HOOK_TYPE_PENDING = 'pending';
     const HOOK_TYPE_AUTH = 'auth';
-    const HOOK_PAYLOAD = ['checkboxes' => ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true],
-                          'custom_fields' =>  ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true]];
+    const HOOK_PAYLOAD = ['checkboxes' => ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true, 'is_custom_field'=>false],
+                          'custom_fields' =>  ['label'=>'Gift', 'type'=>'CHECKBOX', 'is_custom_field'=>true,'value'=>true]];
     
     const CUSTOMER_ID = 1111;
 
@@ -606,7 +606,7 @@ class OrderTest extends BoltTestCase
         static::assertAttributeEquals($this->webhookLogFactory, 'webhookLogFactory', $instance);
         static::assertAttributeEquals($this->featureSwitches, 'featureSwitches', $instance);
         static::assertAttributeEquals($this->checkboxesHandler, 'checkboxesHandler', $instance);
-        static::assertAttributeEquals($this->customfieldsHandler, 'customfieldsHandler', $instance);
+        static::assertAttributeEquals($this->customFieldsHandler, 'customFieldsHandler', $instance);
         static::assertAttributeEquals($this->customerCreditCardFactory, 'customerCreditCardFactory', $instance);
         static::assertAttributeEquals(
             $this->customerCreditCardCollectionFactory,
@@ -3751,7 +3751,7 @@ class OrderTest extends BoltTestCase
      */
     public function updateOrderPayment_handleCustomFields()
     {
-       /*
+       
         list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp(OrderHelper::TS_AUTHORIZED);
         $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
             ->withConsecutive(['transaction_state'])
@@ -3772,11 +3772,10 @@ class OrderTest extends BoltTestCase
 
         $this->orderMock->expects(self::any())->method('getState')
             ->willReturn('pending_payment');
-        $this->checkboxesHandler->expects(self::once())->method('handle')
-            ->with($this->orderMock, self::HOOK_PAYLOAD['checkboxes']);
-
+        $this->customFieldsHandler->expects(self::once())->method('handle')
+            ->with($this->orderMock, self::HOOK_PAYLOAD['custom_fields']);
         $this->currentMock->updateOrderPayment($this->orderMock, $transaction, null, null, self::HOOK_PAYLOAD);
-        */
+        
     }
 
     /**

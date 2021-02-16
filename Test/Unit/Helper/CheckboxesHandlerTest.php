@@ -177,11 +177,13 @@ class CheckboxesHandlerTest extends BoltTestCase
 
     public function handleCheckboxesDataProvider()
     {
-        $checkbox1 = ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true,'features'=>['unknown']];
+        $checkbox1 = ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','is_custom_field'=>false,
+                      'value'=>true,'features'=>['unknown']];
         $comment1 = '<br>Subscribe for our newsletter: Yes';
-        $checkbox2 = ['text'=>'Gift','category'=>'OTHER','value'=>false];
+        $checkbox2 = ['text'=>'Gift','category'=>'OTHER','value'=>false, 'is_custom_field'=>false];
         $comment2 = '<br>Gift: No';
-        $checkbox3 = ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true,'features'=>['subscribe_to_platform_newsletter']];
+        $checkbox3 = ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','is_custom_field'=>false,
+                      'value'=>true,'features'=>['subscribe_to_platform_newsletter']];
         $comment3 = '<br>Subscribe for our newsletter: Yes';
         return [
             [[], '', false],
