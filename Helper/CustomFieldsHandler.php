@@ -27,7 +27,7 @@ use Magento\Newsletter\Model\SubscriberFactory;
  * @SuppressWarnings(PHPMD.TooManyFields)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class CustomfieldsHandler extends AbstractHelper
+class CustomFieldsHandler extends AbstractHelper
 {
     const CATEGORY_NEWSLETTER = 'NEWSLETTER';
     const COMMENT_PREFIX_TEXT = 'BOLTPAY INFO :: customfields';

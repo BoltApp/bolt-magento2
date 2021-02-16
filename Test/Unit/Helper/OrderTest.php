@@ -84,7 +84,7 @@ use Bolt\Boltpay\Model\ResourceModel\WebhookLog\CollectionFactory as WebhookLogC
 use Bolt\Boltpay\Model\WebhookLogFactory;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\CheckboxesHandler;
-use Bolt\Boltpay\Helper\CustomfieldsHandler;
+use Bolt\Boltpay\Helper\CustomFieldsHandler;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
 use Magento\Sales\Model\Order\CreditmemoFactory;
@@ -240,8 +240,8 @@ class OrderTest extends BoltTestCase
     /** @var MockObject|CheckboxesHandler mocked instance of the Bolt checkbox handler helper */
     private $checkboxesHandler;
 
-    /** @var MockObject|CustomfieldsHandler mocked instance of the Bolt checkbox handler helper */
-    private $customfieldsHandler;
+    /** @var MockObject|CustomFieldsHandler mocked instance of the Bolt checkbox handler helper */
+    private $customFieldsHandler;
 
     /** @var MockObject|CustomerCreditCardFactory mocked instance of the Bolt customer credit card factory helper */
     private $customerCreditCardFactory;
@@ -346,7 +346,7 @@ class OrderTest extends BoltTestCase
                     $this->webhookLogFactory,
                     $this->featureSwitches,
                     $this->checkboxesHandler,
-                    $this->customfieldsHandler,
+                    $this->customFieldsHandler,
                     $this->customerCreditCardFactory,
                     $this->customerCreditCardCollectionFactory,
                     $this->creditmemoFactory,
@@ -419,7 +419,7 @@ class OrderTest extends BoltTestCase
         $this->discountHelper = $this->createMock(DiscountHelper::class);
         $this->date = $this->createMock(DateTime::class);
         $this->checkboxesHandler = $this->createMock(CheckboxesHandler::class);
-        $this->customfieldsHandler = $this->createMock(CustomfieldsHandler::class);
+        $this->customFieldsHandler = $this->createMock(CustomFieldsHandler::class);
 
         $this->dataObjectFactory = $this->getMockBuilder(DataObjectFactory::class)
             ->disableOriginalConstructor()
@@ -576,7 +576,7 @@ class OrderTest extends BoltTestCase
             $this->webhookLogFactory,
             $this->featureSwitches,
             $this->checkboxesHandler,
-            $this->customfieldsHandler,
+            $this->customFieldsHandler,
             $this->customerCreditCardFactory,
             $this->customerCreditCardCollectionFactory,
             $this->creditmemoFactory,
