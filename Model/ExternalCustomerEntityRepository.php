@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Model;
 
 use Bolt\Boltpay\Api\Data\ExternalCustomerEntityInterface;
 use Bolt\Boltpay\Api\ExternalCustomerEntityRepositoryInterface;
+use Bolt\Boltpay\Model\ResourceModel\ExternalCustomerEntity as ExternalCustomerEntityResource;
 use Bolt\Boltpay\Model\ResourceModel\ExternalCustomerEntity\CollectionFactory as ExternalCustomerEntityCollectionFactory;
 use Magento\Framework\Exception\NoSuchEntityException;
 
@@ -35,15 +36,23 @@ class ExternalCustomerEntityRepository implements ExternalCustomerEntityReposito
     private $externalCustomerEntityCollectionFactory;
 
     /**
+     * @var ExternalCustomerEntityResource
+     */
+    private $externalCustomerEntityResource;
+
+    /**
      * @param ExternalCustomerEntityFactory           $externalCustomerEntityFactory
      * @param ExternalCustomerEntityCollectionFactory $externalCustomerEntityCollectionFactory
+     * @param ExternalCustomerEntityResource          $externalCustomerEntityResource
      */
     public function __construct(
         ExternalCustomerEntityFactory $externalCustomerEntityFactory,
-        ExternalCustomerEntityCollectionFactory $externalCustomerEntityCollectionFactory
+        ExternalCustomerEntityCollectionFactory $externalCustomerEntityCollectionFactory,
+        ExternalCustomerEntityResource $externalCustomerEntityResource
     ) {
         $this->externalCustomerEntityFactory = $externalCustomerEntityFactory;
         $this->externalCustomerEntityCollectionFactory = $externalCustomerEntityCollectionFactory;
+        $this->externalCustomerEntityResource = $externalCustomerEntityResource;
     }
 
     /**
@@ -73,6 +82,6 @@ class ExternalCustomerEntityRepository implements ExternalCustomerEntityReposito
         $externalCustomerEntity = $this->externalCustomerEntityFactory->create();
         $externalCustomerEntity->setExternalID($externalID);
         $externalCustomerEntity->setCustomerID($customerID);
-        return $this->save($externalCustomerEntity);
+        return $this->externalCustomerEntityResource->save($externalCustomerEntity);
     }
 }
