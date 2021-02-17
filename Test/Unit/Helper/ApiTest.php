@@ -96,6 +96,7 @@ class ApiTest extends BoltTestCase
                     $this->bugsnag
                 ]
             )
+            ->setMethods()
             ->getMock();
     }
 
