@@ -27,11 +27,13 @@ use Magento\Newsletter\Model\SubscriberFactory;
  * @SuppressWarnings(PHPMD.TooManyFields)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class CheckboxesHandler extends AbstractHelper
+class CustomFieldsHandler extends AbstractHelper
 {
     const CATEGORY_NEWSLETTER = 'NEWSLETTER';
-    const COMMENT_PREFIX_TEXT = 'BOLTPAY INFO :: checkboxes';
+    const COMMENT_PREFIX_TEXT = 'BOLTPAY INFO :: customfields';
     const FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER = 'subscribe_to_platform_newsletter';
+    const TYPE_CHECKBOX = 'CHECKBOX';
+    const TYPE_DROPDOWN = 'DROPDOWN';
 
     /**
      * @var SubscriberFactory
@@ -59,28 +61,26 @@ class CheckboxesHandler extends AbstractHelper
     }
 
     /**
-     * Handle checkboxes
+     * Handle custom fields
      *
      * @param OrderModel $order
-     * @param array $checkboxes
+     * @param array $customFields 
      */
-    public function handle($order, $checkboxes)
+    public function handle($order, $customFields)
     {
-        $comment = '';
+        $comment = ''; 
         $needSubscribe = false;
-        foreach ($checkboxes as $checkbox) {
-            
-            // custom fields of type CHECKBOX will be processed by the customFieldsHandler
-            if ($checkbox['is_custom_field']) {
-                continue;
+        foreach ($customFields as $customField) {
+            // Currently only CHECKBOX and DROPDOWN custom fields are supported
+            if ($customField['type'] === self::TYPE_CHECKBOX) {
+                $comment .= '<br>' . $customField['label'] . ': ' . ($customField['value'] ? 'Yes' : 'No');
+            } else if ($customField['type'] === self::TYPE_DROPDOWN) {
+                $comment .= '<br>' . $customField['label'] . ': ' . $customField['value'];
             }
 
-            if ($checkbox['category'] == self::CATEGORY_NEWSLETTER && $checkbox['value']
-                && $checkbox['features'] && in_array(self::FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER, $checkbox['features'])) {
-                $needSubscribe = true;
-            }
-            $comment .= '<br>' . $checkbox['text'] . ': ' . ($checkbox['value'] ? 'Yes' : 'No');
+            $needSubscribe = isset($customField['features']) && in_array($customField['features'], self::FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER);
         }
+
         if ($comment) {
             $order->addCommentToStatusHistory(self::COMMENT_PREFIX_TEXT.$comment);
             $order->save();
