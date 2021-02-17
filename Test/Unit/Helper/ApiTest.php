@@ -96,11 +96,6 @@ class ApiTest extends BoltTestCase
                     $this->bugsnag
                 ]
             )
-            ->setMethods(
-                [
-                    'getFullApiUrl'
-                ]
-            )
             ->getMock();
     }
 
@@ -164,56 +159,6 @@ class ApiTest extends BoltTestCase
         static::assertAttributeEquals($this->requestFactory, 'requestFactory', $instance);
         static::assertAttributeEquals($this->logHelper, 'logHelper', $instance);
         static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
-    }
-
-    /**
-     * @test
-     * that getFullApiUrl returns full api url from provided dynamic by prepending base api url and current version
-     *
-     * @covers ::getFullApiUrl
-     *
-     * @throws ReflectionException if getFullApiUrl method doesn't exist
-     */
-    public function getFullApiUrl_always_returnsFullApiUrl()
-    {
-        $this->configHelper->expects($this->once())->method('getApiUrl')->willReturn(self::API_URL);
-        $fullApiUrl = TestHelper::invokeMethod($this->currentMock, 'getFullApiUrl', [self::DYNAMIC_API_URL]);
-        static::assertEquals(self::API_URL . ApiHelper::API_CURRENT_VERSION . self::DYNAMIC_API_URL, $fullApiUrl);
-    }
-
-    /**
-     * @test
-     * that isResponseError returns true for responses containing errors or error_code keys, otherwise false
-     *
-     * @covers ::isResponseError
-     *
-     * @dataProvider isResponseError_withVariousResponsesProvider
-     *
-     * @param mixed $response to be evaluated
-     * @param bool  $expectedResult of the method call
-     *
-     * @throws ReflectionException if isResponseError method is not defined
-     */
-    public function isResponseError_withVariousResponses_returnsIsResponseError($response, $expectedResult)
-    {
-        static::assertEquals(
-            $expectedResult,
-            TestHelper::invokeMethod($this->currentMock, 'isResponseError', [$response])
-        );
-    }
-
-    /**
-     * Data provider for {@see isResponseError_withVariousResponses_returnsIsResponseError}
-     *
-     * @return array containing dummy response and expected result of the method call
-     */
-    public function isResponseError_withVariousResponsesProvider()
-    {
-        return [
-            ['response' => ['errors' => []], 'expectedResult' => true],
-            ['response' => ['error_code' => 123], 'expectedResult' => true],
-            ['response' => ['test'], 'expectedResult' => false],
-        ];
     }
 
     /**
@@ -332,7 +277,6 @@ class ApiTest extends BoltTestCase
      * if an exception is thrown while sending the request
      *
      * @covers ::sendRequest
-     * @covers ::wrapGatewayError
      *
      * @expectedException \Magento\Framework\Exception\LocalizedException
      * @expectedExceptionMessage Gateway error: Expected exception message
@@ -429,24 +373,6 @@ class ApiTest extends BoltTestCase
         $this->expectExceptionMessage('Something went wrong in the payment gateway.');
         
         $this->currentMock->sendRequest($request);
-    }
-
-    /**
-     * @test
-     * that wrapGatewayError adds prefix to provided text and runs it through translator
-     * @see \Magento\Framework\Phrase
-     *
-     * @covers ::wrapGatewayError
-     *
-     * @throws ReflectionException if wrapGatewayError method doesn't exist
-     */
-    public function wrapGatewayError_always_addsPrefixToProvidedErrorText()
-    {
-        $text = 'Dummy error message';
-        static::assertEquals(
-            __('Gateway error: %1', $text),
-            TestHelper::invokeMethod($this->currentMock, 'wrapGatewayError', [$text])
-        );
     }
 
     /**
