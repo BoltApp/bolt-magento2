@@ -23,6 +23,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Bolt\Boltpay\Helper\SSOHelper;
 use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
+use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Api\Data\CustomerInterfaceFactory;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Customer\Model\Url;
@@ -169,13 +170,17 @@ class OAuthRedirect implements OAuthRedirectInterface
                 throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
             }
 
-            $this->externalCustomerEntityRepository->create($payload['sub'], $customer->getId());
-            $this->customerSession->setCustomerAsLoggedIn($customer);
-            $this->response->setRedirect($this->url->getAccountUrl())->sendResponse();
+            $this->linkAndLogin($payload['sub'], $customer);
+            return;
         }
 
-        if ($customer !== null && !$payload['email_verified']) {
-            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+        if ($customer !== null) {
+            if (!$payload['email_verified']) {
+                throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            }
+
+            $this->linkAndLogin($payload['sub'], $customer);
+            return;
         }
 
         try {
@@ -187,12 +192,22 @@ class OAuthRedirect implements OAuthRedirectInterface
             $newCustomer->setEmail($payload['email']);
             $newCustomer->setConfirmation(null);
             $customer = $this->customerRepository->save($newCustomer);
-
-            $this->externalCustomerEntityRepository->create($payload['sub'], $customer->getId());
-            $this->customerSession->setCustomerAsLoggedIn($customer);
-            $this->response->setRedirect($this->url->getAccountUrl())->sendResponse();
+            $this->linkAndLogin($payload['sub'], $customer);
         } catch (Exception $e) {
             throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
+    }
+
+    /**
+     * Link the external ID to customer, log in, and redirect
+     *
+     * @param string            $externalID
+     * @param CustomerInterface $customer
+     */
+    private function linkAndLogin($externalID, $customer)
+    {
+        $this->externalCustomerEntityRepository->create($externalID, $customer->getId());
+        $this->customerSession->setCustomerAsLoggedIn($customer);
+        $this->response->setRedirect($this->url->getAccountUrl())->sendResponse();
     }
 }
