@@ -143,7 +143,7 @@ class SSOHelperTest extends BoltTestCase
         $dataObject->expects(static::once())->method('setApiData')->with('grant_type=authorization_code&code=abc&scope=openid&client_id=clientid&client_secret=clientsecret');
         $dataObject->expects(static::once())->method('setDynamicApiUrl')->with('oauth/token');
         $dataObject->expects(static::once())->method('setApiKey')->with('test api key');
-        $this->dataObjectFactory->expect(static::once())->method('create')->willReturn($dataObject);
+        $this->dataObjectFactory->expects(static::once())->method('create')->willReturn($dataObject);
         $request = $this->createMock(Request::class);
         $this->apiHelper->expects(static::once())->method('buildRequest')->with($dataObject)->willReturn($request);
         $response = $this->createPartialMock(Response::class, ['getResponse']);
