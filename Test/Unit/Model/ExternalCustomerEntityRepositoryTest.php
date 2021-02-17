@@ -59,7 +59,7 @@ class ExternalCustomerEntityRepositoryTest extends BoltTestCase
         $this->externalCustomerEntityCollectionFactoryMock = $this->createMock(ExternalCustomerEntityCollectionFactory::class);
         $this->externalCustomerEntityResourceMock = $this->createMock(ExternalCustomerEntityResource::class);
         $this->currentMock = $this->getMockBuilder(ExternalCustomerEntityRepository::class)
-            ->setMethods(['getByExternalID'])
+            ->setMethods()
             ->setConstructorArgs([
                 $this->externalCustomerEntityFactoryMock,
                 $this->externalCustomerEntityCollectionFactoryMock,
@@ -102,7 +102,11 @@ class ExternalCustomerEntityRepositoryTest extends BoltTestCase
      */
     public function upsert_createsNewEntry_ifNotFound()
     {
-        $this->currentMock->expects(static::once())->method('getByExternalID')->with('test_external_id')->willReturn(null);
+        $externalCustomerEntityCollectionMock = $this->createMock(ExternalCustomerEntityCollection::class);
+        $this->externalCustomerEntityCollectionFactoryMock->expects(static::once())->method('create')->willReturn($externalCustomerEntityCollectionMock);
+        $externalCustomerEntityCollectionMock->expects(static::once())->method('getExternalCustomerEntityByExternalID')
+            ->with('test_external_id')
+            ->willReturn(null);
         $externalCustomerEntityMock = $this->createMock(ExternalCustomerEntity::class);
         $this->externalCustomerEntityFactoryMock->expects(static::once())->method('create')->willReturn($externalCustomerEntityMock);
         $externalCustomerEntityMock->expects(static::once())->method('setExternalID')->with('test_external_id');
@@ -121,8 +125,12 @@ class ExternalCustomerEntityRepositoryTest extends BoltTestCase
      */
     public function upsert_updatesEntry_ifFound()
     {
+        $externalCustomerEntityCollectionMock = $this->createMock(ExternalCustomerEntityCollection::class);
+        $this->externalCustomerEntityCollectionFactoryMock->expects(static::once())->method('create')->willReturn($externalCustomerEntityCollectionMock);
         $externalCustomerEntityMock = $this->createMock(ExternalCustomerEntity::class);
-        $this->currentMock->expects(static::once())->method('getByExternalID')->with('test_external_id')->willReturn($externalCustomerEntityMock);
+        $externalCustomerEntityCollectionMock->expects(static::once())->method('getExternalCustomerEntityByExternalID')
+            ->with('test_external_id')
+            ->willReturn($externalCustomerEntityMock);
         $this->externalCustomerEntityFactoryMock->expects(static::never())->method('create');
         $externalCustomerEntityMock->expects(static::never())->method('setExternalID');
         $externalCustomerEntityMock->expects(static::once())->method('setCustomerID')->with(123);
