@@ -33,5 +33,5 @@ interface ExternalCustomerEntityRepositoryInterface
      *
      * @return \Bolt\Boltpay\Api\Data\ExternalCustomerEntityInterface
      */
-    public function create($externalID, $customerID);
+    public function upsert($externalID, $customerID);
 }

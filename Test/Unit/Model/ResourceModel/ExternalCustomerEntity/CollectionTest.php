@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel\ExternalCustomerEntity;
 
+use Bolt\Boltpay\Model\ExternalCustomerEntity;
 use Bolt\Boltpay\Model\ResourceModel\ExternalCustomerEntity\Collection as ExternalCustomerEntityCollection;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
@@ -60,9 +61,10 @@ class CollectionTest extends BoltTestCase
     {
         $this->externalCustomerEntityCollectionMock->expects(self::once())->method('addFilter')->with('external_id', 'test_external_id')->willReturnSelf();
         $this->externalCustomerEntityCollectionMock->expects(self::once())->method('getSize')->willReturn(1);
-        $this->externalCustomerEntityCollectionMock->expects(self::once())->method('getFirstItem')->willReturnSelf();
-        $this->assertNotEquals(
-            null,
+        $externalCustomerEntity = $this->createMock(ExternalCustomerEntity::class);
+        $this->externalCustomerEntityCollectionMock->expects(self::once())->method('getFirstItem')->willReturn($externalCustomerEntity);
+        $this->assertEquals(
+            $externalCustomerEntity,
             TestHelper::invokeMethod($this->externalCustomerEntityCollectionMock, 'getExternalCustomerEntityByExternalID', ['test_external_id'])
         );
     }

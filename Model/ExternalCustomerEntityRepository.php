@@ -77,10 +77,13 @@ class ExternalCustomerEntityRepository implements ExternalCustomerEntityReposito
      *
      * @return ExternalCustomerEntityInterface
      */
-    public function create($externalID, $customerID)
+    public function upsert($externalID, $customerID)
     {
-        $externalCustomerEntity = $this->externalCustomerEntityFactory->create();
-        $externalCustomerEntity->setExternalID($externalID);
+        $externalCustomerEntity = $this->getByExternalID($externalID);
+        if ($externalCustomerEntity === null) {
+            $externalCustomerEntity = $this->externalCustomerEntityFactory->create();
+            $externalCustomerEntity->setExternalID($externalID);
+        }
         $externalCustomerEntity->setCustomerID($customerID);
         return $this->externalCustomerEntityResource->save($externalCustomerEntity);
     }

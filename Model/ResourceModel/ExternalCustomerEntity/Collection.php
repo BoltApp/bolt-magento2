@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Model\ResourceModel\ExternalCustomerEntity;
 
-use Magento\Framework\DataObject;
+use Bolt\Boltpay\Model\ExternalCustomerEntity;
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
 
 /**
@@ -38,7 +38,7 @@ class Collection extends AbstractCollection
     /**
      * @param string $externalID
      *
-     * @return DataObject|null
+     * @return ExternalCustomerEntity|null
      */
     public function getExternalCustomerEntityByExternalID($externalID)
     {
