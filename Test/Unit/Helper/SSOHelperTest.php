@@ -17,10 +17,19 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
+use Bolt\Boltpay\Helper\Api as ApiHelper;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\SSOHelper;
+use Bolt\Boltpay\Model\Request;
+use Bolt\Boltpay\Model\Response;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Exception;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\DataObject;
+use Magento\Framework\DataObjectFactory;
+use Magento\Store\Model\Store;
+use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
 /**
@@ -34,6 +43,26 @@ class SSOHelperTest extends BoltTestCase
     private $context;
 
     /**
+     * @var ConfigHelper|MockObject
+     */
+    private $configHelper;
+
+    /**
+     * @var StoreManagerInterface|MockObject
+     */
+    private $storeManager;
+
+    /**
+     * @var DataObjectFactory|MockObject
+     */
+    private $dataObjectFactory;
+
+    /**
+     * @var ApiHelper|MockObject
+     */
+    private $apiHelper;
+
+    /**
      * @var SSOHelper|MockObject
      */
     private $currentMock;
@@ -44,10 +73,98 @@ class SSOHelperTest extends BoltTestCase
     public function setUpInternal()
     {
         $this->context = $this->createMock(Context::class);
+        $this->configHelper = $this->createMock(ConfigHelper::class);
+        $this->storeManager = $this->createMock(StoreManagerInterface::class);
+        $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
+        $this->apiHelper = $this->createMock(ApiHelper::class);
         $this->currentMock = $this->getMockBuilder(SSOHelper::class)
-            ->setMethods(['parseAndValidateJWT'])
-            ->setConstructorArgs([$this->context])
+            ->setMethods(['getOAuthConfiguration', 'exchangeToken', 'parseAndValidateJWT'])
+            ->setConstructorArgs([
+                $this->context,
+                $this->configHelper,
+                $this->storeManager,
+                $this->dataObjectFactory,
+                $this->apiHelper
+            ])
             ->getMock();
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::getOAuthConfiguration
+     */
+    public function getOAuthConfiguration_returnsCorrectValue()
+    {
+        $store = $this->createMock(Store::class);
+        $store->expects(static::once())->method('getId')->willReturn(1);
+        $this->storeManager->expects(static::once())->method('getStore')->willReturn($store);
+        $this->configHelper->expects(static::once())->method('getPublishableKeyCheckout')->with(1)->willReturn('a.b.lastpart');
+        $this->configHelper->expects(static::once())->method('getApiKey')->with(1)->willReturn('test api key');
+        $this->configHelper->expects(static::once())->method('getPublicKey')->with(1)->willReturn('test public key');
+        $this->assertEquals(
+            [
+                'clientID'      => 'lastpart',
+                'clientSecret'  => 'test api key',
+                'boltPublicKey' => 'test public key'
+            ],
+            TestHelper::invokeMethod($this->currentMock, 'getOAuthConfiguration')
+        );
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::exchangeToken
+     */
+    public function exchangeToken_returnsNull_ifExceptionIsThrown()
+    {
+        $this->storeManager->expects(static::once())->method('getStore')->willThrowException(new Exception('test exception'));
+        $this->assertEquals(null, TestHelper::invokeMethod($this->currentMock, 'exchangeToken', ['', '', '', '']));
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::exchangeToken
+     *
+     * @dataProvider exchangeTokenProvider
+     *
+     * @param mixed      $responseBody
+     * @param mixed|null $expected
+     */
+    public function exchangeToken_returnsNull_forAllCases($responseBody, $expected)
+    {
+        $store = $this->createMock(Store::class);
+        $store->expects(static::once())->method('getId')->willReturn(1);
+        $this->storeManager->expects(static::once())->method('getStore')->willReturn($store);
+        $this->configHelper->expects(static::once())->method('getApiKey')->with(1)->willReturn('test api key');
+        $dataObject = $this->createMock(DataObject::class);
+        $dataObject->expects(static::once())->method('setApiData')->with('grant_type=authorization_code&code=abc&scope=openid&client_id=clientid&client_secret=clientsecret');
+        $dataObject->expects(static::once())->method('setDynamicApiUrl')->with('oauth/token');
+        $dataObject->expects(static::once())->method('setApiData')->with('test api key');
+        $request = $this->createMock(Request::class);
+        $this->apiHelper->expects(static::once())->method('buildRequest')->with($dataObject)->willReturn($request);
+        $response = $this->createMock(Response::class);
+        $response->expects(static::once())->method('getResponse')->willReturn($responseBody);
+        $this->apiHelper->expects(static::once())->method('sendRequest')->with($request, 'application/x-www-form-urlencoded')->willReturn($response);
+        $this->assertEquals($expected, TestHelper::invokeMethod($this->currentMock, 'exchangeToken', ['abc', 'openid', 'clientid', 'clientsecret']));
+    }
+
+    /**
+     * Data provider for {@see exchangeToken_returnsNull_forAllCases}
+     *
+     * @return array
+     */
+    public function exchangeTokenProvider()
+    {
+        return [
+            ['responseBody' => [], 'expected' => null],
+            [
+                'responseBody' => ['access_token' => 'test access token', 'id_token' => 'test id token'],
+                'expected'     => ['access_token' => 'test access token', 'id_token' => 'test id token']
+            ],
+        ];
     }
 
     /**
