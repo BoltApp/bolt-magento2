@@ -173,51 +173,47 @@ class OAuthRedirect implements OAuthRedirectInterface
         } catch (NoSuchEntityException $nsee) {
         }
 
-        if ($externalCustomerEntity !== null) {
-            if ($customer === null) {
-                throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
-            }
-
-            $this->linkAndLogin(false, $payload['sub'], $customer->getId());
-            return;
-        }
-
-        if ($customer !== null) {
-            if (!$payload['email_verified']) {
-                throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
-            }
-
-            $this->linkAndLogin(true, $payload['sub'], $customer->getId());
-            return;
+        // If we haven't linked this customer, and it exists in M2, but is not verified, then we throw an exception
+        if ($externalCustomerEntity === null && $customer !== null && !$payload['email_verified']) {
+            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
 
         try {
-            $newCustomer = $this->customerInterfaceFactory->create();
-            $newCustomer->setWebsiteId($websiteId);
-            $newCustomer->setStoreId($storeId);
-            $newCustomer->setFirstname($payload['first_name']);
-            $newCustomer->setLastname($payload['last_name']);
-            $newCustomer->setEmail($payload['email']);
-            $newCustomer->setConfirmation(null);
-            $customer = $this->customerRepository->save($newCustomer);
-            $this->linkAndLogin(true, $payload['sub'], $customer->getId());
+            $customer = $customer ?: $this->createNewCustomer($websiteId, $storeId, $payload);
+            $this->linkAndLogin($payload['sub'], $customer->getId());
         } catch (Exception $e) {
             throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
     }
 
     /**
+     * Create new customer from provided parameters
+     *
+     * @param int   $websiteId
+     * @param int   $storeId
+     * @param mixed $payload
+     */
+    private function createNewCustomer($websiteId, $storeId, $payload)
+    {
+        $newCustomer = $this->customerInterfaceFactory->create();
+        $newCustomer->setWebsiteId($websiteId);
+        $newCustomer->setStoreId($storeId);
+        $newCustomer->setFirstname($payload['first_name']);
+        $newCustomer->setLastname($payload['last_name']);
+        $newCustomer->setEmail($payload['email']);
+        $newCustomer->setConfirmation(null);
+        return $this->customerRepository->save($newCustomer);
+    }
+
+    /**
      * Link the external ID to customer if needed, log in, and redirect
      *
-     * @param bool   $shouldLink
      * @param string $externalID
      * @param int    $customerID
      */
-    private function maybeLinkAndLogin($shouldLink, $externalID, $customerID)
+    private function linkAndLogin($externalID, $customerID)
     {
-        if ($shouldLink) {
-            $this->externalCustomerEntityRepository->create($externalID, $customerID);
-        }
+        $this->externalCustomerEntityRepository->upsert($externalID, $customerID);
         $customerModel = $this->customerFactory->create()->load($customerID);
         $this->customerSession->setCustomerAsLoggedIn($customerModel);
         $this->response->setRedirect($this->url->getAccountUrl())->sendResponse();
