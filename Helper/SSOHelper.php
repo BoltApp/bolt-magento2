@@ -17,9 +17,12 @@
 
 namespace Bolt\Boltpay\Helper;
 
+use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Exception;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\DataObjectFactory;
 use Magento\Store\Model\StoreManagerInterface;
 
 /**
@@ -38,18 +41,34 @@ class SSOHelper extends AbstractHelper
     private $storeManager;
 
     /**
+     * @var DataObjectFactory
+     */
+    private $dataObjectFactory;
+
+    /**
+     * @var ApiHelper
+     */
+    private $apiHelper;
+
+    /**
      * @param Context               $context
      * @param ConfigHelper          $configHelper
      * @param StoreManagerInterface $storeManager
+     * @param DataObjectFactory     $dataObjectFactory
+     * @param ApiHelper             $apiHelper
      */
     public function __construct(
         Context $context,
         ConfigHelper $configHelper,
-        StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        DataObjectFactory $dataObjectFactory,
+        ApiHelper $apiHelper
     ) {
         parent::__construct($context);
         $this->configHelper = $configHelper;
         $this->storeManager = $storeManager;
+        $this->dataObjectFactory = $dataObjectFactory;
+        $this->apiHelper = $apiHelper;
     }
 
     /**
@@ -88,7 +107,23 @@ class SSOHelper extends AbstractHelper
      */
     public function exchangeToken($code, $scope, $clientId, $clientSecret)
     {
-        return null;
+        try {
+            $storeId = $this->storeManager->getStore()->getId();
+            $apiKey = $this->configHelper->getApiKey($storeId);
+
+            $requestData = $this->dataObjectFactory->create();
+            $requestData->setApiData('grant_type=authorization_code&code={$code}&scope={$scope}&client_id={$clientId}&client_secret={$clientSecret}');
+            $requestData->setDynamicApiUrl(ApiHelper::API_OAUTH_TOKEN);
+            $requestData->setApiKey($apiKey);
+
+            $request = $this->apiHelper->buildRequest($requestData);
+            $result = $this->apiHelper->sendRequest($request, 'application/x-www-form-urlencoded');
+            $response = $result->getResponse();
+
+            return empty($response) ? null : $response;
+        } catch (Exception $exception) {
+            return null;
+        }
     }
 
     /**

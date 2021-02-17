@@ -25,6 +25,7 @@ use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Customer\Api\Data\CustomerInterfaceFactory;
 use Magento\Customer\Model\Session as CustomerSession;
+use Magento\Customer\Model\Url;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
@@ -73,6 +74,11 @@ class OAuthRedirect implements OAuthRedirectInterface
     private $customerInterfaceFactory;
 
     /**
+     * @var Url
+     */
+    private $url;
+
+    /**
      * @param Response                         $response
      * @param DeciderHelper                    $deciderHelper
      * @param SSOHelper                        $ssoHelper
@@ -81,6 +87,7 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param StoreManagerInterface            $storeManager
      * @param CustomerSession                  $customerSession
      * @param CustomerInterfaceFactory         $customerInterfaceFactory
+     * @param Url                              $url
      */
     public function __construct(
         Response $response,
@@ -90,7 +97,8 @@ class OAuthRedirect implements OAuthRedirectInterface
         CustomerRepository $customerRepository,
         StoreManagerInterface $storeManager,
         CustomerSession $customerSession,
-        CustomerInterfaceFactory $customerInterfaceFactory
+        CustomerInterfaceFactory $customerInterfaceFactory,
+        Url $url
     ) {
         $this->response = $response;
         $this->deciderHelper = $deciderHelper;
@@ -100,6 +108,7 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->storeManager = $storeManager;
         $this->customerSession = $customerSession;
         $this->customerInterfaceFactory = $customerInterfaceFactory;
+        $this->url = $url;
     }
 
     /**
@@ -162,7 +171,7 @@ class OAuthRedirect implements OAuthRedirectInterface
 
             $this->externalCustomerEntityRepository->create($payload['sub'], $customer->getId());
             $this->customerSession->setCustomerAsLoggedIn($customer);
-            // redirect
+            $this->response->setRedirect($this->url->getAccountUrl())->sendResponse();
         }
 
         if ($customer !== null && !$payload['email_verified']) {
@@ -177,11 +186,11 @@ class OAuthRedirect implements OAuthRedirectInterface
             $newCustomer->setLastname($payload['last_name']);
             $newCustomer->setEmail($payload['email']);
             $newCustomer->setConfirmation(null);
-            $customer = $this->customerRepository->save($customer);
+            $customer = $this->customerRepository->save($newCustomer);
 
             $this->externalCustomerEntityRepository->create($payload['sub'], $customer->getId());
             $this->customerSession->setCustomerAsLoggedIn($customer);
-            // redirect
+            $this->response->setRedirect($this->url->getAccountUrl())->sendResponse();
         } catch (Exception $e) {
             throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
