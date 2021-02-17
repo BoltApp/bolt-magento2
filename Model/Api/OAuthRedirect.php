@@ -178,7 +178,7 @@ class OAuthRedirect implements OAuthRedirectInterface
                 throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
             }
 
-            $this->linkAndLogin($payload['sub'], $customer->getId());
+            $this->linkAndLogin(false, $payload['sub'], $customer->getId());
             return;
         }
 
@@ -187,7 +187,7 @@ class OAuthRedirect implements OAuthRedirectInterface
                 throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
             }
 
-            $this->linkAndLogin($payload['sub'], $customer->getId());
+            $this->linkAndLogin(true, $payload['sub'], $customer->getId());
             return;
         }
 
@@ -200,21 +200,24 @@ class OAuthRedirect implements OAuthRedirectInterface
             $newCustomer->setEmail($payload['email']);
             $newCustomer->setConfirmation(null);
             $customer = $this->customerRepository->save($newCustomer);
-            $this->linkAndLogin($payload['sub'], $customer->getId());
+            $this->linkAndLogin(true, $payload['sub'], $customer->getId());
         } catch (Exception $e) {
             throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
     }
 
     /**
-     * Link the external ID to customer, log in, and redirect
+     * Link the external ID to customer if needed, log in, and redirect
      *
+     * @param bool   $shouldLink
      * @param string $externalID
      * @param int    $customerID
      */
-    private function linkAndLogin($externalID, $customerID)
+    private function maybeLinkAndLogin($shouldLink, $externalID, $customerID)
     {
-        $this->externalCustomerEntityRepository->create($externalID, $customerID);
+        if ($shouldLink) {
+            $this->externalCustomerEntityRepository->create($externalID, $customerID);
+        }
         $customerModel = $this->customerFactory->create()->load($customerID);
         $this->customerSession->setCustomerAsLoggedIn($customerModel);
         $this->response->setRedirect($this->url->getAccountUrl())->sendResponse();
