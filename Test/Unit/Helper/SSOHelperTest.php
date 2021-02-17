@@ -145,7 +145,7 @@ class SSOHelperTest extends BoltTestCase
         $dataObject->expects(static::once())->method('setApiKey')->with('test api key');
         $request = $this->createMock(Request::class);
         $this->apiHelper->expects(static::once())->method('buildRequest')->with($dataObject)->willReturn($request);
-        $response = $this->createMock(Response::class);
+        $response = $this->createPartialMock(Response::class, ['getResponse']);
         $response->expects(static::once())->method('getResponse')->willReturn($responseBody);
         $this->apiHelper->expects(static::once())->method('sendRequest')->with($request, 'application/x-www-form-urlencoded')->willReturn($response);
         $this->assertEquals($expected, TestHelper::invokeMethod($this->currentMock, 'exchangeToken', ['abc', 'openid', 'clientid', 'clientsecret']));
