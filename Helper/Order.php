@@ -352,7 +352,7 @@ class Order extends AbstractHelper
         EventsForThirdPartyModules $eventsForThirdPartyModules,
         OrderManagementInterface $orderManagement = null,
         OrderIncrementIdChecker $orderIncrementIdChecker = null,
-        Create $adminOrderCreateModel = null       
+        Create $adminOrderCreateModel = null
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;
