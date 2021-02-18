@@ -23,6 +23,7 @@ use Bolt\Boltpay\Helper\SSOHelper;
 use Bolt\Boltpay\Model\Api\OAuthRedirect;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
+use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Api\Data\CustomerInterfaceFactory;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Customer\Model\Session as CustomerSession;
@@ -30,6 +31,7 @@ use Magento\Customer\Model\Url;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
+use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
@@ -182,7 +184,7 @@ class OAuthRedirectTest extends BoltTestCase
         ]);
         $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn(null);
         $this->expectException(WebapiException::class);
-        $this->expectExceptionMessage('Internal Server Error');
+        $this->expectExceptionMessage('Internal Server Error1');
         $this->currentMock->login('code', 'scope', 'state');
     }
 
@@ -200,7 +202,32 @@ class OAuthRedirectTest extends BoltTestCase
         $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn('token');
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn(null);
         $this->expectException(WebapiException::class);
-        $this->expectExceptionMessage('Internal Server Error');
+        $this->expectExceptionMessage('Internal Server Error2');
+        $this->currentMock->login('code', 'scope', 'state');
+    }
+
+    /**
+     * @test
+     */
+    public function login_throwsWebapiException_ifSpecificConditionsAreMet()
+    {
+        $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
+        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn([
+            'clientID'      => 'clientid',
+            'clientSecret'  => 'clientsecret',
+            'boltPublicKey' => 'boltpublickey'
+        ]);
+        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn('token');
+        $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn(['sub' => 'abc', 'email' => 't@t.com', 'email_verified' => false]);
+        $store = $this->createMock(StoreInterface::class);
+        $this->storeManager->expects(static::exactly(2))->method('getStore')->willReturn($store);
+        $store->expects(static::once())->method('getWebsiteId')->willReturn(1);
+        $store->expects(static::once())->method('getStoreId')->willReturn(1);
+        $this->externalCustomerEntityRepository->expects(static::once())->method('getByExternalID')->with('abc')->willReturn(null);
+        $customerInterface = $this->createMock(CustomerInterface::class);
+        $this->customerRepository->expects(static::once())->method('get')->with('t@t.com', 1)->willReturn($customerInterface);
+        $this->expectException(WebapiException::class);
+        $this->expectExceptionMessage('Internal Server Error3');
         $this->currentMock->login('code', 'scope', 'state');
     }
 }
