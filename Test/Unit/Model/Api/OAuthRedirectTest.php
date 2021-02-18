@@ -222,7 +222,7 @@ class OAuthRedirectTest extends BoltTestCase
         $store = $this->createMock(StoreInterface::class);
         $this->storeManager->expects(static::exactly(2))->method('getStore')->willReturn($store);
         $store->expects(static::once())->method('getWebsiteId')->willReturn(1);
-        $store->expects(static::once())->method('getStoreId')->willReturn(1);
+        $store->expects(static::once())->method('getId')->willReturn(1);
         $this->externalCustomerEntityRepository->expects(static::once())->method('getByExternalID')->with('abc')->willReturn(null);
         $customerInterface = $this->createMock(CustomerInterface::class);
         $this->customerRepository->expects(static::once())->method('get')->with('t@t.com', 1)->willReturn($customerInterface);
