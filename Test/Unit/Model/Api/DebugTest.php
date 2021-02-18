@@ -17,22 +17,21 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Bolt\Boltpay\Helper\Hook as HookHelper;
-use Bolt\Boltpay\Helper\LogRetriever;
-use Bolt\Boltpay\Helper\ModuleRetriever;
-use Bolt\Boltpay\Model\Api\Data\BoltConfigSetting;
-use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
-use Bolt\Boltpay\Model\Api\Data\DebugInfo;
-use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
-use Bolt\Boltpay\Model\Api\Data\PluginVersion;
+use Bolt\Boltpay\Helper\Hook;
 use Bolt\Boltpay\Model\Api\Debug;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Framework\Webapi\Rest\Response;
-use Magento\Store\Api\Data\StoreInterface;
+use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\Framework\Encryption\EncryptorInterface;
+use Magento\Framework\Webapi\Rest\Request;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Model\ResponseFactory as BoltResponseFactory;
+use Bolt\Boltpay\Model\RequestFactory as BoltRequestFactory;
 
 /**
  * Class CreateOrderTest
@@ -42,6 +41,10 @@ use Magento\Store\Model\StoreManagerInterface;
  */
 class DebugTest extends BoltTestCase
 {
+    const TRACE_ID_HEADER = 'KdekiEGku3j1mU21Mnsx5g==';
+    const SECRET = '42425f51e0614482e17b6e913d74788eedb082e2e6f8067330b98ffa99adc809';
+    const APIKEY = '3c2d5104e7f9d99b66e1c9c550f6566677bf81de0d6f25e121fdb57e47c2eafc';
+
     /**
      * @var Debug
      */
@@ -50,129 +53,130 @@ class DebugTest extends BoltTestCase
     /**
      * @var Response
      */
-    private $responseMock;
+    private $response;
 
     /**
-     * @var DebugInfoFactory
+     * @var ObjectManager
      */
-    private $debugInfoFactoryMock;
+    private $objectManager;
 
     /**
-     * @var BoltConfigSettingFactory
+     * @var
      */
-    private $boltConfigSettingFactoryMock;
+    private $websiteId;
 
     /**
-     * @var ModuleRetriever
+     * @var ScopeInterface
      */
-    private $moduleRetrieverMock;
+    private $storeId;
 
-    /**
-     * @var LogRetriever
-     */
-    private $logRetrieverMock;
-
-    /**
-     * @var StoreManagerInterface
-     */
-    private $storeManagerInterfaceMock;
-
-    /**
-     * @var HookHelper
-     */
-    private $hookHelperMock;
-
-    /**
-     * @var ProductMetadataInterface
-     */
-    private $productMetadataInterfaceMock;
-
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelperMock;
+    /** @var Request */
+    private $request;
 
     /**
      * @inheritdoc
      */
     public function setUpInternal()
     {
-        // prepare response
-        $this->responseMock = $this->createMock(Response::class);
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->debug = $this->objectManager->create(Debug::class);
+        $this->resetRequest();
+        $this->resetResponse();
 
-        // prepare debug info factory
-        $this->debugInfoFactoryMock = $this->createMock(DebugInfoFactory::class);
-        $this->debugInfoFactoryMock->method('create')->willReturn(new DebugInfo());
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $this->storeId = $store->getStore()->getId();
 
-        // prepare bolt config setting factory
-        $this->boltConfigSettingFactoryMock = $this->createMock(BoltConfigSettingFactory::class);
-        $this->boltConfigSettingFactoryMock->method('create')->willReturnCallback(function () {
-            return new BoltConfigSetting();
-        });
+        $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
+        $this->websiteId = $websiteRepository->get('base')->getId();
 
-        // prepare store manager
-        $storeInterfaceMock = $this->createMock(StoreInterface::class);
-        $storeInterfaceMock->method('getId')->willReturn(0);
-        $this->storeManagerInterfaceMock = $this->createMock(StoreManagerInterface::class);
-        $this->storeManagerInterfaceMock->method('getStore')->willReturn($storeInterfaceMock);
+        $encryptor = $this->objectManager->get(EncryptorInterface::class);
+        $secret = $encryptor->encrypt(self::SECRET);
+        $apikey = $encryptor->encrypt(self::APIKEY);
 
-        // prepare product meta data
-        $this->productMetadataInterfaceMock = $this->createMock(ProductMetadataInterface::class);
-        $this->productMetadataInterfaceMock->method('getVersion')->willReturn('2.3.0');
-
-        // prepare hook helper
-        $this->hookHelperMock = $this->createMock(HookHelper::class);
-        $this->hookHelperMock->method('preProcessWebhook');
-
-        // prepare config helper
-        $this->configHelperMock = $this->createMock(ConfigHelper::class);
-        $this->prepareConfigHelperMock();
-
-        // prepare module retriever
-        $this->moduleRetrieverMock = $this->createMock(ModuleRetriever::class);
-        $this->moduleRetrieverMock->method('getInstalledModules')->willReturn(
+        $configData = [
             [
-                (new PluginVersion())->setName('plugin1')->setVersion('1.0.0'),
-                (new PluginVersion())->setName('plugin2')->setVersion('2.0.0'),
-                (new PluginVersion())->setName('plugin3')->setVersion('3.0.0')
-            ]
-        );
-
-        // prepare log retriever
-        $this->logRetrieverMock = $this->createMock(LogRetriever::class);
-        $this->logRetrieverMock->method('getLogs')->willReturn(
-            [['Line 1 of log'], ['Line 2 of log']]
-        );
-
-        // initialize test object
-        $objectManager = new ObjectManager($this);
-        $this->debug = $objectManager->getObject(
-            Debug::class,
+                'path' => 'payment/boltpay/signing_secret',
+                'value' => $secret,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
             [
-                'response' => $this->responseMock,
-                'debugInfoFactory' => $this->debugInfoFactoryMock,
-                'boltConfigSettingFactory' => $this->boltConfigSettingFactoryMock,
-                'storeManager' => $this->storeManagerInterfaceMock,
-                'hookHelper' => $this->hookHelperMock,
-                'productMetadata' => $this->productMetadataInterfaceMock,
-                'configHelper' => $this->configHelperMock,
-                'moduleRetriever' => $this->moduleRetrieverMock,
-                'logRetriever' => $this->logRetrieverMock
-            ]
-        );
+                'path' => 'payment/boltpay/api_key',
+                'value' => $apikey,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => 'payment/boltpay/active',
+                'value' => 1,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+        ];
+        TestUtils::setupBoltConfig($configData);
     }
 
-    private function prepareConfigHelperMock()
+    /**
+     * Request getter
+     *
+     * @param array $bodyParams
+     *
+     * @return \Magento\Framework\App\RequestInterface
+     */
+    public function createRequest($bodyParams)
     {
-        $boltSettings = [];
-        $boltSettings[] = $this->boltConfigSettingFactoryMock->create()
-                                                             ->setName('config_name1')
-                                                             ->setValue('config_value1');
-        $boltSettings[] = $this->boltConfigSettingFactoryMock->create()
-                                                             ->setName('config_name2')
-                                                             ->setValue('config_value2');
-        $this->configHelperMock->method('getAllConfigSettings')->willReturn($boltSettings);
-        $this->configHelperMock->method('getComposerVersion')->willReturn('composer_version');
+        if (!$this->request) {
+            $this->request = $this->objectManager->get(Request::class);
+        }
+
+        $requestContent = json_encode($bodyParams);
+
+        $computed_signature = base64_encode(hash_hmac('sha256', $requestContent, self::SECRET, true));
+
+        $this->request->getHeaders()->clearHeaders();
+        $this->request->getHeaders()->addHeaderLine('X-Bolt-Hmac-Sha256', $computed_signature);
+        $this->request->getHeaders()->addHeaderLine('X-bolt-trace-id', self::TRACE_ID_HEADER);
+        $this->request->getHeaders()->addHeaderLine('Content-Type', 'application/json');
+
+        $this->request->setParams($bodyParams);
+
+        $this->request->setContent($requestContent);
+
+        return $this->request;
+    }
+
+    protected function tearDownInternal()
+    {
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+
+        $this->resetRequest();
+        $this->resetResponse();
+    }
+
+    public function resetRequest()
+    {
+        if (!$this->request) {
+            $this->request = $this->objectManager->get(Request::class);
+        }
+
+        $this->objectManager->removeSharedInstance(Request::class);
+        $this->request = null;
+
+    }
+
+    public function resetResponse()
+    {
+        if (!$this->response) {
+            $this->response = $this->objectManager->get(Response::class);
+        }
+
+        $this->objectManager->removeSharedInstance(Response::class);
+        $this->response = null;
     }
 
     /**
@@ -181,49 +185,28 @@ class DebugTest extends BoltTestCase
      */
     public function debug_successful()
     {
-        $this->hookHelperMock->expects($this->once())->method('preProcessWebhook');
-        $this->responseMock->expects($this->once())->method('sendResponse');
+        $this->skipTestInUnitTestsFlow();
+        $this->createRequest([]);
+        $hookHelper = $this->objectManager->create(Hook::class);
 
-        $expectedJson = json_encode([
-            'status' => 'success',
-            'event' => 'integration.debug',
-            'data' => [
-                'php_version' => PHP_VERSION,
-                'composer_version' => 'composer_version',
-                'platform_version' => '2.3.0',
-                'bolt_config_settings' => [
-                    [
-                        'name' => 'config_name1',
-                        'value' => 'config_value1'
-                    ],
-                    [
-                        'name' => 'config_name2',
-                        'value' => 'config_value2'
-                    ]
-                ],
-                'other_plugin_versions' => [
-                    [
-                        'name' => 'plugin1',
-                        'version' => '1.0.0'
-                    ],
-                    [
-                        'name' => 'plugin2',
-                        'version' => '2.0.0'
-                    ],
-                    [
-                        'name' => 'plugin3',
-                        'version' => '3.0.0'
-                    ]
-                ],
-                'logs' => [
-                    ['Line 1 of log'],
-                    ['Line 2 of log']
-                ],
-                'automated_testing_config' => null
-            ]
-        ]);
+        $stubApiHelper = new stubBoltApiHelper();
+        $apiHelperProperty = new \ReflectionProperty(
+            Hook::class,
+            'apiHelper'
+        );
+        $apiHelperProperty->setAccessible(true);
+        $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
 
-        $this->responseMock->expects($this->once())->method('setBody')->with($this->equalTo($expectedJson));
+        $orderHelperProperty = new \ReflectionProperty(
+            Debug::class,
+            'hookHelper'
+        );
+        $orderHelperProperty->setAccessible(true);
+        $orderHelperProperty->setValue($this->debug, $hookHelper);
         $this->debug->debug();
+        $response = json_decode(TestHelper::getProperty($this->debug, 'response')->getBody(), true);
+        $this->assertEquals('success', $response['status']);
+        $this->assertEquals('integration.debug', $response['event']);
+        $this->assertNotNull($response['data']);
     }
 }
