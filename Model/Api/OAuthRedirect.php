@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\ExternalCustomerEntityRepositoryInterface as ExternalCustomerEntityRepository;
 use Bolt\Boltpay\Api\OAuthRedirectInterface;
+use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Bolt\Boltpay\Helper\SSOHelper;
 use Exception;
@@ -85,6 +86,11 @@ class OAuthRedirect implements OAuthRedirectInterface
     private $url;
 
     /**
+     * @var Bugsnag
+     */
+    private $bugsnag;
+
+    /**
      * @param Response                         $response
      * @param DeciderHelper                    $deciderHelper
      * @param SSOHelper                        $ssoHelper
@@ -95,6 +101,7 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param CustomerInterfaceFactory         $customerInterfaceFactory
      * @param CustomerFactory                  $customerFactory
      * @param Url                              $url
+     * @param Bugsnag                          $bugsnag
      */
     public function __construct(
         Response $response,
@@ -106,7 +113,8 @@ class OAuthRedirect implements OAuthRedirectInterface
         CustomerSession $customerSession,
         CustomerInterfaceFactory $customerInterfaceFactory,
         CustomerFactory $customerFactory,
-        Url $url
+        Url $url,
+        Bugsnag $bugsnag
     ) {
         $this->response = $response;
         $this->deciderHelper = $deciderHelper;
@@ -118,6 +126,7 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->customerInterfaceFactory = $customerInterfaceFactory;
         $this->customerFactory = $customerFactory;
         $this->url = $url;
+        $this->bugsnag = $bugsnag;
     }
 
     /**
@@ -169,11 +178,24 @@ class OAuthRedirect implements OAuthRedirectInterface
         } catch (NoSuchEntityException $nsee) {
         }
         try {
-            $customer = $this->customerRepository->get($payload['email'], $websiteId);
+            if ($externalCustomerEntity !== null) {
+                $customer = $this->customerRepository->getById($externalCustomerEntity->getCustomerID());
+            } else {
+                $customer = $this->customerRepository->get($payload['email'], $websiteId);
+            }
         } catch (NoSuchEntityException $nsee) {
         }
 
-        // If we haven't linked this customer, and it exists in M2, but is not verified, then we throw an exception
+        // External customer entity exists, but the customer it links to doesn't
+        // This should happen very rarely, if at all, which is why we notify bugsnag when this happens
+        if ($externalCustomerEntity !== null && $customer === null) {
+            $this->bugsnag->notifyError(
+                'OAuthRedirect',
+                'external customer entity ' . $payload['sub'] . ' linked to nonexistent customer ' . $externalCustomerEntity->getCustomerID()
+            );
+        }
+
+        // If the customer isn't linked and it exists in M2, but the email is not verified, we throw an exception
         if ($externalCustomerEntity === null && $customer !== null && !$payload['email_verified']) {
             throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
