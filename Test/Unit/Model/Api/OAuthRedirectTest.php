@@ -175,12 +175,12 @@ class OAuthRedirectTest extends BoltTestCase
     public function login_throwsWebapiException_ifTokenExchangeReturnsNull()
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
-        $this->ssoHelper->expect(static::once())->method('getOAuthConfiguration')->willReturn([
+        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn([
             'clientID'      => 'clientid',
             'clientSecret'  => 'clientsecret',
             'boltPublicKey' => 'boltpublickey'
         ]);
-        $this->ssoHelper->expect(static::once())->method('exchangeToken')->willReturn(null);
+        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn(null);
         $this->expectException(WebapiException::class);
         $this->expectExceptionMessage('Internal Server Error');
         $this->currentMock->login('code', 'scope', 'state');
@@ -192,13 +192,13 @@ class OAuthRedirectTest extends BoltTestCase
     public function login_throwsWebapiException_ifParseAndValidateTokenFailed()
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
-        $this->ssoHelper->expect(static::once())->method('getOAuthConfiguration')->willReturn([
+        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn([
             'clientID'      => 'clientid',
             'clientSecret'  => 'clientsecret',
             'boltPublicKey' => 'boltpublickey'
         ]);
-        $this->ssoHelper->expect(static::once())->method('exchangeToken')->willReturn('token');
-        $this->ssoHelper->expect(static::once())->method('parseAndValidateJWT')->willReturn(null);
+        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn('token');
+        $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn(null);
         $this->expectException(WebapiException::class);
         $this->expectExceptionMessage('Internal Server Error');
         $this->currentMock->login('code', 'scope', 'state');
