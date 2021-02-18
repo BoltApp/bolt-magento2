@@ -17,20 +17,20 @@
 
 namespace Bolt\Boltpay\Helper;
 
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Shared\ApiUtils;
 use Bolt\Boltpay\Model\Request;
+use Bolt\Boltpay\Model\RequestFactory;
 use Bolt\Boltpay\Model\Response;
+use Bolt\Boltpay\Model\ResponseFactory;
+use Exception;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\DataObject;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\HTTP\ZendClientFactory;
-use Bolt\Boltpay\Model\ResponseFactory;
-use Bolt\Boltpay\Model\RequestFactory;
-use Bolt\Boltpay\Helper\Log as LogHelper;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Magento\Framework\Phrase;
 use Zend_Http_Client_Exception;
-use Bolt\Boltpay\Helper\Shared\ApiUtils;
 
 /**
  * Boltpay API helper
@@ -40,7 +40,6 @@ use Bolt\Boltpay\Helper\Shared\ApiUtils;
  */
 class Api extends AbstractHelper
 {
-
     /**
      * Api current version
      */
@@ -60,7 +59,6 @@ class Api extends AbstractHelper
      * Api create order
      */
     const API_CREATE_ORDER = 'merchant/orders';
-
 
     /**
      * Api create non-Bolt order
@@ -101,6 +99,11 @@ class Api extends AbstractHelper
      * Api authorize transaction
      */
     const API_AUTHORIZE_TRANSACTION = 'merchant/transactions/authorize';
+
+    /**
+     * Api oauth token exchange
+     */
+    const API_OAUTH_TOKEN = 'oauth/token';
 
     /**
      * Path for sandbox mode
@@ -148,7 +151,7 @@ class Api extends AbstractHelper
      * @param ResponseFactory   $responseFactory
      * @param RequestFactory    $requestFactory
      * @param LogHelper         $logHelper
-     * @param Bugsnag $bugsnag
+     * @param Bugsnag           $bugsnag
      */
     public function __construct(
         Context $context,
@@ -161,48 +164,24 @@ class Api extends AbstractHelper
     ) {
         parent::__construct($context);
         $this->httpClientFactory = $httpClientFactory;
-        $this->configHelper      = $configHelper;
-        $this->responseFactory   = $responseFactory;
-        $this->requestFactory    = $requestFactory;
-        $this->logHelper         = $logHelper;
-        $this->bugsnag           = $bugsnag;
-    }
-
-    /**
-     * Get Full API Endpoint
-     *
-     * @param  string $dynamicUrl
-     * @return  string
-     */
-    private function getFullApiUrl($dynamicUrl)
-    {
-        $staticUrl  = $this->configHelper->getApiUrl();
-        return $staticUrl . self::API_CURRENT_VERSION . $dynamicUrl;
-    }
-
-    /**
-     * Checks if the Bolt API response indicates an error.
-     *
-     * @param  mixed $response    Bolt API response
-     * @return bool               true if there is an error, false otherwise
-     * @deprecated
-     */
-    private function isResponseError($response)
-    {
-        $arr = (array)$response;
-        return array_key_exists('errors', $arr) || array_key_exists('error_code', $arr);
+        $this->configHelper = $configHelper;
+        $this->responseFactory = $responseFactory;
+        $this->requestFactory = $requestFactory;
+        $this->logHelper = $logHelper;
+        $this->bugsnag = $bugsnag;
     }
 
     /**
      * Send request to Bolt Gateway and return response
      *
      * @param Request $request
+     * @param string  $encType
      *
      * @return Response|int
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function sendRequest(Request $request)
+    public function sendRequest($request, $encType = 'application/json')
     {
         $result = $this->responseFactory->create();
         $client = $this->httpClientFactory->create();
@@ -212,7 +191,7 @@ class Api extends AbstractHelper
         $apiKey = $request->getApiKey();
         $requestMethod = $request->getRequestMethod();
 
-        $requestData = $requestMethod !== "GET" ? json_encode($apiData, JSON_UNESCAPED_SLASHES) : null;
+        $requestData = $requestMethod !== 'GET' ? json_encode($apiData, JSON_UNESCAPED_SLASHES) : null;
 
         $client->setUri($apiUrl);
 
@@ -223,7 +202,7 @@ class Api extends AbstractHelper
             $this->configHelper->getModuleVersion(),
             $requestData,
             $apiKey,
-            (array)$request->getHeaders()
+            (array) $request->getHeaders()
         );
 
         $request->setHeaders($headers);
@@ -239,7 +218,7 @@ class Api extends AbstractHelper
         $responseBody = null;
 
         try {
-            $response     = $client->setRawData($requestData, 'application/json')->request($requestMethod);
+            $response = $client->setRawData($requestData, $encType)->request($requestMethod);
             $responseBody = $response->getBody();
 
             $this->bugsnag->registerCallback(function ($report) use ($response) {
@@ -259,8 +238,8 @@ class Api extends AbstractHelper
                     ]
                 ]);
             });
-        } catch (\Exception $e) {
-            throw new LocalizedException($this->wrapGatewayError($e->getMessage()));
+        } catch (Exception $e) {
+            throw new LocalizedException(__('Gateway error: %1', $e->getMessage()));
         }
 
         if ($request->getStatusOnly() && $response) {
@@ -269,25 +248,11 @@ class Api extends AbstractHelper
 
         if ($responseBody) {
             $resultFromJSON = ApiUtils::getJSONFromResponseBody($responseBody);
-
             $result->setResponse($resultFromJSON);
         } else {
-            throw new LocalizedException(
-                __('Something went wrong in the payment gateway.')
-            );
+            throw new LocalizedException(__('Something went wrong in the payment gateway.'));
         }
         return $result;
-    }
-
-    /**
-     * Gateway error response wrapper
-     *
-     * @param string $text
-     * @return Phrase
-     */
-    private function wrapGatewayError($text)
-    {
-        return __('Gateway error: %1', $text);
     }
 
     /**
@@ -299,14 +264,13 @@ class Api extends AbstractHelper
      */
     public function buildRequest($requestData)
     {
-        $apiData       = $requestData->getApiData();
-        $dynamicApiUrl = $requestData->getDynamicApiUrl();
-        $apiKey        = $requestData->getApiKey();
+        $apiData = $requestData->getApiData();
+        $apiUrl = $this->configHelper->getApiUrl() . self::API_CURRENT_VERSION . $requestData->getDynamicApiUrl();
+        $apiKey = $requestData->getApiKey();
         $requestMethod = empty($requestData->getRequestMethod()) ? 'POST' : $requestData->getRequestMethod();
-        $apiUrl        = $this->getFullApiUrl($dynamicApiUrl);
 
-        $headers    = (array)$requestData->getHeaders();
-        $statusOnly = (bool)$requestData->getStatusOnly();
+        $headers = (array) $requestData->getHeaders();
+        $statusOnly = (bool) $requestData->getStatusOnly();
 
         $request = $this->requestFactory->create();
         $request->setApiData($apiData);

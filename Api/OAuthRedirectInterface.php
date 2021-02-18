@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Api;
 
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Webapi\Exception as WebapiException;
 
 interface OAuthRedirectInterface
 {
@@ -26,11 +27,14 @@ interface OAuthRedirectInterface
      *
      * @api
      *
-     * @param string $authorization_code
+     * @param string $code
+     * @param string $scope
+     * @param string $state
      *
      * @return void
      *
      * @throws NoSuchEntityException
+     * @throws WebapiException
      */
-    public function login($authorization_code = '');
+    public function login($code = '', $scope = '', $state = '');
 }
