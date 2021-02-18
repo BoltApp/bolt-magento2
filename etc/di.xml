@@ -71,7 +71,7 @@
 
     <!-- For debug save endpoint -->
     <preference for="Bolt\Boltpay\Api\UpdateSettingsInterface" type="Bolt\Boltpay\Model\Api\UpdateSettings" />
-    
+
     <!-- For update cart endpoint -->
     <preference for="Bolt\Boltpay\Api\UpdateCartInterface" type="Bolt\Boltpay\Model\Api\UpdateCart" />
     <preference for="Bolt\Boltpay\Api\Data\CartDataInterface"   type="Bolt\Boltpay\Model\Api\Data\CartData" />
@@ -94,15 +94,15 @@
     <type name="Mirasvit\Rewards\Model\Purchase">
         <plugin name="Bolt_Boltpay_Mirasvit_Rewards_Model_PurchasePlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin" sortOrder="1" />
     </type>
-    
+
     <type name="Mirasvit\RewardsCheckout\Controller\Checkout\ApplyPointsPost">
         <plugin name="Bolt_Boltpay_Mirasvit_RewardsCheckout_Controller_Checkout_ApplyPointsPostPlugin" type="Bolt\Boltpay\Plugin\Mirasvit\RewardsCheckout\Controller\Checkout\ApplyPointsPostPlugin" sortOrder="1" />
     </type>
-    
+
     <type name="Mirasvit\Rewards\Model\Total\Quote\Discount">
         <plugin name="Bolt_Boltpay_Mirasvit_Rewards_Model_Total_Quote_DiscountPlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\Total\Quote\DiscountPlugin" sortOrder="1" />
     </type>
-    
+
     <type name="Mirasvit\Credit\Model\Total\Quote\Credit">
         <plugin name="Bolt_Boltpay_Mirasvit_Store_Credit_Model_Total_Quote_CreditPlugin" type="Bolt\Boltpay\Plugin\Mirasvit\Credit\Model\Total\Quote\CreditPlugin" sortOrder="1" />
     </type>
@@ -195,5 +195,11 @@
         <arguments>
             <argument name="adminOrderCreateModel" xsi:type="object">Magento\Sales\Model\AdminOrder\Create\Proxy</argument>
         </arguments>
+    </type>
+
+    <!-- TaxJar Support - force rounding to 2 decimal points fix -->
+    <type name="Taxjar\SalesTax\Model\Smartcalcs">
+        <plugin name="bolt_boltpay_taxjar_salestax_model_smartcalcs_plugin"
+                type="Bolt\Boltpay\Plugin\Taxjar\SalesTax\Model\SmartcalcsPlugin"/>
     </type>
 </config>
