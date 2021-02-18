@@ -188,8 +188,12 @@ class SSOHelperTest extends BoltTestCase
      */
     public function parseAndValidateJWTProvider()
     {
-        $wrongSigAndPubkey = $this->getSignatureAndPublicKey(base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx"}'));
-        $rightSigAndPubkey = $this->getSignatureAndPublicKey(base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub"}'));
+        $wrongSigAndPubkeyNoSub = $this->getSignatureAndPublicKey(base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","first_name":"first name","last_name":"last name","email":"t@t.com","email_verified":true}'));
+        $wrongSigAndPubkeyNoFirstName = $this->getSignatureAndPublicKey(base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","last_name":"last name","email":"t@t.com","email_verified":true}'));
+        $wrongSigAndPubkeyNoLastName = $this->getSignatureAndPublicKey(base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","email":"t@t.com","email_verified":true}'));
+        $wrongSigAndPubkeyNoEmail = $this->getSignatureAndPublicKey(base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","last_name":"last name","email_verified":true}'));
+        $wrongSigAndPubkeyNoEmailVerified = $this->getSignatureAndPublicKey(base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","last_name":"last name","email":"t@t.com"}'));
+        $rightSigAndPubkey = $this->getSignatureAndPublicKey(base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","last_name":"last name","email":"t@t.com","email_verified":true}'));
         return [
             [
                 'token'    => '',
@@ -246,26 +250,54 @@ class SSOHelperTest extends BoltTestCase
                 'expected' => null
             ],
             [
-                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000001,"iss":"https://bolt.com","aud":"xxtest audiencexx"}') . '.' . $wrongSigAndPubkey['sig'],
+                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000001,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","last_name":"last name","email":"t@t.com","email_verified":true}') . '.' . $rightSigAndPubkey['sig'],
                 'audience' => 'test audience',
-                'pubkey'   => $wrongSigAndPubkey['pubkey'],
+                'pubkey'   => $rightSigAndPubkey['pubkey'],
                 'expected' => null
             ],
             [
-                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx"}') . '.' . $wrongSigAndPubkey['sig'],
+                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","first_name":"first name","last_name":"last name","email":"t@t.com","email_verified":true}') . '.' . $wrongSigAndPubkeyNoSub['sig'],
                 'audience' => 'test audience',
-                'pubkey'   => $wrongSigAndPubkey['pubkey'],
+                'pubkey'   => $wrongSigAndPubkeyNoSub['pubkey'],
                 'expected' => null
             ],
             [
-                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub"}') . '.' . $rightSigAndPubkey['sig'],
+                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","last_name":"last name","email":"t@t.com","email_verified":true}') . '.' . $wrongSigAndPubkeyNoFirstName['sig'],
+                'audience' => 'test audience',
+                'pubkey'   => $wrongSigAndPubkeyNoFirstName['pubkey'],
+                'expected' => null
+            ],
+            [
+                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","email":"t@t.com","email_verified":true}') . '.' . $wrongSigAndPubkeyNoLastName['sig'],
+                'audience' => 'test audience',
+                'pubkey'   => $wrongSigAndPubkeyNoLastName['pubkey'],
+                'expected' => null
+            ],
+            [
+                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","last_name":"last name","email_verified":true}') . '.' . $wrongSigAndPubkeyNoEmail['sig'],
+                'audience' => 'test audience',
+                'pubkey'   => $wrongSigAndPubkeyNoEmail['pubkey'],
+                'expected' => null
+            ],
+            [
+                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","last_name":"last name","email":"t@t.com"}') . '.' . $wrongSigAndPubkeyNoEmailVerified['sig'],
+                'audience' => 'test audience',
+                'pubkey'   => $wrongSigAndPubkeyNoEmailVerified['pubkey'],
+                'expected' => null
+            ],
+            [
+                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","last_name":"last name","email":"t@t.com","email_verified":true}') . '.' . $rightSigAndPubkey['sig'],
                 'audience' => 'test audience',
                 'pubkey'   => $rightSigAndPubkey['pubkey'],
                 'expected' => [
-                    'exp' => 2000000000,
-                    'iss' => 'https://bolt.com',
-                    'aud' => 'xxtest audiencexx',
-                    'sub' => 'test sub'
+                    'exp'            => 2000000000,
+                    'iss'            => 'https://bolt.com',
+                    'aud'            => 'xxtest audiencexx',
+                    'sub'            => 'test sub',
+                    'first_name'     => 'first name',
+                    'last_name'      => 'last name',
+                    'email'          => 't@t.com',
+                    'email_verified' => true
                 ]
             ]
         ];

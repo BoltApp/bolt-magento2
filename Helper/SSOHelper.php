@@ -206,6 +206,18 @@ class SSOHelper extends AbstractHelper
         if (!isset($payload['sub'])) {
             return null;
         }
+        if (!isset($payload['first_name'])) {
+            return null;
+        }
+        if (!isset($payload['last_name'])) {
+            return null;
+        }
+        if (!isset($payload['email'])) {
+            return null;
+        }
+        if (!isset($payload['email_verified'])) {
+            return null;
+        }
 
         return $payload;
     }
