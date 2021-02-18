@@ -72,7 +72,10 @@ class SSOHelper extends AbstractHelper
     }
 
     /**
-     * Return information needed for oauth exchange
+     * Return array containing information needed for oauth exchange
+     * - clientID: last part of merchant publishable key
+     * - clientSecret: merchant api key
+     * - boltPublicKey: public key needed for oauth exchange
      *
      * @return array
      */
