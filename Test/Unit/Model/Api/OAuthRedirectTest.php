@@ -253,6 +253,7 @@ class OAuthRedirectTest extends BoltTestCase
         $this->externalCustomerEntityRepository->expects(static::once())->method('getByExternalID')->with('abc')->willReturn(null);
         $customerInterface = $this->createMock(CustomerInterface::class);
         $this->customerRepository->expects(static::once())->method('get')->with('t@t.com', 1)->willReturn($customerInterface);
+        $this->bugsnag->expects(static::once())->method('notifyError')->with('OAuthRedirect', 'customer with email t@t.com found but email is not verified');
         $this->expectException(WebapiException::class);
         $this->expectExceptionMessage('Internal Server Error');
         $this->currentMock->login('code', 'scope', 'state');

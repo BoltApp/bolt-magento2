@@ -196,8 +196,16 @@ class OAuthRedirect implements OAuthRedirectInterface
             );
         }
 
-        // If the customer isn't linked and it exists in M2, but the email is not verified, we throw an exception
+        // If
+        // - external customer entity isn't linked
+        // - customer exists in M2
+        // - email is not verified
+        // Notify bugsnag and throw an exception
         if ($externalCustomerEntity === null && $customer !== null && !$payload['email_verified']) {
+            $this->bugsnag->notifyError(
+                'OAuthRedirect',
+                'customer with email ' . $payload['email'] . ' found but email is not verified'
+            );
             throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
 
