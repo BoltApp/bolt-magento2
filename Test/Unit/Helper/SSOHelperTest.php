@@ -103,11 +103,7 @@ class SSOHelperTest extends BoltTestCase
         $this->configHelper->expects(static::once())->method('getApiKey')->with(1)->willReturn('test api key');
         $this->configHelper->expects(static::once())->method('getPublicKey')->with(1)->willReturn('test public key');
         $this->assertEquals(
-            [
-                'clientID'      => 'lastpart',
-                'clientSecret'  => 'test api key',
-                'boltPublicKey' => 'test public key'
-            ],
+            ['lastpart', 'test api key', 'test public key'],
             TestHelper::invokeMethod($this->currentMock, 'getOAuthConfiguration')
         );
     }

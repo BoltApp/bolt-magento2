@@ -74,7 +74,7 @@ class SSOHelper extends AbstractHelper
     /**
      * Return information needed for oauth exchange
      *
-     * @return mixed
+     * @return array
      */
     public function getOAuthConfiguration()
     {
@@ -88,11 +88,7 @@ class SSOHelper extends AbstractHelper
 
         $boltPublicKey = $this->configHelper->getPublicKey($storeId);
 
-        return [
-            'clientID'      => $clientID,
-            'clientSecret'  => $clientSecret,
-            'boltPublicKey' => $boltPublicKey
-        ];
+        return [$clientID, $clientSecret, $boltPublicKey];
     }
 
     /**

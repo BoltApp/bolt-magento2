@@ -188,11 +188,7 @@ class OAuthRedirectTest extends BoltTestCase
     public function login_throwsWebapiException_ifTokenExchangeReturnsNull()
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
-        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn([
-            'clientID'      => 'clientid',
-            'clientSecret'  => 'clientsecret',
-            'boltPublicKey' => 'boltpublickey'
-        ]);
+        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
         $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn(null);
         $this->expectException(WebapiException::class);
         $this->expectExceptionMessage('Internal Server Error');
@@ -205,11 +201,7 @@ class OAuthRedirectTest extends BoltTestCase
     public function login_throwsWebapiException_ifParseAndValidateTokenFailed()
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
-        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn([
-            'clientID'      => 'clientid',
-            'clientSecret'  => 'clientsecret',
-            'boltPublicKey' => 'boltpublickey'
-        ]);
+        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
         $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn('token');
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn(null);
         $this->expectException(WebapiException::class);
@@ -223,11 +215,7 @@ class OAuthRedirectTest extends BoltTestCase
     public function login_notifiesBugsnag_ifExternalCustomerEntityIsFoundButCustomerIsNot()
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
-        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn([
-            'clientID'      => 'clientid',
-            'clientSecret'  => 'clientsecret',
-            'boltPublicKey' => 'boltpublickey'
-        ]);
+        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
         $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn('token');
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn([
             'sub'            => 'abc',
@@ -255,11 +243,7 @@ class OAuthRedirectTest extends BoltTestCase
     public function login_throwsWebapiException_ifSpecificConditionsAreMet()
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
-        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn([
-            'clientID'      => 'clientid',
-            'clientSecret'  => 'clientsecret',
-            'boltPublicKey' => 'boltpublickey'
-        ]);
+        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
         $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn('token');
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn(['sub' => 'abc', 'email' => 't@t.com', 'email_verified' => false]);
         $store = $this->createMock(StoreInterface::class);
@@ -280,11 +264,7 @@ class OAuthRedirectTest extends BoltTestCase
     public function login_throwsWebapiException_ifExceptionIsThrownWhenTryingToLogin()
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
-        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn([
-            'clientID'      => 'clientid',
-            'clientSecret'  => 'clientsecret',
-            'boltPublicKey' => 'boltpublickey'
-        ]);
+        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
         $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn('token');
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn(['sub' => 'abc', 'email' => 't@t.com', 'email_verified' => true]);
         $store = $this->createMock(StoreInterface::class);
@@ -307,11 +287,7 @@ class OAuthRedirectTest extends BoltTestCase
     public function login_isSuccessful()
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
-        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn([
-            'clientID'      => 'clientid',
-            'clientSecret'  => 'clientsecret',
-            'boltPublicKey' => 'boltpublickey'
-        ]);
+        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
         $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn('token');
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn([
             'sub'            => 'abc',
