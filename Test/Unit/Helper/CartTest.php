@@ -1084,18 +1084,17 @@ class CartTest extends BoltTestCase
      */
     public function saveToCache_whenSerializeParameterIsTrue_savesSerializedDataToCache()
     {
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $testCartData = $this->getTestCartData();
-        $this->cache->expects(static::once())->method('save')->with(
-            TestHelper::serialize($this, $testCartData),
-            self::CACHE_IDENTIFIER,
-            [],
-            null
-        );
         TestHelper::invokeMethod(
-            $this->currentMock,
+            $cartHelper,
             'saveToCache',
             [$testCartData, self::CACHE_IDENTIFIER, [], null, true]
         );
+        $cache = Bootstrap::getObjectManager()->create(CacheInterface::class);
+        $result = $cache->load(self::CACHE_IDENTIFIER);
+        self::assertEquals($this->serialize->serialize($testCartData), $result);
     }
 
     /**
@@ -5861,7 +5860,9 @@ ORDER
         */
         public function getHints_whenCheckoutTypeIsAdmin_setsVirtualTerminalModeToTrue()
         {
-        $result = $this->getCurrentMock()->getHints(null, 'admin');
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $result = $cartHelper->getHints(null, 'admin');
         static::assertTrue($result['virtual_terminal_mode']);
         }
 
@@ -6119,29 +6120,33 @@ ORDER
         */
         public function getHints_withNonProductCheckoutTypeAndVirtualQuote_returnsHintsForQuoteBillingAddress()
         {
-        $currentMock = $this->getCurrentMock(['getQuoteById']);
-        $currentMock->expects(static::once())->method('getQuoteById')->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn($this->quoteMock);
-        $this->quoteMock->expects(static::once())->method('isVirtual')->willReturn(true);
-        $this->quoteMock->expects(static::once())->method('getBillingAddress')->willReturn($this->getAddressMock());
-        $hints = $currentMock->getHints(self::IMMUTABLE_QUOTE_ID, 'multipage');
-        static::assertEquals(
-            [
-                'prefill' => (object)[
-                    'firstName'    => 'IntegrationBolt',
-                    'lastName'     => 'BoltTest',
-                    'email'        => self::EMAIL_ADDRESS,
-                    'phone'        => '132 231 1234',
-                    'addressLine1' => '228 7th Avenue',
-                    'addressLine2' => '228 7th Avenue 2',
-                    'city'         => 'New York',
-                    'state'        => 'New York',
-                    'zip'          => '10011',
-                    'country'      => 'US',
-                ]
-            ],
-            $hints
-        );
+            $this->skipTestInUnitTestsFlow();
+            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            $quote = TestUtils::createQuote();
+            $quoteId = $quote->getId();
+            $product = TestUtils::createVirtualProduct();
+            $quote->addProduct($product, 1);
+            TestUtils::setAddressToQuote($this->testAddressData, $quote, 'billing');
+            $quote->save();
+            $hints = $cartHelper->getHints($quoteId, 'multipage');
+            static::assertEquals(
+                [
+                    'prefill' => (object)[
+                        'firstName'    => 'IntegrationBolt',
+                        'lastName'     => 'BoltTest',
+                        'email'        => self::EMAIL_ADDRESS,
+                        'phone'        => '132 231 1234',
+                        'addressLine1' => '228 7th Avenue',
+                        'addressLine2' => '228 7th Avenue 2',
+                        'city'         => 'New York',
+                        'state'        => 'New York',
+                        'zip'          => '10011',
+                        'country'      => 'US',
+                    ]
+                ],
+                $hints
+            );
+            TestUtils::cleanupSharedFixtures([$product]);
         }
 
         /**
@@ -6154,29 +6159,30 @@ ORDER
         */
         public function getHints_withNonProductCheckoutTypeAndNonVirtualQuote_returnsHintsForQuoteShippingAddress()
         {
-        $currentMock = $this->getCurrentMock();
-        $currentMock->expects(static::once())->method('getQuoteById')->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn($this->quoteMock);
-        $this->quoteMock->expects(static::once())->method('isVirtual')->willReturn(false);
-        $this->quoteMock->expects(static::once())->method('getShippingAddress')->willReturn($this->getAddressMock());
-        $hints = $currentMock->getHints(self::IMMUTABLE_QUOTE_ID, 'multipage');
-        static::assertEquals(
-            [
-                'prefill' => (object)[
-                    'firstName'    => 'IntegrationBolt',
-                    'lastName'     => 'BoltTest',
-                    'email'        => self::EMAIL_ADDRESS,
-                    'phone'        => '132 231 1234',
-                    'addressLine1' => '228 7th Avenue',
-                    'addressLine2' => '228 7th Avenue 2',
-                    'city'         => 'New York',
-                    'state'        => 'New York',
-                    'zip'          => '10011',
-                    'country'      => 'US',
-                ]
-            ],
-            $hints
-        );
+            $this->skipTestInUnitTestsFlow();
+            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            $quote = TestUtils::createQuote();
+            $quoteId = $quote->getId();
+            TestUtils::setAddressToQuote($this->testAddressData, $quote, 'shipping');
+            $quote->save();
+            $hints = $cartHelper->getHints($quoteId, 'multipage');
+            static::assertEquals(
+                [
+                    'prefill' => (object)[
+                        'firstName'    => 'IntegrationBolt',
+                        'lastName'     => 'BoltTest',
+                        'email'        => self::EMAIL_ADDRESS,
+                        'phone'        => '132 231 1234',
+                        'addressLine1' => '228 7th Avenue',
+                        'addressLine2' => '228 7th Avenue 2',
+                        'city'         => 'New York',
+                        'state'        => 'New York',
+                        'zip'          => '10011',
+                        'country'      => 'US',
+                    ]
+                ],
+                $hints
+            );
         }
 
         /**
@@ -6189,15 +6195,28 @@ ORDER
         */
         public function getHints_withApplePayRelatedDataPhone_skipsPreFill()
         {
-        $quoteMock = $this->createPartialMock(Quote::class, ['getCustomerEmail', 'isVirtual', 'getShippingAddress']);
-        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($quoteMock);
-        $quoteMock->expects(static::once())->method('isVirtual')->willReturn(false);
-        $shippingAddress = $this->createPartialMock(Quote\Address::class, ['getTelephone']);
-        $shippingAddress->expects(static::once())->method('getTelephone')->willReturn('8005550111');
-        $quoteMock->expects(static::once())->method('getCustomerEmail')->willReturn('na@bolt.com');
-        $quoteMock->expects(static::once())->method('getShippingAddress')->willReturn($shippingAddress);
-        $hints = $this->getCurrentMock()->getHints();
-        static::assertEquals((object)[], $hints['prefill']);
+            $this->skipTestInUnitTestsFlow();
+            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            $quote = TestUtils::createQuote();
+            $testAddressData = [
+                'company'         => "",
+                'country'         => "United States",
+                'country_code'    => "US",
+                'email'           => "test@bolt.com",
+                'first_name'      => "IntegrationBolt",
+                'last_name'       => "BoltTest",
+                'locality'        => "New York",
+                'phone'           => "8005550111",
+                'postal_code'     => "10011",
+                'region'          => "New York",
+                'street_address1' => "228 7th Avenue",
+                'street_address2' => "228 7th Avenue 2",
+            ];
+            TestUtils::setAddressToQuote($testAddressData, $quote, 'shipping');
+            $quote->save();
+            TestUtils::setQuoteToSession($quote);
+            $hints = $cartHelper->getHints();
+            static::assertEquals((object)[], $hints['prefill']);
         }
 
         /**
@@ -6210,14 +6229,28 @@ ORDER
         */
         public function getHints_withApplePayRelatedDataEmail_skipsPreFill()
         {
-        $quoteMock = $this->createPartialMock(Quote::class, ['getCustomerEmail', 'isVirtual', 'getShippingAddress']);
-        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($quoteMock);
-        $quoteMock->expects(static::once())->method('isVirtual')->willReturn(false);
-        $shippingAddress = $this->createPartialMock(Quote\Address::class, ['getEmail']);
-        $quoteMock->expects(static::once())->method('getCustomerEmail')->willReturn('na@bolt.com');
-        $quoteMock->expects(static::once())->method('getShippingAddress')->willReturn($shippingAddress);
-        $hints = $this->getCurrentMock()->getHints();
-        static::assertEquals((object)[], $hints['prefill']);
+            $this->skipTestInUnitTestsFlow();
+            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            $quote = TestUtils::createQuote();
+            $testAddressData = [
+                'company'         => "",
+                'country'         => "United States",
+                'country_code'    => "US",
+                'email'           => "na@bolt.com",
+                'first_name'      => "IntegrationBolt",
+                'last_name'       => "BoltTest",
+                'locality'        => "New York",
+                'phone'           => "8005550111",
+                'postal_code'     => "10011",
+                'region'          => "New York",
+                'street_address1' => "228 7th Avenue",
+                'street_address2' => "228 7th Avenue 2",
+            ];
+            TestUtils::setAddressToQuote($testAddressData, $quote, 'shipping');
+            $quote->save();
+            TestUtils::setQuoteToSession($quote);
+            $hints = $cartHelper->getHints();
+            static::assertEquals((object)[], $hints['prefill']);
         }
 
         /**
@@ -6230,18 +6263,28 @@ ORDER
         */
         public function getHints_withApplePayRelatedDataAddressLine_skipsPreFill()
         {
-        $quoteMock = $this->createPartialMock(Quote::class, ['isVirtual', 'getShippingAddress']);
-        $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($quoteMock);
-        $quoteMock->expects(static::once())->method('isVirtual')->willReturn(false);
-        $shippingAddress = $this->getMockBuilder(Quote\Address::class)
-            ->setMethods(['getStreetLine'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $shippingAddress->method('getStreetLine')
-            ->willReturn('tbd');
-        $quoteMock->expects(static::once())->method('getShippingAddress')->willReturn($shippingAddress);
-        $hints = $this->getCurrentMock()->getHints();
-        static::assertEquals((object)[], $hints['prefill']);
+            $this->skipTestInUnitTestsFlow();
+            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+            $quote = TestUtils::createQuote();
+            $testAddressData = [
+                'company'         => "",
+                'country'         => "United States",
+                'country_code'    => "US",
+                'email'           => "test@bolt.com",
+                'first_name'      => "IntegrationBolt",
+                'last_name'       => "BoltTest",
+                'locality'        => "New York",
+                'phone'           => "8005550111",
+                'postal_code'     => "10011",
+                'region'          => "New York",
+                'street_address1' => "tbd",
+                'street_address2' => "",
+            ];
+            TestUtils::setAddressToQuote($testAddressData, $quote, 'shipping');
+            $quote->save();
+            TestUtils::setQuoteToSession($quote);
+            $hints = $cartHelper->getHints();
+            static::assertEquals((object)[], $hints['prefill']);
         }
 
         /**
@@ -6637,11 +6680,35 @@ ORDER
      */
     public function getCustomerByEmail_withExistingCustomerEmail_returnsCustomerModel()
     {
-        $this->customerRepository->expects(static::once())->method('get')->with(self::EMAIL_ADDRESS, self::WEBSITE_ID)
-            ->willReturn($this->customerMock);
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+
+        $store = Bootstrap::getObjectManager()->get(\Magento\Store\Model\StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
+
+        $websiteRepository = Bootstrap::getObjectManager()->get(\Magento\Store\Api\WebsiteRepositoryInterface::class);
+        $websiteId = $websiteRepository->get('base')->getId();
+        TestUtils::createCustomer($websiteId, $storeId,
+            array(
+                "street_address1" => "street",
+                "street_address2" => "",
+                "locality"        => "Los Angeles",
+                "region"          => "California",
+                'region_code'     => 'CA',
+                'region_id'       => '12',
+                "postal_code"     => "11111",
+                "country_code"    => "US",
+                "country"         => "United States",
+                "name"            => "lastname firstname",
+                "first_name"      => "firstname",
+                "last_name"       => "lastname",
+                "phone_number"    => "11111111",
+                "email_address"   => self::EMAIL_ADDRESS,
+            )
+        );
         static::assertEquals(
-            $this->customerMock,
-            $this->currentMock->getCustomerByEmail(self::EMAIL_ADDRESS, self::WEBSITE_ID)
+            self::EMAIL_ADDRESS,
+            $cartHelper->getCustomerByEmail(self::EMAIL_ADDRESS, $websiteId)->getEmail()
         );
     }
 
@@ -6653,22 +6720,10 @@ ORDER
      */
     public function getCustomerByEmail_withExceptionOnGettingTheCustomer_returnsFalse()
     {
-        $this->customerRepository->expects(static::once())->method('get')->with(self::EMAIL_ADDRESS, self::WEBSITE_ID)
-            ->willThrowException(
-                new NoSuchEntityException(
-                    __(
-                        'No such entity with %fieldName = %fieldValue, %field2Name = %field2Value',
-                        [
-                            'fieldName' => 'email',
-                            'fieldValue' => self::EMAIL_ADDRESS,
-                            'field2Name' => 'websiteId',
-                            'field2Value' => self::WEBSITE_ID
-                        ]
-                    )
-                )
-            );
+        $this->skipTestInUnitTestsFlow();
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         static::assertFalse(
-            $this->currentMock->getCustomerByEmail(self::EMAIL_ADDRESS, self::WEBSITE_ID)
+            $cartHelper->getCustomerByEmail('test@gmail.com', self::WEBSITE_ID)
         );
     }
 }
