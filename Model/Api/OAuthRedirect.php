@@ -153,10 +153,7 @@ class OAuthRedirect implements OAuthRedirectInterface
             throw new WebapiException(__('Bad Request'), 0, WebapiException::HTTP_BAD_REQUEST);
         }
 
-        $oauthConfiguration = $this->ssoHelper->getOAuthConfiguration();
-        $clientID = $oauthConfiguration['clientID'];
-        $clientSecret = $oauthConfiguration['clientSecret'];
-        $boltPublicKey = $oauthConfiguration['boltPublicKey'];
+        list($clientID, $clientSecret, $boltPublicKey) = $this->ssoHelper->getOAuthConfiguration();
 
         $token = $this->ssoHelper->exchangeToken($code, $scope, $clientID, $clientSecret);
         if ($token === null) {
@@ -168,14 +165,17 @@ class OAuthRedirect implements OAuthRedirectInterface
             throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
 
+        $externalID = $payload['sub'];
+
         $websiteId = $this->storeManager->getStore()->getWebsiteId();
         $storeId = $this->storeManager->getStore()->getId();
 
         $externalCustomerEntity = null;
         $customer = null;
         try {
-            $externalCustomerEntity = $this->externalCustomerEntityRepository->getByExternalID($payload['sub']);
+            $externalCustomerEntity = $this->externalCustomerEntityRepository->getByExternalID($externalID);
         } catch (NoSuchEntityException $nsee) {
+            // external customer entity not found
         }
         try {
             if ($externalCustomerEntity !== null) {
@@ -184,6 +184,7 @@ class OAuthRedirect implements OAuthRedirectInterface
                 $customer = $this->customerRepository->get($payload['email'], $websiteId);
             }
         } catch (NoSuchEntityException $nsee) {
+            // customer not found
         }
 
         // External customer entity exists, but the customer it links to doesn't
@@ -191,7 +192,7 @@ class OAuthRedirect implements OAuthRedirectInterface
         if ($externalCustomerEntity !== null && $customer === null) {
             $this->bugsnag->notifyError(
                 'OAuthRedirect',
-                'external customer entity ' . $payload['sub'] . ' linked to nonexistent customer ' . $externalCustomerEntity->getCustomerID()
+                'external customer entity ' . $externalID . ' linked to nonexistent customer ' . $externalCustomerEntity->getCustomerID()
             );
         }
 
@@ -202,7 +203,7 @@ class OAuthRedirect implements OAuthRedirectInterface
 
         try {
             $customer = $customer ?: $this->createNewCustomer($websiteId, $storeId, $payload);
-            $this->linkAndLogin($payload['sub'], $customer->getId());
+            $this->linkLoginAndRedirect($externalID, $customer->getId());
         } catch (Exception $e) {
             throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
@@ -233,7 +234,7 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param string $externalID
      * @param int    $customerID
      */
-    private function linkAndLogin($externalID, $customerID)
+    private function linkLoginAndRedirect($externalID, $customerID)
     {
         $this->externalCustomerEntityRepository->upsert($externalID, $customerID);
         $customerModel = $this->customerFactory->create()->load($customerID);
