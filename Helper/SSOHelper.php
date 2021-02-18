@@ -102,7 +102,7 @@ class SSOHelper extends AbstractHelper
      * @param string $clientId     client id for the oauth workflow, should be the last part of merchant publishable key
      * @param string $clientSecret client secret for the oauth workflow, should be the same as merchant API key
      *
-     * @return mixed|null
+     * @return mixed|string
      */
     public function exchangeToken($code, $scope, $clientId, $clientSecret)
     {
@@ -119,9 +119,9 @@ class SSOHelper extends AbstractHelper
             $result = $this->apiHelper->sendRequest($request, 'application/x-www-form-urlencoded');
             $response = $result->getResponse();
 
-            return empty($response) ? null : $response;
+            return empty($response) ? 'empty response' : $response;
         } catch (Exception $exception) {
-            return null;
+            return $exception->getMessage();
         }
     }
 
@@ -132,7 +132,7 @@ class SSOHelper extends AbstractHelper
      * @param string $audience the token audience
      * @param string $pubkey   the pubkey to verify the token signature
      *
-     * @return mixed|null object in JWT token body, return null if validation fails
+     * @return mixed|string object in JWT token body, return error message if validation fails
      */
     public function parseAndValidateJWT($token, $audience, $pubkey)
     {
@@ -141,7 +141,7 @@ class SSOHelper extends AbstractHelper
         // 1.1 contains three parts separated by dot
         $parts = explode('.', $token);
         if (count($parts) !== 3) {
-            return null;
+            return 'token must have three parts';
         }
 
         $encodedHeader = $parts[0];
@@ -163,60 +163,60 @@ class SSOHelper extends AbstractHelper
 
         // 2.1 make sure the expiration time must be after the current time
         if (!isset($payload['exp'])) {
-            return null;
+            return 'exp must be set';
         }
         if (microtime() > $payload['exp'] * 1000) {
-            return null;
+            return 'expired exp ' . $payload['exp'];
         }
 
         // 2.2 issuing authority should be https://bolt.com
         if (!isset($payload['iss'])) {
-            return null;
+            return 'iss must be set';
         }
         if ($payload['iss'] !== 'https://bolt.com') {
-            return null;
+            return 'incorrect iss ' . $payload['iss'];
         }
 
         // 2.3 aud should contain $audience
         if (!isset($payload['aud'])) {
-            return null;
+            return 'aud must be set';
         }
         if (strpos($payload['aud'], $audience) === false) {
-            return null;
+            return 'aud ' . $payload['aud'] . ' does not contain audience ' . $audience;
         }
 
         // 3. Check signature
 
         // 3.1 check allowed algorithm (Bolt uses RSA-SHA256)
         if (!isset($header['alg'])) {
-            return null;
+            return 'alg must be set';
         }
         if ($header['alg'] !== 'RS256') {
-            return null;
+            return 'invalid alg ' . $header['alg'];
         }
 
         // 3.2 verify hashed value
         $contentToVerify = $encodedHeader . '.' . $encodedPayload;
         $encodedContentToVerify = base64_encode($contentToVerify);
         if (openssl_verify($encodedContentToVerify, $signature, $pubkey, 'sha256WithRSAEncryption') !== 1) {
-            return null;
+            return 'signature verification failed';
         }
 
         // 4. Check fields exist
         if (!isset($payload['sub'])) {
-            return null;
+            return 'sub must be set';
         }
         if (!isset($payload['first_name'])) {
-            return null;
+            return 'first_name must be set';
         }
         if (!isset($payload['last_name'])) {
-            return null;
+            return 'last_name must be set';
         }
         if (!isset($payload['email'])) {
-            return null;
+            return 'email must be set';
         }
         if (!isset($payload['email_verified'])) {
-            return null;
+            return 'email_verified must be set';
         }
 
         return $payload;

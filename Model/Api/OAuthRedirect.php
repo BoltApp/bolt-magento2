@@ -156,12 +156,14 @@ class OAuthRedirect implements OAuthRedirectInterface
         list($clientID, $clientSecret, $boltPublicKey) = $this->ssoHelper->getOAuthConfiguration();
 
         $token = $this->ssoHelper->exchangeToken($code, $scope, $clientID, $clientSecret);
-        if ($token === null) {
+        if (is_string($token)) {
+            $this->bugsnag->notifyError('OAuthRedirect', $token);
             throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
 
         $payload = $this->ssoHelper->parseAndValidateJWT($token, $clientID, $boltPublicKey);
-        if ($payload === null) {
+        if (is_string($payload)) {
+            $this->bugsnag->notifyError('OAuthRedirect', $payload);
             throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
 
