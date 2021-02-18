@@ -151,12 +151,12 @@ class OAuthRedirect implements OAuthRedirectInterface
 
         $token = $this->ssoHelper->exchangeToken($code, $scope, $clientID, $clientSecret);
         if ($token === null) {
-            throw new WebapiException(__('Internal Server Error1'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
 
         $payload = $this->ssoHelper->parseAndValidateJWT($token, $clientID, $boltPublicKey);
         if ($payload === null) {
-            throw new WebapiException(__('Internal Server Error2'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
 
         $websiteId = $this->storeManager->getStore()->getWebsiteId();
@@ -175,14 +175,14 @@ class OAuthRedirect implements OAuthRedirectInterface
 
         // If we haven't linked this customer, and it exists in M2, but is not verified, then we throw an exception
         if ($externalCustomerEntity === null && $customer !== null && !$payload['email_verified']) {
-            throw new WebapiException(__('Internal Server Error3'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
 
         try {
             $customer = $customer ?: $this->createNewCustomer($websiteId, $storeId, $payload);
             $this->linkAndLogin($payload['sub'], $customer->getId());
         } catch (Exception $e) {
-            throw new WebapiException(__('Internal Server Error4'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
     }
 
