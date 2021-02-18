@@ -110,6 +110,17 @@ class TrackingSaveObserver implements ObserverInterface
     }
 
     /**
+     * @param $attribute
+     * @return mixed
+     */
+    private function deflate($attribute) {
+        if (is_object($attribute)) {
+            return get_object_vars($attribute)[0];
+        }
+        return $attribute;
+    }
+
+    /**
      * @param Observer $observer
      */
     public function execute(Observer $observer)
@@ -176,8 +187,8 @@ class TrackingSaveObserver implements ObserverInterface
 
             $trackingData = [
                 'transaction_reference' => $transactionReference,
-                'tracking_number'       => $tracking->getTrackNumber(),
-                'carrier'               => $tracking->getCarrierCode(),
+                'tracking_number'       => $this->deflate($tracking->getTrackNumber()),
+                'carrier'               => $this->deflate($tracking->getCarrierCode()),
                 'items'                 => $items,
                 'is_non_bolt_order'     => $isNonBoltOrder,
                 'tracking_entity_id'    => $tracking->getId(),
