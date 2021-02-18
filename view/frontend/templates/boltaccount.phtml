@@ -61,12 +61,18 @@ $checkoutKey = $block->getCheckoutKey();
                 // When magento constructs mobile menu it copies elements instead of moving
                 // We need to wait for this coping, remove first bolt-account-login div
                 // And only ofter that insert account.js script
+                var ATTEMPT_LIMIT = 3;
+                var attempts = 0;
                 var timerId = setTimeout(function boltAccountLookup() {
                     var $account_div = $("div.bolt-account-login");
                     if ($account_div.length==2) {
                         $account_div.eq(0).remove();
                         insertAccountScript();
                     } else {
+                        if(attempts === ATTEMPT_LIMIT){
+                            return insertAccountScript();
+                        }
+                        attempts ++;
                         timerId = setTimeout(boltAccountLookup, 1000)
                     }
                 }, 1000);
