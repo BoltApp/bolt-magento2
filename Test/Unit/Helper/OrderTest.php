@@ -84,6 +84,7 @@ use Bolt\Boltpay\Model\ResourceModel\WebhookLog\CollectionFactory as WebhookLogC
 use Bolt\Boltpay\Model\WebhookLogFactory;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\CheckboxesHandler;
+use Bolt\Boltpay\Helper\CustomFieldsHandler;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
 use Magento\Sales\Model\Order\CreditmemoFactory;
@@ -129,7 +130,9 @@ class OrderTest extends BoltTestCase
     const USER_ID = 1;
     const HOOK_TYPE_PENDING = 'pending';
     const HOOK_TYPE_AUTH = 'auth';
-    const HOOK_PAYLOAD = ['checkboxes' => ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true] ];
+    const HOOK_PAYLOAD = ['checkboxes' => ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true, 'is_custom_field'=>false],
+                          'custom_fields' =>  ['label'=>'Gift', 'type'=>'CHECKBOX', 'is_custom_field'=>true,'value'=>true]];
+    
     const CUSTOMER_ID = 1111;
 
     /** @var string test cart network */
@@ -237,6 +240,9 @@ class OrderTest extends BoltTestCase
     /** @var MockObject|CheckboxesHandler mocked instance of the Bolt checkbox handler helper */
     private $checkboxesHandler;
 
+    /** @var MockObject|CustomFieldsHandler mocked instance of the Bolt checkbox handler helper */
+    private $customFieldsHandler;
+
     /** @var MockObject|CustomerCreditCardFactory mocked instance of the Bolt customer credit card factory helper */
     private $customerCreditCardFactory;
 
@@ -340,6 +346,7 @@ class OrderTest extends BoltTestCase
                     $this->webhookLogFactory,
                     $this->featureSwitches,
                     $this->checkboxesHandler,
+                    $this->customFieldsHandler,
                     $this->customerCreditCardFactory,
                     $this->customerCreditCardCollectionFactory,
                     $this->creditmemoFactory,
@@ -412,6 +419,7 @@ class OrderTest extends BoltTestCase
         $this->discountHelper = $this->createMock(DiscountHelper::class);
         $this->date = $this->createMock(DateTime::class);
         $this->checkboxesHandler = $this->createMock(CheckboxesHandler::class);
+        $this->customFieldsHandler = $this->createMock(CustomFieldsHandler::class);
 
         $this->dataObjectFactory = $this->getMockBuilder(DataObjectFactory::class)
             ->disableOriginalConstructor()
@@ -568,6 +576,7 @@ class OrderTest extends BoltTestCase
             $this->webhookLogFactory,
             $this->featureSwitches,
             $this->checkboxesHandler,
+            $this->customFieldsHandler,
             $this->customerCreditCardFactory,
             $this->customerCreditCardCollectionFactory,
             $this->creditmemoFactory,
@@ -597,6 +606,7 @@ class OrderTest extends BoltTestCase
         static::assertAttributeEquals($this->webhookLogFactory, 'webhookLogFactory', $instance);
         static::assertAttributeEquals($this->featureSwitches, 'featureSwitches', $instance);
         static::assertAttributeEquals($this->checkboxesHandler, 'checkboxesHandler', $instance);
+        static::assertAttributeEquals($this->customFieldsHandler, 'customFieldsHandler', $instance);
         static::assertAttributeEquals($this->customerCreditCardFactory, 'customerCreditCardFactory', $instance);
         static::assertAttributeEquals(
             $this->customerCreditCardCollectionFactory,
@@ -3732,6 +3742,40 @@ class OrderTest extends BoltTestCase
             ->with($this->orderMock, self::HOOK_PAYLOAD['checkboxes']);
 
         $this->currentMock->updateOrderPayment($this->orderMock, $transaction, null, null, self::HOOK_PAYLOAD);
+    }
+
+        /**
+     * @test
+     *
+     * @covers ::updateOrderPayment
+     */
+    public function updateOrderPayment_handleCustomFields()
+    {
+       
+        list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp(OrderHelper::TS_AUTHORIZED);
+        $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
+            ->withConsecutive(['transaction_state'])
+            ->willReturnOnConsecutiveCalls('');
+
+        $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setOrder')->with($this->orderMock)->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setTransactionId')->with(self::TRANSACTION_ID . '-auth')
+            ->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setAdditionalInformation')->willReturnSelf();
+        $this->transactionBuilder->expects(self::once())->method('setFailSafe')->with(true)->willReturnSelf();
+
+        $this->transactionBuilder->expects(self::once())->method('build')
+            ->with(TransactionInterface::TYPE_AUTH)->willThrowException(new Exception(''));
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('');
+
+        $this->orderMock->expects(self::any())->method('getState')
+            ->willReturn('pending_payment');
+        $this->customFieldsHandler->expects(self::once())->method('handle')
+            ->with($this->orderMock, self::HOOK_PAYLOAD['custom_fields']);
+        $this->currentMock->updateOrderPayment($this->orderMock, $transaction, null, null, self::HOOK_PAYLOAD);
+        
     }
 
     /**

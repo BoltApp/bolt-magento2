@@ -239,6 +239,11 @@ class Order extends AbstractHelper
     private $checkboxesHandler;
 
     /**
+     * @var CustomFieldsHandler
+     */
+    private $customFieldsHandler;
+
+    /**
      * @var CustomerCreditCardFactory
      */
     protected $customerCreditCardFactory;
@@ -304,6 +309,7 @@ class Order extends AbstractHelper
      * @param WebhookLogFactory                   $webhookLogFactory
      * @param Decider                             $featureSwitches
      * @param CheckboxesHandler                   $checkboxesHandler
+     * @param CustomFieldsHandler                 $customFieldsHandler
      * @param CustomerCreditCardFactory           $customerCreditCardFactory
      * @param CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory
      * @param CreditmemoFactory                   $creditmemoFactory
@@ -337,7 +343,8 @@ class Order extends AbstractHelper
         WebhookLogCollectionFactory $webhookLogCollectionFactory,
         WebhookLogFactory $webhookLogFactory,
         Decider $featureSwitches,
-        CheckboxesHandler $checkboxesHandler,
+        CheckboxesHandler $checkboxesHandler,   
+        CustomFieldsHandler $customFieldsHandler,    
         CustomerCreditCardFactory $customerCreditCardFactory,
         CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory,
         CreditmemoFactory $creditmemoFactory,
@@ -371,6 +378,7 @@ class Order extends AbstractHelper
         $this->webhookLogFactory = $webhookLogFactory;
         $this->featureSwitches = $featureSwitches;
         $this->checkboxesHandler = $checkboxesHandler;
+        $this->customFieldsHandler = $customFieldsHandler;
         $this->customerCreditCardFactory = $customerCreditCardFactory;
         $this->customerCreditCardCollectionFactory = $customerCreditCardCollectionFactory;
         $this->creditmemoFactory = $creditmemoFactory;
@@ -2154,10 +2162,15 @@ class Order extends AbstractHelper
         $this->setOrderPaymentInfoData($payment, $transaction);
 
         if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
-            // handle checkboxes
+            // handle checkboxes and custom fields
             if (isset($hookPayload['checkboxes']) && $hookPayload['checkboxes']) {
                 $this->checkboxesHandler->handle($order, $hookPayload['checkboxes']);
             }
+
+            if (isset($hookPayload['custom_fields']) && $hookPayload['custom_fields']) {
+                $this->customFieldsHandler->handle($order, $hookPayload['custom_fields']);
+            }
+
             // set order state and status
             $this->resetOrderState($order);
         }

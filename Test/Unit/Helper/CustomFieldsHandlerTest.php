@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
-use Bolt\Boltpay\Helper\CheckboxesHandler;
+use Bolt\Boltpay\Helper\CustomFieldsHandler;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\Helper\Context;
 use Magento\Newsletter\Model\SubscriberFactory;
@@ -26,9 +26,9 @@ use Magento\Sales\Model\Order;
 use Magento\Quote\Model\Quote\Address;
 
 /**
- * @coversDefaultClass \Bolt\Boltpay\Helper\CheckboxesHandler
+ * @coversDefaultClass \Bolt\Boltpay\Helper\CustomFieldsHandler
  */
-class CheckboxesHandlerTest extends BoltTestCase
+class CustomFieldsHandlerTest extends BoltTestCase
 {
 
     const EMAIL = 'test@bolt.com';
@@ -74,7 +74,7 @@ class CheckboxesHandlerTest extends BoltTestCase
         $enableOriginalConstructor = true,
         $enableProxyingToOriginalMethods = false
     ) {
-        $builder = $this->getMockBuilder(CheckboxesHandler::class)
+        $builder = $this->getMockBuilder(CustomFieldsHandler::class)
             ->setConstructorArgs(
                 [
                     $this->context,
@@ -143,10 +143,10 @@ class CheckboxesHandlerTest extends BoltTestCase
 
     /**
      * @test
-     * @dataProvider handleCheckboxesDataProvider
+     * @dataProvider handleCustomFieldsDataProvider
      * @covers ::handle
      */
-    public function handle($checkboxes, $comment, $needSubscribe)
+    public function handle($customFields, $comment, $needSubscribe)
     {
         $this->initCurrentMock(['subscribeToNewsletter']);
         $this->orderMock = $this->createPartialMock(
@@ -158,7 +158,7 @@ class CheckboxesHandlerTest extends BoltTestCase
         );
 
         if ($comment) {
-            $commentPrefix = 'BOLTPAY INFO :: checkboxes';
+            $commentPrefix = 'BOLTPAY INFO :: customfields';
             $this->orderMock->expects($this->once())->method('addCommentToStatusHistory')
                 ->with($commentPrefix.$comment);
             $this->orderMock->expects($this->once())->method('save');
@@ -172,26 +172,20 @@ class CheckboxesHandlerTest extends BoltTestCase
         } else {
             $this->currentMock->expects($this->never())->method('subscribeToNewsletter');
         }
-        $this->currentMock->handle($this->orderMock, $checkboxes);
+        $this->currentMock->handle($this->orderMock, $customFields);
     }
 
-    public function handleCheckboxesDataProvider()
+    public function handleCustomFieldsDataProvider()
     {
-        $checkbox1 = ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','is_custom_field'=>false,
-                      'value'=>true,'features'=>['unknown']];
-        $comment1 = '<br>Subscribe for our newsletter: Yes';
-        $checkbox2 = ['text'=>'Gift','category'=>'OTHER','value'=>false, 'is_custom_field'=>false];
-        $comment2 = '<br>Gift: No';
-        $checkbox3 = ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','is_custom_field'=>false,
-                      'value'=>true,'features'=>['subscribe_to_platform_newsletter']];
-        $comment3 = '<br>Subscribe for our newsletter: Yes';
+        $customField1 = ['label' => 'Gift', 'type'=>'CHECKBOX', 'is_custom_field' => true, 'value' => false];
+        $comment1 = '<br>Gift: No';
+      
+        $customField2 = ['label' => 'Question', 'type' => 'DROPDOWN', 'is_custom_field' => true, 'value' => 'Answer'];
+        $comment2 = '<br>Question: Answer';
         return [
             [[], '', false],
-            [[$checkbox1], $comment1, false],
-            [[$checkbox2], $comment2, false],
-            [[$checkbox3], $comment3, true],
-            [[$checkbox1,$checkbox2], $comment1.$comment2, false],
-            [[$checkbox1,$checkbox3], $comment1.$comment3, true],
+            [[$customField1], $comment1, false],
+            [[$customField2], $comment2, false]           
         ];
     }
 }
