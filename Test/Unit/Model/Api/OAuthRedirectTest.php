@@ -303,8 +303,8 @@ class OAuthRedirectTest extends BoltTestCase
         $this->storeManager->expects(static::exactly(2))->method('getStore')->willReturn($store);
         $store->expects(static::once())->method('getWebsiteId')->willReturn(1);
         $store->expects(static::once())->method('getId')->willReturn(1);
-        $this->externalCustomerEntityRepository->expects(static::once())->method('getByExternalID')->with('abc')->willReturn(null);
-        $this->customerRepository->expects(static::once())->method('get')->with('t@t.com', 1)->willReturn(null);
+        $this->externalCustomerEntityRepository->expects(static::once())->method('getByExternalID')->with('abc')->willThrowException(new NoSuchEntityException());
+        $this->customerRepository->expects(static::once())->method('get')->with('t@t.com', 1)->willThrowException(new NoSuchEntityException());
         $this->setUpPrivateMethods();
         $this->currentMock->login('code', 'scope', 'state');
     }
