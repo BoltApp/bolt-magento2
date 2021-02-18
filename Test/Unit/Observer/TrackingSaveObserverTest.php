@@ -527,10 +527,11 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->willReturn($shipment);
         $track->expects($this->once())
             ->method('getTrackNumber')
-            ->willReturn((object)[ "0" => "EZ4000000004"]);
+            ->willReturn((object)["0" => "EZ4000000004"]);
         $track->expects($this->once())
             ->method("getCarrierCode")
             ->willReturn((object)["0" => "United States Postal Service"]);
+        $track->method("getId")->willReturn(SELF::ENTITY_ID);
 
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
@@ -591,6 +592,7 @@ class TrackingSaveObserverTest extends BoltTestCase
                 ],
             ],
             'is_non_bolt_order' => false,
+            'tracking_entity_id' => SELF::ENTITY_ID,
         ];
 
         $this->dataObject->expects($this->once())
