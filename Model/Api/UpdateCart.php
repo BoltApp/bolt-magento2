@@ -312,8 +312,8 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
      */
     public function discountHandler($discount_code, $cart, $customer_name = null, $customer_email = null, $customer_phone = null)
     {
-        // Bolt server sends immutableQuoteId as order reference
-        $immutableQuoteId = $cart['order_reference'];
+        // Bolt server sends immutableQuoteId as metadata
+        $immutableQuoteId = $cart['metadata']['immutable_quote_id'];
 
         $result = $this->validateQuote($immutableQuoteId);
         list($parentQuote, $immutableQuote) = $result;
