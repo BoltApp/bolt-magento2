@@ -496,7 +496,7 @@ class TrackingSaveObserverTest extends BoltTestCase
     /**
      * @test
      */
-    public function testExecuteIllFormattedTrackNumberCarrierCode()
+    public function testExecuteIllFormattedTrackNumberCarrierCodeSuccess()
     {
         $shipment = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment::class)->disableOriginalConstructor()->getMock();
         $shipmentItem1 = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
@@ -601,6 +601,93 @@ class TrackingSaveObserverTest extends BoltTestCase
 
         $this->apiHelper->expects($this->once())->method('buildRequest')->willReturn(new Request());
         $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn(200);
+        $this->decider->expects($this->once())->method('isTrackShipmentEnabled')->willReturn(true);
+        $this->observer->execute($eventObserver);
+    }
+
+    /**
+     * @test
+     */
+    public function testExecuteIllFormattedTrackNumberNotifiesError()
+    {
+        $shipment = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment::class)->disableOriginalConstructor()->getMock();
+        $shipmentItem1 = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
+        $shipmentItem2 = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
+        $orderItem1 = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
+        $orderItem2 = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
+        $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
+        $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
+        $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
+
+        $map = [
+            ['transaction_reference', '000123'],
+        ];
+        $payment->expects($this->once())
+            ->method('getAdditionalInformation')
+            ->will($this->returnValueMap($map));
+        $payment->expects($this->once())
+            ->method('getMethod')
+            ->willReturn(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
+        $order->expects($this->once())
+            ->method('getPayment')
+            ->willReturn($payment);
+        $shipment->expects($this->once())
+            ->method('getOrder')
+            ->willReturn($order);
+        $track->expects($this->once())
+            ->method('getShipment')
+            ->willReturn($shipment);
+        $track->expects($this->exactly(2))
+            ->method('getTrackNumber')
+            ->willReturn((object)[]);
+
+        $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
+            ->setMethods(['getTrack'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $eventObserver->expects($this->once())
+            ->method('getEvent')
+            ->willReturn($event);
+        $event->expects($this->once())
+            ->method('getTrack')
+            ->willReturn($track);
+
+        $shipmentItem1->expects($this->once())
+            ->method('getOrderItem')
+            ->willReturn($orderItem1);
+        $orderItem1->expects($this->once())
+            ->method('getProductId')
+            ->willReturn(12345);
+        $orderItem1->expects($this->once())
+            ->method('getParentItem')
+            ->willReturn(false);
+        $orderItem1->expects($this->once())
+            ->method('getProductOptions')
+            ->willReturn([
+                'attributes_info' => [[
+                    "label"  => "Size",
+                    "value" => "XS" ,
+                ]]
+            ]);
+
+        $shipmentItem2->expects($this->once())
+            ->method('getOrderItem')
+            ->willReturn($orderItem2);
+        $orderItem2->expects($this->never())
+            ->method('getProductId');
+        $orderItem2->expects($this->once())
+            ->method('getParentItem')
+            ->willReturn($orderItem1);
+
+        $shipment->expects($this->once())
+            ->method('getItemsCollection')
+            ->willReturn([$shipmentItem1, $shipmentItem2]);
+
+        $this->apiHelper->expects($this->never())->method('sendRequest');
+        $this->bugsnag->expects($this->once())->method('notifyError');
         $this->decider->expects($this->once())->method('isTrackShipmentEnabled')->willReturn(true);
         $this->observer->execute($eventObserver);
     }
