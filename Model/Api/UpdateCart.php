@@ -312,8 +312,8 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
      */
     public function discountHandler($discount_code, $cart, $customer_name = null, $customer_email = null, $customer_phone = null)
     {
-        // Bolt server sends immutableQuoteId as order reference
-        $immutableQuoteId = $cart['order_reference'];
+        // Bolt server sends immutableQuoteId as metadata
+        $immutableQuoteId = $cart['metadata']['immutable_quote_id'];
 
         $result = $this->validateQuote($immutableQuoteId);
         list($parentQuote, $immutableQuote) = $result;
@@ -327,8 +327,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace the quote with $parentQuote in checkout session.
-        $this->sessionHelper->loadSession($parentQuote, $cart['metadata'] ?? []);
-        $this->cartHelper->resetCheckoutSession($this->sessionHelper->getCheckoutSession());
+        $this->updateSession($parentQuote, $cart['metadata'] ?? []);
 
         if(!empty($discount_code)){
             // Get the coupon code
