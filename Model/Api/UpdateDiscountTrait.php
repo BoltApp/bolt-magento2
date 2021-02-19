@@ -248,30 +248,32 @@ trait UpdateDiscountTrait
         // get the rule id
         $ruleId = $rule->getRuleId();
 
-        // Check date validity if "To" date is set for the rule
-        $date = $rule->getToDate();
-        if ($date && date('Y-m-d', strtotime($date)) < date('Y-m-d')) {
-            throw new BoltException(
-                __('The code [%1] has expired', $couponCode),
-                null,
-                BoltErrorResponse::ERR_CODE_EXPIRED,
-                $quote
-            );
-        }
+        if ($this->eventsForThirdPartyModules->runFilter("verifyRuleTimeFrame", true)) {
+            // Check date validity if "To" date is set for the rule
+            $date = $rule->getToDate();
+            if ($date && date('Y-m-d', strtotime($date)) < date('Y-m-d')) {
+                throw new BoltException(
+                    __('The code [%1] has expired', $couponCode),
+                    null,
+                    BoltErrorResponse::ERR_CODE_EXPIRED,
+                    $quote
+                );
+            }
 
-        // Check date validity if "From" date is set for the rule
-        $date = $rule->getFromDate();
-        if ($date && date('Y-m-d', strtotime($date)) > date('Y-m-d')) {
-            $desc = 'Code available from ' . $this->timezone->formatDate(
-                new \DateTime($rule->getFromDate()),
-                \IntlDateFormatter::MEDIUM
-            );
-            throw new BoltException(
-                __($desc),
-                null,
-                BoltErrorResponse::ERR_CODE_NOT_AVAILABLE,
-                $quote
-            );
+            // Check date validity if "From" date is set for the rule
+            $date = $rule->getFromDate();
+            if ($date && date('Y-m-d', strtotime($date)) > date('Y-m-d')) {
+                $desc = 'Code available from ' . $this->timezone->formatDate(
+                        new \DateTime($rule->getFromDate()),
+                        \IntlDateFormatter::MEDIUM
+                    );
+                throw new BoltException(
+                    __($desc),
+                    null,
+                    BoltErrorResponse::ERR_CODE_NOT_AVAILABLE,
+                    $quote
+                );
+            }
         }
 
         // Check coupon usage limits.
