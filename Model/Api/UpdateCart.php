@@ -328,7 +328,6 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace the quote with $parentQuote in checkout session.
         $this->updateSession($parentQuote, $cart['metadata'] ?? []);
-        // $this->cartHelper->resetCheckoutSession($this->sessionHelper->getCheckoutSession());
 
         if(!empty($discount_code)){
             // Get the coupon code
