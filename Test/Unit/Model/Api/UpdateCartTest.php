@@ -387,6 +387,9 @@ class UpdateCartTest extends BoltTestCase
             'shipments' => [
                 0 => $this->getShipments(),
             ],
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
         ];
     }
 
@@ -639,6 +642,96 @@ class UpdateCartTest extends BoltTestCase
         $this->assertTrue($this->currentMock->execute($requestCart, null, null, null, $discount_codes_to_remove));
     }
     
+    /**
+     * @test
+     * that v2 discount application would send success response if applied successfully
+     * 
+     * @covers ::discountHandler
+     */
+    public function discountHandler_applyDiscount_sendSuccessResponse()
+    {
+        $requestCart = $this->getRequestCart();
+        $discount_codes_to_add = [self::COUPON_CODE];
+        $applyDiscountResult = [
+            'status' => 'success',
+            'description' => 'Discount Test Coupon',
+            'discount_amount' => 1000,
+            'discount_code' => self::COUPON_CODE,
+            'discount_type' => 'fixed_amount',
+        ];
+        
+        $parentQuoteMock = $this->getQuoteMock(
+            self::PARENT_QUOTE_ID,
+            self::PARENT_QUOTE_ID            
+        );
+
+        $this->initCurrentMock([
+            'validateQuote',
+            'preProcessWebhook',
+            'updateSession',
+            'setShipment',
+            'generateResult',
+            'verifyCouponCode',
+            'applyDiscount'
+        ]);        
+        
+        $immutableQuoteMock = $this->getQuoteMock();
+        
+        $this->currentMock->expects(self::once())->method('validateQuote')
+            ->with(self::IMMUTABLE_QUOTE_ID)
+            ->willReturn([$parentQuoteMock,$immutableQuoteMock]);
+            
+        $this->currentMock->expects(self::once())->method('preProcessWebhook')
+            ->with(self::STORE_ID);
+        
+        $this->currentMock->expects(self::once())->method('updateSession')
+            ->with($parentQuoteMock);
+            
+        // $this->currentMock->expects($this->exactly(2))
+        //     ->method('setShipment')
+        //     ->withConsecutive(
+        //         [$requestCart['shipments'][0], $immutableQuoteMock],
+        //         [$requestCart['shipments'][0], $parentQuoteMock]
+        //     );
+
+        $this->currentMock->expects(self::once())->method('verifyCouponCode')
+            ->with(self::COUPON_CODE, $parentQuoteMock)
+            ->willReturn([$this->couponMock, null]);
+        
+        $this->currentMock->expects(self::once())->method('applyDiscount')
+            ->with(self::COUPON_CODE, $this->couponMock, null, $parentQuoteMock)
+            ->willReturn($applyDiscountResult);
+
+        $this->cartHelper->expects(self::once())->method('replicateQuoteData')
+            ->with($parentQuoteMock, $immutableQuoteMock);
+
+        $testCartData = $this->getTestCartData();
+        $testCartData['discounts'] = [
+            'discount_amount' => 1000,
+            'discount_code' => self::COUPON_CODE,
+            'discount_type' => 'fixed_amount',
+            'discount_description' => 'Discount Test Coupon',
+        ];
+        $result = [
+            'event' => 'discounts.code.apply',
+            'status' => 'success',
+            'data' => $testCartData['discounts'],
+            
+        ];
+        
+        // $this->currentMock->expects(self::once())->method('generateResult')
+        //     ->with($immutableQuoteMock)
+        //     ->willReturn($result);
+
+        $this->cacheMock->expects(static::once())
+            ->method('clean')->with([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
+            
+        $this->expectSuccessResponse($result);
+
+        $this->currentMock->discountHandler(self::COUPON_CODE, $testCartData);
+
+    }
+
     /**
      * @test
      * that that execute would send success response and return true if add item successfully
