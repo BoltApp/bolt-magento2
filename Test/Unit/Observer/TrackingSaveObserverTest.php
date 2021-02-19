@@ -608,7 +608,7 @@ class TrackingSaveObserverTest extends BoltTestCase
     /**
      * @test
      */
-    public function testExecuteIllFormattedTrackNumberNotifiesError()
+    public function testExecuteIllFormattedEmptyTrackNumberNotifiesError()
     {
         $shipment = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment::class)->disableOriginalConstructor()->getMock();
         $shipmentItem1 = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
