@@ -40,6 +40,7 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * Class UpdateDiscountTraitTest
@@ -745,6 +746,76 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $this->expectExceptionCode(BoltErrorResponse::ERR_CODE_EXPIRED);
 
         TestHelper::invokeMethod($this->currentMock, 'applyingCouponCode', [self::COUPON_CODE, $coupon, $quote]);
+    }
+
+    /**
+     * @test
+     * that applyingCouponCode will not validate neither "from" nor "to" date
+     * when "verifyRuleTimeFrame" filter returns false i.e. when Magento_SalesRuleStaging (EE) module is enabled
+     *
+     * @covers ::applyingCouponCode
+     */
+    public function applyingCouponCode_invalidDateAndVerifyRuleTimeFrameDisabled_skipsDateValidation()
+    {
+        $coupon = $this->getCouponMock(
+            [
+                'getId'     => [
+                    'expects' => 'once'
+                ],
+                'getRuleId' => [
+                    'expects' => 'once'
+                ]
+            ]
+        );
+        $quote = $this->getQuoteMock();
+
+        $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
+        $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
+        $this->ruleMock->expects(self::once())->method('getIsActive')->willReturn(1);
+        $this->ruleMock->expects(self::never())->method('getFromDate')
+            ->willReturn(date('Y-m-d', strtotime('tomorrow')));
+        $this->ruleMock->expects(self::never())->method('getToDate')
+            ->willReturn(date('Y-m-d', strtotime('yesterday')));
+        $this->ruleMock->expects(self::once())->method('getCustomerGroupIds')
+            ->willReturn([0, 1]);
+
+        $this->discountHelper->expects(self::once())->method('setCouponCode')
+            ->with($quote, self::COUPON_CODE);
+        $this->discountHelper->expects(self::once())->method('convertToBoltDiscountType')
+            ->with(self::COUPON_CODE)->willReturn('fixed_amount');
+
+        $checkoutSession = $this->createPartialMock(
+            CheckoutSession::class,
+            ['getBoltCollectSaleRuleDiscounts']
+        );
+        $checkoutSession->expects(static::once())
+            ->method('getBoltCollectSaleRuleDiscounts')
+            ->willReturn([self::RULE_ID => 10]);
+        $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
+            ->willReturn($checkoutSession);
+
+        $eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
+        $eventsForThirdPartyModules->expects(static::once())->method('runFilter')
+            ->with("verifyRuleTimeFrame", true)
+            ->willReturn(false);
+
+        TestHelper::setProperty($this->currentMock, 'eventsForThirdPartyModules', $eventsForThirdPartyModules);
+
+        $result = TestHelper::invokeMethod(
+            $this->currentMock,
+            'applyingCouponCode',
+            [self::COUPON_CODE, $coupon, $quote]
+        );
+        static::assertEquals(
+            [
+                'status'          => 'success',
+                'discount_code'   => 'testcoupon',
+                'discount_amount' => 1000,
+                'description'     => 'Discount (testcoupon)',
+                'discount_type'   => 'fixed_amount',
+            ],
+            $result
+        );
     }
 
     /**
