@@ -687,13 +687,6 @@ class UpdateCartTest extends BoltTestCase
         $this->currentMock->expects(self::once())->method('updateSession')
             ->with($parentQuoteMock);
             
-        // $this->currentMock->expects($this->exactly(2))
-        //     ->method('setShipment')
-        //     ->withConsecutive(
-        //         [$requestCart['shipments'][0], $immutableQuoteMock],
-        //         [$requestCart['shipments'][0], $parentQuoteMock]
-        //     );
-
         $this->currentMock->expects(self::once())->method('verifyCouponCode')
             ->with(self::COUPON_CODE, $parentQuoteMock)
             ->willReturn([$this->couponMock, null]);
@@ -718,10 +711,6 @@ class UpdateCartTest extends BoltTestCase
             'data' => $testCartData['discounts'],
             
         ];
-        
-        // $this->currentMock->expects(self::once())->method('generateResult')
-        //     ->with($immutableQuoteMock)
-        //     ->willReturn($result);
 
         $this->cacheMock->expects(static::once())
             ->method('clean')->with([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
