@@ -8,10 +8,10 @@ parameters:
   run_default_workflow:
     type: boolean
     default: true
-  run_rebase_and_unit_test:
+  run_rebase_and_magento_integration_test:
     type: boolean
     default: false
-  rebase_and_unit_test_branch_name:
+  rebase_and_magento_integration_test_branch_name:
     type: string
     default: ""
 
@@ -236,7 +236,7 @@ jobs:
           name: Auto-rebase
           command: bash .circleci/scripts/auto-rebase.sh
 
-  rebase-and-unit-test:
+  rebase-and-magento-integration-test:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
         auth:
@@ -246,8 +246,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Rebase and Unit Test
-          command: bash .circleci/scripts/rebase-and-integration-test.sh << pipeline.parameters.rebase_and_unit_test_branch_name >>
+          name: Rebase and Magento Integration Test
+          command: bash .circleci/scripts/rebase-and-magento-integration-test.sh << pipeline.parameters.rebase_and_magento_integration_test_branch_name >>
 
   phpcs:
     docker:
@@ -299,8 +299,8 @@ workflows:
             branches:
               only:
                 - master
-  rebase-and-unit-test: #note: this workflow is triggered remotely on merchant branches when a PR is submitted
-    when: << pipeline.parameters.run_rebase_and_unit_test >>
+  rebase-and-magento-integration-test: #note: this workflow is triggered remotely on merchant branches when a PR is submitted
+    when: << pipeline.parameters.run_rebase_and_magento_integration_test >>
     jobs:
-      - rebase-and-unit-test:
-          name: "Rebase and Unit Test << pipeline.parameters.rebase_and_unit_test_branch_name >>"
+      - rebase-and-magento-integration-test:
+          name: "Rebase and Magento Integration Test << pipeline.parameters.rebase_and_magento_integration_test_branch_name >>"

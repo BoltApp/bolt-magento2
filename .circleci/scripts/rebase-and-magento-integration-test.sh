@@ -1,4 +1,3 @@
-
 merchantBranch=$1
 echo "Rebasing $merchantBranch from $CIRCLE_BRANCH"
 
@@ -16,8 +15,8 @@ export TEST_ENV="php72"
 export MAGENTO_VERSION="2.2.8"
 export COMPOSER_MEMORY_LIMIT=5G
 
-echo "Start Bolt Integration Tests..."
+echo "Start Magento Integration Tests..."
 if ! ./Test/scripts/ci-magento-integration.sh; then
-  echo "unit tests failed"
+  echo "magento integration tests failed"
   exit 1
 fi
