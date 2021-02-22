@@ -1,6 +1,6 @@
-## Magento2 Integration tests
+## Magento 2 Integration tests
 
-Unit test flow is depricated. We are running all tests - magento unit and magento integration - in magento integration test flow
+Unit test flow is deprecated. We are running all tests - magento unit and magento integration - in magento integration test flow
 
 ### Run integration tests locally
 
