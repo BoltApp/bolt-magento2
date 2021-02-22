@@ -90,6 +90,27 @@ class SSOHelperTest extends BoltTestCase
     }
 
     /**
+    * @test
+    *
+    * @covers ::__construct
+    */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new SSOHelper(
+            $this->context,
+            $this->configHelper,
+            $this->storeManager,
+            $this->dataObjectFactory,
+            $this->apiHelper
+        );
+
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        static::assertAttributeEquals($this->storeManager, 'storeManager', $instance);
+        static::assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
+        static::assertAttributeEquals($this->apiHelper, 'apiHelper', $instance);
+    }
+
+    /**
      * @test
      *
      * @covers ::getOAuthConfiguration
