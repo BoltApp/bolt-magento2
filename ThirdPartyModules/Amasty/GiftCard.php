@@ -393,9 +393,9 @@ class GiftCard
             $this->discountHelper->updateTotals($quote);
             
         } catch (\Zend_Db_Statement_Exception $e) {
-            $this->bugsnag->notifyException($e);
+            $this->bugsnagHelper->notifyException($e);
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
+            $this->bugsnagHelper->notifyException($e);
         }
     }
 }
