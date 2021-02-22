@@ -449,4 +449,34 @@ class HookTest extends BoltTestCase
 
         $this->currentMock->preProcessWebhook(self::STORE_ID);
     }
+
+    /**
+     * @test
+     *
+     * @covers ::verifyRequest
+     */
+    public function verifyRequest_returnsFalse_ifSignatureVerificationFails()
+    {
+        $this->initCurrentMock(null);
+        $this->request->expects(static::once())->method('getContent')->willReturn(json_encode(['key' => 'value']));
+        $this->request->expects(static::once())->method('getHeader')->with('X-Bolt-Hmac-Sha256')->willReturn('wronghmac');
+        $this->configHelper->expects(static::once())->method('getSigningSecret')->willReturn('signing_secret');
+        static::assertEquals(false, $this->currentMock->verifyRequest());
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::verifyRequest
+     */
+    public function verifyRequest_returnsTrue_ifSignatureVerificationSucceeds()
+    {
+        $this->initCurrentMock(null);
+        $payload = json_encode(['key' => 'value']);
+        $this->request->expects(static::once())->method('getContent')->willReturn($payload);
+        $signature = base64_encode(hash_hmac('sha256', $payload, 'signing_secret', true));
+        $this->request->expects(static::once())->method('getHeader')->with('X-Bolt-Hmac-Sha256')->willReturn($signature);
+        $this->configHelper->expects(static::once())->method('getSigningSecret')->willReturn('signing_secret');
+        static::assertEquals(true, $this->currentMock->verifyRequest());
+    }
 }

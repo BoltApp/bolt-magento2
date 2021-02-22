@@ -17,14 +17,14 @@
 
 namespace Bolt\Boltpay\Helper;
 
+use Bolt\Boltpay\Helper\Api as ApiHelper;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\DataObjectFactory;
-use Magento\Framework\Webapi\Rest\Request;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\Webapi\Exception as WebapiException;
-use Bolt\Boltpay\Helper\Log as LogHelper;
-use Bolt\Boltpay\Helper\Api as ApiHelper;
+use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
 
 /**
@@ -75,10 +75,14 @@ class Hook extends AbstractHelper
      */
     private $dataObjectFactory;
 
-    /** @var Bugsnag */
+    /**
+     * @var Bugsnag
+     */
     private $bugsnag;
 
-    /** @var Response */
+    /**
+     * @var Response
+     */
     private $response;
 
     /**
@@ -87,14 +91,14 @@ class Hook extends AbstractHelper
     private $storeId = null;
 
     /**
-     * @param Context $context
-     * @param Request $request
-     * @param Config  $configHelper
-     * @param LogHelper $logHelper
-     * @param Api     $apiHelper
+     * @param Context           $context
+     * @param Request           $request
+     * @param Config            $configHelper
+     * @param LogHelper         $logHelper
+     * @param Api               $apiHelper
      * @param DataObjectFactory $dataObjectFactory
-     * @param Bugsnag $bugsnag
-     * @param Response $response
+     * @param Bugsnag           $bugsnag
+     * @param Response          $response
      */
     public function __construct(
         Context $context,
@@ -107,10 +111,10 @@ class Hook extends AbstractHelper
         Response $response
     ) {
         parent::__construct($context);
-        $this->request      = $request;
+        $this->request = $request;
         $this->configHelper = $configHelper;
-        $this->logHelper    = $logHelper;
-        $this->apiHelper    = $apiHelper;
+        $this->logHelper = $logHelper;
+        $this->apiHelper = $apiHelper;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->bugsnag = $bugsnag;
         $this->response = $response;
@@ -166,6 +170,18 @@ class Hook extends AbstractHelper
     }
 
     /**
+     * Verify request body against X-Bolt-Hmac-Sha256 header
+     *
+     * @return bool
+     */
+    public function verifyRequest()
+    {
+        $payload = $this->request->getContent();
+        $hmac_header = $this->request->getHeader(self::HMAC_HEADER);
+        return $this->verifySignature($payload, $hmac_header);
+    }
+
+    /**
      * Compute signature using payment secret key
      *
      * @param $payload a string for which a signature is required
@@ -175,11 +191,9 @@ class Hook extends AbstractHelper
     public function computeSignature($payload)
     {
         $signing_secret = $this->configHelper->getSigningSecret($this->getStoreId());
-        $computed_signature  = base64_encode(hash_hmac('sha256', $payload, $signing_secret, true));
-
+        $computed_signature = base64_encode(hash_hmac('sha256', $payload, $signing_secret, true));
         return $computed_signature;
     }
-
 
     /**
      * Verifying Hook Request. If signing secret is not defined or fails fallback to api call.
@@ -189,7 +203,7 @@ class Hook extends AbstractHelper
      */
     public function verifyWebhook()
     {
-        $payload     = $this->request->getContent();
+        $payload = $this->request->getContent();
         $hmac_header = $this->request->getHeader(self::HMAC_HEADER);
 
         if (!$this->verifySignature($payload, $hmac_header) && !$this->verifyWebhookApi($payload, $hmac_header)) {
@@ -219,7 +233,7 @@ class Hook extends AbstractHelper
     public function setHeaders()
     {
         $this->response->getHeaders()->addHeaders([
-            'User-Agent' => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion() . '/' . $this->configHelper->getModuleVersion(),
+            'User-Agent'            => 'BoltPay/Magento-'.$this->configHelper->getStoreVersion() . '/' . $this->configHelper->getModuleVersion(),
             'X-Bolt-Plugin-Version' => $this->configHelper->getModuleVersion(),
         ]);
     }
@@ -242,6 +256,7 @@ class Hook extends AbstractHelper
 
     /**
      * @param null|int $storeId
+     *
      * @throws WebapiException
      * @throws \Magento\Framework\Exception\LocalizedException
      */
