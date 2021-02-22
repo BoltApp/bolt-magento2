@@ -175,13 +175,12 @@ class Api extends AbstractHelper
      * Send request to Bolt Gateway and return response
      *
      * @param Request $request
-     * @param string  $encType
      *
      * @return Response|int
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function sendRequest($request, $encType = 'application/json')
+    public function sendRequest($request)
     {
         $result = $this->responseFactory->create();
         $client = $this->httpClientFactory->create();
@@ -218,7 +217,7 @@ class Api extends AbstractHelper
         $responseBody = null;
 
         try {
-            $response = $client->setRawData($requestData, $encType)->request($requestMethod);
+            $response = $client->setRawData($requestData, 'application/json')->request($requestMethod);
             $responseBody = $response->getBody();
 
             $this->bugsnag->registerCallback(function ($report) use ($response) {
