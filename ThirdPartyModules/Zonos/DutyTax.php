@@ -52,7 +52,7 @@ class DutyTax
      *
      * @param Quote $quote
      */
-    public function beforeDeleteRedundantQuotes($quote)
+    public function beforeOrderDeleteRedundantQuotes($quote)
     {
         try {
             if ($quote && $quote->getId()) {
