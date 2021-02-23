@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Model\Api;
 use Bolt\Boltpay\Api\GetAccountInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
