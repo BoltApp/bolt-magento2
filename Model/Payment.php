@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Model;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
+use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Backend\Model\Auth\Session as AuthSession;
 use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Framework\Api\ExtensionAttributesFactory;
@@ -166,6 +167,11 @@ class Payment extends AbstractMethod
     private $cartHelper;
 
     /**
+     * @var LogHelper
+     */
+    private $logHelper;
+
+    /**
      * @var TransactionRepository
      */
     protected $transactionRepository;
@@ -197,9 +203,10 @@ class Payment extends AbstractMethod
      * @param ApiHelper                  $apiHelper
      * @param OrderHelper                $orderHelper
      * @param Bugsnag                    $bugsnag
-     * @param MetricsClient            $metricsClient
+     * @param MetricsClient              $metricsClient
      * @param DataObjectFactory          $dataObjectFactory
      * @param CartHelper                 $cartHelper
+     * @param LogHelper                  $logHelper
      * @param TransactionRepository      $transactionRepository
      * @param AuthSession                $authSession
      * @param AbstractResource           $resource
@@ -215,6 +222,7 @@ class Payment extends AbstractMethod
         Data $paymentData,
         ScopeConfigInterface $scopeConfig,
         Logger $logger,
+        LogHelper $logHelper,
         TimezoneInterface $localeDate,
         ConfigHelper $configHelper,
         ApiHelper $apiHelper,
@@ -249,6 +257,7 @@ class Payment extends AbstractMethod
         $this->metricsClient = $metricsClient;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->cartHelper = $cartHelper;
+        $this->logHelper = $logHelper;
         $this->transactionRepository = $transactionRepository;
         $this->areaCode = $context->getAppState()->getAreaCode();
         $this->registryCurrentOrder = $registry->registry('current_order');
@@ -265,6 +274,7 @@ class Payment extends AbstractMethod
      */
     public function cancel(InfoInterface $payment)
     {
+        $this->logHelper->addInfoLog(__('Calling void method'));
         return $this->void($payment);
     }
 
@@ -279,8 +289,11 @@ class Payment extends AbstractMethod
     public function void(InfoInterface $payment)
     {
         try {
+            $this->logHelper->addInfoLog(__('Beginning void method'));
             $startTime = $this->metricsClient->getCurrentTime();
+            $this->logHelper->addInfoLog(__('Getting transaction id'));
             $transactionId = $payment->getAdditionalInformation('real_transaction_id');
+            $this->logHelper->addInfoLog(__('Transaction id: %1', $transactionId));
 
             if (empty($transactionId)) {
                 throw new LocalizedException(
@@ -288,38 +301,58 @@ class Payment extends AbstractMethod
                 );
             }
 
+            $this->logHelper->addInfoLog(__('Building transaction data'));
             //Get transaction data
             $transactionData = [
                 'transaction_id' => $transactionId,
                 'skip_hook_notification' => true
             ];
+            $this->logHelper->addInfoLog(__('Built transaction data, getting store id'));
             $storeId = $payment->getOrder()->getStoreId();
+            $this->logHelper->addInfoLog(__('Got store id: %1, getting api key', $storeId));
             $apiKey = $this->configHelper->getApiKey($storeId);
+            $this->logHelper->addInfoLog(__('Got api key: %1', $apiKey));
 
             //Request Data
+            $this->logHelper->addInfoLog(__('Creating request data'));
             $requestData = $this->dataObjectFactory->create();
+            $this->logHelper->addInfoLog(__('Created request data, setting api data'));
             $requestData->setApiData($transactionData);
+            $this->logHelper->addInfoLog(__('Set api data, setting dynamic api url with API_VOID_TRANSACTION'));
             $requestData->setDynamicApiUrl(ApiHelper::API_VOID_TRANSACTION);
+            $this->logHelper->addInfoLog(__('Set dynamic api url, setting api key'));
             $requestData->setApiKey($apiKey);
+            $this->logHelper->addInfoLog(__('Set api key'));
             //Build Request
+            $this->logHelper->addInfoLog(__('Building request with requestData: %1', print_r($requestData, true)));
             $request = $this->apiHelper->buildRequest($requestData);
+            $this->logHelper->addInfoLog(__('Sending request: %1', print_r($request, true)));
             $result = $this->apiHelper->sendRequest($request);
+            $this->logHelper->addInfoLog(__('Request sent, getting response from result: %1', print_r($result, true)));
             $response = $result->getResponse();
+            $this->logHelper->addInfoLog(__('Got response: %1', json_encode($response)));
 
+            $this->logHelper->addInfoLog(__('Checking if response is empty'));
             if (empty($response)) {
                 throw new LocalizedException(
                     __('Bad void response from boltpay')
                 );
             }
 
+            $this->logHelper->addInfoLog(__('Getting status from response'));
             $status = $response->status ?? null;
+            $this->logHelper->addInfoLog(__('Got status: %1', json_encode($status)));
 
+            $this->logHelper->addInfoLog(__('Checking for cancelled or completed status'));
             if (!in_array($status, ['cancelled','completed'])) {
                 throw new LocalizedException(__('Payment void error.'));
             }
 
+            $this->logHelper->addInfoLog(__('Getting order from payment'));
             $order = $payment->getOrder();
+            $this->logHelper->addInfoLog(__('Got order %1', json_encode($order)));
 
+            $this->logHelper->addInfoLog(__('Updating order payment with arguments %1, null, %2', json_encode($order), json_encode($response->reference)));
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
 
             $this->metricsClient->processMetric("order_void.success", 1, "order_void.latency", $startTime);
