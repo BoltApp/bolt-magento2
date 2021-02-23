@@ -1357,18 +1357,28 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 // Load item product object
                 ////////////////////////////////////
-                $itemProduct = $item->getProduct();
-                $customizableOptions = $this->getProductCustomizableOptions($itemProduct);
-                $itemSku = trim($item->getSku());
-
-                if ($customizableOptions) {
-                    $itemSku = $this->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
+                //By default this feature switch is enabled.
+                if ($this->deciderHelper->isCustomizableOptionsSupport()) {
+                    $itemProduct = $item->getProduct();
+                    $customizableOptions = $this->getProductCustomizableOptions($itemProduct);
+                    $itemSku = trim($item->getSku());
+                    
+                    if ($customizableOptions) {
+                        $itemSku = $this->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
+                    }
+                    
+                    $_product = $this->productRepository->get($itemSku);
+                    
+                    $itemReference = $_product->getId();
+                    $itemName = $_product->getName();
+                } else {
+                    $_product = $item->getProduct();
+                    $itemReference = $item->getProductId();
+                    $itemName = $item->getName();
                 }
-                
-                $_product = $this->productRepository->get($itemSku);
 
-                $product['reference']    = $_product->getId();
-                $product['name']         = $_product->getName();
+                $product['reference']    = $itemReference;
+                $product['name']         = $itemName;
                 $product['total_amount'] = $roundedTotalAmount;
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = round($item->getQty());
@@ -1407,7 +1417,8 @@ class Cart extends AbstractHelper
                     }
                 }
                 
-                if ($customizableOptions) {
+                //By default this feature switch is enabled.
+                if ($this->deciderHelper->isCustomizableOptionsSupport() && $customizableOptions) {
                     foreach ($customizableOptions as $customizableOption) {
                         $properties[] = (object) [
                             'name' => $customizableOption['title'],
