@@ -289,11 +289,11 @@ class Payment extends AbstractMethod
     public function void(InfoInterface $payment)
     {
         try {
-            $this->logHelper->addInfoLog(__('Beginning void method'));
+            $this->logHelper->addInfoLog(__('1. Beginning void method for payment with transaction_reference: %1', $payment->getAdditionalInformation('transaction_reference')));
             $startTime = $this->metricsClient->getCurrentTime();
-            $this->logHelper->addInfoLog(__('Getting transaction id'));
+            $this->logHelper->addInfoLog(__('2. Getting transaction id'));
             $transactionId = $payment->getAdditionalInformation('real_transaction_id');
-            $this->logHelper->addInfoLog(__('Transaction id: %1', $transactionId));
+            $this->logHelper->addInfoLog(__('3. Transaction id: %1', $transactionId));
 
             if (empty($transactionId)) {
                 throw new LocalizedException(
@@ -301,64 +301,65 @@ class Payment extends AbstractMethod
                 );
             }
 
-            $this->logHelper->addInfoLog(__('Building transaction data'));
+            $this->logHelper->addInfoLog(__('4. Building transaction data'));
             //Get transaction data
             $transactionData = [
                 'transaction_id' => $transactionId,
                 'skip_hook_notification' => true
             ];
-            $this->logHelper->addInfoLog(__('Built transaction data, getting store id'));
+            $this->logHelper->addInfoLog(__('5. Built transaction data, getting store id'));
             $storeId = $payment->getOrder()->getStoreId();
-            $this->logHelper->addInfoLog(__('Got store id: %1, getting api key', $storeId));
+            $this->logHelper->addInfoLog(__('6. Got store id: %1, getting api key', $storeId));
             $apiKey = $this->configHelper->getApiKey($storeId);
-            $this->logHelper->addInfoLog(__('Got api key: %1', $apiKey));
+            $this->logHelper->addInfoLog(__('7. Got api key: %1', $apiKey));
 
             //Request Data
-            $this->logHelper->addInfoLog(__('Creating request data'));
+            $this->logHelper->addInfoLog(__('8. Creating request data'));
             $requestData = $this->dataObjectFactory->create();
-            $this->logHelper->addInfoLog(__('Created request data, setting api data'));
+            $this->logHelper->addInfoLog(__('9. Created request data, setting api data'));
             $requestData->setApiData($transactionData);
-            $this->logHelper->addInfoLog(__('Set api data, setting dynamic api url with API_VOID_TRANSACTION'));
+            $this->logHelper->addInfoLog(__('10. Set api data, setting dynamic api url with API_VOID_TRANSACTION'));
             $requestData->setDynamicApiUrl(ApiHelper::API_VOID_TRANSACTION);
-            $this->logHelper->addInfoLog(__('Set dynamic api url, setting api key'));
+            $this->logHelper->addInfoLog(__('11. Set dynamic api url, setting api key'));
             $requestData->setApiKey($apiKey);
-            $this->logHelper->addInfoLog(__('Set api key'));
+            $this->logHelper->addInfoLog(__('12. Set api key'));
             //Build Request
-            $this->logHelper->addInfoLog(__('Building request with requestData: %1', print_r($requestData, true)));
+            $this->logHelper->addInfoLog(__('13. Building request with requestData: %1', print_r($requestData, true)));
             $request = $this->apiHelper->buildRequest($requestData);
-            $this->logHelper->addInfoLog(__('Sending request: %1', print_r($request, true)));
+            $this->logHelper->addInfoLog(__('14. Sending request: %1', print_r($request, true)));
             $result = $this->apiHelper->sendRequest($request);
-            $this->logHelper->addInfoLog(__('Request sent, getting response from result: %1', print_r($result, true)));
+            $this->logHelper->addInfoLog(__('15. Request sent, getting response from result: %1', print_r($result, true)));
             $response = $result->getResponse();
-            $this->logHelper->addInfoLog(__('Got response: %1', json_encode($response)));
+            $this->logHelper->addInfoLog(__('16. Got response: %1', json_encode($response)));
 
-            $this->logHelper->addInfoLog(__('Checking if response is empty'));
+            $this->logHelper->addInfoLog(__('17. Checking if response is empty'));
             if (empty($response)) {
                 throw new LocalizedException(
                     __('Bad void response from boltpay')
                 );
             }
 
-            $this->logHelper->addInfoLog(__('Getting status from response'));
+            $this->logHelper->addInfoLog(__('18. Getting status from response'));
             $status = $response->status ?? null;
-            $this->logHelper->addInfoLog(__('Got status: %1', json_encode($status)));
+            $this->logHelper->addInfoLog(__('19. Got status: %1', json_encode($status)));
 
-            $this->logHelper->addInfoLog(__('Checking for cancelled or completed status'));
+            $this->logHelper->addInfoLog(__('20. Checking for cancelled or completed status'));
             if (!in_array($status, ['cancelled','completed'])) {
-                throw new LocalizedException(__('Payment void error.'));
+                throw new LocalizedException(__('21. Payment void error.'));
             }
 
-            $this->logHelper->addInfoLog(__('Getting order from payment'));
+            $this->logHelper->addInfoLog(__('22. Getting order from payment'));
             $order = $payment->getOrder();
-            $this->logHelper->addInfoLog(__('Got order %1', json_encode($order)));
+            $this->logHelper->addInfoLog(__('23. Got order %1', $order->getId()));
 
-            $this->logHelper->addInfoLog(__('Updating order payment with arguments %1, null, %2', json_encode($order), json_encode($response->reference)));
+            $this->logHelper->addInfoLog(__('24. Updating order payment with orderId: %1, transaction reference: %2', $order->getId(), json_encode($response->reference)));
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
 
             $this->metricsClient->processMetric("order_void.success", 1, "order_void.latency", $startTime);
             return $this;
         } catch (\Exception $e) {
             $this->metricsClient->processMetric("order_void.failure", 1, "order_void.latency", $startTime);
+            $this->logHelper->addInfoLog(__('25. Caught exception: %1', $e));
             $this->bugsnag->notifyException($e);
             throw $e;
         }
