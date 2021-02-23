@@ -2,13 +2,12 @@
 
 namespace Bolt\Boltpay\Test\Unit;
 
+use PHPUnit\Framework\Constraint\IsType;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
+use PHPUnit\Runner\Version as PHPUnitVersion;
 use ReflectionException;
 use ReflectionObject;
 use ReflectionProperty;
-use PHPUnit\Framework\Constraint\IsType;
-use PHPUnit\Runner\Version as PHPUnitVersion;
 
 if (PHPUnitVersion::id() < 9) {
     class BoltTestCase extends TestCase
@@ -19,26 +18,29 @@ if (PHPUnitVersion::id() < 9) {
                 $this->markTestSkipped('Skip integration test in unit test flow');
             }
         }
-        
+
         protected function setUp()
         {
             $this->setUpInternal();
         }
-        
+
         protected function tearDown()
         {
             parent::tearDown();
             $this->tearDownInternal();
         }
-        
+
         protected function setUpInternal()
         {
-            
         }
-        
+
         protected function tearDownInternal()
         {
-            
+        }
+
+        public static function assertMatchesRegularExpression(string $pattern, string $string, string $message = '')
+        {
+            static::assertRegExp($pattern, $string, $message);
         }
     }
 } else {
@@ -50,28 +52,26 @@ if (PHPUnitVersion::id() < 9) {
                 $this->markTestSkipped('Skip integration test in unit test flow');
             }
         }
-        
+
         protected function setUp(): void
         {
             $this->setUpInternal();
         }
-        
+
         protected function tearDown(): void
         {
             parent::tearDown();
             $this->tearDownInternal();
         }
-        
+
         protected function setUpInternal()
         {
-
         }
-        
+
         protected function tearDownInternal()
         {
-
         }
-        
+
         protected function createPartialMock($originalClassName, array $methods): \PHPUnit\Framework\MockObject\MockObject
         {
             return $this->getMockBuilder($originalClassName)
@@ -82,7 +82,7 @@ if (PHPUnitVersion::id() < 9) {
                         ->setMethods(empty($methods) ? null : $methods)
                         ->getMock();
         }
-        
+
         public static function assertAttributeInstanceOf($expected, $attributeName, $classOrObject, $message = '')
         {
             static::assertInstanceOf(
@@ -91,7 +91,7 @@ if (PHPUnitVersion::id() < 9) {
                 $message
             );
         }
-        
+
         public static function assertAttributeEquals($expected, $actualAttributeName, $actualClassOrObject, $message = '', $delta = 0.0, $maxDepth = 10, $canonicalize = false, $ignoreCase = false)
         {
             static::assertEquals(
@@ -104,17 +104,17 @@ if (PHPUnitVersion::id() < 9) {
                 $ignoreCase
             );
         }
-        
+
         public static function readAttribute($classOrObject, $attributeName)
         {
             if (!\is_string($attributeName)) {
                 throw InvalidArgumentHelper::factory(2, 'string');
             }
-    
+
             if (!\preg_match('/[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*/', $attributeName)) {
                 throw InvalidArgumentHelper::factory(2, 'valid attribute name');
             }
-    
+
             if (\is_string($classOrObject)) {
                 if (!\class_exists($classOrObject)) {
                     throw InvalidArgumentHelper::factory(
@@ -122,45 +122,45 @@ if (PHPUnitVersion::id() < 9) {
                         'class name'
                     );
                 }
-    
+
                 return static::getStaticAttribute(
                     $classOrObject,
                     $attributeName
                 );
             }
-    
+
             if (\is_object($classOrObject)) {
                 return static::getObjectAttribute(
                     $classOrObject,
                     $attributeName
                 );
             }
-    
+
             throw InvalidArgumentHelper::factory(
                 1,
                 'class name or object'
             );
         }
-        
+
         public static function getObjectAttribute($object, $attributeName)
         {
             if (!\is_object($object)) {
                 throw InvalidArgumentHelper::factory(1, 'object');
             }
-    
+
             if (!\is_string($attributeName)) {
                 throw InvalidArgumentHelper::factory(2, 'string');
             }
-    
+
             if (!\preg_match('/[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*/', $attributeName)) {
                 throw InvalidArgumentHelper::factory(2, 'valid attribute name');
             }
-    
+
             try {
                 $attribute = new ReflectionProperty($object, $attributeName);
             } catch (ReflectionException $e) {
                 $reflector = new ReflectionObject($object);
-    
+
                 while ($reflector = $reflector->getParentClass()) {
                     try {
                         $attribute = $reflector->getProperty($attributeName);
@@ -169,19 +169,19 @@ if (PHPUnitVersion::id() < 9) {
                     }
                 }
             }
-    
+
             if (isset($attribute)) {
                 if (!$attribute || $attribute->isPublic()) {
                     return $object->$attributeName;
                 }
-    
+
                 $attribute->setAccessible(true);
                 $value = $attribute->getValue($object);
                 $attribute->setAccessible(false);
-    
+
                 return $value;
             }
-    
+
             throw new Exception(
                 \sprintf(
                     'Attribute "%s" not found in object.',
@@ -189,20 +189,20 @@ if (PHPUnitVersion::id() < 9) {
                 )
             );
         }
-        
+
         public static function assertInternalType($expected, $actual, $message = '')
         {
             if (!\is_string($expected)) {
                 throw InvalidArgumentHelper::factory(1, 'string');
             }
-    
+
             $constraint = new IsType(
                 $expected
             );
-    
+
             static::assertThat($actual, $constraint, $message);
         }
-        
+
         /**
          * @param string $messageRegExp
          *
@@ -213,7 +213,7 @@ if (PHPUnitVersion::id() < 9) {
             if (!\is_string($messageRegExp)) {
                 throw InvalidArgumentHelper::factory(1, 'string');
             }
-    
+
             $this->expectedExceptionMessageRegExp = $messageRegExp;
         }
     }
@@ -226,12 +226,12 @@ if (!class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
          * @var array|\Traversable
          */
         protected $subset;
-    
+
         /**
          * @var bool
          */
         protected $strict;
-    
+
         /**
          * @param array|\Traversable $subset
          * @param bool               $strict Check for object identity
@@ -241,7 +241,7 @@ if (!class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
             $this->strict = $strict;
             $this->subset = $subset;
         }
-    
+
         /**
          * Evaluates the constraint for parameter $other. Returns true if the
          * constraint is met, false otherwise.
@@ -254,18 +254,18 @@ if (!class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
         {
             //type cast $other & $this->subset as an array to allow
             //support in standard array functions.
-            $other        = $this->toArray($other);
+            $other = $this->toArray($other);
             $this->subset = $this->toArray($this->subset);
-    
+
             $patched = \array_replace_recursive($other, $this->subset);
-    
+
             if ($this->strict) {
                 return $other === $patched;
             }
-    
+
             return $other == $patched;
         }
-    
+
         /**
          * Returns a string representation of the constraint.
          *
@@ -275,7 +275,7 @@ if (!class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
         {
             return 'has the subset ' . $this->exporter->export($this->subset);
         }
-    
+
         /**
          * Returns the description of the failure
          *
@@ -290,7 +290,7 @@ if (!class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
         {
             return 'an array ' . $this->toString();
         }
-    
+
         /**
          * @param array|\Traversable $other
          *
@@ -301,17 +301,17 @@ if (!class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
             if (\is_array($other)) {
                 return $other;
             }
-    
+
             if ($other instanceof \ArrayObject) {
                 return $other->getArrayCopy();
             }
-    
+
             if ($other instanceof \Traversable) {
                 return \iterator_to_array($other);
             }
-    
+
             // Keep BC even if we know that array would not be the expected one
             return (array) $other;
         }
-    }    
+    }
 }

@@ -30,6 +30,8 @@ sed -i 's/localhost/127.0.0.1/g' etc/install-config-mysql.php
 sed -i 's/123123q//g' etc/install-config-mysql.php
 sed -i '/amqp/d' etc/install-config-mysql.php
 
+sudo chmod -R 777 ../../..
+
 echo "Starting Bolt Integration Tests"
-../../../vendor/bin/phpunit -dmemory_limit=5G -c bolt_phpunit.xml
+../../../vendor/bin/phpunit -d memory_limit=5G -c bolt_phpunit.xml
 bash <(curl -s https://bolt-devops.s3-us-west-2.amazonaws.com/testing/codecov_uploader) -f ./artifacts/coverage.xml -F $TEST_ENV

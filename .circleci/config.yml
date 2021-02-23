@@ -8,10 +8,10 @@ parameters:
   run_default_workflow:
     type: boolean
     default: true
-  run_rebase_and_unit_test:
+  run_rebase_and_magento_integration_test:
     type: boolean
     default: false
-  rebase_and_unit_test_branch_name:
+  rebase_and_magento_integration_test_branch_name:
     type: string
     default: ""
 
@@ -40,11 +40,11 @@ commands:
       m2_version:
         type: enum
         default: "2.3.0"
-        enum: ["2.2.0", "2.3.0", "2.4.0"]
+        enum: ["2.2.8", "2.3.0", "2.4.2"]
       php_version:
         type: enum
         default: "php72"
-        enum: ["php70", "php71", "php72", "php74"]
+        enum: ["php71", "php72", "php74"]
       is_integration:
         type: boolean
         default: false
@@ -64,6 +64,7 @@ commands:
             mkdir ./artifacts
             echo 'export TEST_ENV="<< parameters.php_version >>"' >> $BASH_ENV
             echo 'export MAGENTO_VERSION="<< parameters.m2_version >>"' >> $BASH_ENV
+            echo 'export XDEBUG_MODE=coverage' >> $BASH_ENV
       - when:
           condition: << parameters.is_integration >>
           steps:
@@ -134,9 +135,9 @@ commands:
             .circleci/scripts/test-merchant-branches.sh "github" "BoltApp" "bolt-magento2"
 
 jobs:
-  unit-php74-magento24:
+  integration-magento-php74-magento24:
     docker:
-      - image: boltdev/m2-installed-plugin-ci-php74:2.4.0-v1
+      - image: boltdev/m2-installed-plugin-ci-php74:2.4.2
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
@@ -144,54 +145,15 @@ jobs:
         command: --default-authentication-plugin=mysql_native_password
         environment:
           MYSQL_ROOT_PASSWORD: ""
+    resource_class: large
+    environment:
+      MAGENTO_DIR: magento
     steps:
       - m2-php-test:
           cache_key_separator: php74mag24installed
-          m2_version: "2.4.0"
+          m2_version: "2.4.2"
           php_version: "php74"
-          is_integration: false
-
-  unit-php72-magento23:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-      - image: circleci/mysql:5.7
-    steps:
-      - m2-php-test:
-          cache_key_separator: php72mag23installed
-          m2_version: "2.3.0"
-          php_version: "php72"
-          is_integration: false
-
-  unit-php71-magento22:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php71:2.2.0-v1
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-      - image: circleci/mysql:5.7
-    steps:
-      - m2-php-test:
-          cache_key_separator: php71mag22installed
-          m2_version: "2.2.0"
-          php_version: "php71"
-          is_integration: false
-
-  unit-php70-magento22:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php70:2.2.0-v1
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-      - image: circleci/mysql:5.7
-    steps:
-      - m2-php-test:
-          cache_key_separator: php70mag22installed
-          m2_version: "2.2.0"
-          php_version: "php70"
-          is_integration: false
+          is_magento_integration: true
 
   integration-magento-php72-magento23:
     docker:
@@ -205,6 +167,20 @@ jobs:
           cache_key_separator: php72mag23installed
           m2_version: "2.3.0"
           php_version: "php72"
+          is_magento_integration: true
+
+  integration-magento-php71-magento22:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php71:2.2.8
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+      - image: circleci/mysql:5.7
+    steps:
+      - m2-php-test:
+          cache_key_separator: php71mag22installed
+          m2_version: "2.2.8"
+          php_version: "php71"
           is_magento_integration: true
 
   tag-release-candidate:
@@ -260,7 +236,7 @@ jobs:
           name: Auto-rebase
           command: bash .circleci/scripts/auto-rebase.sh
 
-  rebase-and-unit-test:
+  rebase-and-magento-integration-test:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
         auth:
@@ -270,8 +246,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Rebase and Unit Test
-          command: bash .circleci/scripts/rebase-and-unit-test.sh << pipeline.parameters.rebase_and_unit_test_branch_name >>
+          name: Rebase and Magento Integration Test
+          command: bash .circleci/scripts/rebase-and-magento-integration-test.sh << pipeline.parameters.rebase_and_magento_integration_test_branch_name >>
 
   phpcs:
     docker:
@@ -288,11 +264,9 @@ workflows:
   build:
     when: << pipeline.parameters.run_default_workflow >>
     jobs:
-      - unit-php74-magento24
-      - unit-php72-magento23
-      - unit-php71-magento22
-      - unit-php70-magento22
+      - integration-magento-php74-magento24
       - integration-magento-php72-magento23
+      - integration-magento-php71-magento22
   tagger:
     triggers:
       - schedule:
@@ -325,8 +299,8 @@ workflows:
             branches:
               only:
                 - master
-  rebase-and-unit-test: #note: this workflow is triggered remotely on merchant branches when a PR is submitted
-    when: << pipeline.parameters.run_rebase_and_unit_test >>
+  rebase-and-magento-integration-test: #note: this workflow is triggered remotely on merchant branches when a PR is submitted
+    when: << pipeline.parameters.run_rebase_and_magento_integration_test >>
     jobs:
-      - rebase-and-unit-test:
-          name: "Rebase and Unit Test << pipeline.parameters.rebase_and_unit_test_branch_name >>"
+      - rebase-and-magento-integration-test:
+          name: "Rebase and Magento Integration Test << pipeline.parameters.rebase_and_magento_integration_test_branch_name >>"

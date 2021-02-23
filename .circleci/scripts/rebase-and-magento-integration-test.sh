@@ -1,4 +1,3 @@
-
 merchantBranch=$1
 echo "Rebasing $merchantBranch from $CIRCLE_BRANCH"
 
@@ -13,11 +12,11 @@ if ! (git rebase $CIRCLE_BRANCH); then
 fi
 
 export TEST_ENV="php72"
-export MAGENTO_VERSION="2.2.0"
-export COMPOSER_MEMORY_LIMIT=3G
+export MAGENTO_VERSION="2.2.8"
+export COMPOSER_MEMORY_LIMIT=5G
 
-echo "Start unit tests..."
-if ! ./Test/scripts/ci-unit.sh; then
-  echo "unit tests failed"
+echo "Start Magento Integration Tests..."
+if ! ./Test/scripts/ci-magento-integration.sh; then
+  echo "magento integration tests failed"
   exit 1
 fi

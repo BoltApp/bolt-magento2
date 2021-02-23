@@ -6,7 +6,7 @@ ENV LANG=C.UTF-8
 
 RUN cd /usr/local/etc/php/conf.d/ && echo 'memory_limit = -1' >> /usr/local/etc/php/conf.d/docker-php-memlimit.ini
 
-RUN MAGENTO_VERSION=2.4.0
+RUN MAGENTO_VERSION=2.4.2
 
 RUN sudo apt install openjdk-11-jdk -y
 RUN curl -fsSL https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
@@ -34,7 +34,7 @@ RUN composer self-update --1
 COPY auth.json /home/circleci/.composer/auth.json
 USER circleci
 WORKDIR /home/circleci
-RUN composer -vvv create-project --repository-url=https://repo.magento.com/ magento/project-community-edition=2.4.0 magento/
+RUN composer -vvv create-project --repository-url=https://repo.magento.com/ magento/project-community-edition=2.4.2 magento/
 WORKDIR /home/circleci/magento
 RUN composer install
 RUN composer -vvv require "bugsnag/bugsnag:^3.0"

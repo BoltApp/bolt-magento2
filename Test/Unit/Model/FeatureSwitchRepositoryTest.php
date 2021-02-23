@@ -38,7 +38,7 @@ class FeatureSwitchRepositoryTest extends BoltTestCase
      */
     public function getByName_switchExists()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         $featureSwitchRepository = Bootstrap::getObjectManager()->create(FeatureSwitchRepository::class);
         $featureSwitchRepository->upsertByName("test_switch", true, false, 100);
         $switch = $featureSwitchRepository->getByName("test_switch");
@@ -50,7 +50,7 @@ class FeatureSwitchRepositoryTest extends BoltTestCase
      */
     public function getByName_switchDoesNotExists()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         $featureSwitchRepository = Bootstrap::getObjectManager()->create(FeatureSwitchRepository::class);
         $exception_thrown = false;
         try {
@@ -66,7 +66,7 @@ class FeatureSwitchRepositoryTest extends BoltTestCase
      */
     public function upsertByName_shouldOverrideData()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         $featureSwitchRepository = Bootstrap::getObjectManager()->create(FeatureSwitchRepository::class);
         $featureSwitchRepository->upsertByName("test_switch", true, false, 100);
         $featureSwitchRepository->upsertByName("test_switch", false, true, 90);

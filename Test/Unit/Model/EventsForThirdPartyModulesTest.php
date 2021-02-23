@@ -48,7 +48,7 @@ class EventsForThirdPartyModuleTest extends BoltTestCase
      */
     public function configTest()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         $this->configCheckOneConst(EventsForThirdPartyModules::eventListeners);
         $this->configCheckOneConst(EventsForThirdPartyModules::filterListeners);
     }
@@ -58,7 +58,7 @@ class EventsForThirdPartyModuleTest extends BoltTestCase
      */
     public function dispatchEventTest()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         $eventsForThirdPartyModulesMock = Bootstrap::getObjectManager()->get(EventsForThirdPartyModulesMock::class);
         $listenerMock = Bootstrap::getObjectManager()->get(ListenerMock::class);
         
@@ -77,7 +77,7 @@ class EventsForThirdPartyModuleTest extends BoltTestCase
      */
     public function runFilterTest()
     {
-        $this->skipTestInUnitTestsFlow();
+        
         $eventsForThirdPartyModulesMock = Bootstrap::getObjectManager()->get(EventsForThirdPartyModulesMock::class);
         $listenerMock = Bootstrap::getObjectManager()->get(ListenerMock::class);
 
