@@ -134,7 +134,9 @@ class GetAccountTest extends BoltTestCase
         $store = $this->createMock(StoreInterface::class);
         $this->storeManager->expects(static::once())->method('getStore')->willReturn($store);
         $store->expects(static::once())->method('getWebsiteId')->willReturn(1);
-        $this->customerRepository->expects(static::once())->method('get')->with('test@bolt.com', 1)->willThrowException(new Exception());
+        $exception = new Exception();
+        $this->customerRepository->expects(static::once())->method('get')->with('test@bolt.com', 1)->willThrowException($exception);
+        $this->bugsnag->expects(static::once())->with($exception);
         $this->expectException(WebApiException::class);
         $this->expectExceptionMessage('Internal Server Error');
         $this->currentMock->execute('test@bolt.com');
