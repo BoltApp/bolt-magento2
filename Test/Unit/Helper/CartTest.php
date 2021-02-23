@@ -446,7 +446,7 @@ class CartTest extends BoltTestCase
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer']);
         $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(Serialize::class);
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class,
-            ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical', 'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata']);
+            ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical', 'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata', 'isCustomizableOptionsSupport']);
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
         $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
@@ -4436,6 +4436,8 @@ ORDER
 
         $this->imageHelper->method('init')->willReturnSelf();
         $this->imageHelper->method('getUrl')->willReturn('no-image');
+        
+        $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
 
         list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
             $this->quoteMock,
@@ -4504,6 +4506,8 @@ ORDER
         $this->configHelper->method('getProductAttributesList')->willReturn([$attributeName]);
 
         $this->productRepository->method('get')->with(self::PRODUCT_SKU)->willReturn($this->productMock);
+        
+        $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
 
         list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
             $this->quoteMock,
@@ -4558,6 +4562,8 @@ ORDER
         $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
         $quoteItem->method('getProduct')->willReturn($productMock);
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
+        
+        $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
 
         $this->imageHelper->method('init')
             ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
@@ -4627,6 +4633,7 @@ ORDER
     public function getCartItems_withFeatureSwitchHandleVirtualProductsAsPhysical_returnPhysicalCart()
     {
         $this->deciderHelper->expects(self::once())->method('handleVirtualProductsAsPhysical')->willReturn(true);
+        $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
         $quoteItem = $this->createPartialMock(
             Item::class,
             [
@@ -4693,6 +4700,7 @@ ORDER
        */
       public function getCartItems_withGiftWrapping()
       {
+          $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
           $this->appEmulation->expects(static::once())->method('startEnvironmentEmulation')
               ->with(self::STORE_ID, \Magento\Framework\App\Area::AREA_FRONTEND, true);
           $quoteItem = $this->createPartialMock(
