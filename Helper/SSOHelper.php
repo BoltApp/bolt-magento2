@@ -111,12 +111,11 @@ class SSOHelper extends AbstractHelper
             $apiKey = $this->configHelper->getApiKey($storeId);
 
             $requestData = $this->dataObjectFactory->create();
-            $requestData->setApiData("grant_type=authorization_code&code={$code}&scope={$scope}&client_id={$clientId}&client_secret={$clientSecret}");
-            $requestData->setDynamicApiUrl(ApiHelper::API_OAUTH_TOKEN);
+            $requestData->setDynamicApiUrl(ApiHelper::API_OAUTH_TOKEN . "?grant_type=authorization_code&code={$code}&scope={$scope}&client_id={$clientId}&client_secret={$clientSecret}");
             $requestData->setApiKey($apiKey);
 
             $request = $this->apiHelper->buildRequest($requestData);
-            $result = $this->apiHelper->sendRequest($request, 'application/x-www-form-urlencoded');
+            $result = $this->apiHelper->sendRequest($request);
             $response = $result->getResponse();
 
             return empty($response) ? 'empty response' : $response;
