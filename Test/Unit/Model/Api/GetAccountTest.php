@@ -75,7 +75,7 @@ class GetAccountTest extends BoltTestCase
         $this->storeManager = $this->createMock(StoreManagerInterface::class);
         $this->hookHelper = $this->createMock(HookHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->currentMock = $this->getMockBuilder(OAuthRedirect::class)
+        $this->currentMock = $this->getMockBuilder(GetAccount::class)
             ->setMethods()
             ->setConstructorArgs([
                 $this->response,
