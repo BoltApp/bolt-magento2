@@ -21,6 +21,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Model\Api\GetAccount;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -118,7 +119,7 @@ class GetAccountTest extends BoltTestCase
         $store = $this->createMock(StoreInterface::class);
         $this->storeManager->expects(static::once())->method('getStore')->willReturn($store);
         $store->expects(static::once())->method('getWebsiteId')->willReturn(1);
-        $this->customerRepository->expects(static::once())->method('get')->with('test@bolt.com', 1)->willThrowException(new NoSuchEntityFoundException());
+        $this->customerRepository->expects(static::once())->method('get')->with('test@bolt.com', 1)->willThrowException(new NoSuchEntityException());
         $this->expectException(NoSuchEntityException::class);
         $this->expectExceptionMessage('Customer not found with given email.');
         $this->currentMock->execute('test@bolt.com');
