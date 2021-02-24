@@ -145,6 +145,7 @@ class CartTest extends BoltTestCase
     const GIFT_MESSAGE_ID = '122';
     const GIFT_WRAPPING_ID = '123';
     const QUOTE_ITEM_ID = '124';
+    const CUSTOMER_GROUP_ID = '1';
 
     /** @var array Address data containing all required fields */
     const COMPLETE_ADDRESS_DATA = [
@@ -392,7 +393,7 @@ class CartTest extends BoltTestCase
             'getData','isVirtual','getId','getShippingAddress',
             'getBillingAddress','reserveOrderId','addProduct',
             'assignCustomer','setIsActive','getGiftMessageId',
-            'getGwId'
+            'getGwId', 'getCustomerGroupId'
         ]);
         $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote', 'getBoltCollectSaleRuleDiscounts', 'getOrderId']);
         $this->productRepository = $this->createPartialMock(ProductRepository::class, ['get', 'getbyId']);
@@ -1275,14 +1276,20 @@ class CartTest extends BoltTestCase
     {
         
         $testCartData = $this->getTestCartData();
-        $quote = TestUtils::createQuote(['gift_message_id'=> self::GIFT_MESSAGE_ID]);
+        $quote = TestUtils::createQuote([
+            'gift_message_id'=> self::GIFT_MESSAGE_ID,
+            'customer_group_id' => self::CUSTOMER_GROUP_ID
+        ]);
 
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         TestHelper::setProperty($cartHelper, 'lastImmutableQuote', $quote);
 
         $result = TestHelper::invokeMethod($cartHelper, 'getCartCacheIdentifier', [$testCartData]);
         unset($testCartData['display_id']);
-        static::assertEquals(hash('md5',json_encode($testCartData).self::GIFT_MESSAGE_ID), $result);
+        static::assertEquals(
+            hash('md5',json_encode($testCartData).self::GIFT_MESSAGE_ID.self::CUSTOMER_GROUP_ID),
+            $result
+        );
     }
 
     /**
@@ -1295,14 +1302,20 @@ class CartTest extends BoltTestCase
     {
         
         $testCartData = $this->getTestCartData();
-        $quote = TestUtils::createQuote(['gw_id'=> self::GIFT_WRAPPING_ID]);
+        $quote = TestUtils::createQuote([
+            'gw_id'=> self::GIFT_WRAPPING_ID,
+            'customer_group_id' => self::CUSTOMER_GROUP_ID
+        ]);
 
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         TestHelper::setProperty($cartHelper, 'lastImmutableQuote', $quote);
 
         $result = TestHelper::invokeMethod($cartHelper, 'getCartCacheIdentifier', [$testCartData]);
         unset($testCartData['display_id']);
-        static::assertEquals(hash('md5',json_encode($testCartData).self::GIFT_WRAPPING_ID), $result);
+        static::assertEquals(
+            hash('md5',json_encode($testCartData).self::GIFT_WRAPPING_ID.self::CUSTOMER_GROUP_ID),
+            $result
+        );
     }
 
     /**
@@ -1638,7 +1651,7 @@ class CartTest extends BoltTestCase
 
         TestHelper::invokeMethod($currentMock, 'transferData', [$this->quoteMock, $childQuoteMock]);
     }
-    
+
     /**
      * @test
      * that transferData with default email and exclude fields parameters transfers data from provided parent Address to child Address, and unset cached_items_all field
@@ -1652,7 +1665,7 @@ class CartTest extends BoltTestCase
         $currentMock = $this->getCurrentMock(['validateEmail']);
 
         $addressParentShippingAddress = $this->createMock(Quote\Address::class);
-        
+
         $addressParentShippingAddress->expects(static::once())->method('getData')->willReturn(
             [
                 'email'     => $this->testAddressData['email'],
@@ -1666,7 +1679,7 @@ class CartTest extends BoltTestCase
         );
 
         $addressChildShippingAddress = $this->createMock(Quote\Address::class);
-        
+
         $addressChildShippingAddress->expects(static::atLeastOnce())->method('setData')->withConsecutive(
             ['email', $this->testAddressData['email']],
             ['firstname', $this->testAddressData['first_name']],
@@ -1677,7 +1690,7 @@ class CartTest extends BoltTestCase
             ['postcode', $this->testAddressData['postal_code']]
         );
         $addressChildShippingAddress->expects(static::once())->method('save');
-        
+
         $currentMock->expects(static::once())->method('validateEmail')->with($this->testAddressData['email'])->willReturn(true);
 
         TestHelper::invokeMethod($currentMock, 'transferData', [$addressParentShippingAddress, $addressChildShippingAddress]);
@@ -4420,7 +4433,7 @@ ORDER
             ->setMethods(['getId', 'getDescription', 'getTypeInstance', 'getCustomOption'])
             ->disableOriginalConstructor()
             ->getMock();
-        
+
         $this->productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
         $this->productMock->method('getDescription')->willReturn('Product Description');
         $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
@@ -4547,7 +4560,7 @@ ORDER
         $productMock->method('getId')->willReturn(self::PRODUCT_ID);
         $productMock->method('getName')->willReturn('Test Product');
         $productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
-        
+
         $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
             ->willReturn($productMock);
         $quoteItem->method('getName')->willReturn('Test Product');
@@ -4643,7 +4656,7 @@ ORDER
         $productMock->method('getId')->willReturn(self::PRODUCT_ID);
         $productMock->method('getName')->willReturn('Test Product');
         $productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
-        
+
         $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
             ->willReturn($productMock);
         $quoteItem->method('getName')->willReturn('Test Product');
@@ -6725,5 +6738,23 @@ ORDER
         static::assertFalse(
             $cartHelper->getCustomerByEmail('test@gmail.com', self::WEBSITE_ID)
         );
+    }
+
+    /**
+     * @test
+     * that convertExternalFieldsToCacheIdentifier returns cache identifier affected by the customer group id
+     *
+     * @covers ::convertExternalFieldsToCacheIdentifier
+     */
+    public function convertExternalFieldsToCacheIdentifier_always_appendsCustomerGroupIdToCacheIdentifier()
+    {
+        $groupId = mt_rand();
+        $this->immutableQuoteMock->expects(static::once())->method('getCustomerGroupId')->willReturn($groupId);
+        $result = TestHelper::invokeMethod(
+            $this->currentMock,
+            'convertExternalFieldsToCacheIdentifier',
+            [$this->immutableQuoteMock]
+        );
+        static::assertStringContainsString((string)$groupId, $result);
     }
 }
