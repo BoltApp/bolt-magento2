@@ -754,6 +754,8 @@ class Order extends AbstractHelper
      */
     private function deleteRedundantQuotes($quote)
     {
+        $this->eventsForThirdPartyModules->dispatchEvent("beforeOrderDeleteRedundantQuotes", $quote);
+        
         $connection = $this->resourceConnection->getConnection();
 
         // get table name with prefix

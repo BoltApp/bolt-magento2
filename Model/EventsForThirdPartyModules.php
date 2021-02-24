@@ -31,6 +31,7 @@ use Bolt\Boltpay\ThirdPartyModules\Aheadworks\StoreCredit as Aheadworks_StoreCre
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\GiftCard as Mageplaza_GiftCard;
 use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Rewards as Mirasvit_Rewards;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\StoreCredit as Amasty_StoreCredit;
+use Bolt\Boltpay\ThirdPartyModules\Zonos\DutyTax as Zonos_DutyTax;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -183,6 +184,24 @@ class EventsForThirdPartyModules
                                       "Mirasvit\Rewards\Helper\Checkout",
                                       "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"],
                     "boltClass" => Mirasvit_Rewards::class,
+                ],
+            ]
+        ],
+        "beforeOrderDeleteRedundantQuotes" => [
+            "listeners" => [
+                [
+                    "module" => "Zonos_DutyTax",
+                    "checkClasses" => ["Zonos\DutyTax\Model\ResourceModel\ZonosShippingQuotesResourceModel"],
+                    "boltClass" => Zonos_DutyTax::class,
+                ],
+            ]
+        ],
+        "beforeCartDeleteQuote" => [
+            "listeners" => [
+                [
+                    "module" => "Zonos_DutyTax",
+                    "checkClasses" => ["Zonos\DutyTax\Model\ResourceModel\ZonosShippingQuotesResourceModel"],
+                    "boltClass" => Zonos_DutyTax::class,
                 ],
             ]
         ],

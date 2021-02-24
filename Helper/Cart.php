@@ -491,6 +491,7 @@ class Cart extends AbstractHelper
      */
     public function deleteQuote($quote)
     {
+        $this->eventsForThirdPartyModules->dispatchEvent("beforeCartDeleteQuote", $quote);
         $this->quoteRepository->delete($quote);
     }
 
