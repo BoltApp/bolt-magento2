@@ -15,22 +15,24 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-/* @var $block Bolt\Boltpay\Block\Checkout\Success */
-if ($block->shouldDisableBoltCheckout()) { return;
-}
-?>
+namespace Bolt\Boltpay\Api;
 
-<?php if ($block->shouldTrackCheckoutFunnel()): ?>
-    <script type="text/javascript">
-        BoltTrack.recordEvent("OrderConfirmationView");
-    </script>
-<?php endif; ?>
-<script>
-    require([
-        'Magento_Customer/js/customer-data'
-    ], function (customerData) {
-        var sections = ['cart'];
-        customerData.invalidate(sections);
-        customerData.reload(sections, true);
-    });
-</script>
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Webapi\Exception as WebapiException;
+
+interface GetAccountInterface
+{
+    /**
+     * Get user account associated with email
+     *
+     * @api
+     *
+     * @param string $email
+     *
+     * @return void
+     *
+     * @throws NoSuchEntityException
+     * @throws WebapiException
+     */
+    public function execute($email = '');
+}

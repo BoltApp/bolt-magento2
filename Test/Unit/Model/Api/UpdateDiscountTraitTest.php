@@ -472,6 +472,29 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->assertEquals([null,$giftcardMock], $result);
     }
+    
+    /**
+     * @test
+     *
+     */
+    public function verifyCouponCode_loadGiftcard_returnException()
+    {
+        global $ifRunFilter;
+        $giftcardMock = $this->getMockBuilder('\Amasty\GiftCard\Model\Account')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $ifRunFilter = new \Exception('Testing Error');
+
+        $this->discountHelper->expects(static::once())->method('loadUnirgyGiftCertData')->with(self::COUPON_CODE, self::STORE_ID)
+            ->willReturn(null);
+        $quote = $this->getQuoteMock();
+        
+        $this->expectExceptionMessage('Testing Error');
+        $this->expectExceptionCode(BoltErrorResponse::ERR_SERVICE);
+        $this->expectException(BoltException::class);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'verifyCouponCode', [self::COUPON_CODE, $quote]);
+    }
 
     /**
      * @test
@@ -1149,6 +1172,52 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->assertTrue($result);
     }
+    
+    /**
+     * @test
+     *
+     * @covers \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::applyingGiftCardCode
+     */
+    public function applyingGiftCardCode_noSupport()
+    {
+        global $ifRunFilter;
+        $quote = $this->getQuoteMock();
+
+        $ifRunFilter = false;
+        
+        $giftcardMock = $this->getMockBuilder('\Bolt\GiftCard\Model\Account')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(sprintf('The GiftCard %s is not supported', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_SERVICE);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'applyingGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
+    }
+    
+    /**
+     * @test
+     *
+     * @covers \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::applyingGiftCardCode
+     */
+    public function applyingGiftCardCode_hasException()
+    {
+        global $ifRunFilter;
+        $quote = $this->getQuoteMock();
+
+        $ifRunFilter = new \Exception('ApplyingGiftCardCode Error');
+        
+        $giftcardMock = $this->getMockBuilder('\Amasty\GiftCard\Model\Account')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage('ApplyingGiftCardCode Error');
+        $this->expectExceptionCode(BoltErrorResponse::ERR_SERVICE);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'applyingGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
+    }
 
     /**
      * @test
@@ -1258,6 +1327,52 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $result = TestHelper::invokeMethod($this->currentMock, 'removeGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
 
         $this->assertTrue($result);
+    }
+    
+    /**
+     * @test
+     *
+     * @covers \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::removeGiftCardCode
+     */
+    public function removeGiftCardCode_noSupport()
+    {
+        global $ifRunFilter;
+        $quote = $this->getQuoteMock();
+
+        $ifRunFilter = false;
+        
+        $giftcardMock = $this->getMockBuilder('\Bolt\GiftCard\Model\Account')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage(sprintf('The GiftCard %s is not supported', self::COUPON_CODE));
+        $this->expectExceptionCode(BoltErrorResponse::ERR_SERVICE);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'removeGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
+    }
+    
+    /**
+     * @test
+     *
+     * @covers \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::removeGiftCardCode
+     */
+    public function removeGiftCardCode_hasException()
+    {
+        global $ifRunFilter;
+        $quote = $this->getQuoteMock();
+
+        $ifRunFilter = new \Exception('removeGiftCardCode Error');
+        
+        $giftcardMock = $this->getMockBuilder('\Amasty\GiftCard\Model\Account')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->expectException(BoltException::class);
+        $this->expectExceptionMessage('removeGiftCardCode Error');
+        $this->expectExceptionCode(BoltErrorResponse::ERR_SERVICE);
+        
+        $result = TestHelper::invokeMethod($this->currentMock, 'removeGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
     }
 
     /**

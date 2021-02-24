@@ -95,16 +95,18 @@ class Giftcard
      */
     public function loadGiftcard($result, $aheadworksGiftcardRepository, $code, $quote)
     {
-        if (!empty($result)) {
+        if ($result !== null) {
             return $result;
         }
+        
         try {
             $storeId = $quote->getStoreId();
             return $aheadworksGiftcardRepository->getByCode($code, $storeId);
-        } catch (LocalizedException $e) {
+        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
             return null;
+        } catch (\Exception $e) {
+            return $e;
         }
-        return null;
     }
 
     /**
@@ -164,21 +166,24 @@ class Giftcard
      */
     public function filterApplyingGiftCardCode($result, $aheadworksGiftcardCartService, $couponCode, $giftCard, $quote)
     {
-        if ($giftCard instanceof \Aheadworks\Giftcard\Model\Giftcard) {
-            try {
-                // on subsequent validation calls from Bolt checkout
-                // try removing the gift card before adding it
-                $aheadworksGiftcardCartService->remove($quote->getId(), $couponCode, false);
-            } catch (\Exception $e) {
-
-            }
-
-            $aheadworksGiftcardCartService->set($quote->getId(), $couponCode, false);
-
-            $result = true;
+        if ($result || !($giftCard instanceof \Aheadworks\Giftcard\Model\Giftcard)) {
+            return $result;
         }
+        
+        try {
+            // on subsequent validation calls from Bolt checkout
+            // try removing the gift card before adding it
+            $aheadworksGiftcardCartService->remove($quote->getId(), $couponCode, false);
+        } catch (\Exception $e) {
 
-        return $result;
+        }
+        
+        try {
+            $aheadworksGiftcardCartService->set($quote->getId(), $couponCode, false);
+            return true;
+        } catch (\Exception $e) {
+            return $e;
+        }
     }
 
     /**
@@ -190,13 +195,16 @@ class Giftcard
      */
     public function filterRemovingGiftCardCode($result, $aheadworksGiftcardCartService, $giftCard, $quote)
     {
-        if ($giftCard instanceof \Aheadworks\Giftcard\Model\Giftcard) {
-            $aheadworksGiftcardCartService->remove($quote->getId(), $giftCard->getCode(), false);
-
-            $result = true;
+        if ($result || !($giftCard instanceof \Aheadworks\Giftcard\Model\Giftcard)) {
+            return $result;
         }
-
-        return $result;
+        
+        try {
+            $aheadworksGiftcardCartService->remove($quote->getId(), $giftCard->getCode(), false);
+            return true;
+        } catch (\Exception $e) {
+            return $e;
+        }
     }
 
     /**

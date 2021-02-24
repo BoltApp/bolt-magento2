@@ -172,11 +172,15 @@ class GiftCard
      */
     public function loadGiftcard($result, $giftcardAccountFactory, $couponCode, $quote)
     {
+        if ($result !== null) {
+            return $result;
+        }
+        
         try {
             $giftcardAccount = $giftcardAccountFactory->create()->loadByCode($couponCode);
             return $giftcardAccount->getAccountId() ? $giftcardAccount : $result;
-        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
-            return $result;
+        } catch (\Exception $e) {
+            return $e;
         }
     }
 
@@ -243,14 +247,15 @@ class GiftCard
         $giftCard,
         $quote
     ) {
-        if (!$giftCard instanceof \Amasty\GiftCard\Model\Account) {
+        if ($result || !($giftCard instanceof \Amasty\GiftCard\Model\Account)) {
             return $result;
         }
+        
         try {
             $giftCardManagement->set($quote->getId(), $giftCard->getCode());
             return true;
-        } catch (\Magento\Framework\Exception\LocalizedException $e) {
-            return false;
+        } catch (\Exception $e) {
+            return $e;
         }
     }
 
@@ -267,9 +272,10 @@ class GiftCard
         $giftCard,
         $quote
     ) {
-        if (!$giftCard instanceof \Amasty\GiftCard\Model\Account) {
+        if ($result || !($giftCard instanceof \Amasty\GiftCard\Model\Account)) {
             return $result;
         }
+
         try {
             $giftCardTable = $this->resourceConnection->getTableName('amasty_amgiftcard_quote');
 
@@ -287,8 +293,8 @@ class GiftCard
             $quote->collectTotals();
             $quote->setDataChanges(true);
             return true;
-        } catch (\Magento\Framework\Exception\LocalizedException $e) {
-            return false;
+        } catch (\Exception $e) {
+            return $e;
         }
     }
 

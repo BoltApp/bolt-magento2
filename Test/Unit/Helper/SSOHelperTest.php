@@ -90,6 +90,27 @@ class SSOHelperTest extends BoltTestCase
     }
 
     /**
+    * @test
+    *
+    * @covers ::__construct
+    */
+    public function constructor_always_setsInternalProperties()
+    {
+        $instance = new SSOHelper(
+            $this->context,
+            $this->configHelper,
+            $this->storeManager,
+            $this->dataObjectFactory,
+            $this->apiHelper
+        );
+
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        static::assertAttributeEquals($this->storeManager, 'storeManager', $instance);
+        static::assertAttributeEquals($this->dataObjectFactory, 'dataObjectFactory', $instance);
+        static::assertAttributeEquals($this->apiHelper, 'apiHelper', $instance);
+    }
+
+    /**
      * @test
      *
      * @covers ::getOAuthConfiguration
@@ -136,15 +157,14 @@ class SSOHelperTest extends BoltTestCase
         $this->storeManager->expects(static::once())->method('getStore')->willReturn($store);
         $this->configHelper->expects(static::once())->method('getApiKey')->with(1)->willReturn('test api key');
         $dataObject = $this->createPartialMock(DataObject::class, ['setApiData', 'setDynamicApiUrl', 'setApiKey']);
-        $dataObject->expects(static::once())->method('setApiData')->with('grant_type=authorization_code&code=abc&scope=openid&client_id=clientid&client_secret=clientsecret');
-        $dataObject->expects(static::once())->method('setDynamicApiUrl')->with('oauth/token');
+        $dataObject->expects(static::once())->method('setDynamicApiUrl')->with('oauth/token?grant_type=authorization_code&code=abc&scope=openid&client_id=clientid&client_secret=clientsecret');
         $dataObject->expects(static::once())->method('setApiKey')->with('test api key');
         $this->dataObjectFactory->expects(static::once())->method('create')->willReturn($dataObject);
         $request = $this->createMock(Request::class);
         $this->apiHelper->expects(static::once())->method('buildRequest')->with($dataObject)->willReturn($request);
         $response = $this->createPartialMock(Response::class, ['getResponse']);
         $response->expects(static::once())->method('getResponse')->willReturn($responseBody);
-        $this->apiHelper->expects(static::once())->method('sendRequest')->with($request, 'application/x-www-form-urlencoded')->willReturn($response);
+        $this->apiHelper->expects(static::once())->method('sendRequest')->with($request)->willReturn($response);
         $this->assertEquals($expected, TestHelper::invokeMethod($this->currentMock, 'exchangeToken', ['abc', 'openid', 'clientid', 'clientsecret']));
     }
 
