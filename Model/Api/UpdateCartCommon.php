@@ -314,8 +314,16 @@ abstract class UpdateCartCommon
 
         foreach ($items as $item) {
             $product = [];
-                
-            $_product = $this->productRepository->get(trim($item->getSku()));           
+            
+            $itemProduct = $item->getProduct();
+            $customizableOptions = $this->cartHelper->getProductCustomizableOptions($itemProduct);
+            $itemSku = trim($item->getSku());
+
+            if ($customizableOptions) {
+                $itemSku = $this->cartHelper->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
+            }
+            
+            $_product = $this->productRepository->get($itemSku);         
 
             $product['reference']    = $_product->getId();
             $product['quantity']     = round($item->getQty());
