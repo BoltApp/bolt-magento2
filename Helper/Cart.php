@@ -1362,15 +1362,17 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 //By default this feature switch is enabled.
                 $_product = $item->getProduct();
+                $customizableOptions = null;
                 if ($this->deciderHelper->isCustomizableOptionsSupport()) {
                     try {
                         $customizableOptions = $this->getProductCustomizableOptions($_product);
+                        $itemSku = trim($item->getSku());
                         if ($customizableOptions) {
-                            $itemSku = $this->getProductActualSkuByCustomizableOptions(trim($item->getSku()), $customizableOptions);
-                            $_product = $this->productRepository->get($itemSku);
-                            $itemReference = $_product->getId();
-                            $itemName = $_product->getName();
+                            $itemSku = $this->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);    
                         }
+                        $_product = $this->productRepository->get($itemSku);
+                        $itemReference = $_product->getId();
+                        $itemName = $_product->getName();
                     } catch (\Exception $e) {
                         $this->bugsnag->registerCallback(function ($report) use ($item) {
                             $report->setMetaData([
