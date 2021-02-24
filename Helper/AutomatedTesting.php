@@ -178,11 +178,16 @@ class AutomatedTesting extends AbstractHelper
             }
 
             $virtualProduct = $this->getProduct(\Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL);
+            $saleProduct = $this->getProduct('sale');
             $simpleStoreItem = $this->convertToStoreItem($simpleProduct, 'simple');
             $virtualStoreItem = $this->convertToStoreItem($virtualProduct, 'virtual');
+            $saleStoreItem = $this->convertToStoreItem($saleProduct, 'sale');
             $storeItems[] = $simpleStoreItem;
             if ($virtualStoreItem !== null) {
                 $storeItems[] = $virtualStoreItem;
+            }
+            if ($saleStoreItem !== null) {
+                $storeItems[] = $saleStoreItem;
             }
 
             $quote = $this->createQuoteWithItem($simpleProduct);
@@ -221,17 +226,33 @@ class AutomatedTesting extends AbstractHelper
      */
     protected function getProduct($type)
     {
-        $searchCriteria = $this->searchCriteriaBuilder
-            ->addFilter('type_id', $type)
-            ->addFilter('visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq')
-            ->create();
+        $searchCriteriaBuilder = $this->searchCriteriaBuilder
+            ->addFilter('status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED)
+            ->addFilter(
+                'visibility',
+                \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE,
+                'neq'
+            );
+        if ($type === 'sale') {
+            $searchCriteriaBuilder = $searchCriteriaBuilder->addFilter(
+                'type_id',
+                [\Magento\Catalog\Model\Product\Type::TYPE_SIMPLE, \Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL],
+                'in'
+            );
+        } else {
+            $searchCriteriaBuilder = $searchCriteriaBuilder->addFilter('type_id', $type);
+        }
+        $searchCriteria = $searchCriteriaBuilder->create();
 
         $products = $this->productRepository
             ->getList($searchCriteria)
             ->getItems();
 
         foreach ($products as $product) {
-            if ($this->stockRegistry->getStockItem($product->getId())->getIsInStock()) {
+            if ($this->stockRegistry->getStockItem($product->getId())->getIsInStock() && (
+                $type !== 'sale' ||
+                $product->getFinalPrice() < $product->getPriceInfo()->getPrice('regular_price')->getValue()
+            )) {
                 return $product;
             }
         }
@@ -255,7 +276,7 @@ class AutomatedTesting extends AbstractHelper
         return $this->storeItemFactory->create()
                                       ->setItemUrl($product->getProductUrl())
                                       ->setName(trim($product->getName()))
-                                      ->setPrice($this->formatPrice($product->getPrice()))
+                                      ->setPrice($this->formatPrice($product->getFinalPrice()))
                                       ->setType($type);
     }
 
