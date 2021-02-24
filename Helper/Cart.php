@@ -1358,21 +1358,29 @@ class Cart extends AbstractHelper
                 // Load item product object
                 ////////////////////////////////////
                 //By default this feature switch is enabled.
+                $_product = $item->getProduct();
                 if ($this->deciderHelper->isCustomizableOptionsSupport()) {
-                    $itemProduct = $item->getProduct();
-                    $customizableOptions = $this->getProductCustomizableOptions($itemProduct);
-                    $itemSku = trim($item->getSku());
-                    
-                    if ($customizableOptions) {
-                        $itemSku = $this->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
+                    try {
+                        $customizableOptions = $this->getProductCustomizableOptions($_product);
+                        if ($customizableOptions) {
+                            $itemSku = $this->getProductActualSkuByCustomizableOptions(trim($item->getSku()), $customizableOptions);
+                            $_product = $this->productRepository->get($itemSku);
+                            $itemReference = $_product->getId();
+                            $itemName = $_product->getName();
+                        }
+                    } catch (\Exception $e) {
+                        $this->bugsnag->registerCallback(function ($report) use ($item) {
+                            $report->setMetaData([
+                                'product_id' => $item->getProductId(),
+                                'product_name' => $item->getName(),
+                                'product_sku' => $item->getSku()
+                            ]);
+                        });
+                        $this->bugsnag->notifyError('Could not retrieve product', $e->getMessage());
+                        $customizableOptions = null;
                     }
-                    
-                    $_product = $this->productRepository->get($itemSku);
-                    
-                    $itemReference = $_product->getId();
-                    $itemName = $_product->getName();
-                } else {
-                    $_product = $item->getProduct();
+                }
+                if (empty($customizableOptions)) {
                     $itemReference = $item->getProductId();
                     $itemName = $item->getName();
                 }
@@ -1418,7 +1426,7 @@ class Cart extends AbstractHelper
                 }
                 
                 //By default this feature switch is enabled.
-                if ($this->deciderHelper->isCustomizableOptionsSupport() && $customizableOptions) {
+                if ($this->deciderHelper->isCustomizableOptionsSupport() && !empty($customizableOptions)) {
                     foreach ($customizableOptions as $customizableOption) {
                         $properties[] = (object) [
                             'name' => $customizableOption['title'],
