@@ -4437,6 +4437,9 @@ ORDER
         $this->productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
         $this->productMock->method('getDescription')->willReturn('Product Description');
         $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
+        
+        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
+            ->willReturn($this->productMock);
 
         $quoteItemMock = $this->getQuoteItemMock();
         $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItemMock]);
@@ -4561,6 +4564,9 @@ ORDER
         $productMock->method('getId')->willReturn(self::PRODUCT_ID);
         $productMock->method('getName')->willReturn('Test Product');
         $productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
+        
+        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
+            ->willReturn($productMock);
 
         $quoteItem->method('getName')->willReturn('Test Product');
         $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
@@ -4658,6 +4664,9 @@ ORDER
         $productMock->method('getId')->willReturn(self::PRODUCT_ID);
         $productMock->method('getName')->willReturn('Test Product');
         $productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
+        
+        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
+            ->willReturn($productMock);
 
         $quoteItem->method('getName')->willReturn('Test Product');
         $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
@@ -4725,7 +4734,8 @@ ORDER
           $productMock->method('getId')->willReturn(self::PRODUCT_ID);
           $productMock->method('getName')->willReturn('Test Product');
           $productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
-
+          $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
+            ->willReturn($productMock);
           $quoteItem->method('getName')->willReturn('Test Product');
           $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
           $quoteItem->method('getQty')->willReturn(1);
