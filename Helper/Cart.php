@@ -641,10 +641,10 @@ class Cart extends AbstractHelper
     }
 
     /**
-     * @param $immutableQuote
+     * @param Quote $immutableQuote
      * @return string
      */
-    private function convertExternalFieldsToCacheIdentifier($immutableQuote)
+    protected function convertExternalFieldsToCacheIdentifier($immutableQuote)
     {
         $cacheIdentifier = "";
         // add gift message id into cart cache identifier
@@ -666,6 +666,8 @@ class Cart extends AbstractHelper
                 }
             }
         }
+
+        $cacheIdentifier .= $immutableQuote->getCustomerGroupId();
 
         return $cacheIdentifier;
     }
