@@ -3,12 +3,12 @@
 namespace Bolt\Boltpay\Test\Unit;
 
 use PHPUnit\Framework\Constraint\IsType;
+use PHPUnit\Framework\Constraint\StringContains;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Runner\Version as PHPUnitVersion;
 use ReflectionException;
 use ReflectionObject;
 use ReflectionProperty;
-use PHPUnit\Framework\Constraint\StringContains;
 
 if (PHPUnitVersion::id() < 9) {
     class BoltTestCase extends TestCase
@@ -42,7 +42,6 @@ if (PHPUnitVersion::id() < 9) {
         public static function assertMatchesRegularExpression(string $pattern, string $string, string $message = '')
         {
             static::assertRegExp($pattern, $string, $message);
-
         }
 
         /**
