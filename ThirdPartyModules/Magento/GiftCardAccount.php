@@ -159,7 +159,7 @@ class GiftCardAccount
      */
     public function loadGiftcard($result, $magentoGiftCardAccount, $couponCode, $quote)
     {
-        if (!empty($result)) {
+        if ($result !== null) {
             return $result;
         }
         
@@ -175,8 +175,7 @@ class GiftCardAccount
    
             return (!$giftCard->isEmpty() && $giftCard->isValid()) ? $giftCard : null;
         } catch (\Exception $e) {
-            $this->bugsnagHelper->notifyException($e);
-            return null;
+            return $e;
         }
     }
     
