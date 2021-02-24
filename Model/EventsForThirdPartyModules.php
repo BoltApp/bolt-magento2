@@ -34,6 +34,7 @@ use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Rewards as Mirasvit_Rewards;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\StoreCredit as Amasty_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\Magento\GiftCardAccount as Magento_GiftCardAccount;
 use Bolt\Boltpay\ThirdPartyModules\Magento\SalesRuleStaging as Magento_SalesRuleStaging;
+use Bolt\Boltpay\ThirdPartyModules\Zonos\DutyTax as Zonos_DutyTax;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -267,6 +268,24 @@ class EventsForThirdPartyModules
                     "boltClass"   => IDme_GroupVerification::class,
                 ],
             ],
+        ],
+        "beforeOrderDeleteRedundantQuotes" => [
+            "listeners" => [
+                [
+                    "module" => "Zonos_DutyTax",
+                    "checkClasses" => ["Zonos\DutyTax\Model\ResourceModel\ZonosShippingQuotesResourceModel"],
+                    "boltClass" => Zonos_DutyTax::class,
+                ],
+            ]
+        ],
+        "beforeCartDeleteQuote" => [
+            "listeners" => [
+                [
+                    "module" => "Zonos_DutyTax",
+                    "checkClasses" => ["Zonos\DutyTax\Model\ResourceModel\ZonosShippingQuotesResourceModel"],
+                    "boltClass" => Zonos_DutyTax::class,
+                ],
+            ]
         ],
     ];
 
