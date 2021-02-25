@@ -40,6 +40,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class UpdateCartCommon
@@ -132,6 +133,11 @@ abstract class UpdateCartCommon
      * @var ProductRepositoryInterface
      */
     protected $productRepository;
+    
+    /**
+     * @var Decider
+     */
+    protected $featureSwitches;
 
     /**
      * UpdateCartCommon constructor.
@@ -159,6 +165,7 @@ abstract class UpdateCartCommon
         $this->cartRepository = $updateCartContext->getCartRepositoryInterface();
         $this->sessionHelper = $updateCartContext->getSessionHelper();
         $this->productRepository = $updateCartContext->getProductRepositoryInterface();
+        $this->featureSwitches = $updateCartContext->getFeatureSwitches();
     }
 
     /**
@@ -315,17 +322,23 @@ abstract class UpdateCartCommon
         foreach ($items as $item) {
             $product = [];
             
-            $itemProduct = $item->getProduct();
-            $customizableOptions = $this->cartHelper->getProductCustomizableOptions($itemProduct);
-            $itemSku = trim($item->getSku());
-
-            if ($customizableOptions) {
-                $itemSku = $this->cartHelper->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
+            //By default this feature switch is enabled.
+            if ($this->featureSwitches->isCustomizableOptionsSupport()) {
+                $itemProduct = $item->getProduct();
+                $customizableOptions = $this->cartHelper->getProductCustomizableOptions($itemProduct);
+                $itemSku = trim($item->getSku());
+    
+                if ($customizableOptions) {
+                    $itemSku = $this->cartHelper->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
+                }
+                
+                $_product = $this->productRepository->get($itemSku);
+                $itemReference = $_product->getId();
+            } else {
+                $itemReference = $item->getProductId();                     
             }
-            
-            $_product = $this->productRepository->get($itemSku);         
 
-            $product['reference']    = $_product->getId();
+            $product['reference']    = $itemReference;
             $product['quantity']     = round($item->getQty());
             $product['unit_price']   = $item->getCalculationPrice();
             $product['quote_item_id']= $item->getId();

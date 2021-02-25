@@ -41,6 +41,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class UpdateCartContext
@@ -168,6 +169,11 @@ class UpdateCartContext
      * @var CartRepositoryInterface
      */
     protected $cartRepositoryInterface;
+    
+    /**
+     * @var Decider
+     */
+    protected $featureSwitches;
 
     /**
      * UpdateCartContext constructor.
@@ -198,6 +204,7 @@ class UpdateCartContext
      * @param ProductRepositoryInterface  $productRepositoryInterface
      * @param StockStateInterface         $stockStateInterface
      * @param CartRepositoryInterface     $cartRepositoryInterface
+     * @param Decider                     $featureSwitches
      */
     public function __construct(
         Request                     $request,
@@ -223,7 +230,8 @@ class UpdateCartContext
         EventsForThirdPartyModules  $eventsForThirdPartyModules,
         ProductRepositoryInterface  $productRepositoryInterface,
         StockStateInterface         $stockStateInterface,
-        CartRepositoryInterface     $cartRepositoryInterface
+        CartRepositoryInterface     $cartRepositoryInterface,
+        Decider                     $featureSwitches
     ) {
         $this->request = $request;
         $this->response = $response;
@@ -250,6 +258,7 @@ class UpdateCartContext
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockStateInterface = $stockStateInterface;
         $this->cartRepositoryInterface = $cartRepositoryInterface;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
@@ -442,6 +451,14 @@ class UpdateCartContext
     public function getCartRepositoryInterface()
     {
         return $this->cartRepositoryInterface;
+    }
+    
+    /**
+     * @return Decider
+     */
+    public function getFeatureSwitches()
+    {
+        return $this->featureSwitches;
     }
     
 }

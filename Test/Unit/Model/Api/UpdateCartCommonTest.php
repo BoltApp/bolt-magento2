@@ -52,6 +52,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Magento\Framework\App\CacheInterface;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\Catalog\Model\Product;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class UpdateCartCommonTest
@@ -194,6 +195,11 @@ class UpdateCartCommonTest extends BoltTestCase
      * @var StockStateInterface
      */
     protected $stockStateInterface;
+    
+    /**
+     * @var Decider
+     */
+    protected $featureSwitches;
 
 
     protected function setUpInternal()
@@ -222,6 +228,7 @@ class UpdateCartCommonTest extends BoltTestCase
         $this->cartRepository = $this->createMock(CartRepository::class);
         $this->productRepositoryInterface = $this->createMock(ProductRepositoryInterface::class);
         $this->stockStateInterface = $this->createMock(StockStateInterface::class);
+        $this->featureSwitches = $this->createMock(Decider::class);
 
         $this->updateCartContext = $this->getMockBuilder(UpdateCartContext::class)
             ->setConstructorArgs(
@@ -250,7 +257,7 @@ class UpdateCartCommonTest extends BoltTestCase
                     $this->productRepositoryInterface,
                     $this->stockStateInterface,
                     $this->cartRepository,
-                    $this->sessionHelper
+                    $this->featureSwitches
                 ]
             )
             ->enableProxyingToOriginalMethods()
@@ -711,6 +718,8 @@ class UpdateCartCommonTest extends BoltTestCase
         $quoteItem->method('getProduct')->willReturn($productMock);
         
         $customizableOptions = ['customizableOptions'];
+        
+        $this->featureSwitches->expects(self::once())->method('isCustomizableOptionsSupport')->willReturn(true);
         
         $this->cartHelper->expects(self::once())->method('getProductCustomizableOptions')
             ->with($productMock)->willReturn($customizableOptions);

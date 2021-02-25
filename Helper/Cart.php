@@ -1360,18 +1360,52 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 // Load item product object
                 ////////////////////////////////////
-                $itemProduct = $item->getProduct();
-                $customizableOptions = $this->getProductCustomizableOptions($itemProduct);
+                //By default this feature switch is enabled.
+                $_product = $item->getProduct();
+                $customizableOptions = null;
                 $itemSku = trim($item->getSku());
+                $itemReference = $item->getProductId();
+                $itemName = $item->getName();
 
-                if ($customizableOptions) {
-                    $itemSku = $this->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
+                if ($this->deciderHelper->isCustomizableOptionsSupport()) {
+                    try {
+                        $customizableOptions = $this->getProductCustomizableOptions($_product);                        
+                        if ($customizableOptions) {
+                            $itemSku = $this->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
+                        }
+                    } catch (\Exception $e) {
+                        $this->bugsnag->registerCallback(function ($report) use ($item) {
+                            $report->setMetaData([
+                                'product_id' => $item->getProductId(),
+                                'product_name' => $item->getName(),
+                                'product_sku' => $item->getSku()
+                            ]);
+                        });
+
+                        $this->bugsnag->notifyError('Could not retrieve product customizable options', $e->getMessage());
+                        $customizableOptions = null;
+                    }
                 }
                 
-                $_product = $this->productRepository->get($itemSku);
+                try {
+                    if ($customizableOptions || $item->getProductType() == \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE) {
+                        $_product = $this->productRepository->get($itemSku);
+                        $itemReference = $_product->getId();
+                        $itemName = $_product->getName();
+                    }    
+                } catch (\Exception $e) {
+                    $this->bugsnag->registerCallback(function ($report) use ($item) {
+                        $report->setMetaData([
+                            'product_id' => $item->getProductId(),
+                            'product_name' => $item->getName(),
+                            'product_sku' => $item->getSku()
+                        ]);
+                    });
+                    $this->bugsnag->notifyError('Could not retrieve product by sku', $e->getMessage());
+                }
 
-                $product['reference']    = $_product->getId();
-                $product['name']         = $_product->getName();
+                $product['reference']    = $itemReference;
+                $product['name']         = $itemName;
                 $product['total_amount'] = $roundedTotalAmount;
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = round($item->getQty());
@@ -1410,7 +1444,8 @@ class Cart extends AbstractHelper
                     }
                 }
                 
-                if ($customizableOptions) {
+                //By default this feature switch is enabled.
+                if ($this->deciderHelper->isCustomizableOptionsSupport() && !empty($customizableOptions)) {
                     foreach ($customizableOptions as $customizableOption) {
                         $properties[] = (object) [
                             'name' => $customizableOption['title'],
