@@ -205,7 +205,7 @@ class AutomatedTestingTest extends BoltTestCase
     public function getAutomatedTestingConfig_noShippingMethodsFound_returnsErrorString()
     {
         $product = $this->createMock(Product::class);
-        $this->currentMock->expects(static::exactly(2))->method('getProduct')->withConsecutive(['simple'], ['virtual'])->willReturn($product);
+        $this->currentMock->expects(static::exactly(2))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
         $this->currentMock->expects(static::exactly(2))->method('convertToStoreItem')->willReturn(null);
         $quote = $this->createMock(Quote::class);
         $this->currentMock->expects(static::once())->method('createQuoteWithItem')->willReturn($quote);
@@ -222,7 +222,7 @@ class AutomatedTestingTest extends BoltTestCase
     public function getAutomatedTestingConfig_noErrors_returnsSimpleAndVirtualProducts()
     {
         $product = $this->createMock(Product::class);
-        $this->currentMock->expects(static::exactly(2))->method('getProduct')->withConsecutive(['simple'], ['virtual'])->willReturn($product);
+        $this->currentMock->expects(static::exactly(2))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
         $storeItem = $this->createMock(StoreItem::class);
         $this->currentMock->expects(static::exactly(2))->method('convertToStoreItem')->willReturn($storeItem);
         $address = $this->createMock(Address::class);
@@ -260,7 +260,7 @@ class AutomatedTestingTest extends BoltTestCase
     public function getAutomatedTestingConfig_noErrorsButNoVirtualProducts_returnsOnlySimpleProduct()
     {
         $product = $this->createMock(Product::class);
-        $this->currentMock->expects(static::exactly(2))->method('getProduct')->withConsecutive(['simple'], ['virtual'])->willReturn($product);
+        $this->currentMock->expects(static::exactly(2))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
         $storeItem = $this->createMock(StoreItem::class);
         $this->currentMock->expects(static::exactly(2))->method('convertToStoreItem')->willReturnOnConsecutiveCalls($storeItem, null);
         $address = $this->createMock(Address::class);
