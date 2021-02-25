@@ -3,23 +3,16 @@
 namespace Bolt\Boltpay\Test\Unit;
 
 use PHPUnit\Framework\Constraint\IsType;
+use PHPUnit\Framework\Constraint\StringContains;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Runner\Version as PHPUnitVersion;
 use ReflectionException;
 use ReflectionObject;
 use ReflectionProperty;
-use PHPUnit\Framework\Constraint\StringContains;
 
 if (PHPUnitVersion::id() < 9) {
     class BoltTestCase extends TestCase
     {
-        protected function skipTestInUnitTestsFlow()
-        {
-            if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
-                $this->markTestSkipped('Skip integration test in unit test flow');
-            }
-        }
-
         protected function setUp()
         {
             $this->setUpInternal();
@@ -42,7 +35,6 @@ if (PHPUnitVersion::id() < 9) {
         public static function assertMatchesRegularExpression(string $pattern, string $string, string $message = '')
         {
             static::assertRegExp($pattern, $string, $message);
-
         }
 
         /**
@@ -58,13 +50,6 @@ if (PHPUnitVersion::id() < 9) {
 } else {
     class BoltTestCase extends TestCase
     {
-        protected function skipTestInUnitTestsFlow()
-        {
-            if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
-                $this->markTestSkipped('Skip integration test in unit test flow');
-            }
-        }
-
         protected function setUp(): void
         {
             $this->setUpInternal();

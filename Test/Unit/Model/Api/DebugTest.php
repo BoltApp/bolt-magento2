@@ -20,18 +20,16 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 use Bolt\Boltpay\Helper\Hook;
 use Bolt\Boltpay\Model\Api\Debug;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Framework\Webapi\Rest\Response;
-use Magento\TestFramework\Helper\Bootstrap;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\Store\Model\ScopeInterface;
-use Magento\Store\Api\WebsiteRepositoryInterface;
-use Magento\Framework\Encryption\EncryptorInterface;
-use Magento\Framework\Webapi\Rest\Request;
-use Bolt\Boltpay\Test\Unit\TestUtils;
 use Bolt\Boltpay\Test\Unit\TestHelper;
-use Bolt\Boltpay\Model\ResponseFactory as BoltResponseFactory;
-use Bolt\Boltpay\Model\RequestFactory as BoltRequestFactory;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\Framework\Encryption\EncryptorInterface;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Framework\Webapi\Rest\Request;
+use Magento\Framework\Webapi\Rest\Response;
+use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class CreateOrderTest
@@ -61,16 +59,18 @@ class DebugTest extends BoltTestCase
     private $objectManager;
 
     /**
-     * @var
+     * @var int
      */
     private $websiteId;
 
     /**
-     * @var ScopeInterface
+     * @var int
      */
     private $storeId;
 
-    /** @var Request */
+    /**
+     * @var Request
+     */
     private $request;
 
     /**
@@ -98,21 +98,21 @@ class DebugTest extends BoltTestCase
 
         $configData = [
             [
-                'path' => 'payment/boltpay/signing_secret',
-                'value' => $secret,
-                'scope' => ScopeInterface::SCOPE_STORE,
+                'path'    => 'payment/boltpay/signing_secret',
+                'value'   => $secret,
+                'scope'   => ScopeInterface::SCOPE_STORE,
                 'scopeId' => $this->storeId,
             ],
             [
-                'path' => 'payment/boltpay/api_key',
-                'value' => $apikey,
-                'scope' => ScopeInterface::SCOPE_STORE,
+                'path'    => 'payment/boltpay/api_key',
+                'value'   => $apikey,
+                'scope'   => ScopeInterface::SCOPE_STORE,
                 'scopeId' => $this->storeId,
             ],
             [
-                'path' => 'payment/boltpay/active',
-                'value' => 1,
-                'scope' => ScopeInterface::SCOPE_STORE,
+                'path'    => 'payment/boltpay/active',
+                'value'   => 1,
+                'scope'   => ScopeInterface::SCOPE_STORE,
                 'scopeId' => $this->storeId,
             ],
         ];
@@ -166,7 +166,6 @@ class DebugTest extends BoltTestCase
 
         $this->objectManager->removeSharedInstance(Request::class);
         $this->request = null;
-
     }
 
     public function resetResponse()
@@ -181,11 +180,11 @@ class DebugTest extends BoltTestCase
 
     /**
      * @test
+     *
      * @covers ::debug
      */
     public function debug_successful()
     {
-        $this->skipTestInUnitTestsFlow();
         $this->createRequest([]);
         $hookHelper = $this->objectManager->create(Hook::class);
 
