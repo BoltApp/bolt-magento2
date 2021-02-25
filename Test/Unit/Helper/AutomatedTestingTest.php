@@ -205,8 +205,8 @@ class AutomatedTestingTest extends BoltTestCase
     public function getAutomatedTestingConfig_noShippingMethodsFound_returnsErrorString()
     {
         $product = $this->createMock(Product::class);
-        $this->currentMock->expects(static::exactly(2))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
-        $this->currentMock->expects(static::exactly(2))->method('convertToStoreItem')->willReturn(null);
+        $this->currentMock->expects(static::exactly(3))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
+        $this->currentMock->expects(static::exactly(3))->method('convertToStoreItem')->willReturn(null);
         $quote = $this->createMock(Quote::class);
         $this->currentMock->expects(static::once())->method('createQuoteWithItem')->willReturn($quote);
         $this->currentMock->expects(static::once())->method('getShippingMethods')->willReturn([]);
@@ -222,9 +222,9 @@ class AutomatedTestingTest extends BoltTestCase
     public function getAutomatedTestingConfig_noErrors_returnsSimpleAndVirtualProducts()
     {
         $product = $this->createMock(Product::class);
-        $this->currentMock->expects(static::exactly(2))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
+        $this->currentMock->expects(static::exactly(3))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
         $storeItem = $this->createMock(StoreItem::class);
-        $this->currentMock->expects(static::exactly(2))->method('convertToStoreItem')->willReturn($storeItem);
+        $this->currentMock->expects(static::exactly(3))->method('convertToStoreItem')->willReturn($storeItem);
         $address = $this->createMock(Address::class);
         $quote = $this->createMock(Quote::class);
         $quote->expects(static::any())->method('getShippingAddress')->willReturn($address);
@@ -260,9 +260,9 @@ class AutomatedTestingTest extends BoltTestCase
     public function getAutomatedTestingConfig_noErrorsButNoVirtualProducts_returnsOnlySimpleProduct()
     {
         $product = $this->createMock(Product::class);
-        $this->currentMock->expects(static::exactly(2))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
+        $this->currentMock->expects(static::exactly(3))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
         $storeItem = $this->createMock(StoreItem::class);
-        $this->currentMock->expects(static::exactly(2))->method('convertToStoreItem')->willReturnOnConsecutiveCalls($storeItem, null);
+        $this->currentMock->expects(static::exactly(3))->method('convertToStoreItem')->willReturnOnConsecutiveCalls($storeItem, null);
         $address = $this->createMock(Address::class);
         $quote = $this->createMock(Quote::class);
         $quote->expects(static::any())->method('getShippingAddress')->willReturn($address);
