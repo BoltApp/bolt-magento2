@@ -219,7 +219,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
-    public function getAutomatedTestingConfig_noErrors_returnsSimpleAndVirtualProducts()
+    public function getAutomatedTestingConfig_noErrors_returnsSimpleVirtualAndSaleProducts()
     {
         $product = $this->createMock(Product::class);
         $this->currentMock->expects(static::exactly(3))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
@@ -246,7 +246,7 @@ class AutomatedTestingTest extends BoltTestCase
         $config = $this->createMock(AutomatedTestingConfig::class);
         $config->expects(static::once())->method('setStoreItems')->with(static::callback(
             function ($cartItems) {
-                return count($cartItems) === 2;
+                return count($cartItems) === 3;
             }
         ))->willReturnSelf();
         $config->expects(static::once())->method('setCart')->willReturnSelf();
@@ -262,7 +262,7 @@ class AutomatedTestingTest extends BoltTestCase
         $product = $this->createMock(Product::class);
         $this->currentMock->expects(static::exactly(3))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
         $storeItem = $this->createMock(StoreItem::class);
-        $this->currentMock->expects(static::exactly(3))->method('convertToStoreItem')->willReturnOnConsecutiveCalls($storeItem, null);
+        $this->currentMock->expects(static::exactly(3))->method('convertToStoreItem')->willReturnOnConsecutiveCalls($storeItem, null, null);
         $address = $this->createMock(Address::class);
         $quote = $this->createMock(Quote::class);
         $quote->expects(static::any())->method('getShippingAddress')->willReturn($address);
