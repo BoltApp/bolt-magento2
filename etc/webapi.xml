@@ -35,7 +35,7 @@
     </route>
     <!-- Order Update hook -->
     <route url="/V1/bolt/boltpay/order/manage" method="POST">
-        <service class="Bolt\Boltpay\Api\OrderManagementInterface" method="manage"/>
+        <service class="Bolt\Boltpay\Api\OldApiInterface" method="manage"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
@@ -91,7 +91,7 @@
     </route>
     <!--Update Cart Endpoint-->
     <route url="/V1/bolt/boltpay/cart/update" method="POST">
-        <service class="Bolt\Boltpay\Api\UpdateCartInterface" method="execute"/>
+        <service class="Bolt\Boltpay\Api\OldApiInterface" method="updateCart"/>
         <resources>
             <resource ref="anonymous" />
         </resources>

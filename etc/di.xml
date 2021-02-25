@@ -40,6 +40,9 @@
     <preference for="Bolt\Boltpay\Api\UniversalWebhookInterface" type="Bolt\Boltpay\Model\Api\UniversalWebhook" />
     <preference for="Bolt\Boltpay\Api\Data\UniversalWebhookResultInterface" type="Bolt\Boltpay\Model\Api\Data\UniversalWebhookResult" />
 
+    <!-- For refactored V1 handlers -->
+    <preference for="Bolt\Boltpay\Api\OldApiInterface" type="Bolt\Boltpay\Model\Api\OldApi" />
+
     <!-- For rest api hook integration -->
     <preference for="Bolt\Boltpay\Api\OrderManagementInterface" type="Bolt\Boltpay\Model\Api\OrderManagement" />
     <preference for="Bolt\Boltpay\Api\CreateOrderInterface" type="Bolt\Boltpay\Model\Api\CreateOrder" />
