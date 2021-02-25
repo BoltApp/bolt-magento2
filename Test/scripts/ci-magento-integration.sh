@@ -19,10 +19,8 @@ mkdir -p project
 cp magento/app/code/Bolt/Boltpay/composer.json project/composer.json
 cp magento/app/code/Bolt/Boltpay/Test/Unit/integration_phpunit.xml magento/dev/tests/integration/bolt_phpunit.xml
 
-
 echo "Creating DB for integration tests"
 mysql -uroot -h 127.0.0.1 -e 'CREATE DATABASE magento_integration_tests;'
-
 
 cd magento/dev/tests/integration/
 cp etc/install-config-mysql.php.dist etc/install-config-mysql.php
@@ -32,6 +30,7 @@ sed -i '/amqp/d' etc/install-config-mysql.php
 
 sudo chmod -R 777 ../../..
 cd ../../../..
+ls magento/dev/tests/integration
 
 echo "Starting Bolt Integration Tests"
 XDEBUG_MODE=coverage php magento/vendor/phpunit/phpunit/phpunit -d memory_limit=5G --verbose -c magento/dev/tests/integration/bolt_phpunit.xml --coverage-clover=./artifacts/coverage.xml
