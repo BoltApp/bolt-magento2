@@ -31,8 +31,7 @@ sed -i 's/123123q//g' etc/install-config-mysql.php
 sed -i '/amqp/d' etc/install-config-mysql.php
 
 sudo chmod -R 777 ../../..
-cd ../../../..
 
 echo "Starting Bolt Integration Tests"
-magento/vendor/bin/phpunit -d memory_limit=5G --verbose -c magento/dev/tests/integration/bolt_phpunit.xml --coverage-clover=./artifacts/coverage.xml
+../../../vendor/bin/phpunit -d memory_limit=5G --verbose -c bolt_phpunit.xml --coverage-clover=./artifacts/coverage.xml
 bash <(curl -s https://bolt-devops.s3-us-west-2.amazonaws.com/testing/codecov_uploader) -f ./artifacts/coverage.xml -F $TEST_ENV
