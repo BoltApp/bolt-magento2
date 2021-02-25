@@ -1363,16 +1363,17 @@ class Cart extends AbstractHelper
                 //By default this feature switch is enabled.
                 $_product = $item->getProduct();
                 $customizableOptions = null;
+                $itemSku = trim($item->getSku());
+                $itemReference = $item->getProductId();
+                $itemName = $item->getName();
+
                 if ($this->deciderHelper->isCustomizableOptionsSupport()) {
                     try {
-                        $customizableOptions = $this->getProductCustomizableOptions($_product);
-                        $itemSku = trim($item->getSku());
+
+                        $customizableOptions = $this->getProductCustomizableOptions($_product);                        
                         if ($customizableOptions) {
-                            $itemSku = $this->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);    
+                            $itemSku = $this->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
                         }
-                        $_product = $this->productRepository->get($itemSku);
-                        $itemReference = $_product->getId();
-                        $itemName = $_product->getName();
                     } catch (\Exception $e) {
                         $this->bugsnag->registerCallback(function ($report) use ($item) {
                             $report->setMetaData([
@@ -1381,13 +1382,27 @@ class Cart extends AbstractHelper
                                 'product_sku' => $item->getSku()
                             ]);
                         });
-                        $this->bugsnag->notifyError('Could not retrieve product', $e->getMessage());
+
+                        $this->bugsnag->notifyError('Could not retrieve product customizable options', $e->getMessage());
                         $customizableOptions = null;
                     }
                 }
-                if (empty($customizableOptions)) {
-                    $itemReference = $item->getProductId();
-                    $itemName = $item->getName();
+                
+                try {
+                    if ($customizableOptions || $item->getProductType() == \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE) {
+                        $_product = $this->productRepository->get($itemSku);
+                        $itemReference = $_product->getId();
+                        $itemName = $_product->getName();
+                    }    
+                } catch (\Exception $e) {
+                    $this->bugsnag->registerCallback(function ($report) use ($item) {
+                        $report->setMetaData([
+                            'product_id' => $item->getProductId(),
+                            'product_name' => $item->getName(),
+                            'product_sku' => $item->getSku()
+                        ]);
+                    });
+                    $this->bugsnag->notifyError('Could not retrieve product by sku', $e->getMessage());
                 }
 
                 $product['reference']    = $itemReference;
