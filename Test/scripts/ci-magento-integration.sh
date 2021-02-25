@@ -31,6 +31,5 @@ sed -i '/amqp/d' etc/install-config-mysql.php
 sudo chmod -R 777 ../../..
 
 echo "Starting Bolt Integration Tests"
-XDEBUG_MODE=coverage php ../../../vendor/bin/phpunit -d memory_limit=5G --verbose -c bolt_phpunit.xml --coverage-clover=coverage.xml
-cat coverage.xml
-bash <(curl -s https://bolt-devops.s3-us-west-2.amazonaws.com/testing/codecov_uploader) -f coverage.xml -F $TEST_ENV
+XDEBUG_MODE=coverage ../../../vendor/bin/phpunit -d memory_limit=5G --verbose -c bolt_phpunit.xml --coverage-clover=../../../../artifacts/coverage.xml
+bash <(curl -s https://bolt-devops.s3-us-west-2.amazonaws.com/testing/codecov_uploader) -f ../../../../artifacts/coverage.xml -F $TEST_ENV
