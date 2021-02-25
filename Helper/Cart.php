@@ -1121,6 +1121,12 @@ class Cart extends AbstractHelper
 
             $child->setData($key, $value);
         }
+        
+        // Update the property Quote::KEY_ITEMS with proper items.
+        if ($child instanceof \Magento\Quote\Model\Quote) {
+            $child->setItems($child->getAllVisibleItems());
+        }
+        
         if ($save) {
             $child->save();
         }
