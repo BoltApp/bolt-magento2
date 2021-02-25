@@ -298,4 +298,9 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_ENABLE_BOLT_SSO);
     }
+    
+    public function isCustomizableOptionsSupport()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_CUSTOMIZABLE_OPTIONS_SUPPORT);
+    }
 }

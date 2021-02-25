@@ -447,7 +447,7 @@ class CartTest extends BoltTestCase
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer']);
         $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(Serialize::class);
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class,
-            ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical', 'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata']);
+            ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical', 'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata', 'isCustomizableOptionsSupport']);
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
         $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
@@ -1085,7 +1085,6 @@ class CartTest extends BoltTestCase
      */
     public function saveToCache_whenSerializeParameterIsTrue_savesSerializedDataToCache()
     {
-        $this->skipTestInUnitTestsFlow();
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $testCartData = $this->getTestCartData();
         TestHelper::invokeMethod(
@@ -4438,9 +4437,6 @@ ORDER
         $this->productMock->method('getDescription')->willReturn('Product Description');
         $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
 
-        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
-            ->willReturn($this->productMock);
-
         $quoteItemMock = $this->getQuoteItemMock();
         $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItemMock]);
         $this->quoteMock->method('getQuoteCurrencyCode')->willReturn(self::CURRENCY_CODE);
@@ -4449,6 +4445,8 @@ ORDER
 
         $this->imageHelper->method('init')->willReturnSelf();
         $this->imageHelper->method('getUrl')->willReturn('no-image');
+        
+        $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
 
         list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
             $this->quoteMock,
@@ -4517,6 +4515,8 @@ ORDER
         $this->configHelper->method('getProductAttributesList')->willReturn([$attributeName]);
 
         $this->productRepository->method('get')->with(self::PRODUCT_SKU)->willReturn($this->productMock);
+        
+        $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
 
         list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
             $this->quoteMock,
@@ -4561,8 +4561,6 @@ ORDER
         $productMock->method('getName')->willReturn('Test Product');
         $productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
 
-        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
-            ->willReturn($productMock);
         $quoteItem->method('getName')->willReturn('Test Product');
         $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
         $quoteItem->method('getQty')->willReturn(1);
@@ -4571,6 +4569,8 @@ ORDER
         $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
         $quoteItem->method('getProduct')->willReturn($productMock);
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
+        
+        $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
 
         $this->imageHelper->method('init')
             ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
@@ -4640,6 +4640,7 @@ ORDER
     public function getCartItems_withFeatureSwitchHandleVirtualProductsAsPhysical_returnPhysicalCart()
     {
         $this->deciderHelper->expects(self::once())->method('handleVirtualProductsAsPhysical')->willReturn(true);
+        $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
         $quoteItem = $this->createPartialMock(
             Item::class,
             [
@@ -4657,8 +4658,6 @@ ORDER
         $productMock->method('getName')->willReturn('Test Product');
         $productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
 
-        $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
-            ->willReturn($productMock);
         $quoteItem->method('getName')->willReturn('Test Product');
         $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
         $quoteItem->method('getQty')->willReturn(1);
@@ -4706,6 +4705,7 @@ ORDER
        */
       public function getCartItems_withGiftWrapping()
       {
+          $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
           $this->appEmulation->expects(static::once())->method('startEnvironmentEmulation')
               ->with(self::STORE_ID, \Magento\Framework\App\Area::AREA_FRONTEND, true);
           $quoteItem = $this->createPartialMock(
@@ -4724,8 +4724,7 @@ ORDER
           $productMock->method('getId')->willReturn(self::PRODUCT_ID);
           $productMock->method('getName')->willReturn('Test Product');
           $productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
-          $this->productRepository->expects(static::once())->method('get')->with(self::PRODUCT_SKU)
-            ->willReturn($productMock);
+
           $quoteItem->method('getName')->willReturn('Test Product');
           $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
           $quoteItem->method('getQty')->willReturn(1);
@@ -5873,7 +5872,6 @@ ORDER
         */
         public function getHints_whenCheckoutTypeIsAdmin_setsVirtualTerminalModeToTrue()
         {
-        $this->skipTestInUnitTestsFlow();
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $result = $cartHelper->getHints(null, 'admin');
         static::assertTrue($result['virtual_terminal_mode']);
@@ -6133,7 +6131,6 @@ ORDER
         */
         public function getHints_withNonProductCheckoutTypeAndVirtualQuote_returnsHintsForQuoteBillingAddress()
         {
-            $this->skipTestInUnitTestsFlow();
             $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
             $quoteId = $quote->getId();
@@ -6172,7 +6169,6 @@ ORDER
         */
         public function getHints_withNonProductCheckoutTypeAndNonVirtualQuote_returnsHintsForQuoteShippingAddress()
         {
-            $this->skipTestInUnitTestsFlow();
             $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
             $quoteId = $quote->getId();
@@ -6208,7 +6204,6 @@ ORDER
         */
         public function getHints_withApplePayRelatedDataPhone_skipsPreFill()
         {
-            $this->skipTestInUnitTestsFlow();
             $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
             $testAddressData = [
@@ -6242,7 +6237,6 @@ ORDER
         */
         public function getHints_withApplePayRelatedDataEmail_skipsPreFill()
         {
-            $this->skipTestInUnitTestsFlow();
             $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
             $testAddressData = [
@@ -6276,7 +6270,6 @@ ORDER
         */
         public function getHints_withApplePayRelatedDataAddressLine_skipsPreFill()
         {
-            $this->skipTestInUnitTestsFlow();
             $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
             $testAddressData = [
@@ -6693,7 +6686,6 @@ ORDER
      */
     public function getCustomerByEmail_withExistingCustomerEmail_returnsCustomerModel()
     {
-        $this->skipTestInUnitTestsFlow();
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
 
         $store = Bootstrap::getObjectManager()->get(\Magento\Store\Model\StoreManagerInterface::class);
@@ -6733,7 +6725,6 @@ ORDER
      */
     public function getCustomerByEmail_withExceptionOnGettingTheCustomer_returnsFalse()
     {
-        $this->skipTestInUnitTestsFlow();
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         static::assertFalse(
             $cartHelper->getCustomerByEmail('test@gmail.com', self::WEBSITE_ID)

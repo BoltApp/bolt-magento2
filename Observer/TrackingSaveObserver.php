@@ -110,6 +110,22 @@ class TrackingSaveObserver implements ObserverInterface
     }
 
     /**
+     * @param $attribute
+     * @return mixed|null
+     */
+    private function flatten($attribute) {
+        if (is_object($attribute)) {
+            $flattend = get_object_vars($attribute);
+            if (count($flattend) == 1) {
+                return $flattend[0];
+            } else {
+                return null;
+            }
+        }
+        return $attribute;
+    }
+
+    /**
      * @param Observer $observer
      */
     public function execute(Observer $observer)
@@ -174,10 +190,36 @@ class TrackingSaveObserver implements ObserverInterface
 
             $apiKey = $this->configHelper->getApiKey($order->getStoreId());
 
+            $trackNumber = $this->flatten($tracking->getTrackNumber());
+            if ($trackNumber === null) {
+                $this->bugsnag->notifyError("Ill formatted track number",
+                    \sprintf("track number: %s", var_export($tracking->getTrackNumber(), true)));
+                $this->metricsClient->processMetric(
+                    "tracking_creation.failure",
+                    1,
+                    "tracking_creation.latency",
+                    $startTime
+                );
+                return;
+            }
+
+            $carrierCode = $this->flatten($tracking->getCarrierCode());
+            if ($carrierCode === null) {
+                $this->bugsnag->notifyError("Ill formatted carrier code",
+                    \sprintf("carrier code: %s", var_export($tracking->getCarrierCode(), true)));
+                $this->metricsClient->processMetric(
+                    "tracking_creation.failure",
+                    1,
+                    "tracking_creation.latency",
+                    $startTime
+                );
+                return;
+            }
+
             $trackingData = [
                 'transaction_reference' => $transactionReference,
-                'tracking_number'       => $tracking->getTrackNumber(),
-                'carrier'               => $tracking->getCarrierCode(),
+                'tracking_number'       => $trackNumber,
+                'carrier'               => $carrierCode,
                 'items'                 => $items,
                 'is_non_bolt_order'     => $isNonBoltOrder,
                 'tracking_entity_id'    => $tracking->getId(),

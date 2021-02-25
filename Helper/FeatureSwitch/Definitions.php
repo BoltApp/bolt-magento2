@@ -156,6 +156,11 @@ class Definitions
      * Enable Bolt SSO
      */
     const M2_ENABLE_BOLT_SSO = 'M2_ENABLE_BOLT_SSO';
+    
+    /**
+     * Support Customizable Options
+     */
+    const M2_CUSTOMIZABLE_OPTIONS_SUPPORT = 'M2_CUSTOMIZABLE_OPTIONS_SUPPORT';
 
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
@@ -301,6 +306,12 @@ class Definitions
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_CUSTOMIZABLE_OPTIONS_SUPPORT => [
+            self::NAME_KEY        => self::M2_CUSTOMIZABLE_OPTIONS_SUPPORT,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
         ]
     ];
 }

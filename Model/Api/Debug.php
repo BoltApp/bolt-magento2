@@ -21,6 +21,7 @@ use Bolt\Boltpay\Api\DebugInterface;
 use Bolt\Boltpay\Helper\AutomatedTesting as AutomatedTestingHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\LogRetriever;
 use Bolt\Boltpay\Helper\ModuleRetriever;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
@@ -76,6 +77,11 @@ class Debug implements DebugInterface
     private $automatedTestingHelper;
 
     /**
+     * @var LogHelper
+     */
+    private $logHelper;
+
+    /**
      * @param Response                 $response
      * @param DebugInfoFactory         $debugInfoFactory
      * @param StoreManagerInterface    $storeManager
@@ -85,6 +91,7 @@ class Debug implements DebugInterface
      * @param ModuleRetriever          $moduleRetriever
      * @param LogRetriever             $logRetriever
      * @param AutomatedTestingHelper   $automatedTestingHelper
+     * @param LogHelper                $logHelper
      */
     public function __construct(
         Response $response,
@@ -95,7 +102,8 @@ class Debug implements DebugInterface
         ConfigHelper $configHelper,
         ModuleRetriever $moduleRetriever,
         LogRetriever $logRetriever,
-        AutomatedTestingHelper $automatedTestingHelper
+        AutomatedTestingHelper $automatedTestingHelper,
+        LogHelper $logHelper
     ) {
         $this->response = $response;
         $this->debugInfoFactory = $debugInfoFactory;
@@ -106,6 +114,7 @@ class Debug implements DebugInterface
         $this->moduleRetriever = $moduleRetriever;
         $this->logRetriever = $logRetriever;
         $this->automatedTestingHelper = $automatedTestingHelper;
+        $this->logHelper = $logHelper;
     }
 
     /**
@@ -144,7 +153,12 @@ class Debug implements DebugInterface
         $result->setLogs($this->logRetriever->getLogs());
 
         # populate automated testing config
-        $result->setAutomatedTestingConfig($this->automatedTestingHelper->getAutomatedTestingConfig());
+        $automatedTestingConfig = $this->automatedTestingHelper->getAutomatedTestingConfig();
+        if (is_string($automatedTestingConfig)) {
+            $this->logHelper->addInfoLog('getAutomatedTestingConfig error: ' . $automatedTestingConfig);
+        } else {
+            $result->setAutomatedTestingConfig($automatedTestingConfig);
+        }
 
         // prepare response
         $this->response->setHeader('Content-Type', 'application/json');

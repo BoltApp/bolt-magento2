@@ -44,6 +44,7 @@ use Bolt\Boltpay\Model\Api\UpdateCartContext;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class UpdateCartContextTest
@@ -171,6 +172,11 @@ class UpdateCartContextTest extends BoltTestCase
      * @var CartRepositoryInterface
      */
     protected $cartRepositoryInterface;
+    
+    /**
+     * @var Decider
+     */
+    protected $featureSwitches;
 
     /**
      * @var UpdateCartContext|MockObject
@@ -203,6 +209,7 @@ class UpdateCartContextTest extends BoltTestCase
         $this->productRepositoryInterface = $this->createMock(ProductRepositoryInterface::class);
         $this->stockStateInterface = $this->createMock(StockStateInterface::class);
         $this->cartRepositoryInterface = $this->createMock(CartRepositoryInterface::class);
+        $this->featureSwitches = $this->createMock(Decider::class);
 
         $this->currentMock = $this->getMockBuilder(UpdateCartContext::class)
             ->setConstructorArgs(
@@ -230,7 +237,8 @@ class UpdateCartContextTest extends BoltTestCase
                     $this->eventsForThirdPartyModules,
                     $this->productRepositoryInterface,
                     $this->stockStateInterface,
-                    $this->cartRepositoryInterface
+                    $this->cartRepositoryInterface,
+                    $this->featureSwitches
                 ]
             )
             ->enableProxyingToOriginalMethods()
@@ -270,7 +278,8 @@ class UpdateCartContextTest extends BoltTestCase
             $this->eventsForThirdPartyModules,
             $this->productRepositoryInterface,
             $this->stockStateInterface,
-            $this->cartRepositoryInterface
+            $this->cartRepositoryInterface,
+            $this->featureSwitches
         );
         
         static::assertAttributeInstanceOf(Request::class, 'request', $instance);
@@ -297,6 +306,7 @@ class UpdateCartContextTest extends BoltTestCase
         static::assertAttributeInstanceOf(ProductRepositoryInterface::class, 'productRepositoryInterface', $instance);
         static::assertAttributeInstanceOf(StockStateInterface::class, 'stockStateInterface', $instance);
         static::assertAttributeInstanceOf(CartRepositoryInterface::class, 'cartRepositoryInterface', $instance);
+        static::assertAttributeInstanceOf(Decider::class, 'featureSwitches', $instance);
     }
 
     /**
