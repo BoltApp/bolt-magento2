@@ -17,16 +17,46 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
+use Bolt\Boltpay\Api\CreateOrderInterface;
+use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
 use Bolt\Boltpay\Api\OldApiInterface;
 use Bolt\Boltpay\Api\OrderManagementInterface;
+use Bolt\Boltpay\Api\ShippingInterface;
+use Bolt\Boltpay\Api\ShippingMethodsInterface;
+use Bolt\Boltpay\Api\TaxInterface;
 use Bolt\Boltpay\Api\UpdateCartInterface;
 
 class OldApi implements OldApiInterface
 {
     /**
+     * @var CreateOrderInterface
+     */
+    protected $createOrder;
+
+    /**
+     * @var DiscountCodeValidationInterface
+     */
+    protected $discountCodeValidation;
+
+    /**
      * @var OrderManagementInterface
      */
     protected $orderManagement;
+
+    /**
+     * @var ShippingInterface
+     */
+    protected $shipping;
+    
+    /**
+     * @var ShippingMethodsInterface
+     */
+    protected $shippingMethods;
+
+    /**
+     * @var TaxInterface
+     */
+    protected $tax;
 
     /**
      * @var UpdateCartInterface
@@ -34,21 +64,46 @@ class OldApi implements OldApiInterface
     protected $updateCart;
 
     /**
+     * @var CreateOrderInterface $createOrder
+     * @var DiscountCodeValidationInterface $discountCodeValidation
      * @var OrderManagementInterface $orderManagement
+     * @var ShippingInterface $shipping
+     * @var ShippingMethodsInterface $shippingMethods
+     * @var TaxInterface $tax
      * @var UpdateCartInterface $updateCart
      */
     public function __construct(
+        CreateOrderInterface $createOrder,
+        DiscountCodeValidationInterface $discountCodeValidation,
         OrderManagementInterface $orderManagement,
+        ShippingInterface $shipping,
+        ShippingMethodsInterface $shippingMethods,
+        TaxInterface $tax,
         UpdateCartInterface $updateCart
     )
     {
+        $this->createOrder = $createOrder;
+        $this->discountCodeValidation = $discountCodeValidation;
         $this->orderManagement = $orderManagement;
+        $this->shippingInterface = $shipping;
+        $this->shippingMethods = $shippingMethods;
+        $this->tax = $tax;
         $this->updateCart = $updateCart;
     }
 
     /**
      * @api
-     * 
+     * @param mixed $id
+     * @param mixed $reference
+     * @param mixed $order
+     * @param mixed $type
+     * @param mixed $amount
+     * @param mixed $currency
+     * @param mixed $status
+     * @param mixed $display_id
+     * @param mixed $immutable_quote_id
+     * @param mixed $source_transaction_id
+     * @param mixed $source_transaction_reference
      * @return void
      */
     public function manage(
@@ -64,7 +119,7 @@ class OldApi implements OldApiInterface
         $source_transaction_reference = null
     )
     {
-        $this->orderManagement->manage(
+        return $this->orderManagement->manage(
             $id,
             $reference,
             $order,
@@ -80,8 +135,12 @@ class OldApi implements OldApiInterface
 
     /**
      * @api
-     * 
-     * @return \Bolt\Boltpay\Api\Data\UpdateCartResultInterface
+     * @param mixed $cart
+     * @param mixed $add_items
+     * @param mixed $remove_items
+     * @param mixed $discount_codes_to_add
+     * @param mixed $discount_codes_to_remove
+     * @return void
      */
     public function updateCart(
         $cart,
@@ -97,6 +156,88 @@ class OldApi implements OldApiInterface
             $remove_items,
             $discount_codes_to_add,
             $discount_codes_to_remove
+        );
+    }
+
+    /**
+     * @api
+     * @param mixed $cart cart details
+     * @param mixed $shipping_address shipping address
+     * @return \Bolt\Boltpay\Api\Data\ShippingOptionsInterface
+     */
+    public function getShippingMethods($cart, $shipping_address)
+    {
+        return $this->shippingMethods->getShippingMethods(
+            $cart,
+            $shipping_address
+        );
+    }
+
+    /**
+     * @api
+     * 
+     * Shipping hook
+     * @param mixed $cart cart details
+     * @param mixed $shipping_address shipping address
+     * @return \Bolt\Boltpay\Api\Data\ShippingDataInterface
+     */
+    public function getShippingOptions($cart, $shipping_address)
+    {
+        return $this->shipping->execute(
+            $cart,
+            $shipping_address
+        );
+    }
+
+    /**
+     * @api
+     *
+     * Tax hook
+     * Get tax for a given shipping option.
+     * @param mixed $cart cart details
+     * @param mixed $shipping_address shipping address
+     * @param mixed $shipping_option selected shipping option
+     * @return \Bolt\Boltpay\Api\Data\TaxDataInterface
+     */
+    public function getTax($cart, $shipping_address, $shipping_option = null)
+    {
+        return $this->tax->execute(
+            $cart,
+            $shipping_address,
+            $shipping_option
+        );
+    }
+
+    /**
+     * @api
+     * 
+     * Discount validation
+     * @return bool
+     */
+    public function validateDiscount()
+    {
+        return $this->discountCodeValidation->validate();
+    }
+
+    /**
+     * @api
+     * 
+     * Create order.
+     * Hook formats:
+     * [{"type":"order.create","order":{},"currency":"USD"}]
+     *
+     * @param string $type
+     * @param mixed  $order - which contain token and cart nodes.
+     * @param string $currency
+     *
+     * @return void
+     */
+    public function createOrder($type = null, $order = null, $currency = null)
+    {
+        return $this->createOrder->execute(
+            $type,
+            $order,
+            $currency
         );
     }
 }

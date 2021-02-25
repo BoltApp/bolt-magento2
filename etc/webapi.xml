@@ -42,35 +42,35 @@
     </route>
     <!-- Shipping and Tax hook -->
     <route url="/V1/bolt/boltpay/shipping/methods" method="POST">
-        <service class="Bolt\Boltpay\Api\ShippingMethodsInterface" method="getShippingMethods"/>
+        <service class="Bolt\Boltpay\Api\OldApiInterface" method="getShippingMethods"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
     </route>
     <!-- Shipping hook -->
     <route url="/V1/bolt/boltpay/shippingoptions" method="POST">
-        <service class="Bolt\Boltpay\Api\ShippingInterface" method="execute"/>
+        <service class="Bolt\Boltpay\Api\OldApiInterface" method="getShippingOptions"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
     </route>
     <!-- Tax hook -->
     <route url="/V1/bolt/boltpay/tax" method="POST">
-        <service class="Bolt\Boltpay\Api\TaxInterface" method="execute"/>
+        <service class="Bolt\Boltpay\Api\OldApiInterface" method="getTax"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
     </route>
     <!-- Discount Code Validation hook -->
     <route url="/V1/bolt/boltpay/discount/validate" method="POST">
-        <service class="Bolt\Boltpay\Api\DiscountCodeValidationInterface" method="validate"/>
+        <service class="Bolt\Boltpay\Api\OldApiInterface" method="validateDiscount"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
     </route>
     <!-- Pre-Auth: Create Order hook -->
     <route url="/V1/bolt/boltpay/order/create" method="POST">
-        <service class="Bolt\Boltpay\Api\CreateOrderInterface" method="execute"/>
+        <service class="Bolt\Boltpay\Api\OldApiInterface" method="createOrder"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
