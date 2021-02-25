@@ -1085,7 +1085,6 @@ class CartTest extends BoltTestCase
      */
     public function saveToCache_whenSerializeParameterIsTrue_savesSerializedDataToCache()
     {
-        $this->skipTestInUnitTestsFlow();
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $testCartData = $this->getTestCartData();
         TestHelper::invokeMethod(
@@ -5873,7 +5872,6 @@ ORDER
         */
         public function getHints_whenCheckoutTypeIsAdmin_setsVirtualTerminalModeToTrue()
         {
-        $this->skipTestInUnitTestsFlow();
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $result = $cartHelper->getHints(null, 'admin');
         static::assertTrue($result['virtual_terminal_mode']);
@@ -6133,7 +6131,6 @@ ORDER
         */
         public function getHints_withNonProductCheckoutTypeAndVirtualQuote_returnsHintsForQuoteBillingAddress()
         {
-            $this->skipTestInUnitTestsFlow();
             $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
             $quoteId = $quote->getId();
@@ -6172,7 +6169,6 @@ ORDER
         */
         public function getHints_withNonProductCheckoutTypeAndNonVirtualQuote_returnsHintsForQuoteShippingAddress()
         {
-            $this->skipTestInUnitTestsFlow();
             $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
             $quoteId = $quote->getId();
@@ -6208,7 +6204,6 @@ ORDER
         */
         public function getHints_withApplePayRelatedDataPhone_skipsPreFill()
         {
-            $this->skipTestInUnitTestsFlow();
             $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
             $testAddressData = [
@@ -6242,7 +6237,6 @@ ORDER
         */
         public function getHints_withApplePayRelatedDataEmail_skipsPreFill()
         {
-            $this->skipTestInUnitTestsFlow();
             $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
             $testAddressData = [
@@ -6276,7 +6270,6 @@ ORDER
         */
         public function getHints_withApplePayRelatedDataAddressLine_skipsPreFill()
         {
-            $this->skipTestInUnitTestsFlow();
             $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
             $testAddressData = [
@@ -6693,7 +6686,6 @@ ORDER
      */
     public function getCustomerByEmail_withExistingCustomerEmail_returnsCustomerModel()
     {
-        $this->skipTestInUnitTestsFlow();
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
 
         $store = Bootstrap::getObjectManager()->get(\Magento\Store\Model\StoreManagerInterface::class);
@@ -6733,7 +6725,6 @@ ORDER
      */
     public function getCustomerByEmail_withExceptionOnGettingTheCustomer_returnsFalse()
     {
-        $this->skipTestInUnitTestsFlow();
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         static::assertFalse(
             $cartHelper->getCustomerByEmail('test@gmail.com', self::WEBSITE_ID)
