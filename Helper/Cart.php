@@ -1129,6 +1129,11 @@ class Cart extends AbstractHelper
             $child->unsetData("cached_items_all");
         }
         
+        // Update the property Quote::KEY_ITEMS with proper items.
+        if ($child instanceof \Magento\Quote\Model\Quote) {
+            $child->setItems($child->getAllVisibleItems());
+        }
+        
         if ($save) {
             $child->save();
         }
