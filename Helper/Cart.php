@@ -1369,7 +1369,6 @@ class Cart extends AbstractHelper
 
                 if ($this->deciderHelper->isCustomizableOptionsSupport()) {
                     try {
-
                         $customizableOptions = $this->getProductCustomizableOptions($_product);                        
                         if ($customizableOptions) {
                             $itemSku = $this->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
