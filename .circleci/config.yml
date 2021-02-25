@@ -182,7 +182,7 @@ jobs:
           m2_version: "2.2.8"
           php_version: "php71"
           is_magento_integration: true
-      - store-artifacts:
+      - store_artifacts:
           path: ./artifacts/coverage.xml
 
   tag-release-candidate:
