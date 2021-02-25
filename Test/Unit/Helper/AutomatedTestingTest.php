@@ -297,6 +297,6 @@ class AutomatedTestingTest extends BoltTestCase
      */
     public function convertToStoreItem_returnsNull_ifProductIsNull()
     {
-        $static::assertEquals(null, TestHelper::invokeMethod($this->currentMock, 'convertToStoreItem', [null, 'virtual']));
+        static::assertEquals(null, TestHelper::invokeMethod($this->currentMock, 'convertToStoreItem', [null, 'virtual']));
     }
 }
