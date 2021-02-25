@@ -183,7 +183,7 @@ jobs:
           php_version: "php71"
           is_magento_integration: true
       - store_artifacts:
-          path: ./artifacts/coverage.xml
+          path: /home/circleci/project/artifacts/coverage.xml
 
   tag-release-candidate:
     docker:
