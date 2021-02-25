@@ -291,4 +291,12 @@ class AutomatedTestingTest extends BoltTestCase
         $this->configFactory->expects(static::once())->method('create')->willReturn($config);
         TestHelper::invokeMethod($this->currentMock, 'getAutomatedTestingConfig');
     }
+
+    /**
+     * @test
+     */
+    public function convertToStoreItem_returnsNull_ifProductIsNull()
+    {
+        $static::assertEquals(null, TestHelper::invokeMethod($this->currentMock, 'convertToStoreItem', [null, 'virtual']));
+    }
 }
