@@ -156,7 +156,7 @@ class Definitions
      * Enable Bolt SSO
      */
     const M2_ENABLE_BOLT_SSO = 'M2_ENABLE_BOLT_SSO';
-    
+
     /**
      * Support Customizable Options
      */

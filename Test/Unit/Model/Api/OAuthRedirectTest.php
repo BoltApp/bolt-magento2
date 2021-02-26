@@ -211,7 +211,7 @@ class OAuthRedirectTest extends BoltTestCase
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
         $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
-        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn(['access_token' => 'test access token', 'id_token' => 'test id token']);
+        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn((object) ['access_token' => 'test access token', 'id_token' => 'test id token']);
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn('test string');
         $this->bugsnag->expects(static::once())->method('notifyError')->with('OAuthRedirect', 'test string');
         $this->expectException(WebapiException::class);
@@ -226,7 +226,7 @@ class OAuthRedirectTest extends BoltTestCase
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
         $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
-        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn(['access_token' => 'test access token', 'id_token' => 'test id token']);
+        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn((object) ['access_token' => 'test access token', 'id_token' => 'test id token']);
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn([
             'sub'            => 'abc',
             'first_name'     => 'first',
@@ -254,7 +254,7 @@ class OAuthRedirectTest extends BoltTestCase
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
         $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
-        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn(['access_token' => 'test access token', 'id_token' => 'test id token']);
+        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn((object) ['access_token' => 'test access token', 'id_token' => 'test id token']);
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn(['sub' => 'abc', 'email' => 't@t.com', 'email_verified' => false]);
         $store = $this->createMock(StoreInterface::class);
         $this->storeManager->expects(static::exactly(2))->method('getStore')->willReturn($store);
@@ -276,7 +276,7 @@ class OAuthRedirectTest extends BoltTestCase
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
         $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
-        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn(['access_token' => 'test access token', 'id_token' => 'test id token']);
+        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn((object) ['access_token' => 'test access token', 'id_token' => 'test id token']);
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn(['sub' => 'abc', 'email' => 't@t.com', 'email_verified' => true]);
         $store = $this->createMock(StoreInterface::class);
         $this->storeManager->expects(static::exactly(2))->method('getStore')->willReturn($store);
@@ -299,7 +299,7 @@ class OAuthRedirectTest extends BoltTestCase
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
         $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
-        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn(['access_token' => 'test access token', 'id_token' => 'test id token']);
+        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn((object) ['access_token' => 'test access token', 'id_token' => 'test id token']);
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn([
             'sub'            => 'abc',
             'first_name'     => 'first',

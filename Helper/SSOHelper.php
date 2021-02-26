@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -19,6 +20,7 @@ namespace Bolt\Boltpay\Helper;
 
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\JWT\JWT;
 use Exception;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
@@ -111,8 +113,10 @@ class SSOHelper extends AbstractHelper
             $apiKey = $this->configHelper->getApiKey($storeId);
 
             $requestData = $this->dataObjectFactory->create();
-            $requestData->setDynamicApiUrl(ApiHelper::API_OAUTH_TOKEN . "?grant_type=authorization_code&code={$code}&scope={$scope}&client_id={$clientId}&client_secret={$clientSecret}");
+            $requestData->setDynamicApiUrl(ApiHelper::API_OAUTH_TOKEN);
             $requestData->setApiKey($apiKey);
+            $requestData->setApiData("grant_type=authorization_code&code={$code}&scope={$scope}&client_id={$clientId}&client_secret={$clientSecret}");
+            $requestData->setContentType('application/x-www-form-urlencoded');
 
             $request = $this->apiHelper->buildRequest($requestData);
             $result = $this->apiHelper->sendRequest($request);
@@ -125,7 +129,7 @@ class SSOHelper extends AbstractHelper
     }
 
     /**
-     * Reference document: https://auth0.com/docs/tokens/json-web-tokens/validate-json-web-tokens#manually-implement-checks
+     * Parse and validate JWT token
      *
      * @param string $token    the JWT token
      * @param string $audience the token audience
@@ -135,40 +139,13 @@ class SSOHelper extends AbstractHelper
      */
     public function parseAndValidateJWT($token, $audience, $pubkey)
     {
-        // 1. Check JWT is well-formed
-
-        // 1.1 contains three parts separated by dot
-        $parts = explode('.', $token);
-        if (count($parts) !== 3) {
-            return 'token must have three parts';
+        try {
+            $payload = $this->getPayload($token, $pubkey);
+        } catch (Exception $e) {
+            return $e->getMessage();
         }
 
-        $encodedHeader = $parts[0];
-        $encodedPayload = $parts[1];
-        $encodedSignature = $parts[2];
-
-        // 1.2 decode header
-        $headerStr = base64_decode($encodedHeader);
-        $header = json_decode($headerStr, true);
-
-        // 1.2 decode payload
-        $payloadStr = base64_decode($encodedPayload);
-        $payload = json_decode($payloadStr, true);
-
-        // 1.2 decode signature
-        $signature = base64_decode($encodedSignature);
-
-        // 2. Check standard claims
-
-        // 2.1 make sure the expiration time must be after the current time
-        if (!isset($payload['exp'])) {
-            return 'exp must be set';
-        }
-        if (microtime() > $payload['exp'] * 1000) {
-            return 'expired exp ' . $payload['exp'];
-        }
-
-        // 2.2 issuing authority should be https://bolt.com
+        // Issuing authority should be https://bolt.com
         if (!isset($payload['iss'])) {
             return 'iss must be set';
         }
@@ -176,32 +153,15 @@ class SSOHelper extends AbstractHelper
             return 'incorrect iss ' . $payload['iss'];
         }
 
-        // 2.3 aud should contain $audience
+        // The aud field should contain $audience
         if (!isset($payload['aud'])) {
             return 'aud must be set';
         }
-        if (strpos($payload['aud'], $audience) === false) {
-            return 'aud ' . $payload['aud'] . ' does not contain audience ' . $audience;
+        if (!in_array($audience, $payload['aud'])) {
+            return 'aud ' . implode(',', $payload['aud']) . ' does not contain audience ' . $audience;
         }
 
-        // 3. Check signature
-
-        // 3.1 check allowed algorithm (Bolt uses RSA-SHA256)
-        if (!isset($header['alg'])) {
-            return 'alg must be set';
-        }
-        if ($header['alg'] !== 'RS256') {
-            return 'invalid alg ' . $header['alg'];
-        }
-
-        // 3.2 verify hashed value
-        $contentToVerify = $encodedHeader . '.' . $encodedPayload;
-        $encodedContentToVerify = base64_encode($contentToVerify);
-        if (openssl_verify($encodedContentToVerify, $signature, $pubkey, 'sha256WithRSAEncryption') !== 1) {
-            return 'signature verification failed';
-        }
-
-        // 4. Check fields exist
+        // Validate other expected Bolt fields
         if (!isset($payload['sub'])) {
             return 'sub must be set';
         }
@@ -219,5 +179,24 @@ class SSOHelper extends AbstractHelper
         }
 
         return $payload;
+    }
+
+    /**
+     * Decode token and return payload, added so unit tests work
+     *
+     * @param string $token
+     * @param string $pubkey
+     *
+     * @return mixed
+     *
+     * @throws Exception
+     *
+     * @codeCoverageIgnore
+     */
+    protected function getPayload($token, $pubkey)
+    {
+        $multiLineKey = chunk_split($pubkey, 64, "\n");
+        $formattedKey = "-----BEGIN PUBLIC KEY-----\n$multiLineKey-----END PUBLIC KEY-----";
+        return (array) JWT::decode($token, $formattedKey, array('RS256'));
     }
 }

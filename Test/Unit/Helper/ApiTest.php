@@ -18,23 +18,22 @@
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\Api as ApiHelper;
+use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Model\Request;
+use Bolt\Boltpay\Model\RequestFactory;
+use Bolt\Boltpay\Model\Response;
+use Bolt\Boltpay\Model\ResponseFactory;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bugsnag\Report;
 use Exception;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\DataObject;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\HTTP\ZendClientFactory;
-use Bolt\Boltpay\Model\ResponseFactory;
-use Bolt\Boltpay\Model\RequestFactory;
-use Bolt\Boltpay\Model\Request;
-use Bolt\Boltpay\Model\Response;
-use Bolt\Boltpay\Helper\Log as LogHelper;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use ReflectionException;
-use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\HTTP\ZendClient;
+use Magento\Framework\HTTP\ZendClientFactory;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Zend_Http_Response;
 
@@ -43,39 +42,62 @@ use Zend_Http_Response;
  */
 class ApiTest extends BoltTestCase
 {
-
-    /** @var string Dummy API url */
-    const API_URL = "https://api.bolt.com/";
-    /** @var string Dummy API key */
+    /**
+     * @var string Dummy API url
+     */
+    const API_URL = 'https://api.bolt.com/';
+    /**
+     * @var string Dummy API key
+     */
     const API_KEY = '60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b';
-    /** @var string Dummy dynamic part of the API url */
-    const DYNAMIC_API_URL = "/test/api/dynamic";
+    /**
+     * @var string Dummy dynamic part of the API url
+     */
+    const DYNAMIC_API_URL = '/test/api/dynamic';
 
-    /** @var MockObject|LogHelper */
+    /**
+     * @var MockObject|LogHelper
+     */
     private $logHelper;
 
-    /** @var MockObject|Bugsnag */
+    /**
+     * @var MockObject|Bugsnag
+     */
     private $bugsnag;
 
-    /** @var MockObject|ConfigHelper */
+    /**
+     * @var MockObject|ConfigHelper
+     */
     private $configHelper;
 
-    /** @var MockObject|ZendClientFactory */
+    /**
+     * @var MockObject|ZendClientFactory
+     */
     private $zendClientFactory;
 
-    /** @var MockObject|Request */
+    /**
+     * @var MockObject|Request
+     */
     private $request;
 
-    /** @var MockObject|ResponseFactory */
+    /**
+     * @var MockObject|ResponseFactory
+     */
     private $responseFactory;
 
-    /** @var MockObject|RequestFactory */
+    /**
+     * @var MockObject|RequestFactory
+     */
     private $requestFactory;
 
-    /** @var MockObject|Context */
+    /**
+     * @var MockObject|Context
+     */
     private $context;
 
-    /** @var MockObject|ApiHelper */
+    /**
+     * @var MockObject|ApiHelper
+     */
     private $currentMock;
 
     /**
@@ -121,12 +143,14 @@ class ApiTest extends BoltTestCase
                 'getRequestMethod',
                 'getHeaders',
                 'getStatusOnly',
+                'getContentType',
                 'setApiData',
                 'setApiUrl',
                 'setApiKey',
                 'setRequestMethod',
                 'setHeaders',
                 'setStatusOnly',
+                'setContentType'
             ]
         );
         $this->responseFactory = $this->createPartialMock(ResponseFactory::class, ['create']);
@@ -135,7 +159,7 @@ class ApiTest extends BoltTestCase
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
     }
-    
+
     /**
      * @test
      * that constructor sets internal properties
@@ -153,7 +177,7 @@ class ApiTest extends BoltTestCase
             $this->logHelper,
             $this->bugsnag
         );
-        
+
         static::assertAttributeEquals($this->zendClientFactory, 'httpClientFactory', $instance);
         static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
         static::assertAttributeEquals($this->responseFactory, 'responseFactory', $instance);
@@ -168,17 +192,18 @@ class ApiTest extends BoltTestCase
      *
      * @covers ::sendRequest
      *
-     * @throws LocalizedException from tested method
+     * @throws LocalizedException          from tested method
      * @throws \Zend_Http_Client_Exception from tested method
      */
     public function sendRequest_withRegularRequest_returnsResultResponse()
     {
         $request = new Request(
             [
-                'api_data'       => new \stdClass(),
+                'api_data'       => 'dummydata',
                 'api_url'        => self::API_URL,
                 'api_key'        => self::API_KEY,
-                'request_method' => 'POST'
+                'request_method' => 'POST',
+                'content_type'   => 'application/x-www-form-urlencoded'
             ]
         );
         $client = $this->createMock(ZendClient::class);
@@ -226,8 +251,7 @@ class ApiTest extends BoltTestCase
         $client->expects(static::once())->method('request')->willReturn($responseMock);
 
         $responseMock->expects(static::exactly(2))->method('getHeaders')->willReturn([]);
-        $responseMock->expects(static::exactly(2))->method('getBody')
-            ->willReturn($dummyResponseBody);
+        $responseMock->expects(static::exactly(2))->method('getBody')->willReturn($dummyResponseBody);
 
         $resultMock->expects(static::once())->method('setResponse')->with(json_decode($dummyResponseBody));
 
@@ -240,7 +264,7 @@ class ApiTest extends BoltTestCase
      *
      * @covers ::sendRequest
      *
-     * @throws LocalizedException from tested method
+     * @throws LocalizedException          from tested method
      * @throws \Zend_Http_Client_Exception from tested method
      */
     public function sendRequest_withStatusOnlyRequest_returnsResponseStatus()
@@ -279,10 +303,7 @@ class ApiTest extends BoltTestCase
      *
      * @covers ::sendRequest
      *
-     * @expectedException \Magento\Framework\Exception\LocalizedException
-     * @expectedExceptionMessage Gateway error: Expected exception message
-     *
-     * @throws LocalizedException from tested method
+     * @throws LocalizedException          from tested method
      * @throws \Zend_Http_Client_Exception from tested method
      */
     public function sendRequest_exceptionDuringRequest_rethrowsAsLocalizedException()
@@ -298,12 +319,12 @@ class ApiTest extends BoltTestCase
         $client = $this->createMock(ZendClient::class);
         $this->zendClientFactory->expects(static::once())->method('create')->willReturn($client);
         $client->expects(static::once())->method('setRawData')->willReturnSelf();
-        $client->expects(static::once())->method('request')
-            ->will($this->throwException(new LocalizedException(new \Magento\Framework\Phrase('Expected exception message'))));
+        $client->expects(static::once())->method('request')->willThrowException(new LocalizedException(__('Expected exception message')));
         $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Gateway error: Expected exception message');
         $this->currentMock->sendRequest($request);
     }
-    
+
     /**
      * @test
      * that sendRequest throws localized exception if the response body is empty
@@ -367,12 +388,11 @@ class ApiTest extends BoltTestCase
         $client->expects(static::once())->method('request')->willReturn($responseMock);
 
         $responseMock->expects(static::exactly(2))->method('getHeaders')->willReturn([]);
-        $responseMock->expects(static::exactly(2))->method('getBody')
-            ->willReturn($emptyResponseBody);
+        $responseMock->expects(static::exactly(2))->method('getBody')->willReturn($emptyResponseBody);
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Something went wrong in the payment gateway.');
-        
+
         $this->currentMock->sendRequest($request);
     }
 
@@ -397,7 +417,8 @@ class ApiTest extends BoltTestCase
             [
                 'api_data'        => $apiData,
                 'api_key'         => self::API_KEY,
-                'dynamic_api_url' => ApiHelper::API_CREATE_ORDER
+                'dynamic_api_url' => ApiHelper::API_CREATE_ORDER,
+                'content_type'    => 'application/x-www-form-urlencoded'
             ]
         );
 
@@ -409,6 +430,7 @@ class ApiTest extends BoltTestCase
         $this->request->expects(self::once())->method('setRequestMethod')->with($requestMethod);
         $this->request->expects(self::once())->method('setHeaders')->with($headers);
         $this->request->expects(self::once())->method('setStatusOnly')->with($statusOnly);
+        $this->request->expects(self::once())->method('setContentType')->with('application/x-www-form-urlencoded');
 
         static::assertSame($this->request, $this->currentMock->buildRequest($requestData));
     }
