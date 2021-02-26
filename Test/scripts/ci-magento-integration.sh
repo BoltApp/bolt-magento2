@@ -33,6 +33,5 @@ sed -i '/amqp/d' etc/install-config-mysql.php
 sudo chmod -R 777 ../../..
 
 echo "Starting Bolt Integration Tests"
-../../../vendor/bin/phpunit -d memory_limit=5G -c bolt_phpunit.xml --coverage-clover=/home/circleci/project/artifacts/coverage.xml
-cd ../../../..
-bash <(curl -s https://bolt-devops.s3-us-west-2.amazonaws.com/testing/codecov_uploader) -f /home/circleci/project/artifacts/coverage.xml -F $TEST_ENV
+../../../vendor/bin/phpunit -d memory_limit=5G -c bolt_phpunit.xml
+bash <(curl -s https://bolt-devops.s3-us-west-2.amazonaws.com/testing/codecov_uploader) -f ./artifacts/coverage.xml -F $TEST_ENV
