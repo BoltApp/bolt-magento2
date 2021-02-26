@@ -26,6 +26,8 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Sales\Model\Order\Shipment\Track;
+use Exception;
 
 class TrackingSaveObserver implements ObserverInterface
 {
@@ -109,6 +111,44 @@ class TrackingSaveObserver implements ObserverInterface
     }
 
     /**
+     * @param $attribute
+     * @return mixed|null
+     */
+    private function flatten($attribute) {
+        if (is_object($attribute)) {
+            $flattend = get_object_vars($attribute);
+            if (count($flattend) == 1) {
+                return $flattend[0];
+            } else {
+                return null;
+            }
+        }
+        return $attribute;
+    }
+
+    /**
+     * @param Track $observer
+     */
+    private function isTrackNew($track)
+    {
+        // we can not know if track new or not for magento < 2.3.1
+        if (version_compare(
+            $this->configHelper->getStoreVersion(),
+            '2.3.1',
+            '<'
+        )) {
+            return true;
+        }
+        $origData = $tracking->getOrigData();
+        if ($origData &&
+            $origData['track_number'] == $tracking->getTrackNumber() &&
+            $origData['carrier_code'] == $tracking->getCarrierCode()) {
+                return false;
+        }
+        return true;
+    }
+
+    /**
      * @param Observer $observer
      */
     public function execute(Observer $observer)
@@ -122,10 +162,7 @@ class TrackingSaveObserver implements ObserverInterface
             $tracking = $observer->getEvent()->getTrack();
 
             $origData = $tracking->getOrigData();
-            // If we update track (don't create) and carrier and number are the same do nothing
-            if ($origData &&
-            $origData['track_number'] == $tracking->getTrackNumber() &&
-            $origData['carrier_code'] == $tracking->getCarrierCode()) {
+            if (!$this->isTrackNew()) {
                 $this->metricsClient->processMetric(
                     "tracking_creation.success",
                     1,
