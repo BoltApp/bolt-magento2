@@ -21,6 +21,7 @@ use Bolt\Boltpay\Api\ExternalCustomerEntityRepositoryInterface as ExternalCustom
 use Bolt\Boltpay\Api\OAuthRedirectInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
+use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\SSOHelper;
 use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
@@ -44,6 +45,11 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @var DeciderHelper
      */
     private $deciderHelper;
+
+    /**
+     * @var LogHelper
+     */
+    private $logHelper;
 
     /**
      * @var SSOHelper
@@ -94,6 +100,7 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param Response                         $response
      * @param DeciderHelper                    $deciderHelper
      * @param SSOHelper                        $ssoHelper
+     * @param LogHelper                        $logHelper
      * @param ExternalCustomerEntityRepository $externalCustomerEntityRepository
      * @param CustomerRepository               $customerRepository
      * @param StoreManagerInterface            $storeManager
@@ -107,6 +114,7 @@ class OAuthRedirect implements OAuthRedirectInterface
         Response $response,
         DeciderHelper $deciderHelper,
         SSOHelper $ssoHelper,
+        LogHelper $logHelper,
         ExternalCustomerEntityRepository $externalCustomerEntityRepository,
         CustomerRepository $customerRepository,
         StoreManagerInterface $storeManager,
@@ -119,6 +127,7 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->response = $response;
         $this->deciderHelper = $deciderHelper;
         $this->ssoHelper = $ssoHelper;
+        $this->logHelper = $logHelper;
         $this->externalCustomerEntityRepository = $externalCustomerEntityRepository;
         $this->customerRepository = $customerRepository;
         $this->storeManager = $storeManager;
