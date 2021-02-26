@@ -4403,6 +4403,89 @@ ORDER
         static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
         }
+        
+        /**
+        * @test
+        * that collectDiscounts properly handles gift voucher discount by subtracting it from regular discount
+        *
+        * @covers ::collectDiscounts
+        *
+        * @throws NoSuchEntityException from tested method
+        */
+        public function collectDiscounts_withFreeShippingCoupon_collectsCoupon()
+        {
+            $currentMock = $this->getCurrentMock();
+            $shippingAddress = $this->getAddressMock();
+            $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
+            $quote->method('getBoltParentQuoteId')->willReturn(999999);
+            $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
+            $quote->method('getTotals')->willReturn([]);
+            $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
+                ->willReturn($shippingAddress);
+            $quote->expects(static::any())->method('getCouponCode')->willReturn(self::COUPON_CODE);
+            $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
+            $this->discountHelper->expects(static::exactly(2))->method('convertToBoltDiscountType')->with(self::COUPON_CODE)->willReturn('fixed_amount');
+            $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
+            $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
+            $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
+            $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
+            $appliedDiscount = 0; // $
+            $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($appliedDiscount);
+    
+            $quote->method('getAppliedRuleIds')->willReturn('2');
+    
+            $rule2 = $this->getMockBuilder(DataObject::class)
+                ->setMethods(['getCouponType', 'getDescription', 'getSimpleFreeShipping'])
+                ->disableOriginalConstructor()
+                ->getMock();
+            $rule2->expects(static::once())->method('getCouponType')
+                ->willReturn('SPECIFIC_COUPON');
+            $rule2->expects(static::once())->method('getDescription')
+                ->willReturn(self::COUPON_DESCRIPTION);
+            $rule2->expects(static::once())->method('getSimpleFreeShipping')
+                ->willReturn(2);
+    
+            $this->ruleRepository->expects(static::once())
+                ->method('getById')
+                ->with(2)
+                ->willReturn($rule2);
+
+            $checkoutSession = $this->createPartialMock(CheckoutSession::class,
+                ['getBoltCollectSaleRuleDiscounts']
+            );
+            $checkoutSession->expects(static::once())
+                            ->method('getBoltCollectSaleRuleDiscounts')
+                            ->willReturn([2 => $appliedDiscount]);
+            $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
+                 ->willReturn($checkoutSession);
+    
+    
+            $totalAmount = 10000; // cents
+            $diff = 0;
+            $paymentOnly = false;
+            list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
+                $totalAmount,
+                $diff,
+                $paymentOnly,
+                $quote
+            );
+    
+            static::assertEquals($diffResult, $diff);
+            $expectedDiscountAmount = 100 * $appliedDiscount;
+            $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+            $expectedDiscount = [
+                [
+                    'description' => self::COUPON_DESCRIPTION,
+                    'amount'      => $expectedDiscountAmount,
+                    'reference'   => self::COUPON_CODE,
+                    'discount_category' => 'coupon',
+                    'discount_type'   => 'fixed_amount',
+                    'type'   => 'fixed_amount',
+                ],
+            ];
+            static::assertEquals($expectedDiscount, $discounts);
+            static::assertEquals($expectedTotalAmount, $totalAmountResult);
+        }
 
         /**
         * @test
