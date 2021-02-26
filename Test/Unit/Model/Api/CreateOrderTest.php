@@ -17,30 +17,26 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
-use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Bolt\Boltpay\Helper\Hook as HookHelper;
-use Bolt\Boltpay\Helper\Log as LogHelper;
-use Bolt\Boltpay\Helper\MetricsClient;
-use Bolt\Boltpay\Helper\Session as SessionHelper;
-use Magento\Backend\Model\UrlInterface as BackendUrl;
-use Magento\CatalogInventory\Api\StockRegistryInterface;
-use Magento\CatalogInventory\Helper\Data;
+use Bolt\Boltpay\Helper\Hook;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\UrlInterface;
-use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
-use Magento\Quote\Model\Quote;
-use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\Api\CreateOrder;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
-use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\TestFramework\Helper\Bootstrap;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\Encryption\EncryptorInterface;
+use Bolt\Boltpay\Model\ResponseFactory as BoltResponseFactory;
+use Bolt\Boltpay\Model\RequestFactory as BoltRequestFactory;
+use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Class CreateOrderTest
@@ -61,224 +57,116 @@ class CreateOrderTest extends BoltTestCase
     const SUBTOTAL_WITH_DISCOUNT = 70;
     const GRAND_TOTAL = 70;
     const PRODUCT_SKU = "24-UB02";
+    const FLAT_SHIPPING_CODE = 'flatrate_flatrate';
+    const FLAT_SHIPPING_COST = 5.00;
+
+    const TRACE_ID_HEADER = 'KdekiEGku3j1mU21Mnsx5g==';
+    const SECRET = '42425f51e0614482e17b6e913d74788eedb082e2e6f8067330b98ffa99adc809';
+    const APIKEY = '3c2d5104e7f9d99b66e1c9c550f6566677bf81de0d6f25e121fdb57e47c2eafc';
 
     /**
-     * @var MockObject|HookHelper
-     */
-    private $hookHelper;
-
-    /**
-     * @var MockObject|OrderHelper
-     */
-    private $orderHelper;
-
-    /**
-     * @var MockObject|LogHelper
-     */
-    private $logHelper;
-
-    /**
-     * @var MockObject|Request
-     */
-    private $request;
-
-    /**
-     * @var MockObject|Bugsnag
-     */
-    private $bugsnag;
-
-    /**
-     * @var MockObject|MetricsClient
-     */
-    private $metricsClient;
-
-    /**
-     * @var MockObject|Response
+     * @var Response
      */
     private $response;
 
     /**
-     * @var MockObject|ConfigHelper
+     * @var ObjectManager
      */
-    private $configHelper;
+    private $objectManager;
+
+    private $websiteId;
 
     /**
-     * @var MockObject|CartHelper
+     * @var ScopeInterface
      */
-    private $cartHelper;
+    private $storeId;
 
     /**
-     * @var MockObject|UrlInterface
+     * @var Request
      */
-    private $url;
+    private $request;
 
     /**
-     * @var MockObject|BackendUrl
+     * @var CreateOrder
      */
-    private $backendUrl;
-
-    /**
-     * @var MockObject|StockRegistryInterface
-     */
-    private $stockRegistry;
-
-    /**
-     * @var MockObject|SessionHelper
-     */
-    private $sessionHelper;
-
-    /**
-     * @var MockObject|CreateOrder
-     */
-    private $currentMock;
-
-    /**
-     * @var MockObject|Quote
-     */
-    private $quoteMock;
-
-    /**
-     * @var MockObject|Quote
-     */
-    private $immutableQuoteMock;
-
-    /**
-     * @var MockObject|Order
-     */
-    private $orderMock;
-    
-    /** @var MockObject|EventsForThirdPartyModules */
-    private $eventsForThirdPartyModules;
+    private $createOrder;
 
     /**
      * @inheritdoc
      */
     protected function setUpInternal()
     {
-        $this->initRequiredMocks();
-        $this->initCurrentMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->createOrder = $this->objectManager->create(CreateOrder::class);
+        $this->resetRequest();
+        $this->resetResponse();
+
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $this->storeId = $store->getStore()->getId();
+
+        $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
+        $this->websiteId = $websiteRepository->get('base')->getId();
+
+        $encryptor = $this->objectManager->get(EncryptorInterface::class);
+        $secret = $encryptor->encrypt(self::SECRET);
+        $apikey = $encryptor->encrypt(self::APIKEY);
+
+        $configData = [
+            [
+                'path' => 'payment/boltpay/signing_secret',
+                'value' => $secret,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => 'payment/boltpay/api_key',
+                'value' => $apikey,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => 'payment/boltpay/active',
+                'value' => 1,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+        ];
+        TestUtils::setupBoltConfig($configData);
+
     }
 
-    private function initRequiredMocks()
+    protected function tearDownInternal()
     {
-        $this->hookHelper = $this->createMock(HookHelper::class);
-        $this->orderHelper = $this->createMock(OrderHelper::class);
-        $this->logHelper = $this->createMock(LogHelper::class);
-        $this->request = $this->createMock(Request::class);
-        $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->metricsClient = $this->createMock(MetricsClient::class);
-        $this->response = $this->createMock(Response::class);
-        $this->url = $this->createMock(UrlInterface::class);
-        $this->backendUrl = $this->createMock(BackendUrl::class);
-        $this->configHelper = $this->createMock(ConfigHelper::class);
-        $this->stockRegistry = $this->createMock(StockRegistryInterface::class);
-        $this->sessionHelper = $this->createMock(SessionHelper::class);
-        $this->eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
 
-        $this->quoteMock = $this->createPartialMock(
-            Quote::class,
-            [
-                'validateMinimumAmount',
-                'getGrandTotal',
-                'getSubtotal',
-                'getSubtotalWithDiscount',
-                'getStoreId',
-                'getId',
-                'getAllVisibleItems',
-                'isVirtual',
-                'getShippingAddress',
-                'getQuoteCurrencyCode',
-                'getBoltCheckoutType',
-                'getTotals'
-            ]);
-        $this->quoteMock->method('getStoreId')->willReturn(self::STORE_ID);
-        $this->quoteMock->method('getQuoteCurrencyCode')->willReturn("USD");
-
-        $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
-            ->setMethods([
-                'getSku', 'getQty', 'getCalculationPrice', 'getName', 'getIsVirtual',
-                'getProductId', 'getProduct', 'getPrice', 'getErrorInfos'
-            ])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
-        $quoteItem->method('getProductId')->willReturn('7');
-        $quoteItem->method('getPrice')->willReturn(74);
-        $quoteItem->method('getErrorInfos')->willReturn([]);
-        $this->quoteMock->method('getAllVisibleItems')
-            ->willReturn([
-                $quoteItem
-            ]);
-
-        $quoteShippingAddress = $this->createPartialMock(
-            \Magento\Quote\Model\Quote\Address::class,
-            ['getTaxAmount', 'getShippingAmount']
-        );
-        $quoteShippingAddress->method('getTaxAmount')->willReturn(0);
-        $quoteShippingAddress->method('getShippingAmount')->willReturn(5);
-        $this->quoteMock->method('getShippingAddress')->willReturn($quoteShippingAddress);
-
-
-        $this->immutableQuoteMock = $this->createPartialMock(
-            Quote::class,
-            [
-                'validateMinimumAmount',
-                'getGrandTotal',
-                'getStore',
-                'getStoreId',
-            ]
-        );
-        $storeMock = $this->getMockBuilder(Store::class)
-            ->setMethods(['setCurrentCurrencyCode'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->immutableQuoteMock->method('getStore')
-              ->willReturn($storeMock);
-        $this->immutableQuoteMock->method('getStoreId')->willReturn(self::STORE_ID);
-
-        $this->cartHelper = $this->createMock(CartHelper::class);
-        $this->cartHelper->method('getQuoteById')->willReturnMap([
-            [self::QUOTE_ID, $this->quoteMock],
-            [self::IMMUTABLE_QUOTE_ID, $this->immutableQuoteMock],
-        ]);
-        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
-            ->willReturn(self::IMMUTABLE_QUOTE_ID);
-
-        $this->orderMock = $this->createPartialMock(Order::class, ['getData','getIncrementId','getGrandTotal']);
-
-        $this->request->expects(self::any())->method('getContent')->willReturn($this->getRequestContent());
+        $this->resetRequest();
+        $this->resetResponse();
     }
 
-    private function initCurrentMock()
+    private function resetRequest()
     {
-        $this->currentMock = $this->getMockBuilder(CreateOrder::class)
-            ->setConstructorArgs([
-                $this->hookHelper,
-                $this->orderHelper,
-                $this->cartHelper,
-                $this->logHelper,
-                $this->request,
-                $this->bugsnag,
-                $this->metricsClient,
-                $this->response,
-                $this->url,
-                $this->backendUrl,
-                $this->configHelper,
-                $this->stockRegistry,
-                $this->sessionHelper,
-                $this->eventsForThirdPartyModules,
-            ])
-            ->setMethods([
-                'getQuoteIdFromPayloadOrder',
-                'loadQuoteData',
-                'preProcessWebhook',
-                'sendResponse',
-            ])
-            ->enableProxyingToOriginalMethods()
-            ->getMock();
-        $this->currentMock->method('getQuoteIdFromPayloadOrder')
-            ->withAnyParameters()
-            ->willReturn(self::QUOTE_ID);
+        if (!$this->request) {
+            $this->request = $this->objectManager->get(Request::class);
+        }
+
+        $this->objectManager->removeSharedInstance(Request::class);
+        $this->request = null;
+
+    }
+
+    private function resetResponse()
+    {
+        if (!$this->response) {
+            $this->response = $this->objectManager->get(Response::class);
+        }
+
+        $this->objectManager->removeSharedInstance(Response::class);
+        $this->response = null;
     }
 
     /**
@@ -286,48 +174,8 @@ class CreateOrderTest extends BoltTestCase
      */
     public function validateMinimumAmount_valid()
     {
-        $this->quoteMock->expects(static::once())->method('validateMinimumAmount')->willReturn(true);
-        $this->currentMock->validateMinimumAmount($this->quoteMock);
-    }
-
-    /**
-     * @test
-     * @covers ::validateMinimumAmount
-     */
-    public function validateMinimumAmount_invalid()
-    {
-        $this->quoteMock->expects(static::once())->method('validateMinimumAmount')->willReturn(false);
-        $this->quoteMock->expects(static::once())->method('getStoreId')->willReturn(static::STORE_ID);
-        $this->configHelper->expects(static::once())->method('getMinimumOrderAmount')->with(static::STORE_ID)
-            ->willReturn(static::MINIMUM_ORDER_AMOUNT);
-        $this->quoteMock->expects(self::once())->method('getSubtotal')->willReturn(self::SUBTOTAL);
-        $this->quoteMock->expects(self::once())->method('getSubtotalWithDiscount')->willReturn(
-            self::SUBTOTAL_WITH_DISCOUNT
-        );
-        $this->quoteMock->expects(self::once())->method('getGrandTotal')->willReturn(self::GRAND_TOTAL);
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function (callable $fn) {
-                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-                $reportMock->expects(self::once())->method('setMetaData')->with([
-                    'Pre Auth' => [
-                        'Minimum order amount' => static::MINIMUM_ORDER_AMOUNT,
-                        'Subtotal' => self::SUBTOTAL,
-                        'Subtotal with discount' => self::SUBTOTAL_WITH_DISCOUNT,
-                        'Total' => self::GRAND_TOTAL,
-                    ]
-                ]);
-                $fn($reportMock);
-            }
-        );
-        $this->expectException(BoltException::class);
-        $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_MINIMUM_PRICE_NOT_MET);
-        $this->expectExceptionMessage(
-            sprintf(
-                'The minimum order amount: %s has not being met.',
-                static::MINIMUM_ORDER_AMOUNT
-            )
-        );
-        $this->currentMock->validateMinimumAmount($this->quoteMock);
+        $quote = TestUtils::createQuote();
+        $this->createOrder->validateMinimumAmount($quote);
     }
 
     /**
@@ -340,10 +188,9 @@ class CreateOrderTest extends BoltTestCase
      */
     public function validateMinimumAmount_withBackofficeCheckoutType_skipsValidation()
     {
-        $this->quoteMock->expects(static::once())->method('getBoltCheckoutType')
-            ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE);
-        $this->quoteMock->expects(static::never())->method('validateMinimumAmount');
-        $this->currentMock->validateMinimumAmount($this->quoteMock);
+        $quote = TestUtils::createQuote();
+        $quote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE);
+        $this->createOrder->validateMinimumAmount($quote);
     }
 
     /**
@@ -351,8 +198,8 @@ class CreateOrderTest extends BoltTestCase
      */
     public function validateTotalAmount_valid()
     {
-        $this->quoteMock->expects(static::once())->method('getGrandTotal')->willReturn(74);
-        $this->currentMock->validateTotalAmount($this->quoteMock, $this->getTransaction());
+        $quote = TestUtils::createQuote(['grand_total' => 74]);
+        $this->createOrder->validateTotalAmount($quote, $this->getTransaction());
     }
 
     /**
@@ -360,90 +207,12 @@ class CreateOrderTest extends BoltTestCase
      */
     public function validateTotalAmount_invalid()
     {
-        $this->quoteMock->expects(static::once())->method('getGrandTotal')->willReturn(74.01);
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function (callable $fn) {
-                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-                $reportMock->expects(self::once())->method('setMetaData')->with([
-                    'Pre Auth' => [
-                        'quote.total_amount' => 7401,
-                        'transaction.total_amount' => 7400,
-                    ]
-                ]);
-                $fn($reportMock);
-            }
-        );
+        $quote = TestUtils::createQuote(['grand_total' => 7402]);
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(\Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_CART_HAS_EXPIRED);
         $this->expectExceptionMessage('Total amount does not match.');
-        $this->currentMock->validateTotalAmount($this->quoteMock, $this->getTransaction());
+        $this->createOrder->validateTotalAmount($quote, $this->getTransaction());
     }
-
-    /**
-     * @test
-     * @covers ::execute
-     * @covers ::preProcessWebhook
-     * @covers ::createOrder
-     * @covers ::getQuoteIdFromPayloadOrder
-     * @covers ::getDisplayId
-     * @covers ::getOrderReference
-     * @covers ::loadQuoteData
-     */
-    public function execute_common()
-    {
-        $startTime = microtime(true) * 1000;
-        $type = 'order.create';
-
-        $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturn($startTime);
-        $this->logHelper->expects(self::any())->method('addInfoLog')
-            ->withConsecutive(
-                ['[-= Pre-Auth CreateOrder =-]'],
-                [$this->getRequestContent()],
-                ['[-= getReceivedUrl =-]'],
-                ['---> ']
-            );
-        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
-        $this->orderHelper->expects(self::once())->method('prepareQuote')
-            ->with($this->immutableQuoteMock, $this->getTransaction())
-            ->willReturn($this->quoteMock);
-
-        $this->orderMock->expects(self::any())->method('getData')
-            ->willReturn([
-                'id' => '1111',
-                'increment_id'=> 'XXXXX',
-                'grand_total' => '11.00'
-            ]);
-
-        $this->orderMock->expects(self::any())->method('getIncrementId')->willReturn('XXXXX');
-        $this->orderMock->expects(self::any())->method('getGrandTotal')->willReturn('11.00');
-
-        $this->orderHelper->expects(self::once())->method('processExistingOrder')
-            ->with($this->quoteMock, $this->getTransaction())->willReturn($this->orderMock);
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with(self::anything(), 1, 'order_creation.latency', $startTime);
-
-
-
-        $this->currentMock->expects(self::once())->method('sendResponse')->with(
-            200,
-            [
-                'display_id'   => 'XXXXX',
-                'message'   => 'Order create was successful. Order Data: {"id":"1111","increment_id":"XXXXX","grand_total":"11.00"}',
-                'order_received_url'   => '',
-                'status'    => 'success',
-                'total'=> 1100,
-            ]
-        );
-
-
-
-        $this->currentMock->execute(
-            $type,
-            $this->getOrderTransaction(),
-            self::CURRENCY
-        );
-    }
-
 
     /**
      * @test
@@ -451,28 +220,25 @@ class CreateOrderTest extends BoltTestCase
      */
     public function execute_invalidHookType()
     {
-        $exception = new BoltException(
-            __('Invalid hook type!'),
-            null,
-            CreateOrder::E_BOLT_GENERAL_ERROR
-        );
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with("order_creation.failure", 1, "order_creation.latency", self::anything());
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'failure',
-            'error' => [[
-                'code' => $exception->getCode(),
-                'data' => [[
-                    'reason' => $exception->getMessage(),
-                ]]
-            ]]
-        ]));
-        $this->currentMock->execute(
+        $this->createOrder->execute(
             null,
             $this->getOrderTransaction(),
             self::CURRENCY
+        );
+        $response = json_decode(TestHelper::getProperty($this->createOrder, 'response')->getBody(), true);
+        $this->assertEquals(
+            [
+                'status' => 'failure',
+                'error' => [
+                    [
+                        'code' => CreateOrder::E_BOLT_GENERAL_ERROR,
+                        'data' => [
+                            ['reason' => 'Invalid hook type!']
+                        ]
+                    ]
+                ]
+            ],
+            $response
         );
     }
 
@@ -482,29 +248,55 @@ class CreateOrderTest extends BoltTestCase
      */
     public function execute_emptyOrder()
     {
-        $exception = new BoltException(
-            __('Missing order data.'),
-            null,
-            CreateOrder::E_BOLT_GENERAL_ERROR
-        );
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with("order_creation.failure", 1, "order_creation.latency", self::anything());
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'failure',
-            'error' => [[
-                'code' => $exception->getCode(),
-                'data' => [[
-                    'reason' => $exception->getMessage(),
-                ]]
-            ]]
-        ]));
-        $this->currentMock->execute(
+        $this->createOrder->execute(
             'order.create',
             null,
             self::CURRENCY
         );
+        $response = json_decode(TestHelper::getProperty($this->createOrder, 'response')->getBody(), true);
+        $this->assertEquals(
+            [
+                'status' => 'failure',
+                'error' => [
+                    [
+                        'code' => CreateOrder::E_BOLT_GENERAL_ERROR,
+                        'data' => [
+                            ['reason' => 'Missing order data.']
+                        ]
+                    ]
+                ]
+            ],
+            $response
+        );
+    }
+
+    /**
+     * Request getter
+     *
+     * @param array $bodyParams
+     *
+     * @return \Magento\Framework\App\RequestInterface
+     */
+    public function createRequest($bodyParams)
+    {
+        if (!$this->request) {
+            $this->request = $this->objectManager->get(Request::class);
+        }
+
+        $requestContent = json_encode($bodyParams);
+
+        $computed_signature = base64_encode(hash_hmac('sha256', $requestContent, self::SECRET, true));
+
+        $this->request->getHeaders()->clearHeaders();
+        $this->request->getHeaders()->addHeaderLine('X-Bolt-Hmac-Sha256', $computed_signature);
+        $this->request->getHeaders()->addHeaderLine('X-bolt-trace-id', self::TRACE_ID_HEADER);
+        $this->request->getHeaders()->addHeaderLine('Content-Type', 'application/json');
+
+        $this->request->setParams($bodyParams);
+
+        $this->request->setContent($requestContent);
+
+        return $this->request;
     }
 
     /**
@@ -523,151 +315,228 @@ class CreateOrderTest extends BoltTestCase
      */
     public function execute_processNewOrder()
     {
-        $this->orderHelper->expects(self::once())->method('prepareQuote')
-            ->with($this->immutableQuoteMock, $this->getTransaction())
-            ->willReturn($this->quoteMock);
-        $this->orderHelper->expects(self::once())->method('processExistingOrder')
-            ->with($this->quoteMock, $this->getTransaction())->willReturn(false);
-        $this->quoteMock->expects(self::once())->method('validateMinimumAmount')
-            ->willReturn(true);
-        $this->quoteMock->expects(self::once())->method('getGrandTotal')->willReturn(74);
-        $this->quoteMock->expects(self::once())->method('getTotals')->willReturnSelf();
+        $this->createRequest([]);
+        $quote = TestUtils::createQuote(['store_id' => $this->storeId]);
+        $quoteId = $quote->getId();
+        $order = TestUtils::createDumpyOrder([
+            'quote_id'=> $quoteId,
+            'increment_id' => '100000002'
+        ]);
+        $orderIncrementId = $order->getIncrementId();
 
-        $this->orderHelper->expects(self::once())->method('processNewOrder')
-            ->with($this->quoteMock, $this->getTransaction())->willReturn($this->orderMock);
+        $hookHelper = $this->objectManager->create(Hook::class);
+        $orderHelper = $this->getMockBuilder(OrderHelper::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['prepareQuote','processExistingOrder'])
+            ->getMock();
+        $orderHelper->expects($this->any())->method('prepareQuote')->willReturn($quote);
+        $orderHelper->expects($this->any())->method('processExistingOrder')->willReturn($order);
+        $stubApiHelper = new stubBoltApiHelper();
+        $apiHelperProperty = new \ReflectionProperty(
+            Hook::class,
+            'apiHelper'
+        );
+        $apiHelperProperty->setAccessible(true);
+        $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
 
-        $this->currentMock->execute(
+        $hookHelperProperty = new \ReflectionProperty(
+            CreateOrder::class,
+            'hookHelper'
+        );
+        $hookHelperProperty->setAccessible(true);
+        $hookHelperProperty->setValue($this->createOrder, $hookHelper);
+
+        $orderHelperProperty = new \ReflectionProperty(
+            CreateOrder::class,
+            'orderHelper'
+        );
+        $orderHelperProperty->setAccessible(true);
+        $orderHelperProperty->setValue($this->createOrder, $orderHelper);
+
+        $this->createOrder->execute(
             'order.create',
-            $this->getOrderTransaction(),
+            [
+                "token" => "adae3381970f8a96ddfea87b6cdbee5aa7c5dc49679f5105171ea22ce0c6766e",
+                "cart" => [
+                    "order_reference" => $orderIncrementId,
+                    "display_id" => $orderIncrementId.' / '. $quoteId,
+                    "currency" => [
+                        "currency" => self::CURRENCY,
+                        "currency_symbol" => "$"
+                    ],
+                    "subtotal_amount" => null,
+                    "total_amount" => [
+                        "amount" => 7400,
+                        "currency" => "USD",
+                        "currency_symbol" => "$"
+                    ],
+                    "tax_amount" => [
+                        "amount" => 0,
+                        "currency" => "USD",
+                        "currency_symbol" => "$"
+                    ],
+                    "shipping_amount" => [
+                        "amount" => 500,
+                        "currency" => "USD",
+                        "currency_symbol" => "$"
+                    ],
+                    "discount_amount" => [
+                        "amount" => 0,
+                        "currency" => "USD",
+                        "currency_symbol" => "$"
+                    ],
+                    "billing_address" => [
+                        "id" => "AA3xYFWjogfah",
+                        "street_address1" => "DO NOT SHIP",
+                        "locality" => "Beverly Hills",
+                        "region" => "California",
+                        "postal_code" => "90210",
+                        "country_code" => "US",
+                        "country" => "United States",
+                        "name" => "DO_NOT_SHIP DO_NOT_SHIP",
+                        "first_name" => "DO_NOT_SHIP",
+                        "last_name" => "DO_NOT_SHIP",
+                        "phone_number" => "5551234567",
+                        "email_address" => "test@guaranteed.network"
+                    ],
+                    "items" => $this->getOrderTransactionItems(),
+                    "shipments" => [
+                        [
+                            "shipping_address" => [
+                                "id" => "AA2HtQVSbQBtf",
+                                "street_address1" => "DO NOT SHIP",
+                                "locality" => "Beverly Hills",
+                                "region" => "California",
+                                "postal_code" => "90210",
+                                "country_code" => "US",
+                                "country" => "United States",
+                                "name" => "DO_NOT_SHIP DO_NOT_SHIP",
+                                "first_name" => "DO_NOT_SHIP",
+                                "last_name" => "DO_NOT_SHIP",
+                                "phone_number" => "5551234567",
+                                "email_address" => "bolttest@guaranteed.network"
+                            ],
+                            "shipping_method" => "unknown",
+                            "service" => "Best Way - Table Rate",
+                            "cost" => [
+                                "amount" => 0,
+                                "currency" => "USD",
+                                "currency_symbol" => "$"
+                            ],
+                            "reference" => "tablerate_bestway"
+                        ]
+                    ]
+                ]
+            ],
             self::CURRENCY
         );
+        $response = json_decode(TestHelper::getProperty($this->createOrder, 'response')->getBody(), true);
+        $this->assertEquals('success', $response['status']);
+        $this->assertEquals($order->getIncrementId(), $response['display_id']);
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
      * @test
      * @covers ::execute
-     * @covers ::preProcessWebhook
+     * @covers ::createOrder
      */
     public function execute_webApiException()
     {
-        $exception = new WebapiException(__('Precondition Failed'), 6001, 412);
-        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID)
-            ->willThrowException($exception);
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with($exception->getHttpCode());
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'failure',
-            'error' => [[
-                'code' => CreateOrder::E_BOLT_GENERAL_ERROR,
-                'data' => [[
-                    'reason' => $exception->getCode() . ': ' . $exception->getMessage(),
-                ]]
-            ]]
-        ]));
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with('order_creation.failure', 1, "order_creation.latency", self::anything());
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
 
-        $this->currentMock->execute(
+        $this->createOrder->execute(
             'order.create',
-            $this->getOrderTransaction(),
-            self::CURRENCY
-        );
-    }
-
-    /**
-     * @test
-     * @covers ::execute
-     * @covers ::createOrder
-     */
-    public function execute_localizedException()
-    {
-        $exception = new \Magento\Framework\Exception\LocalizedException(
-            __('The requested Payment Method is not available.')
-        );
-        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
-
-        $this->orderHelper->expects(self::once())
-            ->method('prepareQuote')
-            ->with($this->immutableQuoteMock, $this->getTransaction())
-            ->willThrowException($exception);
-
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'failure',
-            'error' => [[
-                'code' => 6009,
-                'data' => [[
-                    'reason' => 'Unprocessable Entity: ' . $exception->getMessage(),
-                ]]
-            ]]
-        ]));
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with('order_creation.failure', 1, "order_creation.latency", self::anything());
-
-        $this->currentMock->execute(
-            'order.create',
-            $this->getOrderTransaction(),
-            self::CURRENCY
-        );
-    }
-
-    /**
-     * @test
-     * @covers ::execute
-     * @covers ::createOrder
-     */
-    public function execute_otherException()
-    {
-        $exception = new \Exception(
-            __('Other exception.')
-        );
-        $this->hookHelper->expects(self::once())->method('preProcessWebhook')->with(self::STORE_ID);
-
-        $this->orderHelper->expects(self::once())
-            ->method('prepareQuote')
-            ->with($this->immutableQuoteMock, $this->getTransaction())
-            ->willThrowException($exception);
-
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with(422);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode([
-            'status' => 'failure',
-            'error' => [[
-                'code' => CreateOrder::E_BOLT_GENERAL_ERROR,
-                'data' => [[
-                    'reason' => $exception->getMessage(),
-                ]]
-            ]]
-        ]));
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with('order_creation.failure', 1, "order_creation.latency", self::anything());
-
-        $this->currentMock->execute(
-            'order.create',
-            $this->getOrderTransaction(),
-            self::CURRENCY
-        );
-    }
-
-    /**
-     * @test
-     * @covers ::getQuoteIdFromPayloadOrder
-     */
-    public function getQuoteIdFromPayloadOrder_noOrder()
-    {
-        $this->cartHelper->expects(self::once())->method('getImmutableQuoteIdFromBoltCartArray');
-        self::assertEquals(
-            self::IMMUTABLE_QUOTE_ID,
-            $this->currentMock->getQuoteIdFromPayloadOrder([
-                'cart' => [
-                    'order_reference' => self::ORDER_ID,
-                    'display_id' => false,
-                    'metadata' => [
-                        'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            [
+                "token" => "adae3381970f8a96ddfea87b6cdbee5aa7c5dc49679f5105171ea22ce0c6766e",
+                "cart" => [
+                    "order_reference" => self::ORDER_ID,
+                    "display_id" => '000000123'.' / '. $quoteId,
+                    "currency" => [
+                        "currency" => self::CURRENCY,
+                        "currency_symbol" => "$"
                     ],
+                    "subtotal_amount" => null,
+                    "total_amount" => [
+                        "amount" => 7400,
+                        "currency" => "USD",
+                        "currency_symbol" => "$"
+                    ],
+                    "tax_amount" => [
+                        "amount" => 0,
+                        "currency" => "USD",
+                        "currency_symbol" => "$"
+                    ],
+                    "shipping_amount" => [
+                        "amount" => 500,
+                        "currency" => "USD",
+                        "currency_symbol" => "$"
+                    ],
+                    "discount_amount" => [
+                        "amount" => 0,
+                        "currency" => "USD",
+                        "currency_symbol" => "$"
+                    ],
+                    "billing_address" => [
+                        "id" => "AA3xYFWjogfah",
+                        "street_address1" => "DO NOT SHIP",
+                        "locality" => "Beverly Hills",
+                        "region" => "California",
+                        "postal_code" => "90210",
+                        "country_code" => "US",
+                        "country" => "United States",
+                        "name" => "DO_NOT_SHIP DO_NOT_SHIP",
+                        "first_name" => "DO_NOT_SHIP",
+                        "last_name" => "DO_NOT_SHIP",
+                        "phone_number" => "5551234567",
+                        "email_address" => "test@guaranteed.network"
+                    ],
+                    "items" => $this->getOrderTransactionItems(),
+                    "shipments" => [
+                        [
+                            "shipping_address" => [
+                                "id" => "AA2HtQVSbQBtf",
+                                "street_address1" => "DO NOT SHIP",
+                                "locality" => "Beverly Hills",
+                                "region" => "California",
+                                "postal_code" => "90210",
+                                "country_code" => "US",
+                                "country" => "United States",
+                                "name" => "DO_NOT_SHIP DO_NOT_SHIP",
+                                "first_name" => "DO_NOT_SHIP",
+                                "last_name" => "DO_NOT_SHIP",
+                                "phone_number" => "5551234567",
+                                "email_address" => "bolttest@guaranteed.network"
+                            ],
+                            "shipping_method" => "unknown",
+                            "service" => "Best Way - Table Rate",
+                            "cost" => [
+                                "amount" => 0,
+                                "currency" => "USD",
+                                "currency_symbol" => "$"
+                            ],
+                            "reference" => "tablerate_bestway"
+                        ]
+                    ]
                 ]
-            ])
+            ],
+            self::CURRENCY
+        );
+        $response = json_decode(TestHelper::getProperty($this->createOrder, 'response')->getBody(), true);
+        $this->assertEquals(
+            [
+                'status' => 'failure',
+                'error' => [
+                    [
+                        'code' => CreateOrder::E_BOLT_GENERAL_ERROR,
+                        'data' => [
+                            ['reason' => '6001: Precondition Failed']
+                        ]
+                    ]
+                ]
+            ],
+            $response
         );
     }
 
@@ -679,7 +548,7 @@ class CreateOrderTest extends BoltTestCase
     {
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('cart->order_reference does not exist');
-        $this->currentMock->getOrderReference([]);
+        $this->createOrder->getOrderReference([]);
     }
 
     /**
@@ -690,7 +559,7 @@ class CreateOrderTest extends BoltTestCase
     {
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('cart->display_id does not exist');
-        $this->currentMock->getDisplayId([]);
+        $this->createOrder->getDisplayId([]);
     }
 
     /**
@@ -699,14 +568,13 @@ class CreateOrderTest extends BoltTestCase
      */
     public function getReceivedUrl()
     {
-        $url = 'baseurl/admin/boltpay/order/receivedurl';
-        $this->sessionHelper->expects(self::once())->method('setFormKey')->with($this->quoteMock);
-        $this->url->expects(self::once())->method('setScope')->with(self::STORE_ID);
-        $this->url->expects(self::once())->method('getUrl')->with('boltpay/order/receivedurl', [
+        $urlInterface = Bootstrap::getObjectManager()->create(UrlInterface::class);
+        $quote = TestUtils::createQuote();
+        $url = $this->createOrder->getReceivedUrl($quote);
+        self::assertEquals($urlInterface->getUrl('boltpay/order/receivedurl', [
             '_secure' => true,
-            'store_id' => self::STORE_ID
-        ])->willReturn($url);
-        $this->currentMock->getReceivedUrl($this->quoteMock);
+            'store_id' => $quote->getStoreId()
+        ]), $url);
     }
 
     /**
@@ -715,10 +583,9 @@ class CreateOrderTest extends BoltTestCase
      */
     public function isBackOfficeOrder_true()
     {
-        $this->quoteMock->expects(self::once())
-                        ->method('getBoltCheckoutType')
-                        ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE);
-        self::assertTrue($this->currentMock->isBackOfficeOrder($this->quoteMock));
+        $quote = TestUtils::createQuote();
+        $quote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE);
+        self::assertTrue($this->createOrder->isBackOfficeOrder($quote));
     }
 
     /**
@@ -727,38 +594,20 @@ class CreateOrderTest extends BoltTestCase
      */
     public function isBackOfficeOrder_false()
     {
-        $this->quoteMock->expects(self::once())
-            ->method('getBoltCheckoutType')
-            ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_MULTISTEP);
-        self::assertFalse($this->currentMock->isBackOfficeOrder($this->quoteMock));
+        $quote = TestUtils::createQuote();
+        $quote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_MULTISTEP);
+        self::assertFalse($this->createOrder->isBackOfficeOrder($quote));
     }
 
     /**
      * @test
      * @covers ::loadQuoteData
      */
-    public function loadQuoteData_exception()
+    public function loadQuoteData()
     {
-        $quoteId = self::QUOTE_ID;
-        $this->cartHelper->expects(self::once())->method('getQuoteById')->with(self::QUOTE_ID)
-            ->willThrowException(new NoSuchEntityException());
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function (callable $fn) use ($quoteId) {
-                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-                $reportMock->expects(self::once())->method('setMetaData')->with([
-                    'ORDER' => [
-                        'pre-auth' => true,
-                        'quoteId' => $quoteId,
-                    ]
-                ]);
-                $fn($reportMock);
-            }
-        );
-        $this->expectException(BoltException::class);
-        $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
-        $this->expectExceptionMessage(sprintf('There is no quote with ID: %s', $quoteId));
-
-        $this->currentMock->loadQuoteData($quoteId);
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        self::assertEquals($quoteId ,$this->createOrder->loadQuoteData($quoteId)->getId());
     }
 
     /**
@@ -769,78 +618,16 @@ class CreateOrderTest extends BoltTestCase
      */
     public function validateCartItems_exception()
     {
+        $quote = TestUtils::createQuote();
+        $product = TestUtils::getSimpleProduct();
+        $productSku = $product->getSku();
+        $quote->addProduct($product, 1);
+        $quote->save();
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(CreateOrder::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED);
-        $this->expectExceptionMessage('Cart data has changed. SKU: ["24-UB02"]');
-        $this->currentMock->validateCartItems($this->quoteMock, json_decode('{"order":{"cart":{"items":{}}}}'));
+        $this->expectExceptionMessage('Cart data has changed. SKU: ["'.$productSku.'"]');
+        $this->createOrder->validateCartItems($quote, json_decode('{"order":{"cart":{"items":{}}}}'));
     }
-
-    /**
-     * @param $errorInfo
-     * @param $message
-     * @dataProvider providerHasItemErrors_qty
-     * @covers ::hasItemErrors
-     * @test
-     * @throws BoltException
-     */
-    public function hasItemErrors_qty($errorInfo, $message)
-    {
-        /** @var MockObject|Quote\Item $quoteItem */
-        $quoteItem = $this->getMockBuilder(Quote\Item::class)
-            ->setMethods([
-                'getSku', 'getQty', 'getCalculationPrice', 'getName', 'getIsVirtual',
-                'getProductId', 'getProduct', 'getPrice', 'getErrorInfos'
-            ])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-
-        $quoteItem->method('getErrorInfos')->willReturn([$errorInfo]);
-
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function (callable $fn) use ($errorInfo, $message) {
-                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-                $reportMock->expects(self::once())->method('setMetaData')->with([
-                    'Pre Auth' => [
-                        'quoteItem errors' => '(' . $errorInfo['origin'] . '): ' . $message . PHP_EOL,
-                        'Error Code' => Data::ERROR_QTY
-                    ]
-                ]);
-                $fn($reportMock);
-            }
-        );
-        $this->expectException(BoltException::class);
-        $this->expectExceptionCode(CreateOrder::E_BOLT_ITEM_OUT_OF_INVENTORY);
-        $this->expectExceptionMessage($message);
-        $this->currentMock->hasItemErrors($quoteItem);
-    }
-
-    /**
-     * Data provider for {@see hasItemErrors_qty}
-     * @return array
-     */
-    public function providerHasItemErrors_qty()
-    {
-        return [
-            [
-                [
-                    'origin' => 'cataloginventory',
-                    'code' => Data::ERROR_QTY,
-                    'message' => __('This product is out of stock.'),
-                ],
-                'This product is out of stock.'
-            ],
-            [
-                [
-                    'origin' => 'cataloginventory',
-                    'code' => Data::ERROR_QTY,
-                    'message' => 'This product is out of stock.',
-                ],
-                'This product is out of stock.'
-            ]
-        ];
-    }
-
 
     /**
      * @test
@@ -852,26 +639,13 @@ class CreateOrderTest extends BoltTestCase
     {
         $itemSku = self::PRODUCT_SKU;
         $transactionItems = json_decode(json_encode($this->getOrderTransactionItems()));
-
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function (callable $fn) {
-                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-                $reportMock->expects(self::once())->method('setMetaData')->with([
-                    'Pre Auth' => [
-                        'item.price' => 7402,
-                        'transaction.unit_price' => 7400,
-                    ]
-                ]);
-                $fn($reportMock);
-            }
-        );
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(CreateOrder::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED);
         $this->expectExceptionMessage('Price does not match. Item sku: ' . $itemSku);
 
-        $this->currentMock->validateItemPrice(
+        $this->createOrder->validateItemPrice(
             $itemSku,
-            7402,
+            740200,
             $transactionItems
         );
     }
@@ -883,25 +657,13 @@ class CreateOrderTest extends BoltTestCase
      */
     public function validateTax_exception()
     {
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function (callable $fn) {
-                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-                $reportMock->expects(self::once())->method('setMetaData')->with([
-                    'Pre Auth' => [
-                        'shipping.tax_amount' => 0,
-                        'transaction.tax_amount' => OrderHelper::MISMATCH_TOLERANCE + 1,
-                    ]
-                ]);
-                $fn($reportMock);
-            }
-        );
+        $quote = TestUtils::createQuote();
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(CreateOrder::E_BOLT_CART_HAS_EXPIRED);
         $this->expectExceptionMessage('Cart Tax mismatched.');
-
-        $this->currentMock->validateTax(
-            $this->quoteMock,
-            json_decode('{"order":{"cart":{"tax_amount":{"amount":2}}}}')
+        $this->createOrder->validateTax(
+            $quote,
+            json_decode('{"order":{"cart":{"tax_amount":{"amount":20000000000}}}}')
         );
     }
 
@@ -912,30 +674,18 @@ class CreateOrderTest extends BoltTestCase
      */
     public function validateShippingCost_exception()
     {
-        $storeCost = 500;
-        $boltCost = 0;
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function (callable $fn) use ($boltCost, $storeCost) {
-                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-                $reportMock->expects(self::once())->method('setMetaData')->with([
-                    'Pre Auth' => [
-                        'shipping.shipping_amount' => $storeCost,
-                        'transaction.shipping_amount' => $boltCost,
-                        ]
-                ]);
-                $fn($reportMock);
-            }
-        );
+        $storeCost = 0;
+        $boltCost = 500;
+        $quote = TestUtils::createQuote();
+        $transaction = $this->getTransaction();
+        $transaction->order->cart->shipping_amount->amount = 500;
+
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(CreateOrder::E_BOLT_SHIPPING_EXPIRED);
         $this->expectExceptionMessage(
             'Shipping total has changed. Old value: ' . $boltCost . ', new value: ' . $storeCost
         );
-
-        $this->currentMock->validateShippingCost(
-            $this->quoteMock,
-            json_decode('{}')
-        );
+        $this->createOrder->validateShippingCost($quote, $transaction);
     }
 
     /**
@@ -945,15 +695,18 @@ class CreateOrderTest extends BoltTestCase
      */
     public function validateShippingCost_virtual()
     {
-        $this->quoteMock->expects(self::once())->method('isVirtual')->willReturn(true);
-
+        $quote = TestUtils::createQuote();
+        $product = TestUtils::getVirtualProduct();
+        $quote->addProduct($product, 1);
+        $quote->save();
         $transaction = $this->getTransaction();
         $transaction->order->cart->shipping_amount->amount = 0;
 
-        $this->currentMock->validateShippingCost(
-            $this->quoteMock,
+        $this->createOrder->validateShippingCost(
+            $quote,
             $transaction
         );
+        TestUtils::cleanupSharedFixtures([$product]);
     }
 
     /**
@@ -966,47 +719,21 @@ class CreateOrderTest extends BoltTestCase
         $storeCost = 0;
         $boltCost = 500;
 
-        $this->quoteMock->expects(self::once())->method('isVirtual')->willReturn(true);
-
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function (callable $fn) use ($boltCost, $storeCost) {
-                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
-                $reportMock->expects(self::once())->method('setMetaData')->with([
-                    'Pre Auth' => [
-                        'shipping.shipping_amount' => $storeCost,
-                        'transaction.shipping_amount' => $boltCost,
-                        ]
-                ]);
-                $fn($reportMock);
-            }
-        );
+        $quote = TestUtils::createQuote();
+        $product = TestUtils::getVirtualProduct();
+        $quote->addProduct($product, 1);
+        $quote->save();
+        $transaction = $this->getTransaction();
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(CreateOrder::E_BOLT_SHIPPING_EXPIRED);
         $this->expectExceptionMessage(
             'Shipping total has changed. Old value: ' . $boltCost . ', new value: ' . $storeCost
         );
-
-        $this->currentMock->validateShippingCost(
-            $this->quoteMock,
-            $this->getTransaction()
+        $this->createOrder->validateShippingCost(
+            $quote,
+            $transaction
         );
-    }
-
-    /**
-     * @test
-     * @covers ::sendResponse
-     */
-    public function sendResponse()
-    {
-        $code = 200;
-        $body = ['test' => 'test'];
-
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with($code);
-        $this->response->expects(self::once())->method('setBody')->with(json_encode($body));
-        $this->currentMock->sendResponse(
-            $code,
-            $body
-        );
+        TestUtils::cleanupSharedFixtures([$product]);
     }
 
     /**
