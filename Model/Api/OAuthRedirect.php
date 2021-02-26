@@ -47,14 +47,14 @@ class OAuthRedirect implements OAuthRedirectInterface
     private $deciderHelper;
 
     /**
-     * @var LogHelper
-     */
-    private $logHelper;
-
-    /**
      * @var SSOHelper
      */
     private $ssoHelper;
+
+    /**
+     * @var LogHelper
+     */
+    private $logHelper;
 
     /**
      * @var ExternalCustomerEntityRepository
