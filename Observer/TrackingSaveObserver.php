@@ -161,8 +161,7 @@ class TrackingSaveObserver implements ObserverInterface
             $startTime = $this->metricsClient->getCurrentTime();
             $tracking = $observer->getEvent()->getTrack();
 
-            $origData = $tracking->getOrigData();
-            if (!$this->isTrackNew()) {
+            if (!$this->isTrackNew($tracking)) {
                 $this->metricsClient->processMetric(
                     "tracking_creation.success",
                     1,
