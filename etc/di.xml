@@ -306,4 +306,8 @@
                 type="Bolt\Boltpay\Plugin\Magento\Quote\Observer\Frontend\Quote\Address\AddressCollectTotalsObserverPlugin"
                 sortOrder="10"/>
     </type>
+    
+    <type name="Zonos\DutyTax\Model\Carrier\Zonos">
+        <plugin name="BoltBoltZonosDutyTaxCarrierPlugin" type="Bolt\Boltpay\Plugin\Zonos\DutyTax\Model\Carrier\ZonosPlugin" sortOrder="1"/>
+    </type>
 </config>
