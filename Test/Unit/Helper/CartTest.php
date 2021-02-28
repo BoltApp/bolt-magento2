@@ -1623,6 +1623,8 @@ class CartTest extends BoltTestCase
     {
         $currentMock = $this->getCurrentMock(['validateEmail']);
 
+        $pitem = $this->getQuoteItemMock();
+        
         $this->quoteMock->expects(static::once())->method('getData')->willReturn(
             [
                 'entity_id'          => self::PARENT_QUOTE_ID,
@@ -1632,17 +1634,21 @@ class CartTest extends BoltTestCase
                 'email'              => 'invalid.mail',
                 'reserved_order_id'  => self::ORDER_INCREMENT_ID,
                 'customer_id'        => self::CUSTOMER_ID,
+                'items'              => [$pitem],
             ]
         );
 
+        $citem = $this->getQuoteItemMock();
         $childQuoteMock = $this->createMock(Quote::class);
         $childQuoteMock->expects(static::atLeastOnce())->method('setData')->withConsecutive(
             ['customer_firstname', 'Test'],
             ['customer_lastname', 'Test'],
             ['customer_email', self::EMAIL_ADDRESS],
-            ['customer_id', self::CUSTOMER_ID]
+            ['customer_id', self::CUSTOMER_ID],
+            ['items', [$citem]]
         );
         $childQuoteMock->expects(static::once())->method('save');
+        $childQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn([$citem]);
         $currentMock->expects(static::exactly(2))->method('validateEmail')->withConsecutive(
             [self::EMAIL_ADDRESS],
             ['invalid.mail']
