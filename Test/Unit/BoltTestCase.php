@@ -9,7 +9,6 @@ use PHPUnit\Runner\Version as PHPUnitVersion;
 use ReflectionException;
 use ReflectionObject;
 use ReflectionProperty;
-use PHPUnit\Framework\Constraint\StringContains;
 
 if (PHPUnitVersion::id() < 9) {
     class BoltTestCase extends TestCase
