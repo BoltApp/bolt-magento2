@@ -49,5 +49,14 @@
     <action name="rest/*/V1/carts/mine/gift-message">
         <section name="boltcart"/>
     </action>
+    <action name="customer/account/logout">
+        <section name="boltcart"/>
+    </action>
+    <action name="customer/account/loginPost">
+        <section name="boltcart"/>
+    </action>
+    <action name="customer/account/createPost">
+        <section name="boltcart"/>
+    </action>
 
 </config>

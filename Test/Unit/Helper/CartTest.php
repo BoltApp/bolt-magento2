@@ -357,6 +357,7 @@ class CartTest extends BoltTestCase
             'isVirtual',
             'assignCustomer',
             'getCustomerGroupId',
+            'getCustomerId',
             'setIsActive',
             'getData',
             'getStore',
@@ -832,7 +833,7 @@ class CartTest extends BoltTestCase
      */
     public function getQuoteById_withQuoteIdNotCached_loadsQuoteById()
     {
-        
+
         $quote = TestUtils::createQuote();
         $quoteId = $quote->getId();
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -849,7 +850,7 @@ class CartTest extends BoltTestCase
      */
     public function getQuoteById_withQuoteIdNotCachedAndNotLoaded_returnsFalse()
     {
-        
+
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         static::assertFalse($boltHelperCart->getQuoteById(self::IMMUTABLE_QUOTE_ID));
     }
@@ -864,7 +865,7 @@ class CartTest extends BoltTestCase
      */
     public function getQuoteById_withQuoteIdCached_returnsFromPropertyCache()
     {
-        
+
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = TestUtils::createQuote();
         $quoteId = $quote->getId();
@@ -887,7 +888,7 @@ class CartTest extends BoltTestCase
      */
     public function getActiveQuoteById_always_getsActiveQuoteFromRepository()
     {
-        
+
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = TestUtils::createQuote(['is_active' => true]);
         $quoteId = $quote->getId();
@@ -905,7 +906,7 @@ class CartTest extends BoltTestCase
      */
     public function getOrderByIncrementId_whenOrderCachedAndForceLoadTrue_loadsOrderByIncrementId()
     {
-        
+
         $order = TestUtils::createDumpyOrder();
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         TestHelper::setProperty(
@@ -925,7 +926,7 @@ class CartTest extends BoltTestCase
      */
     public function saveQuote_always_savesQuoteUsingQuoteRepository()
     {
-        
+
         $quote = TestUtils::createQuote();
         $quote->setCustomerEmail('johnmc+testing@bolt.com');
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -945,7 +946,7 @@ class CartTest extends BoltTestCase
      */
     public function deleteQuote_always_deletesQuoteUsingQuoteRepository()
     {
-        
+
         $quote = TestUtils::createQuote();
         $quoteId = $quote->getId();
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -965,7 +966,7 @@ class CartTest extends BoltTestCase
      */
     public function quoteResourceSave_always_savesQuoteUsingResource()
     {
-        
+
         $quote = TestUtils::createQuote();
         $quote->setCustomerEmail('johnmc+testing@bolt.com');
         $quote->save();
@@ -988,7 +989,7 @@ class CartTest extends BoltTestCase
      */
     public function isBoltOrderCachingEnabled_always_returnsValueFromConfigHelper()
     {
-        
+
         $isBoltOrderCachingEnabled = true;
         $configWriter = Bootstrap::getObjectManager()->create(\Magento\Framework\App\Config\Storage\WriterInterface::class);
         $configWriter->save(ConfigHelper::XML_PATH_BOLT_ORDER_CACHING,
@@ -1014,7 +1015,7 @@ class CartTest extends BoltTestCase
      */
     public function loadFromCache_whenIdentifierNotFoundInCache_returnsFalse()
     {
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $cache = Bootstrap::getObjectManager()->create(CacheInterface::class);
         $cachedValue = false;
@@ -1033,7 +1034,7 @@ class CartTest extends BoltTestCase
      */
     public function loadFromCache_whenIdentifierIsFoundInCacheAndUnserializeFalse_returnsValue()
     {
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $cache = Bootstrap::getObjectManager()->create(CacheInterface::class);
         $cachedValue = 'Test cache value';
@@ -1060,7 +1061,7 @@ class CartTest extends BoltTestCase
      */
     public function loadFromCache_whenIdentifierIsFoundInCacheAndUnserializeTrue_returnsUnserializedValue()
     {
-        
+
         $cachedValue = $this->getTestCartData();
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $cache = Bootstrap::getObjectManager()->create(CacheInterface::class);
@@ -1130,7 +1131,7 @@ class CartTest extends BoltTestCase
      */
     public function setLastImmutableQuote_always_setsLastImmutableQuoteProperty()
     {
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = TestUtils::createQuote();
         TestHelper::invokeMethod(
@@ -1155,7 +1156,7 @@ class CartTest extends BoltTestCase
      */
     public function getLastImmutableQuote_always_returnsLastImmutableQuoteProperty()
     {
-        
+
         $quote = TestUtils::createQuote();
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         TestHelper::setProperty(
@@ -1193,7 +1194,7 @@ class CartTest extends BoltTestCase
      */
     public function getSessionQuoteStoreId_withSessionQuote_returnsSessionQuoteStoreId()
     {
-        
+
         $cartSession = Bootstrap::getObjectManager()->create(CheckoutSession::class);
         $quote = TestUtils::createQuote(['store_id'=>self::STORE_ID]);
         $cartSession->setQuote($quote);
@@ -1210,7 +1211,7 @@ class CartTest extends BoltTestCase
      */
     public function getSessionQuoteStoreId_withoutSessionQuote_returnsNull()
     {
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         static::assertEquals(null, $cartHelper->getSessionQuoteStoreId());
     }
@@ -1257,7 +1258,7 @@ class CartTest extends BoltTestCase
      */
     public function getCartCacheIdentifier_always_returnsCartCacheIdentifier()
     {
-        
+
         $testCartData = $this->getTestCartData();
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $result = TestHelper::invokeMethod($cartHelper, 'getCartCacheIdentifier', [$testCartData]);
@@ -1273,11 +1274,13 @@ class CartTest extends BoltTestCase
      */
     public function getCartCacheIdentifier_withGiftMessageID_returnsCartCacheIdentifier()
     {
-        
+
         $testCartData = $this->getTestCartData();
         $quote = TestUtils::createQuote([
             'gift_message_id'=> self::GIFT_MESSAGE_ID,
-            'customer_group_id' => self::CUSTOMER_GROUP_ID
+            'customer_group_id' => self::CUSTOMER_GROUP_ID,
+            'customer_id' => self::CUSTOMER_ID,
+
         ]);
 
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -1286,7 +1289,10 @@ class CartTest extends BoltTestCase
         $result = TestHelper::invokeMethod($cartHelper, 'getCartCacheIdentifier', [$testCartData]);
         unset($testCartData['display_id']);
         static::assertEquals(
-            hash('md5',json_encode($testCartData).self::GIFT_MESSAGE_ID.self::CUSTOMER_GROUP_ID),
+            hash(
+                'md5',
+                json_encode($testCartData).self::GIFT_MESSAGE_ID.self::CUSTOMER_GROUP_ID.self::CUSTOMER_ID
+            ),
             $result
         );
     }
@@ -1299,11 +1305,12 @@ class CartTest extends BoltTestCase
      */
     public function getCartCacheIdentifier_withGiftWrappingId_returnsCartCacheIdentifier()
     {
-        
+
         $testCartData = $this->getTestCartData();
         $quote = TestUtils::createQuote([
             'gw_id'=> self::GIFT_WRAPPING_ID,
-            'customer_group_id' => self::CUSTOMER_GROUP_ID
+            'customer_group_id' => self::CUSTOMER_GROUP_ID,
+            'customer_id' => self::CUSTOMER_ID,
         ]);
 
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -1312,7 +1319,10 @@ class CartTest extends BoltTestCase
         $result = TestHelper::invokeMethod($cartHelper, 'getCartCacheIdentifier', [$testCartData]);
         unset($testCartData['display_id']);
         static::assertEquals(
-            hash('md5',json_encode($testCartData).self::GIFT_WRAPPING_ID.self::CUSTOMER_GROUP_ID),
+            hash(
+                'md5',
+                json_encode($testCartData).self::GIFT_WRAPPING_ID.self::CUSTOMER_GROUP_ID.self::CUSTOMER_ID
+            ),
             $result
         );
     }
@@ -1414,7 +1424,7 @@ class CartTest extends BoltTestCase
      */
     public function getImmutableQuoteIdFromBoltOrder_always_returnsImmutableQuote()
     {
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $boltOrder = (object)[
             'cart' => (object)[
@@ -1443,7 +1453,7 @@ class CartTest extends BoltTestCase
      */
     public function isQuoteAvailable_always_determinesIfQuoteIsAvailable()
     {
-        
+
         $quote = TestUtils::createQuote();
         $quoteId = $quote->getId();
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -1460,7 +1470,7 @@ class CartTest extends BoltTestCase
      */
     public function updateQuoteTimestamp_always_updatesQuoteTimestamp()
     {
-        
+
         $quote = TestUtils::createQuote();
         $quoteId = $quote->getId();
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -1624,7 +1634,7 @@ class CartTest extends BoltTestCase
         $currentMock = $this->getCurrentMock(['validateEmail']);
 
         $pitem = $this->getQuoteItemMock();
-        
+
         $this->quoteMock->expects(static::once())->method('getData')->willReturn(
             [
                 'entity_id'          => self::PARENT_QUOTE_ID,
@@ -1904,7 +1914,7 @@ class CartTest extends BoltTestCase
      */
     public function isAddressComplete_withVariousAddresses_determinesIfAddressIsComplete($address, $expectedResult)
     {
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         static::assertEquals(
             $expectedResult,
@@ -1978,7 +1988,7 @@ class CartTest extends BoltTestCase
         $sessionObject,
         $expectedResult
     ) {
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         TestHelper::setProperty($cartHelper, 'checkoutSession', $sessionObject);
         static::assertEquals($expectedResult, TestHelper::invokeMethod($cartHelper, 'isBackendSession'));
@@ -1991,7 +2001,7 @@ class CartTest extends BoltTestCase
      */
     public function isBackendSession_withVariousSessionObjectsProvider()
     {
-        
+
         return [
             'Backend session' => [
                 'sessionObject'  => Bootstrap::getObjectManager()->create(\Magento\Backend\Model\Session\Quote::class),
@@ -2042,7 +2052,7 @@ class CartTest extends BoltTestCase
             'another_random_empty_field' => [],
         ];
 
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
 
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -2102,7 +2112,7 @@ class CartTest extends BoltTestCase
             'another_random_empty_field' => [],
         ];
 
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
 
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -2148,7 +2158,7 @@ class CartTest extends BoltTestCase
      */
     public function validateEmail_withVarousEmailAddresses_determinesIfEmailIsValid($email, $expectedResult)
     {
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         static::assertEquals($expectedResult, $cartHelper->validateEmail($email));
     }
@@ -2179,7 +2189,7 @@ class CartTest extends BoltTestCase
      */
     public function getWebsiteId_always_returnsWebsiteIdFromSessionQuote()
     {
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $checkoutSession = Bootstrap::getObjectManager()->create(CheckoutSession::class);
         $store = Bootstrap::getObjectManager()->create(Store::class)->setWebsiteId(self::WEBSITE_ID);
@@ -2198,7 +2208,7 @@ class CartTest extends BoltTestCase
      */
     public function handleSpecialAddressCases_withPuertoRicoAddress_handlessPuertoRicoAddressSpecialCase()
     {
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $addressData = ['country_code' => 'PR'];
         $result = $cartHelper->handleSpecialAddressCases($addressData);
@@ -2218,7 +2228,7 @@ class CartTest extends BoltTestCase
      */
     public function hasProductRestrictions_withToggleCheckoutEmpty_returnsFalse()
     {
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = TestUtils::createQuote();
         static::assertFalse($cartHelper->hasProductRestrictions($quote));
@@ -2234,7 +2244,7 @@ class CartTest extends BoltTestCase
      */
     public function hasProductRestrictions_withNoProductAndItemRestrictionMethods_returnsFalse()
     {
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = TestUtils::createQuote();
         $configWriter = Bootstrap::getObjectManager()->create(\Magento\Framework\App\Config\Storage\WriterInterface::class);
@@ -2256,7 +2266,7 @@ class CartTest extends BoltTestCase
      */
     public function hasProductRestrictions_withNoQuoteItems_returnsFalse()
     {
-        
+
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = TestUtils::createQuote();
         $configWriter = Bootstrap::getObjectManager()->create(\Magento\Framework\App\Config\Storage\WriterInterface::class);
@@ -2502,7 +2512,7 @@ ORDER
         */
         public function deactivateSessionQuote_ifQuoteIsActive_deactivatesQuote()
         {
-            
+
             $quote = TestUtils::createQuote(['is_active'=> true]);
             $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $cartHelper->deactivateSessionQuote($quote);
@@ -2518,7 +2528,7 @@ ORDER
         */
         public function doesOrderExist_withExistingOrder_basedOnGetOrderByIncrementId_returnsOrder()
         {
-            
+
             $order = TestUtils::createDumpyOrder();
             $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             static::assertEquals($order->getId(), $boltHelperCart->doesOrderExist(
@@ -2537,7 +2547,7 @@ ORDER
         */
         public function doesOrderExist_withExistingOrder_basedOnGetOrderByQuoteId_returnsOrder()
         {
-            
+
             $quote = TestUtils::createQuote();
             $order = TestUtils::createDumpyOrder(['quote_id' => $quote->getId()]);
             $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -2558,7 +2568,7 @@ ORDER
         */
         public function doesOrderExist_getOrderByIncrementIdReturnsFalse_getOrderByQuoteIdReturnsFalse_returnsFalse()
         {
-        
+
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         static::assertFalse(
             $boltHelperCart->doesOrderExist(
@@ -2573,7 +2583,7 @@ ORDER
         */
         public function getOrderByQuoteId()
         {
-            
+
             $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
             $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             static::assertEquals($order->getId(), $boltHelperCart->getOrderByQuoteId(self::QUOTE_ID)->getId());
@@ -2585,7 +2595,7 @@ ORDER
          */
         public function getOrderById()
         {
-            
+
             $order = TestUtils::createDumpyOrder();
             $orderId = $order->getId();
             $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -2731,7 +2741,7 @@ ORDER
             $addSessionIdToMetadataValue,
             $metadataSessionIdAssertMethod
         ) {
-            
+
             $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
             $product = TestUtils::getSimpleProduct();
@@ -2807,7 +2817,7 @@ ORDER
         */
         public function getCartData_withParentQuoteEmptyAndNoImmutableQuote_returnsEmptyArray()
         {
-            
+
             TestUtils::setQuoteToSession(null);
             $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             static::assertEquals([], $boltHelperCart->getCartData(false, '', null));
@@ -2823,7 +2833,7 @@ ORDER
         */
         public function getCartData_withEmptyImmutableQuote_returnsEmptyArray()
         {
-            
+
             $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = Bootstrap::getObjectManager()->create(Quote::class);
             TestUtils::setQuoteToSession($quote);
@@ -2844,7 +2854,7 @@ ORDER
             $addSessionIdToMetadataValue,
             $metadataSessionIdAssertMethod
         ) {
-        
+
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
         $quote->setQuoteCurrencyCode("USD");
@@ -2958,7 +2968,7 @@ ORDER
         */
         public function getCartData_withVirtualQuoteAndInsufficientBillingAddressData_notifiesErrorAndReturnsEmptyArray()
         {
-            
+
             $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = Bootstrap::getObjectManager()->create(Quote::class);
             $quote->setQuoteCurrencyCode("USD");
@@ -3000,7 +3010,7 @@ ORDER
             $addSessionIdToMetadataValue,
             $metadataSessionIdAssertMethod
         ) {
-        
+
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
         $quote->setQuoteCurrencyCode("USD");
@@ -3644,7 +3654,7 @@ ORDER
         */
         public function getCartData_paymentOnlyAndShippingMethodMissing_notifiesErrorAndReturnsEmptyArray()
         {
-            
+
             $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = Bootstrap::getObjectManager()->create(Quote::class);
             $quote->setQuoteCurrencyCode("USD");
@@ -3830,7 +3840,7 @@ ORDER
         */
         public function collectDiscounts_withNoDiscounts_returnsParametersUnchanged()
         {
-        
+
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
         $quote->setBoltParentQuoteId(999999);
@@ -3990,7 +4000,7 @@ ORDER
         */
         public function collectDiscounts_withStoreCreditAndPaymentOnly_collectsDiscountFromQuote()
         {
-        
+
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
         $appliedDiscount = 10; // $
@@ -4191,7 +4201,7 @@ ORDER
         $diff = 0;
         $paymentOnly = true;
         $appliedDiscount = 10; // $
-        
+
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
         $appliedDiscount = 10; // $
@@ -4451,7 +4461,7 @@ ORDER
 
         $this->imageHelper->method('init')->willReturnSelf();
         $this->imageHelper->method('getUrl')->willReturn('no-image');
-        
+
         $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
 
         list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
@@ -4521,7 +4531,7 @@ ORDER
         $this->configHelper->method('getProductAttributesList')->willReturn([$attributeName]);
 
         $this->productRepository->method('get')->with(self::PRODUCT_SKU)->willReturn($this->productMock);
-        
+
         $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
 
         list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
@@ -4575,7 +4585,7 @@ ORDER
         $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
         $quoteItem->method('getProduct')->willReturn($productMock);
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
-        
+
         $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
 
         $this->imageHelper->method('init')
@@ -6314,7 +6324,7 @@ ORDER
         */
         public function assignQuoteCustomerByEncryptedUserId_withInvalidEncryptedUserId_throwsException($encryptedUserId)
         {
-            
+
             $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
             $this->expectExceptionMessage("Incorrect encrypted_user_id");
@@ -6357,7 +6367,7 @@ ORDER
         */
         public function assignQuoteCustomerByEncryptedUserId_withInvalidSignature_throwsException()
         {
-            
+
             $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
             $quote = TestUtils::createQuote();
             $this->expectExceptionMessage("Incorrect signature");
@@ -6753,5 +6763,23 @@ ORDER
             [$this->immutableQuoteMock]
         );
         static::assertStringContainsString((string)$groupId, $result);
+    }
+
+    /**
+     * @test
+     * that convertExternalFieldsToCacheIdentifier returns cache identifier affected by the customer id
+     *
+     * @covers ::convertExternalFieldsToCacheIdentifier
+     */
+    public function convertExternalFieldsToCacheIdentifier_always_appendsCustomerIdToCacheIdentifier()
+    {
+        $customerId = mt_rand();
+        $this->immutableQuoteMock->expects(static::once())->method('getCustomerId')->willReturn($customerId);
+        $result = TestHelper::invokeMethod(
+            $this->currentMock,
+            'convertExternalFieldsToCacheIdentifier',
+            [$this->immutableQuoteMock]
+        );
+        static::assertStringContainsString((string)$customerId, $result);
     }
 }
