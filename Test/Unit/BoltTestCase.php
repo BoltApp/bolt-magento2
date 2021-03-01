@@ -46,17 +46,6 @@ if (PHPUnitVersion::id() < 9) {
         public static function assertStringContainsString(string $needle, string $haystack, string $message = '')
         {
             $constraint = new StringContains($needle, false);
-
-            static::assertThat($haystack, $constraint, $message);
-        }
-
-        /**
-         * @throws \PHPUnit\Framework\ExpectationFailedException
-         * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
-         */
-        public static function assertStringContainsString(string $needle, string $haystack, string $message = '')
-        {
-            $constraint = new StringContains($needle, false);
             static::assertThat($haystack, $constraint, $message);
         }
     }
