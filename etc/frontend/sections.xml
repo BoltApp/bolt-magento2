@@ -58,5 +58,8 @@
     <action name="customer/account/createPost">
         <section name="boltcart"/>
     </action>
+    <action name="customer/ajax/login">
+        <section name="boltcart"/>
+    </action>
 
 </config>
