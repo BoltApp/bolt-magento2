@@ -39,11 +39,6 @@ class ShippingOptions implements ShippingOptionsInterface, \JsonSerializable
     private $taxResult;
 
     /**
-     * @var string
-     */
-    private $currency;
-
-    /**
      * Get all available shipping options.
      *
      * @api
