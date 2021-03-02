@@ -15,29 +15,33 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\Api;
+namespace Bolt\Boltpay\Api\Data;
 
-/**
- * @api
- */
-interface CreateOrderInterface
+interface CreatedOrderInterface
 {
     /**
-     * Create order.
-     * Hook formats:
-     * [{"type":"order.create","order":{},"currency":"USD"}]
-     *
      * @api
-     *
-     * @param string $type
-     * @param mixed  $order - which contain token and cart nodes.
-     * @param string $currency
-     *
-     * @return CreatedOrderInterface|void
+     * @param int $displayId
+     * @return $this
      */
-    public function execute(
-        $type = null,
-        $order = null,
-        $currency = null
-    );
+    public function setDisplayId($displayId);
+
+    /**
+     * @api
+     * @return int
+     */
+    public function getDisplayId();
+
+    /**
+     * @api
+     * @param string $orderReceivedUrl
+     * @return $this
+     */
+    public function setOrderReceivedUrl($orderReceivedUrl);
+
+    /**
+     * @api
+     * @return string
+     */
+    public function getOrderReceivedUrl();
 }

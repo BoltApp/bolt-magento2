@@ -40,6 +40,7 @@ use Magento\Quote\Model\Quote\Item as QuoteItem;
 use Magento\CatalogInventory\Helper\Data as CatalogInventoryData;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Api\Data\CreatedOrderInterfaceFactory;
 
 /**
  * Class CreateOrder
@@ -131,13 +132,18 @@ class CreateOrder implements CreateOrderInterface
     private $eventsForThirdPartyModules;
 
     /**
+     * @var CreatedOrderInterfaceFactory
+     */
+    protected $createdOrderInterfaceFactory;
+
+    /**
      * @param HookHelper             $hookHelper
      * @param OrderHelper            $orderHelper
      * @param CartHelper             $cartHelper
      * @param LogHelper              $logHelper
      * @param Request                $request
      * @param Bugsnag                $bugsnag
-     * @param MetricsClient        $metricsClient
+     * @param MetricsClient          $metricsClient
      * @param Response               $response
      * @param UrlInterface           $url
      * @param BackendUrl             $backendUrl
@@ -145,6 +151,7 @@ class CreateOrder implements CreateOrderInterface
      * @param StockRegistryInterface $stockRegistry
      * @param SessionHelper          $sessionHelper
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
+     * @param CreatedOrderInterfaceFactory $createdOrderInterfaceFactory
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -160,7 +167,8 @@ class CreateOrder implements CreateOrderInterface
         ConfigHelper $configHelper,
         StockRegistryInterface $stockRegistry,
         SessionHelper $sessionHelper,
-        EventsForThirdPartyModules $eventsForThirdPartyModules
+        EventsForThirdPartyModules $eventsForThirdPartyModules,
+        CreatedOrderInterfaceFactory $createdOrderInterfaceFactory
     ) {
         $this->hookHelper = $hookHelper;
         $this->orderHelper = $orderHelper;
@@ -176,6 +184,7 @@ class CreateOrder implements CreateOrderInterface
         $this->stockRegistry = $stockRegistry;
         $this->sessionHelper = $sessionHelper;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
+        $this->createdOrderInterfaceFactory = $createdOrderInterfaceFactory;
     }
 
     /**
@@ -229,14 +238,11 @@ class CreateOrder implements CreateOrderInterface
             $orderData = json_encode($createdOrder->getData());
 
             if ($isUniversal) {
-                $this->sendResponse(200, [
-                    'event' => 'order.create',
-                    'status' => 'success',
-                    'data' => [
-                        'display_id' => $createdOrder->getIncrementId(),
-                        'order_received_url' => $this->getReceivedUrl($immutableQuote)
-                    ]
-                ]);
+                $result = $this->createdOrderInterfaceFactory->create();
+                $result->setDisplayId($createdOrder->getIncrementId());
+                $result->setOrderReceivedUrl($this->getReceivedUrl($immutableQuote));
+                $this->metricsClient->processMetric("order_creation.success", 1, "order_creation.latency", $startTime);
+                return $result;
             } else {
                 $this->sendResponse(200, [
                     'status'    => 'success',
@@ -296,7 +302,10 @@ class CreateOrder implements CreateOrderInterface
                 ]]
             ]);
         } finally {
-            $this->response->sendResponse();
+            // we do not want to send a non-error response in the universal case. 
+            if (!$isUniversal) {
+                $this->response->sendResponse();
+            }
         }
     }
 

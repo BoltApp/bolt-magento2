@@ -41,6 +41,7 @@ use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\Api\CreateOrder;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Model\CreatedOrderInterfaceFactory;
 
 /**
  * Class CreateOrderTest
@@ -150,6 +151,9 @@ class CreateOrderTest extends BoltTestCase
     /** @var MockObject|EventsForThirdPartyModules */
     private $eventsForThirdPartyModules;
 
+    /** @var CreatedOrderInterfaceFactory|MockObject */
+    private $createdOrderInterfaceFactory;
+
     /**
      * @inheritdoc
      */
@@ -174,6 +178,7 @@ class CreateOrderTest extends BoltTestCase
         $this->stockRegistry = $this->createMock(StockRegistryInterface::class);
         $this->sessionHelper = $this->createMock(SessionHelper::class);
         $this->eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
+        $this->createdOrderInterfaceFactory = $this->createMock(CreatedOrderInterfaceFactory::class);
 
         $this->quoteMock = $this->createPartialMock(
             Quote::class,
@@ -267,6 +272,7 @@ class CreateOrderTest extends BoltTestCase
                 $this->stockRegistry,
                 $this->sessionHelper,
                 $this->eventsForThirdPartyModules,
+                $this->createdOrderInterfaceFactory,
             ])
             ->setMethods([
                 'getQuoteIdFromPayloadOrder',
