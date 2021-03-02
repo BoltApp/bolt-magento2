@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Block;
 
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Magento\Framework\App\Http\Context as HttpContext;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
@@ -62,6 +63,7 @@ class JsProductPage extends Js
         ProductRepository $productRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
+        HttpContext $httpContext,
         array $data = []
     ) {
         $this->_product = $productView->getProduct();
@@ -75,6 +77,7 @@ class JsProductPage extends Js
             $bugsnag,
             $featureSwitches,
             $eventsForThirdPartyModules,
+            $httpContext,
             $data
         );
     }

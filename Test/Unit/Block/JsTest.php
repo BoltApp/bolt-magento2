@@ -24,6 +24,7 @@ use Exception;
 use Magento\Checkout\Model\Session;
 use Magento\Directory\Model\RegionFactory;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\App\Http\Context as HttpContext;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ResourceInterface;
@@ -119,9 +120,14 @@ class JsTest extends BoltTestCase
      * @var ObjectManager|MockObject unit test object manager
      */
     private $objectManager;
-    
+
     /** @var MockObject|EventsForThirdPartyModules */
     private $eventsForThirdPartyModules;
+
+    /**
+     * @var HttpContext|MockObject mocked instance of the customer session
+     */
+    protected $httpContextMock;
 
     /**
      * Setup test dependencies, called before each test
@@ -204,6 +210,7 @@ class JsTest extends BoltTestCase
         $this->cartHelperMock = $this->createMock(CartHelper::class);
         $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
         $this->deciderMock = $this->createMock(Decider::class);
+        $this->httpContextMock = $this->createMock(HttpContext::class);
 
         $this->requestMock = $this->getMockBuilder(Http::class)
             ->disableOriginalConstructor()
@@ -239,7 +246,8 @@ class JsTest extends BoltTestCase
                     $this->cartHelperMock,
                     $this->bugsnagHelperMock,
                     $this->deciderMock,
-                    $this->eventsForThirdPartyModules
+                    $this->eventsForThirdPartyModules,
+                    $this->httpContextMock,
                 ]
             )
             ->getMock();
@@ -260,7 +268,8 @@ class JsTest extends BoltTestCase
             $this->cartHelperMock,
             $this->bugsnagHelperMock,
             $this->deciderMock,
-            $this->eventsForThirdPartyModules
+            $this->eventsForThirdPartyModules,
+            $this->httpContextMock
         );
         static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
         static::assertAttributeEquals($this->checkoutSessionMock, 'checkoutSession', $instance);
@@ -621,9 +630,9 @@ class JsTest extends BoltTestCase
             $this->currentMock->getAdditionalCheckoutButtonAttributes()
         );
     }
-  
+
     /**
-     * @test  
+     * @test
      * that getAdditionalCheckoutButtonClass returns trimmed additional checkout button class from the config helper
      * @see \Bolt\Boltpay\Helper\Config::getAdditionalCheckoutButtonClass
      *
@@ -1892,14 +1901,14 @@ JS;
             ->expects($configOrderManagementEnabled && $fsOrderManagementEnabled ? static::once() : static::never())
             ->method('getOrderManagementSelector')
             ->willReturn($orderManagementSelector);
-        
+
         $this->assertEquals($expectedResult, $this->currentMock->getOrderManagementSelector());
     }
 
     /**
-     * Data provider for 
+     * Data provider for
      * {@see getOrderManagementSelector_withVariousOrderManagementAvailabilities_returnsOrderManagementSelector}
-     * 
+     *
      * @return array[] containing
      * 1. config order management enabled flag
      * 2. feature switch order management enabled flag

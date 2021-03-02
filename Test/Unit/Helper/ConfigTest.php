@@ -86,7 +86,7 @@ class ConfigTest extends BoltTestCase
     "ignoredShippingAddressCoupons": [
         "IGNORED_SHIPPING_ADDRESS_COUPON"
     ],
-     "priceFaultTolerance": "10"  
+     "priceFaultTolerance": "10"
 }
 JSON;
 
@@ -1158,7 +1158,8 @@ JSON;
             'isSessionEmulationEnabled',
             'shouldMinifyJavascript',
             'shouldCaptureMetrics',
-            'shouldTrackCheckoutFunnel'
+            'shouldTrackCheckoutFunnel',
+            'isBoltSSOEnabled',
         ]);
         $this->currentMock->method('isActive')->willReturn(true);
         $this->currentMock->method('getTitle')->willReturn('bolt test title');
@@ -1202,6 +1203,7 @@ JSON;
         $this->currentMock->method('shouldMinifyJavascript')->willReturn(true);
         $this->currentMock->method('shouldCaptureMetrics')->willReturn(false);
         $this->currentMock->method('shouldTrackCheckoutFunnel')->willReturn(false);
+        $this->currentMock->method('isBoltSSOEnabled')->willReturn(false);
 
         // check bolt settings
         $expected = [
@@ -1247,9 +1249,10 @@ JSON;
             ['should_minify_javascript', 'true'],
             ['capture_merchant_metrics', 'false'],
             ['track_checkout_funnel', 'false'],
+            ['bolt_sso', 'false'],
         ];
         $actual = $this->currentMock->getAllConfigSettings();
-        $this->assertEquals(43, count($actual));
+        $this->assertEquals(44, count($actual));
         for ($i = 0; $i < 2; $i ++) {
             $this->assertEquals($expected[$i][0], $actual[$i]->getName());
             $this->assertEquals($expected[$i][1], $actual[$i]->getValue(), 'actual value for ' . $expected[$i][0] . ' is not equals to expected');
@@ -1538,7 +1541,7 @@ Room 4000',
             'Only attributes in initial config'           => [
                 'additionalConfig' => '{
                     "checkoutButtonAttributes": {
-                        "data-btn-txt": "Pay now" 
+                        "data-btn-txt": "Pay now"
                     }
                 }',
                 'expectedResult'   => (object)["data-btn-txt" => "Pay now"],

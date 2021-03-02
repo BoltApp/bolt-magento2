@@ -20,23 +20,30 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
+
 if ($block->shouldDisableBoltCheckout()) {
     return;
 }
-if (!$block->isOrderManagementEnabled()) {
+if (!$block->isBoltSSOEnabled()) {
     return;
 }
-// If CSS selector is set we want to insert button via frontend after this selector.
-if ($block->getOrderManagementSelector()) {
-    return;
-}
-if ($block->isBlockAlreadyShown('account')) {
-    return;
-}
+
 $accountJsUrl = $block->getAccountJsUrl();
 $checkoutKey = $block->getCheckoutKey();
 ?>
-<div class="bolt-account-login"></div>
+<style>
+    .bolt-account-sso {
+        display: inline-block;
+        margin-left: 20px;
+        --bolt-account-sso-color: white;
+    }
+    .bolt-account-sso button {
+        border: none !important;
+        box-shadow: none !important;
+        background: none !important;
+    }
+</style>
+<div class="bolt-account-sso" data-logged-in="<?= $block->isLoggedIn() ? 'true' : 'false' ?>"></div>
 <script>
     require([
         'jquery',

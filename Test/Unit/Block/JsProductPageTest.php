@@ -25,6 +25,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Magento\Catalog\Block\Product\View as ProductView;
 use Magento\Catalog\Model\Product;
+use Magento\Framework\App\Http\Context as HttpContext;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use \Magento\Catalog\Model\ProductRepository;
@@ -106,9 +107,14 @@ class JsProductPageTest extends BoltTestCase
      * @var SearchCriteriaBuilder
      */
     private $searchCriteriaBuilder;
-    
+
     /** @var MockObject|EventsForThirdPartyModules */
     private $eventsForThirdPartyModules;
+
+    /**
+     * @var HttpContext|MockObject mocked instance of the customer session
+     */
+    protected $httpContextMock;
 
     /**
      * @inheritdoc
@@ -127,9 +133,11 @@ class JsProductPageTest extends BoltTestCase
             ->disableOriginalConstructor()
             ->setMethods(['getQuote'])
             ->getMock();
-        
+
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
+
+        $this->httpContextMock = $this->createMock(HttpContext::class);
 
         $methods = [
             'isSandboxModeSet', 'isActive', 'getAnyPublishableKey',
@@ -200,7 +208,8 @@ class JsProductPageTest extends BoltTestCase
                     $this->featureSwitches,
                     $this->productRepository,
                     $this->searchCriteriaBuilder,
-                    $this->eventsForThirdPartyModules
+                    $this->eventsForThirdPartyModules,
+                    $this->httpContextMock,
                 ]
             )
             ->getMock();

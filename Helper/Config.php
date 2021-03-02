@@ -352,6 +352,11 @@ class Config extends AbstractHelper
     const XML_PATH_ALWAYS_PRESENT_CHECKOUT = 'payment/boltpay/always_present_checkout';
 
     /**
+     * Enable Bolt SSO button
+     */
+    const XML_PATH_BOLT_SSO = 'payment/boltpay/bolt_sso';
+
+    /**
      * Minify JavaScript configuration path
      */
     const XML_PATH_SHOULD_MINIFY_JAVASCRIPT = 'payment/boltpay/should_minify_javascript';
@@ -1919,6 +1924,10 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
                                                          ->setName('show_cc_type_in_order_grid')
                                                          ->setValue($this->getShowCcTypeInOrderGrid());
+        // Enable Bolt SSO
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+                                                         ->setName('bolt_sso')
+                                                         ->setValue(var_export($this->isBoltSSOEnabled(), true));
 
         return $boltSettings;
     }
@@ -2071,6 +2080,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_ALWAYS_PRESENT_CHECKOUT,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Get config value for whether or not Bolt SSO is enabled
+     *
+     * @param int|string|Store $storeId
+     *
+     * @return boolean
+     */
+    public function isBoltSSOEnabled($storeId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_BOLT_SSO,
             ScopeInterface::SCOPE_STORE,
             $storeId
         );

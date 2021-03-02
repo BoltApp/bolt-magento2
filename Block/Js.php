@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Block;
 use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
+use \Magento\Framework\App\Http\Context as HttpContext;
 use Magento\Framework\Session\SessionManager as CheckoutSession;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
@@ -56,6 +57,11 @@ class Js extends Template
     private $eventsForThirdPartyModules;
 
     /**
+     * @var HttpContext
+     */
+    protected $httpContext;
+
+    /**
      * @param Context $context
      * @param Config $configHelper
      * @param CheckoutSession $checkoutSession
@@ -63,6 +69,7 @@ class Js extends Template
      * @param Bugsnag $bugsnag
      * @param Decider $featureSwitches
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
+     * @param HttpContext $httpContext
      * @param array $data
      */
     public function __construct(
@@ -73,6 +80,7 @@ class Js extends Template
         Bugsnag $bugsnag,
         Decider $featureSwitches,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
+        HttpContext $httpContext,
         array $data = []
     ) {
         parent::__construct($context, $data);
@@ -82,6 +90,7 @@ class Js extends Template
         $this->bugsnag = $bugsnag;
         $this->featureSwitches = $featureSwitches;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
+        $this->httpContext = $httpContext;
     }
 
     /**
@@ -509,6 +518,16 @@ class Js extends Template
     }
 
     /**
+     * Return true if Bolt SSO is enabled
+     * @return bool
+     */
+    public function isBoltSSOEnabled()
+    {
+        return $this->configHelper->isBoltSSOEnabled() &&
+            $this->featureSwitches->isBoltSSOEnabled();
+    }
+
+    /**
      * Return true if Order Management is enabled
      * @return bool
      */
@@ -573,5 +592,15 @@ function($argName) {
     public function getAdditionalInvalidateBoltCartJavascript()
     {
         return $this->eventsForThirdPartyModules->runFilter("getAdditionalInvalidateBoltCartJavascript", null);
+    }
+
+    /**
+     * Is customer logged in
+     *
+     * @return bool
+     */
+    public function isLoggedIn(): bool
+    {
+        return $this->httpContext->getValue(\Magento\Customer\Model\Context::CONTEXT_AUTH);
     }
 }
