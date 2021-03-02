@@ -247,16 +247,15 @@ class GiftCardAccount
         $giftCard,
         $quote
     ) {
-        if ($result || !($giftCard instanceof GiftCardAccountInterface)) {
+        if (!$giftCard instanceof GiftCardAccountInterface) {
             return $result;
         }
-
         try {
             $giftcardProcessor->applyToCart($giftCard, $quote);
-            return true;
-        } catch (\Exception $e) {
-            return $e;
+            $result = true;
+        } catch (\Magento\Framework\Exception\LocalizedException $e) {
         }
+        return $result;
     }
 
     /**

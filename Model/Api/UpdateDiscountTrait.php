@@ -402,21 +402,19 @@ trait UpdateDiscountTrait
                 $giftCard,
                 $quote
             );
-            
-            if ($result instanceof \Exception) {
-                throw $result;
-            } elseif (!$result) {
-                throw new \Exception(__('The GiftCard %1 is not supported', $couponCode));
-            }
 
-            return true;
+            if ($result) {
+                return true;
+            }
         } catch (\Exception $e) {
             throw new BoltException(
-                __($e->getMessage()),
+                $e->getMessage(),
                 null,
                 BoltErrorResponse::ERR_SERVICE
             );
         }
+
+        return true;
     }
 
     /**

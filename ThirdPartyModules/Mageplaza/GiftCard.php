@@ -237,19 +237,15 @@ class GiftCard
      */
     public function filterApplyingGiftCardCode($result, $mageplazaGiftCardCheckoutHelper, $couponCode, $giftCard, $quote)
     {
-        if ($result || !($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard)) {
-            return $result;
-        }
-        
-        try {
-            $this->mageplazaGiftCardCheckoutHelper = $mageplazaGiftCardCheckoutHelper;
+        $this->mageplazaGiftCardCheckoutHelper = $mageplazaGiftCardCheckoutHelper;
+        if ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
             $this->removeMageplazaGiftCard($couponCode, $quote);
             $this->applyMageplazaGiftCard($couponCode, $quote);
-            
-            return true;
-        } catch (\Exception $e) {
-            return $e;
+
+            $result = true;
         }
+
+        return $result;
     }
 
     /**

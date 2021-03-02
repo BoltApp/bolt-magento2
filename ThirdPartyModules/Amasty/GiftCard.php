@@ -243,15 +243,14 @@ class GiftCard
         $giftCard,
         $quote
     ) {
-        if ($result || !($giftCard instanceof \Amasty\GiftCard\Model\Account)) {
+        if (!$giftCard instanceof \Amasty\GiftCard\Model\Account) {
             return $result;
         }
-        
         try {
             $giftCardManagement->set($quote->getId(), $giftCard->getCode());
             return true;
-        } catch (\Exception $e) {
-            return $e;
+        } catch (\Magento\Framework\Exception\LocalizedException $e) {
+            return false;
         }
     }
 
