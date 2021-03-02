@@ -31,22 +31,16 @@ class ApiUtils
         switch (json_last_error()) {
             case JSON_ERROR_NONE:
                 return null;
-
             case JSON_ERROR_DEPTH:
                 return 'Maximum stack depth exceeded';
-
             case JSON_ERROR_STATE_MISMATCH:
                 return 'Underflow or the modes mismatch';
-
             case JSON_ERROR_CTRL_CHAR:
                 return 'Unexpected control character found';
-
             case JSON_ERROR_SYNTAX:
                 return 'Syntax error, malformed JSON';
-
             case JSON_ERROR_UTF8:
                 return 'Malformed UTF-8 characters, possibly incorrectly encoded';
-
             default:
                 return 'Unknown error';
         }
@@ -54,23 +48,20 @@ class ApiUtils
 
     private static function isApiError($response)
     {
-        $arr = (array)$response;
-        return array_key_exists('errors', $arr) ||
-            array_key_exists('error_code', $arr) ||
-            array_key_exists('error', $arr);
+        $arr = (array) $response;
+        return array_key_exists('errors', $arr) || array_key_exists('error_code', $arr) || array_key_exists('error', $arr);
     }
 
     public static function getJSONFromResponseBody($responseBody)
     {
         $resultFromJSON = json_decode($responseBody);
-        $jsonError  = self::handleJsonParseError();
+        $jsonError = self::handleJsonParseError();
         if ($jsonError != null) {
-            $message = __("JSON Parse Error: " . $jsonError);
-            throw new LocalizedException($message);
+            throw new LocalizedException(__('JSON Parse Error: ' . $jsonError));
         }
 
         if (self::isApiError($resultFromJSON)) {
-            $message = isset($resultFromJSON->errors[0]->message) ? __($resultFromJSON->errors[0]->message) :  __("Bolt API Error Response");
+            $message = isset($resultFromJSON->errors[0]->message) ? __($resultFromJSON->errors[0]->message) : __('Bolt API Error Response');
             throw new LocalizedException($message);
         }
         return $resultFromJSON;
@@ -81,16 +72,16 @@ class ApiUtils
         $moduleVersion,
         $requestData,
         $apiKey,
+        $contentType,
         $additionalHeaders = []
     ) {
-
         return [
-                'User-Agent'            => 'BoltPay/Magento-'.$storeVersion . '/' . $moduleVersion,
-                'X-Bolt-Plugin-Version' => $moduleVersion,
-                'Content-Type'          => 'application/json',
-                'Content-Length'        => $requestData ? strlen($requestData) : null,
-                'X-Api-Key'             => $apiKey,
-                'X-Nonce'               => rand(100000000000, 999999999999)
-            ] + $additionalHeaders;
+            'User-Agent'            => 'BoltPay/Magento-'.$storeVersion . '/' . $moduleVersion,
+            'X-Bolt-Plugin-Version' => $moduleVersion,
+            'Content-Type'          => $contentType,
+            'Content-Length'        => $requestData ? strlen($requestData) : null,
+            'X-Api-Key'             => $apiKey,
+            'X-Nonce'               => rand(100000000000, 999999999999)
+        ] + $additionalHeaders;
     }
 }

@@ -18,8 +18,8 @@
 namespace Bolt\Boltpay\Test\Unit\Helper\Shared;
 
 use Bolt\Boltpay\Helper\Shared\ApiUtils;
-use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Class ApiUtilsTest
@@ -28,16 +28,15 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
  */
 class ApiUtilsTest extends BoltTestCase
 {
-
     /**
      * @test
      */
     public function getJSONFromResponseBody_success()
     {
-        $body = "{\"status\":\"ok\"}";
+        $body = '{"status":"ok"}';
         $parsedBody = ApiUtils::getJSONFromResponseBody($body);
-        $this->assertObjectHasAttribute("status", $parsedBody);
-        $this->assertEquals("ok", $parsedBody->{"status"});
+        $this->assertObjectHasAttribute('status', $parsedBody);
+        $this->assertEquals('ok', $parsedBody->{'status'});
     }
 
     /**
@@ -47,7 +46,7 @@ class ApiUtilsTest extends BoltTestCase
     {
         $body = '{"status": notok}';
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage("JSON Parse Error: Syntax error, malformed JSON");
+        $this->expectExceptionMessage('JSON Parse Error: Syntax error, malformed JSON');
         $result = ApiUtils::getJSONFromResponseBody($body);
         $this->assertEquals($result, null);
     }
@@ -59,7 +58,7 @@ class ApiUtilsTest extends BoltTestCase
     {
         $body = '{"error": {"something": "here"}}';
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessageRegExp("/Bolt API Error.*/");
+        $this->expectExceptionMessageRegExp('/Bolt API Error.*/');
         $result = ApiUtils::getJSONFromResponseBody($body);
         $this->assertEquals($result, null);
     }
@@ -71,7 +70,7 @@ class ApiUtilsTest extends BoltTestCase
     {
         $body = '{"errors": [{"message": "here"}]}';
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessageRegExp("/here.*/");
+        $this->expectExceptionMessageRegExp('/here.*/');
         $result = ApiUtils::getJSONFromResponseBody($body);
         $this->assertEquals($result, null);
     }
@@ -82,17 +81,18 @@ class ApiUtilsTest extends BoltTestCase
     public function constructRequestHeaders_basic()
     {
         $headers = ApiUtils::constructRequestHeaders(
-            "storeVersion",
-            "moduleVersion",
-            "request-data",
-            "api-key",
+            'storeVersion',
+            'moduleVersion',
+            'request-data',
+            'api-key',
+            'application/json',
             []
         );
-        $this->assertEquals($headers["User-Agent"], "BoltPay/Magento-storeVersion/moduleVersion");
-        $this->assertEquals($headers["X-Bolt-Plugin-Version"], "moduleVersion");
-        $this->assertEquals($headers["Content-Type"], "application/json");
-        $this->assertEquals($headers["Content-Length"], 12);
-        $this->assertEquals($headers["X-Api-Key"], "api-key");
+        $this->assertEquals($headers['User-Agent'], 'BoltPay/Magento-storeVersion/moduleVersion');
+        $this->assertEquals($headers['X-Bolt-Plugin-Version'], 'moduleVersion');
+        $this->assertEquals($headers['Content-Type'], 'application/json');
+        $this->assertEquals($headers['Content-Length'], 12);
+        $this->assertEquals($headers['X-Api-Key'], 'api-key');
     }
 
     /**
@@ -101,20 +101,21 @@ class ApiUtilsTest extends BoltTestCase
     public function constructRequestHeaders_skipsOverwritingWithAdditional()
     {
         $headers = ApiUtils::constructRequestHeaders(
-            "storeVersion",
-            "moduleVersion",
-            "request-data",
-            "api-key",
+            'storeVersion',
+            'moduleVersion',
+            'request-data',
+            'api-key',
+            'application/json',
             [
-                "Content-type" => "secret",
-                "new-thing" => "nothing"
+                'Content-type' => 'secret',
+                'new-thing'    => 'nothing'
             ]
         );
-        $this->assertEquals($headers["User-Agent"], "BoltPay/Magento-storeVersion/moduleVersion");
-        $this->assertEquals($headers["X-Bolt-Plugin-Version"], "moduleVersion");
-        $this->assertEquals($headers["Content-Type"], "application/json");
-        $this->assertEquals($headers["Content-Length"], 12);
-        $this->assertEquals($headers["X-Api-Key"], "api-key");
-        $this->assertEquals($headers["new-thing"], "nothing");
+        $this->assertEquals($headers['User-Agent'], 'BoltPay/Magento-storeVersion/moduleVersion');
+        $this->assertEquals($headers['X-Bolt-Plugin-Version'], 'moduleVersion');
+        $this->assertEquals($headers['Content-Type'], 'application/json');
+        $this->assertEquals($headers['Content-Length'], 12);
+        $this->assertEquals($headers['X-Api-Key'], 'api-key');
+        $this->assertEquals($headers['new-thing'], 'nothing');
     }
 }

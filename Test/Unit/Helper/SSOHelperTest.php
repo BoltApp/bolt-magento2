@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -78,7 +79,7 @@ class SSOHelperTest extends BoltTestCase
         $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
         $this->apiHelper = $this->createMock(ApiHelper::class);
         $this->currentMock = $this->getMockBuilder(SSOHelper::class)
-            ->setMethods(['getOAuthConfiguration', 'exchangeToken', 'parseAndValidateJWT'])
+            ->setMethods(['getOAuthConfiguration', 'exchangeToken', 'parseAndValidateJWT', 'getPayload'])
             ->setConstructorArgs([
                 $this->context,
                 $this->configHelper,
@@ -90,10 +91,10 @@ class SSOHelperTest extends BoltTestCase
     }
 
     /**
-    * @test
-    *
-    * @covers ::__construct
-    */
+     * @test
+     *
+     * @covers ::__construct
+     */
     public function constructor_always_setsInternalProperties()
     {
         $instance = new SSOHelper(
@@ -156,9 +157,11 @@ class SSOHelperTest extends BoltTestCase
         $store->expects(static::once())->method('getId')->willReturn(1);
         $this->storeManager->expects(static::once())->method('getStore')->willReturn($store);
         $this->configHelper->expects(static::once())->method('getApiKey')->with(1)->willReturn('test api key');
-        $dataObject = $this->createPartialMock(DataObject::class, ['setApiData', 'setDynamicApiUrl', 'setApiKey']);
-        $dataObject->expects(static::once())->method('setDynamicApiUrl')->with('oauth/token?grant_type=authorization_code&code=abc&scope=openid&client_id=clientid&client_secret=clientsecret');
+        $dataObject = $this->createPartialMock(DataObject::class, ['setDynamicApiUrl', 'setApiKey', 'setApiData', 'setContentType']);
+        $dataObject->expects(static::once())->method('setDynamicApiUrl')->with('oauth/token');
         $dataObject->expects(static::once())->method('setApiKey')->with('test api key');
+        $dataObject->expects(static::once())->method('setApiData')->with('grant_type=authorization_code&code=abc&scope=openid&client_id=clientid&client_secret=clientsecret');
+        $dataObject->expects(static::once())->method('setContentType')->with('application/x-www-form-urlencoded');
         $this->dataObjectFactory->expects(static::once())->method('create')->willReturn($dataObject);
         $request = $this->createMock(Request::class);
         $this->apiHelper->expects(static::once())->method('buildRequest')->with($dataObject)->willReturn($request);
@@ -188,17 +191,33 @@ class SSOHelperTest extends BoltTestCase
      * @test
      *
      * @covers ::parseAndValidateJWT
+     */
+    public function parseAndValidateJWT_returnsCorrectValue_ifJWTParseThrowsException()
+    {
+        $this->currentMock->expects(static::once())->method('getPayload')->willThrowException(new Exception('test exception'));
+        $this->assertEquals(
+            'test exception',
+            TestHelper::invokeMethod($this->currentMock, 'parseAndValidateJWT', ['', '', ''])
+        );
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::parseAndValidateJWT
      *
      * @dataProvider parseAndValidateJWTProvider
      *
-     * @param string       $token
-     * @param string       $audience
-     * @param string       $pubkey
+     * @param mixed        $payload
      * @param mixed|string $expected
      */
-    public function parseAndValidateJWT_returnsCorrectValue_forAllCases($token, $audience, $pubkey, $expected)
+    public function parseAndValidateJWT_returnsCorrectValue_forAllCases($payload, $expected)
     {
-        $this->assertEquals($expected, TestHelper::invokeMethod($this->currentMock, 'parseAndValidateJWT', [$token, $audience, $pubkey]));
+        $this->currentMock->expects(static::once())->method('getPayload')->willReturn($payload);
+        $this->assertEquals(
+            $expected,
+            TestHelper::invokeMethod($this->currentMock, 'parseAndValidateJWT', ['', 'test audience', ''])
+        );
     }
 
     /**
@@ -208,111 +227,48 @@ class SSOHelperTest extends BoltTestCase
      */
     public function parseAndValidateJWTProvider()
     {
-        $wrongSigAndPubkeyNoSub = $this->getSignatureAndPublicKey(base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","first_name":"first name","last_name":"last name","email":"t@t.com","email_verified":true}'));
-        $wrongSigAndPubkeyNoFirstName = $this->getSignatureAndPublicKey(base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","last_name":"last name","email":"t@t.com","email_verified":true}'));
-        $wrongSigAndPubkeyNoLastName = $this->getSignatureAndPublicKey(base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","email":"t@t.com","email_verified":true}'));
-        $wrongSigAndPubkeyNoEmail = $this->getSignatureAndPublicKey(base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","last_name":"last name","email_verified":true}'));
-        $wrongSigAndPubkeyNoEmailVerified = $this->getSignatureAndPublicKey(base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","last_name":"last name","email":"t@t.com"}'));
-        $rightSigAndPubkey = $this->getSignatureAndPublicKey(base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","last_name":"last name","email":"t@t.com","email_verified":true}'));
         return [
             [
-                'token'    => '',
-                'audience' => '',
-                'pubkey'   => '',
-                'expected' => 'token must have three parts'
-            ],
-            [
-                'token'    => '.' . base64_encode('{}') . '.',
-                'audience' => '',
-                'pubkey'   => '',
-                'expected' => 'exp must be set'
-            ],
-            [
-                'token'    => '.' . base64_encode('{"exp":0}') . '.',
-                'audience' => '',
-                'pubkey'   => '',
-                'expected' => 'expired exp 0'
-            ],
-            [
-                'token'    => '.' . base64_encode('{"exp":2000000000}') . '.',
-                'audience' => '',
-                'pubkey'   => '',
+                'payload'  => [],
                 'expected' => 'iss must be set'
             ],
             [
-                'token'    => '.' . base64_encode('{"exp":2000000000,"iss":"not bolt"}') . '.',
-                'audience' => '',
-                'pubkey'   => '',
+                'payload'  => ['iss' => 'not bolt'],
                 'expected' => 'incorrect iss not bolt'
             ],
             [
-                'token'    => '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com"}') . '.',
-                'audience' => '',
-                'pubkey'   => '',
+                'payload'  => ['iss' => 'https://bolt.com'],
                 'expected' => 'aud must be set'
             ],
             [
-                'token'    => '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"blah"}') . '.',
-                'audience' => 'test audience',
-                'pubkey'   => '',
-                'expected' => 'aud blah does not contain audience test audience'
+                'payload'  => ['iss' => 'https://bolt.com', 'aud' => ['blah', 'blah2']],
+                'expected' => 'aud blah,blah2 does not contain audience test audience'
             ],
             [
-                'token'    => base64_encode('{}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx"}') . '.',
-                'audience' => 'test audience',
-                'pubkey'   => '',
-                'expected' => 'alg must be set'
-            ],
-            [
-                'token'    => base64_encode('{"alg":"random"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx"}') . '.',
-                'audience' => 'test audience',
-                'pubkey'   => '',
-                'expected' => 'invalid alg random'
-            ],
-            [
-                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000001,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","last_name":"last name","email":"t@t.com","email_verified":true}') . '.' . $rightSigAndPubkey['sig'],
-                'audience' => 'test audience',
-                'pubkey'   => $rightSigAndPubkey['pubkey'],
-                'expected' => 'signature verification failed'
-            ],
-            [
-                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","first_name":"first name","last_name":"last name","email":"t@t.com","email_verified":true}') . '.' . $wrongSigAndPubkeyNoSub['sig'],
-                'audience' => 'test audience',
-                'pubkey'   => $wrongSigAndPubkeyNoSub['pubkey'],
+                'payload'  => ['iss' => 'https://bolt.com', 'aud' => ['blah', 'test audience']],
                 'expected' => 'sub must be set'
             ],
             [
-                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","last_name":"last name","email":"t@t.com","email_verified":true}') . '.' . $wrongSigAndPubkeyNoFirstName['sig'],
-                'audience' => 'test audience',
-                'pubkey'   => $wrongSigAndPubkeyNoFirstName['pubkey'],
+                'payload'  => ['iss' => 'https://bolt.com', 'aud' => ['blah', 'test audience'], 'sub' => 'test sub'],
                 'expected' => 'first_name must be set'
             ],
             [
-                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","email":"t@t.com","email_verified":true}') . '.' . $wrongSigAndPubkeyNoLastName['sig'],
-                'audience' => 'test audience',
-                'pubkey'   => $wrongSigAndPubkeyNoLastName['pubkey'],
+                'payload'  => ['iss' => 'https://bolt.com', 'aud' => ['blah', 'test audience'], 'sub' => 'test sub', 'first_name' => 'first name'],
                 'expected' => 'last_name must be set'
             ],
             [
-                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","last_name":"last name","email_verified":true}') . '.' . $wrongSigAndPubkeyNoEmail['sig'],
-                'audience' => 'test audience',
-                'pubkey'   => $wrongSigAndPubkeyNoEmail['pubkey'],
+                'payload'  => ['iss' => 'https://bolt.com', 'aud' => ['blah', 'test audience'], 'sub' => 'test sub', 'first_name' => 'first name', 'last_name' => 'last name'],
                 'expected' => 'email must be set'
             ],
             [
-                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","last_name":"last name","email":"t@t.com"}') . '.' . $wrongSigAndPubkeyNoEmailVerified['sig'],
-                'audience' => 'test audience',
-                'pubkey'   => $wrongSigAndPubkeyNoEmailVerified['pubkey'],
+                'payload'  => ['iss' => 'https://bolt.com', 'aud' => ['blah', 'test audience'], 'sub' => 'test sub', 'first_name' => 'first name', 'last_name' => 'last name', 'email' => 't@t.com'],
                 'expected' => 'email_verified must be set'
             ],
             [
-                'token'    => base64_encode('{"alg":"RS256"}') . '.' . base64_encode('{"exp":2000000000,"iss":"https://bolt.com","aud":"xxtest audiencexx","sub":"test sub","first_name":"first name","last_name":"last name","email":"t@t.com","email_verified":true}') . '.' . $rightSigAndPubkey['sig'],
-                'audience' => 'test audience',
-                'pubkey'   => $rightSigAndPubkey['pubkey'],
+                'payload'  => ['iss' => 'https://bolt.com', 'aud' => ['blah', 'test audience'], 'sub' => 'test sub', 'first_name' => 'first name', 'last_name' => 'last name', 'email' => 't@t.com', 'email_verified' => true],
                 'expected' => [
-                    'exp'            => 2000000000,
                     'iss'            => 'https://bolt.com',
-                    'aud'            => 'xxtest audiencexx',
+                    'aud'            => ['blah', 'test audience'],
                     'sub'            => 'test sub',
                     'first_name'     => 'first name',
                     'last_name'      => 'last name',
@@ -320,19 +276,6 @@ class SSOHelperTest extends BoltTestCase
                     'email_verified' => true
                 ]
             ]
-        ];
-    }
-
-    private function getSignatureAndPublicKey($data)
-    {
-        $private_key_res = openssl_pkey_new(array(
-            'private_key_bits' => 2048,
-            'private_key_type' => OPENSSL_KEYTYPE_RSA,
-        ));
-        openssl_sign(base64_encode($data), $signature, $private_key_res, OPENSSL_ALGO_SHA256);
-        return [
-            'sig'    => base64_encode($signature),
-            'pubkey' => openssl_pkey_get_details($private_key_res)['key']
         ];
     }
 }

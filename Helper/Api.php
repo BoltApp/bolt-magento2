@@ -189,8 +189,13 @@ class Api extends AbstractHelper
         $apiUrl = $request->getApiUrl();
         $apiKey = $request->getApiKey();
         $requestMethod = $request->getRequestMethod();
+        $contentType = $request->getContentType();
 
-        $requestData = $requestMethod !== 'GET' ? json_encode($apiData, JSON_UNESCAPED_SLASHES) : null;
+        if ($contentType == 'application/x-www-form-urlencoded') {
+            $requestData = $apiData;
+        } else {
+            $requestData = $requestMethod !== 'GET' ? json_encode($apiData, JSON_UNESCAPED_SLASHES) : null;
+        }
 
         $client->setUri($apiUrl);
 
@@ -201,6 +206,7 @@ class Api extends AbstractHelper
             $this->configHelper->getModuleVersion(),
             $requestData,
             $apiKey,
+            $contentType,
             (array) $request->getHeaders()
         );
 
@@ -217,7 +223,7 @@ class Api extends AbstractHelper
         $responseBody = null;
 
         try {
-            $response = $client->setRawData($requestData, 'application/json')->request($requestMethod);
+            $response = $client->setRawData($requestData, $contentType)->request($requestMethod);
             $responseBody = $response->getBody();
 
             $this->bugsnag->registerCallback(function ($report) use ($response) {
@@ -266,7 +272,8 @@ class Api extends AbstractHelper
         $apiData = $requestData->getApiData();
         $apiUrl = $this->configHelper->getApiUrl() . self::API_CURRENT_VERSION . $requestData->getDynamicApiUrl();
         $apiKey = $requestData->getApiKey();
-        $requestMethod = empty($requestData->getRequestMethod()) ? 'POST' : $requestData->getRequestMethod();
+        $requestMethod = $requestData->getRequestMethod() ?: 'POST';
+        $contentType = $requestData->getContentType() ?: 'application/json';
 
         $headers = (array) $requestData->getHeaders();
         $statusOnly = (bool) $requestData->getStatusOnly();
@@ -278,6 +285,7 @@ class Api extends AbstractHelper
         $request->setRequestMethod($requestMethod);
         $request->setHeaders($headers);
         $request->setStatusOnly($statusOnly);
+        $request->setContentType($contentType);
         return $request;
     }
 }
