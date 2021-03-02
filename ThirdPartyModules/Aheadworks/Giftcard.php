@@ -95,18 +95,16 @@ class Giftcard
      */
     public function loadGiftcard($result, $aheadworksGiftcardRepository, $code, $quote)
     {
-        if ($result !== null) {
+        if (!empty($result)) {
             return $result;
         }
-        
         try {
             $storeId = $quote->getStoreId();
             return $aheadworksGiftcardRepository->getByCode($code, $storeId);
-        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+        } catch (LocalizedException $e) {
             return null;
-        } catch (\Exception $e) {
-            return $e;
         }
+        return null;
     }
 
     /**

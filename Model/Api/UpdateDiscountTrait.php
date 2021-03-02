@@ -153,13 +153,6 @@ trait UpdateDiscountTrait
 
         if (empty($giftCard)) {
             $giftCard = $this->eventsForThirdPartyModules->runFilter("loadGiftcard", null, $couponCode, $quote);
-            if ($giftCard instanceof \Exception) {
-                throw new BoltException(
-                    __($giftCard->getMessage()),
-                    null,
-                    BoltErrorResponse::ERR_SERVICE
-                );
-            }
         }
 
         $coupon = null;
