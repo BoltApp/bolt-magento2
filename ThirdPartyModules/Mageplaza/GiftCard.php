@@ -304,17 +304,12 @@ class GiftCard
      */
     public function filterRemovingGiftCardCode($result, $mageplazaGiftCardCheckoutHelper, $giftCard, $quote)
     {
-        if ($result || !($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard)) {
-            return $result;
-        }
-        
         $this->mageplazaGiftCardCheckoutHelper = $mageplazaGiftCardCheckoutHelper;
-        
-        try {
+        if ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
             $this->removeMageplazaGiftCard($giftCard->getCode(), $quote);
-            return true;
-        } catch (\Exception $e) {
-            return $e;
+            $result = true;
         }
+
+        return $result;
     }
 }

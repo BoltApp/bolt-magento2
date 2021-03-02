@@ -309,7 +309,7 @@ class GiftCardAccount
         $giftCard,
         $quote
     ) {
-        if ($result || !($giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount)) {
+        if ($result || !$giftCard instanceof \Magento\GiftCardAccount\Model\Giftcardaccount) {
             return $result;
         }
         
@@ -317,7 +317,8 @@ class GiftCardAccount
             $giftCard->removeFromCart(true, $quote);
             return true;
         } catch (\Exception $e) {
-            return $e;
+            $this->bugsnagHelper->notifyException($e);
+            return false;
         }
     }
 }
