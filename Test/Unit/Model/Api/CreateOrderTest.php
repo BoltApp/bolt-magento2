@@ -151,7 +151,7 @@ class CreateOrderTest extends BoltTestCase
     /** @var MockObject|EventsForThirdPartyModules */
     private $eventsForThirdPartyModules;
 
-    /** @var CreatedOrderInterfaceFactory|MockObject */
+    /** @var MockObject|CreatedOrderInterfaceFactory */
     private $createdOrderInterfaceFactory;
 
     /**
