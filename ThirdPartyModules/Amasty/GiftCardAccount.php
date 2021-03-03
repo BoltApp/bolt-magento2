@@ -175,6 +175,8 @@ class GiftCardAccount
         
         try {
             return $giftcardAccountRepository->getByCode($couponCode);
+        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+            return null;
         } catch (\Exception $e) {
             return $e;
         }
