@@ -44,6 +44,7 @@ use Magento\Quote\Model\Cart\ShippingMethodConverter;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\QuoteFactory;
+use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
@@ -317,5 +318,33 @@ class AutomatedTestingTest extends BoltTestCase
         $storeItem->expects(static::once())->method('setPrice')->with('$1.99')->willReturnSelf();
         $storeItem->expects(static::once())->method('setType')->with('physical')->willReturnSelf();
         static::assertEquals($storeItem, TestHelper::invokeMethod($this->currentMock, 'convertToStoreItem', [$product, 'physical']));
+    }
+
+    /**
+     * @test
+     */
+    public function createQuoteWithItem_returnsQuote()
+    {
+        $this->quoteManagement->expects(static::once())->method('createEmptyCart')->willReturn(1);
+        $quote = $this->createMock(Quote::class);
+        $this->quoteFactory->expects(static::once())->method('create')->willReturn($quote);
+        $quote->expects(static::once())->method('load')->with(1)->willReturnSelf();
+        $store = $this->createMock(Store::class);
+        $store->expects(static::once())->method('getId')->willReturn(1);
+        $this->storeManager->expects(static::once())->method('getStore')->willReturn($store);
+        $quote->expects(static::once())->method('setStoreId')->with(1);
+        $product = $this->createMock(Product::class);
+        $quote->expects(static::once())->method('addProduct')->with($product, 1);
+        $address = $this->createMock(Address::class);
+        $address->expects(static::once())->method('addData')->with([
+            'street'     => '1235 Howard St Ste D',
+            'city'       => 'San Francisco',
+            'country_id' => 'US',
+            'region'     => 'CA',
+            'postcode'   => '94103'
+        ]);
+        $quote->expects(static::once())->method('getShippingAddress')->willReturn($address);
+        $this->quoteRepository->expects(static::once())->method('save');
+        static::assertEquals($quote, TestHelper::invokeMethod($this->currentMock, 'createQuoteWithItem', [$product]));
     }
 }
