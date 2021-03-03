@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -32,17 +33,25 @@ use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\StoreItemFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Exception;
+use Magento\Catalog\Api\Data\ProductSearchResultsInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface as ProductRepository;
 use Magento\Catalog\Model\Product;
+use Magento\CatalogInventory\Api\Data\StockItemInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
+use Magento\Framework\Api\SearchCriteria;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Pricing\Price\PriceInterface;
+use Magento\Framework\Pricing\PriceInfoInterface;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
+use Magento\Quote\Model\Cart\ShippingMethod;
 use Magento\Quote\Model\Cart\ShippingMethodConverter;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\QuoteFactory;
+use Magento\Quote\Model\ResourceModel\Quote\Address\Rate;
+use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
@@ -205,8 +214,8 @@ class AutomatedTestingTest extends BoltTestCase
     public function getAutomatedTestingConfig_noShippingMethodsFound_returnsErrorString()
     {
         $product = $this->createMock(Product::class);
-        $this->currentMock->expects(static::exactly(2))->method('getProduct')->withConsecutive(['simple'], ['virtual'])->willReturn($product);
-        $this->currentMock->expects(static::exactly(2))->method('convertToStoreItem')->willReturn(null);
+        $this->currentMock->expects(static::exactly(3))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
+        $this->currentMock->expects(static::exactly(3))->method('convertToStoreItem')->willReturn(null);
         $quote = $this->createMock(Quote::class);
         $this->currentMock->expects(static::once())->method('createQuoteWithItem')->willReturn($quote);
         $this->currentMock->expects(static::once())->method('getShippingMethods')->willReturn([]);
@@ -219,12 +228,12 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
-    public function getAutomatedTestingConfig_noErrors_returnsSimpleAndVirtualProducts()
+    public function getAutomatedTestingConfig_noErrors_returnsSimpleVirtualAndSaleProducts()
     {
         $product = $this->createMock(Product::class);
-        $this->currentMock->expects(static::exactly(2))->method('getProduct')->withConsecutive(['simple'], ['virtual'])->willReturn($product);
+        $this->currentMock->expects(static::exactly(3))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
         $storeItem = $this->createMock(StoreItem::class);
-        $this->currentMock->expects(static::exactly(2))->method('convertToStoreItem')->willReturn($storeItem);
+        $this->currentMock->expects(static::exactly(3))->method('convertToStoreItem')->willReturn($storeItem);
         $address = $this->createMock(Address::class);
         $quote = $this->createMock(Quote::class);
         $quote->expects(static::any())->method('getShippingAddress')->willReturn($address);
@@ -246,7 +255,7 @@ class AutomatedTestingTest extends BoltTestCase
         $config = $this->createMock(AutomatedTestingConfig::class);
         $config->expects(static::once())->method('setStoreItems')->with(static::callback(
             function ($cartItems) {
-                return count($cartItems) === 2;
+                return count($cartItems) === 3;
             }
         ))->willReturnSelf();
         $config->expects(static::once())->method('setCart')->willReturnSelf();
@@ -260,9 +269,9 @@ class AutomatedTestingTest extends BoltTestCase
     public function getAutomatedTestingConfig_noErrorsButNoVirtualProducts_returnsOnlySimpleProduct()
     {
         $product = $this->createMock(Product::class);
-        $this->currentMock->expects(static::exactly(2))->method('getProduct')->withConsecutive(['simple'], ['virtual'])->willReturn($product);
+        $this->currentMock->expects(static::exactly(3))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
         $storeItem = $this->createMock(StoreItem::class);
-        $this->currentMock->expects(static::exactly(2))->method('convertToStoreItem')->willReturnOnConsecutiveCalls($storeItem, null);
+        $this->currentMock->expects(static::exactly(3))->method('convertToStoreItem')->willReturnOnConsecutiveCalls($storeItem, null, null);
         $address = $this->createMock(Address::class);
         $quote = $this->createMock(Quote::class);
         $quote->expects(static::any())->method('getShippingAddress')->willReturn($address);
@@ -290,5 +299,168 @@ class AutomatedTestingTest extends BoltTestCase
         $config->expects(static::once())->method('setCart')->willReturnSelf();
         $this->configFactory->expects(static::once())->method('create')->willReturn($config);
         TestHelper::invokeMethod($this->currentMock, 'getAutomatedTestingConfig');
+    }
+
+    /**
+     * @test
+     */
+    public function getProduct_returnsPhysicalProduct()
+    {
+        $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->withConsecutive(
+            ['status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED],
+            ['visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq'],
+            ['type_id', 'physical']
+        )->willReturnSelf();
+        $searchCriteria = $this->createMock(SearchCriteria::class);
+        $this->searchCriteriaBuilder->expects(static::once())->method('create')->willReturn($searchCriteria);
+        $productSearchResults = $this->createMock(ProductSearchResultsInterface::class);
+        $this->productRepository->expects(static::once())->method('getList')->with($searchCriteria)->willReturn($productSearchResults);
+        $product = $this->createMock(Product::class);
+        $productSearchResults->expects(static::once())->method('getItems')->willReturn([$product]);
+        $product->expects(static::once())->method('getId')->willReturn(1);
+        $stockItem = $this->createMock(StockItemInterface::class);
+        $this->stockRegistry->expects(static::once())->method('getStockItem')->with(1)->willReturn($stockItem);
+        $stockItem->expects(static::once())->method('getIsInStock')->willReturn(true);
+        static::assertEquals($product, TestHelper::invokeMethod($this->currentMock, 'getProduct', ['physical']));
+    }
+
+    /**
+     * @test
+     */
+    public function getProduct_returnsSaleProduct()
+    {
+        $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->withConsecutive(
+            ['status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED],
+            ['visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq'],
+            ['type_id', [\Magento\Catalog\Model\Product\Type::TYPE_SIMPLE, \Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL], 'in']
+        )->willReturnSelf();
+        $searchCriteria = $this->createMock(SearchCriteria::class);
+        $this->searchCriteriaBuilder->expects(static::once())->method('create')->willReturn($searchCriteria);
+        $productSearchResults = $this->createMock(ProductSearchResultsInterface::class);
+        $this->productRepository->expects(static::once())->method('getList')->with($searchCriteria)->willReturn($productSearchResults);
+        $product = $this->createMock(Product::class);
+        $productSearchResults->expects(static::once())->method('getItems')->willReturn([$product]);
+        $product->expects(static::once())->method('getId')->willReturn(1);
+        $stockItem = $this->createMock(StockItemInterface::class);
+        $this->stockRegistry->expects(static::once())->method('getStockItem')->with(1)->willReturn($stockItem);
+        $stockItem->expects(static::once())->method('getIsInStock')->willReturn(true);
+        $product->expects(static::once())->method('getFinalPrice')->willReturn(0.99);
+        $priceInfo = $this->createMock(PriceInfoInterface::class);
+        $product->expects(static::once())->method('getPriceInfo')->willReturn($priceInfo);
+        $price = $this->createMock(PriceInterface::class);
+        $priceInfo->expects(static::once())->method('getPrice')->with('regular_price')->willReturn($price);
+        $price->expects(static::once())->method('getValue')->willReturn(1);
+        static::assertEquals($product, TestHelper::invokeMethod($this->currentMock, 'getProduct', ['sale']));
+    }
+
+    /**
+     * @test
+     */
+    public function getProduct_returnsNull_ifNoProductSatisfiesConditions()
+    {
+        $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->withConsecutive(
+            ['status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED],
+            ['visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq'],
+            ['type_id', 'physical']
+        )->willReturnSelf();
+        $searchCriteria = $this->createMock(SearchCriteria::class);
+        $this->searchCriteriaBuilder->expects(static::once())->method('create')->willReturn($searchCriteria);
+        $productSearchResults = $this->createMock(ProductSearchResultsInterface::class);
+        $this->productRepository->expects(static::once())->method('getList')->with($searchCriteria)->willReturn($productSearchResults);
+        $productSearchResults->expects(static::once())->method('getItems')->willReturn([]);
+        static::assertEquals(null, TestHelper::invokeMethod($this->currentMock, 'getProduct', ['physical']));
+    }
+
+    /**
+     * @test
+     */
+    public function convertToStoreItem_returnsNull_ifProductIsNull()
+    {
+        static::assertEquals(null, TestHelper::invokeMethod($this->currentMock, 'convertToStoreItem', [null, 'virtual']));
+    }
+
+    /**
+     * @test
+     */
+    public function convertToStoreItem_returnsStoreItem_ifProductIsNotNull()
+    {
+        $product = $this->createMock(Product::class);
+        $product->expects(static::once())->method('getProductUrl')->willReturn('http://test.com/url');
+        $product->expects(static::once())->method('getName')->willReturn('  a product');
+        $product->expects(static::once())->method('getFinalPrice')->willReturn('1.99');
+        $storeItem = $this->createMock(StoreItem::class);
+        $this->storeItemFactory->expects(static::once())->method('create')->willReturn($storeItem);
+        $storeItem->expects(static::once())->method('setItemUrl')->with('http://test.com/url')->willReturnSelf();
+        $storeItem->expects(static::once())->method('setName')->with('a product')->willReturnSelf();
+        $storeItem->expects(static::once())->method('setPrice')->with('$1.99')->willReturnSelf();
+        $storeItem->expects(static::once())->method('setType')->with('physical')->willReturnSelf();
+        static::assertEquals($storeItem, TestHelper::invokeMethod($this->currentMock, 'convertToStoreItem', [$product, 'physical']));
+    }
+
+    /**
+     * @test
+     */
+    public function createQuoteWithItem_returnsQuote()
+    {
+        $this->quoteManagement->expects(static::once())->method('createEmptyCart')->willReturn(1);
+        $quote = $this->createMock(Quote::class);
+        $this->quoteFactory->expects(static::once())->method('create')->willReturn($quote);
+        $quote->expects(static::once())->method('load')->with(1)->willReturnSelf();
+        $store = $this->createMock(Store::class);
+        $store->expects(static::once())->method('getId')->willReturn(1);
+        $this->storeManager->expects(static::once())->method('getStore')->willReturn($store);
+        $quote->expects(static::once())->method('setStoreId')->with(1);
+        $product = $this->createMock(Product::class);
+        $quote->expects(static::once())->method('addProduct')->with($product, 1);
+        $address = $this->createMock(Address::class);
+        $address->expects(static::once())->method('addData')->with([
+            'street'     => '1235 Howard St Ste D',
+            'city'       => 'San Francisco',
+            'country_id' => 'US',
+            'region'     => 'CA',
+            'postcode'   => '94103'
+        ]);
+        $quote->expects(static::once())->method('getShippingAddress')->willReturn($address);
+        $this->quoteRepository->expects(static::once())->method('save');
+        static::assertEquals($quote, TestHelper::invokeMethod($this->currentMock, 'createQuoteWithItem', [$product]));
+    }
+
+    /**
+     * @test
+     */
+    public function getShippingMethods_returnsEmptyArray_ifNoShippingMethods()
+    {
+        $address = $this->createMock(Address::class);
+        $quote = $this->createMock(Quote::class);
+        $quote->expects(static::once())->method('getShippingAddress')->willReturn($address);
+        $address->expects(static::once())->method('getGroupedAllShippingRates')->willReturn([]);
+        static::assertEquals([], TestHelper::invokeMethod($this->currentMock, 'getShippingMethods', [$quote]));
+    }
+
+    /**
+     * @test
+     */
+    public function getShippingMethods_returnsCorrectShippingMethods()
+    {
+        $address = $this->createPartialMock(Address::class, ['getGroupedAllShippingRates', 'setCollectShippingRates', 'setShippingMethod', 'save']);
+        $quote = $this->createMock(Quote::class);
+        $quote->expects(static::once())->method('getShippingAddress')->willReturn($address);
+        $rate = $this->createMock(Rate::class);
+        $address->expects(static::once())->method('getGroupedAllShippingRates')->willReturn([[$rate]]);
+        $shippingMethod = $this->createMock(ShippingMethod::class);
+        $this->shippingMethodConverter->expects(static::once())->method('modelToDataObject')->with($rate, 'USD')->willReturn($shippingMethod);
+        $address->expects(static::once())->method('setCollectShippingRates')->with(true)->willReturnSelf();
+        $shippingMethod->expects(static::once())->method('getCarrierCode')->willReturn('fs');
+        $shippingMethod->expects(static::once())->method('getMethodCode')->willReturn('fs');
+        $address->expects(static::once())->method('setShippingMethod')->with('fs_fs')->willReturnSelf();
+        $address->expects(static::once())->method('save');
+        $shippingMethod->expects(static::once())->method('getCarrierTitle')->willReturn('freeshipping');
+        $shippingMethod->expects(static::once())->method('getMethodTitle')->willReturn('freeshipping');
+        $shippingMethod->expects(static::once())->method('getAmount')->willReturn(0.0);
+        $atcShippingMethod = $this->createMock(PriceProperty::class);
+        $atcShippingMethod->expects(static::once())->method('setName')->with('freeshipping - freeshipping')->willReturnSelf();
+        $atcShippingMethod->expects(static::once())->method('setPrice')->with('Free')->willReturnSelf();
+        $this->pricePropertyFactory->expects(static::once())->method('create')->willReturn($atcShippingMethod);
+        static::assertEquals([$atcShippingMethod], TestHelper::invokeMethod($this->currentMock, 'getShippingMethods', [$quote]));
     }
 }
