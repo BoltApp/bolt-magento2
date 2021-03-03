@@ -33,11 +33,16 @@ use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\StoreItemFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Exception;
+use Magento\Catalog\Api\Data\ProductSearchResultsInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface as ProductRepository;
 use Magento\Catalog\Model\Product;
+use Magento\CatalogInventory\Api\Data\StockItemInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
+use Magento\Framework\Api\SearchCriteria;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\Pricing\Price\PriceInterface;
+use Magento\Framework\Pricing\PriceInfoInterface;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Quote\Model\Cart\ShippingMethod;
@@ -294,6 +299,76 @@ class AutomatedTestingTest extends BoltTestCase
         $config->expects(static::once())->method('setCart')->willReturnSelf();
         $this->configFactory->expects(static::once())->method('create')->willReturn($config);
         TestHelper::invokeMethod($this->currentMock, 'getAutomatedTestingConfig');
+    }
+
+    /**
+     * @test
+     */
+    public function getProduct_returnsPhysicalProduct()
+    {
+        $this->searchCriteriaBuilder->expects(static::exactly(3))->withConsecutive(
+            ['status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED],
+            ['visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq'],
+            ['type_id', 'physical']
+        )->willReturnSelf();
+        $searchCriteria = $this->createMock(SearchCriteria::class);
+        $this->searchCriteriaBuilder->expects(static::once())->method('create')->willReturn($searchCriteria);
+        $productSearchResults = $this->createMock(ProductSearchResultsInterface::class);
+        $this->productRepository->expects(static::once())->method('getList')->with($searchCriteria)->willReturn($productSearchResults);
+        $product = $this->createMock(Product::class);
+        $productSearchResults->expects(static::once())->method('getItems')->willReturn([$product]);
+        $product->expects(static::once())->method('getId')->willReturn(1);
+        $stockItem = $this->createMock(StockItemInterface::class);
+        $this->stockRegistry->expects(static::once())->method('getStockItem')->with(1)->willReturn($stockItem);
+        $stockItem->expects(static::once())->method('getIsInStock')->willReturn(true);
+        static::assertEquals($product, TestHelper::invokeMethod($this->currentMock, 'getProduct', ['physical']));
+    }
+
+    /**
+     * @test
+     */
+    public function getProduct_returnsSaleProduct()
+    {
+        $this->searchCriteriaBuilder->expects(static::exactly(3))->withConsecutive(
+            ['status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED],
+            ['visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq'],
+            ['type_id', [\Magento\Catalog\Model\Product\Type::TYPE_SIMPLE, \Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL], 'in']
+        )->willReturnSelf();
+        $searchCriteria = $this->createMock(SearchCriteria::class);
+        $this->searchCriteriaBuilder->expects(static::once())->method('create')->willReturn($searchCriteria);
+        $productSearchResults = $this->createMock(ProductSearchResultsInterface::class);
+        $this->productRepository->expects(static::once())->method('getList')->with($searchCriteria)->willReturn($productSearchResults);
+        $product = $this->createMock(Product::class);
+        $productSearchResults->expects(static::once())->method('getItems')->willReturn([$product]);
+        $product->expects(static::once())->method('getId')->willReturn(1);
+        $stockItem = $this->createMock(StockItemInterface::class);
+        $this->stockRegistry->expects(static::once())->method('getStockItem')->with(1)->willReturn($stockItem);
+        $stockItem->expects(static::once())->method('getIsInStock')->willReturn(true);
+        $product->expects(static::once())->method('getFinalPrice')->willReturn(0.99);
+        $priceInfo = $this->createMock(PriceInfoInterface::class);
+        $product->expects(static::once())->method('getPriceInfo')->willReturn($priceInfo);
+        $price = $this->createMock(PriceInterface::class);
+        $priceInfo->expects(static::once())->method('getPrice')->with('regular_price')->willReturn($price);
+        $price->expects(static::once())->method('getValue')->willReturn(1);
+        static::assertEquals($product, TestHelper::invokeMethod($this->currentMock, 'getProduct', ['sale']));
+    }
+
+    /**
+     * @test
+     */
+    public function getProduct_returnsNull_ifNoProductSatisfiesConditions()
+    {
+        $this->searchCriteriaBuilder->expects(static::exactly(3))->withConsecutive(
+            ['status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED],
+            ['visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq'],
+            ['type_id', 'physical']
+        )->willReturnSelf();
+        $searchCriteria = $this->createMock(SearchCriteria::class);
+        $this->searchCriteriaBuilder->expects(static::once())->method('create')->willReturn($searchCriteria);
+        $productSearchResults = $this->createMock(ProductSearchResultsInterface::class);
+        $this->productRepository->expects(static::once())->method('getList')->with($searchCriteria)->willReturn($productSearchResults);
+        $productSearchResults->expects(static::once())->method('getItems')->willReturn([]);
+        static::assertEquals(null, TestHelper::invokeMethod($this->currentMock, 'getProduct', ['physical']));
     }
 
     /**
