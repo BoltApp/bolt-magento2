@@ -35,42 +35,42 @@
     </route>
     <!-- Order Update hook -->
     <route url="/V1/bolt/boltpay/order/manage" method="POST">
-        <service class="Bolt\Boltpay\Api\OldApiInterface" method="manage"/>
+        <service class="Bolt\Boltpay\Api\LegacyApiInterface" method="manage"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
     </route>
     <!-- Shipping and Tax hook -->
     <route url="/V1/bolt/boltpay/shipping/methods" method="POST">
-        <service class="Bolt\Boltpay\Api\OldApiInterface" method="getShippingMethods"/>
+        <service class="Bolt\Boltpay\Api\LegacyApiInterface" method="getShippingMethods"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
     </route>
     <!-- Shipping hook -->
     <route url="/V1/bolt/boltpay/shippingoptions" method="POST">
-        <service class="Bolt\Boltpay\Api\OldApiInterface" method="getShippingOptions"/>
+        <service class="Bolt\Boltpay\Api\LegacyApiInterface" method="getShippingOptions"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
     </route>
     <!-- Tax hook -->
     <route url="/V1/bolt/boltpay/tax" method="POST">
-        <service class="Bolt\Boltpay\Api\OldApiInterface" method="getTax"/>
+        <service class="Bolt\Boltpay\Api\LegacyApiInterface" method="getTax"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
     </route>
     <!-- Discount Code Validation hook -->
     <route url="/V1/bolt/boltpay/discount/validate" method="POST">
-        <service class="Bolt\Boltpay\Api\OldApiInterface" method="validateDiscount"/>
+        <service class="Bolt\Boltpay\Api\LegacyApiInterface" method="validateDiscount"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
     </route>
     <!-- Pre-Auth: Create Order hook -->
     <route url="/V1/bolt/boltpay/order/create" method="POST">
-        <service class="Bolt\Boltpay\Api\OldApiInterface" method="createOrder"/>
+        <service class="Bolt\Boltpay\Api\LegacyApiInterface" method="createOrder"/>
         <resources>
             <resource ref="anonymous" />
         </resources>
@@ -91,7 +91,7 @@
     </route>
     <!--Update Cart Endpoint-->
     <route url="/V1/bolt/boltpay/cart/update" method="POST">
-        <service class="Bolt\Boltpay\Api\OldApiInterface" method="updateCart"/>
+        <service class="Bolt\Boltpay\Api\LegacyApiInterface" method="updateCart"/>
         <resources>
             <resource ref="anonymous" />
         </resources>

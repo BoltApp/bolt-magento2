@@ -19,14 +19,14 @@ namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\CreateOrderInterface;
 use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
-use Bolt\Boltpay\Api\OldApiInterface;
+use Bolt\Boltpay\Api\LegacyApiInterface;
 use Bolt\Boltpay\Api\OrderManagementInterface;
 use Bolt\Boltpay\Api\ShippingInterface;
 use Bolt\Boltpay\Api\ShippingMethodsInterface;
 use Bolt\Boltpay\Api\TaxInterface;
 use Bolt\Boltpay\Api\UpdateCartInterface;
 
-class OldApi implements OldApiInterface
+class LegacyApi implements LegacyApiInterface
 {
     /**
      * @var CreateOrderInterface

@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Api;
 /**
  * @api
  */
-interface OldApiInterface
+interface LegacyApiInterface
 {
     /**
      * @api
