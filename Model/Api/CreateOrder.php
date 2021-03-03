@@ -201,6 +201,8 @@ class CreateOrder implements CreateOrderInterface
     ) {
         try {
             $startTime = $this->metricsClient->getCurrentTime();
+            //initialize variable here as it is used in finally block
+            $isUniversal = false;
             $payload = $this->request->getContent();
             $this->logHelper->addInfoLog('[-= Pre-Auth CreateOrder =-]');
             $this->logHelper->addInfoLog($payload);
@@ -229,7 +231,6 @@ class CreateOrder implements CreateOrderInterface
 
             $transaction = json_decode($payload);
             // V2 webhooks send requests as {"event": ... "data":{requestContent}} so we need to extract the data we want
-            $isUniversal = false;
             if (isset($transaction->data)) {
                 $transaction = $transaction->data;
                 $isUniversal = true;
