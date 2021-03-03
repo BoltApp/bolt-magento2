@@ -306,7 +306,7 @@ class AutomatedTestingTest extends BoltTestCase
      */
     public function getProduct_returnsPhysicalProduct()
     {
-        $this->searchCriteriaBuilder->expects(static::exactly(3))->withConsecutive(
+        $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->withConsecutive(
             ['status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED],
             ['visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq'],
             ['type_id', 'physical']
@@ -329,7 +329,7 @@ class AutomatedTestingTest extends BoltTestCase
      */
     public function getProduct_returnsSaleProduct()
     {
-        $this->searchCriteriaBuilder->expects(static::exactly(3))->withConsecutive(
+        $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->withConsecutive(
             ['status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED],
             ['visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq'],
             ['type_id', [\Magento\Catalog\Model\Product\Type::TYPE_SIMPLE, \Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL], 'in']
@@ -358,7 +358,7 @@ class AutomatedTestingTest extends BoltTestCase
      */
     public function getProduct_returnsNull_ifNoProductSatisfiesConditions()
     {
-        $this->searchCriteriaBuilder->expects(static::exactly(3))->withConsecutive(
+        $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->withConsecutive(
             ['status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED],
             ['visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq'],
             ['type_id', 'physical']
