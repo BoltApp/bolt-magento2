@@ -44,6 +44,7 @@ use Magento\Quote\Model\Cart\ShippingMethodConverter;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\QuoteFactory;
+use Magento\Quote\Model\ResourceModel\Quote\Address\Rate;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
@@ -346,5 +347,42 @@ class AutomatedTestingTest extends BoltTestCase
         $quote->expects(static::once())->method('getShippingAddress')->willReturn($address);
         $this->quoteRepository->expects(static::once())->method('save');
         static::assertEquals($quote, TestHelper::invokeMethod($this->currentMock, 'createQuoteWithItem', [$product]));
+    }
+
+    /**
+     * @test
+     */
+    public function getShippingMethods_returnsEmptyArray_ifNoShippingMethods()
+    {
+        $address = $this->createMock(Address::class);
+        $quote = $this->createMock(Quote::class);
+        $quote->expects(static::once())->method('getShippingAddress')->willReturn($address);
+        $address->expects(static::once())->method('getGroupedAllShippingRates')->willReturn([]);
+        static::assertEquals([], TestHelper::invokeMethod($this->currentMock, 'getShippingMethods', [$quote]));
+    }
+
+    /**
+     * @test
+     */
+    public function getShippingMethods_returnsCorrectShippingMethods()
+    {
+        $address = $this->createMock(Address::class);
+        $quote = $this->createMock(Quote::class);
+        $quote->expects(static::once())->method('getShippingAddress')->willReturn($address);
+        $rate = $this->createMock(Rate::class);
+        $address->expects(static::once())->method('getGroupedAllShippingRates')->willReturn([[$rate]]);
+        $address->expects(static::once())->method('setCollectShippingRates')->with(true)->willReturnSelf();
+        $rate->expects(static::once())->method('getCarrierCode')->willReturn('fs');
+        $rate->expects(static::once())->method('getMethodCode')->willReturn('fs');
+        $address->expects(static::once())->method('setShippingMethod')->with('fs_fs')->willReturnSelf();
+        $address->expects(static::once())->method('save');
+        $rate->expects(static::once())->method('getCarrierTitle')->willReturn('freeshipping');
+        $rate->expects(static::once())->method('getMethodTitle')->willReturn('freeshipping');
+        $rate->expects(static::once())->method('getAmount')->willReturn(0.0);
+        $shippingMethod = $this->createMock(PriceProperty::class);
+        $shippingMethod->expects(static::once())->method('setName')->with('freeshipping-freeshipping')->willReturnSelf();
+        $shippingMethod->expects(static::once())->method('setPrice')->with('FREE')->willReturnSelf();
+        $this->pricePropertyFactory->expects(static::once())->method('create')->willReturn($shippingMethod);
+        static::assertEquals([$shippingMethod], TestHelper::invokeMethod($this->currentMock, 'getShippingMethods', [$quote]));
     }
 }
