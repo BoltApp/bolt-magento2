@@ -26,7 +26,7 @@ use Bolt\Boltpay\Api\Data\ShippingTaxInterface;
  *
  * @package Bolt\Boltpay\Model\Api\Data
  */
-class ShippingOptions implements ShippingOptionsInterface
+class ShippingOptions implements ShippingOptionsInterface, \JsonSerializable
 {
     /**
      * @var array
@@ -42,6 +42,7 @@ class ShippingOptions implements ShippingOptionsInterface
      * Get all available shipping options.
      *
      * @api
+     * 
      * @return ShippingOptionInterface[]
      */
     public function getShippingOptions()
@@ -54,6 +55,7 @@ class ShippingOptions implements ShippingOptionsInterface
      *
      * @api
      * @param ShippingOptionInterface[]
+     * 
      * @return $this
      */
     public function setShippingOptions($shippingOptions)
@@ -66,6 +68,7 @@ class ShippingOptions implements ShippingOptionsInterface
      * Get order tax result.
      *
      * @api
+     * 
      * @return ShippingTaxInterface
      */
     public function getTaxResult()
@@ -102,5 +105,16 @@ class ShippingOptions implements ShippingOptionsInterface
         }
 
         return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function jsonSerialize()
+    {
+        return [
+            'shipping_options' => $this->shippingOptions,
+            'tax_result' => $this->taxResult,
+        ];
     }
 }

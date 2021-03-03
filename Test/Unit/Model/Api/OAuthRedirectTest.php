@@ -21,6 +21,7 @@ use Bolt\Boltpay\Api\Data\ExternalCustomerEntityInterface;
 use Bolt\Boltpay\Api\ExternalCustomerEntityRepositoryInterface as ExternalCustomerEntityRepository;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
+use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\SSOHelper;
 use Bolt\Boltpay\Model\Api\OAuthRedirect;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
@@ -58,6 +59,11 @@ class OAuthRedirectTest extends BoltTestCase
      * @var SSOHelper|MockObject
      */
     private $ssoHelper;
+
+    /**
+     * @var LogHelper|MockObject
+     */
+    private $logHelper;
 
     /**
      * @var ExternalCustomerEntityRepository|MockObject
@@ -112,6 +118,7 @@ class OAuthRedirectTest extends BoltTestCase
         $this->response = $this->createMock(Response::class);
         $this->deciderHelper = $this->createMock(DeciderHelper::class);
         $this->ssoHelper = $this->createMock(SSOHelper::class);
+        $this->logHelper = $this->createMock(LogHelper::class);
         $this->externalCustomerEntityRepository = $this->createMock(ExternalCustomerEntityRepository::class);
         $this->customerRepository = $this->createMock(CustomerRepository::class);
         $this->storeManager = $this->createMock(StoreManagerInterface::class);
@@ -126,6 +133,7 @@ class OAuthRedirectTest extends BoltTestCase
                 $this->response,
                 $this->deciderHelper,
                 $this->ssoHelper,
+                $this->logHelper,
                 $this->externalCustomerEntityRepository,
                 $this->customerRepository,
                 $this->storeManager,
@@ -203,7 +211,7 @@ class OAuthRedirectTest extends BoltTestCase
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
         $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
-        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn(['access_token' => 'test access token', 'id_token' => 'test id token']);
+        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn((object) ['access_token' => 'test access token', 'id_token' => 'test id token']);
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn('test string');
         $this->bugsnag->expects(static::once())->method('notifyError')->with('OAuthRedirect', 'test string');
         $this->expectException(WebapiException::class);
@@ -218,7 +226,7 @@ class OAuthRedirectTest extends BoltTestCase
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
         $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
-        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn(['access_token' => 'test access token', 'id_token' => 'test id token']);
+        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn((object) ['access_token' => 'test access token', 'id_token' => 'test id token']);
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn([
             'sub'            => 'abc',
             'first_name'     => 'first',
@@ -246,7 +254,7 @@ class OAuthRedirectTest extends BoltTestCase
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
         $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
-        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn(['access_token' => 'test access token', 'id_token' => 'test id token']);
+        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn((object) ['access_token' => 'test access token', 'id_token' => 'test id token']);
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn(['sub' => 'abc', 'email' => 't@t.com', 'email_verified' => false]);
         $store = $this->createMock(StoreInterface::class);
         $this->storeManager->expects(static::exactly(2))->method('getStore')->willReturn($store);
@@ -268,7 +276,7 @@ class OAuthRedirectTest extends BoltTestCase
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
         $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
-        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn(['access_token' => 'test access token', 'id_token' => 'test id token']);
+        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn((object) ['access_token' => 'test access token', 'id_token' => 'test id token']);
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn(['sub' => 'abc', 'email' => 't@t.com', 'email_verified' => true]);
         $store = $this->createMock(StoreInterface::class);
         $this->storeManager->expects(static::exactly(2))->method('getStore')->willReturn($store);
@@ -291,7 +299,7 @@ class OAuthRedirectTest extends BoltTestCase
     {
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
         $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
-        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn(['access_token' => 'test access token', 'id_token' => 'test id token']);
+        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn((object) ['access_token' => 'test access token', 'id_token' => 'test id token']);
         $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn([
             'sub'            => 'abc',
             'first_name'     => 'first',

@@ -130,6 +130,7 @@ class Client extends AbstractHelper
             $this->configHelper->getModuleVersion(),
             $requestData,
             $apiKey,
+            'application/json',
             []
         );
 
