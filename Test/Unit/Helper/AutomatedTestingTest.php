@@ -367,7 +367,7 @@ class AutomatedTestingTest extends BoltTestCase
      */
     public function getShippingMethods_returnsCorrectShippingMethods()
     {
-        $address = $this->createMock(Address::class);
+        $address = $this->createPartialMock(Address::class, ['getGroupedAllShippingRates', 'setCollectShippingRates', 'setShippingMethod', 'save']);
         $quote = $this->createMock(Quote::class);
         $quote->expects(static::once())->method('getShippingAddress')->willReturn($address);
         $rate = $this->createMock(Rate::class);
