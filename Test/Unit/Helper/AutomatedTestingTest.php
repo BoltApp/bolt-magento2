@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -298,5 +299,23 @@ class AutomatedTestingTest extends BoltTestCase
     public function convertToStoreItem_returnsNull_ifProductIsNull()
     {
         static::assertEquals(null, TestHelper::invokeMethod($this->currentMock, 'convertToStoreItem', [null, 'virtual']));
+    }
+
+    /**
+     * @test
+     */
+    public function convertToStoreItem_returnsStoreItem_ifProductIsNotNull()
+    {
+        $product = $this->createMock(Product::class);
+        $product->expects(static::once())->method('getProductUrl')->willReturn('http://test.com/url');
+        $product->expects(static::once())->method('getName')->willReturn('  a product');
+        $product->expects(static::once())->method('getFinalPrice')->willReturn('1.99');
+        $storeItem = $this->createMock(StoreItem::class);
+        $this->storeItemFactory->expects(static::once())->method('create')->willReturn($storeItem);
+        $storeItem->expects(static::once())->method('setItemUrl')->with('http://test.com/url')->willReturnSelf();
+        $storeItem->expects(static::once())->method('setName')->with('a product')->willReturnSelf();
+        $storeItem->expects(static::once())->method('setPrice')->with('$1.99')->willReturnSelf();
+        $storeItem->expects(static::once())->method('setType')->with('physical')->willReturnSelf();
+        static::assertEquals($storeItem, TestHelper::invokeMethod($this->currentMock, 'convertToStoreItem', [$product, 'physical']));
     }
 }

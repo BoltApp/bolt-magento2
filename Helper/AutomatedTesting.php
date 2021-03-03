@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -199,15 +200,15 @@ class AutomatedTesting extends AbstractHelper
             $quote->collectTotals();
             $this->quoteRepository->save($quote);
             $simpleCartItem = $this->cartItemFactory->create()
-                                                    ->setName($simpleStoreItem->getName())
-                                                    ->setPrice($simpleStoreItem->getPrice())
-                                                    ->setQuantity(1);
+                ->setName($simpleStoreItem->getName())
+                ->setPrice($simpleStoreItem->getPrice())
+                ->setQuantity(1);
             $cart = $this->cartFactory->create()
-                                      ->setItems([$simpleCartItem])
-                                      ->setShipping(reset($shippingMethods))
-                                      ->setExpectedShippingMethods($shippingMethods)
-                                      ->setTax($this->formatPrice($quote->getShippingAddress()->getTaxAmount()))
-                                      ->setSubTotal($this->formatPrice($quote->getSubtotal()));
+                ->setItems([$simpleCartItem])
+                ->setShipping(reset($shippingMethods))
+                ->setExpectedShippingMethods($shippingMethods)
+                ->setTax($this->formatPrice($quote->getShippingAddress()->getTaxAmount()))
+                ->setSubTotal($this->formatPrice($quote->getSubtotal()));
             $this->quoteRepository->delete($quote);
 
             return $this->configFactory->create()->setStoreItems($storeItems)->setCart($cart);
@@ -244,10 +245,7 @@ class AutomatedTesting extends AbstractHelper
         }
         $searchCriteria = $searchCriteriaBuilder->create();
 
-        $products = $this->productRepository
-            ->getList($searchCriteria)
-            ->getItems();
-
+        $products = $this->productRepository->getList($searchCriteria)->getItems();
         foreach ($products as $product) {
             if ($this->stockRegistry->getStockItem($product->getId())->getIsInStock() && (
                 $type !== 'sale' ||
@@ -274,10 +272,10 @@ class AutomatedTesting extends AbstractHelper
             return null;
         }
         return $this->storeItemFactory->create()
-                                      ->setItemUrl($product->getProductUrl())
-                                      ->setName(trim($product->getName()))
-                                      ->setPrice($this->formatPrice($product->getFinalPrice()))
-                                      ->setType($type);
+            ->setItemUrl($product->getProductUrl())
+            ->setName(trim($product->getName()))
+            ->setPrice($this->formatPrice($product->getFinalPrice()))
+            ->setType($type);
     }
 
     /**
@@ -328,16 +326,16 @@ class AutomatedTesting extends AbstractHelper
 
         $firstShippingMethod = reset($flattenedRates);
         $address->setCollectShippingRates(true)
-                ->setShippingMethod($firstShippingMethod->getCarrierCode() . '_' . $firstShippingMethod->getMethodCode())
-                ->save();
+            ->setShippingMethod($firstShippingMethod->getCarrierCode() . '_' . $firstShippingMethod->getMethodCode())
+            ->save();
 
         $shippingMethods = [];
         foreach ($flattenedRates as $rate) {
             $shippingMethodName = $rate->getCarrierTitle() . ' - ' . $rate->getMethodTitle();
             $shippingMethodPrice = $this->formatPrice($rate->getAmount(), true);
             $shippingMethods[] = $this->pricePropertyFactory->create()
-                                                            ->setName($shippingMethodName)
-                                                            ->setPrice($shippingMethodPrice);
+                ->setName($shippingMethodName)
+                ->setPrice($shippingMethodPrice);
         }
 
         return $shippingMethods;
