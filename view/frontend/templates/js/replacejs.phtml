@@ -992,7 +992,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 params = params.join('&');
 
                 hintBarrier = boltBarrier();
-
+                cartBarrier = boltBarrier();
                 BoltState.boltCart = new Promise(function (resolve, reject) {
 
                     createRequest = true;
@@ -1007,24 +1007,28 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                             if (BoltState.cartRestricted) {
                                 if (popUpOpen) reject(new Error(data.message));
                                 hintBarrier.resolve(hints);
+                                cartBarrier.resolve(cart);
                                 return;
                             }
 
                             if (data.status !== 'success') {
                                 reject(new Error(data.message || 'Network request failed'));
                                 hintBarrier.resolve(hints);
+                                cartBarrier.resolve(cart);
                                 return;
                             }
 
                             if (!data.cart) {
                                 reject(new Error('The cart info is missing.'));
                                 hintBarrier.resolve(hints);
+                                cartBarrier.resolve(cart);
                                 return;
                             }
 
                             if (!data.cart.orderToken) {
                                 reject(new Error('The cart is empty.'));
                                 hintBarrier.resolve(hints);
+                                cartBarrier.resolve(cart);
                                 return;
                             }
 
@@ -1036,8 +1040,8 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                             //////////////////////////
 
                             resolve(data.cart);
+                            cartBarrier.resolve(data.cart);
                             hintBarrier.resolve(hints);
-
                             // open the checkout if auto-open flag is set
                             // one time only on page load
                             if (BoltState.initiateCheckout && allowAutoOpen) {
@@ -1051,7 +1055,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                         .always(function() {
                             createRequest = false;
                         })
-                        boltCheckoutConfigure(BoltState.boltCart, hintBarrier.promise, callbacks);
+                        boltCheckoutConfigure(cartBarrier.promise, hintBarrier.promise, callbacks);
                 });
         }
 
@@ -1485,6 +1489,15 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             'jquery',
             'Magento_Checkout/js/model/quote',
             ], function ($, quote) {
+                var prevAddress;
+                //If billing address has been changed we need to recreate the order token.
+		        quote.billingAddress.subscribe(function(newAddress){
+                    if((!newAddress ^ !prevAddress || prevAddress.getKey() !== newAddress.getKey())){
+                        prevAddress = newAddress;
+                        quote.billingAddress(newAddress);
+			            $(document).trigger('bolt:createOrder');
+                    }
+                });
                 // If quote total was changed through a method we didn't create,
                 // we should reload the bolt cart since totals are probably now out of sync.
                 quote.totals.subscribe(function (totals) {
