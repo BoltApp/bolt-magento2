@@ -383,7 +383,7 @@ class AutomatedTestingTest extends BoltTestCase
         $shippingMethod->expects(static::once())->method('getMethodTitle')->willReturn('freeshipping');
         $shippingMethod->expects(static::once())->method('getAmount')->willReturn(0.0);
         $atcShippingMethod = $this->createMock(PriceProperty::class);
-        $atcShippingMethod->expects(static::once())->method('setName')->with('freeshipping-freeshipping')->willReturnSelf();
+        $atcShippingMethod->expects(static::once())->method('setName')->with('freeshipping - freeshipping')->willReturnSelf();
         $atcShippingMethod->expects(static::once())->method('setPrice')->with('FREE')->willReturnSelf();
         $this->pricePropertyFactory->expects(static::once())->method('create')->willReturn($atcShippingMethod);
         static::assertEquals([$atcShippingMethod], TestHelper::invokeMethod($this->currentMock, 'getShippingMethods', [$quote]));
