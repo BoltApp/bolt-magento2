@@ -41,7 +41,7 @@ use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\Api\CreateOrder;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
-use Bolt\Boltpay\Model\CreatedOrderInterfaceFactory;
+use Bolt\Boltpay\Api\Data\CreatedOrderInterfaceFactory;
 
 /**
  * Class CreateOrderTest
