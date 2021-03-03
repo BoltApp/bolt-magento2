@@ -40,6 +40,7 @@ use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\Context;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
+use Magento\Quote\Model\Cart\ShippingMethod;
 use Magento\Quote\Model\Cart\ShippingMethodConverter;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
@@ -371,18 +372,20 @@ class AutomatedTestingTest extends BoltTestCase
         $quote->expects(static::once())->method('getShippingAddress')->willReturn($address);
         $rate = $this->createMock(Rate::class);
         $address->expects(static::once())->method('getGroupedAllShippingRates')->willReturn([[$rate]]);
+        $shippingMethod = $this->createMock(ShippingMethod::class);
+        $this->shippingMethodConverter->expects(static::once())->method('modelToDataObject')->with($rate, 'USD')->willReturn($shippingMethod);
         $address->expects(static::once())->method('setCollectShippingRates')->with(true)->willReturnSelf();
-        $rate->expects(static::once())->method('getCarrierCode')->willReturn('fs');
-        $rate->expects(static::once())->method('getMethodCode')->willReturn('fs');
+        $shippingMethod->expects(static::once())->method('getCarrierCode')->willReturn('fs');
+        $shippingMethod->expects(static::once())->method('getMethodCode')->willReturn('fs');
         $address->expects(static::once())->method('setShippingMethod')->with('fs_fs')->willReturnSelf();
         $address->expects(static::once())->method('save');
-        $rate->expects(static::once())->method('getCarrierTitle')->willReturn('freeshipping');
-        $rate->expects(static::once())->method('getMethodTitle')->willReturn('freeshipping');
-        $rate->expects(static::once())->method('getAmount')->willReturn(0.0);
-        $shippingMethod = $this->createMock(PriceProperty::class);
-        $shippingMethod->expects(static::once())->method('setName')->with('freeshipping-freeshipping')->willReturnSelf();
-        $shippingMethod->expects(static::once())->method('setPrice')->with('FREE')->willReturnSelf();
-        $this->pricePropertyFactory->expects(static::once())->method('create')->willReturn($shippingMethod);
-        static::assertEquals([$shippingMethod], TestHelper::invokeMethod($this->currentMock, 'getShippingMethods', [$quote]));
+        $shippingMethod->expects(static::once())->method('getCarrierTitle')->willReturn('freeshipping');
+        $shippingMethod->expects(static::once())->method('getMethodTitle')->willReturn('freeshipping');
+        $shippingMethod->expects(static::once())->method('getAmount')->willReturn(0.0);
+        $atcShippingMethod = $this->createMock(PriceProperty::class);
+        $atcShippingMethod->expects(static::once())->method('setName')->with('freeshipping-freeshipping')->willReturnSelf();
+        $atcShippingMethod->expects(static::once())->method('setPrice')->with('FREE')->willReturnSelf();
+        $this->pricePropertyFactory->expects(static::once())->method('create')->willReturn($atcShippingMethod);
+        static::assertEquals([$atcShippingMethod], TestHelper::invokeMethod($this->currentMock, 'getShippingMethods', [$quote]));
     }
 }
