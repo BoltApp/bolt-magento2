@@ -153,13 +153,6 @@ trait UpdateDiscountTrait
 
         if (empty($giftCard)) {
             $giftCard = $this->eventsForThirdPartyModules->runFilter("loadGiftcard", null, $couponCode, $quote);
-            if ($giftCard instanceof \Exception) {
-                throw new BoltException(
-                    __($giftCard->getMessage()),
-                    null,
-                    BoltErrorResponse::ERR_SERVICE
-                );
-            }
         }
 
         $coupon = null;
@@ -409,21 +402,19 @@ trait UpdateDiscountTrait
                 $giftCard,
                 $quote
             );
-            
-            if ($result instanceof \Exception) {
-                throw $result;
-            } elseif (!$result) {
-                throw new \Exception(__('The GiftCard %1 is not supported', $couponCode));
-            }
 
-            return true;
+            if ($result) {
+                return true;
+            }
         } catch (\Exception $e) {
             throw new BoltException(
-                __($e->getMessage()),
+                $e->getMessage(),
                 null,
                 BoltErrorResponse::ERR_SERVICE
             );
         }
+
+        return true;
     }
 
     /**
@@ -514,27 +505,29 @@ trait UpdateDiscountTrait
     protected function removeGiftCardCode($couponCode, $giftCard, $quote)
     {
         try {
-            $result = $this->eventsForThirdPartyModules->runFilter(
+            $filterRemoveGiftCardCode = $this->eventsForThirdPartyModules->runFilter(
                 "filterRemovingGiftCardCode",
                 false,
                 $giftCard,
                 $quote
             );
-            
-            if ($result instanceof \Exception) {
-                throw $result;
-            } elseif (!$result) {
-                throw new \Exception(__('The GiftCard %1 is not supported', $couponCode));
+            if ($filterRemoveGiftCardCode) {
+                return true;
             }
 
-            return true;
+            throw new \Exception(__('Failed to apply the GiftCard %1', $couponCode));
         } catch (\Exception $e) {
-            throw new BoltException(
-                __($e->getMessage()),
-                null,
-                BoltErrorResponse::ERR_SERVICE
+            $this->sendErrorResponse(
+                BoltErrorResponse::ERR_SERVICE,
+                $e->getMessage(),
+                422,
+                $quote
             );
+
+            return false;
         }
+
+        return true;
     }
 
     /**

@@ -237,19 +237,15 @@ class GiftCard
      */
     public function filterApplyingGiftCardCode($result, $mageplazaGiftCardCheckoutHelper, $couponCode, $giftCard, $quote)
     {
-        if ($result || !($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard)) {
-            return $result;
-        }
-        
-        try {
-            $this->mageplazaGiftCardCheckoutHelper = $mageplazaGiftCardCheckoutHelper;
+        $this->mageplazaGiftCardCheckoutHelper = $mageplazaGiftCardCheckoutHelper;
+        if ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
             $this->removeMageplazaGiftCard($couponCode, $quote);
             $this->applyMageplazaGiftCard($couponCode, $quote);
-            
-            return true;
-        } catch (\Exception $e) {
-            return $e;
+
+            $result = true;
         }
+
+        return $result;
     }
 
     /**
@@ -281,18 +277,18 @@ class GiftCard
      */
     public function loadGiftcard($result, $mageplazaGiftCardFactory, $code, $quote)
     {
-        if ($result !== null) {
-            return $result;
-        }
-        
         $this->mageplazaGiftCardFactory = $mageplazaGiftCardFactory;
 
+        if (!empty($result)) {
+            return $result;
+        }
         try {
             $storeId = $quote->getStoreId();
             return $this->loadMageplazaGiftCard($code, $storeId);
-        } catch (\Exception $e) {
-            return $e;
+        } catch (LocalizedException $e) {
+            return null;
         }
+        return null;
     }
 
     /**
@@ -304,17 +300,12 @@ class GiftCard
      */
     public function filterRemovingGiftCardCode($result, $mageplazaGiftCardCheckoutHelper, $giftCard, $quote)
     {
-        if ($result || !($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard)) {
-            return $result;
-        }
-        
         $this->mageplazaGiftCardCheckoutHelper = $mageplazaGiftCardCheckoutHelper;
-        
-        try {
+        if ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
             $this->removeMageplazaGiftCard($giftCard->getCode(), $quote);
-            return true;
-        } catch (\Exception $e) {
-            return $e;
+            $result = true;
         }
+
+        return $result;
     }
 }
