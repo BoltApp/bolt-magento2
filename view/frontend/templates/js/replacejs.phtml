@@ -1491,7 +1491,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             ], function ($, quote) {
                 var prevAddress;
                 //If billing address has been changed we need to recreate the order token.
-		        quote.billingAddress.subscribe(function(newAddress){
+                quote.billingAddress.subscribe(function(newAddress){
                     if((!newAddress ^ !prevAddress || prevAddress.getKey() !== newAddress.getKey())){
                         prevAddress = newAddress;
                         quote.billingAddress(newAddress);
