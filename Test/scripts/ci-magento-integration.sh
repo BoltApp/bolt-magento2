@@ -23,7 +23,6 @@ cp magento/app/code/Bolt/Boltpay/Test/Unit/integration_phpunit.xml magento/dev/t
 echo "Creating DB for integration tests"
 mysql -uroot -h 127.0.0.1 -e 'CREATE DATABASE magento_integration_tests;'
 
-
 cd magento/dev/tests/integration/
 cp etc/install-config-mysql.php.dist etc/install-config-mysql.php
 sed -i 's/localhost/127.0.0.1/g' etc/install-config-mysql.php
@@ -35,4 +34,5 @@ sudo chmod -R 777 ../../..
 echo "Starting Bolt Integration Tests"
 ../../../vendor/bin/phpunit -d memory_limit=5G -c bolt_phpunit.xml --coverage-clover=/home/circleci/project/artifacts/coverage.xml
 cd ../../../..
+find ./magento -mindepth 1 ! -regex '^./magento/app/code/Bolt/Boltpay\(/.*\)?' -delete
 bash <(curl -s https://bolt-devops.s3-us-west-2.amazonaws.com/testing/codecov_uploader) -f /home/circleci/project/artifacts/coverage.xml -F $TEST_ENV
