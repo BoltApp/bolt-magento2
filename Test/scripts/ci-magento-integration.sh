@@ -34,5 +34,8 @@ sudo chmod -R 777 ../../..
 echo "Starting Bolt Integration Tests"
 ../../../vendor/bin/phpunit -d memory_limit=5G -c bolt_phpunit.xml --coverage-clover=/home/circleci/project/artifacts/coverage.xml
 cd ../../../..
-find ./magento -mindepth 1 ! -regex '^./magento/app/code/Bolt/Boltpay\(/.*\)?' -delete
+cp -r magento/app/code/Bolt/Boltpay .
+rm -rf magento
+mkdir -p magento/app/code/Bolt
+mv Boltpay magento/app/code/Bolt
 bash <(curl -s https://bolt-devops.s3-us-west-2.amazonaws.com/testing/codecov_uploader) -f /home/circleci/project/artifacts/coverage.xml -F $TEST_ENV
