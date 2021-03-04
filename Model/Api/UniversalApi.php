@@ -125,12 +125,12 @@ class UniversalApi implements UniversalApiInterface
             switch($event){
                 case "order.create":
                     //currently sends its own response updated for v2, no return
-                    // $this->result->setData(
+                    $this->result->setData(
                         $this->createOrder->execute(
                             $event,
                             isset($data['order']) ? $data['order'] : null,
                             isset($data['currency']) ? $data['currency'] : null
-                        // )
+                        )
                     );
                     break;
                 case "cart.create":
