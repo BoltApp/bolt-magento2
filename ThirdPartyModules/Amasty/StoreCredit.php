@@ -21,9 +21,12 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+use Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartTotalsLayout;
 
 class StoreCredit
 {
+    use FiltersCartTotalsLayout;
+
     const AMASTY_STORECREDIT = 'amstorecredit';
 
     /**
@@ -101,25 +104,33 @@ class StoreCredit
     }
 
     /**
-     * @param $result
-     * @return mixed
+     * Modifies checkout cart totals JS layout array with the purpose of adding components dynamically
+     *
+     * @param array $layout cart totals JS layout array
+     *
+     * @return array modified or unmodified JS layout array from the input
      */
-    public function filterProcessLayout($result)
+    public function filterProcessLayout($layout)
     {
-        if (!$this->configHelper->useAmastyStoreCreditConfig()) {
-            unset($result['components']['block-totals']['children']['amstorecredit_total']);
-            unset($result['components']['block-totals']['children']['amstorecredit_form']);
+        if ($this->configHelper->useAmastyStoreCreditConfig()) {
+            $layout['components']['block-totals']['children']['amstorecredit_total'] = [
+                'component' => 'Amasty_StoreCredit/js/view/checkout/totals/store-credit',
+                'sortOrder' => '90'
+            ];
+            $layout['components']['block-totals']['children']['amstorecredit_form'] = [
+                'component' => 'Amasty_StoreCredit/js/view/checkout/payment/store-credit'
+            ];
         }
-        return $result;
+        return $layout;
     }
-    
+
     /**
      * Return code if the quote has Amasty store credits.
-     * 
+     *
      * @param $result
      * @param $couponCode
      * @param $quote
-     * 
+     *
      * @return array
      */
     public function filterVerifyAppliedStoreCredit (
@@ -131,10 +142,10 @@ class StoreCredit
         if ($couponCode == self::AMASTY_STORECREDIT && $quote->getData(\Amasty\StoreCredit\Api\Data\SalesFieldInterface::AMSC_USE)) {
             $result[] = $couponCode;
         }
-        
+
         return $result;
     }
-    
+
     /**
      * Remove Amasty store credits from the quote.
      *
@@ -143,7 +154,7 @@ class StoreCredit
      * @param $quote
      * @param $websiteId
      * @param $storeId
-     * 
+     *
      */
     public function removeAppliedStoreCredit (
         $amastyApplyStoreCreditToQuote,

@@ -17,8 +17,11 @@
 
 namespace Bolt\Boltpay\Test\Unit\ViewModel;
 
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Bolt\Boltpay\ViewModel\MinicartAddons;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use PHPUnit\Framework\MockObject\MockObject;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\ViewModel\MinicartAddons
@@ -44,7 +47,7 @@ class MinicartAddonsTest extends BoltTestCase
     ];
 
     /**
-     * @var \Bolt\Boltpay\Helper\Config|\PHPUnit_Framework_MockObject_MockObject
+     * @var \Bolt\Boltpay\Helper\Config|MockObject
      */
     private $configHelper;
 
@@ -54,10 +57,19 @@ class MinicartAddonsTest extends BoltTestCase
     private $serializer;
 
     /**
-     * @var \Magento\Framework\App\Http\Context|\PHPUnit_Framework_MockObject_MockObject
+     * @var \Magento\Framework\App\Http\Context|MockObject
      */
     private $httpContext;
+
+    /**
+     * @var MinicartAddons|MockObject
+     */
     private $currentMock;
+
+    /**
+     * @var EventsForThirdPartyModules|MockObject
+     */
+    private $eventsForThirdPartyModulesMock;
 
     /**
      * Setup test dependencies, called before each test
@@ -68,10 +80,12 @@ class MinicartAddonsTest extends BoltTestCase
         $this->serializer = (new ObjectManager($this))
             ->getObject(\Magento\Framework\Serialize\Serializer\Json::class);
         $this->httpContext = $this->createMock(\Magento\Framework\App\Http\Context::class);
+        $this->eventsForThirdPartyModulesMock = $this->createMock(EventsForThirdPartyModules::class);
         $this->currentMock = new \Bolt\Boltpay\ViewModel\MinicartAddons(
             $this->serializer,
             $this->httpContext,
-            $this->configHelper
+            $this->configHelper,
+            $this->eventsForThirdPartyModulesMock
         );
     }
 
@@ -86,7 +100,8 @@ class MinicartAddonsTest extends BoltTestCase
         $instance = new \Bolt\Boltpay\ViewModel\MinicartAddons(
             $this->serializer,
             $this->httpContext,
-            $this->configHelper
+            $this->configHelper,
+            $this->eventsForThirdPartyModulesMock
         );
         static::assertAttributeEquals($this->serializer, 'serializer', $instance);
         static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
@@ -95,59 +110,20 @@ class MinicartAddonsTest extends BoltTestCase
 
     /**
      * @test
-     * that getLayout returns layout updates based on configuration and context state
+     * that getLayout
      *
      * @covers ::getLayout
      *
-     * @dataProvider getLayout_withVariousStatesProvider
-     *
-     * @param bool  $customerLoggedIn HTTP context flag
-     * @param bool  $displayRewardPointsInMinicartConfig flag value
-     * @param array $expectedResult of the method call
-     *
      * @throws \ReflectionException if getLayout method is not defined
      */
-    public function getLayout_withVariousStates_returnsLayout(
-        $customerLoggedIn,
-        $displayRewardPointsInMinicartConfig,
-        $expectedResult
-    ) {
-        $this->httpContext->expects(static::once())->method('getValue')
-            ->with(\Magento\Customer\Model\Context::CONTEXT_AUTH)
-            ->willReturn($customerLoggedIn);
-        $this->configHelper->expects($customerLoggedIn ? static::once() : static::never())
-            ->method('displayRewardPointsInMinicartConfig')
-            ->willReturn($displayRewardPointsInMinicartConfig);
+    public function getLayout_withVariousStates_returnsLayout() {
+        $this->eventsForThirdPartyModulesMock->expects(static::once())->method('runFilter')
+            ->with('filterMinicartAddonsLayout', [])
+            ->willReturn(self::DEFAULT_LAYOUT);
         static::assertEquals(
-            $expectedResult,
+            self::DEFAULT_LAYOUT,
             \Bolt\Boltpay\Test\Unit\TestHelper::invokeMethod($this->currentMock, 'getLayout')
         );
-    }
-
-    /**
-     * Data provider for {@see getLayout_withVariousStates_returnsLayout}
-     *
-     * @return array[] containing customer logged in flag, use reward points on minicart config and expected result of the method call
-     */
-    public function getLayout_withVariousStatesProvider()
-    {
-        return [
-            'Happy path - customer logged in and rewards on minicart enabled' => [
-                'customerLoggedIn'                    => true,
-                'displayRewardPointsInMinicartConfig' => true,
-                'expectedResult'                      => self::DEFAULT_LAYOUT
-            ],
-            [
-                'customerLoggedIn'                    => false,
-                'displayRewardPointsInMinicartConfig' => true,
-                'expectedResult'                      => []
-            ],
-            [
-                'customerLoggedIn'                    => true,
-                'displayRewardPointsInMinicartConfig' => false,
-                'expectedResult'                      => []
-            ],
-        ];
     }
 
     /**

@@ -238,24 +238,6 @@
                         <config_path>payment/boltpay/ip_whitelist</config_path>
                         <comment>Comma separated list of allowed IP addresses, used for test purposes. Leave empty for no restrictions. Clearing page cache is mandatory for the change to take effect.</comment>
                     </field>
-                    <field id="store_credit" translate="label" type="select" sortOrder="240" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Use Store Credit on Shopping Cart</label>
-                        <config_path>payment/boltpay/store_credit</config_path>
-                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                        <if_module_enabled>Magento_CustomerBalance</if_module_enabled>
-                    </field>
-                    <field id="reward_points" translate="label" type="select" sortOrder="245" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Use Reward Points on Shopping Cart</label>
-                        <config_path>payment/boltpay/reward_points</config_path>
-                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                        <if_module_enabled>Magento_Reward</if_module_enabled>
-                    </field>
-                    <field id="reward_points_minicart" translate="label" type="select" sortOrder="246" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Use Magento Commerce Reward Points on Minicart</label>
-                        <config_path>payment/boltpay/reward_points_minicart</config_path>
-                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                        <if_module_enabled>Magento_Reward</if_module_enabled>
-                    </field>
                     <field id="bolt_order_caching" translate="label" type="select" sortOrder="260" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Cache Bolt Order Token (Performance Optimization)</label>
                         <config_path>payment/boltpay/bolt_order_caching</config_path>
@@ -383,6 +365,24 @@
                         <config_path>payment/boltpay/aheadworks_reward_points_on_cart</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <if_module_enabled>Aheadworks_RewardPoints</if_module_enabled>
+                    </field>
+                    <field id="store_credit" translate="label" type="select" sortOrder="240" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use Store Credit on Shopping Cart</label>
+                        <config_path>payment/boltpay/store_credit</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <if_module_enabled>Magento_CustomerBalance</if_module_enabled>
+                    </field>
+                    <field id="reward_points" translate="label" type="select" sortOrder="245" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use Reward Points on Shopping Cart</label>
+                        <config_path>payment/boltpay/reward_points</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <if_module_enabled>Magento_Reward</if_module_enabled>
+                    </field>
+                    <field id="reward_points_minicart" translate="label" type="select" sortOrder="246" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use Magento Commerce Reward Points on Minicart</label>
+                        <config_path>payment/boltpay/reward_points_minicart</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <if_module_enabled>Magento_Reward</if_module_enabled>
                     </field>
                 </group>
             </group>

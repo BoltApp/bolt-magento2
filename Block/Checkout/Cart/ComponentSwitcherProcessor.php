@@ -40,8 +40,7 @@ class ComponentSwitcherProcessor extends LayoutProcessor
     public function __construct(
         ConfigHelper $configHelper,
         EventsForThirdPartyModules $eventsForThirdPartyModules
-    )
-    {
+    ) {
         parent::__construct($configHelper);
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
@@ -54,15 +53,7 @@ class ComponentSwitcherProcessor extends LayoutProcessor
      */
     public function process($jsLayout)
     {
-        // Store Credit
-        if (!$this->configHelper->useStoreCreditConfig()) {
-            unset($jsLayout['components']['block-totals']['children']['storeCredit']);
-        }
-        // Reward Points
-        if (!$this->configHelper->useRewardPointsConfig()) {
-            unset($jsLayout['components']['block-totals']['children']['rewardPoints']);
-        }
-
+        /** @see \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartTotalsLayout */
         return $this->eventsForThirdPartyModules->runFilter('filterProcessLayout', $jsLayout);
     }
 }

@@ -18,8 +18,7 @@
 /** @var \Magento\Framework\View\Element\Template $block */
 /** @var \Bolt\Boltpay\ViewModel\MinicartAddons $miniCartView */
 $miniCartView = $block->getViewModel();
-if (!$miniCartView->shouldShow()) { return;
-}
+if (!$miniCartView->shouldShow()) { return; }
 ?>
 <script>
     require([
@@ -29,7 +28,8 @@ if (!$miniCartView->shouldShow()) { return;
             require(['uiLayout'], function (layout) {
                 layout(<?= /* @noEscape */ $miniCartView->getLayoutJSON(); ?>);
 
-                <?php if ($miniCartView->configHelper->displayRewardPointsInMinicartConfig()):?>
+                <?php if ($miniCartView->configHelper->displayRewardPointsInMinicartConfig()
+                       && $miniCartView->eventsForThirdPartyModules->isModuleAvailable('Magento_Reward')): ?>
                 $('#minicart-content-wrapper').on('click', '.totals.rewardpoints .action.delete', function (e) {
                     e.preventDefault();
                     $.ajax({
@@ -41,13 +41,12 @@ if (!$miniCartView->shouldShow()) { return;
                         success:    function (response) {
                             customerData.reload(['boltcart'], true);
                             require([
-                                    'Magento_Checkout/js/action/get-payment-information'
-                                ], function (getPaymentInformationAction) {
-                                    getPaymentInformationAction().always(function () {
-                                        customerData.reload(['messages'], true);
-                                    });
-                                }
-                            );
+                                'Magento_Checkout/js/action/get-payment-information'
+                            ], function (getPaymentInformationAction) {
+                                getPaymentInformationAction().always(function () {
+                                    customerData.reload(['messages'], true);
+                                });
+                            });
                         }
                     });
                 });
@@ -58,13 +57,11 @@ if (!$miniCartView->shouldShow()) { return;
         if (typeof window.checkoutConfig == 'undefined') {
             $.ajax({
                 url: '<?= /* @noEscape */ $block->getUrl('boltpay/cart/checkoutconfig'); ?>',
-                success:
-                    function (result) {
-                        window.checkoutConfig = result;
-                        customer.setIsLoggedIn(result.isCustomerLoggedIn);
-                        append_minicart_addons();
-                    }
-                ,
+                success: function (result) {
+                    window.checkoutConfig = result;
+                    customer.setIsLoggedIn(result.isCustomerLoggedIn);
+                    append_minicart_addons();
+                },
                 cache: false
             });
         } else {
