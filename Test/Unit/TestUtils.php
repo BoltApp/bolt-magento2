@@ -204,14 +204,33 @@ class TestUtils {
 
         if ($productCollection->getSize() > 0) {
             /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $product */
-            $product =  $productCollection->getFirstItem();
-
-            if ($product->getTypeId() === ProductType::TYPE_SIMPLE) {
-                return Bootstrap::getObjectManager()->create(Product::class)->load($product->getId());
+            foreach ($productCollection as $product) {
+                if ($product->getTypeId() === ProductType::TYPE_SIMPLE) {
+                    return Bootstrap::getObjectManager()->create(Product::class)->load($product->getId());
+                }
             }
         }
 
         return self::createSimpleProduct();
+    }
+
+    /**
+     * @return mixed
+     */
+    public static function getVirtualProduct() {
+        $objectManager = Bootstrap::getObjectManager();
+        $productCollection = $objectManager->create(\Magento\Catalog\Model\ResourceModel\Product\Collection::class);
+
+        if ($productCollection->getSize() > 0) {
+            /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $product */
+            foreach ($productCollection as $product) {
+                if ($product->getTypeId() === ProductType::TYPE_VIRTUAL) {
+                    return Bootstrap::getObjectManager()->create(Product::class)->load($product->getId());
+                }
+            }
+        }
+
+        return self::createVirtualProduct();
     }
 
     /**
