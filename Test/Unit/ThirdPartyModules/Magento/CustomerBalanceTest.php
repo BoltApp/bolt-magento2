@@ -23,7 +23,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
- * @coversDefaultClass CustomerBalance
+ * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\Magento\CustomerBalance
  */
 class CustomerBalanceTest extends BoltTestCase
 {

@@ -25,7 +25,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
 /**
- * @coversDefaultClass StoreCredit
+ * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\Amasty\StoreCredit
  */
 class StoreCreditTest extends BoltTestCase
 {
