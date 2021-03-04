@@ -187,3 +187,9 @@
 - Fixed: Resolved issue where the order grid in the Magento admin console would freeze when no order records matched the user's defined filtering criteria.
 ## [v2.19.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.19.0) 2021-02-10
 - The M2 plugin now supports the default **Edit Order** functionality in Magento Admin. This enables merchants to edit orders from the Magento Admin Console.
+## [v2.20.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.20.0) 2021-03-04
+- Product addons are now supported for M2.
+- The Universal API is now supported for M2.
+- Custom fields (dropdowns, checkboxes) have been refactored for better performance in the future.
+- Resolved issue with tax calculations where fixed discounts on the whole cart caused the final calculation to throw the error `cart tax mismatched`.
+- Resolved issue where the mini cart occasionally displayed items after a shopper has checked out and is on the order success page.
