@@ -85,7 +85,7 @@ class LegacyApi implements LegacyApiInterface
         $this->createOrder = $createOrder;
         $this->discountCodeValidation = $discountCodeValidation;
         $this->orderManagement = $orderManagement;
-        $this->shippingInterface = $shipping;
+        $this->shipping = $shipping;
         $this->shippingMethods = $shippingMethods;
         $this->tax = $tax;
         $this->updateCart = $updateCart;
