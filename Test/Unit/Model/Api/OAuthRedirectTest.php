@@ -104,6 +104,11 @@ class OAuthRedirectTest extends BoltTestCase
     private $customerFactory;
 
     /**
+     * @var OrderRepository|MockObject
+     */
+    private $orderRepository;
+
+    /**
      * @var Url|MockObject
      */
     private $url;
@@ -112,11 +117,6 @@ class OAuthRedirectTest extends BoltTestCase
      * @var Bugsnag|MockObject
      */
     private $bugsnag;
-
-    /**
-     * @var OrderRepository|MockObject
-     */
-    private $orderRepository;
 
     /**
      * @var OAuthRedirect|MockObject
@@ -139,9 +139,9 @@ class OAuthRedirectTest extends BoltTestCase
         $this->customerSession = $this->createMock(CustomerSession::class);
         $this->customerInterfaceFactory = $this->createMock(CustomerInterfaceFactory::class);
         $this->customerFactory = $this->createMock(CustomerFactory::class);
+        $this->orderRepository = $this->createMock(OrderRepository::class);
         $this->url = $this->createMock(Url::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->orderRepository = $this->createMock(OrderRepository::class);
         $this->currentMock = $this->getMockBuilder(OAuthRedirect::class)
             ->setMethods()
             ->setConstructorArgs([
@@ -156,9 +156,9 @@ class OAuthRedirectTest extends BoltTestCase
                 $this->customerSession,
                 $this->customerInterfaceFactory,
                 $this->customerFactory,
+                $this->orderRepository,
                 $this->url,
-                $this->bugsnag,
-                $this->orderRepository
+                $this->bugsnag
             ])
             ->getMock();
     }

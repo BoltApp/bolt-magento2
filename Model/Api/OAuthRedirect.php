@@ -95,6 +95,11 @@ class OAuthRedirect implements OAuthRedirectInterface
     private $customerFactory;
 
     /**
+     * @var OrderRepository
+     */
+    private $orderRepository;
+
+    /**
      * @var Url
      */
     private $url;
@@ -103,11 +108,6 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @var Bugsnag
      */
     private $bugsnag;
-
-    /**
-     * @var OrderRepository
-     */
-    private $orderRepository;
 
     /**
      * @param Response                         $response
@@ -121,9 +121,9 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param CustomerSession                  $customerSession
      * @param CustomerInterfaceFactory         $customerInterfaceFactory
      * @param CustomerFactory                  $customerFactory
+     * @param OrderRepository                  $orderRepository
      * @param Url                              $url
      * @param Bugsnag                          $bugsnag
-     * @param OrderRepository                  $orderRepository
      */
     public function __construct(
         Response $response,
@@ -137,9 +137,9 @@ class OAuthRedirect implements OAuthRedirectInterface
         CustomerSession $customerSession,
         CustomerInterfaceFactory $customerInterfaceFactory,
         CustomerFactory $customerFactory,
+        OrderRepository $orderRepository,
         Url $url,
-        Bugsnag $bugsnag,
-        OrderRepository $orderRepository
+        Bugsnag $bugsnag
     ) {
         $this->response = $response;
         $this->deciderHelper = $deciderHelper;
@@ -152,9 +152,9 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->customerSession = $customerSession;
         $this->customerInterfaceFactory = $customerInterfaceFactory;
         $this->customerFactory = $customerFactory;
+        $this->orderRepository = $orderRepository;
         $this->url = $url;
         $this->bugsnag = $bugsnag;
-        $this->orderRepository = $orderRepository;
     }
 
     /**
