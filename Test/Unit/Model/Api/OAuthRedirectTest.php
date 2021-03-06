@@ -38,6 +38,7 @@ use Magento\Customer\Model\Url;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
+use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -335,7 +336,32 @@ class OAuthRedirectTest extends BoltTestCase
         $this->currentMock->login('code', 'scope', 'state', '');
     }
 
-    private function setUpPrivateMethods()
+    /**
+     * @test
+     */
+    public function login_linksOrderToCustomer()
+    {
+        $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
+        $this->ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
+        $this->ssoHelper->expects(static::once())->method('exchangeToken')->willReturn((object) ['access_token' => 'test access token', 'id_token' => 'test id token']);
+        $this->ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn([
+            'sub'            => 'abc',
+            'first_name'     => 'first',
+            'last_name'      => 'last',
+            'email'          => 't@t.com',
+            'email_verified' => true
+        ]);
+        $store = $this->createMock(StoreInterface::class);
+        $this->storeManager->expects(static::exactly(2))->method('getStore')->willReturn($store);
+        $store->expects(static::once())->method('getWebsiteId')->willReturn(1);
+        $store->expects(static::once())->method('getId')->willReturn(1);
+        $this->externalCustomerEntityRepository->expects(static::once())->method('getByExternalID')->with('abc')->willThrowException(new NoSuchEntityException());
+        $this->customerRepository->expects(static::once())->method('get')->with('t@t.com', 1)->willThrowException(new NoSuchEntityException());
+        $this->setUpPrivateMethods(true);
+        $this->currentMock->login('code', 'scope', 'state', '000000234');
+    }
+
+    private function setUpPrivateMethods($shouldLinkOrder = false)
     {
         $customerInterface = $this->createMock(CustomerInterface::class);
         $this->customerInterfaceFactory->expects(static::once())->method('create')->willReturn($customerInterface);
@@ -346,7 +372,16 @@ class OAuthRedirectTest extends BoltTestCase
         $customerInterface->expects(static::once())->method('setEmail')->with('t@t.com');
         $customerInterface->expects(static::once())->method('setConfirmation')->with(null);
         $this->customerRepository->expects(static::once())->method('save')->with($customerInterface)->willReturn($customerInterface);
-        $customerInterface->expects(static::once())->method('getId')->willReturn(3);
+        if ($shouldLinkOrder) {
+            $customerInterface->expects(static::exactly(2))->method('getId')->willReturn(3);
+            $order = $this->createMock(OrderInterface::class);
+            $this->cartHelper->expects(static::once())->method('getOrderByIncrementId')->with('000000234')->willReturn($order);
+            $order->expects(static::once())->method('getCustomerEmail')->willReturn('t@t.com');
+            $order->expects(static::once())->method('setCustomerId')->with(3);
+            $this->orderRepository->expects(static::once())->method('save')->with($order);
+        } else {
+            $customerInterface->expects(static::once())->method('getId')->willReturn(3);
+        }
         $this->externalCustomerEntityRepository->expects(static::once())->method('upsert')->with('abc', 3);
         $customer = $this->createMock(Customer::class);
         $this->customerFactory->expects(static::once())->method('create')->willReturn($customer);
