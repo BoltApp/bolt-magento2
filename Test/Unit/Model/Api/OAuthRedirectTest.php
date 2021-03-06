@@ -38,6 +38,7 @@ use Magento\Customer\Model\Url;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
+use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
@@ -113,6 +114,11 @@ class OAuthRedirectTest extends BoltTestCase
     private $bugsnag;
 
     /**
+     * @var OrderRepository|MockObject
+     */
+    private $orderRepository;
+
+    /**
      * @var OAuthRedirect|MockObject
      */
     private $currentMock;
@@ -135,6 +141,7 @@ class OAuthRedirectTest extends BoltTestCase
         $this->customerFactory = $this->createMock(CustomerFactory::class);
         $this->url = $this->createMock(Url::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
+        $this->orderRepository = $this->createMock(OrderRepository::class);
         $this->currentMock = $this->getMockBuilder(OAuthRedirect::class)
             ->setMethods()
             ->setConstructorArgs([
@@ -150,7 +157,8 @@ class OAuthRedirectTest extends BoltTestCase
                 $this->customerInterfaceFactory,
                 $this->customerFactory,
                 $this->url,
-                $this->bugsnag
+                $this->bugsnag,
+                $this->orderRepository
             ])
             ->getMock();
     }

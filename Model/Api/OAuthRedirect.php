@@ -34,6 +34,7 @@ use Magento\Customer\Model\Url;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
+use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Store\Model\StoreManagerInterface;
 
 class OAuthRedirect implements OAuthRedirectInterface
@@ -104,6 +105,11 @@ class OAuthRedirect implements OAuthRedirectInterface
     private $bugsnag;
 
     /**
+     * @var OrderRepository
+     */
+    private $orderRepository;
+
+    /**
      * @param Response                         $response
      * @param DeciderHelper                    $deciderHelper
      * @param SSOHelper                        $ssoHelper
@@ -117,6 +123,7 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param CustomerFactory                  $customerFactory
      * @param Url                              $url
      * @param Bugsnag                          $bugsnag
+     * @param OrderRepository                  $orderRepository
      */
     public function __construct(
         Response $response,
@@ -131,7 +138,8 @@ class OAuthRedirect implements OAuthRedirectInterface
         CustomerInterfaceFactory $customerInterfaceFactory,
         CustomerFactory $customerFactory,
         Url $url,
-        Bugsnag $bugsnag
+        Bugsnag $bugsnag,
+        OrderRepository $orderRepository
     ) {
         $this->response = $response;
         $this->deciderHelper = $deciderHelper;
@@ -146,6 +154,7 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->customerFactory = $customerFactory;
         $this->url = $url;
         $this->bugsnag = $bugsnag;
+        $this->orderRepository = $orderRepository;
     }
 
     /**
@@ -237,6 +246,11 @@ class OAuthRedirect implements OAuthRedirectInterface
             $customer = $customer ?: $this->createNewCustomer($websiteId, $storeId, $payload);
 
             if ($shouldLinkOrder) {
+                $order = $this->cartHelper->getOrderByIncrementId($order_id);
+                if ($order !== false && $order->getCustomerEmail() === $payload['email']) {
+                    $order->setCustomerId($customer->getId());
+                    $this->orderRepository->save($order);
+                }
             }
 
             $this->linkLoginAndRedirect($externalID, $customer->getId());
