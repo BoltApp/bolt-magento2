@@ -21,6 +21,7 @@ namespace Bolt\Boltpay\Model\Api;
 use Bolt\Boltpay\Api\ExternalCustomerEntityRepositoryInterface as ExternalCustomerEntityRepository;
 use Bolt\Boltpay\Api\OAuthRedirectInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\SSOHelper;
@@ -33,7 +34,6 @@ use Magento\Customer\Model\Url;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
-use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Store\Model\StoreManagerInterface;
 
 class OAuthRedirect implements OAuthRedirectInterface
@@ -57,6 +57,11 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @var LogHelper
      */
     private $logHelper;
+
+    /**
+     * @var CartHelper
+     */
+    private $cartHelper;
 
     /**
      * @var ExternalCustomerEntityRepository
@@ -99,15 +104,11 @@ class OAuthRedirect implements OAuthRedirectInterface
     private $bugsnag;
 
     /**
-     * @var OrderRepository
-     */
-    private $orderRepository;
-
-    /**
      * @param Response                         $response
      * @param DeciderHelper                    $deciderHelper
      * @param SSOHelper                        $ssoHelper
      * @param LogHelper                        $logHelper
+     * @param CartHelper                       $cartHelper
      * @param ExternalCustomerEntityRepository $externalCustomerEntityRepository
      * @param CustomerRepository               $customerRepository
      * @param StoreManagerInterface            $storeManager
@@ -116,13 +117,13 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param CustomerFactory                  $customerFactory
      * @param Url                              $url
      * @param Bugsnag                          $bugsnag
-     * @param OrderRepository                  $orderRepository
      */
     public function __construct(
         Response $response,
         DeciderHelper $deciderHelper,
         SSOHelper $ssoHelper,
         LogHelper $logHelper,
+        CartHelper $cartHelper,
         ExternalCustomerEntityRepository $externalCustomerEntityRepository,
         CustomerRepository $customerRepository,
         StoreManagerInterface $storeManager,
@@ -130,13 +131,13 @@ class OAuthRedirect implements OAuthRedirectInterface
         CustomerInterfaceFactory $customerInterfaceFactory,
         CustomerFactory $customerFactory,
         Url $url,
-        Bugsnag $bugsnag,
-        OrderRepository $orderRepository
+        Bugsnag $bugsnag
     ) {
         $this->response = $response;
         $this->deciderHelper = $deciderHelper;
         $this->ssoHelper = $ssoHelper;
         $this->logHelper = $logHelper;
+        $this->cartHelper = $cartHelper;
         $this->externalCustomerEntityRepository = $externalCustomerEntityRepository;
         $this->customerRepository = $customerRepository;
         $this->storeManager = $storeManager;
@@ -145,7 +146,6 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->customerFactory = $customerFactory;
         $this->url = $url;
         $this->bugsnag = $bugsnag;
-        $this->orderRepository = $orderRepository;
     }
 
     /**

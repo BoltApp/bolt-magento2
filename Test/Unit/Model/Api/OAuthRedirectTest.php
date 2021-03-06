@@ -21,6 +21,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 use Bolt\Boltpay\Api\Data\ExternalCustomerEntityInterface;
 use Bolt\Boltpay\Api\ExternalCustomerEntityRepositoryInterface as ExternalCustomerEntityRepository;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\SSOHelper;
@@ -37,7 +38,6 @@ use Magento\Customer\Model\Url;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
-use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
@@ -66,6 +66,11 @@ class OAuthRedirectTest extends BoltTestCase
      * @var LogHelper|MockObject
      */
     private $logHelper;
+
+    /**
+     * @var CartHelper|MockObject
+     */
+    private $cartHelper;
 
     /**
      * @var ExternalCustomerEntityRepository|MockObject
@@ -108,11 +113,6 @@ class OAuthRedirectTest extends BoltTestCase
     private $bugsnag;
 
     /**
-     * @var OrderRepository|MockObject
-     */
-    private $orderRepository;
-
-    /**
      * @var OAuthRedirect|MockObject
      */
     private $currentMock;
@@ -126,6 +126,7 @@ class OAuthRedirectTest extends BoltTestCase
         $this->deciderHelper = $this->createMock(DeciderHelper::class);
         $this->ssoHelper = $this->createMock(SSOHelper::class);
         $this->logHelper = $this->createMock(LogHelper::class);
+        $this->cartHelper = $this->createMock(CartHelper::class);
         $this->externalCustomerEntityRepository = $this->createMock(ExternalCustomerEntityRepository::class);
         $this->customerRepository = $this->createMock(CustomerRepository::class);
         $this->storeManager = $this->createMock(StoreManagerInterface::class);
@@ -134,7 +135,6 @@ class OAuthRedirectTest extends BoltTestCase
         $this->customerFactory = $this->createMock(CustomerFactory::class);
         $this->url = $this->createMock(Url::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->orderRepository = $this->createMock(OrderRepository::class);
         $this->currentMock = $this->getMockBuilder(OAuthRedirect::class)
             ->setMethods()
             ->setConstructorArgs([
@@ -142,6 +142,7 @@ class OAuthRedirectTest extends BoltTestCase
                 $this->deciderHelper,
                 $this->ssoHelper,
                 $this->logHelper,
+                $this->cartHelper,
                 $this->externalCustomerEntityRepository,
                 $this->customerRepository,
                 $this->storeManager,
@@ -149,8 +150,7 @@ class OAuthRedirectTest extends BoltTestCase
                 $this->customerInterfaceFactory,
                 $this->customerFactory,
                 $this->url,
-                $this->bugsnag,
-                $this->orderRepository
+                $this->bugsnag
             ])
             ->getMock();
     }
