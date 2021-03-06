@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -165,7 +166,7 @@ class OAuthRedirectTest extends BoltTestCase
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
         $this->expectException(WebapiException::class);
         $this->expectExceptionMessage('Bad Request');
-        $this->currentMock->login('', 'scope', 'state');
+        $this->currentMock->login('', 'scope', 'state', '');
     }
 
     /**
@@ -176,7 +177,7 @@ class OAuthRedirectTest extends BoltTestCase
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
         $this->expectException(WebapiException::class);
         $this->expectExceptionMessage('Bad Request');
-        $this->currentMock->login('code', '', 'state');
+        $this->currentMock->login('code', '', 'state', '');
     }
 
     /**
@@ -187,7 +188,7 @@ class OAuthRedirectTest extends BoltTestCase
         $this->deciderHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
         $this->expectException(WebapiException::class);
         $this->expectExceptionMessage('Bad Request');
-        $this->currentMock->login('code', 'scope', '');
+        $this->currentMock->login('code', 'scope', '', '');
     }
 
     /**
@@ -201,7 +202,7 @@ class OAuthRedirectTest extends BoltTestCase
         $this->bugsnag->expects(static::once())->method('notifyError')->with('OAuthRedirect', 'empty response');
         $this->expectException(WebapiException::class);
         $this->expectExceptionMessage('Internal Server Error');
-        $this->currentMock->login('code', 'scope', 'state');
+        $this->currentMock->login('code', 'scope', 'state', '');
     }
 
     /**
@@ -216,7 +217,7 @@ class OAuthRedirectTest extends BoltTestCase
         $this->bugsnag->expects(static::once())->method('notifyError')->with('OAuthRedirect', 'test string');
         $this->expectException(WebapiException::class);
         $this->expectExceptionMessage('Internal Server Error');
-        $this->currentMock->login('code', 'scope', 'state');
+        $this->currentMock->login('code', 'scope', 'state', '');
     }
 
     /**
@@ -244,7 +245,7 @@ class OAuthRedirectTest extends BoltTestCase
         $this->customerRepository->expects(static::once())->method('getById')->with(2)->willReturn(null);
         $this->bugsnag->expects(static::once())->method('notifyError')->with('OAuthRedirect', 'external customer entity abc linked to nonexistent customer 2');
         $this->setUpPrivateMethods();
-        $this->currentMock->login('code', 'scope', 'state');
+        $this->currentMock->login('code', 'scope', 'state', '');
     }
 
     /**
@@ -266,7 +267,7 @@ class OAuthRedirectTest extends BoltTestCase
         $this->bugsnag->expects(static::once())->method('notifyError')->with('OAuthRedirect', 'customer with email t@t.com found but email is not verified');
         $this->expectException(WebapiException::class);
         $this->expectExceptionMessage('Internal Server Error');
-        $this->currentMock->login('code', 'scope', 'state');
+        $this->currentMock->login('code', 'scope', 'state', '');
     }
 
     /**
@@ -287,9 +288,10 @@ class OAuthRedirectTest extends BoltTestCase
         $this->customerRepository->expects(static::once())->method('get')->with('t@t.com', 1)->willReturn($customerInterface);
         $customerInterface->expects(static::once())->method('getId')->willReturn(1);
         $this->externalCustomerEntityRepository->expects(static::once())->method('upsert')->with('abc', 1)->willThrowException(new Exception('test exception'));
+        $this->bugsnag->expects(static::once())->method('notifyError')->with('OAuthRedirect', 'test exception');
         $this->expectException(WebapiException::class);
         $this->expectExceptionMessage('Internal Server Error');
-        $this->currentMock->login('code', 'scope', 'state');
+        $this->currentMock->login('code', 'scope', 'state', '');
     }
 
     /**
@@ -314,7 +316,7 @@ class OAuthRedirectTest extends BoltTestCase
         $this->externalCustomerEntityRepository->expects(static::once())->method('getByExternalID')->with('abc')->willThrowException(new NoSuchEntityException());
         $this->customerRepository->expects(static::once())->method('get')->with('t@t.com', 1)->willThrowException(new NoSuchEntityException());
         $this->setUpPrivateMethods();
-        $this->currentMock->login('code', 'scope', 'state');
+        $this->currentMock->login('code', 'scope', 'state', '');
     }
 
     private function setUpPrivateMethods()
