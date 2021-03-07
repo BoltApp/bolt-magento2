@@ -86,7 +86,6 @@ class ComponentSwitcherProcessorTest extends BoltTestCase
             )
             ->getMock();
         $this->eventsForThirdPartyModulesMock = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
-        $this->eventsForThirdPartyModulesMock->method('runFilter')->will($this->returnArgument(1));
         $this->currentMock = $this->getMockBuilder(ComponentSwitcherProcessor::class)
             ->setMethods()
             ->setConstructorArgs(
@@ -100,24 +99,12 @@ class ComponentSwitcherProcessorTest extends BoltTestCase
 
     /**
      * @test
-     * Test process method sets componentDisabled property to inverse value of config
-     *
-     * @param bool $useStoreCreditConfig Configuration value for Store Credit
-     * @param bool $useRewardPointsConfig Configuration value for Reward Points
-     *
-     * @dataProvider process_withVariousConfigurationStates_returnsModifiedJsLayoutProvider
+     * Test process method filters the provided JS layout using the third party filter "filterProcessLayout"
      *
      * @covers ::process
      */
-    public function process_withVariousConfigurationStates_returnsModifiedJsLayout(
-        $useStoreCreditConfig,
-        $useRewardPointsConfig
-    ) {
-        $this->configHelper->expects(self::once())->method('useStoreCreditConfig')
-            ->willReturn($useStoreCreditConfig);
-        $this->configHelper->expects(self::once())->method('useRewardPointsConfig')
-            ->willReturn($useRewardPointsConfig);
-        $jsLayout = [
+    public function process_withVariousConfigurationStates_returnsModifiedJsLayout() {
+        $filteredJsLayout = [
             'components' => [
                 'block-totals' => [
                     'children' => [
@@ -131,38 +118,11 @@ class ComponentSwitcherProcessorTest extends BoltTestCase
                 ]
             ]
         ];
-        $result = $this->currentMock->process($jsLayout);
-        $blockTotalsChildren = $result['components']['block-totals']['children'];
-
-        if ($useStoreCreditConfig) {
-            self::assertArrayHasKey('storeCredit', $blockTotalsChildren);
-        } else {
-            self::assertArrayNotHasKey('storeCredit', $blockTotalsChildren);
-        }
-
-        if ($useRewardPointsConfig) {
-            self::assertArrayHasKey('rewardPoints', $blockTotalsChildren);
-        } else {
-            self::assertArrayNotHasKey('rewardPoints', $blockTotalsChildren);
-        }
-    }
-
-    /**
-     * Provides all configuration combinations for Store Credit and Reward Points
-     *
-     * @return array of bool pairs
-     */
-    public function process_withVariousConfigurationStates_returnsModifiedJsLayoutProvider()
-    {
-        return [
-            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => true],
-            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => true],
-            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => false],
-            ['useStoreCreditConfig' => true, 'useRewardPointsConfig' => false],
-            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => true],
-            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => true],
-            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => false],
-            ['useStoreCreditConfig' => false, 'useRewardPointsConfig' => false],
-        ];
+        $originalJsLayout = [];
+        $this->eventsForThirdPartyModulesMock->expects(static::once())
+            ->method('runFilter')
+            ->with('filterProcessLayout', $originalJsLayout)
+            ->willReturn($filteredJsLayout);
+        static::assertEquals($filteredJsLayout, $this->currentMock->process($originalJsLayout));
     }
 }

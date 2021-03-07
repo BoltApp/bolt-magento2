@@ -17,6 +17,8 @@
 
 namespace Bolt\Boltpay\ViewModel;
 
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+
 /**
  * MinicartAddons view model
  *
@@ -45,20 +47,28 @@ class MinicartAddons implements \Magento\Framework\View\Element\Block\ArgumentIn
     private $_layout;
 
     /**
+     * @var EventsForThirdPartyModules
+     */
+    public $eventsForThirdPartyModules;
+
+    /**
      * MinicartAddons constructor.
      *
-     * @param \Magento\Framework\Serialize\SerializerInterface $serializer JSON serializer instance
+     * @param \Magento\Framework\Serialize\SerializerInterface $serializer  JSON serializer instance
      * @param \Magento\Framework\App\Http\Context              $httpContext request context data
-     * @param \Bolt\Boltpay\Helper\Config                      $config instance of the Bolt configuration helper
+     * @param \Bolt\Boltpay\Helper\Config                      $config      instance of the Bolt configuration helper
+     * @param EventsForThirdPartyModules                       $eventsForThirdPartyModules
      */
     public function __construct(
         \Magento\Framework\Serialize\SerializerInterface $serializer,
         \Magento\Framework\App\Http\Context $httpContext,
-        \Bolt\Boltpay\Helper\Config $config
+        \Bolt\Boltpay\Helper\Config $config,
+        EventsForThirdPartyModules $eventsForThirdPartyModules
     ) {
         $this->configHelper = $config;
         $this->serializer = $serializer;
         $this->httpContext = $httpContext;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
 
     /**
@@ -69,25 +79,7 @@ class MinicartAddons implements \Magento\Framework\View\Element\Block\ArgumentIn
     protected function getLayout()
     {
         if ($this->_layout === null) {
-            $this->_layout = [];
-            if ($this->httpContext->getValue(\Magento\Customer\Model\Context::CONTEXT_AUTH)
-                && $this->configHelper->displayRewardPointsInMinicartConfig()) {
-                $this->_layout[] = [
-                    'parent'    => 'minicart_content.extra_info',
-                    'name'      => 'minicart_content.extra_info.rewards',
-                    'component' => 'Magento_Reward/js/view/payment/reward',
-                    'config'    => [],
-                ];
-                $this->_layout[] = [
-                    'parent'    => 'minicart_content.extra_info',
-                    'name'      => 'minicart_content.extra_info.rewards_total',
-                    'component' => 'Magento_Reward/js/view/cart/reward',
-                    'config'    => [
-                        'template' => 'Magento_Reward/cart/reward',
-                        'title'    => 'Reward Points',
-                    ],
-                ];
-            }
+            $this->_layout = $this->eventsForThirdPartyModules->runFilter('filterMinicartAddonsLayout', []);
         }
         return $this->_layout;
     }
@@ -112,5 +104,4 @@ class MinicartAddons implements \Magento\Framework\View\Element\Block\ArgumentIn
     {
         return $this->configHelper->getMinicartSupport() && !empty($this->getLayout());
     }
-
 }

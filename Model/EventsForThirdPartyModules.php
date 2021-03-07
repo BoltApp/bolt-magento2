@@ -624,8 +624,23 @@ class EventsForThirdPartyModules
                 [
                     "module" => "Amasty_StoreCredit",
                     "boltClass" => Amasty_StoreCredit::class,
-                    "alwaysRun" => true,
-                ]
+                ],
+                [
+                    "module" => "Magento_CustomerBalance",
+                    "boltClass" => \Bolt\Boltpay\ThirdPartyModules\Magento\CustomerBalance::class,
+                ],
+                [
+                    "module" => "Magento_Reward",
+                    "boltClass" => \Bolt\Boltpay\ThirdPartyModules\Magento\Reward::class,
+                ],
+            ],
+        ],
+        "filterMinicartAddonsLayout" => [
+            "listeners" => [
+                [
+                    "module" => "Magento_Reward",
+                    "boltClass" => \Bolt\Boltpay\ThirdPartyModules\Magento\Reward::class,
+                ],
             ],
         ],
         "filterVerifyAppliedStoreCredit" => [
@@ -871,7 +886,7 @@ class EventsForThirdPartyModules
      * Check whether the module is available (installed and enabled)
      * @return bool
      */
-    private function isModuleAvailable($moduleName)
+    public function isModuleAvailable($moduleName)
     {
         return $this->moduleManager->isEnabled($moduleName);
     }
