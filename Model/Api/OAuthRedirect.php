@@ -247,8 +247,9 @@ class OAuthRedirect implements OAuthRedirectInterface
 
             if ($shouldLinkOrder) {
                 $order = $this->cartHelper->getOrderByIncrementId($order_id);
-                if ($order !== false && $order->getCustomerEmail() === $payload['email']) {
+                if ($order !== false && !$order->getCustomerId() && $order->getBillingAddress()->getEmail() === $payload['email']) {
                     $order->setCustomerId($customer->getId());
+                    $order->setCustomerIsGuest(0);
                     $this->orderRepository->save($order);
                 }
             }

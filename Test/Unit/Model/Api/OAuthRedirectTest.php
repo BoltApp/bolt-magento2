@@ -38,6 +38,7 @@ use Magento\Customer\Model\Url;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
+use Magento\Sales\Api\Data\OrderAddressInterface;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Store\Api\Data\StoreInterface;
@@ -376,8 +377,12 @@ class OAuthRedirectTest extends BoltTestCase
             $customerInterface->expects(static::exactly(2))->method('getId')->willReturn(3);
             $order = $this->createMock(OrderInterface::class);
             $this->cartHelper->expects(static::once())->method('getOrderByIncrementId')->with('000000234')->willReturn($order);
-            $order->expects(static::once())->method('getCustomerEmail')->willReturn('t@t.com');
+            $order->expects(static::once())->method('getCustomerId')->willReturn(0);
+            $orderAddress = $this->createMock(OrderAddressInterface::class);
+            $orderAddress->expects(static::once())->method('getEmail')->willReturn('t@t.com');
+            $order->expects(static::once())->method('getBillingAddress')->willReturn($orderAddress);
             $order->expects(static::once())->method('setCustomerId')->with(3);
+            $order->expects(static::once())->method('setCustomerIsGuest')->with(0);
             $this->orderRepository->expects(static::once())->method('save')->with($order);
         } else {
             $customerInterface->expects(static::once())->method('getId')->willReturn(3);
