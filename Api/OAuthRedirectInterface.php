@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -30,11 +31,12 @@ interface OAuthRedirectInterface
      * @param string $code
      * @param string $scope
      * @param string $state
+     * @param string $order_id
      *
      * @return void
      *
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function login($code = '', $scope = '', $state = '');
+    public function login($code = '', $scope = '', $state = '', $order_id = '');
 }

@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -20,6 +21,7 @@ namespace Bolt\Boltpay\Model\Api;
 use Bolt\Boltpay\Api\ExternalCustomerEntityRepositoryInterface as ExternalCustomerEntityRepository;
 use Bolt\Boltpay\Api\OAuthRedirectInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\SSOHelper;
@@ -32,6 +34,7 @@ use Magento\Customer\Model\Url;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
+use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Store\Model\StoreManagerInterface;
 
 class OAuthRedirect implements OAuthRedirectInterface
@@ -55,6 +58,11 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @var LogHelper
      */
     private $logHelper;
+
+    /**
+     * @var CartHelper
+     */
+    private $cartHelper;
 
     /**
      * @var ExternalCustomerEntityRepository
@@ -87,6 +95,11 @@ class OAuthRedirect implements OAuthRedirectInterface
     private $customerFactory;
 
     /**
+     * @var OrderRepository
+     */
+    private $orderRepository;
+
+    /**
      * @var Url
      */
     private $url;
@@ -101,12 +114,14 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param DeciderHelper                    $deciderHelper
      * @param SSOHelper                        $ssoHelper
      * @param LogHelper                        $logHelper
+     * @param CartHelper                       $cartHelper
      * @param ExternalCustomerEntityRepository $externalCustomerEntityRepository
      * @param CustomerRepository               $customerRepository
      * @param StoreManagerInterface            $storeManager
      * @param CustomerSession                  $customerSession
      * @param CustomerInterfaceFactory         $customerInterfaceFactory
      * @param CustomerFactory                  $customerFactory
+     * @param OrderRepository                  $orderRepository
      * @param Url                              $url
      * @param Bugsnag                          $bugsnag
      */
@@ -115,12 +130,14 @@ class OAuthRedirect implements OAuthRedirectInterface
         DeciderHelper $deciderHelper,
         SSOHelper $ssoHelper,
         LogHelper $logHelper,
+        CartHelper $cartHelper,
         ExternalCustomerEntityRepository $externalCustomerEntityRepository,
         CustomerRepository $customerRepository,
         StoreManagerInterface $storeManager,
         CustomerSession $customerSession,
         CustomerInterfaceFactory $customerInterfaceFactory,
         CustomerFactory $customerFactory,
+        OrderRepository $orderRepository,
         Url $url,
         Bugsnag $bugsnag
     ) {
@@ -128,12 +145,14 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->deciderHelper = $deciderHelper;
         $this->ssoHelper = $ssoHelper;
         $this->logHelper = $logHelper;
+        $this->cartHelper = $cartHelper;
         $this->externalCustomerEntityRepository = $externalCustomerEntityRepository;
         $this->customerRepository = $customerRepository;
         $this->storeManager = $storeManager;
         $this->customerSession = $customerSession;
         $this->customerInterfaceFactory = $customerInterfaceFactory;
         $this->customerFactory = $customerFactory;
+        $this->orderRepository = $orderRepository;
         $this->url = $url;
         $this->bugsnag = $bugsnag;
     }
@@ -146,13 +165,14 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param string $code
      * @param string $scope
      * @param string $state
+     * @param string $order_id
      *
      * @return void
      *
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function login($code = '', $scope = '', $state = '')
+    public function login($code = '', $scope = '', $state = '', $order_id = '')
     {
         if (!$this->deciderHelper->isBoltSSOEnabled()) {
             throw new NoSuchEntityException(__('Request does not match any route.'));
@@ -221,9 +241,22 @@ class OAuthRedirect implements OAuthRedirectInterface
         }
 
         try {
+            $shouldLinkOrder = $order_id !== '' && $customer === null;
+
             $customer = $customer ?: $this->createNewCustomer($websiteId, $storeId, $payload);
+
+            if ($shouldLinkOrder) {
+                $order = $this->cartHelper->getOrderByIncrementId($order_id);
+                if ($order !== false && !$order->getCustomerId() && $order->getBillingAddress()->getEmail() === $payload['email']) {
+                    $order->setCustomerId($customer->getId());
+                    $order->setCustomerIsGuest(0);
+                    $this->orderRepository->save($order);
+                }
+            }
+
             $this->linkLoginAndRedirect($externalID, $customer->getId());
         } catch (Exception $e) {
+            $this->bugsnag->notifyException($e);
             throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
     }
