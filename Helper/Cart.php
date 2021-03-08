@@ -2101,7 +2101,7 @@ class Cart extends AbstractHelper
                 }
                 $rule = $this->ruleRepository->getById($salesruleId);
                 $ruleDiscountAmount = $boltCollectSaleRuleDiscounts[$salesruleId];
-                if ($rule && $ruleDiscountAmount) {
+                if ($rule && ($ruleDiscountAmount || $rule->getSimpleFreeShipping())) {
                     $roundedAmount = CurrencyUtils::toMinor($ruleDiscountAmount, $currencyCode);
                     switch ($rule->getCouponType()) {
                         case RuleInterface::COUPON_TYPE_SPECIFIC_COUPON:
