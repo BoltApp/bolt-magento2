@@ -256,7 +256,7 @@ class OAuthRedirect implements OAuthRedirectInterface
 
             $this->linkLoginAndRedirect($externalID, $customer->getId());
         } catch (Exception $e) {
-            $this->bugsnag->notifyError('OAuthRedirect', $e->getMessage());
+            $this->bugsnag->notifyException('OAuthRedirect', $e);
             throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
     }
