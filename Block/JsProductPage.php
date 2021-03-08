@@ -11,23 +11,24 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Block;
 
+use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Catalog\Block\Product\View as ProductView;
+use Magento\Catalog\Model\ProductRepository;
+use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Http\Context as HttpContext;
 use Magento\Framework\View\Element\Template\Context;
-use Magento\Checkout\Model\Session as CheckoutSession;
-use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Bolt\Boltpay\Helper\Bugsnag;
-use Magento\Catalog\Block\Product\View as ProductView;
-use Magento\Framework\Api\SearchCriteriaBuilder;
-use \Magento\Catalog\Model\ProductRepository;
-use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Js Block. The block class used in replace.phtml and track.phtml blocks.
@@ -36,7 +37,6 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
  */
 class JsProductPage extends Js
 {
-
     /**
      * @var \Magento\Catalog\Model\Product
      */
@@ -85,7 +85,7 @@ class JsProductPage extends Js
     /**
      * Get product
      *
-     * @return  \Magento\Catalog\Model\Product
+     * @return \Magento\Catalog\Model\Product
      */
     public function getProduct()
     {
@@ -99,10 +99,7 @@ class JsProductPage extends Js
      */
     public function isSupportableType()
     {
-        if (in_array($this->_product->getTypeId(), Config::$supportableProductTypesForProductPageCheckout)) {
-            return true;
-        }
-        return false;
+        return in_array($this->_product->getTypeId(), Config::$supportableProductTypesForProductPageCheckout);
     }
 
     /**
@@ -155,8 +152,7 @@ class JsProductPage extends Js
         if ($this->isDownloadable() && $this->configHelper->isGuestCheckoutForDownloadableProductDisabled()) {
             return 0;
         }
-
-        return (int)$this->configHelper->isGuestCheckoutAllowed();
+        return (int) $this->configHelper->isGuestCheckoutAllowed();
     }
 
     public function getStoreCurrencyCode()
@@ -172,14 +168,12 @@ class JsProductPage extends Js
     public function isBoltProductPage()
     {
         // If this flag is not enabled, we ignore this check and only use the parent check
-        if (!$this->configHelper->getSelectProductPageCheckoutFlag())
-        {
+        if (!$this->configHelper->getSelectProductPageCheckoutFlag()) {
             return parent::isBoltProductPage();
         }
 
         // If the parent check is false, this check is automatically false
-        if (!parent::isBoltProductPage())
-        {
+        if (!parent::isBoltProductPage()) {
             return false;
         }
 
@@ -187,8 +181,7 @@ class JsProductPage extends Js
         // all that remains is to check if this product has the ppc attribute or not.
         $attributes = $this->getProduct()->getAttributes();
         foreach ($attributes as $attribute) {
-            if ($attribute->getName() == 'bolt_ppc')
-            {
+            if ($attribute->getName() == 'bolt_ppc') {
                 return true;
             }
         }

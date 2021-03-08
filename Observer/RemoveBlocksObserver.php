@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -19,8 +20,8 @@ namespace Bolt\Boltpay\Observer;
 
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
-use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
 
 class RemoveBlocksObserver implements ObserverInterface
 {
@@ -36,7 +37,7 @@ class RemoveBlocksObserver implements ObserverInterface
 
     /**
      * @param ConfigHelper $configHelper
-     * @param LogHelper $logHelper
+     * @param LogHelper    $logHelper
      */
     public function __construct(
         ConfigHelper $configHelper,
@@ -48,6 +49,7 @@ class RemoveBlocksObserver implements ObserverInterface
 
     /**
      * @param Observer $observer
+     *
      * @return $this|void
      */
     public function execute(Observer $observer)

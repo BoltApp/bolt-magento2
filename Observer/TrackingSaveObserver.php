@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -18,15 +19,14 @@
 namespace Bolt\Boltpay\Observer;
 
 use Bolt\Boltpay\Helper\Api as ApiHelper;
-use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Event\Observer;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\MetricsClient;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-use Magento\Framework\Exception\LocalizedException;
+use Bolt\Boltpay\Helper\MetricsClient;
 use Exception;
+use Magento\Framework\DataObjectFactory;
+use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
 
 class TrackingSaveObserver implements ObserverInterface
 {
@@ -63,11 +63,10 @@ class TrackingSaveObserver implements ObserverInterface
     /**
      * @param ConfigHelper      $configHelper
      * @param DataObjectFactory $dataObjectFactory
-     * @param ApiHelper $apiHelper
-     * @param Bugsnag $bugsnag
-     * @param MetricsClient $metricsClient
-     * @param Decider $decider
-     *
+     * @param ApiHelper         $apiHelper
+     * @param Bugsnag           $bugsnag
+     * @param MetricsClient     $metricsClient
+     * @param Decider           $decider
      */
     public function __construct(
         ConfigHelper $configHelper,
@@ -86,46 +85,6 @@ class TrackingSaveObserver implements ObserverInterface
     }
 
     /**
-     * Convert item options into bolt format
-     * @param array item options
-     * @return array
-     */
-    private function getPropertiesByProductOptions($itemOptions)
-    {
-        if (!isset($itemOptions['attributes_info'])) {
-            return [];
-        }
-        $properties = [];
-        foreach ($itemOptions['attributes_info'] as $attributeInfo) {
-            // Convert attribute to string if it's a boolean before sending to the Bolt API
-            $attributeValue = is_bool($attributeInfo['value']) ?
-                var_export($attributeInfo['value'], true) : $attributeInfo['value'];
-            $attributeLabel = $attributeInfo['label'];
-            $properties[] = (object) [
-                'name' => $attributeLabel,
-                'value' => $attributeValue
-            ];
-        }
-        return $properties;
-    }
-
-    /**
-     * @param $attribute
-     * @return mixed|null
-     */
-    private function flatten($attribute) {
-        if (is_object($attribute)) {
-            $flattend = get_object_vars($attribute);
-            if (count($flattend) == 1) {
-                return $flattend[0];
-            } else {
-                return null;
-            }
-        }
-        return $attribute;
-    }
-
-    /**
      * @param Observer $observer
      */
     public function execute(Observer $observer)
@@ -140,13 +99,15 @@ class TrackingSaveObserver implements ObserverInterface
 
             $origData = $tracking->getOrigData();
             // If we update track (don't create) and carrier and number are the same do nothing
-            if ($origData &&
-            $origData['track_number'] == $tracking->getTrackNumber() &&
-            $origData['carrier_code'] == $tracking->getCarrierCode()) {
+            if (
+                $origData &&
+                $origData['track_number'] == $tracking->getTrackNumber() &&
+                $origData['carrier_code'] == $tracking->getCarrierCode()
+            ) {
                 $this->metricsClient->processMetric(
-                    "tracking_creation.success",
+                    'tracking_creation.success',
                     1,
-                    "tracking_creation.latency",
+                    'tracking_creation.latency',
                     $startTime
                 );
                 return;
@@ -165,11 +126,11 @@ class TrackingSaveObserver implements ObserverInterface
 
             if ($transactionReference === null) {
                 $quoteId = $order->getQuoteId();
-                $this->bugsnag->notifyError("Missing transaction reference", "QuoteID: {$quoteId}");
+                $this->bugsnag->notifyError('Missing transaction reference', "QuoteID: {$quoteId}");
                 $this->metricsClient->processMetric(
-                    "tracking_creation.failure",
+                    'tracking_creation.failure',
                     1,
-                    "tracking_creation.latency",
+                    'tracking_creation.latency',
                     $startTime
                 );
                 return;
@@ -182,7 +143,7 @@ class TrackingSaveObserver implements ObserverInterface
                     continue;
                 }
 
-                $items[] = (object)[
+                $items[] = (object) [
                     'reference' => $orderItem->getProductId(),
                     'options'   => $this->getPropertiesByProductOptions($orderItem->getProductOptions()),
                 ];
@@ -192,12 +153,14 @@ class TrackingSaveObserver implements ObserverInterface
 
             $trackNumber = $this->flatten($tracking->getTrackNumber());
             if ($trackNumber === null) {
-                $this->bugsnag->notifyError("Ill formatted track number",
-                    \sprintf("track number: %s", var_export($tracking->getTrackNumber(), true)));
+                $this->bugsnag->notifyError(
+                    'Ill formatted track number',
+                    \sprintf('track number: %s', var_export($tracking->getTrackNumber(), true))
+                );
                 $this->metricsClient->processMetric(
-                    "tracking_creation.failure",
+                    'tracking_creation.failure',
                     1,
-                    "tracking_creation.latency",
+                    'tracking_creation.latency',
                     $startTime
                 );
                 return;
@@ -205,12 +168,14 @@ class TrackingSaveObserver implements ObserverInterface
 
             $carrierCode = $this->flatten($tracking->getCarrierCode());
             if ($carrierCode === null) {
-                $this->bugsnag->notifyError("Ill formatted carrier code",
-                    \sprintf("carrier code: %s", var_export($tracking->getCarrierCode(), true)));
+                $this->bugsnag->notifyError(
+                    'Ill formatted carrier code',
+                    \sprintf('carrier code: %s', var_export($tracking->getCarrierCode(), true))
+                );
                 $this->metricsClient->processMetric(
-                    "tracking_creation.failure",
+                    'tracking_creation.failure',
                     1,
-                    "tracking_creation.latency",
+                    'tracking_creation.latency',
                     $startTime
                 );
                 return;
@@ -237,35 +202,71 @@ class TrackingSaveObserver implements ObserverInterface
 
             if ($result != 200) {
                 $this->metricsClient->processMetric(
-                    "tracking_creation.failure",
+                    'tracking_creation.failure',
                     1,
-                    "tracking_creation.latency",
+                    'tracking_creation.latency',
                     $startTime
                 );
                 return;
             }
             $this->metricsClient->processMetric(
-                "tracking_creation.success",
+                'tracking_creation.success',
                 1,
-                "tracking_creation.latency",
+                'tracking_creation.latency',
                 $startTime
             );
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
             $this->metricsClient->processMetric(
-                "tracking_creation.failure",
+                'tracking_creation.failure',
                 1,
-                "tracking_creation.latency",
-                $startTime
-            );
-        } catch (LocalizedException $e) {
-            $this->bugsnag->notifyException($e);
-            $this->metricsClient->processMetric(
-                "tracking_creation.failure",
-                1,
-                "tracking_creation.latency",
+                'tracking_creation.latency',
                 $startTime
             );
         }
+    }
+
+    /**
+     * Convert item options into bolt format
+     *
+     * @param array item options
+     * @param mixed $itemOptions
+     *
+     * @return array
+     */
+    private function getPropertiesByProductOptions($itemOptions)
+    {
+        if (!isset($itemOptions['attributes_info'])) {
+            return [];
+        }
+        $properties = [];
+        foreach ($itemOptions['attributes_info'] as $attributeInfo) {
+            // Convert attribute to string if it's a boolean before sending to the Bolt API
+            $attributeValue = is_bool($attributeInfo['value']) ?
+                var_export($attributeInfo['value'], true) : $attributeInfo['value'];
+            $attributeLabel = $attributeInfo['label'];
+            $properties[] = (object) [
+                'name'  => $attributeLabel,
+                'value' => $attributeValue
+            ];
+        }
+        return $properties;
+    }
+
+    /**
+     * @param $attribute
+     *
+     * @return mixed|null
+     */
+    private function flatten($attribute)
+    {
+        if (is_object($attribute)) {
+            $flattend = get_object_vars($attribute);
+            if (count($flattend) == 1) {
+                return $flattend[0];
+            }
+            return null;
+        }
+        return $attribute;
     }
 }

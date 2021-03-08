@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -20,6 +21,7 @@ namespace Bolt\Boltpay\Helper;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Exception;
 use Magento\Directory\Model\RegionFactory;
+use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
@@ -39,16 +41,6 @@ class Config extends AbstractHelper
 {
     const BOLT_TRACE_ID_HEADER = 'X-bolt-trace-id';
     const BOLT_COMPOSER_NAME = 'boltpay/bolt-magento2';
-
-    /**
-     * @var BoltConfigSettingFactory
-     */
-    private $boltConfigSettingFactory;
-
-    /**
-     * @var EncryptorInterface
-     */
-    private $encryptor;
 
     /**
      * Path for title
@@ -145,7 +137,6 @@ class Config extends AbstractHelper
      */
     const XML_PATH_PRODUCT_ORDER_MANAGEMENT_SELECTOR = 'payment/boltpay/order_management_selector';
 
-
     /**
      * Prefetch shipping
      */
@@ -175,7 +166,6 @@ class Config extends AbstractHelper
      * Get hints
      */
     const GET_HINTS_ACTION = 'boltpay/cart/hints';
-
 
     /**
      * Prefetch Shipping
@@ -393,21 +383,6 @@ class Config extends AbstractHelper
     const CHECKOUT_PAGE_ACTION = 'checkout_index_index';
     const SUCCESS_PAGE_ACTION = 'checkout_onepage_success';
 
-    public static $defaultPageWhitelist = [
-        self::SHOPPING_CART_PAGE_ACTION,
-        self::CHECKOUT_PAGE_ACTION,
-        self::SUCCESS_PAGE_ACTION
-    ];
-
-    public static $supportableProductTypesForProductPageCheckout = [
-        \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE,
-        \Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL,
-        \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE,
-        \Magento\Downloadable\Model\Product\Type::TYPE_DOWNLOADABLE,
-        \Magento\Catalog\Model\Product\Type::TYPE_BUNDLE,
-        \Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE
-    ];
-
     /**
      * Map of human-readable config names to their XML paths
      */
@@ -464,6 +439,31 @@ class Config extends AbstractHelper
      */
     const XML_PATH_DISABLE_GUEST_CHECKOUT = 'catalog/downloadable/disable_guest_checkout';
 
+    public static $defaultPageWhitelist = [
+        self::SHOPPING_CART_PAGE_ACTION,
+        self::CHECKOUT_PAGE_ACTION,
+        self::SUCCESS_PAGE_ACTION
+    ];
+
+    public static $supportableProductTypesForProductPageCheckout = [
+        \Magento\Catalog\Model\Product\Type::TYPE_SIMPLE,
+        \Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL,
+        \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE,
+        \Magento\Downloadable\Model\Product\Type::TYPE_DOWNLOADABLE,
+        \Magento\Catalog\Model\Product\Type::TYPE_BUNDLE,
+        \Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE
+    ];
+
+    /**
+     * @var BoltConfigSettingFactory
+     */
+    private $boltConfigSettingFactory;
+
+    /**
+     * @var EncryptorInterface
+     */
+    private $encryptor;
+
     /**
      * @var ResourceInterface
      */
@@ -485,6 +485,11 @@ class Config extends AbstractHelper
     private $composerFactory;
 
     /**
+     * @var WriterInterface
+     */
+    private $configWriter;
+
+    /**
      * @param Context                  $context
      * @param EncryptorInterface       $encryptor
      * @param ResourceInterface        $moduleResource
@@ -492,6 +497,7 @@ class Config extends AbstractHelper
      * @param BoltConfigSettingFactory $boltConfigSettingFactory
      * @param RegionFactory            $regionFactory
      * @param ComposerFactory          $composerFactory
+     * @param WriterInterface          $configWriter
      */
     public function __construct(
         Context $context,
@@ -500,7 +506,8 @@ class Config extends AbstractHelper
         ProductMetadataInterface $productMetadata,
         BoltConfigSettingFactory $boltConfigSettingFactory,
         RegionFactory $regionFactory,
-        ComposerFactory $composerFactory
+        ComposerFactory $composerFactory,
+        WriterInterface $configWriter
     ) {
         parent::__construct($context);
         $this->encryptor = $encryptor;
@@ -509,6 +516,7 @@ class Config extends AbstractHelper
         $this->boltConfigSettingFactory = $boltConfigSettingFactory;
         $this->regionFactory = $regionFactory;
         $this->composerFactory = $composerFactory;
+        $this->configWriter = $configWriter;
     }
 
     /**
@@ -523,9 +531,8 @@ class Config extends AbstractHelper
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
             return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_API, self::API_URL_SANDBOX);
-        } else {
-            return self::API_URL_PRODUCTION;
         }
+        return self::API_URL_PRODUCTION;
     }
 
     /**
@@ -540,9 +547,8 @@ class Config extends AbstractHelper
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
             return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_MERCHANT_DASH, self::MERCHANT_DASH_SANDBOX);
-        } else {
-            return self::MERCHANT_DASH_PRODUCTION;
         }
+        return self::MERCHANT_DASH_PRODUCTION;
     }
 
     /**
@@ -557,9 +563,8 @@ class Config extends AbstractHelper
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
             return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_SANDBOX);
-        } else {
-            return self::CDN_URL_PRODUCTION;
         }
+        return self::CDN_URL_PRODUCTION;
     }
 
     /**
@@ -574,9 +579,8 @@ class Config extends AbstractHelper
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
             return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_ACCOUNT, self::ACCOUNT_URL_SANDBOX);
-        } else {
-            return self::ACCOUNT_URL_PRODUCTION;
         }
+        return self::ACCOUNT_URL_PRODUCTION;
     }
 
     /**
@@ -613,6 +617,7 @@ class Config extends AbstractHelper
 
     /**
      * @return string
+     *
      * @throws Exception
      */
     public function getComposerVersion()
@@ -637,29 +642,6 @@ class Config extends AbstractHelper
     public function getStoreVersion()
     {
         return $this->productMetadata->getVersion();
-    }
-
-    /**
-     * Helper method to Get Encrypted Key from config.
-     * Return decrypted.
-     *
-     * @param string     $path
-     * @param int|string $storeId
-     *
-     * @return string
-     */
-    private function getEncryptedKey($path, $storeId = null)
-    {
-        //Get management key
-        $key = $this->getScopeConfig()->getValue(
-            $path,
-            ScopeInterface::SCOPE_STORE,
-            $storeId
-        );
-
-        //Decrypt management key
-        $key = $this->encryptor->decrypt($key);
-        return $key;
     }
 
     /**
@@ -933,7 +915,6 @@ class Config extends AbstractHelper
      *
      * @return boolean
      */
-
     public function getSelectProductPageCheckoutFlag($store = null)
     {
         return $this->getScopeConfig()->isSetFlag(
@@ -1069,32 +1050,11 @@ class Config extends AbstractHelper
     }
 
     /**
-     * @param $url
-     *
-     * @return bool
-     */
-    protected function validateCustomUrl($url)
-    {
-        return (
-            $url
-            && preg_match("/^https?:\/\/([a-zA-Z0-9-]+\.)+bolt.(me|com)\/?$/", $url)
-        );
-    }
-
-    /**
      * @return \Magento\Framework\App\Config\ScopeConfigInterface
      */
     public function getScopeConfig()
     {
         return $this->scopeConfig;
-    }
-
-    /**
-     * @return \Magento\Framework\App\Config\WriterInterface
-     */
-    public function getConfigWriter()
-    {
-        return $this->configWriter;
     }
 
     /**
@@ -1240,32 +1200,6 @@ class Config extends AbstractHelper
     }
 
     /**
-     * Get Additional Config object
-     *
-     * @param int|string $storeId scope for which to retrieve additional config property
-     *
-     * @return object containing Additional Config parsed from JSON
-     */
-    private function getAdditionalConfigObject($storeId = null)
-    {
-        return json_decode($this->getAdditionalConfigString($storeId));
-    }
-
-    /**
-     * Get Additional Config property
-     *
-     * @param string     $name    name of the additional config property
-     * @param int|string $storeId scope for which to retrieve additional config property
-     *
-     * @return mixed value of the requested property in the Additional COnfig
-     */
-    private function getAdditionalConfigProperty($name, $storeId = null)
-    {
-        $config = $this->getAdditionalConfigObject($storeId);
-        return $config->$name ?? null;
-    }
-
-    /**
      * Get Is Pre-Auth flag from config
      *
      * @param int|string|Store $store
@@ -1352,42 +1286,6 @@ class Config extends AbstractHelper
     }
 
     /**
-     * Get "pageFilters" additional configuration property, stored is the following format:
-     *
-     * {
-     *   "pageFilters": {
-     *     "whitelist": ['checkout_cart_index', 'checkout_index_index', 'checkout_onepage_success'],
-     *     "blacklist": ['cms_index_index']
-     *   }
-     * }
-     *
-     * @param int|string $storeId
-     *
-     * @return mixed
-     */
-    private function getPageFilters($storeId = null)
-    {
-        return $this->getAdditionalConfigProperty('pageFilters', $storeId);
-    }
-
-    /**
-     * Get filter specified by name from "pageFilters" additional configuration
-     *
-     * @param string     $filterName 'whitelist'|'blacklist'
-     * @param int|string $storeId
-     *
-     * @return array
-     */
-    private function getPageFilter($filterName, $storeId = null)
-    {
-        $pageFilters = $this->getPageFilters($storeId);
-        if ($pageFilters && isset($pageFilters->$filterName)) {
-            return (array) $pageFilters->$filterName;
-        }
-        return [];
-    }
-
-    /**
      * Get whitelisted pages, stored in "pageFilters.whitelist" additional configuration
      * as an array of "Full Action Name" identifiers, [<router_controller_action>]
      *
@@ -1447,22 +1345,6 @@ class Config extends AbstractHelper
     }
 
     /**
-     * Get Client IP Whitelist from config
-     *
-     * @param int|string $storeId
-     *
-     * @return string
-     */
-    private function getIPWhitelistConfig($storeId = null)
-    {
-        return $this->getScopeConfig()->getValue(
-            self::XML_PATH_IP_WHITELIST,
-            ScopeInterface::SCOPE_STORE,
-            $storeId
-        );
-    }
-
-    /**
      * Get an array of whitelisted IPs
      *
      * @param int|string $storeId
@@ -1510,13 +1392,15 @@ class Config extends AbstractHelper
      * Check if the client IP is restricted -
      * there is an IP whitelist and the client IP is not on the list.
      *
+     * @param null|mixed $storeId
+     *
      * @return bool
      */
     public function isIPRestricted($storeId = null)
     {
         $clientIP = $this->getClientIp();
         $whitelist = $this->getIPWhitelistArray($storeId);
-        return $whitelist && ! in_array($clientIP, $whitelist);
+        return $whitelist && !in_array($clientIP, $whitelist);
     }
 
     /**
@@ -1636,6 +1520,7 @@ class Config extends AbstractHelper
             $store
         );
     }
+
     /**
      * Get Emulate Customer Session in API Calls flag configuration
      *
@@ -1669,7 +1554,6 @@ class Config extends AbstractHelper
     }
 
     /**
-
      * Get minimize javascript flag configuration
      *
      * @param int|string|Store $store
@@ -1754,180 +1638,180 @@ class Config extends AbstractHelper
 
         // Active
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('active')
-                                                         ->setValue(var_export($this->isActive(), true));
+            ->setName('active')
+            ->setValue(var_export($this->isActive(), true));
         // Title
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('title')
-                                                         ->setValue($this->getTitle());
+            ->setName('title')
+            ->setValue($this->getTitle());
         // API Key (obscured)
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('api_key')
-                                                         ->setValue(SecretObscurer::obscure($this->getApiKey()));
+            ->setName('api_key')
+            ->setValue(SecretObscurer::obscure($this->getApiKey()));
         // Signing Secret (obscured)
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('signing_secret')
-                                                         ->setValue(SecretObscurer::obscure($this->getSigningSecret()));
+            ->setName('signing_secret')
+            ->setValue(SecretObscurer::obscure($this->getSigningSecret()));
         // Publishable Key for Checkout
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('publishable_key_checkout')
-                                                         ->setValue($this->getPublishableKeyCheckout());
+            ->setName('publishable_key_checkout')
+            ->setValue($this->getPublishableKeyCheckout());
         // Publishable Key for Payment
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('publishable_key_payment')
-                                                         ->setValue($this->getPublishableKeyPayment());
+            ->setName('publishable_key_payment')
+            ->setValue($this->getPublishableKeyPayment());
         // Publishable Key for Back Office
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('publishable_key_back_office')
-                                                         ->setValue($this->getPublishableKeyBackOffice());
+            ->setName('publishable_key_back_office')
+            ->setValue($this->getPublishableKeyBackOffice());
         // Sandbox Mode
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('sandbox_mode')
-                                                         ->setValue(var_export($this->isSandboxModeSet(), true));
+            ->setName('sandbox_mode')
+            ->setValue(var_export($this->isSandboxModeSet(), true));
         // Pre-auth
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('is_pre_auth')
-                                                         ->setValue(var_export($this->getIsPreAuth(), true));
+            ->setName('is_pre_auth')
+            ->setValue(var_export($this->getIsPreAuth(), true));
         // Product Page Checkout
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('product_page_checkout')
-                                                         ->setValue(var_export($this->getProductPageCheckoutFlag(), true));
+            ->setName('product_page_checkout')
+            ->setValue(var_export($this->getProductPageCheckoutFlag(), true));
         // Select Product Page Checkout
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('select_product_page_checkout')
-                                                         ->setValue(var_export($this->getSelectProductPageCheckoutFlag(), true));
+            ->setName('select_product_page_checkout')
+            ->setValue(var_export($this->getSelectProductPageCheckoutFlag(), true));
         // Geolocation API Key (obscured)
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('geolocation_api_key')
-                                                         ->setValue(SecretObscurer::obscure($this->getGeolocationApiKey()));
+            ->setName('geolocation_api_key')
+            ->setValue(SecretObscurer::obscure($this->getGeolocationApiKey()));
         // Replace Button Selectors
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('replace_selectors')
-                                                         ->setValue($this->getReplaceSelectors());
+            ->setName('replace_selectors')
+            ->setValue($this->getReplaceSelectors());
         // Totals Monitor Selectors
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('totals_change_selectors')
-                                                         ->setValue($this->getTotalsChangeSelectors());
+            ->setName('totals_change_selectors')
+            ->setValue($this->getTotalsChangeSelectors());
         // Global CSS
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('global_css')
-                                                         ->setValue($this->getGlobalCSS());
+            ->setName('global_css')
+            ->setValue($this->getGlobalCSS());
         // Additional Checkout Button Class
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('additional_checkout_button_class')
-                                                         ->setValue($this->getAdditionalCheckoutButtonClass());
+            ->setName('additional_checkout_button_class')
+            ->setValue($this->getAdditionalCheckoutButtonClass());
         // Success Page Redirect
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('success_page')
-                                                         ->setValue($this->getSuccessPageRedirect());
+            ->setName('success_page')
+            ->setValue($this->getSuccessPageRedirect());
         // Prefetch Shipping
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('prefetch_shipping')
-                                                         ->setValue(var_export($this->getPrefetchShipping(), true));
+            ->setName('prefetch_shipping')
+            ->setValue(var_export($this->getPrefetchShipping(), true));
         // Prefetch Address
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('prefetch_address_fields')
-                                                         ->setValue($this->getPrefetchAddressFields());
+            ->setName('prefetch_address_fields')
+            ->setValue($this->getPrefetchAddressFields());
         // Reset Shipping Calculation
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('reset_shipping_calculation')
-                                                         ->setValue(var_export($this->getResetShippingCalculation(), true));
+            ->setName('reset_shipping_calculation')
+            ->setValue(var_export($this->getResetShippingCalculation(), true));
         // Javascript: success
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('javascript_success')
-                                                         ->setValue($this->getJavascriptSuccess());
+            ->setName('javascript_success')
+            ->setValue($this->getJavascriptSuccess());
         // Debug
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('debug')
-                                                         ->setValue(var_export($this->isDebugModeOn(), true));
+            ->setName('debug')
+            ->setValue(var_export($this->isDebugModeOn(), true));
         // Additional Javascript
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('additional_js')
-                                                         ->setValue($this->getAdditionalJS());
+            ->setName('additional_js')
+            ->setValue($this->getAdditionalJS());
         // Tracking: onCheckoutStart
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('track_on_checkout_start')
-                                                         ->setValue($this->getOnCheckoutStart());
+            ->setName('track_on_checkout_start')
+            ->setValue($this->getOnCheckoutStart());
         // Tracking: onEmailEnter
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('track_on_email_enter')
-                                                         ->setValue($this->getOnEmailEnter());
+            ->setName('track_on_email_enter')
+            ->setValue($this->getOnEmailEnter());
         // Tracking: onShippingDetailsComplete
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('track_on_shipping_details_complete')
-                                                         ->setValue($this->getOnShippingDetailsComplete());
+            ->setName('track_on_shipping_details_complete')
+            ->setValue($this->getOnShippingDetailsComplete());
         // Tracking: onShippingOptionsComplete
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('track_on_shipping_options_complete')
-                                                         ->setValue($this->getOnShippingOptionsComplete());
+            ->setName('track_on_shipping_options_complete')
+            ->setValue($this->getOnShippingOptionsComplete());
         // Tracking: onPaymentSubmit
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('track_on_payment_submit')
-                                                         ->setValue($this->getOnPaymentSubmit());
+            ->setName('track_on_payment_submit')
+            ->setValue($this->getOnPaymentSubmit());
         // Tracking: onSuccess
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('track_on_success')
-                                                         ->setValue($this->getOnSuccess());
+            ->setName('track_on_success')
+            ->setValue($this->getOnSuccess());
         // Tracking: onClose
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('track_on_close')
-                                                         ->setValue($this->getOnClose());
+            ->setName('track_on_close')
+            ->setValue($this->getOnClose());
         // Additional Configuration
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('additional_config')
-                                                         ->setValue($this->getAdditionalConfigString());
+            ->setName('additional_config')
+            ->setValue($this->getAdditionalConfigString());
         // MiniCart Support
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('minicart_support')
-                                                         ->setValue(var_export($this->getMinicartSupport(), true));
+            ->setName('minicart_support')
+            ->setValue(var_export($this->getMinicartSupport(), true));
         // Client IP Restriction
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('ip_whitelist')
-                                                         ->setValue(implode(', ', $this->getIPWhitelistArray()));
+            ->setName('ip_whitelist')
+            ->setValue(implode(', ', $this->getIPWhitelistArray()));
         // Store Credit
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('store_credit')
-                                                         ->setValue(var_export($this->useStoreCreditConfig(), true));
+            ->setName('store_credit')
+            ->setValue(var_export($this->useStoreCreditConfig(), true));
         // Reward Points
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('reward_points')
-                                                         ->setValue(var_export($this->useRewardPointsConfig(), true));
+            ->setName('reward_points')
+            ->setValue(var_export($this->useRewardPointsConfig(), true));
         // Reward Points Minicart
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('reward_points_minicart')
-                                                         ->setValue(var_export($this->displayRewardPointsInMinicartConfig(), true));
+            ->setName('reward_points_minicart')
+            ->setValue(var_export($this->displayRewardPointsInMinicartConfig(), true));
         // Enable Payment Only Checkout
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('enable_payment_only_checkout')
-                                                         ->setValue(var_export($this->isPaymentOnlyCheckoutEnabled(), true));
+            ->setName('enable_payment_only_checkout')
+            ->setValue(var_export($this->isPaymentOnlyCheckoutEnabled(), true));
         // Cache Bolt Order Token
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('bolt_order_caching')
-                                                         ->setValue(var_export($this->isBoltOrderCachingEnabled(), true));
+            ->setName('bolt_order_caching')
+            ->setValue(var_export($this->isBoltOrderCachingEnabled(), true));
         // Emulate Customer Session in API Calls
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('api_emulate_session')
-                                                         ->setValue(var_export($this->isSessionEmulationEnabled(), true));
+            ->setName('api_emulate_session')
+            ->setValue(var_export($this->isSessionEmulationEnabled(), true));
         // Minify JavaScript
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('should_minify_javascript')
-                                                         ->setValue(var_export($this->shouldMinifyJavascript(), true));
+            ->setName('should_minify_javascript')
+            ->setValue(var_export($this->shouldMinifyJavascript(), true));
         // Capture Internal Merchant Metrics
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('capture_merchant_metrics')
-                                                         ->setValue(var_export($this->shouldCaptureMetrics(), true));
+            ->setName('capture_merchant_metrics')
+            ->setValue(var_export($this->shouldCaptureMetrics(), true));
         // Track checkout funnel
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('track_checkout_funnel')
-                                                         ->setValue(var_export($this->shouldTrackCheckoutFunnel(), true));
+            ->setName('track_checkout_funnel')
+            ->setValue(var_export($this->shouldTrackCheckoutFunnel(), true));
         // Show card type in the order grid
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('show_cc_type_in_order_grid')
-                                                         ->setValue($this->getShowCcTypeInOrderGrid());
+            ->setName('show_cc_type_in_order_grid')
+            ->setValue($this->getShowCcTypeInOrderGrid());
         // Enable Bolt SSO
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-                                                         ->setName('bolt_sso')
-                                                         ->setValue(var_export($this->isBoltSSOEnabled(), true));
+            ->setName('bolt_sso')
+            ->setValue(var_export($this->isBoltSSOEnabled(), true));
 
         return $boltSettings;
     }
@@ -1948,7 +1832,7 @@ class Config extends AbstractHelper
         );
 
         if ($currentValue != $settingValue) {
-            $this->getConfigWriter()->save(
+            $this->configWriter->save(
                 self::CONFIG_SETTING_PATHS[$settingName],
                 $settingValue,
                 ScopeInterface::SCOPE_STORE,
@@ -2124,7 +2008,7 @@ class Config extends AbstractHelper
         }
 
         if ($apartment) {
-            $street .= "\n".$apartment;
+            $street .= "\n" . $apartment;
         }
 
         $addressData = [
@@ -2212,6 +2096,117 @@ class Config extends AbstractHelper
             self::XML_PATH_AHEADWORKS_REWARD_POINTS_ON_CART,
             ScopeInterface::SCOPE_STORE,
             $store
+        );
+    }
+
+    /**
+     * @param $url
+     *
+     * @return bool
+     */
+    protected function validateCustomUrl($url)
+    {
+        return $url && preg_match("/^https?:\/\/([a-zA-Z0-9-]+\.)+bolt.(me|com)\/?$/", $url);
+    }
+
+    /**
+     * Helper method to Get Encrypted Key from config.
+     * Return decrypted.
+     *
+     * @param string     $path
+     * @param int|string $storeId
+     *
+     * @return string
+     */
+    private function getEncryptedKey($path, $storeId = null)
+    {
+        //Get management key
+        $key = $this->getScopeConfig()->getValue(
+            $path,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+
+        //Decrypt management key
+        $key = $this->encryptor->decrypt($key);
+        return $key;
+    }
+
+    /**
+     * Get Additional Config object
+     *
+     * @param int|string $storeId scope for which to retrieve additional config property
+     *
+     * @return object containing Additional Config parsed from JSON
+     */
+    private function getAdditionalConfigObject($storeId = null)
+    {
+        return json_decode($this->getAdditionalConfigString($storeId));
+    }
+
+    /**
+     * Get Additional Config property
+     *
+     * @param string     $name    name of the additional config property
+     * @param int|string $storeId scope for which to retrieve additional config property
+     *
+     * @return mixed value of the requested property in the Additional COnfig
+     */
+    private function getAdditionalConfigProperty($name, $storeId = null)
+    {
+        $config = $this->getAdditionalConfigObject($storeId);
+        return $config->$name ?? null;
+    }
+
+    /**
+     * Get "pageFilters" additional configuration property, stored is the following format:
+     *
+     * {
+     *   "pageFilters": {
+     *     "whitelist": ['checkout_cart_index', 'checkout_index_index', 'checkout_onepage_success'],
+     *     "blacklist": ['cms_index_index']
+     *   }
+     * }
+     *
+     * @param int|string $storeId
+     *
+     * @return mixed
+     */
+    private function getPageFilters($storeId = null)
+    {
+        return $this->getAdditionalConfigProperty('pageFilters', $storeId);
+    }
+
+    /**
+     * Get filter specified by name from "pageFilters" additional configuration
+     *
+     * @param string     $filterName 'whitelist'|'blacklist'
+     * @param int|string $storeId
+     *
+     * @return array
+     */
+    private function getPageFilter($filterName, $storeId = null)
+    {
+        $pageFilters = $this->getPageFilters($storeId);
+        if ($pageFilters && isset($pageFilters->$filterName)) {
+            return (array) $pageFilters->$filterName;
+        }
+        return [];
+    }
+
+    /**
+     * Get Client IP Whitelist from config
+     *
+     * @param int|string $storeId
+     *
+     * @return string
+     */
+    private function getIPWhitelistConfig($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_IP_WHITELIST,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
         );
     }
 }

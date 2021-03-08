@@ -11,22 +11,24 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Test\Unit\Observer\Adminhtml\Sales;
 
-use Magento\Framework\Event;
-use Magento\Quote\Model\Quote;
-use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\Event\Observer;
 use Bolt\Boltpay\Observer\Adminhtml\Sales\OrderCreateProcessDataObserver;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\Event;
+use Magento\Framework\Event\Observer;
+use Magento\Quote\Model\Quote;
 
 /**
  * Class OrderCreateProcessDataObserverTest
- * @coversDefaultClass \Bolt\Boltpay\Model\Payment
+ *
+ * @coversDefaultClass \Bolt\Boltpay\Observer\Adminhtml\Sales\OrderCreateProcessDataObserver
  */
 class OrderCreateProcessDataObserverTest extends BoltTestCase
 {
@@ -55,24 +57,6 @@ class OrderCreateProcessDataObserverTest extends BoltTestCase
      */
     protected $quote;
 
-    protected function setUpInternal()
-    {
-        $this->observer = $this->createPartialMock(
-            Observer::class,
-            ['getEvent', 'getData', 'getQuote']
-        );
-        $this->productMetadata = $this->createMock(ProductMetadataInterface::class);
-
-        $this->quote = $this->createPartialMock(Quote::class, ['setCustomerEmail']);
-        $this->event = $this->createPartialMock(Event::class, ['getData', 'getQuote']);
-        $this->orderCreateProcessDataObserverTest = $this->getMockBuilder(OrderCreateProcessDataObserver::class)
-            ->setConstructorArgs([
-                $this->productMetadata
-            ])
-            ->setMethods(['_init'])
-            ->getMock();
-    }
-
     /**
      * @test
      */
@@ -97,5 +81,23 @@ class OrderCreateProcessDataObserverTest extends BoltTestCase
         $this->observer->expects(self::once())->method('getEvent')->willReturn($this->event);
 
         $this->orderCreateProcessDataObserverTest->execute($this->observer);
+    }
+
+    protected function setUpInternal()
+    {
+        $this->observer = $this->createPartialMock(
+            Observer::class,
+            ['getEvent', 'getData', 'getQuote']
+        );
+        $this->productMetadata = $this->createMock(ProductMetadataInterface::class);
+
+        $this->quote = $this->createPartialMock(Quote::class, ['setCustomerEmail']);
+        $this->event = $this->createPartialMock(Event::class, ['getData', 'getQuote']);
+        $this->orderCreateProcessDataObserverTest = $this->getMockBuilder(OrderCreateProcessDataObserver::class)
+            ->setConstructorArgs([
+                $this->productMetadata
+            ])
+            ->setMethods(['_init'])
+            ->getMock();
     }
 }

@@ -11,13 +11,15 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 namespace Bolt\Boltpay\Block\Checkout;
 
-use Magento\Checkout\Block\Checkout\LayoutProcessorInterface;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Magento\Checkout\Block\Checkout\LayoutProcessorInterface;
 
 /**
  * Class LayoutProcessor
@@ -34,11 +36,10 @@ abstract class LayoutProcessor implements LayoutProcessorInterface
     protected $configHelper;
 
     /**
-     * @param ConfigHelper      $configHelper
+     * @param ConfigHelper $configHelper
      */
-    public function __construct(
-        ConfigHelper $configHelper
-    ) {
+    public function __construct(ConfigHelper $configHelper)
+    {
         $this->configHelper = $configHelper;
     }
 
@@ -46,6 +47,7 @@ abstract class LayoutProcessor implements LayoutProcessorInterface
      * Process the layout
      *
      * @param array $jsLayout
+     *
      * @return array
      */
     abstract public function process($jsLayout);

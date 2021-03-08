@@ -1,4 +1,20 @@
 <?php
+/**
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ *
+ * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
 
 namespace Bolt\Boltpay\Test\Unit;
 
@@ -24,14 +40,6 @@ if (PHPUnitVersion::id() < 9) {
             $this->tearDownInternal();
         }
 
-        protected function setUpInternal()
-        {
-        }
-
-        protected function tearDownInternal()
-        {
-        }
-
         public static function assertMatchesRegularExpression(string $pattern, string $string, string $message = '')
         {
             static::assertRegExp($pattern, $string, $message);
@@ -47,6 +55,14 @@ if (PHPUnitVersion::id() < 9) {
             $constraint = new StringContains($needle, false);
             static::assertThat($haystack, $constraint, $message);
         }
+
+        protected function setUpInternal()
+        {
+        }
+
+        protected function tearDownInternal()
+        {
+        }
     }
 } else {
     class BoltTestCase extends TestCase
@@ -60,25 +76,6 @@ if (PHPUnitVersion::id() < 9) {
         {
             parent::tearDown();
             $this->tearDownInternal();
-        }
-
-        protected function setUpInternal()
-        {
-        }
-
-        protected function tearDownInternal()
-        {
-        }
-
-        protected function createPartialMock($originalClassName, array $methods): \PHPUnit\Framework\MockObject\MockObject
-        {
-            return $this->getMockBuilder($originalClassName)
-                        ->disableOriginalConstructor()
-                        ->disableOriginalClone()
-                        ->disableArgumentCloning()
-                        ->disallowMockingUnknownTypes()
-                        ->setMethods(empty($methods) ? null : $methods)
-                        ->getMock();
         }
 
         public static function assertAttributeInstanceOf($expected, $attributeName, $classOrObject, $message = '')
@@ -214,6 +211,25 @@ if (PHPUnitVersion::id() < 9) {
 
             $this->expectedExceptionMessageRegExp = $messageRegExp;
         }
+
+        protected function setUpInternal()
+        {
+        }
+
+        protected function tearDownInternal()
+        {
+        }
+
+        protected function createPartialMock($originalClassName, array $methods): \PHPUnit\Framework\MockObject\MockObject
+        {
+            return $this->getMockBuilder($originalClassName)
+                ->disableOriginalConstructor()
+                ->disableOriginalClone()
+                ->disableArgumentCloning()
+                ->disallowMockingUnknownTypes()
+                ->setMethods(empty($methods) ? null : $methods)
+                ->getMock();
+        }
     }
 }
 
@@ -241,6 +257,16 @@ if (!class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
         }
 
         /**
+         * Returns a string representation of the constraint.
+         *
+         * @return string
+         */
+        public function toString(): string
+        {
+            return 'has the subset ' . $this->exporter->export($this->subset);
+        }
+
+        /**
          * Evaluates the constraint for parameter $other. Returns true if the
          * constraint is met, false otherwise.
          *
@@ -262,16 +288,6 @@ if (!class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
             }
 
             return $other == $patched;
-        }
-
-        /**
-         * Returns a string representation of the constraint.
-         *
-         * @return string
-         */
-        public function toString(): string
-        {
-            return 'has the subset ' . $this->exporter->export($this->subset);
         }
 
         /**

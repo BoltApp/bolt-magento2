@@ -11,17 +11,18 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Block\Checkout;
 
+use Bolt\Boltpay\Block\BlockTrait;
 use Bolt\Boltpay\Helper\Config;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
-use Bolt\Boltpay\Block\BlockTrait;
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 class Success extends Template
 {
@@ -30,10 +31,10 @@ class Success extends Template
     /**
      * Success constructor.
      *
-     * @param Config                   $configHelper
-     * @param Context                  $context
-     * @param Decider                  $featureSwitches
-     * @param array                    $data
+     * @param Config  $configHelper
+     * @param Context $context
+     * @param Decider $featureSwitches
+     * @param array   $data
      */
     public function __construct(
         Config $configHelper,
@@ -42,7 +43,6 @@ class Success extends Template
         array $data = []
     ) {
         parent::__construct($context, $data);
-
         $this->configHelper = $configHelper;
         $this->featureSwitches = $featureSwitches;
     }

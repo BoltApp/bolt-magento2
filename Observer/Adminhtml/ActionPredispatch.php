@@ -11,17 +11,19 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Observer\Adminhtml;
 
-use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
 
 /**
  * Observer for controller_action_predispatch
+ *
  * @see \Magento\Framework\App\Action\Action::dispatch
  */
 class ActionPredispatch implements ObserverInterface
@@ -33,6 +35,7 @@ class ActionPredispatch implements ObserverInterface
 
     /**
      * ActionPredispatch constructor.
+     *
      * @param \Bolt\Boltpay\Model\EventsForThirdPartyModules $eventsForThirdPartyModules
      */
     public function __construct(\Bolt\Boltpay\Model\EventsForThirdPartyModules $eventsForThirdPartyModules)
@@ -44,6 +47,7 @@ class ActionPredispatch implements ObserverInterface
      * Redirects the predispatch event to the {@see \Bolt\Boltpay\Model\EventsForThirdPartyModules}
      *
      * @param Observer $observer
+     *
      * @return void
      */
     public function execute(Observer $observer)
@@ -66,9 +70,11 @@ class ActionPredispatch implements ObserverInterface
 
     /**
      * Converts Magento format event name to the Boltpay format used in
+     *
      * @see \Bolt\Boltpay\Model\EventsForThirdPartyModules
      *
      * @param string $eventName in Magento format
+     *
      * @return string event name in Boltpay third party modules event format
      */
     private function convertEventName($eventName)
