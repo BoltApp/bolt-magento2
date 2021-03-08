@@ -35,6 +35,7 @@ if (PHPUnitVersion::id() < 9) {
         public static function assertMatchesRegularExpression(string $pattern, string $string, string $message = '')
         {
             static::assertRegExp($pattern, $string, $message);
+
         }
 
         /**
