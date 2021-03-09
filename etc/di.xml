@@ -214,4 +214,8 @@
         <plugin name="bolt_boltpay_taxjar_salestax_model_smartcalcs_plugin"
                 type="Bolt\Boltpay\Plugin\Taxjar\SalesTax\Model\SmartcalcsPlugin"/>
     </type>
+    
+    <type name="Zonos\DutyTax\Model\Carrier\Zonos">
+        <plugin name="BoltBoltZonosDutyTaxCarrierPlugin" type="Bolt\Boltpay\Plugin\Zonos\DutyTax\Model\Carrier\ZonosPlugin" sortOrder="1"/>
+    </type>
 </config>
