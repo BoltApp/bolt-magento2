@@ -74,7 +74,7 @@ class ZonosPlugin
                 }
             }            
         } catch (\Exception $e) {
-            $this->bugsnagHelper->notifyException($e);
+            $this->boltBugsnagHelper->notifyException($e);
         }
 
         return [$address, $quoteId];
