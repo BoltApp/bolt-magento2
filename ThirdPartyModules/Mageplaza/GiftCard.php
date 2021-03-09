@@ -22,6 +22,7 @@ use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Helper\Session;
 use Magento\Framework\Exception\LocalizedException;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 class GiftCard
 {
@@ -49,16 +50,23 @@ class GiftCard
     protected $mageplazaGiftCardCheckoutHelper;
 
     protected $mageplazaGiftCardFactory;
+    
+    /**
+     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
+     */
+    private $featureSwitches;
 
     public function __construct(
         Discount $discountHelper,
         Bugsnag $bugsnagHelper,
-        Session $sessionHelper
+        Session $sessionHelper,
+        Decider  $featureSwitches        
     )
     {
         $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
         $this->sessionHelper = $sessionHelper;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
@@ -287,7 +295,12 @@ class GiftCard
             $storeId = $quote->getStoreId();
             return $this->loadMageplazaGiftCard($code, $storeId);
         } catch (\Exception $e) {
-            return $e;
+            if ($this->featureSwitches->isReturnErrWhenRunFilter()) {
+                return $e;
+            } else {
+                $this->bugsnagHelper->notifyException($e);
+                return null;
+            }
         }
     }
 

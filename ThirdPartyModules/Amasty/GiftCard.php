@@ -21,6 +21,8 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Quote\Model\Quote;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Magento\Framework\App\ResourceConnection;
 
 /**
  * Class GiftCard
@@ -43,20 +45,28 @@ class GiftCard
      * @var \Magento\Framework\App\ResourceConnection
      */
     private $resourceConnection;
+    
+    /**
+     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
+     */
+    private $featureSwitches;
 
     /**
-     * @param Bugsnag                                   $bugsnagHelper Bugsnag helper instance
-     * @param Discount                                  $discountHelper
-     * @param \Magento\Framework\App\ResourceConnection $resourceConnection
+     * @param Bugsnag            $bugsnagHelper Bugsnag helper instance
+     * @param Discount           $discountHelper
+     * @param ResourceConnection $resourceConnection
+     * @param Decider            $featureSwitches
      */
     public function __construct(
         Bugsnag $bugsnagHelper,
         Discount $discountHelper,
-        \Magento\Framework\App\ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection,
+        Decider $featureSwitches
     ) {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->discountHelper = $discountHelper;
         $this->resourceConnection = $resourceConnection;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
@@ -179,8 +189,15 @@ class GiftCard
         try {
             $giftcardAccount = $giftcardAccountFactory->create()->loadByCode($couponCode);
             return $giftcardAccount->getAccountId() ? $giftcardAccount : $result;
+        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+            return null;
         } catch (\Exception $e) {
-            return $e;
+            if ($this->featureSwitches->isReturnErrWhenRunFilter()) {
+                return $e;
+            } else {
+                $this->bugsnagHelper->notifyException($e);
+                return null;
+            }
         }
     }
 

@@ -22,6 +22,7 @@ use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Model\Service\OrderService;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 class Giftcard
 {
@@ -39,20 +40,28 @@ class Giftcard
      * @var Discount
      */
     protected $discountHelper;
+    
+    /**
+     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
+     */
+    private $featureSwitches;
 
     /**
      * @param OrderService $orderService Magento order service instance
      * @param Bugsnag $bugsnagHelper Bugsnag helper instance
      * @param Discount $discountHelper
+     * @param Decider  $featureSwitches
      */
     public function __construct(
         OrderService  $orderService,
         Bugsnag       $bugsnagHelper,
-        Discount      $discountHelper
+        Discount      $discountHelper,
+        Decider       $featureSwitches
     ) {
         $this->orderService   = $orderService;
         $this->bugsnagHelper  = $bugsnagHelper;
         $this->discountHelper = $discountHelper;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
@@ -105,7 +114,12 @@ class Giftcard
         } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
             return null;
         } catch (\Exception $e) {
-            return $e;
+            if ($this->featureSwitches->isReturnErrWhenRunFilter()) {
+                return $e;
+            } else {
+                $this->bugsnagHelper->notifyException($e);
+                return null;
+            }
         }
     }
 
