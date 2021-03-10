@@ -11,18 +11,19 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Observer\Adminhtml\Sales;
 
-use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Event\Observer;
-use Magento\Framework\App\RequestInterface;
-use Bolt\Boltpay\Model\CustomerCreditCardFactory as CustomerCreditCardFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
+use Bolt\Boltpay\Model\CustomerCreditCardFactory as CustomerCreditCardFactory;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
 
 class RechargeCustomer implements ObserverInterface
 {
@@ -48,10 +49,11 @@ class RechargeCustomer implements ObserverInterface
 
     /**
      * RechargeCustomer constructor.
-     * @param Bugsnag $bugsnag
-     * @param RequestInterface $request
+     *
+     * @param Bugsnag                   $bugsnag
+     * @param RequestInterface          $request
      * @param CustomerCreditCardFactory $boltCustomerCreditCardFactory
-     * @param Order $orderHelper
+     * @param Order                     $orderHelper
      */
     public function __construct(
         Bugsnag $bugsnag,
@@ -71,9 +73,7 @@ class RechargeCustomer implements ObserverInterface
             $event = $observer->getEvent();
             $order = $event->getOrder();
 
-            if (!$order->getPayment()
-                || $order->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE
-            ) {
+            if (!$order->getPayment() || $order->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
                 return false;
             }
 

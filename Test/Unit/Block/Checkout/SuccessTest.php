@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -22,6 +23,7 @@ use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Magento\Framework\App\Config\Storage\WriterInterface;
 
 /**
  * Class SuccessTest
@@ -40,14 +42,38 @@ class SuccessTest extends BoltTestCase
      */
     protected $block;
 
+    /**
+     * @test
+     * @dataProvider shouldTrackCheckoutFunnelData
+     *
+     * @param mixed $config
+     * @param mixed $expected
+     */
+    public function shouldTrackCheckoutFunnel_getValueFromConfig($config, $expected)
+    {
+        $this->configHelper->method('shouldTrackCheckoutFunnel')->willReturn($config);
+
+        $result = $this->block->shouldTrackCheckoutFunnel();
+
+        $this->assertEquals($expected, $result);
+    }
+
+    public function shouldTrackCheckoutFunnelData()
+    {
+        return [
+            [true, true],
+            [false, false]
+        ];
+    }
+
     protected function setUpInternal()
     {
         $helperContextMock = $this->createMock(\Magento\Framework\App\Helper\Context::class);
         $contextMock = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);
         $requestMock = $this->getMockBuilder(Http::class)
-              ->disableOriginalConstructor()
-              ->setMethods(['getFullActionName'])
-              ->getMock();
+            ->disableOriginalConstructor()
+            ->setMethods(['getFullActionName'])
+            ->getMock();
         $contextMock->method('getRequest')->willReturn($requestMock);
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -60,32 +86,12 @@ class SuccessTest extends BoltTestCase
                     $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class),
                     $this->createMock(BoltConfigSettingFactory::class),
                     $this->createMock(\Magento\Directory\Model\RegionFactory::class),
-                    $this->createMock(\Magento\Framework\Composer\ComposerFactory::class)
+                    $this->createMock(\Magento\Framework\Composer\ComposerFactory::class),
+                    $this->createMock(WriterInterface::class)
                 ]
             )
             ->getMock();
         $deciderMock = $this->createMock(Decider::class);
         $this->block = new Success($this->configHelper, $contextMock, $deciderMock);
-    }
-
-    /**
-     * @test
-     * @dataProvider shouldTrackCheckoutFunnelData
-     */
-    public function shouldTrackCheckoutFunnel_getValueFromConfig($config, $expected)
-    {
-        $this->configHelper->method("shouldTrackCheckoutFunnel")->willReturn($config);
-
-        $result = $this->block->shouldTrackCheckoutFunnel();
-
-        $this->assertEquals($expected, $result);
-    }
-
-    public function shouldTrackCheckoutFunnelData()
-    {
-        return [
-            [ true, true ],
-            [ false, false ]
-        ];
     }
 }

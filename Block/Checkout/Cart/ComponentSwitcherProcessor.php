@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -34,7 +35,8 @@ class ComponentSwitcherProcessor extends LayoutProcessor
 
     /**
      * ComponentSwitcherProcessor constructor.
-     * @param ConfigHelper $configHelper
+     *
+     * @param ConfigHelper               $configHelper
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      */
     public function __construct(
@@ -48,12 +50,13 @@ class ComponentSwitcherProcessor extends LayoutProcessor
     /**
      * Process the layout
      *
-     * @param  array $jsLayout
+     * @param array $jsLayout
+     *
      * @return array
      */
     public function process($jsLayout)
     {
-        /** @see \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartTotalsLayout */
+        /* @see \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartTotalsLayout */
         return $this->eventsForThirdPartyModules->runFilter('filterProcessLayout', $jsLayout);
     }
 }

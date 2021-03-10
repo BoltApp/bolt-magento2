@@ -11,45 +11,33 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Test\Unit\Observer\Adminhtml\Sales;
 
-use Magento\Sales\Model\Order;
-use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\Event\Observer;
-use Bolt\Boltpay\Observer\Adminhtml\Sales\CreateInvoiceForRechargedOrder;
-use Magento\Sales\Model\Service\InvoiceService;
-use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Observer\Adminhtml\Sales\CreateInvoiceForRechargedOrder;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Exception;
+use Magento\Framework\Event\Observer;
+use Magento\Sales\Model\Order;
+use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
+use Magento\Sales\Model\Service\InvoiceService;
 
 /**
- * Class OrderCreateProcessDataObserverTest
+ * Class CreateInvoiceForRechargedOrderTest
+ *
  * @coversDefaultClass \Bolt\Boltpay\Observer\Adminhtml\Sales\CreateInvoiceForRechargedOrder
  */
 class CreateInvoiceForRechargedOrderTest extends BoltTestCase
 {
     /**
-     * @var InvoiceService
-     */
-    private $invoiceService;
-
-    /**
-     * @var InvoiceSender
-     */
-    private $invoiceSender;
-
-    /**
-     * @var Bugsnag
-     */
-    private $bugsnag;
-
-    /**
      * @var CreateInvoiceForRechargedOrder
      */
-    protected $creatingInvoiceForRechargeOrderObserverTest;
+    protected $createInvoiceForRechargedOrderTest;
 
     /**
      * @var Observer
@@ -65,35 +53,20 @@ class CreateInvoiceForRechargedOrderTest extends BoltTestCase
      * @var Order\Invoice
      */
     protected $invoice;
+    /**
+     * @var InvoiceService
+     */
+    private $invoiceService;
 
-    protected function setUpInternal()
-    {
-        $this->invoiceService = $this->createPartialMock(InvoiceService::class, ['prepareInvoice']);
-        $this->invoiceSender = $this->createPartialMock(InvoiceSender::class, ['send']);
-        $this->bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
-        $this->observer = $this->createPartialMock(
-            Observer::class,
-            ['getEvent', 'getOrder']
-        );
-        $this->order = $this->createPartialMock(
-            Order::class,
-            ['getIsRechargedOrder', 'canInvoice', 'addRelatedObject', 'addStatusHistoryComment', 'setIsCustomerNotified']
-        );
+    /**
+     * @var InvoiceSender
+     */
+    private $invoiceSender;
 
-
-        $this->invoice = $this->createPartialMock(
-            Order\Invoice::class,
-            ['getEmailSent', 'setRequestedCaptureCase', 'register', 'save']
-        );
-        $this->creatingInvoiceForRechargeOrderObserverTest = $this->getMockBuilder(CreateInvoiceForRechargedOrder::class)
-            ->setConstructorArgs([
-                $this->invoiceService,
-                $this->invoiceSender,
-                $this->bugsnag
-            ])
-            ->setMethods(['_init'])
-            ->getMock();
-    }
+    /**
+     * @var Bugsnag
+     */
+    private $bugsnag;
 
     /**
      * @test
@@ -116,7 +89,7 @@ class CreateInvoiceForRechargedOrderTest extends BoltTestCase
         $this->invoiceSender->expects(self::once())->method('send')->with($this->invoice)->willReturnSelf();
 
         $this->invoice->expects(self::once())->method('save')->willReturn($this->invoice);
-        $this->creatingInvoiceForRechargeOrderObserverTest->execute($this->observer);
+        $this->createInvoiceForRechargedOrderTest->execute($this->observer);
     }
 
     /**
@@ -130,7 +103,46 @@ class CreateInvoiceForRechargedOrderTest extends BoltTestCase
         $this->observer->expects(self::once())->method('getOrder')->willReturn($this->order);
         $this->invoiceService->expects(self::never())->method('prepareInvoice')->with($this->order)->willReturnSelf();
 
-        $this->creatingInvoiceForRechargeOrderObserverTest->execute($this->observer);
+        $this->createInvoiceForRechargedOrderTest->execute($this->observer);
+    }
+
+    /**
+     * @test
+     */
+    public function execute_throwsException()
+    {
+        $e = new Exception('test exception');
+        $this->observer->expects(self::once())->method('getEvent')->willThrowException($e);
+        $this->bugsnag->expects(self::once())->method('notifyException')->with($e);
+
+        $this->createInvoiceForRechargedOrderTest->execute($this->observer);
+    }
+
+    protected function setUpInternal()
+    {
+        $this->invoiceService = $this->createMock(InvoiceService::class);
+        $this->invoiceSender = $this->createMock(InvoiceSender::class);
+        $this->bugsnag = $this->createMock(Bugsnag::class);
+        $this->observer = $this->createPartialMock(
+            Observer::class,
+            ['getEvent', 'getOrder']
+        );
+        $this->order = $this->createPartialMock(
+            Order::class,
+            ['getIsRechargedOrder', 'canInvoice', 'addRelatedObject', 'addStatusHistoryComment', 'setIsCustomerNotified']
+        );
+
+        $this->invoice = $this->createPartialMock(
+            Order\Invoice::class,
+            ['getEmailSent', 'setRequestedCaptureCase', 'register', 'save']
+        );
+        $this->createInvoiceForRechargedOrderTest = $this->getMockBuilder(CreateInvoiceForRechargedOrder::class)
+            ->setConstructorArgs([
+                $this->invoiceService,
+                $this->invoiceSender,
+                $this->bugsnag
+            ])
+            ->setMethods(['_init'])
+            ->getMock();
     }
 }
-

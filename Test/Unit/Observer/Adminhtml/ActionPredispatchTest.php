@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -34,20 +35,6 @@ class ActionPredispatchTest extends BoltTestCase
      * @var ActionPredispatch|\PHPUnit\Framework\MockObject\MockObject
      */
     private $currentMock;
-
-    /**
-     * Setup test dependencies, called before each test
-     */
-    protected function setUpInternal()
-    {
-        $this->eventsForThirdPartyModulesMock = $this->createMock(
-            \Bolt\Boltpay\Model\EventsForThirdPartyModules::class
-        );
-        $this->currentMock = $this->getMockBuilder(ActionPredispatch::class)
-            ->setMethods(null)
-            ->setConstructorArgs([$this->eventsForThirdPartyModulesMock])
-            ->getMock();
-    }
 
     /**
      * @test
@@ -134,4 +121,17 @@ class ActionPredispatchTest extends BoltTestCase
         ];
     }
 
+    /**
+     * Setup test dependencies, called before each test
+     */
+    protected function setUpInternal()
+    {
+        $this->eventsForThirdPartyModulesMock = $this->createMock(
+            \Bolt\Boltpay\Model\EventsForThirdPartyModules::class
+        );
+        $this->currentMock = $this->getMockBuilder(ActionPredispatch::class)
+            ->setMethods(null)
+            ->setConstructorArgs([$this->eventsForThirdPartyModulesMock])
+            ->getMock();
+    }
 }

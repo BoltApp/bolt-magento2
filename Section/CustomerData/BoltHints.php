@@ -11,18 +11,19 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2019 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 namespace Bolt\Boltpay\Section\CustomerData;
 
-use Magento\Customer\CustomerData\SectionSourceInterface;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Magento\Customer\CustomerData\SectionSourceInterface;
 
 class BoltHints implements SectionSourceInterface
 {
-
     /**
      * @var CartHelper
      */

@@ -11,6 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
@@ -19,11 +20,12 @@ namespace Bolt\Boltpay\Test\Unit\Section\CustomerData;
 
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Section\CustomerData\BoltCart;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 
 /**
  * Class BoltCartTest
+ *
  * @package Bolt\Boltpay\Test\Unit\Section\CustomerData
  * @coversDefaultClass \Bolt\Boltpay\Section\CustomerData\BoltCart
  */
@@ -44,7 +46,7 @@ class BoltCartTest extends BoltTestCase
      */
     public function setUpInternal()
     {
-        $this->cartHelper = $this->createPartialMock(CartHelper::class, ['calculateCartAndHints']);
+        $this->cartHelper = $this->createMock(CartHelper::class);
         $this->boltCart = (new ObjectManager($this))->getObject(
             BoltCart::class,
             [
@@ -55,7 +57,6 @@ class BoltCartTest extends BoltTestCase
 
     /**
      * @test
-     * @covers ::getSectionData
      */
     public function getSectionData()
     {

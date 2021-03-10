@@ -11,23 +11,23 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
- 
+
 namespace Bolt\Boltpay\Observer\Adminhtml\Sales;
 
-use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Event\Observer;
 use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\Event\Observer;
+use Magento\Framework\Event\ObserverInterface;
 
 class OrderCreateProcessDataObserver implements ObserverInterface
 {
     private $productMetadata;
 
-    public function __construct(
-        ProductMetadataInterface $productMetadata
-    ) {
+    public function __construct(ProductMetadataInterface $productMetadata)
+    {
         $this->productMetadata = $productMetadata;
     }
 
@@ -36,7 +36,7 @@ class OrderCreateProcessDataObserver implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        $magentoVersion = $this->productMetadata->getVersion() ;
+        $magentoVersion = $this->productMetadata->getVersion();
         if (version_compare($magentoVersion, '2.1.4') < 0) {
             $event = $observer->getEvent();
             $orderCreateModel = $event->getData('order_create_model');

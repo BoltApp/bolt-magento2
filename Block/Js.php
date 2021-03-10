@@ -11,21 +11,24 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Block;
 
+use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Exception;
+use Magento\Framework\App\Http\Context as HttpContext;
+use Magento\Framework\Session\SessionManager as CheckoutSession;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
-use Magento\Framework\Session\SessionManager as CheckoutSession;
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\Quote;
-use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Js Block. The block class used in track.phtml block.
@@ -36,7 +39,19 @@ class Js extends Template
 {
     use BlockTrait;
 
-    /** @var CheckoutSession */
+    /**
+     * @var array
+     */
+    private static $blockAlreadyShown;
+
+    /**
+     * @var HttpContext
+     */
+    protected $httpContext;
+
+    /**
+     * @var CheckoutSession
+     */
     private $checkoutSession;
 
     /**
@@ -44,11 +59,10 @@ class Js extends Template
      */
     private $cartHelper;
 
-    /** @var Bugsnag  Bug logging interface */
+    /**
+     * @var Bugsnag
+     */
     private $bugsnag;
-
-    /** @var array */
-    private static $blockAlreadyShown;
 
     /**
      * @var EventsForThirdPartyModules
@@ -56,14 +70,15 @@ class Js extends Template
     private $eventsForThirdPartyModules;
 
     /**
-     * @param Context $context
-     * @param Config $configHelper
-     * @param CheckoutSession $checkoutSession
-     * @param CartHelper $cartHelper
-     * @param Bugsnag $bugsnag
-     * @param Decider $featureSwitches
+     * @param Context                    $context
+     * @param Config                     $configHelper
+     * @param CheckoutSession            $checkoutSession
+     * @param CartHelper                 $cartHelper
+     * @param Bugsnag                    $bugsnag
+     * @param Decider                    $featureSwitches
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
-     * @param array $data
+     * @param HttpContext                $httpContext
+     * @param array                      $data
      */
     public function __construct(
         Context $context,
@@ -73,6 +88,7 @@ class Js extends Template
         Bugsnag $bugsnag,
         Decider $featureSwitches,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
+        HttpContext $httpContext,
         array $data = []
     ) {
         parent::__construct($context, $data);
@@ -82,71 +98,64 @@ class Js extends Template
         $this->bugsnag = $bugsnag;
         $this->featureSwitches = $featureSwitches;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
+        $this->httpContext = $httpContext;
     }
 
     /**
      * Get track js url
      *
-     * @return  string
+     * @return string
      */
     public function getTrackJsUrl()
     {
-        $cdnUrl = $this->configHelper->getCdnUrl();
-
-        return $cdnUrl . '/track.js';
+        return $this->configHelper->getCdnUrl() . '/track.js';
     }
 
     /**
      * Get connect js url
      *
-     * @return  string
+     * @return string
      */
     public function getConnectJsUrl()
     {
-        $cdnUrl = $this->configHelper->getCdnUrl();
-
-        return $cdnUrl . '/connect.js';
+        return $this->configHelper->getCdnUrl() . '/connect.js';
     }
 
     /**
      * Get pay-by-link url
      *
-     * @return  string
+     * @return string
      */
     public function getPayByLinkUrl()
     {
-        $cdnUrl = $this->configHelper->getCdnUrl();
-        return $cdnUrl . '/checkout';
+        return $this->configHelper->getCdnUrl() . '/checkout';
     }
 
     /**
      * Get M2 Plugin setting for always present checkout button
+     *
      * @return boolean
      */
     public function enableAlwaysPresentCheckoutButton()
     {
         $storeId = $this->getStoreId();
-        return $this->configHelper->isAlwaysPresentCheckoutEnabled($storeId)
-            && $this->featureSwitches->isAlwaysPresentCheckoutEnabled();
+        return $this->configHelper->isAlwaysPresentCheckoutEnabled($storeId) && $this->featureSwitches->isAlwaysPresentCheckoutEnabled();
     }
 
     public function getPrefetchShipping()
     {
         $storeId = $this->getStoreId();
-        return $this->configHelper->getPrefetchShipping($storeId)
-            && $this->featureSwitches->isPrefetchShippingEnabled();
+        return $this->configHelper->getPrefetchShipping($storeId) && $this->featureSwitches->isPrefetchShippingEnabled();
     }
 
     /**
      * Get account js url
      *
-     * @return  string
+     * @return string
      */
     public function getAccountJsUrl()
     {
-        $accountUrl = $this->configHelper->getAccountUrl();
-
-        return $accountUrl . '/account.js';
+        return $this->configHelper->getAccountUrl() . '/account.js';
     }
 
     /**
@@ -156,10 +165,9 @@ class Js extends Template
      */
     public function getReplaceSelectors()
     {
-        $isBoltUsedInCheckoutPage = $this->configHelper->isPaymentOnlyCheckoutEnabled()
-            && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION;
-        $subject = ($isBoltUsedInCheckoutPage) ? '' : trim($this->configHelper->getReplaceSelectors());
-
+        $isCheckoutPageAction = $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION;
+        $isBoltUsedInCheckoutPage = $this->configHelper->isPaymentOnlyCheckoutEnabled() && $isCheckoutPageAction;
+        $subject = $isBoltUsedInCheckoutPage ? '' : trim($this->configHelper->getReplaceSelectors());
         return array_filter(explode(',', preg_replace('/\s+/', ' ', $subject)));
     }
 
@@ -171,7 +179,6 @@ class Js extends Template
     public function getTotalsChangeSelectors()
     {
         $subject = trim($this->configHelper->getTotalsChangeSelectors());
-
         return array_filter(explode(',', preg_replace('/\s+/', ' ', $subject)));
     }
 
@@ -222,7 +229,7 @@ class Js extends Template
      */
     public function getAdditionalJavascript()
     {
-        return $this->eventsForThirdPartyModules->runFilter("getAdditionalJS", $this->configHelper->getAdditionalJS());
+        return $this->eventsForThirdPartyModules->runFilter('getAdditionalJS', $this->configHelper->getAdditionalJS());
     }
 
     /**
@@ -232,7 +239,7 @@ class Js extends Template
      */
     public function getAdditionalHtml()
     {
-        return $this->eventsForThirdPartyModules->runFilter("getAdditionalHtml", null);
+        return $this->eventsForThirdPartyModules->runFilter('getAdditionalHtml', null);
     }
 
     /**
@@ -244,7 +251,7 @@ class Js extends Template
     {
         $flag = $this->checkoutSession->getBoltInitiateCheckout();
         $this->checkoutSession->unsBoltInitiateCheckout();
-        return (bool)$flag;
+        return (bool) $flag;
     }
 
     /**
@@ -259,48 +266,39 @@ class Js extends Template
 
     /**
      * Get Javascript page settings.
+     *
      * @return string
      */
     public function getSettings()
     {
         return json_encode([
-            'connect_url' => $this->getConnectJsUrl(),
-            'publishable_key_payment' => $this->configHelper->getPublishableKeyPayment(),
-            'publishable_key_checkout' => $this->configHelper->getPublishableKeyCheckout(),
-            'publishable_key_back_office' => $this->configHelper->getPublishableKeyBackOffice(),
-            'create_order_url' => $this->getUrl(Config::CREATE_ORDER_ACTION),
-            'save_order_url' => $this->getUrl(Config::SAVE_ORDER_ACTION),
-            'get_hints_url' => $this->getUrl(Config::GET_HINTS_ACTION),
-            'selectors' => $this->getReplaceSelectors(),
-            'shipping_prefetch_url' => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
-            'prefetch_shipping' => $this->getPrefetchShipping(),
-            'save_email_url' => $this->getUrl(Config::SAVE_EMAIL_ACTION),
-            'pay_by_link_url' => $this->featureSwitches->isPayByLinkEnabled() ? $this->getPayByLinkUrl() : null,
-            'quote_is_virtual' => $this->getQuoteIsVirtual(),
-            'totals_change_selectors' => $this->getTotalsChangeSelectors(),
-            'additional_checkout_button_class' => $this->getAdditionalCheckoutButtonClass(),
+            'connect_url'                           => $this->getConnectJsUrl(),
+            'publishable_key_payment'               => $this->configHelper->getPublishableKeyPayment(),
+            'publishable_key_checkout'              => $this->configHelper->getPublishableKeyCheckout(),
+            'publishable_key_back_office'           => $this->configHelper->getPublishableKeyBackOffice(),
+            'create_order_url'                      => $this->getUrl(Config::CREATE_ORDER_ACTION),
+            'save_order_url'                        => $this->getUrl(Config::SAVE_ORDER_ACTION),
+            'get_hints_url'                         => $this->getUrl(Config::GET_HINTS_ACTION),
+            'selectors'                             => $this->getReplaceSelectors(),
+            'shipping_prefetch_url'                 => $this->getUrl(Config::SHIPPING_PREFETCH_ACTION),
+            'prefetch_shipping'                     => $this->getPrefetchShipping(),
+            'save_email_url'                        => $this->getUrl(Config::SAVE_EMAIL_ACTION),
+            'pay_by_link_url'                       => $this->featureSwitches->isPayByLinkEnabled() ? $this->getPayByLinkUrl() : null,
+            'quote_is_virtual'                      => $this->getQuoteIsVirtual(),
+            'totals_change_selectors'               => $this->getTotalsChangeSelectors(),
+            'additional_checkout_button_class'      => $this->getAdditionalCheckoutButtonClass(),
             'additional_checkout_button_attributes' => $this->getAdditionalCheckoutButtonAttributes(),
-            'initiate_checkout' => $this->getInitiateCheckout(),
-            'toggle_checkout' => $this->getToggleCheckout(),
-            'is_pre_auth' => $this->getIsPreAuth(),
-            'default_error_message' => $this->getBoltPopupErrorMessage(),
-            'button_css_styles' => $this->getButtonCssStyles(),
-            'is_instant_checkout_button' => $this->getIsInstantCheckoutButton(),
-            'cdn_url' => $this->configHelper->getCdnUrl(),
-            'always_present_checkout' => $this->enableAlwaysPresentCheckoutButton(),
-            'account_url' => $this->getAccountJsUrl(),
-            'order_management_selector' => $this->getOrderManagementSelector(),
+            'initiate_checkout'                     => $this->getInitiateCheckout(),
+            'toggle_checkout'                       => $this->getToggleCheckout(),
+            'is_pre_auth'                           => $this->getIsPreAuth(),
+            'default_error_message'                 => $this->getBoltPopupErrorMessage(),
+            'button_css_styles'                     => $this->getButtonCssStyles(),
+            'is_instant_checkout_button'            => $this->getIsInstantCheckoutButton(),
+            'cdn_url'                               => $this->configHelper->getCdnUrl(),
+            'always_present_checkout'               => $this->enableAlwaysPresentCheckoutButton(),
+            'account_url'                           => $this->getAccountJsUrl(),
+            'order_management_selector'             => $this->getOrderManagementSelector(),
         ]);
-    }
-
-    /**
-     * Get quote is virtual flag, false if no existing quote
-     * @return bool
-     */
-    private function getQuoteIsVirtual()
-    {
-        $quote = $this->getQuoteFromCheckoutSession();
-        return $quote ? $quote->isVirtual() : false;
     }
 
     /**
@@ -308,11 +306,15 @@ class Js extends Template
      */
     public function getBoltPopupErrorMessage()
     {
-        $contact_email = $this->_scopeConfig->getValue('trans_email/ident_support/email') ?:
-            $this->_scopeConfig->getValue('trans_email/ident_general/email') ?: '';
-        return __('Your payment was successful and we\'re now processing your order.' .
+        $contact_email = $this->_scopeConfig->getValue('trans_email/ident_support/email')
+            ?: $this->_scopeConfig->getValue('trans_email/ident_general/email')
+            ?: '';
+        return __(
+            'Your payment was successful and we\'re now processing your order. ' .
             'If you don\'t receive order confirmation email in next 30 minutes, please contact us at ' .
-            $contact_email . '.');
+            $contact_email .
+            '.'
+        );
     }
 
     /**
@@ -321,14 +323,200 @@ class Js extends Template
     public function getTrackCallbacks()
     {
         return [
-            'checkout_start' => $this->getOnCheckoutStart(),
-            'email_enter' => $this->getOnEmailEnter(),
+            'checkout_start'            => $this->getOnCheckoutStart(),
+            'email_enter'               => $this->getOnEmailEnter(),
             'shipping_details_complete' => $this->getOnShippingDetailsComplete(),
             'shipping_options_complete' => $this->getOnShippingOptionsComplete(),
-            'payment_submit' => $this->getOnPaymentSubmit(),
-            'success' => $this->getOnSuccess(),
-            'close' => $this->getOnClose(),
+            'payment_submit'            => $this->getOnPaymentSubmit(),
+            'success'                   => $this->getOnSuccess(),
+            'close'                     => $this->getOnClose(),
         ];
+    }
+
+    /**
+     * Get plugin version
+     *
+     * @return string|false Plugin version string or false if the module is missing or there is a DB connection problem
+     */
+    public function getModuleVersion()
+    {
+        return $this->configHelper->getModuleVersion();
+    }
+
+    /**
+     * Takes a string containing javascript and removes unneeded characters in
+     * order to shrink the code without altering it's functionality.
+     *
+     * @param string $js
+     *
+     * @return string
+     *
+     * @throws Exception
+     */
+    public function minifyJs($js)
+    {
+        if ($this->configHelper->shouldMinifyJavascript()) {
+            try {
+                return \JShrink\Minifier::minify($js);
+            } catch (Exception $e) {
+                $this->bugsnag->notifyException($e);
+                return $js;
+            }
+        } else {
+            return $js;
+        }
+    }
+
+    /**
+     * Return true if we are on cart page or checkout page
+     */
+    public function isOnPageFromWhiteList()
+    {
+        $currentPage = $this->getRequest()->getFullActionName();
+        return in_array($currentPage, $this->getPageWhitelist());
+    }
+
+    /**
+     * Return true if bolt on minicart is enabled
+     */
+    public function isMinicartEnabled()
+    {
+        return $this->configHelper->getMinicartSupport();
+    }
+
+    /**
+     * Return true if we are on product page, and bolt on product page is enabled
+     */
+    public function isBoltProductPage()
+    {
+        if (!$this->configHelper->getProductPageCheckoutFlag()) {
+            return false;
+        }
+        $currentPage = $this->getRequest()->getFullActionName();
+        return $currentPage == 'catalog_product_view';
+    }
+
+    /**
+     * Return CSS styles for bolt button
+     *
+     * @return string
+     */
+    public function getButtonCssStyles()
+    {
+        $style = '';
+
+        $toggleCheckout = $this->configHelper->getToggleCheckout();
+        if ($toggleCheckout && $toggleCheckout->active) {
+            $style .= 'display:none;';
+        }
+
+        $buttonColor = $this->configHelper->getButtonColor();
+        if ($buttonColor) {
+            $style .= '--bolt-primary-action-color:' . $buttonColor . ';';
+        }
+        return $style;
+    }
+
+    /**
+     * Return true if Order Management is enabled
+     *
+     * @return bool
+     */
+    public function isOrderManagementEnabled()
+    {
+        return $this->configHelper->isOrderManagementEnabled() && $this->featureSwitches->isOrderManagementEnabled();
+    }
+
+    /**
+     * Return true if Bolt SSO is enabled
+     *
+     * @return bool
+     */
+    public function isBoltSSOEnabled()
+    {
+        return $this->configHelper->isBoltSSOEnabled() && $this->featureSwitches->isBoltSSOEnabled();
+    }
+
+    /**
+     * Return true if Order Management is enabled
+     *
+     * @return bool
+     */
+    public function getOrderManagementSelector()
+    {
+        if (!$this->configHelper->isOrderManagementEnabled() || !$this->featureSwitches->isOrderManagementEnabled()) {
+            return '';
+        }
+        return $this->configHelper->getOrderManagementSelector();
+    }
+
+    /**
+     * Return false if block wasn't shown yet
+     * Need to provide using block only once
+     *
+     * @return bool
+     *
+     * @param mixed $blockType
+     */
+    public function isBlockAlreadyShown($blockType)
+    {
+        if (isset(static::$blockAlreadyShown[$blockType])) {
+            return true;
+        }
+        static::$blockAlreadyShown[$blockType] = true;
+        return false;
+    }
+
+    /**
+     * @param $jsCode
+     * @param string $argName
+     *
+     * @return string
+     */
+    public function wrapWithCatch($jsCode, $argName = '')
+    {
+        return "
+function($argName) {
+    try {
+        $jsCode
+    } catch (error) {
+        console.error(error);
+    }
+}";
+    }
+
+    /**
+     * Returns configuration value for Bolt Order Caching
+     *
+     * @see \Bolt\Boltpay\Helper\Config::isBoltOrderCachingEnabled
+     *
+     * @param null $storeId
+     *
+     * @return bool
+     */
+    public function isBoltOrderCachingEnabled($storeId = null)
+    {
+        return $this->configHelper->isBoltOrderCachingEnabled($storeId);
+    }
+
+    /**
+     * Get Additional Javascript to invalidate BoltCart.
+     *
+     * @return string
+     */
+    public function getAdditionalInvalidateBoltCartJavascript()
+    {
+        return $this->eventsForThirdPartyModules->runFilter('getAdditionalInvalidateBoltCartJavascript', null);
+    }
+
+    /**
+     * Is customer logged in
+     *
+     * @return bool
+     */
+    public function isLoggedIn(): bool
+    {
+        return $this->httpContext->getValue(\Magento\Customer\Model\Context::CONTEXT_AUTH);
     }
 
     /**
@@ -344,7 +532,7 @@ class Js extends Template
      */
     protected function getOnEmailEnter()
     {
-        return $this->eventsForThirdPartyModules->runFilter("getOnEmailEnter", $this->configHelper->getOnEmailEnter());
+        return $this->eventsForThirdPartyModules->runFilter('getOnEmailEnter', $this->configHelper->getOnEmailEnter());
     }
 
     /**
@@ -388,6 +576,25 @@ class Js extends Template
     }
 
     /**
+     * @return Quote
+     */
+    protected function getQuoteFromCheckoutSession()
+    {
+        return $this->checkoutSession->getQuote();
+    }
+
+    /**
+     * Get quote is virtual flag, false if no existing quote
+     *
+     * @return bool
+     */
+    private function getQuoteIsVirtual()
+    {
+        $quote = $this->getQuoteFromCheckoutSession();
+        return $quote ? $quote->isVirtual() : false;
+    }
+
+    /**
      * Get Toggle Checkout configuration
      *
      * @return mixed
@@ -407,171 +614,5 @@ class Js extends Template
     {
         $storeId = $this->getStoreId();
         return $this->configHelper->getIsPreAuth($storeId);
-    }
-
-    /**
-     * @return Quote
-     */
-    protected function getQuoteFromCheckoutSession()
-    {
-        return $this->checkoutSession->getQuote();
-    }
-
-    /**
-     * Get plugin version
-     *
-     * @return string|false Plugin version string or false if the module is missing or there is a DB connection problem
-     */
-    public function getModuleVersion()
-    {
-        return $this->configHelper->getModuleVersion();
-    }
-
-    /**
-     * Takes a string containing javascript and removes unneeded characters in
-     * order to shrink the code without altering it's functionality.
-     *
-     * @param string $js
-     * @return string
-     * @throws \Exception
-     */
-    public function minifyJs($js)
-    {
-        if ($this->configHelper->shouldMinifyJavascript()) {
-            try {
-                return \JShrink\Minifier::minify($js);
-            } catch (\Exception $e) {
-                $this->bugsnag->notifyException($e);
-                return $js;
-            }
-        } else {
-            return $js;
-        }
-    }
-
-    /**
-     * Return true if we are on cart page or checkout page
-     */
-    public function isOnPageFromWhiteList()
-    {
-        $currentPage = $this->getRequest()->getFullActionName();
-        return in_array($currentPage, $this->getPageWhitelist());
-    }
-
-    /**
-     * Return true if bolt on minicart is enabled
-     */
-    public function isMinicartEnabled()
-    {
-        return $this->configHelper->getMinicartSupport();
-    }
-
-    /**
-     * Return true if we are on product page, and bolt on product page is enabled
-     */
-    public function isBoltProductPage()
-    {
-        if (!$this->configHelper->getProductPageCheckoutFlag()) {
-            return false;
-        }
-        $currentPage = $this->getRequest()->getFullActionName();
-        return $currentPage == "catalog_product_view";
-    }
-
-    /**
-     * Return CSS styles for bolt button
-     * @return string
-     */
-    public function getButtonCssStyles()
-    {
-        $style = "";
-
-        $toggleCheckout = $this->configHelper->getToggleCheckout();
-        if ($toggleCheckout && $toggleCheckout->active) {
-            $style .= 'display:none;';
-        }
-
-        $buttonColor = $this->configHelper->getButtonColor();
-        if ($buttonColor) {
-            $style .= '--bolt-primary-action-color:' . $buttonColor .';';
-        }
-        return $style;
-    }
-
-    /**
-     * Return true if Order Management is enabled
-     * @return bool
-     */
-    public function isOrderManagementEnabled()
-    {
-        return $this->configHelper->isOrderManagementEnabled() &&
-            $this->featureSwitches->isOrderManagementEnabled();
-    }
-
-    /**
-     * Return true if Order Management is enabled
-     * @return bool
-     */
-    public function getOrderManagementSelector()
-    {
-        if (!$this->configHelper->isOrderManagementEnabled() || !$this->featureSwitches->isOrderManagementEnabled()) {
-            return '';
-        }
-        return $this->configHelper->getOrderManagementSelector();
-    }
-
-    /**
-     * Return false if block wasn't shown yet
-     * Need to provide using block only once
-     *
-     * @return bool
-     */
-    public function isBlockAlreadyShown($blockType)
-    {
-        if (isset(static::$blockAlreadyShown[$blockType])) {
-            return true;
-        }
-        static::$blockAlreadyShown[$blockType] = true;
-        return false;
-    }
-
-    /**
-     * @param $jsCode
-     * @param string $argName
-     * @return string
-     */
-    public function wrapWithCatch($jsCode, $argName = '')
-    {
-        return "
-function($argName) {
-    try {
-        $jsCode
-    } catch (error) {
-        console.error(error);
-    }
-}";
-    }
-
-    /**
-     * Returns configuration value for Bolt Order Caching
-     * @see \Bolt\Boltpay\Helper\Config::isBoltOrderCachingEnabled
-     *
-     * @param null $storeId
-     *
-     * @return bool
-     */
-    public function isBoltOrderCachingEnabled($storeId = null)
-    {
-        return $this->configHelper->isBoltOrderCachingEnabled($storeId);
-    }
-
-    /**
-     * Get Additional Javascript to invalidate BoltCart.
-     *
-     * @return string
-     */
-    public function getAdditionalInvalidateBoltCartJavascript()
-    {
-        return $this->eventsForThirdPartyModules->runFilter("getAdditionalInvalidateBoltCartJavascript", null);
     }
 }

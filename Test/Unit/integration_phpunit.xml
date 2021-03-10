@@ -40,6 +40,8 @@
                 <directory>../../../lib/internal/*/*/Test</directory>
                 <directory>../../../lib/internal/*/*/*/Test</directory>
                 <directory>../../../setup/src/*/*/Test</directory>
+                <file>../../../app/code/Bolt/Boltpay/registration.php</file>
+                <directory>../../../app/code/Bolt/Boltpay/Helper/JWT</directory>
             </exclude>
         </whitelist>
     </filter>

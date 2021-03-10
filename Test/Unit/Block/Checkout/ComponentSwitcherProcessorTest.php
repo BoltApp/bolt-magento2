@@ -11,15 +11,16 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
 namespace Bolt\Boltpay\Test\Unit\Block\Checkout;
 
+use Bolt\Boltpay\Block\Checkout\ComponentSwitcherProcessor;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Bolt\Boltpay\Block\Checkout\ComponentSwitcherProcessor;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Block\Checkout\ComponentSwitcherProcessor
@@ -59,8 +60,7 @@ class ComponentSwitcherProcessorTest extends BoltTestCase
         $jsLayout = $this->componentSwitcherProcessor->process([]);
 
         $this->assertFalse(
-            $jsLayout['components']['checkout']['children']['steps']['children']['billing-step']['children']['payment']
-            ['children']['renders']['children']['boltpay-payments']['config']['componentDisabled']
+            $jsLayout['components']['checkout']['children']['steps']['children']['billing-step']['children']['payment']['children']['renders']['children']['boltpay-payments']['config']['componentDisabled']
         );
     }
 }

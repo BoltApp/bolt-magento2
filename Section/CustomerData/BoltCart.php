@@ -11,13 +11,15 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
+ *
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
+
 namespace Bolt\Boltpay\Section\CustomerData;
 
-use Magento\Customer\CustomerData\SectionSourceInterface;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Magento\Customer\CustomerData\SectionSourceInterface;
 
 class BoltCart implements SectionSourceInterface
 {
@@ -26,9 +28,8 @@ class BoltCart implements SectionSourceInterface
      */
     private $cartHelper;
 
-    public function __construct(
-        CartHelper $cartHelper
-    ) {
+    public function __construct(CartHelper $cartHelper)
+    {
         $this->cartHelper = $cartHelper;
     }
 
