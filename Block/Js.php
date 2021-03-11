@@ -42,7 +42,7 @@ class Js extends Template
     /**
      * @var array
      */
-    private static $blockAlreadyShown;
+    protected static $blockAlreadyShown;
 
     /**
      * @var HttpContext
