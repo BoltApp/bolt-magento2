@@ -995,7 +995,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 params = params.join('&');
 
                 hintBarrier = boltBarrier();
-                cartBarrier = boltBarrier();
                 BoltState.boltCart = new Promise(function (resolve, reject) {
 
                     createRequest = true;
@@ -1036,8 +1035,8 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
                             hints = deepMergeObjects(hints, data.hints);
                             hints.prefill = prefill;
-
                             //////////////////////////
+
                             resolve(data.cart);
                             hintBarrier.resolve(hints);
 
