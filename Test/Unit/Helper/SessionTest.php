@@ -166,6 +166,8 @@ class SessionTest extends BoltTestCase
         $this->eventsForThirdPartyModules = $this->createMock(
             EventsForThirdPartyModules::class
         );
+        
+        $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
 
         $this->configHelper = $this->createPartialMock(
             ConfigHelper::class,
