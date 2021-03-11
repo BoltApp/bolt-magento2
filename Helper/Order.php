@@ -343,8 +343,8 @@ class Order extends AbstractHelper
         WebhookLogCollectionFactory $webhookLogCollectionFactory,
         WebhookLogFactory $webhookLogFactory,
         Decider $featureSwitches,
-        CheckboxesHandler $checkboxesHandler,   
-        CustomFieldsHandler $customFieldsHandler,    
+        CheckboxesHandler $checkboxesHandler,
+        CustomFieldsHandler $customFieldsHandler,
         CustomerCreditCardFactory $customerCreditCardFactory,
         CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory,
         CreditmemoFactory $creditmemoFactory,
@@ -784,7 +784,7 @@ class Order extends AbstractHelper
     private function deleteRedundantQuotes($quote)
     {
         $this->eventsForThirdPartyModules->dispatchEvent("beforeOrderDeleteRedundantQuotes", $quote);
-        
+
         $connection = $this->resourceConnection->getConnection();
 
         // get table name with prefix
@@ -965,6 +965,9 @@ class Order extends AbstractHelper
         }
 
         if (Hook::$fromBolt) {
+            if ($hookType === Hook::HT_CREDIT && $this->isCreditHookIgnored($transaction, $order)) {
+                return [$parentQuote, $order];
+            }
             // if called from hook update order payment transactions
             $this->updateOrderPayment($order, $transaction, null, $hookType, $hookPayload);
             // Check for total amount mismatch between magento and bolt order.
@@ -972,6 +975,23 @@ class Order extends AbstractHelper
         }
 
         return [$parentQuote, $order];
+    }
+
+
+    /**
+     * @param $transaction
+     * @param $order
+     * @return bool
+     * @throws \Exception
+     */
+    public function isCreditHookIgnored($transaction, $order)
+    {
+        $currencyCode = $order->getOrderCurrencyCode();
+        $refundAmount = $transaction->amount->amount;
+        $boltTotal = $transaction->order->cart->total_amount->amount;
+        $magentoTotal = CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode);
+
+        return $boltTotal - $refundAmount == $magentoTotal;
     }
 
     /**

@@ -5533,7 +5533,6 @@ class OrderTest extends BoltTestCase
      */
     public function cancelFailedPaymentOrder_ifOrderStateIsNotPendingPayment_throwsBoltException()
     {
-        
         $order = TestUtils::createDumpyOrder(['state' => OrderModel::STATE_PROCESSING]);
         $incrementId = $order->getIncrementId();
         $orderHelper = Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class);
@@ -5549,5 +5548,46 @@ class OrderTest extends BoltTestCase
         $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
         $orderHelper->cancelFailedPaymentOrder($incrementId, self::QUOTE_ID);
         TestUtils::cleanupSharedFixtures([$order]);
+    }
+
+    /**
+     * @test
+     * @covers ::isCreditHookIgnored
+     * @dataProvider isCreditHookIgnoredProvider
+     * @param $refundAmount
+     * @param $totalAmount
+     * @param $expected
+     *
+     * @throws LocalizedException
+     */
+    public function isCreditHookIgnored($refundAmount, $totalAmount, $expected)
+    {
+        $orderHelper = Bootstrap::getObjectManager()->create(OrderHelper::class);
+        $order = TestUtils::createDumpyOrder(
+            [
+                'grand_total' => 100,
+                'increment_id' => '1000002'
+            ]
+        );
+
+        $transaction = new stdClass();
+        $transaction->amount = new \stdClass();
+        $transaction->amount->amount = $refundAmount;
+
+        $transaction->order = new \stdClass();
+        $transaction->order->cart = new \stdClass();
+        $transaction->order->cart->total_amount = new \stdClass();
+        $transaction->order->cart->total_amount->amount = $totalAmount;
+
+        $this->assertEquals($expected , $orderHelper->isCreditHookIgnored($transaction, $order));
+        TestUtils::cleanupSharedFixtures([$order]);
+    }
+
+    public function isCreditHookIgnoredProvider()
+    {
+        return [
+            ['refundAmount' => 20000, 'totalAmount' => 30000, true],
+            ['refundAmount' => 20000, 'totalAmount' => 30055, false],
+        ];
     }
 }
