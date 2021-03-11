@@ -1036,10 +1036,11 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
                             hints = deepMergeObjects(hints, data.hints);
                             hints.prefill = prefill;
+
                             //////////////////////////
                             resolve(data.cart);
                             hintBarrier.resolve(hints);
-                            console.log(data.cart);
+
                             // open the checkout if auto-open flag is set
                             // one time only on page load
                             if (BoltState.initiateCheckout && allowAutoOpen) {
@@ -1197,7 +1198,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         }
         /////////////////////////////////////////////////////
         if (isPaymentOnlyCheckout()) {
-            console.log('payment only');
             /////////////////////////////////////////////////////
             // Call Bolt order creation Magento endpoint on
             // customer billing address change on payment only page,
