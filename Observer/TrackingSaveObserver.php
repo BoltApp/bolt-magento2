@@ -97,13 +97,8 @@ class TrackingSaveObserver implements ObserverInterface
             $startTime = $this->metricsClient->getCurrentTime();
             $tracking = $observer->getEvent()->getTrack();
 
-            $origData = $tracking->getOrigData();
             // If we update track (don't create) and carrier and number are the same do nothing
-            if (
-                $origData &&
-                $origData['track_number'] == $tracking->getTrackNumber() &&
-                $origData['carrier_code'] == $tracking->getCarrierCode()
-            ) {
+            if (!$this->isTrackNew($tracking)) {
                 $this->metricsClient->processMetric(
                     'tracking_creation.success',
                     1,
@@ -224,6 +219,29 @@ class TrackingSaveObserver implements ObserverInterface
                 $startTime
             );
         }
+    }
+
+    /**
+     * @param Track $track
+     *
+     * @return bool
+     */
+    private function isTrackNew($track)
+    {
+        $version = $this->configHelper->getStoreVersion();
+        // we can not know if track new or not for magento < 2.3.1
+        if (version_compare($version, '2.3.1', '<')) {
+            return true;
+        }
+        $origData = $track->getOrigData();
+        if (
+            $origData &&
+            $origData['track_number'] == $track->getTrackNumber() &&
+            $origData['carrier_code'] == $track->getCarrierCode()
+        ) {
+            return false;
+        }
+        return true;
     }
 
     /**
