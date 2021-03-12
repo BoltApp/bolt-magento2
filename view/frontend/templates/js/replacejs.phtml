@@ -346,9 +346,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
          * return string
          */
         var getCheckoutType = function() {
-            return trim(location.pathname, '/') === 'checkout'
-            && (settings.quote_is_virtual || location.hash === '#payment' || location.hash === '#shipping')
-                ? 'payment' : 'checkout';
+            return trim(location.pathname, '/') === 'checkout' ? 'payment' : 'checkout';
         };
 
         /**
@@ -406,9 +404,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             });
         };
 
-        var isPaymentOnlyCheckout = function() {
-            return !(trim(location.pathname, '/') === 'checkout/cart') && trim(location.pathname, '/') === 'checkout'
-        }
         /**
          * Inject connect.js
          * return void
@@ -1196,7 +1191,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             BoltState.codeIsLoaded.resolve();
         }
         /////////////////////////////////////////////////////
-        if (isPaymentOnlyCheckout()) {
+        if (getCheckoutType() === 'payment') {
             /////////////////////////////////////////////////////
             // Call Bolt order creation Magento endpoint on
             // customer billing address change on payment only page,
@@ -1205,7 +1200,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             var billing_address_value;
             onAttributesChange(billing_address_selector, function(element) {
                 var address = element.value;
-                if(address === 'null' || address === '') return;
+                if (address === 'null' || address === '') return;
 
                 if (address !== billing_address_value) {
                     billing_address_value = address;
