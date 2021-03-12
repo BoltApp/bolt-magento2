@@ -530,7 +530,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
             close: function () {
                 popUpOpen = false;
-                customerData.reload(['boltcart'], true);
+                customerData.reload(['cart'], true);
                 trackCallbacks.onClose();
 
                 if (callbacks.success_url) {
