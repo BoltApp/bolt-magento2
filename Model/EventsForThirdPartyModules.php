@@ -35,6 +35,7 @@ use Bolt\Boltpay\ThirdPartyModules\Amasty\StoreCredit as Amasty_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\Magento\GiftCardAccount as Magento_GiftCardAccount;
 use Bolt\Boltpay\ThirdPartyModules\Magento\SalesRuleStaging as Magento_SalesRuleStaging;
 use Bolt\Boltpay\ThirdPartyModules\Zonos\DutyTax as Zonos_DutyTax;
+use Bolt\Boltpay\ThirdPartyModules\Mageside\CustomShippingPrice as Mageside_CustomShippingPrice;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -59,6 +60,11 @@ class EventsForThirdPartyModules
                 [
                     "module" => "IDme_GroupVerification",
                     "boltClass" => IDme_GroupVerification::class,
+                ],
+                [
+                    "module" => "Mageside_CustomShippingPrice",
+                    "checkClasses" => ["Mageside\CustomShippingPrice\Model\Carrier\CustomShipping"],
+                    "boltClass" => Mageside_CustomShippingPrice::class,
                 ],
             ],
         ],
@@ -713,6 +719,15 @@ class EventsForThirdPartyModules
                     "boltClass"   => Aheadworks_RewardPoints::class,
                 ],
             ]
+        ],
+        "saveSessionData" => [
+            "listeners" => [
+                [
+                    "module" => "Mageside_CustomShippingPrice",
+                    "checkClasses" => ["Mageside\CustomShippingPrice\Model\Carrier\CustomShipping"],
+                    "boltClass" => Mageside_CustomShippingPrice::class,
+                ],
+            ],
         ]
     ];
 
