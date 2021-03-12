@@ -346,9 +346,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
          * return string
          */
         var getCheckoutType = function() {
-            return trim(location.pathname, '/') === 'checkout'
-            && (settings.quote_is_virtual || location.hash === '#payment' || location.hash === '#shipping')
-                ? 'payment' : 'checkout';
+            return trim(location.pathname, '/') === 'checkout' ? 'payment' : 'checkout';
         };
 
         /**
@@ -992,7 +990,6 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                 params = params.join('&');
 
                 hintBarrier = boltBarrier();
-
                 BoltState.boltCart = new Promise(function (resolve, reject) {
 
                     createRequest = true;
@@ -1051,8 +1048,8 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                         .always(function() {
                             createRequest = false;
                         })
-                        boltCheckoutConfigure(BoltState.boltCart, hintBarrier.promise, callbacks);
                 });
+                boltCheckoutConfigure(BoltState.boltCart, hintBarrier.promise, callbacks);
         }
 
         var boltCheckoutSetup = function (el, dataChanged) {
@@ -1194,44 +1191,40 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
             BoltState.codeIsLoaded.resolve();
         }
         /////////////////////////////////////////////////////
+        if (getCheckoutType() === 'payment') {
+            /////////////////////////////////////////////////////
+            // Call Bolt order creation Magento endpoint on
+            // customer billing address change on payment only page,
+            // storing the live page data in Bolt cart.
+            /////////////////////////////////////////////////////
+            var billing_address_value;
+            onAttributesChange(billing_address_selector, function(element) {
+                var address = element.value;
+                if (address === 'null' || address === '') return;
 
-        if (getCheckoutType()=="payment") {
-        /////////////////////////////////////////////////////
-        // Call Bolt order creation Magento endpoint on
-        // customer billing address change on payment only page,
-        // storing the live page data in Bolt cart.
-        /////////////////////////////////////////////////////
-        var billing_address_value;
-        onAttributesChange(billing_address_selector, function(element) {
+                if (address !== billing_address_value) {
+                    billing_address_value = address;
+                    boltCheckoutSetup();
+                }
+            });
+            /////////////////////////////////////////////////////
 
-            var checkout_type = getCheckoutType();
-            var address = element.value;
-            if (checkout_type !== 'payment' || address === 'null') return;
+            /////////////////////////////////////////////////////
+            // Call Bolt order creation Magento endpoint on
+            // customer email change on payment only page, storing
+            // the live page data in Bolt cart.
+            /////////////////////////////////////////////////////
+            var customer_email_value;
+            onAttributesChange(customer_email_selector, function(element) {
 
-            if (address !== billing_address_value) {
-                billing_address_value = address;
-                boltCheckoutSetup();
-            }
-        });
-        /////////////////////////////////////////////////////
+                var email = element.value.trim();
+                if (email === "") return;
 
-        /////////////////////////////////////////////////////
-        // Call Bolt order creation Magento endpoint on
-        // customer email change on payment only page, storing
-        // the live page data in Bolt cart.
-        /////////////////////////////////////////////////////
-        var customer_email_value;
-        onAttributesChange(customer_email_selector, function(element) {
-
-            var checkout_type = getCheckoutType();
-            var email = element.value.trim();
-            if (checkout_type !== 'payment'|| email === "") return;
-
-            if (email !== customer_email_value) {
-                customer_email_value = email;
-                boltCheckoutSetup();
-            }
-        });
+                if (email !== customer_email_value) {
+                    customer_email_value = email;
+                    boltCheckoutSetup();
+                }
+            });
         }
 
         ///////////////////////////////////////////////////////////
