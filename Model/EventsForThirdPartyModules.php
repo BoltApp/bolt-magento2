@@ -31,6 +31,7 @@ use Bolt\Boltpay\ThirdPartyModules\Aheadworks\StoreCredit as Aheadworks_StoreCre
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\GiftCard as Mageplaza_GiftCard;
 use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Rewards as Mirasvit_Rewards;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\StoreCredit as Amasty_StoreCredit;
+use Bolt\Boltpay\ThirdPartyModules\MageWorld\Affiliate as MW_Affiliate;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -55,6 +56,11 @@ class EventsForThirdPartyModules
                 [
                     "module" => "IDme_GroupVerification",
                     "boltClass" => IDme_GroupVerification::class,
+                ],
+                [
+                    "module" => "MW_Affiliate",
+                    "checkClasses" => ["MW\Affiliate\Helper\Data"],
+                    "boltClass" => MW_Affiliate::class,
                 ],
             ],
         ],
@@ -183,6 +189,15 @@ class EventsForThirdPartyModules
                                       "Mirasvit\Rewards\Helper\Checkout",
                                       "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"],
                     "boltClass" => Mirasvit_Rewards::class,
+                ],
+            ]
+        ],
+        'beforeSaveUpdateOrder' => [
+            "listeners" => [
+                [
+                    "module" => "MW_Affiliate",
+                    "checkClasses" => ["MW\Affiliate\Helper\Data"],
+                    "boltClass" => MW_Affiliate::class,
                 ],
             ]
         ],
@@ -540,6 +555,24 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        "saveSessionData" => [
+            "listeners" => [
+                [
+                    "module" => "MW_Affiliate",
+                    "checkClasses" => ["MW\Affiliate\Helper\Data"],
+                    "boltClass" => MW_Affiliate::class,
+                ],
+            ],
+        ],
+        "getCartCacheIdentifier" => [
+            "listeners" => [
+                [
+                    "module" => "MW_Affiliate",
+                    "checkClasses" => ["MW\Affiliate\Helper\Data"],
+                    "boltClass" => MW_Affiliate::class,
+                ],
+            ],
+        ]
     ];
 
     /**

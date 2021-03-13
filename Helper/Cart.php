@@ -635,6 +635,7 @@ class Cart extends AbstractHelper
             $identifier .= $this->convertCustomAddressFieldsToCacheIdentifier($immutableQuote);
             $identifier .= $this->convertExternalFieldsToCacheIdentifier($immutableQuote);
         }
+        $identifier = $this->eventsForThirdPartyModules->runFilter('getCartCacheIdentifier', $identifier, $immutableQuote, $cart);
 
         return hash('md5', $identifier);
     }

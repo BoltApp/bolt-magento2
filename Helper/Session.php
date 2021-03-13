@@ -128,6 +128,7 @@ class Session extends AbstractHelper
             "sessionType" => $checkoutSession instanceof \Magento\Checkout\Model\Session ? "frontend" : "admin",
             "sessionID"   => $checkoutSession->getSessionId()
         ];
+        $sessionData = $this->eventsForThirdPartyModules->runFilter('saveSessionData', $sessionData, $quoteId, $checkoutSession);
         $this->cache->save($this->serialize->serialize($sessionData), $cacheIdentifier, [], 86400);
     }
 
