@@ -383,17 +383,57 @@ class Js extends Template
     {
         return $this->configHelper->getMinicartSupport();
     }
+    
+    /**
+     * Return true if bolt product page checkout is enabled
+     */
+    public function isBoltPPCEnabled()
+    {
+        return $this->configHelper->getProductPageCheckoutFlag();
+    }
 
     /**
      * Return true if we are on product page, and bolt on product page is enabled
      */
     public function isBoltProductPage()
     {
-        if (!$this->configHelper->getProductPageCheckoutFlag()) {
-            return false;
-        }
+        return $this->isBoltPPCEnabled() && $this->isOnProductPage();
+    }
+    
+    /**
+     * Return true if customer is on cart page
+     */
+    public function isOnCartPage()
+    {
+        $currentPage = $this->getRequest()->getFullActionName();
+        return $currentPage == 'checkout_cart_index';
+    }
+    
+    /**
+     * Return true if customer is on product page
+     */
+    public function isOnProductPage()
+    {
         $currentPage = $this->getRequest()->getFullActionName();
         return $currentPage == 'catalog_product_view';
+    }
+    
+    public function isLoadConnectJsEnabled()
+    {
+$writer = new \Zend\Log\Writer\Stream(BP . '/var/log/boltdebug.log');
+$logger = new \Zend\Log\Logger();
+$logger->addWriter($writer);
+$logger->info(var_export($this->featureSwitches->isLoadConnectJsOnSpecificPage(), true));
+$logger->info('isOnCartPage  '.var_export($this->isOnCartPage(), true));
+$logger->info('isBoltProductPage  '.var_export($this->isBoltProductPage(), true));
+        if ($this->featureSwitches->isLoadConnectJsOnSpecificPage()) {
+            if (!$this->isOnCartPage()
+                && !($this->isOnProductPage() && ($this->isBoltPPCEnabled() || ($this->isMinicartEnabled() && !$this->isCartEmpty())))) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     /**
@@ -517,6 +557,21 @@ function($argName) {
     public function isLoggedIn(): bool
     {
         return $this->httpContext->getValue(\Magento\Customer\Model\Context::CONTEXT_AUTH);
+    }
+    
+    /**
+     * Check if cart is empty
+     *
+     * @return bool
+     */
+    public function isCartEmpty()
+    {
+        $quote = $this->getQuoteFromCheckoutSession();
+        if (empty($quote) || $quote->getItemsCount() === 0) {
+            return true;
+        }
+        
+        return false;
     }
 
     /**

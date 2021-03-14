@@ -30,6 +30,9 @@ if ($block->shouldDisableBoltCheckout()) { return;
 //product page checkout has its own JS script
 if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 }
+
+$connectJsUrl = $block->getConnectJsUrl();
+$isLoadConnectJsEnabled = $block->isLoadConnectJsEnabled();
 ?>
 
 <script type="text/javascript">
@@ -1400,14 +1403,28 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
         // When we know that cart will be updated soon we call configure with promises
         // to make sure bolt checkout with outdated cart isn't available for user
         $(document).on("ajax:addToCart", function () {
-            expectCartRendering = true;
-            // If merchant shows popup after add to cart
-            // delay 0 allows to render bolt button before we call configure
-            setTimeout(callConfigureWithPromises, 0);
-            // set flag to animate always present button when we catch cart updating
-            if (boltConfig.always_present_checkout) {
-                newItemAddedToCart = true;
-            }
+            <?php
+            if ($isLoadConnectJsEnabled) {
+            ?>
+            $.getScript("<?= /* @noEscape */ $connectJsUrl; ?>", function(data, textStatus, jqxhr) {
+            <?php
+            }            
+            ?>
+                expectCartRendering = true;
+                // If merchant shows popup after add to cart
+                // delay 0 allows to render bolt button before we call configure
+                setTimeout(callConfigureWithPromises, 0);
+                // set flag to animate always present button when we catch cart updating
+                if (boltConfig.always_present_checkout) {
+                    newItemAddedToCart = true;
+                }
+            <?php
+            if ($isLoadConnectJsEnabled) {
+            ?>
+            });
+            <?php
+            }            
+            ?>
         });
         $(document).on("ajax:addToCart:error", function () {
             invalidateBoltCart();
