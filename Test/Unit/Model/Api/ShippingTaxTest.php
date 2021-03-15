@@ -17,28 +17,29 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
+use Bolt\Boltpay\Model\Api\Shipping;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Store\Model\Store;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
-use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Quote\Model\Quote;
-use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
-use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\MetricsClient;
-use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\Webapi\Rest\Response;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Magento\Framework\Webapi\Rest\Request;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
-use Bolt\Boltpay\Helper\Session as SessionHelper;
+
 use Bolt\Boltpay\Exception\BoltException;
-use Bolt\Boltpay\Helper\Discount as DiscountHelper;
-use Bolt\Boltpay\Model\Api\ShippingTaxContext;
-use PHPUnit\Framework\MockObject\MockObject;
+use Magento\TestFramework\ObjectManager;
 use Bolt\Boltpay\Model\Api\ShippingTax;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\TestFramework\Helper\Bootstrap;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\Encryption\EncryptorInterface;
+use Bolt\Boltpay\Model\ResponseFactory as BoltResponseFactory;
+use Bolt\Boltpay\Model\RequestFactory as BoltRequestFactory;
+use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Bolt\Boltpay\Model\ErrorResponse;
 
 /**
  * Class ShippingTaxTest
@@ -54,210 +55,139 @@ class ShippingTaxTest extends BoltTestCase
     const STORE_ID = 1;
     const CURRENCY_CODE = 'USD';
     const EMAIL = 'integration@bolt.com';
+    const TRACE_ID_HEADER = 'KdekiEGku3j1mU21Mnsx5g==';
+    const SECRET = '42425f51e0614482e17b6e913d74788eedb082e2e6f8067330b98ffa99adc809';
+    const APIKEY = '3c2d5104e7f9d99b66e1c9c550f6566677bf81de0d6f25e121fdb57e47c2eafc';
 
     /**
-     * @var HookHelper|MockObject
-     */
-    private $hookHelper;
-
-    /**
-     * @var CartHelper|MockObject
-     */
-    private $cartHelper;
-
-    /**
-     * @var LogHelper|MockObject
-     */
-    private $logHelper;
-
-    /**
-     * @var ConfigHelper|MockObject
-     */
-    private $configHelper;
-
-    /**
-     * @var SessionHelper|MockObject
-     */
-    private $sessionHelper;
-
-    /**
-     * @var DiscountHelper|MockObject
-     */
-    private $discountHelper;
-
-    /**
-     * @var Bugsnag|MockObject
-     */
-    private $bugsnag;
-
-    /**
-     * @var MetricsClient|MockObject
-     */
-    private $metricsClient;
-
-    /**
-     * @var BoltErrorResponse|MockObject
-     */
-    private $errorResponse;
-
-    /**
-     * @var RegionModel|MockObject
-     */
-    private $regionModel;
-
-    /**
-     * @var Response|MockObject
+     * @var Response
      */
     private $response;
 
     /**
-     * @var ShippingTaxContext|MockObject
+     * @var ObjectManager
      */
-    private $shippingTaxContext;
+    private $objectManager;
+
+    private $websiteId;
 
     /**
-     * @var ShippingOptionInterfaceFactory|MockObject
+     * @var ScopeInterface
      */
-    private $shippingOptionFactory;
+    private $storeId;
 
     /**
-     * @var Store|MockObject
+     * @var Request
      */
-    private $store;
+    private $request;
 
     /**
-     * @var ShippingTax|MockObject
+     * @var ShippingTax
      */
-    private $currentMock;
+    private $shippingTax;
 
     protected function setUpInternal()
     {
-        $this->hookHelper = $this->createMock(HookHelper::class);
-        $this->cartHelper = $this->createMock(CartHelper::class);
-        $this->logHelper = $this->createMock(LogHelper::class);
-        $this->configHelper = $this->createMock(ConfigHelper::class);
-        $this->sessionHelper = $this->createMock(SessionHelper::class);
-        $this->discountHelper = $this->createMock(DiscountHelper::class);
-        $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->metricsClient = $this->createMock(MetricsClient::class);
-        $this->errorResponse = $this->createMock(BoltErrorResponse::class);
-        $this->regionModel = $this->createMock(RegionModel::class);
-        $this->response = $this->createMock(Response::class);
-        $this->shippingOptionFactory = $this->createMock(ShippingOptionInterfaceFactory::class);
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->shippingTax = $this->objectManager->create(Shipping::class);
 
-        $this->shippingTaxContext = $this->getMockBuilder(ShippingTaxContext::class)
-            ->setConstructorArgs(
-                [
-                    $this->hookHelper,
-                    $this->cartHelper,
-                    $this->logHelper,
-                    $this->configHelper,
-                    $this->sessionHelper,
-                    $this->discountHelper,
-                    $this->bugsnag,
-                    $this->metricsClient,
-                    $this->errorResponse,
-                    $this->regionModel,
-                    $this->response,
-                    $this->shippingOptionFactory
-                ]
-            )
-            ->enableProxyingToOriginalMethods()
-            ->getMock();
+        $this->resetRequest();
+        $this->resetResponse();
 
-        $this->store = $this->createMock(Store::class);
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $this->storeId = $store->getStore()->getId();
+
+        $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
+        $this->websiteId = $websiteRepository->get('base')->getId();
+
+        $encryptor = $this->objectManager->get(EncryptorInterface::class);
+        $secret = $encryptor->encrypt(self::SECRET);
+        $apikey = $encryptor->encrypt(self::APIKEY);
+
+        $configData = [
+            [
+                'path' => 'payment/boltpay/signing_secret',
+                'value' => $secret,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => 'payment/boltpay/api_key',
+                'value' => $apikey,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => 'payment/boltpay/active',
+                'value' => 1,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+        ];
+        TestUtils::setupBoltConfig($configData);
     }
 
-    private function initCurrentMock(
-        $mockedMethods = [],
-        $callOriginalConstructor = true,
-        $callOriginalClone = true,
-        $callAutoload = true,
-        $cloneArguments = false
-    ) {
-        $this->currentMock = $this->getMockForAbstractClass(
-            ShippingTax::class,
-            [$this->shippingTaxContext],
-            '',
-            $callOriginalConstructor,
-            $callOriginalClone,
-            $callAutoload,
-            $mockedMethods,
-            $cloneArguments
-        );
+    protected function tearDownInternal()
+    {
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+
+        $this->resetRequest();
+        $this->resetResponse();
+    }
+
+    private function resetRequest()
+    {
+        if (!$this->request) {
+            $this->request = $this->objectManager->get(Request::class);
+        }
+
+        $this->objectManager->removeSharedInstance(Request::class);
+        $this->request = null;
+
+    }
+
+    private function resetResponse()
+    {
+        if (!$this->response) {
+            $this->response = $this->objectManager->get(Response::class);
+        }
+
+        $this->objectManager->removeSharedInstance(Response::class);
+        $this->response = null;
     }
 
     /**
+     * Request getter
      *
-     * @test
-     * that sets internal properties
+     * @param array $bodyParams
      *
-     * @covers ::__construct
+     * @return \Magento\Framework\App\RequestInterface
      */
-    public function constructor_always_setsInternalProperties()
+    public function createRequest($bodyParams)
     {
-        $this->initCurrentMock();
+        if (!$this->request) {
+            $this->request = $this->objectManager->get(Request::class);
+        }
 
-        static::assertAttributeInstanceOf(
-            HookHelper::class,
-            'hookHelper',
-            $this->currentMock
-        );
-        static::assertAttributeInstanceOf(
-            CartHelper::class,
-            'cartHelper',
-            $this->currentMock
-        );
-        static::assertAttributeInstanceOf(
-            LogHelper::class,
-            'logHelper',
-            $this->currentMock
-        );
-        static::assertAttributeInstanceOf(
-            ConfigHelper::class,
-            'configHelper',
-            $this->currentMock
-        );
-        static::assertAttributeInstanceOf(
-            SessionHelper::class,
-            'sessionHelper',
-            $this->currentMock
-        );
-        static::assertAttributeInstanceOf(
-            DiscountHelper::class,
-            'discountHelper',
-            $this->currentMock
-        );
-        static::assertAttributeInstanceOf(
-            Bugsnag::class,
-            'bugsnag',
-            $this->currentMock
-        );
-        static::assertAttributeInstanceOf(
-            MetricsClient::class,
-            'metricsClient',
-            $this->currentMock
-        );
-        static::assertAttributeInstanceOf(
-            BoltErrorResponse::class,
-            'errorResponse',
-            $this->currentMock
-        );
-        static::assertAttributeInstanceOf(
-            RegionModel::class,
-            'regionModel',
-            $this->currentMock
-        );
-        static::assertAttributeInstanceOf(
-            Response::class,
-            'response',
-            $this->currentMock
-        );
-        static::assertAttributeInstanceOf(
-            ShippingOptionInterfaceFactory::class,
-            'shippingOptionFactory',
-            $this->currentMock
-        );
+        $requestContent = json_encode($bodyParams);
+
+        $computed_signature = base64_encode(hash_hmac('sha256', $requestContent, self::SECRET, true));
+
+        $this->request->getHeaders()->clearHeaders();
+        $this->request->getHeaders()->addHeaderLine('X-Bolt-Hmac-Sha256', $computed_signature);
+        $this->request->getHeaders()->addHeaderLine('X-bolt-trace-id', self::TRACE_ID_HEADER);
+        $this->request->getHeaders()->addHeaderLine('Content-Type', 'application/json');
+
+        $this->request->setParams($bodyParams);
+
+        $this->request->setContent($requestContent);
+
+        return $this->request;
     }
 
     /**
@@ -268,87 +198,12 @@ class ShippingTaxTest extends BoltTestCase
      */
     public function throwUnknownQuoteIdException()
     {
-        $this->initCurrentMock();
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage(__('Unknown quote id: %1.', self::IMMUTABLE_QUOTE_ID)->render());
         TestHelper::invokeMethod(
-            $this->currentMock,
+            $this->shippingTax,
             'throwUnknownQuoteIdException',
             [self::IMMUTABLE_QUOTE_ID]
-        );
-    }
-
-    /**
-     * @test
-     * that catchExceptionAndSendError would notify bugsnag and send error response
-     *
-     * @covers ::catchExceptionAndSendError
-     */
-    public function catchExceptionAndSendError()
-    {
-        $this->initCurrentMock(['sendErrorResponse']);
-        $e = new \Exception;
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($e);
-        $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(6009, '', 422);
-        TestHelper::invokeMethod(
-            $this->currentMock,
-            'catchExceptionAndSendError',
-            [$e]
-        );
-    }
-
-    /**
-     * @test
-     * that preprocessHook would forward to hook helper preProcessWebhook
-     *
-     * @covers ::preprocessHook
-     */
-    public function preprocessHook()
-    {
-        $this->initCurrentMock();
-        $this->hookHelper->expects(self::once())->method('preProcessWebhook')
-            ->with(self::STORE_ID);
-        TestHelper::invokeMethod(
-            $this->currentMock,
-            'preprocessHook',
-            [self::STORE_ID]
-        );
-    }
-
-    /**
-     * @test
-     * that sendErrorResponse would prepare error messages and set response code, body and send response
-     *
-     * @covers ::sendErrorResponse
-     */
-    public function sendErrorResponse()
-    {
-        $errCode = 123;
-        $message = 'test message';
-        $httpStatusCode = 401;
-
-        $this->initCurrentMock();
-
-        $errResponse = [
-            'status' => 'failure',
-            'error' => [
-                'code' => $errCode,
-                'message' => $message,
-            ],
-        ];
-
-        $this->errorResponse->expects(self::once())->method('prepareErrorMessage')
-            ->with($errCode, $message)->willReturn($errResponse);
-        $this->response->expects(self::once())->method('setHttpResponseCode')->with($httpStatusCode);
-        $this->response->expects(self::once())->method('setBody')
-            ->with($errResponse);
-        $this->response->expects(self::once())->method('sendResponse');
-
-        TestHelper::invokeMethod(
-            $this->currentMock,
-            'sendErrorResponse',
-            [$errCode, $message, $httpStatusCode]
         );
     }
 
@@ -360,26 +215,9 @@ class ShippingTaxTest extends BoltTestCase
      */
     public function getQuoteById()
     {
-        $this->initCurrentMock();
-        $quote = $this->createMock(Quote::class);
-        $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)->willReturn($quote);
-        $this->assertEquals($quote, $this->currentMock->getQuoteById(self::IMMUTABLE_QUOTE_ID));
-    }
-
-    /**
-     * @test
-     * that applyExternalQuoteData would call apply external quote data in discount helper for the quote
-     *
-     * @covers ::applyExternalQuoteData
-     */
-    public function applyExternalQuoteData()
-    {
-        $this->initCurrentMock();
-        $quote = $this->createMock(Quote::class);
-        TestHelper::setProperty($this->currentMock, 'quote', $quote);
-        $this->discountHelper->expects(self::once())->method('applyExternalDiscountData')->with($quote);
-        $this->currentMock->applyExternalQuoteData($quote);
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        static::assertEquals($quoteId, $this->shippingTax->getQuoteById($quoteId)->getId());
     }
 
     /**
@@ -409,49 +247,9 @@ class ShippingTaxTest extends BoltTestCase
             'street' => '123 Sesame St.',
             'email' => self::EMAIL
         ];
-        $this->initCurrentMock();
-        $region = $this->createMock(RegionModel::class);
-        $region->expects(self::once())->method('getId')
-            ->willReturn(12);
-        $this->regionModel->expects(self::once())->method('loadByName')->with('California', 'US')
-            ->willReturn($region);
-        $this->cartHelper->expects(self::once())->method('validateEmail')
-            ->with(self::EMAIL)->willReturn(true);
-
-        $this->assertEquals($expected, $this->currentMock->reformatAddressData($addressData));
+        $this->assertEquals($expected, $this->shippingTax->reformatAddressData($addressData));
     }
 
-    /**
-     * @param int $quoteId
-     * @param int $parentQuoteId
-     * @param array $methods
-     * @return MockObject
-     */
-    private function getQuoteMock(
-        $quoteId = self::IMMUTABLE_QUOTE_ID,
-        $parentQuoteId = self::PARENT_QUOTE_ID,
-        $methods = []
-    ) {
-        $quoteMethods = array_merge([
-            'getId', 'getBoltParentQuoteId', 'getStoreId', 'getStore', 'getQuoteCurrencyCode'
-        ], $methods);
-
-        $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods($quoteMethods)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $quote->method('getId')
-            ->willReturn($quoteId);
-        $quote->method('getBoltParentQuoteId')
-            ->willReturn($parentQuoteId);
-        $quote->method('getQuoteCurrencyCode')
-            ->willReturn(self::CURRENCY_CODE);
-        $quote->method('getStore')
-            ->willReturn($this->store);
-        $quote->method('getStoreId')
-            ->willReturn(self::STORE_ID);
-        return $quote;
-    }
 
     /**
      * @test
@@ -464,10 +262,7 @@ class ShippingTaxTest extends BoltTestCase
         $addressData = [
             'email' => self::EMAIL
         ];
-        $this->initCurrentMock();
-        $this->cartHelper->expects(self::once())->method('validateEmail')
-            ->with(self::EMAIL)->willReturn(true);
-        $this->currentMock->validateAddressData($addressData);
+        $this->shippingTax->validateAddressData($addressData);
     }
 
     /**
@@ -478,10 +273,7 @@ class ShippingTaxTest extends BoltTestCase
      */
     public function validateEmail_valid()
     {
-        $this->initCurrentMock();
-        $this->cartHelper->expects(self::once())->method('validateEmail')
-            ->with(self::EMAIL)->willReturn(true);
-        $this->currentMock->validateEmail(self::EMAIL);
+        $this->shippingTax->validateEmail(self::EMAIL);
     }
 
     /**
@@ -493,38 +285,11 @@ class ShippingTaxTest extends BoltTestCase
     public function validateEmail_invalid()
     {
         $invalidEmail = 'invalid email';
-        $this->initCurrentMock();
-
-        $this->cartHelper->expects(self::once())->method('validateEmail')
-            ->with($invalidEmail)->willReturn(false);
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(BoltErrorResponse::ERR_UNIQUE_EMAIL_REQUIRED);
         $this->expectExceptionMessage(__('Invalid email: %1', $invalidEmail)->render());
 
-        $this->currentMock->validateEmail($invalidEmail);
-    }
-
-    /**
-     * @param $errCode
-     * @param $message
-     * @param $httpStatusCode
-     */
-    private function expectErrorResponse($errCode, $message, $httpStatusCode = 422)
-    {
-        $body = [
-            'status' => 'failure',
-            'error'  => [
-                'code'    => $errCode,
-                'message' => $message,
-            ],
-        ];
-        $this->errorResponse->expects(self::once())->method('prepareErrorMessage')
-            ->with($errCode, $message)->willReturn($body);
-        $this->response->expects(self::once())->method('setHttpResponseCode')
-            ->with($httpStatusCode);
-        $this->response->expects(self::once())->method('setBody')
-            ->with($body);
-        $this->response->expects(self::once())->method('sendResponse');
+        $this->shippingTax->validateEmail($invalidEmail);
     }
 
     /**
@@ -535,13 +300,9 @@ class ShippingTaxTest extends BoltTestCase
      */
     public function loadQuote_happyPath()
     {
-        $this->initCurrentMock(['getQuoteById']);
-        $quote = $this->createMock(Quote::class);
-        $this->currentMock->expects(self::exactly(1))->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn($quote);
-
-        $this->assertEquals($quote, $this->currentMock->loadQuote(self::IMMUTABLE_QUOTE_ID));
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        $this->assertEquals($quote->getId(), $this->shippingTax->loadQuote($quoteId)->getId());
     }
 
     /**
@@ -552,15 +313,9 @@ class ShippingTaxTest extends BoltTestCase
      */
     public function loadQuote_throwUnknownQuoteIdException()
     {
-        $this->initCurrentMock(['getQuoteById']);
-        $this->currentMock->expects(self::exactly(1))->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn(false);
-
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage(__('Unknown quote id: %1.', self::IMMUTABLE_QUOTE_ID)->render());
-
-        $this->assertNull($this->currentMock->loadQuote(self::IMMUTABLE_QUOTE_ID));
+        $this->assertNull($this->shippingTax->loadQuote(self::IMMUTABLE_QUOTE_ID));
     }
 
     /**
@@ -571,33 +326,49 @@ class ShippingTaxTest extends BoltTestCase
      */
     public function execute_WebApiException()
     {
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
         $cart = [
             'display_id' => self::DISPLAY_ID,
             'metadata' => [
-                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                'immutable_quote_id' => $quoteId,
             ],
         ];
-        $this->initCurrentMock(['getQuoteById', 'preprocessHook']);
 
-        $startTime = microtime(true) * 1000;
-        $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturn($startTime);
+        $this->assertNull($this->shippingTax->execute($cart, []));
+        $response = json_decode(TestHelper::getProperty($this->shippingTax, 'response')->getBody(), true);
+        $this->assertEquals(
+            [
+                'status' => 'failure',
+                'error' => [
+                    'code' => ErrorResponse::ERR_SERVICE, 'message' => 'Precondition Failed',]
+            ],
+            $response
+        );
+    }
 
-        $immutableQuote = $this->createMock(Quote::class);
-        $this->currentMock->expects(self::exactly(1))->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn($immutableQuote);
+    /**
+     * @test
+     * that handleRequest throws web api exception
+     *
+     * @covers ::handleRequest
+     */
+    public function handleRequest_WebApiException()
+    {
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        $cart = [
+            'display_id' => self::DISPLAY_ID,
+            'metadata' => [
+                'immutable_quote_id' => $quoteId,
+            ],
+        ];
 
-        $e = new WebapiException(__('Precondition Failed'), 6001, 422);
-        $this->currentMock->method('preprocessHook')->willThrowException($e);
-        $this->currentMock->expects(self::once())->method('preprocessHook')
-            ->willThrowException($e);
+        $this->expectException(WebapiException::class);
 
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with(ShippingTax::METRICS_FAILURE_KEY, 1, ShippingTax::METRICS_LATENCY_KEY, $startTime);
+        $this->expectExceptionMessage('Precondition Failed');
+        $this->shippingTax->handleRequest($cart, []);
 
-        $this->expectErrorResponse($e->getCode(), $e->getMessage(), $e->getHttpCode());
-        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
-        $this->assertNull($this->currentMock->execute($cart, []));
     }
 
     /**
@@ -608,63 +379,79 @@ class ShippingTaxTest extends BoltTestCase
      */
     public function execute_BoltException()
     {
+        $this->createRequest([]);
+        $quote = TestUtils::createQuote(['store_id' => $this->storeId]);
+        $quoteId = $quote->getId();
         $cart = [
             'display_id' => self::DISPLAY_ID,
-            'order_reference' => self::PARENT_QUOTE_ID,
+            'order_reference' => $quoteId,
             'metadata' => [
-                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                'immutable_quote_id' => $quoteId,
             ],
         ];
         $shipping_address = [
-            'email' => 'invalid email'
+            'email' => 'invalid email',
+            'country_code' => 'US'
         ];
         $shipping_option = null;
-
-        $this->initCurrentMock(['loadQuote', 'preprocessHook', 'validateEmail']);
-
-        $startTime = microtime(true) * 1000;
-        $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturn($startTime);
-
-        $immutableQuote = $this->getQuoteMock();
-        $parentQuote = $this->getQuoteMock(self::PARENT_QUOTE_ID, self::PARENT_QUOTE_ID);
-
-        $this->currentMock->expects(self::once())->method('preprocessHook')
-            ->with(self::STORE_ID);
-        $this->currentMock->expects(self::exactly(2))->method('loadQuote')
-            ->withConsecutive([self::IMMUTABLE_QUOTE_ID], [self::PARENT_QUOTE_ID])
-            ->willReturnOnConsecutiveCalls($immutableQuote, $parentQuote);
-        $this->cartHelper->expects(self::once())->method('replicateQuoteData')
-            ->with($immutableQuote, $parentQuote);
-
-        TestHelper::setProperty($this->currentMock, 'quote', $parentQuote);
-
-        $this->store->expects(self::once())->method('setCurrentCurrencyCode')
-            ->with(self::CURRENCY_CODE);
-        $this->sessionHelper->expects(self::once())->method('loadSession')
-            ->with(TestHelper::getProperty($this->currentMock, 'quote'));
-        $this->cartHelper->expects(self::once())->method('handleSpecialAddressCases')
-            ->with($shipping_address)->willReturn($shipping_address);
-        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
-            ->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
-
-        $e = new BoltException(
-            __('Invalid email: %1', 'invalid email'),
-            null,
-            BoltErrorResponse::ERR_UNIQUE_EMAIL_REQUIRED
+        $hookHelper = $this->objectManager->create(HookHelper::class);
+        $stubApiHelper = new stubBoltApiHelper();
+        $apiHelperProperty = new \ReflectionProperty(
+            HookHelper::class,
+            'apiHelper'
         );
+        $apiHelperProperty->setAccessible(true);
+        $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
 
-        $this->currentMock->method('validateEmail')->willThrowException($e);
-
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with(ShippingTax::METRICS_FAILURE_KEY, 1, ShippingTax::METRICS_LATENCY_KEY, $startTime);
-
-        $this->expectErrorResponse($e->getCode(), $e->getMessage());
-        $this->assertNull($this->currentMock->execute($cart, $shipping_address));
+        $hookHelperProperty = new \ReflectionProperty(
+            ShippingTax::class,
+            'hookHelper'
+        );
+        $hookHelperProperty->setAccessible(true);
+        $hookHelperProperty->setValue($this->shippingTax, $hookHelper);
+        $this->assertNull($this->shippingTax->execute($cart, $shipping_address));
+        $response = json_decode(TestHelper::getProperty($this->shippingTax, 'response')->getBody(), true);
+        $this->assertEquals(
+            [
+                'status' => 'failure',
+                'error' => [
+                    'code' => ErrorResponse::ERR_UNIQUE_EMAIL_REQUIRED,
+                    'message' => 'Invalid email: invalid email']
+            ],
+            $response
+        );
     }
 
     /**
      * @test
-     * that execute throw exception and return null
+     * that handleRequest throws web api exception
+     *
+     * @covers ::handleRequest
+     */
+    public function handleRequest_BoltException()
+    {
+        $quote = TestUtils::createQuote(['store_id' => $this->storeId]);
+        $quoteId = $quote->getId();
+        $cart = [
+            'display_id' => self::DISPLAY_ID,
+            'order_reference' => $quoteId,
+            'metadata' => [
+                'immutable_quote_id' => $quoteId,
+            ],
+        ];
+        $shipping_address = [
+            'email' => 'invalid email',
+            'country_code' => 'US'
+        ];
+
+        $this->expectException(WebapiException::class);
+        $this->expectExceptionMessage('Precondition Failed');
+        $this->shippingTax->handleRequest($cart, $shipping_address);
+    }
+
+    /**
+     * @test
+     * that execute return null
      *
      * @covers ::execute
      */
@@ -676,15 +463,29 @@ class ShippingTaxTest extends BoltTestCase
                 'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
             ],
         ];
-        $this->initCurrentMock(['loadQuote']);
+        $this->assertNull($this->shippingTax->execute($cart, []));
+    }
 
-        $message = 'test message';
-        $e = new \Exception($message);
-        $this->currentMock->expects(self::once())->method('loadQuote')->willThrowException($e);
-        $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
+    /**
+     * @test
+     * that handleRequest throws exception
+     *
+     * @covers ::handleRequest
+     */
+    public function handleRequest_Exception()
+    {
+        $cart = [
+            'display_id' => self::DISPLAY_ID,
+            'metadata' => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+            ],
+        ];
 
-        $this->expectErrorResponse(6009, $msg);
-        $this->assertNull($this->currentMock->execute($cart, []));
+        $message = 'Unknown quote id: 1001.';
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage($message);
+
+        $this->shippingTax->handleRequest($cart, []);
     }
 
     /**
@@ -695,64 +496,18 @@ class ShippingTaxTest extends BoltTestCase
      */
     public function execute_happyPath()
     {
+        $this->createRequest([]);
+        $quote = TestUtils::createQuote(['store_id' => $this->storeId]);
+        $quoteId = $quote->getId();
         $cart = [
             'display_id' => self::DISPLAY_ID,
-            'order_reference' => self::PARENT_QUOTE_ID,
+            'order_reference' => $quoteId,
             'metadata' => [
-                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                'immutable_quote_id' => $quoteId,
             ],
         ];
+
         $shipping_address = [
-            'email' => self::EMAIL
-        ];
-        $shipping_option = null;
-
-        $this->initCurrentMock(['loadQuote', 'preprocessHook', 'getResult']);
-
-        $startTime = microtime(true) * 1000;
-        $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturn($startTime);
-
-        $immutableQuote = $this->getQuoteMock();
-        $parentQuote = $this->getQuoteMock(self::PARENT_QUOTE_ID, self::PARENT_QUOTE_ID);
-
-        $this->currentMock->expects(self::once())->method('preprocessHook')
-            ->with(self::STORE_ID);
-        $this->currentMock->expects(self::exactly(2))->method('loadQuote')
-            ->withConsecutive([self::IMMUTABLE_QUOTE_ID], [self::PARENT_QUOTE_ID])
-            ->willReturnOnConsecutiveCalls($immutableQuote, $parentQuote);
-        $this->cartHelper->expects(self::once())->method('replicateQuoteData')
-            ->with($immutableQuote, $parentQuote);
-
-        TestHelper::setProperty($this->currentMock, 'quote', $parentQuote);
-
-        $this->store->expects(self::once())->method('setCurrentCurrencyCode')
-            ->with(self::CURRENCY_CODE);
-        $this->sessionHelper->expects(self::once())->method('loadSession')
-            ->with(TestHelper::getProperty($this->currentMock, 'quote'));
-        $this->cartHelper->expects(self::once())->method('handleSpecialAddressCases')
-            ->with($shipping_address)->willReturn($shipping_address);
-        $this->cartHelper->expects(self::once())->method('validateEmail')
-            ->with(self::EMAIL)->willReturn(true);
-        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
-            ->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
-        $this->currentMock->expects(self::once())->method('getResult')
-            ->with($shipping_address, $shipping_option);
-        $this->logHelper->expects(self::exactly(4))->method('addInfoLog');
-        $this->metricsClient->expects(self::once())->method('processMetric')
-            ->with(ShippingTax::METRICS_SUCCESS_KEY, 1, ShippingTax::METRICS_LATENCY_KEY, $startTime);
-
-        $this->currentMock->execute($cart, $shipping_address);
-    }
-
-    /**
-     * @test
-     * that getResult would return generate result
-     *
-     * @covers ::getResult
-     */
-    public function getResult()
-    {
-        $addressData = [
             'region' => 'California',
             'country_code' => 'US',
             'postal_code' => '90210',
@@ -762,16 +517,179 @@ class ShippingTaxTest extends BoltTestCase
             'company' => 'Bolt'
         ];
 
-        $result = [
-            'some' => 'result'
+        $hookHelper = $this->objectManager->create(HookHelper::class);
+        $stubApiHelper = new stubBoltApiHelper();
+        $apiHelperProperty = new \ReflectionProperty(
+            HookHelper::class,
+            'apiHelper'
+        );
+        $apiHelperProperty->setAccessible(true);
+        $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
+
+        $hookHelperProperty = new \ReflectionProperty(
+            Shipping::class,
+            'hookHelper'
+        );
+        $hookHelperProperty->setAccessible(true);
+        $hookHelperProperty->setValue($this->shippingTax, $hookHelper);
+
+        $shippingMethodManagement = $this->getMockBuilder(\Magento\Quote\Api\Data\ShippingMethodInterface::class)
+                ->disableOriginalConstructor()
+                ->setMethods([
+                    'getCarrierTitle',
+                    'setCarrierTitle',
+                    'getCarrierCode',
+                    'setCarrierCode',
+                    'setMethodCode',
+                    'getMethodCode',
+                    'setMethodTitle',
+                    'getMethodTitle',
+                    'getAmount',
+                    'setAmount',
+                    'getBaseAmount',
+                    'setBaseAmount',
+                    'getAvailable',
+                    'setAvailable',
+                    'getExtensionAttributes',
+                    'setExtensionAttributes',
+                    'setErrorMessage',
+                    'getErrorMessage',
+                    'getPriceExclTax',
+                    'setPriceExclTax',
+                    'getPriceInclTax',
+                    'setPriceInclTax'
+                ])
+                ->getMock();
+        $shippingMethodManagement->method('getCarrierTitle')->willReturn('Carrier Title');
+        $shippingMethodManagement->method('getMethodTitle')->willReturn('Method Title');
+        $shippingMethodManagement->method('getCarrierCode')->willReturn('carrier_code');
+        $shippingMethodManagement->method('getMethodCode')->willReturn('method_code');
+        $shippingMethodManagement->method('getAmount')->willReturn(100);
+        $shipmentEstimationInterface = $this->getMockBuilder(\Magento\Quote\Api\ShipmentEstimationInterface::class)
+                ->disableOriginalConstructor()
+                ->setMethods(['estimateByExtendedAddress'])
+                ->getMock();
+        $shipmentEstimationInterface->method('estimateByExtendedAddress')->willReturn([$shippingMethodManagement]);
+        $shippingMethodManagement = new \ReflectionProperty(
+            Shipping::class,
+            'shippingMethodManagement'
+        );
+        $shippingMethodManagement->setAccessible(true);
+        $shippingMethodManagement->setValue($this->shippingTax, $shipmentEstimationInterface);
+
+        $result = $this->shippingTax->execute($cart, $shipping_address, ['some' => 'result']);
+
+        $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
+        $shippingOptionData
+            ->setService('Carrier Title - Method Title')
+            ->setCost(10000)
+            ->setReference('carrier_code_method_code')
+            ->setTaxAmount(0);
+        $this->assertEquals(
+            [$shippingOptionData],
+            $result->getShippingOptions()
+        );
+    }
+
+    /**
+     * @test
+     * @throws \ReflectionException
+     */
+    public function handleRequest_happyPath()
+    {
+        $this->createRequest([]);
+        $quote = TestUtils::createQuote(['store_id' => $this->storeId]);
+        $quoteId = $quote->getId();
+        $cart = [
+            'display_id' => self::DISPLAY_ID,
+            'order_reference' => $quoteId,
+            'metadata' => [
+                'immutable_quote_id' => $quoteId,
+            ],
         ];
 
-        $this->initCurrentMock(['applyExternalQuoteData', 'generateResult']);
-        $this->currentMock->expects(self::once())->method('applyExternalQuoteData');
-        $this->currentMock->expects(self::once())->method('generateResult')
-            ->with($addressData, null)->willReturn($result);
+        $shipping_address = [
+            'region' => 'California',
+            'country_code' => 'US',
+            'postal_code' => '90210',
+            'locality' => 'San Franciso',
+            'street_address1' => '123 Sesame St.',
+            'email' => self::EMAIL,
+            'company' => 'Bolt'
+        ];
 
-        $this->assertEquals($result, $this->currentMock->getResult($addressData, null));
+        $hookHelper = $this->objectManager->create(HookHelper::class);
+        $stubApiHelper = new stubBoltApiHelper();
+        $apiHelperProperty = new \ReflectionProperty(
+            HookHelper::class,
+            'apiHelper'
+        );
+        $apiHelperProperty->setAccessible(true);
+        $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
+
+        $hookHelperProperty = new \ReflectionProperty(
+            Shipping::class,
+            'hookHelper'
+        );
+        $hookHelperProperty->setAccessible(true);
+        $hookHelperProperty->setValue($this->shippingTax, $hookHelper);
+
+        $shippingMethodManagement = $this->getMockBuilder(\Magento\Quote\Api\Data\ShippingMethodInterface::class)
+            ->disableOriginalConstructor()
+            ->setMethods([
+                'getCarrierTitle',
+                'setCarrierTitle',
+                'getCarrierCode',
+                'setCarrierCode',
+                'setMethodCode',
+                'getMethodCode',
+                'setMethodTitle',
+                'getMethodTitle',
+                'getAmount',
+                'setAmount',
+                'getBaseAmount',
+                'setBaseAmount',
+                'getAvailable',
+                'setAvailable',
+                'getExtensionAttributes',
+                'setExtensionAttributes',
+                'setErrorMessage',
+                'getErrorMessage',
+                'getPriceExclTax',
+                'setPriceExclTax',
+                'getPriceInclTax',
+                'setPriceInclTax'
+            ])
+            ->getMock();
+        $shippingMethodManagement->method('getCarrierTitle')->willReturn('Carrier Title');
+        $shippingMethodManagement->method('getMethodTitle')->willReturn('Method Title');
+        $shippingMethodManagement->method('getCarrierCode')->willReturn('carrier_code');
+        $shippingMethodManagement->method('getMethodCode')->willReturn('method_code');
+        $shippingMethodManagement->method('getAmount')->willReturn(100);
+        $shipmentEstimationInterface = $this->getMockBuilder(\Magento\Quote\Api\ShipmentEstimationInterface::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['estimateByExtendedAddress'])
+            ->getMock();
+        $shipmentEstimationInterface->method('estimateByExtendedAddress')->willReturn([$shippingMethodManagement]);
+        $shippingMethodManagement = new \ReflectionProperty(
+            Shipping::class,
+            'shippingMethodManagement'
+        );
+        $shippingMethodManagement->setAccessible(true);
+        $shippingMethodManagement->setValue($this->shippingTax, $shipmentEstimationInterface);
+
+        $result = $this->shippingTax->execute($cart, $shipping_address, ['some' => 'result']);
+
+        $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
+        $shippingOptionData
+            ->setService('Carrier Title - Method Title')
+            ->setCost(10000)
+            ->setReference('carrier_code_method_code')
+            ->setTaxAmount(0);
+        $this->assertEquals(
+            [$shippingOptionData],
+            $result->getShippingOptions()
+        );
     }
 
     /**
@@ -802,183 +720,26 @@ class ShippingTaxTest extends BoltTestCase
             'company' => 'Bolt'
         ];
 
-        $this->initCurrentMock(['reformatAddressData']);
-
-        $address = $this->createMock(\Magento\Quote\Model\Quote\Address::class);
-        $quote = $this->createMock(Quote::class);
-        $quote->expects(self::once())->method('isVirtual')->willReturn(false);
-        $quote->expects(self::once())->method('getShippingAddress')->willReturn($address);
-
-        TestHelper::setProperty($this->currentMock, 'quote', $quote);
-
-        $this->currentMock->expects(self::once())->method('reformatAddressData')
-            ->with($addressData)->willReturn($addressDataReformatted);
-
-        $address->expects(self::once())->method('addData')->willReturnSelf();
-
-        $this->assertEquals([$address,$addressDataReformatted], $this->currentMock->populateAddress($addressData));
-    }
-
-
-    /**
-     * @test
-     * that handleRequest throws web api exception
-     *
-     * @covers ::handleRequest
-     */
-    public function handleRequest_WebApiException()
-    {
-        $cart = [
-            'display_id' => self::DISPLAY_ID,
-            'metadata' => [
-                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
-            ],
+        $testAddressData = [
+            'company'         => "",
+            'country'         => "United States",
+            'country_code'    => "US",
+            'email'           => "na@bolt.com",
+            'first_name'      => "IntegrationBolt",
+            'last_name'       => "BoltTest",
+            'locality'        => "New York",
+            'phone'           => "8005550111",
+            'postal_code'     => "10011",
+            'region'          => "New York",
+            'street_address1' => "228 7th Avenue",
+            'street_address2' => "228 7th Avenue 2",
         ];
-        $this->initCurrentMock(['getQuoteById', 'preprocessHook']);
+        $quote = TestUtils::createQuote();
+        TestUtils::setAddressToQuote($testAddressData, $quote, 'shipping');
+        TestUtils::setAddressToQuote($testAddressData, $quote, 'billing');
+        $quote->save();
+        TestHelper::setProperty($this->shippingTax, 'quote', $quote);
 
-        $immutableQuote = $this->createMock(Quote::class);
-        $this->currentMock->expects(self::exactly(1))->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn($immutableQuote);
-
-        $e = new WebapiException(__('Precondition Failed'), 6001, 422);
-        $this->currentMock->method('preprocessHook')->willThrowException($e);
-        $this->currentMock->expects(self::once())->method('preprocessHook')
-            ->willThrowException($e);
-
-        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
-        $this->expectException(WebapiException::class);
-        $this->currentMock->handleRequest($cart, []);
-    }
-
-    /**
-     * @test
-     * that handleRequest would throw bolt exception
-     *
-     * @covers ::handleRequest
-     */
-    public function handleRequest_BoltException()
-    {
-        $cart = [
-            'display_id' => self::DISPLAY_ID,
-            'order_reference' => self::PARENT_QUOTE_ID,
-            'metadata' => [
-                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
-            ],
-        ];
-        $shipping_address = [
-            'email' => 'invalid email'
-        ];
-        $shipping_option = null;
-
-        $this->initCurrentMock(['loadQuote', 'preprocessHook', 'validateEmail']);
-
-        $immutableQuote = $this->getQuoteMock();
-        $parentQuote = $this->getQuoteMock(self::PARENT_QUOTE_ID, self::PARENT_QUOTE_ID);
-
-        $this->currentMock->expects(self::once())->method('preprocessHook')
-            ->with(self::STORE_ID);
-        $this->currentMock->expects(self::exactly(2))->method('loadQuote')
-            ->withConsecutive([self::IMMUTABLE_QUOTE_ID], [self::PARENT_QUOTE_ID])
-            ->willReturnOnConsecutiveCalls($immutableQuote, $parentQuote);
-        $this->cartHelper->expects(self::once())->method('replicateQuoteData')
-            ->with($immutableQuote, $parentQuote);
-
-        TestHelper::setProperty($this->currentMock, 'quote', $parentQuote);
-
-        $this->store->expects(self::once())->method('setCurrentCurrencyCode')
-            ->with(self::CURRENCY_CODE);
-        $this->sessionHelper->expects(self::once())->method('loadSession')
-            ->with(TestHelper::getProperty($this->currentMock, 'quote'));
-        $this->cartHelper->expects(self::once())->method('handleSpecialAddressCases')
-            ->with($shipping_address)->willReturn($shipping_address);
-        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
-            ->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
-
-        $e = new BoltException(
-            __('Invalid email: %1', 'invalid email'),
-            null,
-            BoltErrorResponse::ERR_UNIQUE_EMAIL_REQUIRED
-        );
-
-        $this->currentMock->method('validateEmail')->willThrowException($e);
-        $this->expectException(BoltException::class);
-        $this->currentMock->handleRequest($cart, $shipping_address);
-    }
-
-    /**
-     * @test
-     * that handleRequest throws exception
-     *
-     * @covers ::handleRequest
-     */
-    public function handleRequest_Exception()
-    {
-        $cart = [
-            'display_id' => self::DISPLAY_ID,
-            'metadata' => [
-                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
-            ],
-        ];
-        $this->initCurrentMock(['loadQuote']);
-
-        $message = 'test message';
-        $e = new \Exception($message);
-        $this->currentMock->expects(self::once())->method('loadQuote')->willThrowException($e);
-        $this->expectException(\Exception::class);
-
-        $this->currentMock->handleRequest($cart, []);
-    }
-
-    /**
-     * @test
-     * that handleRequest would return result regarding address data and shipping option
-     *
-     * @covers ::handleRequest
-     */
-    public function handleRequest_happyPath()
-    {
-        $cart = [
-            'display_id' => self::DISPLAY_ID,
-            'order_reference' => self::PARENT_QUOTE_ID,
-            'metadata' => [
-                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
-            ],
-        ];
-        $shipping_address = [
-            'email' => self::EMAIL
-        ];
-        $shipping_option = null;
-
-        $this->initCurrentMock(['loadQuote', 'preprocessHook', 'getResult']);
-
-        $immutableQuote = $this->getQuoteMock();
-        $parentQuote = $this->getQuoteMock(self::PARENT_QUOTE_ID, self::PARENT_QUOTE_ID);
-
-        $this->currentMock->expects(self::once())->method('preprocessHook')
-            ->with(self::STORE_ID);
-        $this->currentMock->expects(self::exactly(2))->method('loadQuote')
-            ->withConsecutive([self::IMMUTABLE_QUOTE_ID], [self::PARENT_QUOTE_ID])
-            ->willReturnOnConsecutiveCalls($immutableQuote, $parentQuote);
-        $this->cartHelper->expects(self::once())->method('replicateQuoteData')
-            ->with($immutableQuote, $parentQuote);
-
-        TestHelper::setProperty($this->currentMock, 'quote', $parentQuote);
-
-        $this->store->expects(self::once())->method('setCurrentCurrencyCode')
-            ->with(self::CURRENCY_CODE);
-        $this->sessionHelper->expects(self::once())->method('loadSession')
-            ->with(TestHelper::getProperty($this->currentMock, 'quote'));
-        $this->cartHelper->expects(self::once())->method('handleSpecialAddressCases')
-            ->with($shipping_address)->willReturn($shipping_address);
-        $this->cartHelper->expects(self::once())->method('validateEmail')
-            ->with(self::EMAIL)->willReturn(true);
-        $this->cartHelper->method('getImmutableQuoteIdFromBoltCartArray')
-            ->with($cart)->willReturn(self::IMMUTABLE_QUOTE_ID);
-        $this->currentMock->expects(self::once())->method('getResult')
-            ->with($shipping_address, $shipping_option);
-        $this->logHelper->expects(self::exactly(2))->method('addInfoLog');
-
-        $this->currentMock->handleRequest($cart, $shipping_address);
+        $this->assertEquals([$quote->getShippingAddress(), $addressDataReformatted], $this->shippingTax->populateAddress($addressData));
     }
 }
