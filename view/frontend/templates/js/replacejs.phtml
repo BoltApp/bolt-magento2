@@ -530,7 +530,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
             close: function () {
                 popUpOpen = false;
-                customerData.reload(['cart'], true);
+               
                 trackCallbacks.onClose();
 
                 if (callbacks.success_url) {
@@ -541,6 +541,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
                     // after order was changed from inside the checkout,
                     // i.e. the discount was applied
                     invalidateBoltCart();
+                    customerData.reload(['cart'], true);
                 }
             },
 
