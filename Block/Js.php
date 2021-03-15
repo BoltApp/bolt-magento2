@@ -420,15 +420,8 @@ class Js extends Template
     
     public function isLoadConnectJsEnabled()
     {
-$writer = new \Zend\Log\Writer\Stream(BP . '/var/log/boltdebug.log');
-$logger = new \Zend\Log\Logger();
-$logger->addWriter($writer);
-$logger->info(var_export($this->featureSwitches->isLoadConnectJsOnSpecificPage(), true));
-$logger->info('isOnCartPage  '.var_export($this->isOnCartPage(), true));
-$logger->info('isBoltProductPage  '.var_export($this->isBoltProductPage(), true));
         if ($this->featureSwitches->isLoadConnectJsOnSpecificPage()) {
-            if (!$this->isOnCartPage()
-                && !($this->isOnProductPage() && ($this->isBoltPPCEnabled() || ($this->isMinicartEnabled() && !$this->isCartEmpty())))) {
+            if (!$this->isOnCartPage() && !$this->isBoltProductPage()) {
                 return false;
             }
         }

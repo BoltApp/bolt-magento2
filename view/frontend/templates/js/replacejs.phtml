@@ -32,7 +32,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 }
 
 $connectJsUrl = $block->getConnectJsUrl();
-$isLoadConnectJsEnabled = $block->isLoadConnectJsEnabled();
+$isLoadConnectJsDynamic = !$block->isLoadConnectJsEnabled();
 ?>
 
 <script type="text/javascript">
@@ -422,6 +422,21 @@ $isLoadConnectJsEnabled = $block->isLoadConnectJsEnabled();
             scriptTag.setAttribute('type', 'text/javascript');
             scriptTag.setAttribute('async', '');
             scriptTag.setAttribute('src', settings.connect_url);
+            scriptTag.setAttribute('id', 'bolt-connect');
+            scriptTag.setAttribute('data-publishable-key', publishableKey);
+            document.head.appendChild(scriptTag);
+        };
+        
+        var insertConnectScriptWithoutSrc = function() {
+            var scriptTag = document.getElementById('bolt-connect');
+            var publishableKey = getCheckoutKey();
+            if (scriptTag) {
+                scriptTag.setAttribute('data-publishable-key', publishableKey);
+                return;
+            }
+            scriptTag = document.createElement('script');
+            scriptTag.setAttribute('type', 'text/javascript');
+            scriptTag.setAttribute('async', '');
             scriptTag.setAttribute('id', 'bolt-connect');
             scriptTag.setAttribute('data-publishable-key', publishableKey);
             document.head.appendChild(scriptTag);
@@ -1404,8 +1419,9 @@ $isLoadConnectJsEnabled = $block->isLoadConnectJsEnabled();
         // to make sure bolt checkout with outdated cart isn't available for user
         $(document).on("ajax:addToCart", function () {
             <?php
-            if ($isLoadConnectJsEnabled) {
+            if ($block->isMinicartEnabled() && !$this->isBoltPPCEnabled() && $this->isOnProductPage()) {
             ?>
+            insertConnectScriptWithoutSrc();
             $.getScript("<?= /* @noEscape */ $connectJsUrl; ?>", function(data, textStatus, jqxhr) {
             <?php
             }            
@@ -1419,7 +1435,7 @@ $isLoadConnectJsEnabled = $block->isLoadConnectJsEnabled();
                     newItemAddedToCart = true;
                 }
             <?php
-            if ($isLoadConnectJsEnabled) {
+            if ($block->isMinicartEnabled() && !$this->isBoltPPCEnabled() && $this->isOnProductPage()) {
             ?>
             });
             <?php
@@ -1487,6 +1503,19 @@ $isLoadConnectJsEnabled = $block->isLoadConnectJsEnabled();
         ////////////////////////////////////////////////////
         boltCheckoutSetup();
         ////////////////////////////////////////////////////
+        
+        <?php
+        if ($block->isMinicartEnabled() && !$this->isBoltPPCEnabled() && $this->isOnProductPage()) {
+        ?>
+        magentoCartDataListenerLoadConnectJs = function(data) {
+            if (data.items !== undefined && data.items.length > 0) {
+                insertConnectScript();
+            }            
+        }
+        customerData.get('cart').subscribe(magentoCartDataListenerLoadConnectJs);
+        <?php
+        }
+        ?>
     });
 
     if ((trim(location.pathname, '/') === 'checkout/cart') || (trim(location.pathname, '/') === 'checkout')) {
