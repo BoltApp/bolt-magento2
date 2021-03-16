@@ -187,9 +187,6 @@ class AutomatedTesting extends AbstractHelper
             if ($virtualStoreItem !== null) {
                 $storeItems[] = $virtualStoreItem;
             }
-            if ($saleStoreItem !== null) {
-                $storeItems[] = $saleStoreItem;
-            }
 
             $quote = $this->createQuoteWithItem($simpleProduct);
             $shippingMethods = $this->getShippingMethods($quote);
