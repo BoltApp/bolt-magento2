@@ -438,7 +438,9 @@ class Js extends Template
     /**
      * If feature switch M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE is enabled,
      * then on the product page, with PPC disabled and minicart enabled,
-     * we load Bolt connect JS dynamically when the customer add product to cart.
+     * we load Bolt connect JS dynamically under the one of the following conditions:
+     * 1. The cart contains any item.
+     * 2. The cart is empty, and the customer add product to the cart.
      */
     public function isLoadConnectJsDynamic()
     {
