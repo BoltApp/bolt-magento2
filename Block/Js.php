@@ -418,15 +418,37 @@ class Js extends Template
         return $currentPage == 'catalog_product_view';
     }
     
-    public function isLoadConnectJsEnabled()
+    /**
+     * If feature switch M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE is enabled,
+     * then we only fetch Bolt connect js on page load for the product page (PPC is enabled) and cart page.
+     */
+    public function isLoadConnectJs()
     {
         if ($this->featureSwitches->isLoadConnectJsOnSpecificPage()) {
-            if (!$this->isOnCartPage() && !$this->isBoltProductPage()) {
+            if ($this->isOnCartPage() || $this->isBoltProductPage()) {
+                return true;
+            } else {
                 return false;
             }
         }
         
         return true;
+    }
+    
+    /**
+     * If feature switch M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE is enabled,
+     * then on the product page, with PPC disabled and minicart enabled,
+     * we load Bolt connect JS dynamically when the customer add product to cart.
+     */
+    public function isLoadConnectJsDynamic()
+    {
+        if ($this->featureSwitches->isLoadConnectJsOnSpecificPage()) {
+            if ($this->isMinicartEnabled() && !$this->isBoltPPCEnabled() && $this->isOnProductPage()) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     /**
@@ -550,21 +572,6 @@ function($argName) {
     public function isLoggedIn(): bool
     {
         return $this->httpContext->getValue(\Magento\Customer\Model\Context::CONTEXT_AUTH);
-    }
-    
-    /**
-     * Check if cart is empty
-     *
-     * @return bool
-     */
-    public function isCartEmpty()
-    {
-        $quote = $this->getQuoteFromCheckoutSession();
-        if (empty($quote) || $quote->getItemsCount() === 0) {
-            return true;
-        }
-        
-        return false;
     }
 
     /**

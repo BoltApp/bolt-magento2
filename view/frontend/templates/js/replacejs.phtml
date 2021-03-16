@@ -32,7 +32,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 }
 
 $connectJsUrl = $block->getConnectJsUrl();
-$isLoadConnectJsDynamic = !$block->isLoadConnectJsEnabled();
+$isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
 ?>
 
 <script type="text/javascript">
@@ -412,19 +412,10 @@ $isLoadConnectJsDynamic = !$block->isLoadConnectJsEnabled();
          * return void
          */
         var insertConnectScript = function() {
-            var scriptTag = document.getElementById('bolt-connect');
-            var publishableKey = getCheckoutKey();
-            if (scriptTag) {
-                scriptTag.setAttribute('data-publishable-key', publishableKey);
-                return;
+            if (insertConnectScriptWithoutSrc()) {
+                var scriptTag = document.getElementById('bolt-connect');
+                scriptTag.setAttribute('src', settings.connect_url);
             }
-            scriptTag = document.createElement('script');
-            scriptTag.setAttribute('type', 'text/javascript');
-            scriptTag.setAttribute('async', '');
-            scriptTag.setAttribute('src', settings.connect_url);
-            scriptTag.setAttribute('id', 'bolt-connect');
-            scriptTag.setAttribute('data-publishable-key', publishableKey);
-            document.head.appendChild(scriptTag);
         };
         
         var insertConnectScriptWithoutSrc = function() {
@@ -432,7 +423,7 @@ $isLoadConnectJsDynamic = !$block->isLoadConnectJsEnabled();
             var publishableKey = getCheckoutKey();
             if (scriptTag) {
                 scriptTag.setAttribute('data-publishable-key', publishableKey);
-                return;
+                return false;
             }
             scriptTag = document.createElement('script');
             scriptTag.setAttribute('type', 'text/javascript');
@@ -440,6 +431,7 @@ $isLoadConnectJsDynamic = !$block->isLoadConnectJsEnabled();
             scriptTag.setAttribute('id', 'bolt-connect');
             scriptTag.setAttribute('data-publishable-key', publishableKey);
             document.head.appendChild(scriptTag);
+            return true;
         };
 
         /**
@@ -1418,14 +1410,7 @@ $isLoadConnectJsDynamic = !$block->isLoadConnectJsEnabled();
         // When we know that cart will be updated soon we call configure with promises
         // to make sure bolt checkout with outdated cart isn't available for user
         $(document).on("ajax:addToCart", function () {
-            <?php
-            if ($block->isMinicartEnabled() && !$this->isBoltPPCEnabled() && $this->isOnProductPage()) {
-            ?>
-            insertConnectScriptWithoutSrc();
-            $.getScript("<?= /* @noEscape */ $connectJsUrl; ?>", function(data, textStatus, jqxhr) {
-            <?php
-            }            
-            ?>
+            var callBoltAfterAddToCart = function() {
                 expectCartRendering = true;
                 // If merchant shows popup after add to cart
                 // delay 0 allows to render bolt button before we call configure
@@ -1434,12 +1419,23 @@ $isLoadConnectJsDynamic = !$block->isLoadConnectJsEnabled();
                 if (boltConfig.always_present_checkout) {
                     newItemAddedToCart = true;
                 }
+            }
             <?php
-            if ($block->isMinicartEnabled() && !$this->isBoltPPCEnabled() && $this->isOnProductPage()) {
+            if ($isLoadConnectJsDynamic) {
             ?>
-            });
+            if (insertConnectScriptWithoutSrc()) {
+                $.getScript("<?= /* @noEscape */ $connectJsUrl; ?>", function(data, textStatus, jqxhr) {
+                    callBoltAfterAddToCart();
+                });
+            } else {
+                callBoltAfterAddToCart();
+            }
             <?php
-            }            
+            } else {
+            ?>
+            callBoltAfterAddToCart();
+            <?php
+            }
             ?>
         });
         $(document).on("ajax:addToCart:error", function () {
@@ -1505,7 +1501,7 @@ $isLoadConnectJsDynamic = !$block->isLoadConnectJsEnabled();
         ////////////////////////////////////////////////////
         
         <?php
-        if ($block->isMinicartEnabled() && !$this->isBoltPPCEnabled() && $this->isOnProductPage()) {
+        if ($isLoadConnectJsDynamic) {
         ?>
         magentoCartDataListenerLoadConnectJs = function(data) {
             if (data.items !== undefined && data.items.length > 0) {
