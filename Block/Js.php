@@ -397,7 +397,7 @@ class Js extends Template
      */
     public function isBoltProductPage()
     {
-        return $this->isBoltPPCEnabled() && $this->isOnProductPage();
+        return $this->isOnProductPage() && $this->isBoltPPCEnabled();
     }
     
     /**

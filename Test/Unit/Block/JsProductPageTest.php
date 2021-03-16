@@ -318,6 +318,7 @@ class JsProductPageTest extends BoltTestCase
     {
         $this->configHelper->expects(static::once())->method('getSelectProductPageCheckoutFlag')->willReturn(false);
         $this->configHelper->expects(static::once())->method('getProductPageCheckoutFlag')->willReturn(false);
+        $this->requestMock->expects(static::once())->method('getFullActionName')->willReturn('catalog_product_view');
         $this->assertEquals(false, $this->block->isBoltProductPage());
     }
 
@@ -339,6 +340,7 @@ class JsProductPageTest extends BoltTestCase
     {
         $this->configHelper->expects(static::once())->method('getSelectProductPageCheckoutFlag')->willReturn(true);
         $this->configHelper->expects(static::once())->method('getProductPageCheckoutFlag')->willReturn(false);
+        $this->requestMock->expects(static::once())->method('getFullActionName')->willReturn('catalog_product_view');
         $this->assertEquals(false, $this->block->isBoltProductPage());
     }
 

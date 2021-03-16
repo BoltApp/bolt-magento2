@@ -1304,16 +1304,16 @@ JS;
         $fullActionName,
         $expectedResult
     ) {
-        $this->configHelper->expects(static::once())
-            ->method('getProductPageCheckoutFlag')
-            ->willReturn($productPageCheckoutFlag);
-
-        $this->currentMock->expects($productPageCheckoutFlag ? static::once() : static::never())
+        $this->currentMock->expects(static::once())
             ->method('getRequest')
             ->willReturnSelf();
-        $this->currentMock->expects($productPageCheckoutFlag ? static::once() : static::never())
+        $this->currentMock->expects(static::once())
             ->method('getFullActionName')
             ->willReturn($fullActionName);
+            
+        $this->configHelper->expects(($fullActionName == 'catalog_product_view') ? static::once() : static::never())
+            ->method('getProductPageCheckoutFlag')
+            ->willReturn($productPageCheckoutFlag);
 
         static::assertEquals($expectedResult, $this->currentMock->isBoltProductPage());
     }
@@ -2157,5 +2157,253 @@ function(arg) {
                 ]
             )
             ->getMock();
+    }
+    
+    /**
+     * @test
+     *
+     * @dataProvider isLoadConnectJs_withVariousConfigsProvider
+     *
+     * @param string $fullActionName
+     * @param bool $productPageCheckoutFlag
+     * @param bool $isLoadConnectJsOnSpecificPageFeatureSwitchEnabled
+     * @param bool $expectedResult
+     */
+    public function isLoadConnectJs_withVariousConfigs_returnsCorrectResult(
+        $fullActionName,
+        $productPageCheckoutFlag,
+        $isLoadConnectJsOnSpecificPageFeatureSwitchEnabled,
+        $expectedResult
+    ) {
+        $this->deciderMock->expects(static::once())
+            ->method('isLoadConnectJsOnSpecificPage')
+            ->willReturn($isLoadConnectJsOnSpecificPageFeatureSwitchEnabled);
+
+        $this->currentMock->expects((!$isLoadConnectJsOnSpecificPageFeatureSwitchEnabled)
+                                    ? static::never()
+                                    : (($fullActionName == 'checkout_cart_index') ? static::once() : static::exactly(2)))
+                          ->method('getRequest')->willReturnSelf();
+        $this->currentMock->expects((!$isLoadConnectJsOnSpecificPageFeatureSwitchEnabled)
+                                    ? static::never()
+                                    : (($fullActionName == 'checkout_cart_index') ? static::once() : static::exactly(2)))
+                          ->method('getFullActionName')->willReturn($fullActionName);
+        $this->configHelper->expects((!$isLoadConnectJsOnSpecificPageFeatureSwitchEnabled || ($fullActionName != 'catalog_product_view'))
+                                    ? static::never() : static::once())
+                           ->method('getProductPageCheckoutFlag')
+                           ->willReturn($productPageCheckoutFlag);
+
+        static::assertEquals($expectedResult, $this->currentMock->isLoadConnectJs());
+    }
+
+    /**
+     * Data provider for
+     *
+     * @see isLoadConnectJs_withVariousConfigs_returnsCorrectResult
+     *
+     * @return array
+     */
+    public function isLoadConnectJs_withVariousConfigsProvider()
+    {
+        return [
+            [
+                'fullActionName'                                    => 'checkout_cart_index',
+                'productPageCheckoutFlag'                           => false,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
+                'expectedResult'                                    => true
+            ],
+            [
+                'fullActionName'                                    => 'checkout_cart_index',
+                'productPageCheckoutFlag'                           => false,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => false,
+                'expectedResult'                                    => true
+            ],
+            [
+                'fullActionName'                                    => 'checkout_cart_index',
+                'productPageCheckoutFlag'                           => true,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => false,
+                'expectedResult'                                    => true
+            ],
+            [
+                'fullActionName'                                    => 'checkout_cart_index',
+                'productPageCheckoutFlag'                           => true,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
+                'expectedResult'                                    => true
+            ],
+            [
+                'fullActionName'                                    => 'catalog_product_view',
+                'productPageCheckoutFlag'                           => true,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => false,
+                'expectedResult'                                    => true
+            ],
+            [
+                'fullActionName'                                    => 'catalog_product_view',
+                'productPageCheckoutFlag'                           => false,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => false,
+                'expectedResult'                                    => true
+            ],
+            [
+                'fullActionName'                                    => 'catalog_product_view',
+                'productPageCheckoutFlag'                           => false,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
+                'expectedResult'                                    => false
+            ],
+            [
+                'fullActionName'                                    => 'catalog_product_view',
+                'productPageCheckoutFlag'                           => true,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
+                'expectedResult'                                    => true
+            ],
+            [
+                'fullActionName'                                    => HelperConfig::CHECKOUT_PAGE_ACTION,
+                'productPageCheckoutFlag'                           => true,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
+                'expectedResult'                                    => false
+            ],
+            [
+                'fullActionName'                                    => HelperConfig::CHECKOUT_PAGE_ACTION,
+                'productPageCheckoutFlag'                           => true,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => false,
+                'expectedResult'                                    => true
+            ],
+        ];
+    }
+    
+    /**
+     * @test
+     *
+     * @dataProvider isLoadConnectJsDynamic_withVariousConfigsProvider
+     *
+     * @param string $fullActionName
+     * @param bool $minicartSupport
+     * @param bool $productPageCheckoutFlag
+     * @param bool $isLoadConnectJsOnSpecificPageFeatureSwitchEnabled
+     * @param bool $expectedResult
+     */
+    public function isLoadConnectJsDynamic_withVariousConfigs_returnsCorrectResult(
+        $fullActionName,
+        $minicartSupport,
+        $productPageCheckoutFlag,
+        $isLoadConnectJsOnSpecificPageFeatureSwitchEnabled,
+        $expectedResult
+    ) {
+        $this->deciderMock->expects(static::once())
+            ->method('isLoadConnectJsOnSpecificPage')
+            ->willReturn($isLoadConnectJsOnSpecificPageFeatureSwitchEnabled);
+
+        $this->currentMock->expects(($isLoadConnectJsOnSpecificPageFeatureSwitchEnabled && $minicartSupport && !$productPageCheckoutFlag)
+                                    ? static::once()
+                                    : static::never())
+                          ->method('getRequest')->willReturnSelf();
+        $this->currentMock->expects(($isLoadConnectJsOnSpecificPageFeatureSwitchEnabled && $minicartSupport && !$productPageCheckoutFlag)
+                                    ? static::once()
+                                    : static::never())
+                          ->method('getFullActionName')->willReturn($fullActionName);
+        $this->configHelper->expects($isLoadConnectJsOnSpecificPageFeatureSwitchEnabled ? static::once() : static::never())
+                           ->method('getMinicartSupport')
+                           ->willReturn($minicartSupport);
+                           
+        $this->configHelper->expects(($isLoadConnectJsOnSpecificPageFeatureSwitchEnabled && $minicartSupport)
+                                    ? static::once() : static::never())
+                           ->method('getProductPageCheckoutFlag')
+                           ->willReturn($productPageCheckoutFlag);
+
+        static::assertEquals($expectedResult, $this->currentMock->isLoadConnectJsDynamic());
+    }
+    
+    /**
+     * Data provider for
+     *
+     * @see isLoadConnectJsDynamic_withVariousConfigs_returnsCorrectResult
+     *
+     * @return array
+     */
+    public function isLoadConnectJsDynamic_withVariousConfigsProvider()
+    {
+        return [
+            [
+                'fullActionName'                                    => 'catalog_product_view',
+                'minicartSupport'                                   => true,
+                'productPageCheckoutFlag'                           => true,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
+                'expectedResult'                                    => false
+            ],
+            [
+                'fullActionName'                                    => 'catalog_product_view',
+                'minicartSupport'                                   => false,
+                'productPageCheckoutFlag'                           => true,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
+                'expectedResult'                                    => false
+            ],
+            [
+                'fullActionName'                                    => 'catalog_product_view',
+                'minicartSupport'                                   => true,
+                'productPageCheckoutFlag'                           => false,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
+                'expectedResult'                                    => true
+            ],
+            [
+                'fullActionName'                                    => 'catalog_product_view',
+                'minicartSupport'                                   => false,
+                'productPageCheckoutFlag'                           => false,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
+                'expectedResult'                                    => false
+            ],
+            [
+                'fullActionName'                                    => 'catalog_product_view',
+                'minicartSupport'                                   => true,
+                'productPageCheckoutFlag'                           => true,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => false,
+                'expectedResult'                                    => false
+            ],
+            [
+                'fullActionName'                                    => 'catalog_product_view',
+                'minicartSupport'                                   => false,
+                'productPageCheckoutFlag'                           => true,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => false,
+                'expectedResult'                                    => false
+            ],
+            [
+                'fullActionName'                                    => 'catalog_product_view',
+                'minicartSupport'                                   => true,
+                'productPageCheckoutFlag'                           => false,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => false,
+                'expectedResult'                                    => false
+            ],
+            [
+                'fullActionName'                                    => 'catalog_product_view',
+                'minicartSupport'                                   => false,
+                'productPageCheckoutFlag'                           => false,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => false,
+                'expectedResult'                                    => false
+            ],
+            [
+                'fullActionName'                                    => HelperConfig::CHECKOUT_PAGE_ACTION,
+                'minicartSupport'                                   => true,
+                'productPageCheckoutFlag'                           => true,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
+                'expectedResult'                                    => false
+            ],
+            [
+                'fullActionName'                                    => HelperConfig::CHECKOUT_PAGE_ACTION,
+                'minicartSupport'                                   => false,
+                'productPageCheckoutFlag'                           => true,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
+                'expectedResult'                                    => false
+            ],
+            [
+                'fullActionName'                                    => HelperConfig::CHECKOUT_PAGE_ACTION,
+                'minicartSupport'                                   => true,
+                'productPageCheckoutFlag'                           => false,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
+                'expectedResult'                                    => false
+            ],
+            [
+                'fullActionName'                                    => HelperConfig::CHECKOUT_PAGE_ACTION,
+                'minicartSupport'                                   => false,
+                'productPageCheckoutFlag'                           => false,
+                'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
+                'expectedResult'                                    => false
+            ],
+        ];
     }
 }
