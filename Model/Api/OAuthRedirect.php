@@ -1,6 +1,6 @@
 <?php
 /**
- * Bolt magento2 plugin
+ * Bolt magento2 pluginblah
  *
  * NOTICE OF LICENSE
  *
