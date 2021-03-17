@@ -22,6 +22,7 @@ use Bolt\Boltpay\Helper\Cart;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Quote\Model\Quote;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class GiftCardAccount
@@ -54,20 +55,28 @@ class GiftCardAccount
      * @var Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection
      */
     private $magentoGiftCardAccount;
+    
+    /**
+     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
+     */
+    private $featureSwitches;
 
     /**
-     * @param Bugsnag                                   $bugsnagHelper Bugsnag helper instance
-     * @param Discount                                  $discountHelper
-     * @param \Magento\Framework\App\ResourceConnection $resourceConnection
+     * @param Bugsnag     $bugsnagHelper Bugsnag helper instance
+     * @param Discount    $discountHelper
+     * @param Cart        $cartHelper
+     * @param Decider     $featureSwitches
      */
     public function __construct(
         Bugsnag  $bugsnagHelper,
         Discount $discountHelper,
-        Cart     $cartHelper
+        Cart     $cartHelper,
+        Decider  $featureSwitches
     ) {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->discountHelper = $discountHelper;
         $this->cartHelper = $cartHelper;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
@@ -159,7 +168,7 @@ class GiftCardAccount
      */
     public function loadGiftcard($result, $magentoGiftCardAccount, $couponCode, $quote)
     {
-        if (!empty($result)) {
+        if ($result !== null) {
             return $result;
         }
         
@@ -175,8 +184,12 @@ class GiftCardAccount
    
             return (!$giftCard->isEmpty() && $giftCard->isValid()) ? $giftCard : null;
         } catch (\Exception $e) {
-            $this->bugsnagHelper->notifyException($e);
-            return null;
+            if ($this->featureSwitches->isReturnErrWhenRunFilter()) {
+                return $e;
+            } else {
+                $this->bugsnagHelper->notifyException($e);
+                return null;
+            }
         }
     }
     

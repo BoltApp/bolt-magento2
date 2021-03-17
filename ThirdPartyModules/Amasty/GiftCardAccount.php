@@ -26,6 +26,7 @@ use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class GiftCardAccount
@@ -48,20 +49,28 @@ class GiftCardAccount
      * @var ResourceConnection
      */
     private $resourceConnection;
+    
+    /**
+     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
+     */
+    private $featureSwitches;
 
     /**
      * @param Bugsnag            $bugsnagHelper Bugsnag helper instance
      * @param Discount           $discountHelper
      * @param ResourceConnection $resourceConnection
+     * @param Decider            $featureSwitches
      */
     public function __construct(
         Bugsnag $bugsnagHelper,
         Discount $discountHelper,
-        ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection,
+        Decider $featureSwitches
     ) {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->discountHelper = $discountHelper;
         $this->resourceConnection = $resourceConnection;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
@@ -169,10 +178,21 @@ class GiftCardAccount
      */
     public function loadGiftcard($result, $giftcardAccountRepository, $couponCode, $quote)
     {
+        if ($result !== null) {
+            return $result;
+        }
+        
         try {
             return $giftcardAccountRepository->getByCode($couponCode);
         } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
-            return $result;
+            return null;
+        } catch (\Exception $e) {
+            if ($this->featureSwitches->isReturnErrWhenRunFilter()) {
+                return $e;
+            } else {
+                $this->bugsnagHelper->notifyException($e);
+                return null;
+            }
         }
     }
 

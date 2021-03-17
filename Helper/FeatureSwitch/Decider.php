@@ -303,4 +303,9 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_CUSTOMIZABLE_OPTIONS_SUPPORT);
     }
+    
+    public function isReturnErrWhenRunFilter()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_RETURN_ERR_WHEN_RUN_FILTER);
+    }
 }

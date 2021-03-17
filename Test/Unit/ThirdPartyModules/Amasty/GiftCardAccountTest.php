@@ -27,6 +27,7 @@ use Magento\Quote\Model\Quote\Item;
 use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Quote\Model\Quote;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\Amasty\GiftCardAccount
@@ -115,6 +116,11 @@ class GiftCardAccountTest extends BoltTestCase
      * @var Total|MockObject
      */
     private $quoteAddressTotal;
+    
+    /**
+     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
+     */
+    private $featureSwitches;
 
     /**
      * @var string[]
@@ -197,10 +203,11 @@ class GiftCardAccountTest extends BoltTestCase
         $this->orderMock = $this->createMock(\Magento\Sales\Model\Order::class);
         $this->orderMock->method('getId')->willReturn(self::ORDER_ID);
         $this->quoteAddressTotal = $this->createPartialMock(Total::class, ['getValue', 'setValue', 'getTitle']);
+        $this->featureSwitches = $this->createMock(Decider::class);
 
         $this->currentMock = $this->getMockBuilder(GiftCardAccount::class)
             ->setMethods(null)->setConstructorArgs(
-                [$this->bugsnagHelperMock, $this->discountHelper, $this->resourceConnection]
+                [$this->bugsnagHelperMock, $this->discountHelper, $this->resourceConnection, $this->featureSwitches]
             )->getMock();
         $this->giftcardOrderExtensionMock = $this->getMockBuilder(
             '\Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Order'
@@ -218,7 +225,8 @@ class GiftCardAccountTest extends BoltTestCase
         $instance = new GiftCardAccount(
             $this->bugsnagHelperMock,
             $this->discountHelper,
-            $this->resourceConnection
+            $this->resourceConnection,
+            $this->featureSwitches
         );
         static::assertAttributeEquals($this->bugsnagHelperMock, 'bugsnagHelper', $instance);
     }
