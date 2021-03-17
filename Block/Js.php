@@ -383,17 +383,74 @@ class Js extends Template
     {
         return $this->configHelper->getMinicartSupport();
     }
+    
+    /**
+     * Return true if bolt product page checkout is enabled
+     */
+    public function isBoltPPCEnabled()
+    {
+        return $this->configHelper->getProductPageCheckoutFlag();
+    }
 
     /**
      * Return true if we are on product page, and bolt on product page is enabled
      */
     public function isBoltProductPage()
     {
-        if (!$this->configHelper->getProductPageCheckoutFlag()) {
-            return false;
-        }
+        return $this->isOnProductPage() && $this->isBoltPPCEnabled();
+    }
+    
+    /**
+     * Return true if customer is on cart page
+     */
+    public function isOnCartPage()
+    {
+        $currentPage = $this->getRequest()->getFullActionName();
+        return $currentPage == 'checkout_cart_index';
+    }
+    
+    /**
+     * Return true if customer is on product page
+     */
+    public function isOnProductPage()
+    {
         $currentPage = $this->getRequest()->getFullActionName();
         return $currentPage == 'catalog_product_view';
+    }
+    
+    /**
+     * If feature switch M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE is enabled,
+     * then we only fetch Bolt connect js on page load for the product page (PPC is enabled) and cart page.
+     */
+    public function isLoadConnectJs()
+    {
+        if ($this->featureSwitches->isLoadConnectJsOnSpecificPage()) {
+            if ($this->isOnCartPage() || $this->isBoltProductPage()) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    /**
+     * If feature switch M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE is enabled,
+     * then on the product page, with PPC disabled and minicart enabled,
+     * we load Bolt connect JS dynamically under the one of the following conditions:
+     * 1. The cart contains any item.
+     * 2. The cart is empty, and the customer add product to the cart.
+     */
+    public function isLoadConnectJsDynamic()
+    {
+        if ($this->featureSwitches->isLoadConnectJsOnSpecificPage()) {
+            if ($this->isMinicartEnabled() && !$this->isBoltPPCEnabled() && $this->isOnProductPage()) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     /**

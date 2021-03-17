@@ -23,13 +23,13 @@
 if ($block->shouldDisableBoltCheckout()) {
     return;
 }
+
 //check if we need Bolt on this page
 if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled() && !$block->isBoltProductPage()) {
     return;
 }
 
 $trackJsUrl = $block->getTrackJsUrl();
-$connectJsUrl = $block->getConnectJsUrl();
 $checkoutKey = $block->getCheckoutKey();
 ?>
 <script>console.log("Bolt M2 Version: <?= /* @noEscape */ $block->getModuleVersion()?>");</script>
@@ -43,6 +43,10 @@ $checkoutKey = $block->getCheckoutKey();
         data-publishable-key="<?= /* @noEscape */
         $checkoutKey; ?>">
 </script>
+<?php
+if ($block->isLoadConnectJs()) {
+    $connectJsUrl = $block->getConnectJsUrl();
+?>
 <script
         id="bolt-connect"
         type="text/javascript"
@@ -53,3 +57,6 @@ $checkoutKey = $block->getCheckoutKey();
         data-publishable-key="<?= /* @noEscape */
         $checkoutKey; ?>">
 </script>
+<?php
+}
+?>

@@ -304,6 +304,11 @@ class Decider extends AbstractHelper
         return $this->isSwitchEnabled(Definitions::M2_CUSTOMIZABLE_OPTIONS_SUPPORT);
     }
     
+    public function isLoadConnectJsOnSpecificPage()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE);
+    }
+  
     public function isReturnErrWhenRunFilter()
     {
         return $this->isSwitchEnabled(Definitions::M2_RETURN_ERR_WHEN_RUN_FILTER);

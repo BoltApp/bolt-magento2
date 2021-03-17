@@ -163,6 +163,11 @@ class Definitions
     const M2_CUSTOMIZABLE_OPTIONS_SUPPORT = 'M2_CUSTOMIZABLE_OPTIONS_SUPPORT';
     
     /**
+     * Enable connect.js on cart page or product page (if PPC enabled) only
+     */
+    const M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE = 'M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE';
+
+    /**
      * Enable always return error if there is any exception when running filter.
      */
     const M2_RETURN_ERR_WHEN_RUN_FILTER = 'M2_RETURN_ERR_WHEN_RUN_FILTER';
@@ -317,6 +322,12 @@ class Definitions
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE => [
+            self::NAME_KEY        => self::M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_RETURN_ERR_WHEN_RUN_FILTER => [
             self::NAME_KEY        => self::M2_RETURN_ERR_WHEN_RUN_FILTER,
