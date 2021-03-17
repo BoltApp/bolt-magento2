@@ -36,6 +36,7 @@ use Bolt\Boltpay\ThirdPartyModules\Magento\GiftCardAccount as Magento_GiftCardAc
 use Bolt\Boltpay\ThirdPartyModules\Magento\SalesRuleStaging as Magento_SalesRuleStaging;
 use Bolt\Boltpay\ThirdPartyModules\Zonos\DutyTax as Zonos_DutyTax;
 use Bolt\Boltpay\ThirdPartyModules\Mageside\CustomShippingPrice as Mageside_CustomShippingPrice;
+use Bolt\Boltpay\ThirdPartyModules\MageWorld\Affiliate as MW_Affiliate;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -65,6 +66,11 @@ class EventsForThirdPartyModules
                     "module" => "Mageside_CustomShippingPrice",
                     "checkClasses" => ["Mageside\CustomShippingPrice\Model\Carrier\CustomShipping"],
                     "boltClass" => Mageside_CustomShippingPrice::class,
+                ],
+                [
+                    "module" => "MW_Affiliate",
+                    "checkClasses" => ["MW\Affiliate\Helper\Data"],
+                    "boltClass" => MW_Affiliate::class,
                 ],
             ],
         ],
@@ -290,6 +296,15 @@ class EventsForThirdPartyModules
                     "module" => "Zonos_DutyTax",
                     "checkClasses" => ["Zonos\DutyTax\Model\ResourceModel\ZonosShippingQuotesResourceModel"],
                     "boltClass" => Zonos_DutyTax::class,
+                ],
+            ]
+        ],
+        'beforeSaveUpdateOrder' => [
+            "listeners" => [
+                [
+                    "module" => "MW_Affiliate",
+                    "checkClasses" => ["MW\Affiliate\Helper\Data"],
+                    "boltClass" => MW_Affiliate::class,
                 ],
             ]
         ],
@@ -741,6 +756,20 @@ class EventsForThirdPartyModules
                     "module" => "Mageside_CustomShippingPrice",
                     "checkClasses" => ["Mageside\CustomShippingPrice\Model\Carrier\CustomShipping"],
                     "boltClass" => Mageside_CustomShippingPrice::class,
+                ],
+                [
+                    "module" => "MW_Affiliate",
+                    "checkClasses" => ["MW\Affiliate\Helper\Data"],
+                    "boltClass" => MW_Affiliate::class,
+                ],
+            ],
+        ],
+        "getCartCacheIdentifier" => [
+            "listeners" => [
+                [
+                    "module" => "MW_Affiliate",
+                    "checkClasses" => ["MW\Affiliate\Helper\Data"],
+                    "boltClass" => MW_Affiliate::class,
                 ],
             ],
         ]

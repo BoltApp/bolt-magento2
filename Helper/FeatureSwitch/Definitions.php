@@ -167,6 +167,11 @@ class Definitions
      */
     const M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE = 'M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE';
 
+    /**
+     * Enable always return error if there is any exception when running filter.
+     */
+    const M2_RETURN_ERR_WHEN_RUN_FILTER = 'M2_RETURN_ERR_WHEN_RUN_FILTER';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -324,5 +329,11 @@ class Definitions
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
         ],
+        self::M2_RETURN_ERR_WHEN_RUN_FILTER => [
+            self::NAME_KEY        => self::M2_RETURN_ERR_WHEN_RUN_FILTER,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
+        ]
     ];
 }
