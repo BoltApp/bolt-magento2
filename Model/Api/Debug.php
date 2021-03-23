@@ -186,7 +186,7 @@ class Debug implements DebugInterface
     public function universalDebug($type){
         
         // Validate Request
-        //$this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
+        $this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
         
         // If debug v2 is not enabled then throw an exception.
         if(!$this->configHelper->isBoltDebugUniversal()){
