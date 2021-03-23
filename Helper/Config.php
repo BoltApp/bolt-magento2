@@ -349,7 +349,7 @@ class Config extends AbstractHelper
     /**
      * Enable Bolt Universal debug requests
      */
-    const XML_PATH_DEBUG_UNIVERSAL = 'payment/boltpay/platform_debug';
+    const XML_PATH_DEBUG_UNIVERSAL = 'payment/boltpay/universal_debug';
 
     /**
      * Minify JavaScript configuration path
