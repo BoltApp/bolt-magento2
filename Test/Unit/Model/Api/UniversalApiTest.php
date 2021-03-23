@@ -228,12 +228,12 @@ class UniversalApiTest extends BoltTestCase
         $this->shippingMethods = $this->createMock(ShippingMethods::class);
         $this->tax = $this->createMock(Tax::class);
         $this->updateCart = $this->createMock(UpdateCart::class);
-        $this->debug = $this->createMock(Debug::class);
         $this->universalApiResult = $this->createMock(UniversalApiResult::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->errorResponse = $this->createMock(BoltErrorResponse::class);
         $this->response = $this->createMock(Response::class);
+        $this->debug = $this->createMock(Debug::class);
     }
 
     private function initCurrentMock($methods = null)
@@ -246,12 +246,12 @@ class UniversalApiTest extends BoltTestCase
                 $this->shippingMethods,
                 $this->tax,
                 $this->updateCart,
-                $this->debug,
                 $this->universalApiResult,
                 $this->bugsnag,
                 $this->logHelper,
                 $this->errorResponse,
                 $this->response,
+                $this->debug,
             ]);
         if ($methods) {
             $mockBuilder->setMethods($methods);
