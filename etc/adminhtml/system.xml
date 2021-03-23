@@ -247,7 +247,7 @@
                         <label>Bolt Debug Enabled</label>
                         <config_path>payment/boltpay/universal_debug</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                        <comment>Bolt may collect and analyze data and other information relating to the provision, use and performance of the Bolt Services and related systems and technologies therefrom (“Usage Data”) in order to improve and enhance the Bolt Services.</comment>
+                        <comment>This feature allow Bolt to fetch information about your platform plugins and configurations to improve your Bolt integration.</comment>
                     </field>
                     <field id="bolt_order_caching" translate="label" type="select" sortOrder="260" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Cache Bolt Order Token (Performance Optimization)</label>
