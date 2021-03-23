@@ -1820,7 +1820,7 @@ class Config extends AbstractHelper
         // Enable Bolt Universal Debug
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('universal_debug')
-            ->setValue(var_export($this->isBoltDebugUniversal(), true));
+            ->setValue(var_export($this->isBoltDebugUniversalEnabled(), true));
 
         return $boltSettings;
     }
@@ -2001,7 +2001,7 @@ class Config extends AbstractHelper
      *
      * @return boolean
      */
-    public function isBoltDebugUniversal($storeId = null)
+    public function isBoltDebugUniversalEnabled($storeId = null)
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_DEBUG_UNIVERSAL,

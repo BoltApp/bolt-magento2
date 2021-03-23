@@ -188,8 +188,8 @@ class Debug implements DebugInterface
         // Validate Request
         $this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
         
-        // If debug v2 is not enabled then throw an exception.
-        if(!$this->configHelper->isBoltDebugUniversal()){
+        // If debug v2 is not enabled then throw an error to be returned.
+        if(!$this->configHelper->isBoltDebugUniversalEnabled()){
             throw new BoltException(
                 __('Not allowed to fetch debug Data.'),
                 null,
