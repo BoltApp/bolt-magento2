@@ -1817,6 +1817,10 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('bolt_sso')
             ->setValue(var_export($this->isBoltSSOEnabled(), true));
+        // Enable Bolt Universal Debug
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+            ->setName('universal_debug')
+            ->setValue(var_export($this->isBoltDebugUniversal(), true));
 
         return $boltSettings;
     }
