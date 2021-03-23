@@ -29,6 +29,7 @@ use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Bolt\Boltpay\Api\DebugInterface;
 use Magento\Framework\Webapi\Rest\Response;
 
 class UniversalApi implements UniversalApiInterface
@@ -88,6 +89,10 @@ class UniversalApi implements UniversalApiInterface
      */
     protected $response;
 
+    /** 
+     * @var DebugInterface
+     */
+    protected $debug;
 
     public function __construct(
         CreateOrderInterface $createOrder,
@@ -100,7 +105,8 @@ class UniversalApi implements UniversalApiInterface
         Bugsnag $bugsnag,
         LogHelper $logHelper,
         BoltErrorResponse $errorResponse,
-        Response $response
+        Response $response,
+        DebugInterface $debug
     )
     {
         $this->createOrder = $createOrder;
@@ -114,6 +120,7 @@ class UniversalApi implements UniversalApiInterface
         $this->logHelper = $logHelper;
         $this->errorResponse = $errorResponse;
         $this->response = $response;
+        $this->debug = $debug;
     }
 
     public function execute(
@@ -185,6 +192,14 @@ class UniversalApi implements UniversalApiInterface
                             isset($data['cart']) ? $data['cart'] : null,
                             isset($data['shipping_address']) ? $data['shipping_address'] : null,
                             isset($data['shipping_option']) ? $data['shipping_option'] : null
+                        )
+                    );
+                    break;
+                case "debug":
+                    //Returns DebugInterface
+                    $this->result->setData(
+                        $this->debug->universalDebug(
+                            isset($data['type']) ? $data['type'] : null
                         )
                     );
                     break;

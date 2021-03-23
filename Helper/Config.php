@@ -347,6 +347,11 @@ class Config extends AbstractHelper
     const XML_PATH_BOLT_SSO = 'payment/boltpay/bolt_sso';
 
     /**
+     * Enable Bolt Universal debug requests
+     */
+    const XML_PATH_DEBUG_UNIVERSAL = 'payment/boltpay/platform_debug';
+
+    /**
      * Minify JavaScript configuration path
      */
     const XML_PATH_SHOULD_MINIFY_JAVASCRIPT = 'payment/boltpay/should_minify_javascript';
@@ -1980,6 +1985,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_BOLT_SSO,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Get config value for whether or not Bolt Debug V2 is enabled.
+     *
+     * @param int|string|Store $storeId
+     *
+     * @return boolean
+     */
+    public function isBoltDebugUniversal($storeId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_DEBUG_UNIVERSAL,
             ScopeInterface::SCOPE_STORE,
             $storeId
         );
