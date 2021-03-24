@@ -39,6 +39,7 @@ use Bolt\Boltpay\ThirdPartyModules\Mageside\CustomShippingPrice as Mageside_Cust
 use Bolt\Boltpay\ThirdPartyModules\MageWorld\Affiliate as MW_Affiliate;
 use Bolt\Boltpay\ThirdPartyModules\Magento\InStorePickupShipping as Magento_InStorePickupShipping;
 use Bolt\Boltpay\ThirdPartyModules\Magecomp\Extrafee as Magecomp_Extrafee;
+use Bolt\Boltpay\ThirdPartyModules\Webkul\Odoomagentoconnect as Webkul_Odoomagentoconnect;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -339,6 +340,15 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup",
                                        "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
                     "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+            ],
+        ],
+        'afterUpdateOrderPayment' => [
+            "listeners" => [
+                'Webkul_Odoomagentoconnect' => [
+                    "module" => "Webkul_Odoomagentoconnect",
+                    'sendClasses' => ['Webkul\Odoomagentoconnect\Observer\SalesOrderAfterObserver'],
+                    "boltClass" => Webkul_Odoomagentoconnect::class,
                 ],
             ],
         ],
