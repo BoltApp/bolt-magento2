@@ -232,6 +232,7 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
             var getItemsData = function () {
                 var options = {};
                 var compositeAttributes = ['super_attribute', 'options', 'bundle_option', 'bundle_option_qty'];
+                var checkboxAttributes = ['links'];
                 formData = $("#product_addtocart_form").serializeArray();
                 $.each( formData, function( key, input ) {
                     var name = input.name, value = input.value;
@@ -246,6 +247,17 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
                             return;
                         }
                     }
+                    for (var index in checkboxAttributes) {
+                        var checkboxAttribute = checkboxAttributes[index];
+                        if (name === checkboxAttribute+'[]') {
+                            if (!(checkboxAttribute in options)) {
+                                options[checkboxAttribute] = [];
+                            }
+                            options[checkboxAttribute].push(value);
+                            return;
+                        }
+                    }
+
                     options[name] = value;
                 });
                 options['storeId'] = '<?= /* @noEscape */ $block->getStoreId(); ?>';
