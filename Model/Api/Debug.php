@@ -28,6 +28,8 @@ use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
+use Bolt\Boltpay\Exception\BoltException;
+use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 
 class Debug implements DebugInterface
 {
@@ -171,5 +173,36 @@ class Debug implements DebugInterface
             ])
         );
         $this->response->sendResponse();
+    }
+
+
+    /**
+     * This method will handle universal api debug requests based on the type of request it is.
+     * 
+     * @param string $type
+     * @return \Bolt\Boltpay\Api\Data\DebugInfo
+     * @throws BoltException
+     * **/
+    public function universalDebug($type){
+        
+        // Validate Request
+        $this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
+        
+        // If debug v2 is not enabled then throw an error to be returned.
+        if(!$this->configHelper->isBoltDebugUniversalEnabled()){
+            throw new BoltException(
+                __('Not allowed to fetch debug Data.'),
+                null,
+                BoltErrorResponse::ERR_SERVICE
+            );
+        }
+
+        // Throw debg not implemented exception for now untill it is implemented.
+        throw new BoltException(
+            __('Webhook of type Debug has not been implemented'),
+            null,
+            BoltErrorResponse::ERR_SERVICE
+        );
+
     }
 }

@@ -27,6 +27,7 @@ use Bolt\Boltpay\Model\Api\Shipping;
 use Bolt\Boltpay\Model\Api\ShippingMethods;
 use Bolt\Boltpay\Model\Api\Tax;
 use Bolt\Boltpay\Model\Api\UpdateCart;
+use Bolt\Boltpay\Model\Api\Debug;
 use Bolt\Boltpay\Model\Api\Data\UniversalApiResult;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
@@ -77,6 +78,11 @@ class UniversalApiTest extends BoltTestCase
      * @var MockObject|UpdateCart
      */
     private $updateCart;
+
+    /**
+     * @var MockObject|Debug
+     */
+    private $debug;
 
     /**
      * @var MockObject|UniversalApiResult
@@ -227,6 +233,7 @@ class UniversalApiTest extends BoltTestCase
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->errorResponse = $this->createMock(BoltErrorResponse::class);
         $this->response = $this->createMock(Response::class);
+        $this->debug = $this->createMock(Debug::class);
     }
 
     private function initCurrentMock($methods = null)
@@ -243,7 +250,8 @@ class UniversalApiTest extends BoltTestCase
                 $this->bugsnag,
                 $this->logHelper,
                 $this->errorResponse,
-                $this->response
+                $this->response,
+                $this->debug,
             ]);
         if ($methods) {
             $mockBuilder->setMethods($methods);

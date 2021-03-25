@@ -733,6 +733,7 @@ JSON;
             ['isOrderManagementEnabled', BoltConfig::XML_PATH_PRODUCT_ORDER_MANAGEMENT],
             ['isAlwaysPresentCheckoutEnabled', BoltConfig::XML_PATH_ALWAYS_PRESENT_CHECKOUT, false],
             ['isBoltSSOEnabled', BoltConfig::XML_PATH_BOLT_SSO],
+            ['isBoltDebugUniversalEnabled', BoltConfig::XML_PATH_DEBUG_UNIVERSAL],
             ['getUseAheadworksRewardPointsConfig', BoltConfig::XML_PATH_AHEADWORKS_REWARD_POINTS_ON_CART, false]
         ];
     }
@@ -1132,6 +1133,7 @@ JSON;
             'shouldCaptureMetrics',
             'shouldTrackCheckoutFunnel',
             'isBoltSSOEnabled',
+            'isBoltDebugUniversalEnabled',
         ]);
         $this->currentMock->method('isActive')->willReturn(true);
         $this->currentMock->method('getTitle')->willReturn('bolt test title');
@@ -1176,6 +1178,7 @@ JSON;
         $this->currentMock->method('shouldCaptureMetrics')->willReturn(false);
         $this->currentMock->method('shouldTrackCheckoutFunnel')->willReturn(false);
         $this->currentMock->method('isBoltSSOEnabled')->willReturn(false);
+        $this->currentMock->method('isBoltDebugUniversalEnabled')->willReturn(true);
 
         // check bolt settings
         $expected = [
@@ -1222,9 +1225,10 @@ JSON;
             ['capture_merchant_metrics', 'false'],
             ['track_checkout_funnel', 'false'],
             ['bolt_sso', 'false'],
+            ['universal_debug', 'true']
         ];
         $actual = $this->currentMock->getAllConfigSettings();
-        $this->assertEquals(44, count($actual));
+        $this->assertEquals(45, count($actual));
         for ($i = 0; $i < 2; $i++) {
             $this->assertEquals($expected[$i][0], $actual[$i]->getName());
             $this->assertEquals($expected[$i][1], $actual[$i]->getValue(), 'actual value for ' . $expected[$i][0] . ' is not equals to expected');
