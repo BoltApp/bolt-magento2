@@ -16,22 +16,6 @@ parameters:
     default: ""
 
 commands:
-  notify-rc-tag:
-    description: "Notify #eng-magento2 after a release candidate is tagged."
-    parameters:
-      tag:
-        type: string
-        default: ""
-    steps:
-      - slack/notify:
-          color: "#58a359"
-          mentions: "pavel,oleksii,"
-          message: ":white_check_mark: A new RC << parameters.tag >> has been tagged for Magento 2!"
-          webhook: $SLACK_MAGENTO2_WEBHOOK
-          include_job_number_field: false
-          include_project_field: false
-          include_visit_job_action: false
-
   m2-php-test:
     description: PHP Unit tests for M2
     parameters:
@@ -183,20 +167,6 @@ jobs:
           php_version: "php71"
           is_magento_integration: true
 
-  tag-release-candidate:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-    steps:
-      - checkout
-      - run:
-          name: Tag master as release candidate every 2 weeks
-          command: .circleci/scripts/tag-rc-if-necessary.sh
-      - notify-rc-tag:
-          tag: $NEWTAGNAME
-
   integration-php72-magento23:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
@@ -267,16 +237,6 @@ workflows:
       - integration-magento-php74-magento24
       - integration-magento-php72-magento23
       - integration-magento-php71-magento22
-  tagger:
-    triggers:
-      - schedule:
-          cron: "0 5 * * 4" # Every Thursday at 5AM UTC
-          filters:
-            branches:
-              only:
-                - master
-    jobs:
-      - tag-release-candidate
   integration-tests:
     triggers:
       - schedule:
