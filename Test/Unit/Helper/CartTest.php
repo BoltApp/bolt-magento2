@@ -5154,7 +5154,7 @@ ORDER
             ];
 
             $expectedCartData = [
-                'order_reference' => self::IMMUTABLE_QUOTE_ID,
+                'order_reference' => self::QUOTE_ID,
                 'display_id'      => '',
                 'currency'        => self::CURRENCY_CODE,
                 'items'           => [
@@ -5268,7 +5268,7 @@ ORDER
         ];
 
         $expectedCartData = [
-            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'order_reference' => self::QUOTE_ID,
             'display_id'      => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID,
             'currency'        => self::CURRENCY_CODE,
             'items'           => [
@@ -5356,7 +5356,7 @@ ORDER
         );
 
         $expectedCartData = [
-            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'order_reference' => self::QUOTE_ID,
             'display_id'      => self::ORDER_INCREMENT_ID,
             'currency'        => self::CURRENCY_CODE,
             'items'           => [
@@ -5650,7 +5650,7 @@ ORDER
         ];
 
         $expectedCartData = [
-            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'order_reference' => self::QUOTE_ID,
             'display_id'      => '',
             'currency'        => self::CURRENCY_CODE,
             'items'           => [
@@ -5759,7 +5759,7 @@ ORDER
         ];
 
         $expectedCartData = [
-            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'order_reference' => self::QUOTE_ID,
             'display_id'      => self::ORDER_INCREMENT_ID . ' / ' . self::IMMUTABLE_QUOTE_ID,
             'currency'        => self::CURRENCY_CODE,
             'items'           => [
@@ -5845,7 +5845,7 @@ ORDER
         );
 
         $expectedCartData = [
-            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'order_reference' => self::QUOTE_ID,
             'display_id'      => self::ORDER_INCREMENT_ID,
             'currency'        => self::CURRENCY_CODE,
             'items'           => [
