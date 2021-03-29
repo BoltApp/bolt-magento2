@@ -115,6 +115,21 @@ abstract class ShippingTax
      * @var ShippingOptionInterfaceFactory
      */
     protected $shippingOptionFactory;
+    
+    /**
+     * @var ShipToStoreOptionInterfaceFactory
+     */
+    protected $shipToStoreOptionFactory;
+    
+    /**
+     * @var StoreAddressInterfaceFactory
+     */
+    protected $storeAddressFactory;
+    
+    /**
+     * @var EventsForThirdPartyModules
+     */
+    protected $eventsForThirdPartyModules;
 
     /**
      * Assigns local references to global resources
@@ -136,6 +151,9 @@ abstract class ShippingTax
         $this->regionModel = $shippingTaxContext->getRegionModel();
         $this->response = $shippingTaxContext->getResponse();
         $this->shippingOptionFactory = $shippingTaxContext->getShippingOptionFactory();
+        $this->shipToStoreOptionFactory = $shippingTaxContext->getShipToStoreOptionFactory();
+        $this->storeAddressFactory = $shippingTaxContext->getStoreAddressFactory();
+        $this->eventsForThirdPartyModules = $shippingTaxContext->getEventsForThirdPartyModules();
     }
 
     /**
@@ -298,16 +316,17 @@ abstract class ShippingTax
      * @param mixed $cart cart details
      * @param mixed $shipping_address shipping address
      * @param mixed $shipping_option selected shipping option
+     * @param mixed $ship_to_store_option selected pick up in store option
      * @return ShippingTaxDataInterface
      */
-    public function execute($cart, $shipping_address, $shipping_option = null)
+    public function execute($cart, $shipping_address, $shipping_option = null, $ship_to_store_option = null)
     {
         // echo statement initially
         $startTime = $this->metricsClient->getCurrentTime();
         $this->logHelper->addInfoLog('[-= Shipping / Tax request =-]');
         $this->logHelper->addInfoLog(file_get_contents('php://input'));
-        try {
-            $result = $this->handleRequest($cart, $shipping_address, $shipping_option);
+        try { 
+            $result = $this->handleRequest($cart, $shipping_address, $shipping_option, $ship_to_store_option);
             $this->metricsClient->processMetric(static::METRICS_SUCCESS_KEY, 1, static::METRICS_LATENCY_KEY, $startTime);
             return $result;
         } catch (\Magento\Framework\Webapi\Exception $e) {
@@ -333,7 +352,7 @@ abstract class ShippingTax
      * @return ShippingTaxDataInterface
      * @throws BoltException
      */
-    public function handleRequest($cart = null, $shipping_address = null, $shipping_option = null)
+    public function handleRequest($cart = null, $shipping_address = null, $shipping_option = null, $ship_to_store_option = null)
     {
         // get immutable quote id stored with transaction
         $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($cart);
@@ -360,8 +379,8 @@ abstract class ShippingTax
         if (isset($addressData['email']) && $addressData['email'] !== null) {
             $this->validateAddressData($addressData);
         }
-
-        $result = $this->getResult($addressData, $shipping_option);
+        
+        $result = $this->getResult($addressData, $shipping_option, $ship_to_store_option);
 
         $this->logHelper->addInfoLog('[-= Shipping / Tax result =-]');
         $this->logHelper->addInfoLog(json_encode($result, JSON_PRETTY_PRINT));
@@ -373,15 +392,16 @@ abstract class ShippingTax
      *
      * @param array $addressData
      * @param array|null $shipping_option
+     * @param array|null $ship_to_store_option
      *
      * @return ShippingTaxDataInterface
      * @throws LocalizedException
      */
-    public function getResult($addressData, $shipping_option)
+    public function getResult($addressData, $shipping_option, $ship_to_store_option)
     {
         // Take into account external data applied to quote in thirt party modules
         $this->applyExternalQuoteData();
-        $result = $this->generateResult($addressData, $shipping_option);
+        $result = $this->generateResult($addressData, $shipping_option, $ship_to_store_option);
         return $result;
     }
 
@@ -400,8 +420,9 @@ abstract class ShippingTax
     /**
      * @param array $addressData
      * @param array|null $shipping_option
+     * @param array|null $ship_to_store_option
      * @return ShippingTaxDataInterface
      * @throws \Exception
      */
-    abstract public function generateResult($addressData, $shipping_option);
+    abstract public function generateResult($addressData, $shipping_option, $ship_to_store_option);
 }

@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Model\Api\Data;
 
 use Bolt\Boltpay\Api\Data\ShippingDataInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
+use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface;
 
 /**
  * Class ShippingData. Shipping options property of Shipping.
@@ -31,6 +32,11 @@ class ShippingData implements ShippingDataInterface, \JsonSerializable
      * @var array
      */
     private $shippingOptions = [];
+    
+    /**
+     * @var array
+     */
+    private $shipToStoreOptions = [];
 
     /**
      * Get all available shipping options.
@@ -55,6 +61,30 @@ class ShippingData implements ShippingDataInterface, \JsonSerializable
         $this->shippingOptions = $shippingOptions;
         return $this;
     }
+    
+    /**
+     * Get all available ship to store options.
+     *
+     * @api
+     * @return \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface[]
+     */
+    public function getShipToStoreOptions()
+    {
+        return $this->shipToStoreOptions;
+    }
+
+    /**
+     * Set available ship to store options.
+     *
+     * @api
+     * @param \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface[]
+     * @return $this
+     */
+    public function setShipToStoreOptions($shipToStoreOptions)
+    {
+        $this->shipToStoreOptions = $shipToStoreOptions;
+        return $this;
+    }
 
     /**
      * @inheritDoc
@@ -62,7 +92,8 @@ class ShippingData implements ShippingDataInterface, \JsonSerializable
     public function jsonSerialize()
     {
         return [
-            'shipping_options' => $this->shippingOptions
+            'shipping_options' => $this->shippingOptions,
+            'ship_to_store_options' => $this->shipToStoreOptions
         ];
     }
 }

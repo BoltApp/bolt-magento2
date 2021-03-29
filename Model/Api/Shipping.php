@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\Data\ShippingDataInterface;
 use Bolt\Boltpay\Api\Data\ShippingDataInterfaceFactory;
+
 use Bolt\Boltpay\Api\ShippingInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
@@ -74,7 +75,7 @@ class Shipping extends ShippingTax implements ShippingInterface
         ShippingTaxContext $shippingTaxContext,
         ShippingDataInterfaceFactory $shippingDataFactory,
         ShipmentEstimationInterface $shippingMethodManagement,
-        AddressInterfaceFactory $addressFactory
+        AddressInterfaceFactory $addressFactory        
     ) {
         parent::__construct($shippingTaxContext);
 
@@ -86,17 +87,22 @@ class Shipping extends ShippingTax implements ShippingInterface
     /**
      * @param array $addressData
      * @param null $shipping_option
+     * @param null $ship_to_store_option
      * @return ShippingDataInterface
      * @throws LocalizedException
      */
-    public function generateResult($addressData, $shipping_option)
+    public function generateResult($addressData, $shipping_option, $ship_to_store_option)
     {
         $shippingOptions = $this->getShippingOptions($addressData);
+        
+        list($shipToStoreOptions, $shippingOptions) = $this->eventsForThirdPartyModules->runFilter("getShipToStoreOptions", [[],$shippingOptions], $this->quote, $shippingOptions, $addressData);
         /**
          * @var ShippingDataInterface $shippingData
          */
         $shippingData = $this->shippingDataFactory->create();
+
         $shippingData->setShippingOptions($shippingOptions);
+        $shippingData->setShipToStoreOptions($shipToStoreOptions);
         return $shippingData;
     }
 

@@ -90,23 +90,29 @@ class Tax extends ShippingTax implements TaxInterface
 
     /**
      * @param array $addressData
-     * @param array $shipping_option
+     * @param array|null $shipping_option
+     * @param array|null $ship_to_store_option
      * @return TotalsInformationInterface
      */
-    public function setAddressInformation($addressData, $shipping_option)
+    public function setAddressInformation($addressData, $shipping_option, $ship_to_store_option)
     {
         list($address,) = $this->populateAddress($addressData);
         $this->addressInformation->setAddress($address);
 
-        if (!$shipping_option) {
+        if (!$shipping_option && !$ship_to_store_option) {
             return ;
         }
 
-        $selectedOption = $shipping_option['reference'];
-        list($carrierCode, $methodCode) = explode('_', $selectedOption, 2);
+        if ($shipping_option) {
+            list($carrierCode, $methodCode) = explode('_', $shipping_option['reference'], 2);
+        } else { 
+            list($carrierCode, $methodCode) = $this->eventsForThirdPartyModules->runFilter("getShipToStoreCarrierMethodCodes", ['', ''], $this->quote, $ship_to_store_option, $addressData);
+        }
 
         $this->addressInformation->setShippingCarrierCode($carrierCode);
         $this->addressInformation->setShippingMethodCode($methodCode);
+        
+        $this->eventsForThirdPartyModules->dispatchEvent("setExtraAddressInformation", $this->addressInformation, $this->quote, $shipping_option, $ship_to_store_option, $addressData);
     }
 
     /**
@@ -146,16 +152,44 @@ class Tax extends ShippingTax implements TaxInterface
 
         return $shippingOption;
     }
+    
+    /**
+     * @param TotalsInterface $totalsInformation
+     * @param string $currencyCode
+     * @param array $ship_to_store_option
+     * @return ShipToStoreOptionInterface
+     * @throws \Exception
+     */
+    public function createInstorePickOption($totalsInformation, $currencyCode, $ship_to_store_option)
+    {
+        $storeAddress = $this->storeAddressFactory->create();
+        $storeAddress->setStreetAddress1($ship_to_store_option['address']['street_address1']);
+        $storeAddress->setStreetAddress2($ship_to_store_option['address']['street_address2']);
+        $storeAddress->setLocality($ship_to_store_option['address']['locality']);
+        $storeAddress->setRegion($ship_to_store_option['address']['region']);
+        $storeAddress->setPostalCode($ship_to_store_option['address']['postal_code']);
+        
+        $shipToStoreOption = $this->shipToStoreOptionFactory->create();
+        $shipToStoreOption->setReference($ship_to_store_option['reference']);
+        $shipToStoreOption->setCost(CurrencyUtils::toMinor($totalsInformation->getShippingAmount(), $currencyCode));
+        $shipToStoreOption->setStoreName($ship_to_store_option['store_name']);
+        $shipToStoreOption->setAddress($storeAddress);
+        $shipToStoreOption->setDistance($ship_to_store_option['distance']);
+        $shipToStoreOption->setDistanceUnit($ship_to_store_option['distance_unit']);
+        $shipToStoreOption->setTaxAmount(CurrencyUtils::toMinor($totalsInformation->getShippingTaxAmount(), $currencyCode));
+
+        return $shipToStoreOption;
+    }
 
     /**
      * @param array $addressData
-     * @param array $shipping_option
+     * @param array|null $selected_shipping_option
      * @return TaxDataInterface
      * @throws \Exception
      */
-    public function generateResult($addressData, $shipping_option)
+    public function generateResult($addressData, $shipping_option, $ship_to_store_option)
     {
-        $this->setAddressInformation($addressData, $shipping_option);
+        $this->setAddressInformation($addressData, $shipping_option, $ship_to_store_option);
 
         $totalsInformation = $this->totalsInformationManagement->calculate(
             $this->quote->getId(),
@@ -165,11 +199,17 @@ class Tax extends ShippingTax implements TaxInterface
         $currencyCode = $this->quote->getQuoteCurrencyCode();
 
         $taxResult = $this->createTaxResult($totalsInformation, $currencyCode);
-        $shippingOption = $this->createShippingOption($totalsInformation, $currencyCode, $shipping_option);
 
         $taxData = $this->taxDataFactory->create();
         $taxData->setTaxResult($taxResult);
-        $taxData->setShippingOption($shippingOption);
+        
+        if (!empty($shipping_option)) {
+            $shippingOption = $this->createShippingOption($totalsInformation, $currencyCode, $shipping_option);
+            $taxData->setShippingOption($shippingOption);
+        } else {
+            $ship_to_store_option = $this->createInstorePickOption($totalsInformation, $currencyCode, $ship_to_store_option);
+            $taxData->setShipToStoreOption($ship_to_store_option);
+        }
 
         return $taxData;
     }
