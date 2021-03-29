@@ -894,7 +894,6 @@ class EventsForThirdPartyModules
                 $existClasses = array_filter($classNames, function($className) {
                     return $this->doesClassExist($className);
                 });
-
                 if (empty($existClasses)) {
                     return [false,null];
                 }

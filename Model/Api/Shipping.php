@@ -19,7 +19,6 @@ namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\Data\ShippingDataInterface;
 use Bolt\Boltpay\Api\Data\ShippingDataInterfaceFactory;
-
 use Bolt\Boltpay\Api\ShippingInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
@@ -75,7 +74,7 @@ class Shipping extends ShippingTax implements ShippingInterface
         ShippingTaxContext $shippingTaxContext,
         ShippingDataInterfaceFactory $shippingDataFactory,
         ShipmentEstimationInterface $shippingMethodManagement,
-        AddressInterfaceFactory $addressFactory        
+        AddressInterfaceFactory $addressFactory  
     ) {
         parent::__construct($shippingTaxContext);
 

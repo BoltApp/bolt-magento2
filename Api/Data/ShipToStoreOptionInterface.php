@@ -140,9 +140,9 @@ interface ShipToStoreOptionInterface
      * Set shipping tax.
      *
      * @api
-     * @param $tax_amount
+     * @param $taxAmount
      *
      * @return $this
      */
-    public function setTaxAmount($tax_amount);
+    public function setTaxAmount($taxAmount);
 }
