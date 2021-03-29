@@ -17,21 +17,18 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
-use Bolt\Boltpay\Model\Api\Data\TaxResult;
 use Bolt\Boltpay\Model\Api\ShippingTaxContext;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Checkout\Api\Data\TotalsInformationInterface;
 use Magento\Checkout\Api\TotalsInformationManagementInterface;
 use Bolt\Boltpay\Api\Data\TaxDataInterfaceFactory;
-use Bolt\Boltpay\Api\Data\TaxDataInterface;
 use Bolt\Boltpay\Api\Data\TaxResultInterfaceFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Tax;
 use PHPUnit\Framework\MockObject\MockObject;
-use Magento\Quote\Api\Data\TotalsInterface;
-use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
-use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
-use Magento\Quote\Model\Quote;
+use Magento\TestFramework\ObjectManager;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class TaxTest
@@ -72,87 +69,22 @@ class TaxTest extends BoltTestCase
     protected $addressInformation;
 
     /**
-     * @var Tax|MockObject
+     * @var ObjectManager
      */
-    private $currentMock;
+    private $objectManager;
+
+    /**
+     * @var Tax
+     */
+    private $tax;
 
     protected function setUpInternal()
     {
-        $this->shippingTaxContext = $this->createMock(ShippingTaxContext::class);
-
-        $this->taxDataFactory = $this->createMock(TaxDataInterfaceFactory::class);
-        $this->taxResultFactory = $this->createMock(TaxResultInterfaceFactory::class);
-        $this->totalsInformationManagement = $this->createMock(
-            TotalsInformationManagementInterface::class
-        );
-        $this->addressInformation = $this->createMock(TotalsInformationInterface::class);
-    }
-
-    /**
-     * @param array $methods
-     * @param bool $enableOriginalConstructor
-     * @param bool $enableProxyingToOriginalMethods
-     */
-    private function initCurrentMock(
-        $methods = [],
-        $enableProxyingToOriginalMethods = false,
-        $enableOriginalConstructor = true
-    ) {
-        $builder = $this->getMockBuilder(Tax::class)
-            ->setConstructorArgs(
-                [
-                    $this->shippingTaxContext,
-                    $this->taxDataFactory,
-                    $this->taxResultFactory,
-                    $this->totalsInformationManagement,
-                    $this->addressInformation
-                ]
-            )
-            ->setMethods($methods);
-
-        if ($enableOriginalConstructor) {
-            $builder->enableOriginalConstructor();
-        } else {
-            $builder->disableOriginalConstructor();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
         }
-
-        if ($enableProxyingToOriginalMethods) {
-            $builder->enableProxyingToOriginalMethods();
-        } else {
-            $builder->disableProxyingToOriginalMethods();
-        }
-        $this->currentMock = $builder->getMock();
-    }
-
-    /**
-     * @test
-     * that sets internal properties
-     * @covers ::__construct
-     */
-    public function constructor_always_setsInternalProperties()
-    {
-        $this->initCurrentMock();
-
-        static::assertAttributeInstanceOf(
-            TaxDataInterfaceFactory::class,
-            'taxDataFactory',
-            $this->currentMock
-        );
-        static::assertAttributeInstanceOf(
-            TaxResultInterfaceFactory::class,
-            'taxResultFactory',
-            $this->currentMock
-        );
-        static::assertAttributeInstanceOf(
-            TotalsInformationManagementInterface::class,
-            'totalsInformationManagement',
-            $this->currentMock
-        );
-        static::assertAttributeInstanceOf(
-            TotalsInformationInterface::class,
-            'addressInformation',
-            $this->currentMock
-        );
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->tax = $this->objectManager->create(Tax::class);
     }
 
     /**
@@ -176,43 +108,27 @@ class TaxTest extends BoltTestCase
             'street_address1' => '123 Sesame St.',
             'email' => 'integration@bolt.com',
             'company' => 'Bolt'
-        ];
-        
-        $addressDataReformatted = [
-            'country_id' => 'US',
-            'postcode' => '90210',
-            'region' => 'California',
-            'region_id' => 12,
-            'city' => 'San Franciso',
-            'street' => '123 Sesame St.',
-            'email' => 'integration@bolt.com',
-            'company' => 'Bolt'
+
         ];
 
         $shipping_option = [
             'reference' => $shippingReference
         ];
+        $addressInformation = $this->objectManager->create(TotalsInformationInterface::class);
 
-        $this->initCurrentMock(['populateAddress']);
-
-        $address = $this->createMock(\Magento\Quote\Model\Quote\Address::class);
-        $this->currentMock->expects(self::once())->method('populateAddress')
-            ->with($addressData)->willReturn([$address,$addressDataReformatted]);
-
-        $this->addressInformation->expects(self::once())->method('setAddress')
-            ->with($address);
-
-        $this->addressInformation->expects(self::once())->method('setShippingCarrierCode')
-            ->with($carrierCode);
-        $this->addressInformation->expects(self::once())->method('setShippingMethodCode')->with($methodCode);
-
-        $this->assertNull($this->currentMock->setAddressInformation($addressData, $shipping_option));
+        $quote = TestUtils::createQuote();
+        TestHelper::setProperty($this->tax, 'addressInformation', $addressInformation);
+        TestHelper::setProperty($this->tax, 'quote', $quote);
+        $this->tax->setAddressInformation($addressData, $shipping_option);
+        self::assertEquals($carrierCode, TestHelper::getProperty($this->tax, 'addressInformation')->getShippingCarrierCode());
+        self::assertEquals($methodCode, TestHelper::getProperty($this->tax, 'addressInformation')->getShippingMethodCode());
     }
 
-    public function provider_setAddressInformation_happyPath(){
+    public function provider_setAddressInformation_happyPath()
+    {
         return [
-          ['carrierCode_methodCode','carrierCode', 'methodCode'],
-          ['shqshared_GROUND_HOME_DELIVERY', 'shqshared', 'GROUND_HOME_DELIVERY']
+            ['carrierCode_methodCode', 'carrierCode', 'methodCode'],
+            ['shqshared_GROUND_HOME_DELIVERY', 'shqshared', 'GROUND_HOME_DELIVERY']
         ];
     }
 
@@ -232,34 +148,16 @@ class TaxTest extends BoltTestCase
             'street_address1' => '123 Sesame St.',
             'email' => 'integration@bolt.com',
             'company' => 'Bolt'
-        ];
-        
-        $addressDataReformatted = [
-            'country_id' => 'US',
-            'postcode' => '90210',
-            'region' => 'California',
-            'region_id' => 12,
-            'city' => 'San Franciso',
-            'street' => '123 Sesame St.',
-            'email' => 'integration@bolt.com',
-            'company' => 'Bolt'
+
         ];
 
         $shipping_option = null;
+        $addressInformation = $this->objectManager->create(TotalsInformationInterface::class);
 
-        $this->initCurrentMock(['populateAddress']);
-
-        $address = $this->createMock(\Magento\Quote\Model\Quote\Address::class);
-        $this->currentMock->expects(self::once())->method('populateAddress')
-            ->with($addressData)->willReturn([$address,$addressDataReformatted]);
-
-        $this->addressInformation->expects(self::once())->method('setAddress')
-            ->with($address);
-
-        $this->addressInformation->expects(self::never())->method('setShippingCarrierCode');
-        $this->addressInformation->expects(self::never())->method('setShippingMethodCode');
-
-        $this->assertNull($this->currentMock->setAddressInformation($addressData, $shipping_option));
+        $quote = TestUtils::createQuote();
+        TestHelper::setProperty($this->tax, 'addressInformation', $addressInformation);
+        TestHelper::setProperty($this->tax, 'quote', $quote);
+        $this->assertNull($this->tax->setAddressInformation($addressData, $shipping_option));
     }
 
     /**
@@ -270,19 +168,14 @@ class TaxTest extends BoltTestCase
      */
     public function createTaxResult()
     {
-        $this->initCurrentMock([], true);
-
-        $totalsInformation = $this->createMock(TotalsInterface::class);
-        $totalsInformation->expects(self::once())->method('getTaxAmount')->willReturn(10);
-
-        $taxResult = $this->createMock(TaxResult::class);
-        $this->taxResultFactory->expects(self::once())->method('create')->willReturn($taxResult);
-
-        $taxResult->expects(self::once())->method('setSubtotalAmount')->with(1000);
+        $addressInformation = $this->objectManager->create(TotalsInformationInterface::class);
+        $addressInformation->setTaxAmount(10);
+        $taxResult = new \Bolt\Boltpay\Model\Api\Data\TaxResult();
+        $taxResult->setSubtotalAmount(1000);
 
         $this->assertEquals(
             $taxResult,
-            $this->currentMock->createTaxResult($totalsInformation, self::CURRENCY_CODE)
+            $this->tax->createTaxResult($addressInformation, self::CURRENCY_CODE)
         );
     }
 
@@ -294,35 +187,26 @@ class TaxTest extends BoltTestCase
      */
     public function createShippingOption()
     {
-        $shippingOptionFactory = $this->createMock(ShippingOptionInterfaceFactory::class);
-        $this->shippingTaxContext->method('getShippingOptionFactory')
-            ->willReturn($shippingOptionFactory);
-
-        $this->initCurrentMock([], true);
+        $addressInformation = $this->objectManager->create(TotalsInformationInterface::class);
+        $addressInformation->setShippingTaxAmount(10);
+        $addressInformation->setShippingAmount(10);
 
         $shipping_option = [
             'service' => 'carrierTitle - methodTitle',
             'reference' => 'carrierCode_methodCode'
         ];
 
-        $shippingOption = $this->createMock(ShippingOptionInterface::class);
-
-        $shippingOptionFactory->expects(self::once())->method('create')
-            ->willReturn($shippingOption);
-
-        $totalsInformation = $this->createMock(TotalsInterface::class);
-        $totalsInformation->expects(self::once())->method('getShippingTaxAmount')->willReturn(10);
-        $totalsInformation->expects(self::once())->method('getShippingAmount')->willReturn(100);
-
-        $shippingOption->expects(self::once())->method('setTaxAmount')->with(1000);
-        $shippingOption->expects(self::once())->method('setService')->with('carrierTitle - methodTitle');
-        $shippingOption->expects(self::once())->method('setCost')->with(10000);
-        $shippingOption->expects(self::once())->method('setReference')->with('carrierCode_methodCode');
+        $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
+        $shippingOptionData
+            ->setService('carrierTitle - methodTitle')
+            ->setCost(1000)
+            ->setReference('carrierCode_methodCode')
+            ->setTaxAmount(1000);
 
         $this->assertEquals(
-            $shippingOption,
-            $this->currentMock->createShippingOption(
-                $totalsInformation,
+            $shippingOptionData,
+            $this->tax->createShippingOption(
+                $addressInformation,
                 self::CURRENCY_CODE,
                 $shipping_option
             )
@@ -339,32 +223,19 @@ class TaxTest extends BoltTestCase
      */
     public function createShippingOption_noShippingOption()
     {
-        $shippingOptionFactory = $this->createMock(ShippingOptionInterfaceFactory::class);
-        $this->shippingTaxContext->method('getShippingOptionFactory')
-            ->willReturn($shippingOptionFactory);
-
-        $this->initCurrentMock([], true);
-
+        $addressInformation = $this->objectManager->create(TotalsInformationInterface::class);
         $shipping_option = null;
-
-        $shippingOption = $this->createMock(ShippingOptionInterface::class);
-
-        $shippingOptionFactory->expects(self::once())->method('create')
-            ->willReturn($shippingOption);
-
-        $totalsInformation = $this->createMock(TotalsInterface::class);
-        $totalsInformation->expects(self::once())->method('getShippingTaxAmount')->willReturn(0);
-        $totalsInformation->expects(self::once())->method('getShippingAmount')->willReturn(0);
-
-        $shippingOption->expects(self::once())->method('setTaxAmount')->with(0);
-        $shippingOption->expects(self::once())->method('setService')->with(null);
-        $shippingOption->expects(self::once())->method('setCost')->with(0);
-        $shippingOption->expects(self::once())->method('setReference')->with(null);
+        $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
+        $shippingOptionData
+            ->setService(null)
+            ->setCost(0)
+            ->setReference(null)
+            ->setTaxAmount(0);
 
         $this->assertEquals(
-            $shippingOption,
-            $this->currentMock->createShippingOption(
-                $totalsInformation,
+            $shippingOptionData,
+            $this->tax->createShippingOption(
+                $addressInformation,
                 self::CURRENCY_CODE,
                 $shipping_option
             )
@@ -394,37 +265,43 @@ class TaxTest extends BoltTestCase
             'reference' => 'carrierCode_methodCode'
         ];
 
-        $this->initCurrentMock(['setAddressInformation', 'createTaxResult', 'createShippingOption']);
+        $addressInformation = $this->objectManager->create(TotalsInformationInterface::class);
+        $addressInformation->setShippingTaxAmount(10);
+        $addressInformation->setShippingAmount(10);
+        $addressInformation->setTaxAmount(10);
 
-        $this->currentMock->expects(self::once())->method('setAddressInformation')
-            ->with($addressData, $shipping_option);
-
-        $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getId', 'getQuoteCurrencyCode'])
+        $totalsInformationManagementInterface = $this->getMockBuilder(\Magento\Checkout\Api\TotalsInformationManagementInterface::class)
             ->disableOriginalConstructor()
+            ->setMethods(['calculate'])
             ->getMock();
+        $totalsInformationManagementInterface->method('calculate')->willReturn($addressInformation);
 
-        $quote->expects(self::once())->method('getId')->willReturn(self::PARENT_QUOTE_ID);
-        $quote->expects(self::once())->method('getQuoteCurrencyCode')->willReturn(self::CURRENCY_CODE);
-        TestHelper::setProperty($this->currentMock, 'quote', $quote);
+        $apiHelperProperty = new \ReflectionProperty(
+            Tax::class,
+            'totalsInformationManagement'
+        );
+        $apiHelperProperty->setAccessible(true);
+        $apiHelperProperty->setValue($this->tax, $totalsInformationManagementInterface);
 
-        $totalsInformation = $this->createMock(TotalsInterface::class);
-        $this->totalsInformationManagement->expects(self::once())->method('calculate')
-            ->with(self::PARENT_QUOTE_ID, $this->addressInformation)->willReturn($totalsInformation);
+        $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
+        $shippingOptionData
+            ->setService('carrierTitle - methodTitle')
+            ->setCost(1000)
+            ->setReference('carrierCode_methodCode')
+            ->setTaxAmount(1000);
 
-        $taxResult = $this->createMock(TaxResult::class);
-        $this->currentMock->expects(self::once())->method('createTaxResult')
-            ->with($totalsInformation, self::CURRENCY_CODE)->willReturn($taxResult);
+        $taxResult = new \Bolt\Boltpay\Model\Api\Data\TaxResult();
+        $taxResult->setSubtotalAmount(0);
 
-        $shippingOption = $this->createMock(ShippingOptionInterface::class);
-        $this->currentMock->expects(self::once())->method('createShippingOption')
-            ->with($totalsInformation, self::CURRENCY_CODE, $shipping_option)->willReturn($shippingOption);
+        $taxData = new \Bolt\Boltpay\Model\Api\Data\TaxData();
+        $taxData
+            ->setTaxResult($taxResult)
+            ->setShippingOption($shippingOptionData);
 
-        $taxData = $this->createMock(TaxDataInterface::class);
-        $this->taxDataFactory->expects(self::once())->method('create')->willReturn($taxData);
-        $taxData->expects(self::once())->method('setTaxResult')->with($taxResult);
-        $taxData->expects(self::once())->method('setShippingOption')->with($shippingOption);
+        $quote = TestUtils::createQuote();
+        TestHelper::setProperty($this->tax, 'quote', $quote);
+        TestHelper::setProperty($this->tax, 'addressInformation', $addressInformation);
 
-        $this->assertEquals($taxData, $this->currentMock->generateResult($addressData, $shipping_option));
+        $this->assertEquals($taxData, $this->tax->generateResult($addressData, $shipping_option));
     }
 }
