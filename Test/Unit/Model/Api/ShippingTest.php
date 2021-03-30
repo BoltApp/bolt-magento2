@@ -170,7 +170,7 @@ class ShippingTest extends BoltTestCase
 
         $shippingData->expects(self::once())->method('setShippingOptions')->with($shippingOptions);
 
-        $this->assertEquals($shippingData, $this->currentMock->generateResult($addressData, null));
+        $this->assertEquals($shippingData, $this->currentMock->generateResult($addressData, null, null));
     }
 
     /**

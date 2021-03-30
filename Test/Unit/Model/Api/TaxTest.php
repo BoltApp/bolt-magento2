@@ -206,7 +206,7 @@ class TaxTest extends BoltTestCase
             ->with($carrierCode);
         $this->addressInformation->expects(self::once())->method('setShippingMethodCode')->with($methodCode);
 
-        $this->assertNull($this->currentMock->setAddressInformation($addressData, $shipping_option));
+        $this->assertNull($this->currentMock->setAddressInformation($addressData, $shipping_option, null));
     }
 
     public function provider_setAddressInformation_happyPath(){
@@ -259,7 +259,7 @@ class TaxTest extends BoltTestCase
         $this->addressInformation->expects(self::never())->method('setShippingCarrierCode');
         $this->addressInformation->expects(self::never())->method('setShippingMethodCode');
 
-        $this->assertNull($this->currentMock->setAddressInformation($addressData, $shipping_option));
+        $this->assertNull($this->currentMock->setAddressInformation($addressData, $shipping_option, null));
     }
 
     /**
@@ -425,6 +425,6 @@ class TaxTest extends BoltTestCase
         $taxData->expects(self::once())->method('setTaxResult')->with($taxResult);
         $taxData->expects(self::once())->method('setShippingOption')->with($shippingOption);
 
-        $this->assertEquals($taxData, $this->currentMock->generateResult($addressData, $shipping_option));
+        $this->assertEquals($taxData, $this->currentMock->generateResult($addressData, $shipping_option, null));
     }
 }
