@@ -29,6 +29,9 @@ use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
+use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterfaceFactory;
+use Bolt\Boltpay\Api\Data\StoreAddressInterfaceFactory;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class ShippingTaxContext
@@ -97,6 +100,21 @@ class ShippingTaxContext
      * @var ShippingOptionInterfaceFactory
      */
     protected $shippingOptionFactory;
+    
+    /**
+     * @var ShipToStoreOptionInterfaceFactory
+     */
+    protected $shipToStoreOptionFactory;
+    
+    /**
+     * @var StoreAddressInterfaceFactory
+     */
+    protected $storeAddressFactory;
+    
+    /**
+     * @var EventsForThirdPartyModules
+     */
+    protected $eventsForThirdPartyModules;
 
     /**
      * Assigns local references to global resources
@@ -113,6 +131,9 @@ class ShippingTaxContext
      * @param RegionModel $regionModel
      * @param Response $response
      * @param ShippingOptionInterfaceFactory $shippingOptionFactory
+     * @param ShipToStoreOptionInterfaceFactory $shipToStoreOptionFactory
+     * @param StoreAddressInterfaceFactory $storeAddressFactory
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -126,7 +147,10 @@ class ShippingTaxContext
         BoltErrorResponse $errorResponse,
         RegionModel $regionModel,
         Response $response,
-        ShippingOptionInterfaceFactory $shippingOptionFactory
+        ShippingOptionInterfaceFactory $shippingOptionFactory,
+        ShipToStoreOptionInterfaceFactory $shipToStoreOptionFactory,
+        StoreAddressInterfaceFactory $storeAddressFactory,
+        EventsForThirdPartyModules $eventsForThirdPartyModules
     ) {
         $this->hookHelper = $hookHelper;
         $this->cartHelper = $cartHelper;
@@ -140,6 +164,9 @@ class ShippingTaxContext
         $this->regionModel = $regionModel;
         $this->response = $response;
         $this->shippingOptionFactory = $shippingOptionFactory;
+        $this->shipToStoreOptionFactory = $shipToStoreOptionFactory;
+        $this->storeAddressFactory = $storeAddressFactory;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
 
     /**
@@ -236,5 +263,29 @@ class ShippingTaxContext
     public function getShippingOptionFactory()
     {
         return $this->shippingOptionFactory;
+    }
+    
+    /**
+     * @return ShipToStoreOptionInterfaceFactory
+     */
+    public function getShipToStoreOptionFactory()
+    {
+        return $this->shipToStoreOptionFactory;
+    }
+    
+    /**
+     * @return StoreAddressInterfaceFactory
+     */
+    public function getStoreAddressFactory()
+    {
+        return $this->storeAddressFactory;
+    }
+    
+    /**
+     * @return EventsForThirdPartyModules
+     */
+    public function getEventsForThirdPartyModules()
+    {
+        return $this->eventsForThirdPartyModules;
     }
 }
