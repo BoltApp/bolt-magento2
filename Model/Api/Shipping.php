@@ -86,17 +86,21 @@ class Shipping extends ShippingTax implements ShippingInterface
     /**
      * @param array $addressData
      * @param null $shipping_option
+     * @param null $ship_to_store_option
      * @return ShippingDataInterface
      * @throws LocalizedException
      */
-    public function generateResult($addressData, $shipping_option)
+    public function generateResult($addressData, $shipping_option, $ship_to_store_option)
     {
         $shippingOptions = $this->getShippingOptions($addressData);
+        // Get ship to store options
+        list($shipToStoreOptions, $shippingOptions) = $this->eventsForThirdPartyModules->runFilter("getShipToStoreOptions", [[],$shippingOptions], $this->quote, $shippingOptions, $addressData);
         /**
          * @var ShippingDataInterface $shippingData
          */
         $shippingData = $this->shippingDataFactory->create();
         $shippingData->setShippingOptions($shippingOptions);
+        $shippingData->setShipToStoreOptions($shipToStoreOptions);
         return $shippingData;
     }
 

@@ -111,7 +111,7 @@ class ShippingTest extends BoltTestCase
             ->setTaxAmount(0);
         $quote = TestUtils::createQuote(['store_id' => $this->storeId]);
         TestHelper::setProperty($this->shipping, 'quote', $quote);
-        $result = $this->shipping->generateResult($addressData,[]);
+        $result = $this->shipping->generateResult($addressData,[], null);
         $this->assertEquals(
             [$shippingOptionData],
             $result->getShippingOptions()
