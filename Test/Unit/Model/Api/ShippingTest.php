@@ -33,6 +33,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Magento\Quote\Api\Data\ShippingMethodInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class ShippingTest
@@ -75,6 +76,11 @@ class ShippingTest extends BoltTestCase
     protected function setUpInternal()
     {
         $this->shippingTaxContext = $this->createMock(ShippingTaxContext::class);
+        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
+        $eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
+        $eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();        
+        $this->shippingTaxContext->method('getEventsForThirdPartyModules')
+            ->willReturn($eventsForThirdPartyModules);
         $this->shippingDataFactory = $this->createMock(ShippingDataInterfaceFactory::class);
         $this->shippingMethodManagement = $this->createMock(ShipmentEstimationInterface::class);
         $this->addressFactory = $this->createMock(AddressInterfaceFactory::class);

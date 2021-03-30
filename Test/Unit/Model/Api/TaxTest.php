@@ -32,6 +32,7 @@ use Magento\Quote\Api\Data\TotalsInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Magento\Quote\Model\Quote;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class TaxTest
@@ -79,7 +80,11 @@ class TaxTest extends BoltTestCase
     protected function setUpInternal()
     {
         $this->shippingTaxContext = $this->createMock(ShippingTaxContext::class);
-
+        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
+        $eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
+        $eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();        
+        $this->shippingTaxContext->method('getEventsForThirdPartyModules')
+            ->willReturn($eventsForThirdPartyModules);
         $this->taxDataFactory = $this->createMock(TaxDataInterfaceFactory::class);
         $this->taxResultFactory = $this->createMock(TaxResultInterfaceFactory::class);
         $this->totalsInformationManagement = $this->createMock(
