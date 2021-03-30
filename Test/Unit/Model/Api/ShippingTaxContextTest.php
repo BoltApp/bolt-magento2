@@ -32,6 +32,9 @@ use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterfaceFactory;
+use Bolt\Boltpay\Api\Data\StoreAddressInterfaceFactory;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class ShippingTaxContextTest
@@ -99,6 +102,21 @@ class ShippingTaxContextTest extends BoltTestCase
      * @var ShippingOptionInterfaceFactory|MockObject
      */
     private $shippingOptionFactory;
+    
+    /**
+     * @var ShipToStoreOptionInterfaceFactory
+     */
+    private $shipToStoreOptionFactory;
+    
+    /**
+     * @var StoreAddressInterfaceFactory
+     */
+    private $storeAddressFactory;
+    
+    /**
+     * @var EventsForThirdPartyModules
+     */
+    private $eventsForThirdPartyModules;
 
     /**
      * @var ShippingTaxContext|MockObject
@@ -119,6 +137,9 @@ class ShippingTaxContextTest extends BoltTestCase
         $this->regionModel = $this->createMock(RegionModel::class);
         $this->response = $this->createMock(Response::class);
         $this->shippingOptionFactory = $this->createMock(ShippingOptionInterfaceFactory::class);
+        $this->shipToStoreOptionFactory = $this->createMock(ShipToStoreOptionInterfaceFactory::class);
+        $this->storeAddressFactory = $this->createMock(StoreAddressInterfaceFactory::class);
+        $this->eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
 
         $this->currentMock = $this->getMockBuilder(ShippingTaxContext::class)
             ->setConstructorArgs(
@@ -134,7 +155,10 @@ class ShippingTaxContextTest extends BoltTestCase
                     $this->errorResponse,
                     $this->regionModel,
                     $this->response,
-                    $this->shippingOptionFactory
+                    $this->shippingOptionFactory,
+                    $this->shipToStoreOptionFactory,
+                    $this->storeAddressFactory,
+                    $this->eventsForThirdPartyModules
                 ]
             )
             ->enableProxyingToOriginalMethods()
@@ -162,7 +186,10 @@ class ShippingTaxContextTest extends BoltTestCase
             $this->errorResponse,
             $this->regionModel,
             $this->response,
-            $this->shippingOptionFactory
+            $this->shippingOptionFactory,
+            $this->shipToStoreOptionFactory,
+            $this->storeAddressFactory,
+            $this->eventsForThirdPartyModules
         );
 
         static::assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
@@ -179,6 +206,21 @@ class ShippingTaxContextTest extends BoltTestCase
         static::assertAttributeInstanceOf(
             ShippingOptionInterfaceFactory::class,
             'shippingOptionFactory',
+            $instance
+        );
+        static::assertAttributeInstanceOf(
+            ShipToStoreOptionInterfaceFactory::class,
+            'shipToStoreOptionFactory',
+            $instance
+        );
+        static::assertAttributeInstanceOf(
+            StoreAddressInterfaceFactory::class,
+            'storeAddressFactory',
+            $instance
+        );
+        static::assertAttributeInstanceOf(
+            EventsForThirdPartyModules::class,
+            'eventsForThirdPartyModules',
             $instance
         );
     }
@@ -315,6 +357,48 @@ class ShippingTaxContextTest extends BoltTestCase
         $this->assertEquals(
             $this->shippingOptionFactory,
             $this->currentMock->getShippingOptionFactory()
+        );
+    }
+    
+    /**
+     * @test
+     * that getShipToStoreOptionFactory would returns ship to store option factory instance
+     *
+     * @covers ::getShipToStoreOptionFactory
+     */
+    public function getShipToStoreOptionFactory_always_returnsShipToStoreOptionFactory()
+    {
+        $this->assertEquals(
+            $this->shipToStoreOptionFactory,
+            $this->currentMock->getShipToStoreOptionFactory()
+        );
+    }
+    
+    /**
+     * @test
+     * that getStoreAddressFactory would returns store address factory instance
+     *
+     * @covers ::getStoreAddressFactory
+     */
+    public function getStoreAddressFactory_always_returnsStoreAddressFactory()
+    {
+        $this->assertEquals(
+            $this->storeAddressFactory,
+            $this->currentMock->getStoreAddressFactory()
+        );
+    }
+    
+    /**
+     * @test
+     * that getEventsForThirdPartyModules would returns eventsForThirdPartyModules instance
+     *
+     * @covers ::getEventsForThirdPartyModules
+     */
+    public function getEventsForThirdPartyModules_always_returnsEventsForThirdPartyModules()
+    {
+        $this->assertEquals(
+            $this->eventsForThirdPartyModules,
+            $this->currentMock->getEventsForThirdPartyModules()
         );
     }
 }
