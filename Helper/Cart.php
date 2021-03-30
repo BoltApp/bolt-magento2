@@ -2446,7 +2446,7 @@ class Cart extends AbstractHelper
 
         //add item to quote
         foreach ($items as $item) {
-            $product = $this->productRepository->getbyId($item['reference']);
+            $product = $this->productRepository->getById($item['reference']);
 
             $options = json_decode($item['options'], true);
             if (isset($options['storeId']) && $options['storeId']) {
@@ -2480,6 +2480,7 @@ class Cart extends AbstractHelper
         $quote->setIsActive(false);
         $this->saveQuote($quote);
         $cart_data = $this->getCartData(false, '', $quote);
+        $cart_data['order_reference'] = $quoteId;
         $this->quoteResourceSave($quote);
         $this->saveQuote($quote);
 
