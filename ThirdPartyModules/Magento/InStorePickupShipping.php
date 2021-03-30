@@ -125,10 +125,12 @@ class InStorePickupShipping
             }
           
             $tmpShippingOptions = [];
+            $inStorePickupCost = 0;
             $hasInStorePickup = false;
             foreach ($shippingOptions as $shippingOption) {
                 if ($shippingOption->getReference() == InStorePickup::DELIVERY_METHOD) {
-                    $hasInStorePickup = true;                    
+                    $hasInStorePickup = true;
+                    $inStorePickupCost = $shippingOption->getCost();
                 } else {
                     $tmpShippingOptions[] = $shippingOption;
                 }
@@ -179,7 +181,7 @@ class InStorePickupShipping
                     $pickupLocationCode = $item->getPickupLocationCode();
 
                     $shipToStoreOption->setReference(InStorePickup::DELIVERY_METHOD . '_' . $pickupLocationCode);
-                    $shipToStoreOption->setCost(0);
+                    $shipToStoreOption->setCost($inStorePickupCost);
                     $shipToStoreOption->setStoreName($item->getName());
                     $shipToStoreOption->setAddress($storeAddress);
                     $shipToStoreOption->setDistance($distanceToSources[$pickupLocationCode]);
