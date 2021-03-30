@@ -32,7 +32,8 @@ interface TaxInterface
      * @param mixed $cart cart details
      * @param mixed $shipping_address shipping address
      * @param mixed $shipping_option selected shipping option
+     * @param mixed $ship_to_store_option selected ship to store option
      * @return \Bolt\Boltpay\Api\Data\TaxDataInterface
      */
-    public function execute($cart, $shipping_address, $shipping_option = null);
+    public function execute($cart, $shipping_address, $shipping_option = null, $ship_to_store_option = null);
 }

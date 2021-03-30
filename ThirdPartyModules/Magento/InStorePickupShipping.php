@@ -198,4 +198,68 @@ class InStorePickupShipping
             return $result;
         }
     }
+    
+    /**
+     * @param Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation $setAddressPickupLocation
+     * @param Magento\Checkout\Api\Data\TotalsInformationInterface $addressInformation
+     * @param Magento\Quote\Model\Quote $quote
+     * @param array                     $shipping_option
+     * @param array                     $ship_to_store_option
+     * @param array                     $addressData
+     * @return array
+     */
+    public function setExtraAddressInformation(
+        $setAddressPickupLocation,
+        $addressInformation,
+        $quote,
+        $shipping_option,
+        $ship_to_store_option,
+        $addressData
+    ) {
+        try {
+            $carrierCode = $addressInformation->getShippingCarrierCode();
+            $methodCode = $addressInformation->getShippingMethodCode();
+            if ( $carrierCode . '_' . $methodCode == InStorePickup::DELIVERY_METHOD) {
+                $shippingAddress = $quote->getShippingAddress();
+                $pickupLocation = substr_replace($ship_to_store_option['reference'], '', 0, strlen(InStorePickup::DELIVERY_METHOD . '_'));    
+                $setAddressPickupLocation->execute($shippingAddress, $pickupLocation);
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+    
+    /**
+     * @param array                     $result
+     * @param Magento\Quote\Model\Quote $quote
+     * @param array                     $ship_to_store_option
+     * @param array                     $addressData
+     * @return array
+     */
+    public function getShipToStoreCarrierMethodCodes(
+        $result,
+        $quote,
+        $ship_to_store_option,
+        $addressData
+    ) {
+        $referenceCodes = explode('_', $ship_to_store_option['reference']);
+        if ($this->checkIfMagentoInStorePickupByCode($referenceCodes)) {
+            return [$referenceCodes[0], $referenceCodes[1]];
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * @param array $referenceCodes
+     * @return bool
+     */
+    private function checkIfMagentoInStorePickupByCode($referenceCodes)
+    {
+        if (count($referenceCodes) > 2 && $referenceCodes[0] . '_' . $referenceCodes[1] == InStorePickup::DELIVERY_METHOD) {
+            return true;
+        }
+        
+        return false;
+    }
 }

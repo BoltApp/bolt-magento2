@@ -32,6 +32,7 @@ use Magento\Quote\Api\Data\TotalsInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Magento\Quote\Model\Quote;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class TaxTest
@@ -79,7 +80,11 @@ class TaxTest extends BoltTestCase
     protected function setUpInternal()
     {
         $this->shippingTaxContext = $this->createMock(ShippingTaxContext::class);
-
+        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
+        $eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
+        $eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();        
+        $this->shippingTaxContext->method('getEventsForThirdPartyModules')
+            ->willReturn($eventsForThirdPartyModules);
         $this->taxDataFactory = $this->createMock(TaxDataInterfaceFactory::class);
         $this->taxResultFactory = $this->createMock(TaxResultInterfaceFactory::class);
         $this->totalsInformationManagement = $this->createMock(
@@ -206,7 +211,7 @@ class TaxTest extends BoltTestCase
             ->with($carrierCode);
         $this->addressInformation->expects(self::once())->method('setShippingMethodCode')->with($methodCode);
 
-        $this->assertNull($this->currentMock->setAddressInformation($addressData, $shipping_option));
+        $this->assertNull($this->currentMock->setAddressInformation($addressData, $shipping_option, null));
     }
 
     public function provider_setAddressInformation_happyPath(){
@@ -259,7 +264,7 @@ class TaxTest extends BoltTestCase
         $this->addressInformation->expects(self::never())->method('setShippingCarrierCode');
         $this->addressInformation->expects(self::never())->method('setShippingMethodCode');
 
-        $this->assertNull($this->currentMock->setAddressInformation($addressData, $shipping_option));
+        $this->assertNull($this->currentMock->setAddressInformation($addressData, $shipping_option, null));
     }
 
     /**
@@ -425,6 +430,6 @@ class TaxTest extends BoltTestCase
         $taxData->expects(self::once())->method('setTaxResult')->with($taxResult);
         $taxData->expects(self::once())->method('setShippingOption')->with($shippingOption);
 
-        $this->assertEquals($taxData, $this->currentMock->generateResult($addressData, $shipping_option));
+        $this->assertEquals($taxData, $this->currentMock->generateResult($addressData, $shipping_option, null));
     }
 }
