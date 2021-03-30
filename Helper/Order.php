@@ -437,13 +437,15 @@ class Order extends AbstractHelper
         if ($quote->isVirtual()) {
             return;
         }
-
-        $shippingAddress = $quote->getShippingAddress();
-        $shippingAddress->setCollectShippingRates(true);
-
-        $shippingMethod = $transaction->order->cart->shipments[0]->reference;
-
-        $shippingAddress->setShippingMethod($shippingMethod)->save();
+        
+        if (isset($transaction->order->cart->in_store_shipments)) {
+            $this->eventsForThirdPartyModules->dispatchEvent("setInStoreShippingMethodForPrepareQuote", $quote, $transaction);
+        } else {
+            $shippingAddress = $quote->getShippingAddress();
+            $shippingAddress->setCollectShippingRates(true);    
+            $shippingMethod = $transaction->order->cart->shipments[0]->reference;    
+            $shippingAddress->setShippingMethod($shippingMethod)->save();
+        }
     }
 
     /**
@@ -511,14 +513,21 @@ class Order extends AbstractHelper
      */
     protected function setShippingAddress($quote, $transaction)
     {
-        $address = $transaction->order->cart->shipments[0]->shipping_address ?? null;
-        $referenceShipmentMethod = $transaction->order->cart->shipments[0]->reference ?? null;
-
-        if ($address) {
-            $this->setAddress($quote->getShippingAddress(), $address);
-            if (isset($referenceShipmentMethod) && $this->configHelper->isPickupInStoreShippingMethodCode($referenceShipmentMethod)) {
-                $addressData = $this->configHelper->getPickupAddressData();
-                $quote->getShippingAddress()->addData($addressData);
+        if (isset($transaction->order->cart->in_store_shipments)) {
+            $address = $transaction->order->cart->in_store_shipments[0]->shipment->shipping_address ?? null;
+            if ($address) {
+                $this->setAddress($quote->getShippingAddress(), $address);
+            }
+            $this->eventsForThirdPartyModules->dispatchEvent("setInStoreShippingAddressForPrepareQuote", $quote, $transaction);
+        } else {
+            $address = $transaction->order->cart->shipments[0]->shipping_address ?? null;
+            $referenceShipmentMethod = $transaction->order->cart->shipments[0]->reference ?? null;
+            if ($address) {
+                $this->setAddress($quote->getShippingAddress(), $address);
+                if (isset($referenceShipmentMethod) && $this->configHelper->isPickupInStoreShippingMethodCode($referenceShipmentMethod)) {
+                    $addressData = $this->configHelper->getPickupAddressData();
+                    $quote->getShippingAddress()->addData($addressData);
+                }
             }
         }
     }
@@ -1531,8 +1540,14 @@ class Order extends AbstractHelper
         $this->setPaymentMethod($quote);
         $this->quoteAfterChange($quote);
 
-        $email = $transaction->order->cart->billing_address->email_address ??
-            $transaction->order->cart->shipments[0]->shipping_address->email_address ?? null;
+        if (isset($transaction->order->cart->in_store_shipments)) {
+            $email = $transaction->order->cart->billing_address->email_address ??
+                $transaction->order->cart->in_store_shipments[0]->shipment->email_address ?? null;
+        } else {
+            $email = $transaction->order->cart->billing_address->email_address ??
+                $transaction->order->cart->shipments[0]->shipping_address->email_address ?? null;
+        }
+        
         $this->addCustomerDetails($quote, $email);
 
         $this->cartHelper->quoteResourceSave($quote);

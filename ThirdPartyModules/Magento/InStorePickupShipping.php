@@ -251,6 +251,67 @@ class InStorePickupShipping
     }
     
     /**
+     * @param Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation $setAddressPickupLocation
+     * @param Magento\Quote\Model\Quote $quote
+     * @param \stdClass                 $transaction
+     * @return array
+     */
+    public function setInStoreShippingMethodForPrepareQuote(
+        $setAddressPickupLocation,
+        $quote,
+        $transaction
+    ) {
+        try {
+            $shipment = $transaction->order->cart->in_store_shipments[0]->shipment;
+            $referenceCodes = explode('_', $shipment->reference);
+            if ($this->checkIfMagentoInStorePickupByCode($referenceCodes)) {
+                $shippingAddress = $quote->getShippingAddress();
+                $shippingAddress->setCollectShippingRates(true);
+                $pickupLocation = substr_replace($shipment->reference, '', 0, strlen(InStorePickup::DELIVERY_METHOD . '_'));
+                $setAddressPickupLocation->execute($shippingAddress, $pickupLocation);  
+                $shippingAddress->setShippingMethod(InStorePickup::DELIVERY_METHOD)->save();
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+    
+    /**
+     * @param Magento\InventoryInStorePickupQuote\Model\ToQuoteAddress $addressConverter
+     * @param Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface $getPickupLocation
+     * @param Magento\Quote\Model\Quote $quote
+     * @param \stdClass                 $transaction
+     * @return array
+     */
+    public function setInStoreShippingAddressForPrepareQuote(
+        $addressConverter,
+        $getPickupLocation,
+        $quote,
+        $transaction
+    ) {
+        try {
+            $shipment = $transaction->order->cart->in_store_shipments[0]->shipment;
+            $referenceCodes = explode('_', $shipment->reference);
+            if ($this->checkIfMagentoInStorePickupByCode($referenceCodes)) {
+                $shippingAddress = $quote->getShippingAddress();
+                $shippingAddress->setData('firstname', $transaction->order->cart->in_store_shipments[0]->store_name);
+                $shippingAddress->setData('lastname', 'Store');
+                $shippingAddress->save();
+                $pickupLocationCode = substr_replace($shipment->reference, '', 0, strlen(InStorePickup::DELIVERY_METHOD . '_'));
+                $pickupLocation = $getPickupLocation->execute(
+                    $pickupLocationCode,
+                    SalesChannelInterface::TYPE_WEBSITE,
+                    $quote->getStore()->getWebsite()->getCode()
+                );      
+                $shippingAddress = $addressConverter->convert($pickupLocation, $shippingAddress);  
+                $quote->setShippingAddress($shippingAddress)->save();
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+    
+    /**
      * @param array $referenceCodes
      * @return bool
      */

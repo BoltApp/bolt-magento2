@@ -319,6 +319,28 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        "setInStoreShippingMethodForPrepareQuote" => [
+            "listeners" => [
+                [
+                    "module" => "Magento_InventoryInStorePickup",
+                    "sendClasses" => ["Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation"],
+                    "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
+                    "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+            ],
+        ],
+        "setInStoreShippingAddressForPrepareQuote" => [
+            "listeners" => [
+                [
+                    "module" => "Magento_InventoryInStorePickup",
+                    "sendClasses" => ["Magento\InventoryInStorePickupQuote\Model\ToQuoteAddress",
+                                      "Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface"],
+                    "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup",
+                                       "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
+                    "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+            ],
+        ],
     ];
 
     const filterListeners = [
