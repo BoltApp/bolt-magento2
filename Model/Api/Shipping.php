@@ -74,7 +74,7 @@ class Shipping extends ShippingTax implements ShippingInterface
         ShippingTaxContext $shippingTaxContext,
         ShippingDataInterfaceFactory $shippingDataFactory,
         ShipmentEstimationInterface $shippingMethodManagement,
-        AddressInterfaceFactory $addressFactory  
+        AddressInterfaceFactory $addressFactory
     ) {
         parent::__construct($shippingTaxContext);
 
@@ -93,13 +93,12 @@ class Shipping extends ShippingTax implements ShippingInterface
     public function generateResult($addressData, $shipping_option, $ship_to_store_option)
     {
         $shippingOptions = $this->getShippingOptions($addressData);
-        
+        // Get ship to store options
         list($shipToStoreOptions, $shippingOptions) = $this->eventsForThirdPartyModules->runFilter("getShipToStoreOptions", [[],$shippingOptions], $this->quote, $shippingOptions, $addressData);
         /**
          * @var ShippingDataInterface $shippingData
          */
         $shippingData = $this->shippingDataFactory->create();
-
         $shippingData->setShippingOptions($shippingOptions);
         $shippingData->setShipToStoreOptions($shipToStoreOptions);
         return $shippingData;

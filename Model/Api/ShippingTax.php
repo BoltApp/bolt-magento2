@@ -316,7 +316,7 @@ abstract class ShippingTax
      * @param mixed $cart cart details
      * @param mixed $shipping_address shipping address
      * @param mixed $shipping_option selected shipping option
-     * @param mixed $ship_to_store_option selected pick up in store option
+     * @param mixed $ship_to_store_option selected ship to store option
      * @return ShippingTaxDataInterface
      */
     public function execute($cart, $shipping_address, $shipping_option = null, $ship_to_store_option = null)
@@ -325,7 +325,7 @@ abstract class ShippingTax
         $startTime = $this->metricsClient->getCurrentTime();
         $this->logHelper->addInfoLog('[-= Shipping / Tax request =-]');
         $this->logHelper->addInfoLog(file_get_contents('php://input'));
-        try { 
+        try {
             $result = $this->handleRequest($cart, $shipping_address, $shipping_option, $ship_to_store_option);
             $this->metricsClient->processMetric(static::METRICS_SUCCESS_KEY, 1, static::METRICS_LATENCY_KEY, $startTime);
             return $result;
@@ -349,6 +349,7 @@ abstract class ShippingTax
      * @param mixed $cart cart details
      * @param mixed $shipping_address shipping address
      * @param mixed $shipping_option selected shipping option
+     * @param mixed $ship_to_store_option selected pick up in store option
      * @return ShippingTaxDataInterface
      * @throws BoltException
      */
@@ -379,7 +380,7 @@ abstract class ShippingTax
         if (isset($addressData['email']) && $addressData['email'] !== null) {
             $this->validateAddressData($addressData);
         }
-        
+
         $result = $this->getResult($addressData, $shipping_option, $ship_to_store_option);
 
         $this->logHelper->addInfoLog('[-= Shipping / Tax result =-]');

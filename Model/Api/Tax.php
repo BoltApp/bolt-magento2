@@ -183,7 +183,8 @@ class Tax extends ShippingTax implements TaxInterface
 
     /**
      * @param array $addressData
-     * @param array|null $selected_shipping_option
+     * @param array|null $shipping_option
+     * @param array|null $ship_to_store_option
      * @return TaxDataInterface
      * @throws \Exception
      */

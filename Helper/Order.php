@@ -437,7 +437,7 @@ class Order extends AbstractHelper
         if ($quote->isVirtual()) {
             return;
         }
-
+        
         if (isset($transaction->order->cart->in_store_shipments)) {
             $this->eventsForThirdPartyModules->dispatchEvent("setInStoreShippingMethodForPrepareQuote", $quote, $transaction);
         } else {
@@ -445,7 +445,7 @@ class Order extends AbstractHelper
             $shippingAddress->setCollectShippingRates(true);    
             $shippingMethod = $transaction->order->cart->shipments[0]->reference;    
             $shippingAddress->setShippingMethod($shippingMethod)->save();
-        }        
+        }
     }
 
     /**
