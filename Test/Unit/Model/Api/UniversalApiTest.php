@@ -18,115 +18,67 @@
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Bolt\Boltpay\Model\Api\UniversalApi;
-
-use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Model\Api\CreateOrder;
-use Bolt\Boltpay\Model\Api\OrderManagement;
 use Bolt\Boltpay\Model\Api\Shipping;
 use Bolt\Boltpay\Model\Api\ShippingMethods;
-use Bolt\Boltpay\Model\Api\Tax;
 use Bolt\Boltpay\Model\Api\UpdateCart;
-use Bolt\Boltpay\Model\Api\Debug;
-use Bolt\Boltpay\Model\Api\Data\UniversalApiResult;
-use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\Webapi\Rest\Request;
-use Magento\Framework\Webapi\Rest\Response;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\TestFramework\ObjectManager;
+use Bolt\Boltpay\Model\ErrorResponse;
+use Bolt\Boltpay\Test\Unit\TestHelper;
 
+/**
+ * Class UniversalApiTest
+ * @package Bolt\Boltpay\Test\Unit\Model\Api
+ * @coversDefaultClass \Bolt\Boltpay\Model\Api\UniversalApi
+ */
 class UniversalApiTest extends BoltTestCase
 {
     const DATA = ['data1' => 'not important'];
 
-    /** 
-     * @var MockObject|Bugsnag 
+    /**
+     * @var ObjectManager
      */
-    private $bugsnag;
+    private $objectManager;
 
     /**
-     * @var MockObject|LogHelper
+     * @var UniversalApi
      */
-    private $logHelper;
-
-    /**
-     * @var MockObject|CreateOrder
-     */
-    private $createOrder;
-
-    /**
-     * @var MockObject|OrderManagement
-     */
-    private $orderManagement;
-
-    /**
-     * @var MockObject|Shipping
-     */
-    private $shipping;
-
-    /**
-     * @var MockObject|ShippingMethods
-     */
-    private $shippingMethods;
-
-    /**
-     * @var MockObject|Tax
-     */
-    private $tax;
-
-    /**
-     * @var MockObject|UpdateCart
-     */
-    private $updateCart;
-
-    /**
-     * @var MockObject|Debug
-     */
-    private $debug;
-
-    /**
-     * @var MockObject|UniversalApiResult
-     */
-    private $universalApiResult;
-
-    /**
-     * @var MockObject|Request
-     */
-    private $request;
-
-    /**
-     * @var MockObject|Response
-     */
-    private $response;
-
-    /**
-     * @var MockObject|UniversalApi
-     */
-    private $currentMock;
+    private $universalApi;
 
     /**
      * @inheritdoc
      */
     protected function setUpInternal()
     {
-        $this->initRequiredMocks();
-        $this->initCurrentMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->universalApi = $this->objectManager->create(UniversalApi::class);
     }
 
     /**
      * @test
+     * @covers ::execute
      */
     public function invalidRequestEvent_sendsErrorResponse()
     {
         $invalidType = "invalid_hook_type";
+        $this->universalApi->execute($invalidType, self::DATA);
 
-        $this->expectErrorResponse(
-            BoltErrorResponse::ERR_SERVICE,
-            __('Invalid webhook type %1', $invalidType),
-            422
+        $response = json_decode(TestHelper::getProperty($this->universalApi, 'response')->getBody(), true);
+        $this->assertEquals(
+            [
+                'status' => 'failure',
+                'error' => [
+                    'code' => ErrorResponse::ERR_SERVICE,
+                    'message' => 'Invalid webhook type invalid_hook_type',
+                    ]
+            ],
+            $response
         );
-
-        $this->currentMock->execute($invalidType, self::DATA);
     }
 
     /**
@@ -136,17 +88,14 @@ class UniversalApiTest extends BoltTestCase
     {
         $event = "order.create";
         $data = ['order' => 'order', 'currency' => 'currency'];
+        $createOrder = $this->createMock(CreateOrder::class);
+        $createOrder->expects(self::once())->method('execute')->with($event,
+            $data['order'],
+            $data['currency']
+        );
+        TestHelper::setProperty($this->universalApi,'createOrder', $createOrder);
 
-        $this->createOrder->expects(self::once())
-            ->method('execute')
-            ->with(
-                $event, 
-                $data['order'], 
-                $data['currency']
-            )
-            ->willReturn(true);
-        
-        $this->assertTrue($this->currentMock->execute($event, $data));
+        $this->assertTrue($this->universalApi->execute($event, $data));
     }
 
     /**
@@ -163,17 +112,18 @@ class UniversalApiTest extends BoltTestCase
             'discount_codes_to_remove' => 'discount_codes_to_remove',
         ];
 
-        $this->updateCart->expects(self::once())
-            ->method('execute')
-            ->with(
-                $data['cart'],
-                $data['add_items'],
-                $data['remove_items'],
-                $data['discount_codes_to_add'],
-                $data['discount_codes_to_remove']
-            );
+        $updateCart = $this->createMock(UpdateCart::class);
+        $updateCart->expects(self::once())->method('execute')->with(
+            $data['cart'],
+            $data['add_items'],
+            $data['remove_items'],
+            $data['discount_codes_to_add'],
+            $data['discount_codes_to_remove']
+        );
+
+        TestHelper::setProperty($this->universalApi,'updateCart', $updateCart);
         
-        $this->assertTrue($this->currentMock->execute($event, $data));
+        $this->assertTrue($this->universalApi->execute($event, $data));
     }
 
     /**
@@ -186,15 +136,16 @@ class UniversalApiTest extends BoltTestCase
             'cart' => 'cart',
             'shipping_address' => 'shipping_address'
         ];
-
-        $this->shippingMethods->expects(self::once())
+        $shippingMethods = $this->createMock(ShippingMethods::class);
+        $shippingMethods->expects(self::once())
             ->method('getShippingMethods')
             ->with(
                 $data['cart'],
                 $data['shipping_address']
             );
-        
-        $this->assertTrue($this->currentMock->execute($event, $data));
+        TestHelper::setProperty($this->universalApi,'shippingMethods', $shippingMethods);
+
+        $this->assertTrue($this->universalApi->execute($event, $data));
     }
 
     /**
@@ -209,81 +160,17 @@ class UniversalApiTest extends BoltTestCase
             'shipping_option' => 'shipping_option'
         ];
 
-        $this->shipping->expects(self::once())
+        $shipping = $this->createMock(Shipping::class);
+        $shipping->expects(self::once())
             ->method('execute')
             ->with(
                 $data['cart'],
                 $data['shipping_address'],
                 $data['shipping_option']
             );
-        
-        $this->assertTrue($this->currentMock->execute($event, $data));
-    }
 
-    private function initRequiredMocks()
-    {
-        $this->createOrder = $this->createMock(CreateOrder::class);
-        $this->orderManagement = $this->createMock(OrderManagement::class);
-        $this->shipping = $this->createMock(Shipping::class);
-        $this->shippingMethods = $this->createMock(ShippingMethods::class);
-        $this->tax = $this->createMock(Tax::class);
-        $this->updateCart = $this->createMock(UpdateCart::class);
-        $this->universalApiResult = $this->createMock(UniversalApiResult::class);
-        $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->logHelper = $this->createMock(LogHelper::class);
-        $this->errorResponse = $this->createMock(BoltErrorResponse::class);
-        $this->response = $this->createMock(Response::class);
-        $this->debug = $this->createMock(Debug::class);
-    }
+        TestHelper::setProperty($this->universalApi,'shipping', $shipping);
 
-    private function initCurrentMock($methods = null)
-    {
-        $mockBuilder = $this->getMockBuilder(UniversalApi::class)
-            ->setConstructorArgs([
-                $this->createOrder,
-                $this->orderManagement,
-                $this->shipping,
-                $this->shippingMethods,
-                $this->tax,
-                $this->updateCart,
-                $this->universalApiResult,
-                $this->bugsnag,
-                $this->logHelper,
-                $this->errorResponse,
-                $this->response,
-                $this->debug,
-            ]);
-        if ($methods) {
-            $mockBuilder->setMethods($methods);
-        } else {
-            $mockBuilder->enableProxyingToOriginalMethods();
-        }
-
-        $this->currentMock = $mockBuilder->getMock();
-    }
-
-    private function expectErrorResponse($errCode, $message, $httpStatusCode)
-    {
-        //TODO: Additional response stays here for now as it will be fleshed out in the handler
-        $additionalErrorResponseData = [];
-        $encodeErrorResult = '';
-
-        $this->errorResponse->expects(self::once())
-            ->method('prepareErrorMessage')
-            ->with($errCode, $message, $additionalErrorResponseData)
-            ->willReturn($encodeErrorResult);
-
-        $this->bugsnag->expects(self::once())
-            ->method('notifyException')
-            ->with(new \Exception($message));
-
-        $this->response->expects(self::once())
-            ->method('setHttpResponseCode')
-            ->with($httpStatusCode);
-        $this->response->expects(self::once())
-            ->method('setBody')
-            ->with($encodeErrorResult);
-        $this->response->expects(self::once())
-            ->method('sendResponse');
+        $this->assertTrue($this->universalApi->execute($event, $data));
     }
 }
