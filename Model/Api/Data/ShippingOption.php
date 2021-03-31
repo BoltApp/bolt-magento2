@@ -67,7 +67,7 @@ class ShippingOption implements ShippingOptionInterface, \JsonSerializable
      */
     public function setService($service)
     {
-        $this->service = $service;
+        $this->service = ltrim($service, ' -');
         return $this;
     }
 

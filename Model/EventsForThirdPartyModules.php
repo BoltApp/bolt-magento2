@@ -786,6 +786,10 @@ class EventsForThirdPartyModules
         ],
         "filterCartItems" => [
             'listeners' => [
+                'Brainvire_Engraving' => [
+                    'module'      => 'Brainvire_Engraving',
+                    'boltClass'   => Magecomp_Extrafee::class,
+                ],
                 'Magecomp_Extrafee' => [
                     'module'      => 'Magecomp_Extrafee',
                     'boltClass'   => Magecomp_Extrafee::class,
@@ -794,6 +798,10 @@ class EventsForThirdPartyModules
         ],
         "filterTransactionBeforeOrderCreateValidation" => [
             'listeners' => [
+                'Brainvire_Engraving' => [
+                    'module'      => 'Brainvire_Engraving',
+                    'boltClass'   => Magecomp_Extrafee::class,
+                ],
                 'Magecomp_Extrafee' => [
                     'module'      => 'Magecomp_Extrafee',
                     'boltClass'   => Magecomp_Extrafee::class,
@@ -802,6 +810,10 @@ class EventsForThirdPartyModules
         ],
         "filterCartBeforeLegacyShippingAndTax" => [
             'listeners' => [
+                'Brainvire_Engraving' => [
+                    'module'      => 'Brainvire_Engraving',
+                    'boltClass'   => Magecomp_Extrafee::class,
+                ],
                 'Magecomp_Extrafee' => [
                     'module'      => 'Magecomp_Extrafee',
                     'boltClass'   => Magecomp_Extrafee::class,
