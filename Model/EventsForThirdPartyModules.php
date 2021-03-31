@@ -37,6 +37,7 @@ use Bolt\Boltpay\ThirdPartyModules\Magento\SalesRuleStaging as Magento_SalesRule
 use Bolt\Boltpay\ThirdPartyModules\Zonos\DutyTax as Zonos_DutyTax;
 use Bolt\Boltpay\ThirdPartyModules\Mageside\CustomShippingPrice as Mageside_CustomShippingPrice;
 use Bolt\Boltpay\ThirdPartyModules\MageWorld\Affiliate as MW_Affiliate;
+use Bolt\Boltpay\ThirdPartyModules\Magecomp\Extrafee as Magecomp_Extrafee;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -772,7 +773,31 @@ class EventsForThirdPartyModules
                     "boltClass" => MW_Affiliate::class,
                 ],
             ],
-        ]
+        ],
+        "filterCartItems" => [
+            'listeners' => [
+                'Magecomp_Extrafee' => [
+                    'module'      => 'Magecomp_Extrafee',
+                    'boltClass'   => Magecomp_Extrafee::class,
+                ],
+            ]
+        ],
+        "filterTransactionBeforeOrderCreateValidation" => [
+            'listeners' => [
+                'Magecomp_Extrafee' => [
+                    'module'      => 'Magecomp_Extrafee',
+                    'boltClass'   => Magecomp_Extrafee::class,
+                ],
+            ]
+        ],
+        "filterCartBeforeLegacyShippingAndTax" => [
+            'listeners' => [
+                'Magecomp_Extrafee' => [
+                    'module'      => 'Magecomp_Extrafee',
+                    'boltClass'   => Magecomp_Extrafee::class,
+                ],
+            ]
+        ],
     ];
 
     /**

@@ -165,7 +165,7 @@ class ShippingMethods implements ShippingMethodsInterface
     private $serialize;
 
     protected $_oldShippingAddress;
-    
+
     /**
      * @var EventsForThirdPartyModules
      */
@@ -326,7 +326,7 @@ class ShippingMethods implements ShippingMethodsInterface
                     __('The quantity of items in your cart has changed and needs to be revised. Please reload the page and checkout again.'),
                     null,
                     6103
-                ); 
+                );
             }
             else {
                 throw new BoltException(
@@ -412,6 +412,7 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     public function getShippingAndTax($cart, $shipping_address)
     {
+        $cart = $this->eventsForThirdPartyModules->runFilter('filterCartBeforeLegacyShippingAndTax', $cart);
         // get immutable quote id stored with transaction
         $quoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($cart);
 
