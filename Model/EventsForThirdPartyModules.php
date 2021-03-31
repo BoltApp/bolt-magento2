@@ -38,6 +38,7 @@ use Bolt\Boltpay\ThirdPartyModules\Zonos\DutyTax as Zonos_DutyTax;
 use Bolt\Boltpay\ThirdPartyModules\Mageside\CustomShippingPrice as Mageside_CustomShippingPrice;
 use Bolt\Boltpay\ThirdPartyModules\MageWorld\Affiliate as MW_Affiliate;
 use Bolt\Boltpay\ThirdPartyModules\Magecomp\Extrafee as Magecomp_Extrafee;
+use Bolt\Boltpay\ThirdPartyModules\Webkul\Odoomagentoconnect as Webkul_Odoomagentoconnect;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -306,6 +307,15 @@ class EventsForThirdPartyModules
                     "module" => "MW_Affiliate",
                     "checkClasses" => ["MW\Affiliate\Helper\Data"],
                     "boltClass" => MW_Affiliate::class,
+                ],
+            ]
+        ],
+        'afterUpdateOrderPayment' => [
+            "listeners" => [
+                'Webkul_Odoomagentoconnect' => [
+                    "module" => "Webkul_Odoomagentoconnect",
+                    'sendClasses' => ['Webkul\Odoomagentoconnect\Observer\SalesOrderAfterObserver'],
+                    "boltClass" => Webkul_Odoomagentoconnect::class,
                 ],
             ]
         ],

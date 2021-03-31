@@ -343,8 +343,8 @@ class Order extends AbstractHelper
         WebhookLogCollectionFactory $webhookLogCollectionFactory,
         WebhookLogFactory $webhookLogFactory,
         Decider $featureSwitches,
-        CheckboxesHandler $checkboxesHandler,   
-        CustomFieldsHandler $customFieldsHandler,    
+        CheckboxesHandler $checkboxesHandler,
+        CustomFieldsHandler $customFieldsHandler,
         CustomerCreditCardFactory $customerCreditCardFactory,
         CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory,
         CreditmemoFactory $creditmemoFactory,
@@ -784,7 +784,7 @@ class Order extends AbstractHelper
     private function deleteRedundantQuotes($quote)
     {
         $this->eventsForThirdPartyModules->dispatchEvent("beforeOrderDeleteRedundantQuotes", $quote);
-        
+
         $connection = $this->resourceConnection->getConnection();
 
         // get table name with prefix
@@ -905,7 +905,7 @@ class Order extends AbstractHelper
             });
         }
         ///////////////////////////////////////////////////////////////
-        
+
         $this->eventsForThirdPartyModules->dispatchEvent("beforeSaveUpdateOrder", $immutableQuote, $transaction);
 
         // check if the order exists
@@ -1649,7 +1649,7 @@ class Order extends AbstractHelper
         // Unless the state is TS_ZERO_AMOUNT, TS_COMPLETED (valid start transaction states, as well as TS_PENDING)
         // or TS_CREDIT_COMPLETED (for historical reasons, old orders refund,
         // legacy code when order was created, no state recorded) put it in TS_PENDING state.
-        // It can corelate with the $transactionState or not in case the hook is late due connection problems and
+        // It can correlate with the $transactionState or not in case the hook is late due connection problems and
         // the status has changed in the meanwhile.
         if (!$prevTransactionState && !$transactionReference && !$transactionId) {
             if (in_array($transactionState, [self::TS_ZERO_AMOUNT, self::TS_COMPLETED, self::TS_CREDIT_COMPLETED])) {
@@ -1658,7 +1658,7 @@ class Order extends AbstractHelper
             return self::TS_PENDING;
         }
 
-        // The previously recorded state is either TS_PENDING or TS_REJECTED_REVERSIBLE. Authorization occured but also
+        // The previously recorded state is either TS_PENDING or TS_REJECTED_REVERSIBLE. Authorization occurred but also
         // some of the funds were captured before the TS_AUTHORIZED state is recorded in Magento. Mark the transaction
         // as TS_AUTHORIZED and wait for the next hook to record the CAPTURE.
         if (in_array($prevTransactionState, [self::TS_PENDING, self::TS_REJECTED_REVERSIBLE]) &&
@@ -2234,6 +2234,14 @@ class Order extends AbstractHelper
         // save payment and order
         $payment->save();
         $order->save();
+
+        $this->eventsForThirdPartyModules->dispatchEvent(
+            'afterUpdateOrderPayment',
+            $order,
+            $transaction,
+            $transactionState,
+            $prevTransactionState
+        );
     }
 
     /**
