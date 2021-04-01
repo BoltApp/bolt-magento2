@@ -27,15 +27,16 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Model\Api\ShippingTaxContext;
-use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Bolt\Boltpay\Model\ErrorResponse;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use Magento\TestFramework\ObjectManager;
+use Magento\TestFramework\Helper\Bootstrap;
 use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterfaceFactory;
 use Bolt\Boltpay\Api\Data\StoreAddressInterfaceFactory;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
-
 /**
  * Class ShippingTaxContextTest
  * @package Bolt\Boltpay\Test\Unit\Model\Api
@@ -44,185 +45,19 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 class ShippingTaxContextTest extends BoltTestCase
 {
     /**
-     * @var HookHelper|MockObject
-     */
-    private $hookHelper;
-
-    /**
-     * @var CartHelper|MockObject
-     */
-    private $cartHelper;
-
-    /**
-     * @var LogHelper|MockObject
-     */
-    private $logHelper;
-
-    /**
-     * @var ConfigHelper|MockObject
-     */
-    private $configHelper;
-
-    /**
-     * @var SessionHelper|MockObject
-     */
-    private $sessionHelper;
-
-    /**
-     * @var DiscountHelper|MockObject
-     */
-    private $discountHelper;
-
-    /**
-     * @var Bugsnag|MockObject
-     */
-    private $bugsnag;
-
-    /**
-     * @var MetricsClient|MockObject
-     */
-    private $metricsClient;
-
-    /**
-     * @var BoltErrorResponse|MockObject
-     */
-    private $errorResponse;
-
-    /**
-     * @var RegionModel|MockObject
-     */
-    private $regionModel;
-
-    /**
-     * @var Response|MockObject
-     */
-    private $response;
-
-    /**
-     * @var ShippingOptionInterfaceFactory|MockObject
-     */
-    private $shippingOptionFactory;
-    
-    /**
-     * @var ShipToStoreOptionInterfaceFactory
-     */
-    private $shipToStoreOptionFactory;
-    
-    /**
-     * @var StoreAddressInterfaceFactory
-     */
-    private $storeAddressFactory;
-    
-    /**
-     * @var EventsForThirdPartyModules
-     */
-    private $eventsForThirdPartyModules;
-
-    /**
      * @var ShippingTaxContext|MockObject
      */
-    private $currentMock;
+    private $shippingTaxContext;
+
+    /**
+     * @var ObjectManager
+     */
+    private $objectManager;
 
     protected function setUpInternal()
     {
-        $this->hookHelper = $this->createMock(HookHelper::class);
-        $this->cartHelper = $this->createMock(CartHelper::class);
-        $this->logHelper = $this->createMock(LogHelper::class);
-        $this->configHelper = $this->createMock(ConfigHelper::class);
-        $this->sessionHelper = $this->createMock(SessionHelper::class);
-        $this->discountHelper = $this->createMock(DiscountHelper::class);
-        $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->metricsClient = $this->createMock(MetricsClient::class);
-        $this->errorResponse = $this->createMock(BoltErrorResponse::class);
-        $this->regionModel = $this->createMock(RegionModel::class);
-        $this->response = $this->createMock(Response::class);
-        $this->shippingOptionFactory = $this->createMock(ShippingOptionInterfaceFactory::class);
-        $this->shipToStoreOptionFactory = $this->createMock(ShipToStoreOptionInterfaceFactory::class);
-        $this->storeAddressFactory = $this->createMock(StoreAddressInterfaceFactory::class);
-        $this->eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
-
-        $this->currentMock = $this->getMockBuilder(ShippingTaxContext::class)
-            ->setConstructorArgs(
-                [
-                    $this->hookHelper,
-                    $this->cartHelper,
-                    $this->logHelper,
-                    $this->configHelper,
-                    $this->sessionHelper,
-                    $this->discountHelper,
-                    $this->bugsnag,
-                    $this->metricsClient,
-                    $this->errorResponse,
-                    $this->regionModel,
-                    $this->response,
-                    $this->shippingOptionFactory,
-                    $this->shipToStoreOptionFactory,
-                    $this->storeAddressFactory,
-                    $this->eventsForThirdPartyModules
-                ]
-            )
-            ->enableProxyingToOriginalMethods()
-            ->getMock();
-    }
-
-    /**
-     *
-     * @test
-     * that set internal properties
-     *
-     * @covers ::__construct
-     */
-    public function constructor_always_setsInternalProperties()
-    {
-        $instance = new ShippingTaxContext(
-            $this->hookHelper,
-            $this->cartHelper,
-            $this->logHelper,
-            $this->configHelper,
-            $this->sessionHelper,
-            $this->discountHelper,
-            $this->bugsnag,
-            $this->metricsClient,
-            $this->errorResponse,
-            $this->regionModel,
-            $this->response,
-            $this->shippingOptionFactory,
-            $this->shipToStoreOptionFactory,
-            $this->storeAddressFactory,
-            $this->eventsForThirdPartyModules
-        );
-
-        static::assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
-        static::assertAttributeInstanceOf(CartHelper::class, 'cartHelper', $instance);
-        static::assertAttributeInstanceOf(LogHelper::class, 'logHelper', $instance);
-        static::assertAttributeInstanceOf(ConfigHelper::class, 'configHelper', $instance);
-        static::assertAttributeInstanceOf(SessionHelper::class, 'sessionHelper', $instance);
-        static::assertAttributeInstanceOf(DiscountHelper::class, 'discountHelper', $instance);
-        static::assertAttributeInstanceOf(Bugsnag::class, 'bugsnag', $instance);
-        static::assertAttributeInstanceOf(MetricsClient::class, 'metricsClient', $instance);
-        static::assertAttributeInstanceOf(BoltErrorResponse::class, 'errorResponse', $instance);
-        static::assertAttributeInstanceOf(RegionModel::class, 'regionModel', $instance);
-        static::assertAttributeInstanceOf(Response::class, 'response', $instance);
-        static::assertAttributeInstanceOf(
-            ShippingOptionInterfaceFactory::class,
-            'shippingOptionFactory',
-            $instance
-        );
-        static::assertAttributeInstanceOf(
-            ShipToStoreOptionInterfaceFactory::class,
-            'shipToStoreOptionFactory',
-            $instance
-        );
-        static::assertAttributeInstanceOf(
-            StoreAddressInterfaceFactory::class,
-            'storeAddressFactory',
-            $instance
-        );
-        static::assertAttributeInstanceOf(
-            EventsForThirdPartyModules::class,
-            'eventsForThirdPartyModules',
-            $instance
-        );
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->shippingTaxContext = $this->objectManager->create(ShippingTaxContext::class);
     }
 
     /**
@@ -233,7 +68,7 @@ class ShippingTaxContextTest extends BoltTestCase
      */
     public function getHookHelper_always_returnsHookHelper()
     {
-        $this->assertEquals($this->hookHelper, $this->currentMock->getHookHelper());
+        $this->assertEquals($this->objectManager->create(HookHelper::class), $this->shippingTaxContext->getHookHelper());
     }
 
     /**
@@ -244,7 +79,7 @@ class ShippingTaxContextTest extends BoltTestCase
      */
     public function getCartHelper_always_returnsCartHelper()
     {
-        $this->assertEquals($this->cartHelper, $this->currentMock->getCartHelper());
+        $this->assertEquals($this->objectManager->create(CartHelper::class), $this->shippingTaxContext->getCartHelper());
     }
 
     /**
@@ -255,7 +90,7 @@ class ShippingTaxContextTest extends BoltTestCase
      */
     public function getLogHelper_always_returnsLogHelper()
     {
-        $this->assertEquals($this->logHelper, $this->currentMock->getLogHelper());
+        $this->assertEquals($this->objectManager->create(LogHelper::class), $this->shippingTaxContext->getLogHelper());
     }
 
     /**
@@ -266,7 +101,7 @@ class ShippingTaxContextTest extends BoltTestCase
      */
     public function getConfigHelper_always_returnsConfigHelper()
     {
-        $this->assertEquals($this->configHelper, $this->currentMock->getConfigHelper());
+        $this->assertEquals($this->objectManager->create(ConfigHelper::class), $this->shippingTaxContext->getConfigHelper());
     }
 
     /**
@@ -277,7 +112,7 @@ class ShippingTaxContextTest extends BoltTestCase
      */
     public function getSessionHelper_always_returnsSessionHelper()
     {
-        $this->assertEquals($this->sessionHelper, $this->currentMock->getSessionHelper());
+        $this->assertEquals($this->objectManager->create(SessionHelper::class), $this->shippingTaxContext->getSessionHelper());
     }
 
     /**
@@ -288,7 +123,7 @@ class ShippingTaxContextTest extends BoltTestCase
      */
     public function getDiscountHelper_always_returnsDiscountHelper()
     {
-        $this->assertEquals($this->discountHelper, $this->currentMock->getDiscountHelper());
+        $this->assertEquals($this->objectManager->create(DiscountHelper::class), $this->shippingTaxContext->getDiscountHelper());
     }
 
     /**
@@ -299,7 +134,7 @@ class ShippingTaxContextTest extends BoltTestCase
      */
     public function getBugsnag_always_returnsBugsnag()
     {
-        $this->assertEquals($this->bugsnag, $this->currentMock->getBugsnag());
+        $this->assertEquals($this->objectManager->create(Bugsnag::class), $this->shippingTaxContext->getBugsnag());
     }
 
     /**
@@ -310,7 +145,7 @@ class ShippingTaxContextTest extends BoltTestCase
      */
     public function getMetricsClient_always_returnsMetricsClient()
     {
-        $this->assertEquals($this->metricsClient, $this->currentMock->getMetricsClient());
+        $this->assertEquals($this->objectManager->create(MetricsClient::class), $this->shippingTaxContext->getMetricsClient());
     }
 
     /**
@@ -321,7 +156,7 @@ class ShippingTaxContextTest extends BoltTestCase
      */
     public function getErrorResponse_always_returnsErrorResponse()
     {
-        $this->assertEquals($this->errorResponse, $this->currentMock->getErrorResponse());
+        $this->assertEquals($this->objectManager->create(ErrorResponse::class), $this->shippingTaxContext->getErrorResponse());
     }
 
     /**
@@ -332,7 +167,7 @@ class ShippingTaxContextTest extends BoltTestCase
      */
     public function getRegionModel_always_returnsRegionModel()
     {
-        $this->assertEquals($this->regionModel, $this->currentMock->getRegionModel());
+        $this->assertEquals($this->objectManager->create(RegionModel::class), $this->shippingTaxContext->getRegionModel());
     }
 
     /**
@@ -343,7 +178,7 @@ class ShippingTaxContextTest extends BoltTestCase
      */
     public function getResponse_always_returnsResponse()
     {
-        $this->assertEquals($this->response, $this->currentMock->getResponse());
+        $this->assertEquals($this->objectManager->create(Response::class), $this->shippingTaxContext->getResponse());
     }
 
     /**
@@ -355,11 +190,11 @@ class ShippingTaxContextTest extends BoltTestCase
     public function getShippingOptionFactory_always_returnsShippingOptionFactory()
     {
         $this->assertEquals(
-            $this->shippingOptionFactory,
-            $this->currentMock->getShippingOptionFactory()
+            $this->objectManager->create(ShippingOptionInterfaceFactory::class),
+            $this->shippingTaxContext->getShippingOptionFactory()
         );
     }
-    
+
     /**
      * @test
      * that getShipToStoreOptionFactory would returns ship to store option factory instance
@@ -369,11 +204,11 @@ class ShippingTaxContextTest extends BoltTestCase
     public function getShipToStoreOptionFactory_always_returnsShipToStoreOptionFactory()
     {
         $this->assertEquals(
-            $this->shipToStoreOptionFactory,
-            $this->currentMock->getShipToStoreOptionFactory()
+            $this->objectManager->create(ShipToStoreOptionInterfaceFactory::class),
+            $this->shippingTaxContext->getShipToStoreOptionFactory()
         );
     }
-    
+
     /**
      * @test
      * that getStoreAddressFactory would returns store address factory instance
@@ -383,11 +218,11 @@ class ShippingTaxContextTest extends BoltTestCase
     public function getStoreAddressFactory_always_returnsStoreAddressFactory()
     {
         $this->assertEquals(
-            $this->storeAddressFactory,
-            $this->currentMock->getStoreAddressFactory()
+            $this->objectManager->create(StoreAddressInterfaceFactory::class),
+            $this->shippingTaxContext->getStoreAddressFactory()
         );
     }
-    
+
     /**
      * @test
      * that getEventsForThirdPartyModules would returns eventsForThirdPartyModules instance
@@ -397,8 +232,8 @@ class ShippingTaxContextTest extends BoltTestCase
     public function getEventsForThirdPartyModules_always_returnsEventsForThirdPartyModules()
     {
         $this->assertEquals(
-            $this->eventsForThirdPartyModules,
-            $this->currentMock->getEventsForThirdPartyModules()
+            $this->objectManager->create(EventsForThirdPartyModules::class),
+            $this->shippingTaxContext->getEventsForThirdPartyModules()
         );
     }
 }
