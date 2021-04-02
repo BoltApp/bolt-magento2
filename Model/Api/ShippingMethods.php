@@ -165,7 +165,7 @@ class ShippingMethods implements ShippingMethodsInterface
     private $serialize;
 
     protected $_oldShippingAddress;
-    
+
     /**
      * @var EventsForThirdPartyModules
      */
@@ -326,7 +326,7 @@ class ShippingMethods implements ShippingMethodsInterface
                     __('The quantity of items in your cart has changed and needs to be revised. Please reload the page and checkout again.'),
                     null,
                     6103
-                ); 
+                );
             }
             else {
                 throw new BoltException(
@@ -433,7 +433,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace parent quote with immutable quote in checkout session.
-        $this->sessionHelper->loadSession($this->quote, $cart['metadata']);
+        $this->sessionHelper->loadSession($this->quote, $cart['metadata'] ?? []);
 
         $addressData = $this->cartHelper->handleSpecialAddressCases($shipping_address);
 
