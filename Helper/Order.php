@@ -343,8 +343,8 @@ class Order extends AbstractHelper
         WebhookLogCollectionFactory $webhookLogCollectionFactory,
         WebhookLogFactory $webhookLogFactory,
         Decider $featureSwitches,
-        CheckboxesHandler $checkboxesHandler,   
-        CustomFieldsHandler $customFieldsHandler,    
+        CheckboxesHandler $checkboxesHandler,
+        CustomFieldsHandler $customFieldsHandler,
         CustomerCreditCardFactory $customerCreditCardFactory,
         CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory,
         CreditmemoFactory $creditmemoFactory,
@@ -784,7 +784,7 @@ class Order extends AbstractHelper
     private function deleteRedundantQuotes($quote)
     {
         $this->eventsForThirdPartyModules->dispatchEvent("beforeOrderDeleteRedundantQuotes", $quote);
-        
+
         $connection = $this->resourceConnection->getConnection();
 
         // get table name with prefix
