@@ -182,6 +182,8 @@ class Session extends AbstractHelper
             return;
         }
 
+        $metadata = (array)$metadata;
+
         $customerId = $quote->getCustomerId();
         $cacheIdentifier = self::BOLT_SESSION_PREFIX . $quote->getBoltParentQuoteId();
 
