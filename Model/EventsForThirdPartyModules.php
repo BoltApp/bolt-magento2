@@ -37,6 +37,7 @@ use Bolt\Boltpay\ThirdPartyModules\Magento\SalesRuleStaging as Magento_SalesRule
 use Bolt\Boltpay\ThirdPartyModules\Zonos\DutyTax as Zonos_DutyTax;
 use Bolt\Boltpay\ThirdPartyModules\Mageside\CustomShippingPrice as Mageside_CustomShippingPrice;
 use Bolt\Boltpay\ThirdPartyModules\MageWorld\Affiliate as MW_Affiliate;
+use Bolt\Boltpay\ThirdPartyModules\Magento\InStorePickupShipping as Magento_InStorePickupShipping;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -770,6 +771,21 @@ class EventsForThirdPartyModules
                     "module" => "MW_Affiliate",
                     "checkClasses" => ["MW\Affiliate\Helper\Data"],
                     "boltClass" => MW_Affiliate::class,
+                ],
+            ],
+        ],
+        "getShipToStoreOptions" => [
+            "listeners" => [
+                [
+                    "module" => "Magento_InventoryInStorePickup",
+                    "sendClasses" => ["Magento\InventoryInStorePickupApi\Model\SearchRequestBuilderInterface",
+                                      "Magento\InventoryInStorePickupApi\Api\GetPickupLocationsInterface",
+                                      "Magento\InventoryInStorePickupApi\Api\Data\SearchRequest\ProductInfoInterfaceFactory",
+                                      "Magento\InventoryInStorePickupApi\Api\Data\SearchRequestExtensionFactory",
+                                      "Magento\InventoryInStorePickup\Model\SearchRequest\Area\GetDistanceToSources"],
+                    "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup",
+                                       "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
+                    "boltClass" => Magento_InStorePickupShipping::class,
                 ],
             ],
         ]

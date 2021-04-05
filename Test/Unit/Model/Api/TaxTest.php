@@ -302,6 +302,6 @@ class TaxTest extends BoltTestCase
         TestHelper::setProperty($this->tax, 'quote', $quote);
         TestHelper::setProperty($this->tax, 'addressInformation', $addressInformation);
 
-        $this->assertEquals($taxData, $this->tax->generateResult($addressData, $shipping_option));
+        $this->assertEquals($taxData, $this->tax->generateResult($addressData, $shipping_option, null));
     }
 }
