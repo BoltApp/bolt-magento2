@@ -17,26 +17,34 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
+use Bolt\Boltpay\Helper\Hook;
 use Bolt\Boltpay\Model\Api\UpdateSettings;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Bolt\Boltpay\Helper\Bugsnag as Bugsnag;
-use Bolt\Boltpay\Helper\Hook as HookHelper;
-use Bolt\Boltpay\Model\Api\Data\BoltConfigSetting;
-use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
-use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\Framework\Encryption\EncryptorInterface;
+use Magento\Framework\Webapi\Rest\Request;
+use Magento\Framework\Webapi\Rest\Response;
+use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\Store\Model\ScopeInterface;
+use Magento\TestFramework\Helper\Bootstrap;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\Framework\Webapi\Exception as WebapiException;
 
 /**
- * Class CreateOrderTest
+ * Class UpdateSettingsTest
  *
  * @package Bolt\Boltpay\Test\Unit\Model\Api
- * @coversDefaultClass \Bolt\Boltpay\Model\Api\Debug
+ * @coversDefaultClass \Bolt\Boltpay\Model\Api\UpdateSettings
  */
-class UpdateTest extends BoltTestCase
+class UpdateSettingsTest extends BoltTestCase
 {
+    const TRACE_ID_HEADER = 'KdekiEGku3j1mU21Mnsx5g==';
+    const SECRET = '42425f51e0614482e17b6e913d74788eedb082e2e6f8067330b98ffa99adc809';
+    const APIKEY = '3c2d5104e7f9d99b66e1c9c550f6566677bf81de0d6f25e121fdb57e47c2eafc';
+
     /**
      * @var UpdateSettings
      */
@@ -45,107 +53,245 @@ class UpdateTest extends BoltTestCase
     /**
      * @var Response
      */
-    private $responseMock;
+    private $response;
 
     /**
-     * @var BoltConfigSettingFactory
+     * @var ObjectManager
      */
-    private $boltConfigSettingFactoryMock;
+    private $objectManager;
 
     /**
-     * @var ModuleRetriever
+     * @var int
      */
-    private $moduleRetrieverMock;
+    private $websiteId;
 
     /**
-     * @var StoreManagerInterface
+     * @var int
      */
-    private $storeManagerInterfaceMock;
+    private $storeId;
 
     /**
-     * @var HookHelper
+     * @var Request
      */
-    private $hookHelperMock;
-
-    /**
-     * @var ProductMetadataInterface
-     */
-    private $productMetadataInterfaceMock;
-
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelperMock;
+    private $request;
 
     /**
      * @inheritdoc
      */
     public function setUpInternal()
     {
-        // prepare bolt config setting factory
-        $this->boltConfigSettingFactoryMock = $this->createMock(BoltConfigSettingFactory::class);
-        $this->boltConfigSettingFactoryMock->method('create')->willReturnCallback(function () {
-            return new BoltConfigSetting();
-        });
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->updateSettings = $this->objectManager->create(UpdateSettings::class);
+        $this->resetRequest();
+        $this->resetResponse();
 
-        // prepare store manager
-        $storeInterfaceMock = $this->createMock(StoreInterface::class);
-        $storeInterfaceMock->method('getId')->willReturn(0);
-        $this->storeManagerInterfaceMock = $this->createMock(StoreManagerInterface::class);
-        $this->storeManagerInterfaceMock->method('getStore')->willReturn($storeInterfaceMock);
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $this->storeId = $store->getStore()->getId();
 
-        // prepare product meta data
-        $this->productMetadataInterfaceMock = $this->createMock(ProductMetadataInterface::class);
-        $this->productMetadataInterfaceMock->method('getVersion')->willReturn('2.3.0');
+        $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
+        $this->websiteId = $websiteRepository->get('base')->getId();
 
-        // prepare hook helper
-        $this->hookHelperMock = $this->createMock(HookHelper::class);
-        $this->hookHelperMock->method('preProcessWebhook');
+        $encryptor = $this->objectManager->get(EncryptorInterface::class);
+        $secret = $encryptor->encrypt(self::SECRET);
+        $apikey = $encryptor->encrypt(self::APIKEY);
 
-        // prepare config helper
-        $localConfigHelperMock = $this->createMock(ConfigHelper::class);
-        $localConfigHelperMock->setting = "initial_setting";
-        // Mock setter
-        $localConfigHelperMock->method('setConfigSetting')->willReturnCallback(
-            function($settingName, $settingValue) use ($localConfigHelperMock) {
-                $localConfigHelperMock->setting = $settingValue;
-            }
-        );
-        // Mock getter
-        $localConfigHelperMock->method('getPublishableKeyCheckout')->willReturnCallback(
-            function($arg) use ($localConfigHelperMock) {
-                return $localConfigHelperMock->setting;
-            }
-        );
-
-        $this->configHelperMock = $localConfigHelperMock;
-
-        $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
-            ->setMethods(['notifyException', 'notifyError', 'registerCallback'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->bugsnag->method('notifyException')
-            ->willReturnSelf();
-
-        // initialize test object
-        $objectManager = new ObjectManager($this);
-        $this->updateSettings = $objectManager->getObject(
-            UpdateSettings::class,
+        $configData = [
             [
-                'configHelper' => $this->configHelperMock,
-                'bugsnag' => $this->bugsnag,
-                'hookHelper' => $this->hookHelperMock,
-                'storeManager' => $this->storeManagerInterfaceMock
+                'path'    => 'payment/boltpay/signing_secret',
+                'value'   => $secret,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path'    => 'payment/boltpay/api_key',
+                'value'   => $apikey,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path'    => 'payment/boltpay/active',
+                'value'   => 1,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+        ];
+        TestUtils::setupBoltConfig($configData);
+    }
+
+    /**
+     * Request getter
+     *
+     * @param array $bodyParams
+     *
+     * @return \Magento\Framework\App\RequestInterface
+     */
+    public function createRequest($bodyParams)
+    {
+        if (!$this->request) {
+            $this->request = $this->objectManager->get(Request::class);
+        }
+
+        $requestContent = json_encode($bodyParams);
+
+        $computed_signature = base64_encode(hash_hmac('sha256', $requestContent, self::SECRET, true));
+
+        $this->request->getHeaders()->clearHeaders();
+        $this->request->getHeaders()->addHeaderLine('X-Bolt-Hmac-Sha256', $computed_signature);
+        $this->request->getHeaders()->addHeaderLine('X-bolt-trace-id', self::TRACE_ID_HEADER);
+        $this->request->getHeaders()->addHeaderLine('Content-Type', 'application/json');
+
+        $this->request->setParams($bodyParams);
+
+        $this->request->setContent($requestContent);
+
+        return $this->request;
+    }
+
+    protected function tearDownInternal()
+    {
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+
+        $this->resetRequest();
+        $this->resetResponse();
+    }
+
+    public function resetRequest()
+    {
+        if (!$this->request) {
+            $this->request = $this->objectManager->get(Request::class);
+        }
+
+        $this->objectManager->removeSharedInstance(Request::class);
+        $this->request = null;
+    }
+
+    public function resetResponse()
+    {
+        if (!$this->response) {
+            $this->response = $this->objectManager->get(Response::class);
+        }
+
+        $this->objectManager->removeSharedInstance(Response::class);
+        $this->response = null;
+    }
+
+    /**
+     * @test
+     * ignore set config setting if the setting name is api_key or signing_secret
+     * @covers ::execute
+     */
+    public function update_settings_ignoreSetConfigSetting()
+    {
+        $this->createRequest([]);
+        $hookHelper = $this->objectManager->create(Hook::class);
+        $stubApiHelper = new stubBoltApiHelper();
+        $apiHelperProperty = new \ReflectionProperty(
+            Hook::class,
+            'apiHelper'
+        );
+        $apiHelperProperty->setAccessible(true);
+        $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
+
+        $orderHelperProperty = new \ReflectionProperty(
+            UpdateSettings::class,
+            'hookHelper'
+        );
+        $orderHelperProperty->setAccessible(true);
+        $orderHelperProperty->setValue($this->updateSettings, $hookHelper);
+
+        $mockDebugInfo = json_encode([
+            'division' => [
+                'pluginIntegrationInfo' => [
+                    'phpVersion' => PHP_VERSION,
+                    'platformVersion' => '2.3.3',
+                    'pluginConfigSettings' => [
+                        [
+                            'name' => 'api_key',
+                            'value' => 'test_key'
+                        ],
+                        [
+                            'name' => 'signing_secret',
+                            'value' => 'test_key'
+                        ]
+                    ]
+                ]
             ]
+        ]);
+        $this->updateSettings->execute($mockDebugInfo);
+        /** @var ConfigHelper $configHelper */
+        $configHelper = $this->objectManager->create(ConfigHelper::class);
+        $apiKey = $configHelper->getApiKey(0);
+        $signingSecret = $configHelper->getSigningSecret(0);
+
+        $this->assertEquals(null, $apiKey);
+        $this->assertEquals(null, $signingSecret);
+
+        $response = TestHelper::getProperty($this->updateSettings, 'response');
+        $this->assertEquals(
+            200,
+            $response->getHttpResponseCode()
         );
     }
 
     /**
      * @test
-     * @covers ::debug
+     *
+     * @covers ::execute
+     */
+    public function update_settings_throwApiException()
+    {
+        $mockDebugInfo = json_encode([
+            'division' => [
+                'pluginIntegrationInfo' => [
+                    'phpVersion' => PHP_VERSION,
+                    'platformVersion' => '2.3.3',
+                    'pluginConfigSettings' => [
+                        [
+                            'name' => 'api_key',
+                            'value' => 'test_key'
+                        ],
+                        [
+                            'name' => 'signing_secret',
+                            'value' => 'test_key'
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+        $this->expectException(WebapiException::class);
+        $this->expectExceptionMessage('Precondition Failed');
+        $this->updateSettings->execute($mockDebugInfo);
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::execute
      */
     public function update_settings_successful()
     {
+        $this->createRequest([]);
+        $hookHelper = $this->objectManager->create(Hook::class);
+        $stubApiHelper = new stubBoltApiHelper();
+        $apiHelperProperty = new \ReflectionProperty(
+            Hook::class,
+            'apiHelper'
+        );
+        $apiHelperProperty->setAccessible(true);
+        $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
+
+        $orderHelperProperty = new \ReflectionProperty(
+            UpdateSettings::class,
+            'hookHelper'
+        );
+        $orderHelperProperty->setAccessible(true);
+        $orderHelperProperty->setValue($this->updateSettings, $hookHelper);
+
         $mockDebugInfo = json_encode([
             'division' => [
                 'pluginIntegrationInfo' => [
@@ -155,16 +301,27 @@ class UpdateTest extends BoltTestCase
                         [
                             'name' => 'publishable_key_checkout',
                             'value' => 'test_key'
-                        ]
+                        ],
                     ]
                 ]
             ]
         ]);
 
-        $this->hookHelperMock->expects($this->once())->method('preProcessWebhook');
+        $configHelper = $this->createMock(ConfigHelper::class);
+        $configHelper->expects(self::once())->method('setConfigSetting')->with(
+            'publishable_key_checkout',
+            'test_key'
+        );
+
+        TestHelper::setProperty($this->updateSettings, 'configHelper', $configHelper);
         $this->updateSettings->execute($mockDebugInfo);
 
-        $result = $this->configHelperMock->getPublishableKeyCheckout(0);
-        $this->assertEquals("test_key", $result);
+        $response = TestHelper::getProperty($this->updateSettings, 'response');
+        $this->assertEquals(
+            200,
+            $response->getHttpResponseCode()
+        );
     }
 }
+
+
