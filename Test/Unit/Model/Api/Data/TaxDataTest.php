@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
 use Bolt\Boltpay\Api\Data\TaxDataInterface;
 use Bolt\Boltpay\Model\Api\Data\ShippingOption;
+use Bolt\Boltpay\Model\Api\Data\ShipToStoreOption;
 use Bolt\Boltpay\Model\Api\Data\TaxData;
 use Bolt\Boltpay\Model\Api\Data\TaxResult;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
@@ -44,14 +45,21 @@ class TaxDataTest extends BoltTestCase
      * @var ShippingOption
      */
     private $shippingOption;
+    
+    /**
+     * @var ShipToStoreOption
+     */
+    private $shipToStoreOption;
 
     public function setUpInternal()
     {
         $this->taxResult = new TaxResult;
         $this->shippingOption = new ShippingOption;
+        $this->shipToStoreOption = new ShipToStoreOption;
         $this->taxData = new TaxData;
         $this->taxData->setTaxResult($this->taxResult);
         $this->taxData->setShippingOption($this->shippingOption);
+        $this->taxData->setShipToStoreOption($this->shipToStoreOption);
     }
 
     /**
@@ -99,6 +107,29 @@ class TaxDataTest extends BoltTestCase
         $result = $this->taxData->setShippingOption($this->shippingOption);
         $this->assertInstanceOf(TaxData::class, $result);
     }
+    
+    /**
+     * @test
+     * that getShipToStoreOption would return ship to store option
+     *
+     * @covers ::getShipToStoreOption
+     */
+    public function getShipToStoreOption()
+    {
+        $this->assertEquals($this->shipToStoreOption, $this->taxData->getShipToStoreOption());
+    }
+
+    /**
+     * @test
+     * that setShipToStoreOption would set ship to store option and return tax data instance
+     *
+     * @covers ::setShipToStoreOption
+     */
+    public function setShipToStoreOption()
+    {
+        $result = $this->taxData->setShipToStoreOption($this->shipToStoreOption);
+        $this->assertInstanceOf(TaxData::class, $result);
+    }
 
     /**
      * @test
@@ -111,7 +142,8 @@ class TaxDataTest extends BoltTestCase
         $result = $this->taxData->jsonSerialize();
         $this->assertEquals([
             'tax_result' => $this->taxResult,
-            'shipping_option' => $this->shippingOption
+            'shipping_option' => $this->shippingOption,
+            'ship_to_store_option' => $this->shipToStoreOption
         ], $result);
     }
 }

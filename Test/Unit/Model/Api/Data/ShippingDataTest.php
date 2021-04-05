@@ -19,7 +19,9 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\ShippingOption;
+use Bolt\Boltpay\Model\Api\Data\ShipToStoreOption;
 use Bolt\Boltpay\Api\Data\ShippingDataInterface;
+use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface;
 use Bolt\Boltpay\Model\Api\Data\ShippingData;
 
 /**
@@ -38,12 +40,19 @@ class ShippingDataTest extends BoltTestCase
      * @var ShippingOption[]
      */
     private $shippingOptions;
+    
+    /**
+     * @var ShipToStoreOption[]
+     */
+    private $shipToStoreOptions = [];
 
     protected function setUpInternal()
     {
         $this->shippingOptions = [new ShippingOption];
+        $this->shipToStoreOptions = [new ShipToStoreOption];
         $this->shippingData = new ShippingData;
         $this->shippingData->setShippingOptions($this->shippingOptions);
+        $this->shippingData->setShipToStoreOptions($this->shipToStoreOptions);
     }
 
     /**
@@ -66,6 +75,27 @@ class ShippingDataTest extends BoltTestCase
         $result = $this->shippingData->setShippingOptions($this->shippingOptions);
         $this->assertInstanceOf(ShippingData::class, $result);
     }
+    
+    /**
+     * @test
+     * that getShipToStoreOptions would return ship to store options
+     * @covers ::getShipToStoreOptions
+     */
+    public function getShipToStoreOptions()
+    {
+        $this->assertEquals($this->shipToStoreOptions, $this->shippingData->getShipToStoreOptions());
+    }
+
+    /**
+     * @test
+     * that setShipToStoreOptions would set instances of ship to store options
+     * @covers ::setShipToStoreOptions
+     */
+    public function setShipToStoreOptions()
+    {
+        $result = $this->shippingData->setShipToStoreOptions($this->shipToStoreOptions);
+        $this->assertInstanceOf(ShippingData::class, $result);
+    }
 
     /**
      * @test
@@ -76,7 +106,8 @@ class ShippingDataTest extends BoltTestCase
     {
         $result = $this->shippingData->jsonSerialize();
         $this->assertEquals([
-            'shipping_options' => $this->shippingOptions
+            'shipping_options' => $this->shippingOptions,
+            'ship_to_store_options' => $this->shipToStoreOptions
         ], $result);
     }
 }

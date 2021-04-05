@@ -41,4 +41,21 @@ interface ShippingDataInterface extends ShippingTaxDataInterface
      * @return $this
      */
     public function setShippingOptions($shippingOptions);
+    
+    /**
+     * Get all available ship to store options.
+     *
+     * @api
+     * @return \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface[]
+     */
+    public function getShipToStoreOptions();
+
+    /**
+     * Set available ship to store options.
+     *
+     * @api
+     * @param \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface[]
+     * @return $this
+     */
+    public function setShipToStoreOptions($shipToStoreOptions);
 }
