@@ -23,5 +23,14 @@
                    name="bolt.transaction.target"
                    template="Bolt_Boltpay::boltpay/js/transaction.phtml"/>
         </referenceContainer>
+        <referenceContainer name="order_additional_info">
+            <block name="bolt_order_comment"
+                   class="Magento\Sales\Block\Adminhtml\Order\AbstractOrder"
+                   template="Bolt_Boltpay::order/comment.phtml">
+                <arguments>
+                    <argument name="order_comment" xsi:type="object">Bolt\Boltpay\ViewModel\OrderComment</argument>
+                </arguments>
+            </block>
+        </referenceContainer>
     </body>
 </page>

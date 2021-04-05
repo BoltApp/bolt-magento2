@@ -2734,21 +2734,20 @@ ORDER
         static::assertNull($currentMock->getBoltpayOrder(false, ''));
     }
 
-        /**
-         * @test
-         * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
-         * @covers ::getCartData
-         */
+    /**
+     * @test
+     * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
+     * @covers ::getCartData
+     */
     public function getCartData_inMultistepWithNoDiscount_returnsCartData(
         $addSessionIdToMetadataValue,
         $metadataSessionIdAssertMethod
     ) {
-
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = TestUtils::createQuote();
         $product = TestUtils::getSimpleProduct();
         $this->objectsToClean[] = $product;
-        $quote->addProduct($product, 1);
+        $quote->addProduct($product,1);
         TestUtils::setQuoteToSession($quote);
 
         $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(
@@ -2765,7 +2764,7 @@ ORDER
 
         // check image url
         static::assertMatchesRegularExpression(
-            "|http://localhost/(pub\/)?static/version\d+/frontend/Magento/luma/en_US/Magento_Catalog/images/product/placeholder/small_image.jpg|",
+            "|https?://localhost/(pub\/)?static/version\d+/frontend/Magento/luma/en_US/Magento_Catalog/images/product/placeholder/small_image.jpg|",
             $result['items'][0]['image_url']
         );
         unset($result['items'][0]['image_url']);
@@ -2902,8 +2901,8 @@ ORDER
 
         // check image url
         static::assertMatchesRegularExpression(
-            "|http://localhost/(pub\/)?static/version\d+/frontend/Magento/luma/en_US/Magento_Catalog/images/product/placeholder/small_image.jpg|",
-            $result['items'][0]['image_url']
+            "|https?://localhost/(pub\/)?static/version\d+/frontend/Magento/luma/en_US/Magento_Catalog/images/product/placeholder/small_image.jpg|",
+                $result['items'][0]['image_url']
         );
         unset($result['items'][0]['image_url']);
 
@@ -4424,7 +4423,7 @@ ORDER
         static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
     }
-        
+
         /**
          * @test
          * that collectDiscounts properly handles gift voucher discount by subtracting it from regular discount
@@ -4452,9 +4451,9 @@ ORDER
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
         $appliedDiscount = 0; // $
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($appliedDiscount);
-    
+
         $quote->method('getAppliedRuleIds')->willReturn('2');
-    
+
         $rule2 = $this->getMockBuilder(DataObject::class)
             ->setMethods(['getCouponType', 'getDescription', 'getSimpleFreeShipping'])
             ->disableOriginalConstructor()
@@ -4465,7 +4464,7 @@ ORDER
             ->willReturn(self::COUPON_DESCRIPTION);
         $rule2->expects(static::once())->method('getSimpleFreeShipping')
             ->willReturn(2);
-    
+
         $this->ruleRepository->expects(static::once())
             ->method('getById')
             ->with(2)
@@ -4480,8 +4479,8 @@ ORDER
                         ->willReturn([2 => $appliedDiscount]);
         $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
              ->willReturn($checkoutSession);
-    
-    
+
+
         $totalAmount = 10000; // cents
         $diff = 0;
         $paymentOnly = false;
@@ -4491,7 +4490,7 @@ ORDER
             $paymentOnly,
             $quote
         );
-    
+
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;

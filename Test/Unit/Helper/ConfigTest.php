@@ -1135,8 +1135,10 @@ JSON;
             'shouldMinifyJavascript',
             'shouldCaptureMetrics',
             'shouldTrackCheckoutFunnel',
+            'getShowCcTypeInOrderGrid',
             'isBoltSSOEnabled',
             'isBoltDebugUniversalEnabled',
+            'getOrderCommentField',
         ]);
         $this->currentMock->method('isActive')->willReturn(true);
         $this->currentMock->method('getTitle')->willReturn('bolt test title');
@@ -1180,8 +1182,10 @@ JSON;
         $this->currentMock->method('shouldMinifyJavascript')->willReturn(true);
         $this->currentMock->method('shouldCaptureMetrics')->willReturn(false);
         $this->currentMock->method('shouldTrackCheckoutFunnel')->willReturn(false);
+        $this->currentMock->method('getShowCcTypeInOrderGrid')->willReturn(false);
         $this->currentMock->method('isBoltSSOEnabled')->willReturn(false);
         $this->currentMock->method('isBoltDebugUniversalEnabled')->willReturn(true);
+        $this->currentMock->method('getOrderCommentField')->willReturn('customer_note');
 
         // check bolt settings
         $expected = [
@@ -1227,12 +1231,14 @@ JSON;
             ['should_minify_javascript', 'true'],
             ['capture_merchant_metrics', 'false'],
             ['track_checkout_funnel', 'false'],
+            ['show_cc_type_in_order_grid', 'false'],
             ['bolt_sso', 'false'],
-            ['universal_debug', 'true']
+            ['universal_debug', 'true'],
+            ['order_comment_field', "'customer_note'"],
         ];
         $actual = $this->currentMock->getAllConfigSettings();
-        $this->assertEquals(45, count($actual));
-        for ($i = 0; $i < 2; $i++) {
+        $this->assertEquals(46, count($actual));
+        for ($i = 0; $i < 46; $i++) {
             $this->assertEquals($expected[$i][0], $actual[$i]->getName());
             $this->assertEquals($expected[$i][1], $actual[$i]->getValue(), 'actual value for ' . $expected[$i][0] . ' is not equals to expected');
         }
@@ -1854,5 +1860,38 @@ Room 4000',
             ->method('getValue')
             ->with(BoltConfig::XML_PATH_ADDITIONAL_CONFIG, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
             ->willReturn($additionalConfig);
+    }
+
+    /**
+     * @test
+     * that getOrderCommentField returns order comment field from the configuration if set
+     *
+     * @covers ::getOrderCommentField
+     */
+    public function getOrderCommentField_ifSetInConfiguration_returnsCommentField()
+    {
+        $customCommentField = 'custom_comment_field';
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_ORDER_COMMENT_FIELD, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+            ->willReturn($customCommentField);
+        $this->assertEquals($customCommentField, $this->currentMock->getOrderCommentField());
+    }
+
+    /**
+     * @test
+     * that getOrderCommentField returns 'customer_note' field if a field is not set in the configuration
+     *
+     * @covers ::getOrderCommentField
+     */
+    public function getOrderCommentField_ifNotSetInConfiguration_returnsCustomerNote()
+    {
+        $this->scopeConfig
+            ->expects(self::once())
+            ->method('getValue')
+            ->with(BoltConfig::XML_PATH_ORDER_COMMENT_FIELD, \Magento\Store\Model\ScopeInterface::SCOPE_STORE, null)
+            ->willReturn(null);
+        $this->assertEquals('customer_note', $this->currentMock->getOrderCommentField());
     }
 }
