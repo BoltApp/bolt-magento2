@@ -1372,10 +1372,17 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
         }
         /////////////////////////////////////////////////////////////////////
 
+        if (getCheckoutType()==="payment") {
+            var country_selectors = ['div[name="billingAddressboltpay.country_id"] select[name=country_id]','div[name="shippingAddress.country_id"] select[name=country_id]','.payment-method-boltpay select[name=country_id]'];
+            var state_selectors = ['div[name="billingAddressboltpay.region_id"] select[name=region_id]','div[name="shippingAddress.region_id"] select[name=region_id]','.payment-method-boltpay select[name=region_id]'];
+        } else {
+            var country_selectors = ['select[name=country_id]'];
+            var state_selectors = ['select[name=region_id]'];                
+        }
+        
         ///////////////////////////////////////////////////////////
         // Monitor Country DOM element change and update hints
         ///////////////////////////////////////////////////////////
-        var country_selectors = ['select[name=country_id]'];
         monitorAttributesChange(country_selectors, function(element) {
             if (!element.value) {
                 delete hints.prefill.country;
@@ -1388,11 +1395,10 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
             configureHints();
         }, true);
         ///////////////////////////////////////////////////////////
-
+            
         ///////////////////////////////////////////////////////////
         // Monitor State DOM element change and update hints
         ///////////////////////////////////////////////////////////
-        var state_selectors = ['select[name=region_id]'];
         monitorAttributesChange(state_selectors, function(element) {
             if (!element.value) {
                 delete hints.prefill.state;

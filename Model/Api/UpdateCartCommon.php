@@ -123,17 +123,17 @@ abstract class UpdateCartCommon
      * @var CartRepository
      */
     protected $cartRepository;
-    
+
     /**
      * @var SessionHelper
      */
     protected $sessionHelper;
-    
+
     /**
      * @var ProductRepositoryInterface
      */
     protected $productRepository;
-    
+
     /**
      * @var Decider
      */
@@ -321,21 +321,21 @@ abstract class UpdateCartCommon
 
         foreach ($items as $item) {
             $product = [];
-            
+
             //By default this feature switch is enabled.
             if ($this->featureSwitches->isCustomizableOptionsSupport()) {
                 $itemProduct = $item->getProduct();
                 $customizableOptions = $this->cartHelper->getProductCustomizableOptions($itemProduct);
                 $itemSku = trim($item->getSku());
-    
+
                 if ($customizableOptions) {
                     $itemSku = $this->cartHelper->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
                 }
-                
+
                 $_product = $this->productRepository->get($itemSku);
                 $itemReference = $_product->getId();
             } else {
-                $itemReference = $item->getProductId();                     
+                $itemReference = $item->getProductId();
             }
 
             $product['reference']    = $itemReference;
@@ -343,7 +343,7 @@ abstract class UpdateCartCommon
             $product['unit_price']   = $item->getCalculationPrice();
             $product['quote_item_id']= $item->getId();
             $product['quote_item']   = $item;
-            
+
             $products[] = $product;
         }
 
@@ -362,7 +362,7 @@ abstract class UpdateCartCommon
      */
     public function updateSession($quote, $metadata = [])
     {
-        $this->sessionHelper->loadSession($quote, $metadata);
+        $this->sessionHelper->loadSession($quote, $metadata ?? []);
         $this->cartHelper->resetCheckoutSession($this->sessionHelper->getCheckoutSession());
     }
 
