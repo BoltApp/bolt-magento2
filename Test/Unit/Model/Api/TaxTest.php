@@ -119,7 +119,7 @@ class TaxTest extends BoltTestCase
         $quote = TestUtils::createQuote();
         TestHelper::setProperty($this->tax, 'addressInformation', $addressInformation);
         TestHelper::setProperty($this->tax, 'quote', $quote);
-        $this->tax->setAddressInformation($addressData, $shipping_option);
+        $this->tax->setAddressInformation($addressData, $shipping_option, null);
         self::assertEquals($carrierCode, TestHelper::getProperty($this->tax, 'addressInformation')->getShippingCarrierCode());
         self::assertEquals($methodCode, TestHelper::getProperty($this->tax, 'addressInformation')->getShippingMethodCode());
     }
@@ -157,7 +157,7 @@ class TaxTest extends BoltTestCase
         $quote = TestUtils::createQuote();
         TestHelper::setProperty($this->tax, 'addressInformation', $addressInformation);
         TestHelper::setProperty($this->tax, 'quote', $quote);
-        $this->assertNull($this->tax->setAddressInformation($addressData, $shipping_option));
+        $this->assertNull($this->tax->setAddressInformation($addressData, $shipping_option, null));
     }
 
     /**

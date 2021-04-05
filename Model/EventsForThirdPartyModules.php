@@ -309,6 +309,16 @@ class EventsForThirdPartyModules
                 ],
             ]
         ],
+        "setExtraAddressInformation" => [
+            "listeners" => [
+                [
+                    "module" => "Magento_InventoryInStorePickup",
+                    "sendClasses" => ["Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation"],
+                    "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
+                    "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+            ],
+        ],
     ];
 
     const filterListeners = [
@@ -788,7 +798,16 @@ class EventsForThirdPartyModules
                     "boltClass" => Magento_InStorePickupShipping::class,
                 ],
             ],
-        ]
+        ],
+        "getShipToStoreCarrierMethodCodes" => [
+            "listeners" => [
+                [
+                    "module" => "Magento_InventoryInStorePickup",
+                    "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
+                    "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+            ],
+        ],
     ];
 
     /**
