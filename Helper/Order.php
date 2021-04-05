@@ -513,7 +513,7 @@ class Order extends AbstractHelper
      */
     protected function setShippingAddress($quote, $transaction)
     {
-        if (isset($transaction->order->cart->in_store_shipments)) {
+        if (isset($transaction->order->cart->in_store_shipments[0]->shipment->shipping_address)) {
             $address = $transaction->order->cart->in_store_shipments[0]->shipment->shipping_address ?? null;
             if ($address) {
                 $this->setAddress($quote->getShippingAddress(), $address);
