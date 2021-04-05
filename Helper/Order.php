@@ -343,8 +343,8 @@ class Order extends AbstractHelper
         WebhookLogCollectionFactory $webhookLogCollectionFactory,
         WebhookLogFactory $webhookLogFactory,
         Decider $featureSwitches,
-        CheckboxesHandler $checkboxesHandler,   
-        CustomFieldsHandler $customFieldsHandler,    
+        CheckboxesHandler $checkboxesHandler,
+        CustomFieldsHandler $customFieldsHandler,
         CustomerCreditCardFactory $customerCreditCardFactory,
         CustomerCreditCardCollectionFactory $customerCreditCardCollectionFactory,
         CreditmemoFactory $creditmemoFactory,
@@ -513,7 +513,7 @@ class Order extends AbstractHelper
      */
     protected function setShippingAddress($quote, $transaction)
     {
-        if (isset($transaction->order->cart->in_store_shipments)) {
+        if (isset($transaction->order->cart->in_store_shipments[0]->shipment->shipping_address)) {
             $address = $transaction->order->cart->in_store_shipments[0]->shipment->shipping_address ?? null;
             if ($address) {
                 $this->setAddress($quote->getShippingAddress(), $address);
@@ -793,7 +793,7 @@ class Order extends AbstractHelper
     private function deleteRedundantQuotes($quote)
     {
         $this->eventsForThirdPartyModules->dispatchEvent("beforeOrderDeleteRedundantQuotes", $quote);
-        
+
         $connection = $this->resourceConnection->getConnection();
 
         // get table name with prefix
@@ -914,7 +914,7 @@ class Order extends AbstractHelper
             });
         }
         ///////////////////////////////////////////////////////////////
-        
+
         $this->eventsForThirdPartyModules->dispatchEvent("beforeSaveUpdateOrder", $immutableQuote, $transaction);
 
         // check if the order exists

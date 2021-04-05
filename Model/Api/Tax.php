@@ -198,7 +198,7 @@ class Tax extends ShippingTax implements TaxInterface
         );
 
         $currencyCode = $this->quote->getQuoteCurrencyCode();
-
+        
         $taxResult = $this->createTaxResult($totalsInformation, $currencyCode);
 
         $taxData = $this->taxDataFactory->create();
