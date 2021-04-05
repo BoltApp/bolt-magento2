@@ -200,27 +200,6 @@ class InStorePickupShipping
     }
     
     /**
-     * @param array                     $result
-     * @param Magento\Quote\Model\Quote $quote
-     * @param array                     $ship_to_store_option
-     * @param array                     $addressData
-     * @return array
-     */
-    public function getShipToStoreCarrierMethodCodes(
-        $result,
-        $quote,
-        $ship_to_store_option,
-        $addressData
-    ) {
-        $referenceCodes = explode('_', $ship_to_store_option['reference']);
-        if ($this->checkIfMagentoInStorePickupByCode($referenceCodes)) {
-            return [$referenceCodes[0], $referenceCodes[1]];
-        }
-        
-        return $result;
-    }
-    
-    /**
      * @param Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation $setAddressPickupLocation
      * @param Magento\Checkout\Api\Data\TotalsInformationInterface $addressInformation
      * @param Magento\Quote\Model\Quote $quote
