@@ -419,6 +419,8 @@ abstract class ShippingTax
     }
 
     /**
+     * For the shipping api hook, it only has $addressData.
+     * For the tax api hook, besides the $addressData, it also has $shipping_option or $ship_to_store_option.
      * @param array $addressData
      * @param array|null $shipping_option
      * @param array|null $ship_to_store_option
