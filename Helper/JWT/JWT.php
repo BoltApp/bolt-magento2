@@ -49,7 +49,7 @@ class JWT
      * we want to provide some extra leeway time to
      * account for clock skew.
      */
-    public static $leeway = 0;
+    public static $leeway = 1000; // 1 second
 
     /**
      * Allow the current timestamp to be specified.
