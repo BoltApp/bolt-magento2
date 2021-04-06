@@ -30,7 +30,6 @@ class Uninstall implements UninstallInterface
      * @param SchemaSetupInterface $setup
      * @param ModuleContextInterface $context
     */
-
     public function uninstall(
         SchemaSetupInterface $setup,
         ModuleContextinterface $context
@@ -59,7 +58,6 @@ class Uninstall implements UninstallInterface
      * 
      * @return void
      */
-
     private function removeBoltTables(SchemaSetupInterface $setup, $tables){
         foreach ($tables as $table){
             $tableExists = $setup->getConnection()->isTableExists($table);
