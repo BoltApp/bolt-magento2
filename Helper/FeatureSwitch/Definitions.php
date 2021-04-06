@@ -246,10 +246,10 @@ class Definitions
             self::ROLLOUT_KEY     => 100
         ],
         self::M2_INSTANT_BOLT_CHECKOUT_BUTTON => [
-            self::NAME_KEY            => self::M2_INSTANT_BOLT_CHECKOUT_BUTTON,
-            self::VAL_KEY             => true,
-            self::DEFAULT_VAL_KEY     => true,
-            self::ROLLOUT_KEY         => 100
+            self::NAME_KEY        => self::M2_INSTANT_BOLT_CHECKOUT_BUTTON,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => true,
+            self::ROLLOUT_KEY     => 100
         ],
         self::M2_SAVE_HINTS_IN_SECTIONS => [
             self::NAME_KEY        => self::M2_SAVE_HINTS_IN_SECTIONS,
