@@ -1310,7 +1310,7 @@ JS;
         $this->currentMock->expects(static::once())
             ->method('getFullActionName')
             ->willReturn($fullActionName);
-            
+
         $this->configHelper->expects(($fullActionName == 'catalog_product_view') ? static::once() : static::never())
             ->method('getProductPageCheckoutFlag')
             ->willReturn($productPageCheckoutFlag);
@@ -2158,7 +2158,7 @@ function(arg) {
             )
             ->getMock();
     }
-    
+
     /**
      * @test
      *
@@ -2267,7 +2267,7 @@ function(arg) {
             ],
         ];
     }
-    
+
     /**
      * @test
      *
@@ -2301,7 +2301,7 @@ function(arg) {
         $this->configHelper->expects($isLoadConnectJsOnSpecificPageFeatureSwitchEnabled ? static::once() : static::never())
                            ->method('getMinicartSupport')
                            ->willReturn($minicartSupport);
-                           
+
         $this->configHelper->expects(($isLoadConnectJsOnSpecificPageFeatureSwitchEnabled && $minicartSupport)
                                     ? static::once() : static::never())
                            ->method('getProductPageCheckoutFlag')
@@ -2309,7 +2309,7 @@ function(arg) {
 
         static::assertEquals($expectedResult, $this->currentMock->isLoadConnectJsDynamic());
     }
-    
+
     /**
      * Data provider for
      *

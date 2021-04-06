@@ -88,6 +88,11 @@ class Config extends AbstractHelper
     const XML_PATH_TOTALS_CHANGE_SELECTORS = 'payment/boltpay/totals_change_selectors';
 
     /**
+     * Path for Bolt SSO Selectors
+     */
+    const XML_PATH_BOLT_SSO_SELECTORS = 'payment/boltpay/bolt_sso_selectors';
+
+    /**
      * Path for Global CSS
      */
     const XML_PATH_GLOBAL_CSS = 'payment/boltpay/global_css';
@@ -780,6 +785,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_TOTALS_CHANGE_SELECTORS,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Get SSO Button Selectors from config
+     *
+     * @param int|string $storeId
+     *
+     * @return string
+     */
+    public function getSsoButtonSelectors($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_BOLT_SSO_SELECTORS,
             ScopeInterface::SCOPE_STORE,
             $storeId
         );
@@ -1813,6 +1834,10 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('show_cc_type_in_order_grid')
             ->setValue($this->getShowCcTypeInOrderGrid());
+        // Bolt SSO Selectors
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+            ->setName('bolt_sso_selectors')
+            ->setValue($this->getSsoButtonSelectors());
         // Enable Bolt SSO
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('bolt_sso')

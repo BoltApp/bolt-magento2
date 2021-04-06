@@ -183,6 +183,18 @@ class Js extends Template
     }
 
     /**
+     * Get SSO ButtonSelectors.
+     *
+     * @return string
+     */
+    public function getSsoButtonSelectors()
+    {
+        $subject = trim($this->configHelper->getSsoButtonSelectors());
+
+        return array_filter(explode(',', preg_replace('/\s+/', ' ', $subject)));
+    }
+
+    /**
      * Get Additional button class.
      *
      * @return string
@@ -298,6 +310,7 @@ class Js extends Template
             'always_present_checkout'               => $this->enableAlwaysPresentCheckoutButton(),
             'account_url'                           => $this->getAccountJsUrl(),
             'order_management_selector'             => $this->getOrderManagementSelector(),
+            'sso_button_selectors'                  => $this->getSsoButtonSelectors(),
         ]);
     }
 
@@ -383,7 +396,7 @@ class Js extends Template
     {
         return $this->configHelper->getMinicartSupport();
     }
-    
+
     /**
      * Return true if bolt product page checkout is enabled
      */
@@ -399,7 +412,7 @@ class Js extends Template
     {
         return $this->isOnProductPage() && $this->isBoltPPCEnabled();
     }
-    
+
     /**
      * Return true if customer is on cart page
      */
@@ -408,7 +421,7 @@ class Js extends Template
         $currentPage = $this->getRequest()->getFullActionName();
         return $currentPage == 'checkout_cart_index';
     }
-    
+
     /**
      * Return true if customer is on product page
      */
@@ -417,7 +430,7 @@ class Js extends Template
         $currentPage = $this->getRequest()->getFullActionName();
         return $currentPage == 'catalog_product_view';
     }
-    
+
     /**
      * If feature switch M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE is enabled,
      * then we only fetch Bolt connect js on page load for the product page (PPC is enabled) and cart page.
@@ -431,10 +444,10 @@ class Js extends Template
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     /**
      * If feature switch M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE is enabled,
      * then on the product page, with PPC disabled and minicart enabled,
@@ -449,7 +462,7 @@ class Js extends Template
                 return true;
             }
         }
-        
+
         return false;
     }
 

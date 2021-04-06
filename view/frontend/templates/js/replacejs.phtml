@@ -86,6 +86,7 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
                 elements = doc.querySelectorAll(listener.selector);
                 for (var j = 0, jLen = elements.length, element; j < jLen; j++) {
                     element = elements[j];
+
                     // Make sure the callback isn't invoked with the
                     // same element more than once
                     if (!element.ready) {
@@ -417,7 +418,7 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
                 scriptTag.setAttribute('src', settings.connect_url);
             }
         };
-        
+
         var insertConnectScriptWithoutSrc = function() {
             var scriptTag = document.getElementById('bolt-connect');
             var publishableKey = getCheckoutKey();
@@ -818,7 +819,7 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
                     invalidateBoltCart();
                 }
             }
-            
+
             <?= /* @noEscape */ $block->getAdditionalInvalidateBoltCartJavascript(); ?>
         }
 
@@ -1116,12 +1117,12 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
                         // We haven't seen magento cart yet. If Magento cart isn't set it means that bolt cart is unactual
                         return;
                     }
-                    
+
                     if (data.hints === undefined) {
                         // In some contexts, the data only has data_id.
                         return;
                     }
-                    
+
                     boltCartDataID = data.data_id;
                     if (BoltState.magentoCart.data_id > boltCartDataID) {
                         // bolt cart is unactual
@@ -1377,9 +1378,9 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
             var state_selectors = ['div[name="billingAddressboltpay.region_id"] select[name=region_id]','div[name="shippingAddress.region_id"] select[name=region_id]','.payment-method-boltpay select[name=region_id]'];
         } else {
             var country_selectors = ['select[name=country_id]'];
-            var state_selectors = ['select[name=region_id]'];                
+            var state_selectors = ['select[name=region_id]'];
         }
-        
+
         ///////////////////////////////////////////////////////////
         // Monitor Country DOM element change and update hints
         ///////////////////////////////////////////////////////////
@@ -1395,7 +1396,7 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
             configureHints();
         }, true);
         ///////////////////////////////////////////////////////////
-            
+
         ///////////////////////////////////////////////////////////
         // Monitor State DOM element change and update hints
         ///////////////////////////////////////////////////////////
@@ -1501,6 +1502,83 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
             setupOrderManagementReplacement();
         }
 
+
+        // insert Bolt SSO buttons into DOM
+        if (settings.sso_button_selectors) {
+            let insertAccountScript = function () {
+                let scriptTag = document.getElementById('bolt-account');
+                if (scriptTag) {
+                    return;
+                }
+                let publishableKey = getCheckoutKey();
+                scriptTag = document.createElement('script');
+                scriptTag.setAttribute('type', 'text/javascript');
+                scriptTag.setAttribute('async', '');
+                scriptTag.setAttribute('src', settings.account_url);
+                scriptTag.setAttribute('id', 'bolt-account');
+                scriptTag.setAttribute('data-publishable-key', publishableKey);
+                document.head.appendChild(scriptTag);
+            }
+            let insertSsoButtonAfterElement = function(element) {
+                let isUserLoggedIn;
+                require(['Magento_Customer/js/model/customer'], function (customer) {
+                    isUserLoggedIn = customer.isLoggedIn();
+                });
+
+                let ssoButton = document.createElement('div');
+                ssoButton.setAttribute('class', 'bolt-account-sso');
+                ssoButton.setAttribute('data-logged-in', isUserLoggedIn ? 'true' : 'false');
+                element.parentNode.insertBefore(ssoButton, element.nextSibling);
+                insertAccountScript();
+            }
+            let replaceElementWithSsoButton = function(element) {
+                let isUserLoggedIn;
+                require(['Magento_Customer/js/model/customer'], function (customer) {
+                    isUserLoggedIn = customer.isLoggedIn();
+                });
+
+                let ssoButton = document.createElement('div');
+                ssoButton.setAttribute('class', 'bolt-account-sso');
+                ssoButton.setAttribute('data-logged-in', isUserLoggedIn ? 'true' : 'false');
+                element.parentNode.replaceChild(ssoButton, element);
+                insertAccountScript();
+            }
+            let addSsoOnClickToElement = function(element) {
+                element.setAttribute('id', 'bolt-custom-sso');
+                // cannot have an href since this will cause a redirect when the element is clicked
+                element.removeAttribute('href');
+                insertAccountScript();
+            }
+            let setupSsoButtonReplacement = function() {
+                for (let i = 0, length = settings.sso_button_selectors.length; i < length; i++) {
+                    const selector = settings.sso_button_selectors[i];
+                    const parts = selector.split('|');
+
+                    // the CSS selector
+                    const identifier = parts[0].trim();
+
+                    // button placement regarding the selector element: append, replace, onclick
+                    const position = parts[1];
+
+                    console.log(identifier);
+                    console.log(position);
+
+                    onElementReady(identifier, function(element) {
+                        console.log(identifier);
+                        console.log("ready");
+                        if (position.trim().toLowerCase() === 'append') {
+                            insertSsoButtonAfterElement(element);
+                        } else if (position.trim().toLowerCase() === 'replace') {
+                            replaceElementWithSsoButton(element);
+                        } else if (position.trim().toLowerCase() === 'onclick') {
+                            addSsoOnClickToElement(element);
+                        }
+                    });
+                }
+            }
+            setupSsoButtonReplacement();
+        }
+
         ////////////////////////////////////////////////////
         // Initially configures BoltCheckout.
         // Required for setting check callback which either
@@ -1509,14 +1587,14 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
         ////////////////////////////////////////////////////
         boltCheckoutSetup();
         ////////////////////////////////////////////////////
-        
+
         <?php
         if ($isLoadConnectJsDynamic) {
         ?>
         magentoCartDataListenerLoadConnectJs = function(data) {
             if (data.items !== undefined && data.items.length > 0) {
                 insertConnectScript();
-            }            
+            }
         }
         customerData.get('cart').subscribe(magentoCartDataListenerLoadConnectJs);
         <?php

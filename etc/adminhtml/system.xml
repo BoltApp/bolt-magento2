@@ -161,6 +161,10 @@
                         <label>Totals Monitor Selectors</label>
                         <config_path>payment/boltpay/totals_change_selectors</config_path>
                     </field>
+                    <field id="bolt_sso_selectors" translate="label" type="textarea" sortOrder="96" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Bolt SSO Selectors</label>
+                        <config_path>payment/boltpay/bolt_sso_selectors</config_path>
+                    </field>
 
                     <field id="additional_checkout_button_class" translate="label" type="text" sortOrder="105" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Additional Checkout Button Class</label>

@@ -767,6 +767,7 @@ JSON;
             ['getButtonColor', BoltConfig::XML_PATH_BUTTON_COLOR],
             ['getReplaceSelectors', BoltConfig::XML_PATH_REPLACE_SELECTORS],
             ['getTotalsChangeSelectors', BoltConfig::XML_PATH_TOTALS_CHANGE_SELECTORS, 'tr.grand.totals td.amount span.price'],
+            ['getSsoButtonSelectors', BoltConfig::XML_PATH_BOLT_SSO_SELECTORS, '.authorization-link'],
             ['getSuccessPageRedirect', BoltConfig::XML_PATH_SUCCESS_PAGE_REDIRECT, 'checkout/onepage/success'],
             ['getjavascriptSuccess', BoltConfig::XML_PATH_JAVASCRIPT_SUCCESS],
             ['getAdditionalJS', BoltConfig::XML_PATH_ADDITIONAL_JS],
@@ -1132,6 +1133,7 @@ JSON;
             'shouldMinifyJavascript',
             'shouldCaptureMetrics',
             'shouldTrackCheckoutFunnel',
+            'getSsoButtonSelectors',
             'isBoltSSOEnabled',
             'isBoltDebugUniversalEnabled',
         ]);
@@ -1149,6 +1151,7 @@ JSON;
         $this->currentMock->method('getGeolocationApiKey')->willReturn('geolocation api key');
         $this->currentMock->method('getReplaceSelectors')->willReturn('#replace');
         $this->currentMock->method('getTotalsChangeSelectors')->willReturn('.totals');
+        $this->currentMock->method('getSsoButtonSelectors')->willReturn('.authorization-link');
         $this->currentMock->method('getGlobalCSS')->willReturn('#customerbalance-placer {width: 210px;}');
         $this->currentMock->method('getAdditionalCheckoutButtonClass')->willReturn('with-cards');
         $this->currentMock->method('getSuccessPageRedirect')->willReturn('checkout/onepage/success');
@@ -1224,6 +1227,7 @@ JSON;
             ['should_minify_javascript', 'true'],
             ['capture_merchant_metrics', 'false'],
             ['track_checkout_funnel', 'false'],
+            ['sso_button_selectors', '.authorization-link'],
             ['bolt_sso', 'false'],
             ['universal_debug', 'true']
         ];
