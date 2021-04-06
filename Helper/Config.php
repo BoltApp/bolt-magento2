@@ -592,7 +592,7 @@ class Config extends AbstractHelper
      */
     public function getPublicKey($storeId = null)
     {
-        // Sandbox public key is hardcoded
+        // Sandbox public key is hardcoded, set the custom key for staging/development
         if ($this->isSandboxModeSet($storeId)) {
             return $this->getScopeConfig()->getValue(
                 self::XML_PATH_CUSTOM_PUBLIC_KEY,
@@ -601,8 +601,7 @@ class Config extends AbstractHelper
             ) ?: 'MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAumrI98nQ0thJELhOa0AI4fQkEEuh9gHOFEQUjVZzSZO/O5x42mugJyMq3hDGwJBOH2FUgT5WnGt9tHJ9NbTwfZtljOyRkmoTUGFkQIcRZy/b0fD9/IfFXuAXJebflCIVFO/UnFRN4Z9RQqx+vffAE+qNnQV/V/455Qw0+/HW5n06Df0UVYXiZ1+2RXfGIinPcUgMS59r12kJDahELTWWcwa1gJE1UnSUiwTO7dDp1IjgGml6cpbynYcROyuz4wNumIj7w6tH+krmPguTYXPmKVSmZtqFCh1reXonSZBQ9XvuWhQbY3skf7X2AELHB6nkUNaUlVlSbG/DiHjxSAvSr3HSKLHiaYuB3VA/FWgfSWvg9kZVE9d1Qg+JhYL8kIxcWIgH37onIR5gh7lep0u73WlgFy97tjy9uiTmcjrzBBXtxl5PsLGaTJGPkZnAON4BH0Njuq23G/ZHXcJvX8uFs4VlfItq838SjJqzCrWS5eK4mKX669dYEXenjv8mqqkKSD3PNZl4ixwfMkhmVAeYA0qPnq5rt7XA5mVlr5BNkpal29fL/s6CcdfAylzvzS3C1a6z3ZpZSl2yGAfDgceC4+h+iLJmyeZM3Jz1jttE9BTUxwlhQvO/xIDkJXGgU9y8TMy/rNcPS/qOW1k4DDcTM/eCqsISa58WWiCO0WQUW6ECAwEAAQ==';
         }
 
-        // Production public key has not been generated yet
-        return '';
+        return 'MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAsfwvIFA3rstwsFizP9Yyjq8okQZFFZoxjORzdapQdf8UDQ/1hVTi26epvRKcKg0Zwxq6s/m1TWXsWJjIpAPWFVABcUufHnxgwXWyHsCedEmaJzomgoehMB/Ul4hNVfj0Dt7eNjsa2EboJ41B5Ir7MZ4LR1PRs2vlGQN73cEUQSrd0vtYPV69DXABk/o4fW+qU9iyWoCfJdhMWon32edMGnz6qxg0mFlOP0NTkkZPS3MbIoIxuhYT5/E35WoL60eSVjdPxYc4qeEK1+mOSKtjDku3mEsz5R3G20xUhK8lxSRqIIPbRyg9Y8Cg5LkXTsBDSGZX445bXsfeR9RigVblqLPFNQVcXyBV2CQe/bBwaLGxrNSXWUCWP+ITu+QVWAJ+HXMfyWDuPI0gVrlyC6BIEq6i4nC4UGZjs0MkU3mHTI2oojg6m0uDJvuwtxUq4mPdMhxXfnr8NJWvG2vzVQ+wds//9663VHbnCXi87PqtSaFbLFVUYNoJdDINQRtpnZNFxebH524k6dM9dZnA6rTdUwSoXbzE5HL64sUY6HCnNkqRS0HiwQBuz6WxDh7wuocxcXuAIwpYD3IYf1HKF1vyGtdHbLn7GhhDuelEzN3JgPdntrNp6tuLGJb47tO1KVz+/ps4e97colDjQAP7R8halVYUIGQ3rjwhZJXQP1suU0kCAwEAAQ==';
     }
 
     /**
