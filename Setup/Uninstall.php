@@ -38,82 +38,46 @@ class Uninstall implements UninstallInterface
         $setup->startSetup();
         // Remove Configurations 
         $this->removeBoltConfig($setup);
+        
         // Remove Bolt Tables
-        $this->removeFeatureSwitchTable($setup);
-        $this->removeExternalCustomerEntityTable($setup);
-        $this->removeBoltWebhookLogTable($setup);
-        $this->removeBoltCustomerCreditCardsTable($setup);
+        $tables = ['bolt_feature_switches',
+                   'bolt_external_customer_entity',
+                   'bolt_webhook_log',
+                   'bolt_customer_credit_cards'];
+        $this->removeBoltTables($setup, $tables);
+
         $this->removeBoltColumns($setup);
         $setup->endSetup();
+    }
+
+
+    /** 
+     * Remove all tables in provided array if they exist
+     * 
+     * @param SchemSetupInterface $setup
+     * @param array $tables
+     * 
+     * @return void
+     */
+
+    private function removeBoltTables(SchemaSetupInterface $setup, $tables){
+        foreach ($tables as $table){
+            $tableExists = $setup->getConnection()->isTableExists($table);
+            if ($tableExists) {
+                $setup->getConnection()->dropTable($table); 
+            }
+        }
     }
 
     /**
      * Remove all Bolt Plugin configurations from the config table
      * 
+     * @param SchemSetupInterface $setup
+     * 
      * @return void
      */
     private function removeBoltConfig(SchemaSetupInterface $setup){
         $setup->getConnection()->delete($setup->getTable('core_config_data'), "path like '%payment/boltpay%'");
-    }
-
-    /**
-     * Remove the feature switch table if it exists.
-     * 
-     * @param SchemSetupInterface $setup
-     * 
-     * @return void
-     */
-    private function removeFeatureSwitchTable(SchemaSetupInterface $setup){
-        $tableExists = $setup->getConnection()->isTableExists('bolt_feature_switches');
-        if (!$tableExists) {
-            return;
-        }
-        $setup->getConnection()->dropTable('bolt_feature_switches');
-    }
-
-    /**
-     * Remove the Bolt External Customer Entity table if it exists.
-     * 
-     * @param SchemSetupInterface $setup
-     * 
-     * @return void
-     */
-    private function removeExternalCustomerEntityTable(SchemaSetupInterface $setup){
-        $tableExists = $setup->getConnection()->isTableExists('bolt_external_customer_entity');
-        if (!$tableExists) {
-            return;
-        }
-        $setup->getConnection()->dropTable('bolt_external_customer_entity');
-    }
-
-    /**
-     * Remove the Bolt Webhook Log table if it exists.
-     * 
-     * @param SchemSetupInterface $setup
-     * 
-     * @return void
-     */
-    private function removeBoltWebhookLogTable(SchemaSetupInterface $setup){
-        $tableExists = $setup->getConnection()->isTableExists('bolt_webhook_log');
-        if (!$tableExists) {
-            return;
-        }
-        $setup->getConnection()->dropTable('bolt_webhook_log');
-    }
-
-    /**
-     * Remove the Bolt Customer Credit Cards table if it exists.
-     * 
-     * @param SchemSetupInterface $setup
-     * 
-     * @return void
-     */
-    private function removeBoltCustomerCreditCardsTable(SchemaSetupInterface $setup){
-        $tableExists = $setup->getConnection()->isTableExists('bolt_customer_credit_cards');
-        if (!$tableExists) {
-            return;
-        }
-        $setup->getConnection()->dropTable('bolt_customer_credit_cards');
     }
 
     /**
