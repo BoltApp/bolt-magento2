@@ -207,7 +207,7 @@ class Tax extends ShippingTax implements TaxInterface
         if (!empty($shipping_option)) {
             $shippingOption = $this->createShippingOption($totalsInformation, $currencyCode, $shipping_option);
             $taxData->setShippingOption($shippingOption);
-        } else {
+        } elseif (!empty($ship_to_store_option)) {
             $ship_to_store_option = $this->createInstorePickOption($totalsInformation, $currencyCode, $ship_to_store_option);
             $taxData->setShipToStoreOption($ship_to_store_option);
         }
