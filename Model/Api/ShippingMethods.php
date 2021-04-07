@@ -413,24 +413,24 @@ class ShippingMethods implements ShippingMethodsInterface
     public function getShippingAndTax($cart, $shipping_address)
     {
         // get immutable quote id stored with transaction
-        $quoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($cart);
-
-        // Load quote from entity id
-        $this->quote = $this->getQuoteById($quoteId);
-
-        if (!$this->quote) {
+        $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($cart);
+        $immutableQuote = $this->getQuoteById($immutableQuoteId);
+        if (!$immutableQuote) {
             throw new BoltException(
-                __('Unknown quote id: %1.', $quoteId),
+                __('Unknown quote id: %1.', $immutableQuoteId),
                 null,
                 6103
             );
         }
 
-        $this->preprocessHook();
-
+        $this->preprocessHook($immutableQuote->getStoreId());
+        
+        $parentQuoteId = $cart['order_reference'];
+        $parentQuote = $this->getQuoteById($parentQuoteId);
+        $this->cartHelper->replicateQuoteData($immutableQuote, $parentQuote);
+        $this->quote = $parentQuote;
         $this->quote->getStore()->setCurrentCurrencyCode($this->quote->getQuoteCurrencyCode());
         $this->checkCartItems($cart);
-
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace parent quote with immutable quote in checkout session.
         $this->sessionHelper->loadSession($this->quote, $cart['metadata'] ?? []);
@@ -502,10 +502,10 @@ class ShippingMethods implements ShippingMethodsInterface
      * @throws LocalizedException
      * @throws \Magento\Framework\Webapi\Exception
      */
-    protected function preprocessHook()
+    protected function preprocessHook($storeId)
     {
         HookHelper::$fromBolt = true;
-        $this->hookHelper->preProcessWebhook($this->quote->getStoreId());
+        $this->hookHelper->preProcessWebhook($storeId);
     }
 
     /**
