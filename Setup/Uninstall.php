@@ -37,14 +37,9 @@ class Uninstall implements UninstallInterface
         $setup->startSetup();
         // Remove Configurations 
         $this->removeBoltConfig($setup);
-        
         // Remove Bolt Tables
-        $tables = ['bolt_feature_switches',
-                   'bolt_external_customer_entity',
-                   'bolt_webhook_log',
-                   'bolt_customer_credit_cards'];
-        $this->removeBoltTables($setup, $tables);
-
+        $this->removeBoltTables($setup);
+        // Remove Bolt Columns
         $this->removeBoltColumns($setup);
         $setup->endSetup();
     }
@@ -54,16 +49,22 @@ class Uninstall implements UninstallInterface
      * Remove all tables in provided array if they exist
      * 
      * @param SchemSetupInterface $setup
-     * @param array $tables
      * 
      * @return void
      */
-    private function removeBoltTables(SchemaSetupInterface $setup, $tables){
-        foreach ($tables as $table){
-            $tableExists = $setup->getConnection()->isTableExists($table);
-            if ($tableExists) {
-                $setup->getConnection()->dropTable($table); 
+    private function removeBoltTables(SchemaSetupInterface $setup){
+        try{
+            $tables = $setup->getConnection()->fetchAll("SELECT TABLE_NAME FROM information_schema.tables WHERE table_name LIKE 'bolt_%'");
+            foreach ($tables as $table){
+                $tableExists = $setup->getConnection()->isTableExists($table['TABLE_NAME']);
+                if ($tableExists) {
+                    $setup->getConnection()->dropTable($table['TABLE_NAME']); 
+                }
             }
+        }
+        catch (\Exception $e) {
+            // If we run into an exception while fetching the tables due to the query failing return and continue with rest of cleanup
+            return;
         }
     }
 
