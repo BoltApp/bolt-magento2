@@ -24,6 +24,7 @@ use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\LogRetriever;
 use Bolt\Boltpay\Helper\ModuleRetriever;
+use Bolt\Boltpay\Helper\ThirdPartyConfig;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Webapi\Rest\Response;
@@ -79,6 +80,11 @@ class Debug implements DebugInterface
     private $automatedTestingHelper;
 
     /**
+     * @var ThirdPartyConfig
+     */
+    private $thirdPartyConfig;
+
+    /**
      * @var LogHelper
      */
     private $logHelper;
@@ -105,6 +111,7 @@ class Debug implements DebugInterface
         ModuleRetriever $moduleRetriever,
         LogRetriever $logRetriever,
         AutomatedTestingHelper $automatedTestingHelper,
+        ThirdPartyConfig $thirdPartyConfig,
         LogHelper $logHelper
     ) {
         $this->response = $response;
@@ -116,6 +123,7 @@ class Debug implements DebugInterface
         $this->moduleRetriever = $moduleRetriever;
         $this->logRetriever = $logRetriever;
         $this->automatedTestingHelper = $automatedTestingHelper;
+        $this->thirdPartyConfig = $thirdPartyConfig;
         $this->logHelper = $logHelper;
     }
 
@@ -197,12 +205,20 @@ class Debug implements DebugInterface
             );
         }
 
-        // Throw debg not implemented exception for now untill it is implemented.
-        throw new BoltException(
-            __('Webhook of type Debug has not been implemented'),
-            null,
-            BoltErrorResponse::ERR_SERVICE
-        );
+        $result = $this->debugInfoFactory->create();
+        
+        switch ($type){
+            case 'log':
+                $result->setLogs($this->logRetriever->getLogs());
+                break;
+            default:
+                $result->setPhpVersion(PHP_VERSION);
+                $result->setComposerVersion($this->configHelper->getComposerVersion());
+                $result->setPlatformVersion($this->productMetadata->getVersion());
+                $result->setBoltConfigSettings($this->configHelper->getAllConfigSettings());
+                $result->setOtherPluginVersions($this->moduleRetriever->getInstalledModules());
+                $result->setThirdPartyPluginConfig($this->thirdPartyConfig->getThirdPartyPluginConfig());
+        }
 
     }
 }
