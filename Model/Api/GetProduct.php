@@ -84,7 +84,7 @@ class GetProduct implements GetProductInterface
      *
      * @param string $sku
      *
-     * @return ProductInterface
+     * @return \Magento\Catalog\Api\Data\ProductInterface
      *
      * @throws NoSuchEntityException
      * @throws WebapiException
