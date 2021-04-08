@@ -82,14 +82,14 @@ class GetProduct implements GetProductInterface
      *
      * @api
      *
-     * @param string $sku
+     * @param string $productID
      *
      * @return \Magento\Catalog\Api\Data\ProductInterface
      *
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function execute($sku = '')
+    public function execute($productID = '')
     {
 //        if (!$this->hookHelper->verifyRequest()) {
 //            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
@@ -101,7 +101,7 @@ class GetProduct implements GetProductInterface
 
         try {
             $storeId = $this->storeManager->getStore()->getId();
-            $product = $this->productRepositoryInterface->getById(14, false, $storeId, false);
+            $product = $this->productRepositoryInterface->getById($productID, false, $storeId, false);
             return $product;
         } catch (NoSuchEntityException $nsee) {
             throw new NoSuchEntityException(__('Customer not found with given email.'));
