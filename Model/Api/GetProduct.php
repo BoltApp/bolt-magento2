@@ -100,7 +100,7 @@ class GetProduct implements GetProductInterface
 
         try {
             $storeId = $this->storeManager->getStore()->getId();
-            $product = $this->productRepository->get("24-WB04", false, $storeId, true);
+            $product = $this->productRepository->getById(14, false, $storeId, false);
             $this->response->setHeader('Content-Type', 'application/json');
             $this->response->setHttpResponseCode(200);
             $this->response->setBody(json_encode($product));
@@ -109,7 +109,7 @@ class GetProduct implements GetProductInterface
             throw new NoSuchEntityException(__('Customer not found with given email.'));
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
     }
 }
