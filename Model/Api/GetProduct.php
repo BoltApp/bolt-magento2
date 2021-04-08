@@ -100,7 +100,7 @@ class GetProduct implements GetProductInterface
 
         try {
             $storeId = $this->storeManager->getStore()->getId();
-            $product = $this->productRepository->getById(14, false, $storeId, false);
+            $product = $this->productRepositoryInterface->getById(14, false, $storeId, false);
             $this->response->setHeader('Content-Type', 'application/json');
             $this->response->setHttpResponseCode(200);
             $this->response->setBody(json_encode($product));
