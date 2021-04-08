@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Api;
 
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
+use \Magento\Catalog\Api\Data\ProductInterface;
 
 interface GetProductInterface
 {
@@ -29,10 +30,10 @@ interface GetProductInterface
      *
      * @param string $sku
      *
-     * @return void
+     * @return ProductInterface
      *
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function execute($sku = '');
+    public function execute($sku = ''): ProductInterface;
 }

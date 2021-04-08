@@ -102,10 +102,7 @@ class GetProduct implements GetProductInterface
         try {
             $storeId = $this->storeManager->getStore()->getId();
             $product = $this->productRepositoryInterface->getById(14, false, $storeId, false);
-            $this->response->setHeader('Content-Type', 'application/json');
-            $this->response->setHttpResponseCode(200);
-            $this->response->setBody(json_encode($product));
-            $this->response->sendResponse();
+            return $product;
         } catch (NoSuchEntityException $nsee) {
             throw new NoSuchEntityException(__('Customer not found with given email.'));
         } catch (Exception $e) {
