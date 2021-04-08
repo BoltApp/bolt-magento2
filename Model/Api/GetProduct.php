@@ -93,14 +93,14 @@ class GetProduct implements GetProductInterface
 //        if (!$this->hookHelper->verifyRequest()) {
 //            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
 //        }
-
-        if ($sku === '') {
-            throw new WebapiException(__('Missing email in the request body.'), 0, WebapiException::HTTP_BAD_REQUEST);
-        }
+//
+//        if ($sku === '') {
+//            throw new WebapiException(__('Missing email in the request body.'), 0, WebapiException::HTTP_BAD_REQUEST);
+//        }
 
         try {
             $storeId = $this->storeManager->getStore()->getId();
-            $product = $this->productRepository->get($sku, false, $storeId, true);
+            $product = $this->productRepository->get("24-WB04", false, $storeId, true);
             $this->response->setHeader('Content-Type', 'application/json');
             $this->response->setHttpResponseCode(200);
             $this->response->setBody(json_encode($product));
