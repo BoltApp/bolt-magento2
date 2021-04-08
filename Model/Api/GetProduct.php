@@ -17,8 +17,7 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
-use Bolt\Boltpay\Api\GetAccountInterface;
-use Bolt\Boltpay\Api\GetProductInterface;
+use Bolt\Boltpay\Api\Data\GetProductDataInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Exception;
@@ -28,13 +27,15 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\CatalogInventory\Api\StockRegistryInterface;
+
 
 class GetProduct implements GetProductInterface
 {
     /**
-     * @var Response
+     * @var GetProductDataInterface
      */
-    private $response;
+    private $productData;
 
     /**
      * @var ProductRepositoryInterface
@@ -47,6 +48,11 @@ class GetProduct implements GetProductInterface
     private $storeManager;
 
     /**
+     * @var StockRegistryInterface
+     */
+    private $stockRegistry;
+
+    /**
      * @var HookHelper
      */
     private $hookHelper;
@@ -57,25 +63,29 @@ class GetProduct implements GetProductInterface
     private $bugsnag;
 
     /**
-     * @param Response              $response
      * @param ProductRepositoryInterface  $productRepositoryInterface
+     * @param StockRegistryInterface  $stockRegistry
+     * @param GetProductDataInterface  $productData
      * @param StoreManagerInterface $storeManager
      * @param HookHelper            $hookHelper
      * @param Bugsnag               $bugsnag
      */
     public function __construct(
-        Response $response,
         ProductRepositoryInterface  $productRepositoryInterface,
+        StockRegistryInterface  $stockRegistry,
+        GetProductDataInterface  $productData,
         StoreManagerInterface $storeManager,
         HookHelper $hookHelper,
         Bugsnag $bugsnag
     ) {
-        $this->response = $response;
         $this->productRepositoryInterface = $productRepositoryInterface;
+        $this->stockRegistry = $stockRegistry;
+        $this->productData = $productData;
         $this->storeManager = $storeManager;
         $this->hookHelper = $hookHelper;
         $this->bugsnag = $bugsnag;
     }
+
 
     /**
      * Get user account associated with email
@@ -84,7 +94,7 @@ class GetProduct implements GetProductInterface
      *
      * @param string $productID
      *
-     * @return \Magento\Catalog\Api\Data\ProductInterface
+     * @return \Bolt\Boltpay\Api\Data\GetProductDataInterface
      *
      * @throws NoSuchEntityException
      * @throws WebapiException
@@ -102,8 +112,11 @@ class GetProduct implements GetProductInterface
         try {
             $storeId = $this->storeManager->getStore()->getId();
             $product = $this->productRepositoryInterface->getById($productID, false, $storeId, false);
-            return $product;
-        } catch (NoSuchEntityException $nsee) {
+            $this->productData->setProduct($product);
+            $stockItem = $this->stockRegistry->getStockItem($product->getId());
+            $this->productData->setStock($stockItem);
+            return $this->productData;
+        } catch (NoSuchEntityException $nse) {
             throw new NoSuchEntityException(__('Customer not found with given email.'));
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
