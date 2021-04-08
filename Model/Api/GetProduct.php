@@ -23,6 +23,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use \Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
@@ -83,7 +84,7 @@ class GetProduct implements GetProductInterface
      *
      * @param string $email
      *
-     * @return void
+     * @return ProductInterface
      *
      * @throws NoSuchEntityException
      * @throws WebapiException
