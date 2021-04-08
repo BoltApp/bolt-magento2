@@ -35,5 +35,5 @@ interface GetProductInterface
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function execute($sku = ''): ProductInterface;
+    public function execute($sku = '');
 }

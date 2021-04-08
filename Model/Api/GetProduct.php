@@ -82,7 +82,7 @@ class GetProduct implements GetProductInterface
      *
      * @api
      *
-     * @param string $email
+     * @param string $sku
      *
      * @return ProductInterface
      *
