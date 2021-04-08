@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\Data\GetProductDataInterface;
+use Bolt\Boltpay\Api\GetProductInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Exception;
