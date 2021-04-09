@@ -17,6 +17,8 @@
 
 namespace Bolt\Boltpay\ThirdPartyModules\Aheadworks;
 
+use Magento\Payment\Model\Checks\SpecificationFactory as SpecificationFactory;
+
 /**
  * Adds compatibility between Boltpay and Aheadworks_Sarp2 modules
  */
@@ -56,7 +58,7 @@ class Sarp2
      */
     public function adminhtmlControllerActionPredispatchSalesOrderCreateIndex()
     {
-        $class = Magento\Payment\Model\Checks\SpecificationFactory::class;
+        $class = SpecificationFactory::class;
         $globalConfig = $this->configLoader->load(\Magento\Framework\App\Area::AREA_GLOBAL);
         $adminConfig = $this->configLoader->load(\Magento\Framework\App\Area::AREA_ADMINHTML);
 
