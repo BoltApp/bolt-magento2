@@ -38,8 +38,8 @@ class SalesRuleQuoteDiscountPlugin
         }
         
         $checkoutSession = $this->sessionHelper->getCheckoutSession();
-        // Each time when collecting address discount amount, the BoltCollectSaleRuleDiscounts session data would be reset,
-        // then it can store the updated info of applied sale rules.
+        // Each time when collecting address discount amount, the BoltCollectSaleRuleDiscounts session data
+        // would be reset, then it can store the updated info of applied sale rules.
         $checkoutSession->setBoltCollectSaleRuleDiscounts([]);
 
         return [$quote, $shippingAssignment, $total];

@@ -17,10 +17,6 @@
 
 namespace Bolt\Boltpay\ThirdPartyModules\Magento;
 
-/**
- * Class SalesRuleStaging
- * @package Bolt\Boltpay\ThirdPartyModules\Magento
- */
 class SalesRuleStaging
 {
     /**

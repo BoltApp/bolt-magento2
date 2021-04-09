@@ -109,7 +109,13 @@ class Remarketing
      */
     private function isListrakEnabled()
     {
-        return $this->scopeConfigInterface->getValue(self::XML_PATH_LISTRAK_REMARKETING_TRACK_WITH_LISTRAK, ScopeInterface::SCOPE_STORE)
-            && $this->scopeConfigInterface->getValue(self::XML_PATH_LISTRAK_REMARKETING_MERCHANT_ID, ScopeInterface::SCOPE_STORE);
+        return $this->scopeConfigInterface->getValue(
+            self::XML_PATH_LISTRAK_REMARKETING_TRACK_WITH_LISTRAK,
+            ScopeInterface::SCOPE_STORE
+        ) &&
+            $this->scopeConfigInterface->getValue(
+                self::XML_PATH_LISTRAK_REMARKETING_MERCHANT_ID,
+                ScopeInterface::SCOPE_STORE
+            );
     }
 }

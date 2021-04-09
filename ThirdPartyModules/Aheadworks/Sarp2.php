@@ -56,7 +56,7 @@ class Sarp2
      */
     public function adminhtmlControllerActionPredispatchSalesOrderCreateIndex()
     {
-        $class = 'Magento\Payment\Model\Checks\SpecificationFactory';
+        $class = Magento\Payment\Model\Checks\SpecificationFactory::class;
         $globalConfig = $this->configLoader->load(\Magento\Framework\App\Area::AREA_GLOBAL);
         $adminConfig = $this->configLoader->load(\Magento\Framework\App\Area::AREA_ADMINHTML);
 
