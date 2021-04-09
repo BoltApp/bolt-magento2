@@ -161,8 +161,8 @@ class HookTest extends BoltTestCase
      * @throws ReflectionException if verifyWebhookApi method doesn't exist
      */
     public function verifyWebhookApi_withVariousResponses_returnsVerifiedState(
-        $hmacHeader, 
-        $response, 
+        $hmacHeader,
+        $response,
         $expectException,
         $expectedResult
     ) {
@@ -240,7 +240,7 @@ class HookTest extends BoltTestCase
 
     /**
      * Data provider for {@see verifySignature_withVariousHmacHeaders_returnsSignatureState}
-     * 
+     *
      * @return array[] containing HMAC header value and expected result of the tested method
      */
     public function verifySignature_withVariousHmacHeadersProvider()
@@ -352,7 +352,7 @@ class HookTest extends BoltTestCase
     /**
      * @test
      * that setCommonMetaData adds Bolt trace ID to Bugsnag metadata if it is present in the request headers
-     * 
+     *
      * @covers ::setCommonMetaData
      */
     public function setCommonMetaData_requestHasBoltTraceIdHeader_registersBugsnagCallback()
@@ -423,7 +423,7 @@ class HookTest extends BoltTestCase
     {
         $this->initCurrentMock(null);
         $this->currentMock->setStoreId(self::STORE_ID);
-        static::assertAttributeEquals(self::STORE_ID , 'storeId', $this->currentMock);
+        static::assertAttributeEquals(self::STORE_ID, 'storeId', $this->currentMock);
     }
 
     /**

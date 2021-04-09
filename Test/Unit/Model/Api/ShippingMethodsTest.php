@@ -146,7 +146,6 @@ class ShippingMethodsTest extends BoltTestCase
 
         $this->objectManager->removeSharedInstance(Request::class);
         $this->request = null;
-
     }
 
     private function resetResponse()
@@ -214,7 +213,8 @@ class ShippingMethodsTest extends BoltTestCase
      */
     public function getShippingMethods_fullAddressData()
     {
-        $shippingMethodMock = $this->createPartialMock(ShippingMethods::class,
+        $shippingMethodMock = $this->createPartialMock(
+            ShippingMethods::class,
             ['getShippingAndTax']
         );
         $cart = [
@@ -238,7 +238,8 @@ class ShippingMethodsTest extends BoltTestCase
             'street_address1' => "228 5th Avenue",
             'street_address2' => "",
         ];
-        $metricsClient = $this->createPartialMock(MetricsClient::class,
+        $metricsClient = $this->createPartialMock(
+            MetricsClient::class,
             ['getCurrentTime','processMetric']
         );
         TestHelper::setProperty($shippingMethodMock, 'metricsClient', $metricsClient);
@@ -280,8 +281,8 @@ class ShippingMethodsTest extends BoltTestCase
                     'immutable_quote_id' => $quote->getId(),
                 ]
             ],
-            [])
-        );
+            []
+        ));
         $response = json_decode(TestHelper::getProperty($this->shippingMethod, 'response')->getBody(), true);
         $this->assertEquals(
             [

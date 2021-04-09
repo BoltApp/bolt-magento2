@@ -185,7 +185,7 @@ class CustomFieldsHandlerTest extends BoltTestCase
         return [
             [[], '', false],
             [[$customField1], $comment1, false],
-            [[$customField2], $comment2, false]           
+            [[$customField2], $comment2, false]
         ];
     }
 }

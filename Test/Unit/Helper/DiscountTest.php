@@ -593,6 +593,6 @@ class DiscountTest extends BoltTestCase
 
         $this->quoteRepository->expects(static::once())->method('save')->with($quote)->willReturnSelf();
 
-        static::assertNull($this->currentMock->setCouponCode($quote,$couponCode));
+        static::assertNull($this->currentMock->setCouponCode($quote, $couponCode));
     }
 }

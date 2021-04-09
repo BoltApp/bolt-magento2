@@ -323,5 +323,3 @@ class UpdateSettingsTest extends BoltTestCase
         );
     }
 }
-
-

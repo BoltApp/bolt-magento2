@@ -27,10 +27,10 @@ class FeatureSwitchRepositoryTest extends BoltTestCase
 {
     private function checkSwitch($switch, $name, $value, $defaultValue, $rolloutPercentage)
     {
-        $this->assertEquals($name,$switch->getName());
-        $this->assertEquals($value,$switch->getValue());
-        $this->assertEquals($defaultValue,$switch->getDefaultValue());
-        $this->assertEquals($rolloutPercentage,$switch->getRolloutPercentage());
+        $this->assertEquals($name, $switch->getName());
+        $this->assertEquals($value, $switch->getValue());
+        $this->assertEquals($defaultValue, $switch->getDefaultValue());
+        $this->assertEquals($rolloutPercentage, $switch->getRolloutPercentage());
     }
 
     /**
@@ -42,7 +42,7 @@ class FeatureSwitchRepositoryTest extends BoltTestCase
         $featureSwitchRepository = Bootstrap::getObjectManager()->create(FeatureSwitchRepository::class);
         $featureSwitchRepository->upsertByName("test_switch", true, false, 100);
         $switch = $featureSwitchRepository->getByName("test_switch");
-        $this->checkSwitch($switch,"test_switch", true, false, 100);
+        $this->checkSwitch($switch, "test_switch", true, false, 100);
     }
 
     /**
@@ -71,6 +71,6 @@ class FeatureSwitchRepositoryTest extends BoltTestCase
         $featureSwitchRepository->upsertByName("test_switch", true, false, 100);
         $featureSwitchRepository->upsertByName("test_switch", false, true, 90);
         $switch = $featureSwitchRepository->getByName("test_switch");
-        $this->checkSwitch($switch,"test_switch", false, true, 90);
+        $this->checkSwitch($switch, "test_switch", false, true, 90);
     }
 }

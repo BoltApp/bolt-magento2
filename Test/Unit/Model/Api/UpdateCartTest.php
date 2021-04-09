@@ -43,7 +43,6 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
-
 /**
  * Class UpdateCartTest
  * @package Bolt\Boltpay\Test\Unit\Model\Api
@@ -153,11 +152,11 @@ class UpdateCartTest extends BoltTestCase
         $updateCartResultFactory = null,
         $enableProxyingToOriginalMethods = false,
         $enableOriginalConstructor = true
-    ) {        
-        if(!$cartDataFactory) {
+    ) {
+        if (!$cartDataFactory) {
             $cartDataFactory = $this->cartDataFactory;
         }
-        if(!$updateCartResultFactory) {
+        if (!$updateCartResultFactory) {
             $updateCartResultFactory = $this->updateCartResultFactory;
         }
         
@@ -239,7 +238,7 @@ class UpdateCartTest extends BoltTestCase
         $quoteId = self::IMMUTABLE_QUOTE_ID,
         $parentQuoteId = self::PARENT_QUOTE_ID,
         $customerId = null,
-        $isVirtual = false,        
+        $isVirtual = false,
         $couponCode = null
     ) {
         $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
@@ -337,7 +336,7 @@ class UpdateCartTest extends BoltTestCase
     }
     
     private function getRequestCart()
-    {        
+    {
         $request_cart = [
             'order_reference' => self::IMMUTABLE_QUOTE_ID,
             'display_id'  => '',
@@ -364,7 +363,7 @@ class UpdateCartTest extends BoltTestCase
             'display_id' => '',
             'currency' => 'USD',
             'total_amount' => 50500,
-            'tax_amount' => 1000,            
+            'tax_amount' => 1000,
             'items' => [
                 [
                     'name'         => 'Beaded Long Dress',
@@ -395,7 +394,7 @@ class UpdateCartTest extends BoltTestCase
 
     private function expectErrorResponse($errCode, $message, $httpStatusCode, $quote = null)
     {
-        $additionalErrorResponseData = [];        
+        $additionalErrorResponseData = [];
         $encodeErrorResult = '';
         $this->errorResponse->expects(self::once())->method('prepareUpdateCartErrorMessage')
             ->with($errCode, $message, $additionalErrorResponseData)->willReturn($encodeErrorResult);
@@ -409,7 +408,7 @@ class UpdateCartTest extends BoltTestCase
 
     private function expectSuccessResponse($result)
     {
-        $result = str_replace(array("\r\n", "\n", "\r"), ' ', json_encode($result));
+        $result = str_replace(["\r\n", "\n", "\r"], ' ', json_encode($result));
         $this->response->expects(self::once())->method('setBody')->with($result);
         $this->response->expects(self::once())->method('sendResponse');
     }
@@ -442,10 +441,10 @@ class UpdateCartTest extends BoltTestCase
      * @covers ::execute
      */
     public function execute_validateQuoteFail_returnFalse()
-    {            
+    {
         $this->initCurrentMock(['validateQuote']);
         $exception = new BoltException(
-            __(sprintf('The cart reference [%s] cannot be found.', SELF::IMMUTABLE_QUOTE_ID)),
+            __(sprintf('The cart reference [%s] cannot be found.', self::IMMUTABLE_QUOTE_ID)),
             null,
             BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
         );
@@ -471,7 +470,7 @@ class UpdateCartTest extends BoltTestCase
         
         $parentQuoteMock = $this->getQuoteMock(
             self::PARENT_QUOTE_ID,
-            self::PARENT_QUOTE_ID            
+            self::PARENT_QUOTE_ID
         );
 
         $this->initCurrentMock([
@@ -482,7 +481,7 @@ class UpdateCartTest extends BoltTestCase
             'generateResult',
             'verifyCouponCode',
             'applyDiscount'
-        ]);        
+        ]);
         
         $immutableQuoteMock = $this->getQuoteMock();
         
@@ -566,7 +565,7 @@ class UpdateCartTest extends BoltTestCase
         
         $parentQuoteMock = $this->getQuoteMock(
             self::PARENT_QUOTE_ID,
-            self::PARENT_QUOTE_ID            
+            self::PARENT_QUOTE_ID
         );
             
         $this->initCurrentMock([
@@ -578,7 +577,7 @@ class UpdateCartTest extends BoltTestCase
             'getQuoteCart',
             'removeDiscount',
             'getAppliedStoreCredit'
-        ]);        
+        ]);
         
         $immutableQuoteMock = $this->getQuoteMock();
         
@@ -645,7 +644,7 @@ class UpdateCartTest extends BoltTestCase
     /**
      * @test
      * that v2 discount application would send success response if applied successfully
-     * 
+     *
      * @covers ::discountHandler
      */
     public function discountHandler_applyDiscount_sendSuccessResponse()
@@ -662,7 +661,7 @@ class UpdateCartTest extends BoltTestCase
         
         $parentQuoteMock = $this->getQuoteMock(
             self::PARENT_QUOTE_ID,
-            self::PARENT_QUOTE_ID            
+            self::PARENT_QUOTE_ID
         );
 
         $this->initCurrentMock([
@@ -673,7 +672,7 @@ class UpdateCartTest extends BoltTestCase
             'generateResult',
             'verifyCouponCode',
             'applyDiscount'
-        ]);        
+        ]);
         
         $immutableQuoteMock = $this->getQuoteMock();
         
@@ -718,7 +717,6 @@ class UpdateCartTest extends BoltTestCase
         $this->expectSuccessResponse($result);
 
         $this->currentMock->discountHandler(self::COUPON_CODE, $testCartData);
-
     }
 
     /**
@@ -743,7 +741,7 @@ class UpdateCartTest extends BoltTestCase
 
         $parentQuoteMock = $this->getQuoteMock(
             self::PARENT_QUOTE_ID,
-            self::PARENT_QUOTE_ID            
+            self::PARENT_QUOTE_ID
         );
         
         $this->initCurrentMock([
@@ -797,7 +795,7 @@ class UpdateCartTest extends BoltTestCase
         
         $product = $this->createMock(ProductInterface::class);
         $this->currentMock->expects(self::once())->method('getProduct')
-            ->with(100,self::STORE_ID)
+            ->with(100, self::STORE_ID)
             ->willReturn($product);
         
         $this->currentMock->expects(self::once())->method('verifyItemData')
@@ -867,7 +865,7 @@ class UpdateCartTest extends BoltTestCase
        
         $parentQuoteMock = $this->getQuoteMock(
             self::PARENT_QUOTE_ID,
-            self::PARENT_QUOTE_ID            
+            self::PARENT_QUOTE_ID
         );
             
         $this->initCurrentMock([
@@ -931,7 +929,7 @@ class UpdateCartTest extends BoltTestCase
             
         $product = $this->createMock(ProductInterface::class);
         $this->currentMock->expects(self::once())->method('getProduct')
-            ->with(100,self::STORE_ID)
+            ->with(100, self::STORE_ID)
             ->willReturn($product);
             
         $this->currentMock->expects(self::once())->method('verifyItemData')
@@ -973,7 +971,7 @@ class UpdateCartTest extends BoltTestCase
         
         $parentQuoteMock = $this->getQuoteMock(
             self::PARENT_QUOTE_ID,
-            self::PARENT_QUOTE_ID            
+            self::PARENT_QUOTE_ID
         );
             
         $this->initCurrentMock(['validateQuote', 'preProcessWebhook', 'getQuoteCart']);
@@ -1070,7 +1068,7 @@ class UpdateCartTest extends BoltTestCase
         
         $parentQuoteMock = $this->getQuoteMock(
             self::PARENT_QUOTE_ID,
-            self::PARENT_QUOTE_ID            
+            self::PARENT_QUOTE_ID
         );
         
         $this->cartHelper->expects(self::once())->method('getCartData')
@@ -1095,7 +1093,7 @@ class UpdateCartTest extends BoltTestCase
         
         $parentQuoteMock = $this->getQuoteMock(
             self::PARENT_QUOTE_ID,
-            self::PARENT_QUOTE_ID            
+            self::PARENT_QUOTE_ID
         );
         
         $this->cartHelper->expects(self::once())->method('getCartData')

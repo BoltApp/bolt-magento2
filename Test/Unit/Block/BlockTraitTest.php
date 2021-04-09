@@ -72,7 +72,6 @@ class BlockTraitTest extends BoltTestCase
         $this->featureSwitches = $this->createPartialMock(Decider::class, ['isInstantCheckoutButton', 'isBoltEnabled']);
         TestHelper::setProperty($this->currentMock, 'configHelper', $this->configHelper);
         TestHelper::setProperty($this->currentMock, 'featureSwitches', $this->featureSwitches);
-
     }
 
     /**

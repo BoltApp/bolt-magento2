@@ -352,7 +352,8 @@ class PaymentTest extends BoltTestCase
         $this->currentMock->capture($paymentMock, $amount);
     }
 
-    public function provider_capture_withAmountsLessThanOneCent_doesNotCallBoltApi(){
+    public function provider_capture_withAmountsLessThanOneCent_doesNotCallBoltApi()
+    {
         return [
             ['amount' => 0],
             ['amount' => null],

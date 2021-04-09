@@ -37,7 +37,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
  * @package Bolt\Boltpay\Test\Unit\Helper\FeatureSwitch
  * @coversDefaultClass \Bolt\Boltpay\Helper\FeatureSwitch\Decider
  */
-class DeciderTest  extends BoltTestCase
+class DeciderTest extends BoltTestCase
 {
     /**
      * @var Context
@@ -117,11 +117,11 @@ class DeciderTest  extends BoltTestCase
     }
     
      /**
-     * @test
-     * that constructor sets internal properties
-     *
-     * @covers ::__construct
-     */
+      * @test
+      * that constructor sets internal properties
+      *
+      * @covers ::__construct
+      */
     public function constructor_always_setsInternalProperties()
     {
         $instance = new Decider(
@@ -238,7 +238,8 @@ class DeciderTest  extends BoltTestCase
      * @param $expected
      * @throws LocalizedException
      */
-    public function isSwitchEnabled_willReturnBoolean($result, $expected) {
+    public function isSwitchEnabled_willReturnBoolean($result, $expected)
+    {
         $fs = $this->createMock(FeatureSwitch::class);
         $fs->expects($this->once())->method('getValue')->willReturn($result);
         $fs->expects($this->exactly(2))

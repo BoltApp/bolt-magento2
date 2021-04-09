@@ -739,7 +739,8 @@ class OrderTest extends BoltTestCase
     public function setAddress()
     {
         
-        $addressObject = (object) self::ADDRESS_DATA;;
+        $addressObject = (object) self::ADDRESS_DATA;
+        ;
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $quote = TestUtils::createQuote();
         $quoteAddress = $quote->getShippingAddress();
@@ -748,11 +749,11 @@ class OrderTest extends BoltTestCase
             'setAddress',
             [$quoteAddress, $addressObject]
         );
-        self::assertEquals($quote->getShippingAddress()->getCity(),'Beverly Hills');
-        self::assertEquals($quote->getShippingAddress()->getCountryId(),'US');
-        self::assertEquals($quote->getShippingAddress()->getCompany(),'Bolt');
-        self::assertEquals($quote->getShippingAddress()->getEmail(),'test@bolt.com');
-        self::assertEquals($quote->getShippingAddress()->getTelephone(),'0123456789');
+        self::assertEquals($quote->getShippingAddress()->getCity(), 'Beverly Hills');
+        self::assertEquals($quote->getShippingAddress()->getCountryId(), 'US');
+        self::assertEquals($quote->getShippingAddress()->getCompany(), 'Bolt');
+        self::assertEquals($quote->getShippingAddress()->getEmail(), 'test@bolt.com');
+        self::assertEquals($quote->getShippingAddress()->getTelephone(), '0123456789');
     }
 
     /**
@@ -1185,7 +1186,7 @@ class OrderTest extends BoltTestCase
 
         self::assertEquals(OrderHelper::MAGENTO_ORDER_STATUS_PENDING, $order->getStatus());
         self::assertEquals(OrderModel::STATE_PENDING_PAYMENT, $order->getState());
-        self::assertEquals($order->getAllStatusHistory()[0]->getComment(),'BOLTPAY INFO :: This order was approved by Bolt');
+        self::assertEquals($order->getAllStatusHistory()[0]->getComment(), 'BOLTPAY INFO :: This order was approved by Bolt');
         TestUtils::cleanupSharedFixtures([$order]);
     }
 
@@ -1380,7 +1381,9 @@ class OrderTest extends BoltTestCase
             ->willReturnSelf();
 
         $this->currentMock->saveUpdateOrder(
-            self::REFERENCE_ID, self::STORE_ID, self::BOLT_TRACE_ID
+            self::REFERENCE_ID,
+            self::STORE_ID,
+            self::BOLT_TRACE_ID
         );
     }
 
@@ -1691,7 +1694,8 @@ class OrderTest extends BoltTestCase
      *
      * @throws Exception
      */
-    public function processExistingOrder_withCanceledOrder_throwsException() {
+    public function processExistingOrder_withCanceledOrder_throwsException()
+    {
         $this->quoteMock->expects(self::exactly(2))->method('getId')
             ->willReturn(self::QUOTE_ID);
         $this->currentMock->expects(self::once())->method('getExistingOrder')
@@ -3396,7 +3400,7 @@ class OrderTest extends BoltTestCase
         $order = TestUtils::createDumpyOrder();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $boltHelperOrder->setOrderState($order, Order::STATE_HOLDED);
-        self::assertEquals(Order::STATE_HOLDED,$order->getState());
+        self::assertEquals(Order::STATE_HOLDED, $order->getState());
         TestUtils::cleanupSharedFixtures([$order]);
     }
 
@@ -3434,7 +3438,7 @@ class OrderTest extends BoltTestCase
         $order = TestUtils::createDumpyOrder();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $boltHelperOrder->setOrderState($order, $state);
-        self::assertEquals(Order::STATE_CANCELED,$order->getState());
+        self::assertEquals(Order::STATE_CANCELED, $order->getState());
         TestUtils::cleanupSharedFixtures([$order]);
     }
 
@@ -3482,7 +3486,7 @@ class OrderTest extends BoltTestCase
         $order = TestUtils::createDumpyOrder();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $boltHelperOrder->setOrderState($order, $state);
-        self::assertEquals(Order::STATE_PAYMENT_REVIEW,$order->getState());
+        self::assertEquals(Order::STATE_PAYMENT_REVIEW, $order->getState());
         TestUtils::cleanupSharedFixtures([$order]);
     }
 
@@ -3573,7 +3577,7 @@ class OrderTest extends BoltTestCase
      * @param int $orderGrandTotal
      * @param int $orderTotalPaid
      */
-    public function transactionToOrderState($transactionState, $orderState, $isHookFromBolt = false, $isCreatingCreditMemoFromWebHookEnabled = false, $orderTotalRefunded = 0, $orderGrandTotal = 10 , $orderTotalPaid = 10)
+    public function transactionToOrderState($transactionState, $orderState, $isHookFromBolt = false, $isCreatingCreditMemoFromWebHookEnabled = false, $orderTotalRefunded = 0, $orderGrandTotal = 10, $orderTotalPaid = 10)
     {
         Hook::$fromBolt = $isHookFromBolt;
         $this->featureSwitches->method('isCreatingCreditMemoFromWebHookEnabled')->willReturn($isCreatingCreditMemoFromWebHookEnabled);
@@ -3745,10 +3749,10 @@ class OrderTest extends BoltTestCase
     }
 
         /**
-     * @test
-     *
-     * @covers ::updateOrderPayment
-     */
+         * @test
+         *
+         * @covers ::updateOrderPayment
+         */
     public function updateOrderPayment_handleCustomFields()
     {
        
@@ -3775,7 +3779,6 @@ class OrderTest extends BoltTestCase
         $this->customFieldsHandler->expects(self::once())->method('handle')
             ->with($this->orderMock, self::HOOK_PAYLOAD['custom_fields']);
         $this->currentMock->updateOrderPayment($this->orderMock, $transaction, null, null, self::HOOK_PAYLOAD);
-        
     }
 
     /**
@@ -4787,11 +4790,11 @@ class OrderTest extends BoltTestCase
         $quote = TestUtils::createQuote();
 
         TestHelper::invokeMethod($boltHelperOrder, 'setBillingAddress', [$quote, $transaction]);
-        self::assertEquals($quote->getBillingAddress()->getCity(),'Beverly Hills');
-        self::assertEquals($quote->getBillingAddress()->getCountryId(),'US');
-        self::assertEquals($quote->getBillingAddress()->getCompany(),'Bolt');
-        self::assertEquals($quote->getBillingAddress()->getEmail(),'test@bolt.com');
-        self::assertEquals($quote->getBillingAddress()->getTelephone(),'0123456789');
+        self::assertEquals($quote->getBillingAddress()->getCity(), 'Beverly Hills');
+        self::assertEquals($quote->getBillingAddress()->getCountryId(), 'US');
+        self::assertEquals($quote->getBillingAddress()->getCompany(), 'Bolt');
+        self::assertEquals($quote->getBillingAddress()->getEmail(), 'test@bolt.com');
+        self::assertEquals($quote->getBillingAddress()->getTelephone(), '0123456789');
     }
 
     /**
@@ -4821,11 +4824,11 @@ class OrderTest extends BoltTestCase
         $quote = TestUtils::createQuote();
 
         TestHelper::invokeMethod($boltHelperOrder, 'setShippingAddress', [$quote, $transaction]);
-        self::assertEquals($quote->getShippingAddress()->getCity(),'Beverly Hills');
-        self::assertEquals($quote->getShippingAddress()->getCountryId(),'US');
-        self::assertEquals($quote->getShippingAddress()->getCompany(),'Bolt');
-        self::assertEquals($quote->getShippingAddress()->getEmail(),'test@bolt.com');
-        self::assertEquals($quote->getShippingAddress()->getTelephone(),'0123456789');
+        self::assertEquals($quote->getShippingAddress()->getCity(), 'Beverly Hills');
+        self::assertEquals($quote->getShippingAddress()->getCountryId(), 'US');
+        self::assertEquals($quote->getShippingAddress()->getCompany(), 'Bolt');
+        self::assertEquals($quote->getShippingAddress()->getEmail(), 'test@bolt.com');
+        self::assertEquals($quote->getShippingAddress()->getTelephone(), '0123456789');
     }
 
     /**
@@ -4866,7 +4869,7 @@ class OrderTest extends BoltTestCase
 
         $quote->method('getBillingAddress')->willReturn($addressMock);
         $quote->expects(static::exactly(2))->method('getShippingAddress')
-            ->willReturnOnConsecutiveCalls($addressMock,$quote);
+            ->willReturnOnConsecutiveCalls($addressMock, $quote);
 
         $this->currentMock->expects(static::once())
             ->method('setAddress')
@@ -5070,7 +5073,8 @@ class OrderTest extends BoltTestCase
         ];
     }
 
-    private function mockTransactionData() {
+    private function mockTransactionData()
+    {
         $transactionData = new \stdClass();
         $transactionData->from_consumer = new \stdClass();
         $transactionData->from_credit_card = new \stdClass();
@@ -5339,19 +5343,20 @@ class OrderTest extends BoltTestCase
             $priceFaultToleranceConfiguration
         );
 
-        $magentoTotalAmount = CurrencyUtils::toMinor($grandTotal,'USD');
+        $magentoTotalAmount = CurrencyUtils::toMinor($grandTotal, 'USD');
         $totalMismatch = $cartTotalAmount - $magentoTotalAmount;
         $recordMismatch = abs($totalMismatch) > 0 && abs($totalMismatch) <= $priceFaultTolerance;
 
         TestHelper::invokeMethod(
-            $orderHelper, 'adjustPriceMismatch',
+            $orderHelper,
+            'adjustPriceMismatch',
             [$transaction, $order, $quote]
         );
 
         if ($recordMismatch) {
             self::assertEquals(CurrencyUtils::toMajor($cartTotalAmount, 'USD'), $order->getGrandTotal());
             self::assertEquals(CurrencyUtils::toMajor($cartTotalAmount, 'USD'), $order->getBaseGrandTotal());
-        }else {
+        } else {
             self::assertEquals($grandTotal, $order->getGrandTotal());
             self::assertEquals($grandTotal, $order->getBaseGrandTotal());
         }
@@ -5382,7 +5387,8 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
-    public function getExistingOrder_byParenQuoteId() {
+    public function getExistingOrder_byParenQuoteId()
+    {
         
         $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
 
@@ -5469,7 +5475,8 @@ class OrderTest extends BoltTestCase
      *
      * @return array
      */
-    public function cancelFailedPaymentOrderProvider(){
+    public function cancelFailedPaymentOrderProvider()
+    {
         return [
             ['isPPC' => true],
             ['isPPC' => false],
@@ -5480,7 +5487,8 @@ class OrderTest extends BoltTestCase
      * @test
      * @covers ::deleteOrCancelFailedPaymentOrder
      */
-    public function deleteOrCancelFailedPaymentOrder_deleteOrderByIncrementId() {
+    public function deleteOrCancelFailedPaymentOrder_deleteOrderByIncrementId()
+    {
         
         $quote = TestUtils::createQuote();
         $order = TestUtils::createDumpyOrder(
@@ -5502,7 +5510,8 @@ class OrderTest extends BoltTestCase
      * @test
      * @covers ::deleteOrCancelFailedPaymentOrder
      */
-    public function deleteOrCancelFailedPaymentOrder_cancelFailedPaymentOrder() {
+    public function deleteOrCancelFailedPaymentOrder_cancelFailedPaymentOrder()
+    {
         
         $this->featureSwitches->method('isCancelFailedPaymentOrderInsteadOfDeleting')
             ->willReturn(true);

@@ -576,7 +576,8 @@ JSON;
         $this->currentMock->expects(self::once())->method('isSandboxModeSet')->willReturn(false);
         $this->assertEquals(
             'MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAsfwvIFA3rstwsFizP9Yyjq8okQZFFZoxjORzdapQdf8UDQ/1hVTi26epvRKcKg0Zwxq6s/m1TWXsWJjIpAPWFVABcUufHnxgwXWyHsCedEmaJzomgoehMB/Ul4hNVfj0Dt7eNjsa2EboJ41B5Ir7MZ4LR1PRs2vlGQN73cEUQSrd0vtYPV69DXABk/o4fW+qU9iyWoCfJdhMWon32edMGnz6qxg0mFlOP0NTkkZPS3MbIoIxuhYT5/E35WoL60eSVjdPxYc4qeEK1+mOSKtjDku3mEsz5R3G20xUhK8lxSRqIIPbRyg9Y8Cg5LkXTsBDSGZX445bXsfeR9RigVblqLPFNQVcXyBV2CQe/bBwaLGxrNSXWUCWP+ITu+QVWAJ+HXMfyWDuPI0gVrlyC6BIEq6i4nC4UGZjs0MkU3mHTI2oojg6m0uDJvuwtxUq4mPdMhxXfnr8NJWvG2vzVQ+wds//9663VHbnCXi87PqtSaFbLFVUYNoJdDINQRtpnZNFxebH524k6dM9dZnA6rTdUwSoXbzE5HL64sUY6HCnNkqRS0HiwQBuz6WxDh7wuocxcXuAIwpYD3IYf1HKF1vyGtdHbLn7GhhDuelEzN3JgPdntrNp6tuLGJb47tO1KVz+/ps4e97colDjQAP7R8halVYUIGQ3rjwhZJXQP1suU0kCAwEAAQ==',
-            $this->currentMock->getPublicKey());
+            $this->currentMock->getPublicKey()
+        );
     }
 
     /**

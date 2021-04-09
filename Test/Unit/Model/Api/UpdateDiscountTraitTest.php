@@ -194,7 +194,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules
             ->method('runFilter')
-            ->will($this->returnCallback(function($class, $result, $couponCode = null, $quote = null) {
+            ->will($this->returnCallback(function ($class, $result, $couponCode = null, $quote = null) {
                 global $ifRunFilter;
                 if ($ifRunFilter) {
                     return $ifRunFilter;
@@ -218,10 +218,11 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $this->initRequiredMocks();
     }
 
-    public function tearDownInternal() {
-		global $ifRunFilter;
+    public function tearDownInternal()
+    {
+        global $ifRunFilter;
         $ifRunFilter = false;
-	}
+    }
 
     protected function initRequiredMocks()
     {
@@ -265,7 +266,6 @@ class UpdateDiscountTraitTest extends BoltTestCase
             ->getMock();
         $this->objectFactory->method('create')
             ->willReturn($this->dataObjectMock);
-
     }
 
     /**
@@ -602,7 +602,8 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $this->discountHelper->expects(self::once())->method('setCouponCode')
             ->with($quote, self::COUPON_CODE);
 
-        $checkoutSession = $this->createPartialMock(CheckoutSession::class,
+        $checkoutSession = $this->createPartialMock(
+            CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts']
         );
         $checkoutSession->expects(static::once())
@@ -671,7 +672,8 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $shippingDiscountAmount = 1000;
 
-        $checkoutSession = $this->createPartialMock(CheckoutSession::class,
+        $checkoutSession = $this->createPartialMock(
+            CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts']
         );
         $checkoutSession->expects(static::once())
@@ -937,7 +939,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
                     'expects' => 'once'
                 ]
             ]);
-        $quote = $this->getQuoteMock(self::COUPON_CODE,null,self::CUSTOMER_ID);
+        $quote = $this->getQuoteMock(self::COUPON_CODE, null, self::CUSTOMER_ID);
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
@@ -975,7 +977,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
                     'expects' => 'once'
                 ]
             ]);
-        $quote = $this->getQuoteMock(self::COUPON_CODE,null,self::CUSTOMER_ID);
+        $quote = $this->getQuoteMock(self::COUPON_CODE, null, self::CUSTOMER_ID);
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
@@ -1009,7 +1011,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
                     'expects' => 'once'
                 ]
             ]);
-        $quote = $this->getQuoteMock(self::COUPON_CODE,null,0);
+        $quote = $this->getQuoteMock(self::COUPON_CODE, null, 0);
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
@@ -1043,7 +1045,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
                 ]
             ]);
 
-        $quote = $this->getQuoteMock(self::COUPON_CODE,null,null,true);
+        $quote = $this->getQuoteMock(self::COUPON_CODE, null, null, true);
 
         $this->ruleMock->expects(self::once())->method('getWebsiteIds')->willReturn([self::WEBSITE_ID]);
         $this->ruleMock->expects(self::once())->method('getRuleId')->willReturn(self::RULE_ID);
@@ -1061,7 +1063,8 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $this->discountHelper->expects(self::once())->method('setCouponCode')
             ->with($quote, self::COUPON_CODE);
 
-        $checkoutSession = $this->createPartialMock(CheckoutSession::class,
+        $checkoutSession = $this->createPartialMock(
+            CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts']
         );
         $checkoutSession->expects(static::once())
@@ -1220,7 +1223,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $quote = $this->getQuoteMock();
 
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_SERVICE,'Coupon code ' . self::COUPON_CODE . ' does not exist!',422,$quote);
+            ->with(BoltErrorResponse::ERR_SERVICE, 'Coupon code ' . self::COUPON_CODE . ' does not exist!', 422, $quote);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'removeDiscount', [self::COUPON_CODE, $discounts, $quote, self::WEBSITE_ID, self::STORE_ID]);
         $this->assertFalse($result);
@@ -1255,7 +1258,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
             ->with($quote, '')->willThrowException($exception);
 
         $this->currentMock->expects(self::once())->method('sendErrorResponse')
-            ->with(BoltErrorResponse::ERR_SERVICE,'General exception',422,$quote);
+            ->with(BoltErrorResponse::ERR_SERVICE, 'General exception', 422, $quote);
 
         $result = TestHelper::invokeMethod($this->currentMock, 'removeCouponCode', [$quote]);
 
@@ -1317,5 +1320,4 @@ class UpdateDiscountTraitTest extends BoltTestCase
 
         $this->assertFalse($result);
     }
-
 }

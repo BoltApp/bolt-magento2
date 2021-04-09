@@ -20,7 +20,8 @@ namespace Bolt\Boltpay\Test\Unit\Model;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
-class EventsForThirdPartyModulesMock extends EventsForThirdPartyModules {
+class EventsForThirdPartyModulesMock extends EventsForThirdPartyModules
+{
     const eventListeners = [
         "shouldCall" => [
             "listeners" => [

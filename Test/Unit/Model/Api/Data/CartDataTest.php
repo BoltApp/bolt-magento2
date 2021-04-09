@@ -279,14 +279,16 @@ class CartDataTest extends BoltTestCase
      * @param $methodName
      * @throws \ReflectionException
      */
-    public function processTypeName($methodName){
+    public function processTypeName($methodName)
+    {
         $classReflection = new ClassReflection(CartDataInterface::class);
         $methodReflection = $classReflection->getMethod($methodName);
 
         self::assertEquals('mixed[]', $this->typeProcessor->register($this->typeProcessor->getGetterReturnType($methodReflection)['type']));
     }
 
-    public function processTypeNameDataProvider(){
+    public function processTypeNameDataProvider()
+    {
         return [
             ['getItems'],
             ['getDiscounts'],

@@ -109,8 +109,7 @@ class AbstractLoginPluginTest extends BoltTestCase
                     $this->resultFactory,
                     $this->bugsnag,
                     $this->decider
-                ]
-            )
+                ])
             ->setMethods([])
             ->getMockForAbstractClass();
     }
