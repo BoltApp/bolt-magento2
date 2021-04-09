@@ -20,11 +20,6 @@ namespace Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\Total\Quote;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
-/**
- * Class DiscountPlugin
- *
- * @package Bolt\Boltpay\Plugin
- */
 class DiscountPlugin
 {
     /**
@@ -63,7 +58,10 @@ class DiscountPlugin
         $shippingAssignment,
         $total
     ) {
-        if ($this->eventsForThirdPartyModules->runFilter("checkMirasvitRewardsIsShippingIncluded", false)) {
+        if ($this->eventsForThirdPartyModules->runFilter(
+            "checkMirasvitRewardsIsShippingIncluded",
+            false
+        )) {
             $address = $shippingAssignment->getShipping()->getAddress();
             $beforeShippingDiscountAmount = $address->getShippingDiscountAmount();
             $checkoutSession = $this->sessionHelper->getCheckoutSession();
@@ -75,7 +73,8 @@ class DiscountPlugin
     }
     
     /**
-     * Exclude the Mirasvit rewards points from shipping discount, so the Bolt can apply Mirasvit rewards points to shipping properly.
+     * Exclude the Mirasvit rewards points from shipping discount,
+     * so the Bolt can apply Mirasvit rewards points to shipping properly.
      *
      * @return mixed
      */
@@ -86,7 +85,10 @@ class DiscountPlugin
         $shippingAssignment,
         $total
     ) {
-        if ($this->eventsForThirdPartyModules->runFilter("checkMirasvitRewardsIsShippingIncluded", false)) {
+        if ($this->eventsForThirdPartyModules->runFilter(
+            "checkMirasvitRewardsIsShippingIncluded",
+            false
+        )) {
             $address = $shippingAssignment->getShipping()->getAddress();
             $afterShippingDiscountAmount = $address->getShippingDiscountAmount();
             $checkoutSession = $this->sessionHelper->getCheckoutSession();

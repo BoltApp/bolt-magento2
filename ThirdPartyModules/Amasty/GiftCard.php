@@ -24,10 +24,6 @@ use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\App\ResourceConnection;
 
-/**
- * Class GiftCard
- * @package Bolt\Boltpay\ThirdPartyModules\Amasty
- */
 class GiftCard
 {
 

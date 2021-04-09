@@ -88,7 +88,8 @@ class StoreCredit
                     'description' => 'Store Credit',
                     'amount' => $roundedAmount,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                    'discount_type' => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
+                    // For v1/discounts.code.apply and v2/cart.update
+                    'discount_type' => $this->discountHelper->getBoltDiscountType('by_fixed'),
                     'type' => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
                 ];
 
@@ -110,7 +111,8 @@ class StoreCredit
     private function getBssStoreCreditAmount($immutableQuote, $parentQuote)
     {
         try {
-            $isAppliedToShippingAndTax = $this->bssStoreCreditHelper->getGeneralConfig('used_shipping') || $this->bssStoreCreditHelper->getGeneralConfig('used_tax');
+            $isAppliedToShippingAndTax = $this->bssStoreCreditHelper->getGeneralConfig('used_shipping') ||
+                $this->bssStoreCreditHelper->getGeneralConfig('used_tax');
 
             $storeCreditAmount = $immutableQuote->getBaseBssStorecreditAmountInput();
             if ($isAppliedToShippingAndTax && abs($storeCreditAmount) >= $immutableQuote->getSubtotal()) {

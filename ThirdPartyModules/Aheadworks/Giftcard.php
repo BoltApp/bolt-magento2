@@ -83,8 +83,10 @@ class Giftcard
                     'description'       => "Gift Card ({$giftcardQuote->getGiftcardCode()})",
                     'amount'            => CurrencyUtils::toMinor($giftcardQuote->getGiftcardBalance(), $currencyCode),
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                    // For v1/discounts.code.apply and v2/cart.update
+                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                    // For v1/merchant/order
+                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'),
                 ];
                 $totalAmount -= CurrencyUtils::toMinor($giftcardQuote->getGiftcardAmount(), $currencyCode);
             }
@@ -132,8 +134,14 @@ class Giftcard
      * @param $parentQuote
      * @return array|null
      */
-    public function applyGiftcard($result, $aheadworksGiftcardManagement, $code, $giftCard, $immutableQuote, $parentQuote)
-    {
+    public function applyGiftcard(
+        $result,
+        $aheadworksGiftcardManagement,
+        $code,
+        $giftCard,
+        $immutableQuote,
+        $parentQuote
+    ) {
         if (!empty($result)) {
             return $result;
         }
@@ -246,7 +254,9 @@ class Giftcard
     public function replicateQuoteData($aheadworksGiftcardOrderServicePlugin, $sourceQuote, $destinationQuote)
     {
         if ($sourceQuote->getExtensionAttributes() && $sourceQuote->getExtensionAttributes()->getAwGiftcardCodes()
-            && (!$destinationQuote->getExtensionAttributes() || empty($destinationQuote->getExtensionAttributes()->getAwGiftcardCodes()))) {
+            && (!$destinationQuote->getExtensionAttributes()
+                || empty($destinationQuote->getExtensionAttributes()->getAwGiftcardCodes()))
+        ) {
             $giftcards = $sourceQuote->getExtensionAttributes()->getAwGiftcardCodes();
             /** @var GiftcardQuoteInterface $giftcard */
             foreach ($giftcards as $giftcard) {

@@ -26,7 +26,10 @@ $checkoutButtonUrl = $block->getCheckoutCdnUrl(). '/v1/checkout_button?publishab
 $additionalCheckoutButtonClass = $block->getAdditionalCheckoutButtonClass();
 $additionalCheckoutButtonAttributes = '';
 foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrValue) {
-    $additionalCheckoutButtonAttributes .= $block->escapeHtmlAttr($attrName) . '="' . $block->escapeHtmlAttr($attrValue) . '" ';
+    $additionalCheckoutButtonAttributes .= $block->escapeHtmlAttr($attrName)
+        . '="'
+        . $block->escapeHtmlAttr($attrValue)
+        . '" ';
 }
 
 ?>

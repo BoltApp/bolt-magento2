@@ -106,7 +106,10 @@ class CustomShippingPrice
             $cacheIdentifier = BoltSession::BOLT_SESSION_PREFIX . $quote->getBoltParentQuoteId();
             if ($serialized = $this->cache->load($cacheIdentifier)) {
                 $sessionData = $this->serialize->unserialize($serialized);
-                if ($sessionData['sessionType'] == 'admin' && isset($sessionData["adminUserId"]) && !$this->authSession->isLoggedIn()) {
+                if ($sessionData['sessionType'] == 'admin' &&
+                    isset($sessionData["adminUserId"]) &&
+                    !$this->authSession->isLoggedIn()
+                ) {
                     $user = $this->userFactory->create()->load($sessionData["adminUserId"]);
                     $this->authSession->setUser($user);
                     $this->authSession->processLogin();

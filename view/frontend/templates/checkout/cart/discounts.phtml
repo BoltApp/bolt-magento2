@@ -8,14 +8,14 @@ if (!$jsLayout) {
     return;
 }
 ?>
-<div id="<?php echo $cartDiscounts->getId(); ?>"
-     data-bind="scope: '<?php echo $cartDiscounts->getId(); ?>'"
+<div id="<?= /* @noEscape */ $cartDiscounts->getId(); ?>"
+     data-bind="scope: '<?= /* @noEscape */ $cartDiscounts->getId(); ?>'"
      class="block">
     <!-- ko template: getTemplate() --><!-- /ko -->
     <script type="text/x-magento-init">
         {
-            "#<?php echo $cartDiscounts->getId(); ?>": {
-                "Magento_Ui/js/core/app": <?php echo $jsLayout; ?>
+            "#<?= /* @noEscape */ $cartDiscounts->getId(); ?>": {
+                "Magento_Ui/js/core/app": <?= /* @noEscape */ $jsLayout; ?>
             }
         }
     </script>

@@ -106,8 +106,10 @@ class GiftCard
                         'amount' => $roundedAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                         'reference' => $giftCardCode,
-                        'discount_type' => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                        'type' => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                        // For v1/discounts.code.apply and v2/cart.update
+                        'discount_type' => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                        // For v1/merchant/order
+                        'type' => $this->discountHelper->getBoltDiscountType('by_fixed'),
                     ];
                     $discountAmount += $amount;
                     $roundedDiscountAmount += $roundedAmount;
@@ -133,7 +135,8 @@ class GiftCard
     private function getMageplazaGiftCardCodes($quote)
     {
         $giftCardsData = $this->sessionHelper->getCheckoutSession()->getGiftCardsData();
-        $giftCardCodes = isset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY]) ? array_keys($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY]) : [];
+        $giftCardCodes = isset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY]) ?
+            array_keys($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY]) : [];
 
         $giftCardsQuote = $quote->getMpGiftCards();
         if (!$giftCardCodes && $giftCardsQuote) {
@@ -166,8 +169,14 @@ class GiftCard
      * @return null
      * @throws \Exception
      */
-    public function applyGiftcard($result, $mageplazaGiftCardCheckoutHelper, $code, $giftCard, $immutableQuote, $parentQuote)
-    {
+    public function applyGiftcard(
+        $result,
+        $mageplazaGiftCardCheckoutHelper,
+        $code,
+        $giftCard,
+        $immutableQuote,
+        $parentQuote
+    ) {
         if (!empty($result)) {
             return $result;
         }
@@ -240,8 +249,13 @@ class GiftCard
      * @param $quote
      * @return bool
      */
-    public function filterApplyingGiftCardCode($result, $mageplazaGiftCardCheckoutHelper, $couponCode, $giftCard, $quote)
-    {
+    public function filterApplyingGiftCardCode(
+        $result,
+        $mageplazaGiftCardCheckoutHelper,
+        $couponCode,
+        $giftCard,
+        $quote
+    ) {
         $this->mageplazaGiftCardCheckoutHelper = $mageplazaGiftCardCheckoutHelper;
         if ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
             $this->removeMageplazaGiftCard($couponCode, $quote);

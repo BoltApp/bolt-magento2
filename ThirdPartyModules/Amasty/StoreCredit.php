@@ -136,7 +136,9 @@ class StoreCredit
         $couponCode,
         $quote
     ) {
-        if ($couponCode == self::AMASTY_STORECREDIT && $quote->getData(\Amasty\StoreCredit\Api\Data\SalesFieldInterface::AMSC_USE)) {
+        if ($couponCode == self::AMASTY_STORECREDIT &&
+            $quote->getData(\Amasty\StoreCredit\Api\Data\SalesFieldInterface::AMSC_USE)
+        ) {
             $result[] = $couponCode;
         }
 
@@ -161,7 +163,9 @@ class StoreCredit
         $storeId
     ) {
         try {
-            if ($couponCode == self::AMASTY_STORECREDIT && $quote->getData(\Amasty\StoreCredit\Api\Data\SalesFieldInterface::AMSC_USE)) {
+            if ($couponCode == self::AMASTY_STORECREDIT &&
+                $quote->getData(\Amasty\StoreCredit\Api\Data\SalesFieldInterface::AMSC_USE)
+            ) {
                 $amastyApplyStoreCreditToQuote->cancel($quote->getId());
             }
         } catch (\Exception $e) {

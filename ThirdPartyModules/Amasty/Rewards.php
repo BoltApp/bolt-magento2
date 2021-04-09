@@ -96,8 +96,10 @@ class Rewards
                     'amount'            => $roundedAmount,
                     'reference'         => self::AMASTY_REWARD,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                    // For v1/discounts.code.apply and v2/cart.update
+                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                    // For v1/merchant/order
+                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'),
                 ];
                 
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;

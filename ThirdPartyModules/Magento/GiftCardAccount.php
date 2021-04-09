@@ -24,10 +24,6 @@ use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
-/**
- * Class GiftCardAccount
- * @package Bolt\Boltpay\ThirdPartyModules\Magento
- */
 class GiftCardAccount
 {
 
@@ -148,8 +144,10 @@ class GiftCardAccount
             } else {
                 $cards = array_column(
                     $cards,
-                    defined('\Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT') ? \Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT : 'a',
-                    defined('\Magento\GiftCardAccount\Model\Giftcardaccount::CODE') ? \Magento\GiftCardAccount\Model\Giftcardaccount::CODE : 'c'
+                    defined('\Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT') ?
+                        \Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT : 'a',
+                    defined('\Magento\GiftCardAccount\Model\Giftcardaccount::CODE') ?
+                        \Magento\GiftCardAccount\Model\Giftcardaccount::CODE : 'c'
                 );
             }
             
