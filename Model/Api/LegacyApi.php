@@ -80,8 +80,7 @@ class LegacyApi implements LegacyApiInterface
         ShippingMethodsInterface $shippingMethods,
         TaxInterface $tax,
         UpdateCartInterface $updateCart
-    )
-    {
+    ) {
         $this->createOrder = $createOrder;
         $this->discountCodeValidation = $discountCodeValidation;
         $this->orderManagement = $orderManagement;
@@ -117,8 +116,7 @@ class LegacyApi implements LegacyApiInterface
         $display_id = null, // <order increment ID>
         $source_transaction_id = null,
         $source_transaction_reference = null
-    )
-    {
+    ) {
         return $this->orderManagement->manage(
             $id,
             $reference,
@@ -148,8 +146,7 @@ class LegacyApi implements LegacyApiInterface
         $remove_items = null,
         $discount_codes_to_add = null,
         $discount_codes_to_remove = null
-    )
-    {
+    ) {
         return $this->updateCart->execute(
             $cart,
             $add_items,
@@ -175,7 +172,7 @@ class LegacyApi implements LegacyApiInterface
 
     /**
      * @api
-     * 
+     *
      * Shipping hook
      * @param mixed $cart cart details
      * @param mixed $shipping_address shipping address
@@ -212,7 +209,7 @@ class LegacyApi implements LegacyApiInterface
 
     /**
      * @api
-     * 
+     *
      * Discount validation
      * @return bool
      */
@@ -223,7 +220,7 @@ class LegacyApi implements LegacyApiInterface
 
     /**
      * @api
-     * 
+     *
      * Create order.
      * Hook formats:
      * [{"type":"order.create","order":{},"currency":"USD"}]

@@ -104,7 +104,7 @@ class GiftCardAccount
             $giftCardCodes = $this->getMagentoGiftCardAccountGiftCardData($quote);
             $currencyCode = $quote->getQuoteCurrencyCode();
 
-            foreach($giftCardCodes as $giftCardCode => $giftCardAmount) {
+            foreach ($giftCardCodes as $giftCardCode => $giftCardAmount) {
                 $amount = abs($giftCardAmount);
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                 $boltDiscountType = $this->discountHelper->getBoltDiscountType('by_fixed');
@@ -146,9 +146,10 @@ class GiftCardAccount
             if (!$cards) {
                 $cards = [];
             } else {
-                $cards = array_column($cards,
-                    defined( '\Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT' ) ? \Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT : 'a',
-                    defined( '\Magento\GiftCardAccount\Model\Giftcardaccount::CODE' ) ? \Magento\GiftCardAccount\Model\Giftcardaccount::CODE : 'c'
+                $cards = array_column(
+                    $cards,
+                    defined('\Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT') ? \Magento\GiftCardAccount\Model\Giftcardaccount::AMOUNT : 'a',
+                    defined('\Magento\GiftCardAccount\Model\Giftcardaccount::CODE') ? \Magento\GiftCardAccount\Model\Giftcardaccount::CODE : 'c'
                 );
             }
             

@@ -21,7 +21,7 @@ interface UniversalWebhookResultInterface
 {
     /**
      * Get status string
-     * 
+     *
      * @api
      * @return string
      */
@@ -30,7 +30,7 @@ interface UniversalWebhookResultInterface
 
     /**
      * Set status string
-     * 
+     *
      * @api
      * @param string $status
      * @return $this
@@ -40,7 +40,7 @@ interface UniversalWebhookResultInterface
 
     /**
      * Get error object
-     * 
+     *
      * @api
      * @return array
      */
@@ -49,7 +49,7 @@ interface UniversalWebhookResultInterface
 
     /**
      * Set error object
-     * 
+     *
      * @api
      * @param array $error
      * @return $this

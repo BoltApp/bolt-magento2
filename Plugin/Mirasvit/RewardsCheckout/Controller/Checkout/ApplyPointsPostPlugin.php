@@ -41,7 +41,7 @@ class ApplyPointsPostPlugin
      * Check how the customer choose to spend the reward points
      *
      * @param \Mirasvit\RewardsCheckout\Controller\Checkout\ApplyPointsPost $subject
-     * 
+     *
      * @return null
      */
     public function beforeExecute(\Mirasvit\RewardsCheckout\Controller\Checkout\ApplyPointsPost $subject)

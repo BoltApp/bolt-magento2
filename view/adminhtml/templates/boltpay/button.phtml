@@ -8,7 +8,7 @@ $paymentOnlyKey = $block->getPublishableKeyPaymentOnly();
 $customerCreditCardInfos = $block->getCustomerCreditCardInfo();
 $isAdminReorderForLoggedInCustomerFeatureEnabled = $block->isAdminReorderForLoggedInCustomerFeatureEnabled();
 $additionalCheckoutButtonAttributes = '';
-foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrValue) {
+foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrValue) {
     $additionalCheckoutButtonAttributes .= $block->escapeHtmlAttr($attrName) . '="' . $block->escapeHtmlAttr($attrValue) . '" ';
 }
 ?>

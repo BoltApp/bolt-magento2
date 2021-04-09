@@ -54,8 +54,7 @@ class StoreCredit
         Discount $discountHelper,
         Bugsnag $bugsnagHelper,
         Config $configHelper
-    )
-    {
+    ) {
         $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
         $this->configHelper = $configHelper;
@@ -73,8 +72,7 @@ class StoreCredit
         $quote,
         $parentQuote,
         $paymentOnly
-    )
-    {
+    ) {
         list ($discounts, $totalAmount, $diff) = $result;
         $totals = $quote->getTotals();
 
@@ -133,12 +131,11 @@ class StoreCredit
      *
      * @return array
      */
-    public function filterVerifyAppliedStoreCredit (
+    public function filterVerifyAppliedStoreCredit(
         $result,
         $couponCode,
         $quote
-    )
-    {
+    ) {
         if ($couponCode == self::AMASTY_STORECREDIT && $quote->getData(\Amasty\StoreCredit\Api\Data\SalesFieldInterface::AMSC_USE)) {
             $result[] = $couponCode;
         }
@@ -156,14 +153,13 @@ class StoreCredit
      * @param $storeId
      *
      */
-    public function removeAppliedStoreCredit (
+    public function removeAppliedStoreCredit(
         $amastyApplyStoreCreditToQuote,
         $couponCode,
         $quote,
         $websiteId,
         $storeId
-    )
-    {
+    ) {
         try {
             if ($couponCode == self::AMASTY_STORECREDIT && $quote->getData(\Amasty\StoreCredit\Api\Data\SalesFieldInterface::AMSC_USE)) {
                 $amastyApplyStoreCreditToQuote->cancel($quote->getId());

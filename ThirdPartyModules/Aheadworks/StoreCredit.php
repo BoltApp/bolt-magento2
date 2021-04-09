@@ -56,8 +56,7 @@ class StoreCredit
         Discount $discountHelper,
         Bugsnag $bugsnagHelper,
         CartRepositoryInterface $quoteRepository
-    )
-    {
+    ) {
         $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
         $this->quoteRepository = $quoteRepository;
@@ -77,8 +76,7 @@ class StoreCredit
         $quote,
         $parentQuote,
         $paymentOnly
-    )
-    {
+    ) {
         $this->aheadworksCustomerStoreCreditManagement = $aheadworksCustomerStoreCreditManagement;
 
         list ($discounts, $totalAmount, $diff) = $result;
@@ -111,19 +109,18 @@ class StoreCredit
     
     /**
      * Return code if the quote has Aheadworks store credits.
-     * 
+     *
      * @param $result
      * @param $couponCode
      * @param $quote
-     * 
+     *
      * @return array
      */
-    public function filterVerifyAppliedStoreCredit (
+    public function filterVerifyAppliedStoreCredit(
         $result,
         $couponCode,
         $quote
-    )
-    {
+    ) {
         if ($couponCode == self::AHEADWORKS_STORE_CREDIT && $quote->getAwUseStoreCredit()) {
             $result[] = $couponCode;
         }
@@ -139,15 +136,14 @@ class StoreCredit
      * @param $quote
      * @param $websiteId
      * @param $storeId
-     * 
+     *
      */
-    public function removeAppliedStoreCredit (
+    public function removeAppliedStoreCredit(
         $couponCode,
         $quote,
         $websiteId,
         $storeId
-    )
-    {
+    ) {
         try {
             if ($couponCode == self::AHEADWORKS_STORE_CREDIT && $quote->getAwUseStoreCredit()) {
                 $quote->setAwUseStoreCredit(false);

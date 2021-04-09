@@ -16,6 +16,7 @@
  */
 
 namespace Bolt\Boltpay\Helper;
+
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Filesystem\Driver\File;
 
@@ -41,8 +42,7 @@ class LogRetriever
     public function __construct(
         File $file,
         Bugsnag $bugsnag
-    )
-    {
+    ) {
         $this->file = $file;
         $this->bugsnag = $bugsnag;
     }

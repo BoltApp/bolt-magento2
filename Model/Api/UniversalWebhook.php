@@ -66,8 +66,7 @@ class UniversalWebhook implements UniversalWebhookInterface
         LogHelper $logHelper,
         BoltErrorResponse $errorResponse,
         Response $response
-    )
-    {
+    ) {
         $this->orderManagement = $orderManagement;
         $this->result = $result;
         $this->bugsnag = $bugsnag;
@@ -78,19 +77,18 @@ class UniversalWebhook implements UniversalWebhookInterface
 
     /**
      * @api
-     * 
+     *
      * @param string $type
      * @param string $object
      * @param mixed $data
-     * 
+     *
      * @return boolean
      */
     public function execute(
         $type = null,
         $object = null,
         $data = null
-    )
-    {
+    ) {
         try {
             // This just reuses the existing manage function by pulling the necessary data from the request.
             $this->orderManagement->manage(
@@ -98,15 +96,14 @@ class UniversalWebhook implements UniversalWebhookInterface
                 isset($data['reference']) ? $data['reference'] : null, //bolt transaction id
                 isset($data['order']['cart']['order_reference']) ? $data['order']['cart']['order_reference'] : null, //parent quote id
                 isset($type) ? $type : null,
-                isset($data['amount']['amount']) ? $data['amount']['amount'] : null, 
+                isset($data['amount']['amount']) ? $data['amount']['amount'] : null,
                 isset($data['amount']['currency']) ? $data['amount']['currency'] : null,
                 isset($data['status']) ? $data['status'] : null,
                 isset($data['order']['cart']['display_id']) ? $data['order']['cart']['display_id'] : null,
                 isset($data['source_transaction']['id']) ? $data['source_transaction']['id'] : null,
                 isset($data['source_transaction']['reference']) ? $data['source_transaction']['reference'] : null
             );
-        }
-        catch (BoltException $e) {
+        } catch (BoltException $e) {
             $this->sendErrorResponse(
                 $e->getCode(),
                 $e->getMessage(),
@@ -133,8 +130,7 @@ class UniversalWebhook implements UniversalWebhookInterface
 
         //currently this is never used as error response is handled separately
         //leaving as failsafe
-        if ($response['status'] == "failed")
-        {
+        if ($response['status'] == "failed") {
             $response['error'] = $this->result->getError();
         }
 
@@ -172,5 +168,4 @@ class UniversalWebhook implements UniversalWebhookInterface
         $this->response->setBody($this->formatResponse($result));
         $this->response->sendResponse();
     }
-
 }

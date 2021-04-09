@@ -177,7 +177,7 @@ class UpdateCartContext
 
     /**
      * UpdateCartContext constructor.
-     * 
+     *
      * Assigns local references to global resources
      *
      * @param Request                     $request
@@ -211,10 +211,10 @@ class UpdateCartContext
         Response                    $response,
         HookHelper                  $hookHelper,
         BoltErrorResponse           $errorResponse,
-        LogHelper                   $logHelper,      
-        Bugsnag                     $bugsnag,        
+        LogHelper                   $logHelper,
+        Bugsnag                     $bugsnag,
         RegionModel                 $regionModel,
-        OrderHelper                 $orderHelper,  
+        OrderHelper                 $orderHelper,
         CartHelper                  $cartHelper,
         CheckoutSession             $checkoutSession,
         RuleRepository              $ruleRepository,
@@ -237,7 +237,7 @@ class UpdateCartContext
         $this->response = $response;
         $this->hookHelper = $hookHelper;
         $this->errorResponse = $errorResponse;
-        $this->logHelper = $logHelper;       
+        $this->logHelper = $logHelper;
         $this->bugsnag = $bugsnag;
         $this->regionModel = $regionModel;
         $this->orderHelper = $orderHelper;
@@ -460,5 +460,4 @@ class UpdateCartContext
     {
         return $this->featureSwitches;
     }
-    
 }

@@ -146,8 +146,7 @@ abstract class UpdateCartCommon
      */
     public function __construct(
         UpdateCartContext $updateCartContext
-    )
-    {
+    ) {
         $this->request = $updateCartContext->getRequest();
         $this->response = $updateCartContext->getResponse();
         $this->hookHelper = $updateCartContext->getHookHelper();
@@ -189,7 +188,7 @@ abstract class UpdateCartCommon
 
         $parentQuoteId = $immutableQuote->getBoltParentQuoteId();
 
-        if(empty($parentQuoteId)) {
+        if (empty($parentQuoteId)) {
             $this->bugsnag->notifyError(
                 BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION,
                 'Parent quote does not exist'
@@ -384,5 +383,4 @@ abstract class UpdateCartCommon
      * @throws \Exception
      */
     abstract protected function sendSuccessResponse($result, $quote = null);
-
 }

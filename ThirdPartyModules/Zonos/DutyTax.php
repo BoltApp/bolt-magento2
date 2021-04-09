@@ -40,8 +40,7 @@ class DutyTax
     public function __construct(
         Bugsnag $bugsnagHelper,
         ResourceConnection $resourceConnection
-    )
-    {
+    ) {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->resourceConnection = $resourceConnection;
     }
@@ -70,7 +69,7 @@ class DutyTax
                 ];
                 
                 $connection->query($sql, $bind);
-            }            
+            }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
         }
@@ -96,10 +95,9 @@ class DutyTax
                 ];
                 
                 $connection->query($sql, $bind);
-            }            
+            }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
 }

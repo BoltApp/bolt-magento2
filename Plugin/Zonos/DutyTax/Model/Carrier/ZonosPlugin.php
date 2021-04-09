@@ -72,7 +72,7 @@ class ZonosPlugin
                 if (!empty($parentQuoteId)) {
                     $quoteId = $parentQuoteId;
                 }
-            }            
+            }
         } catch (\Exception $e) {
             $this->boltBugsnagHelper->notifyException($e);
         }

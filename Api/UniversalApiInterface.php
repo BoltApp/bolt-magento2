@@ -20,20 +20,20 @@
  /**
   * Universal api interface. Passes the request data to the right helper functions to handle the request
   */
- interface UniversalApiInterface
- {
-     /**
-      * Hook format:
-      * {"event":"create_order", "data":{requestData}}
-      * @api
-      * 
-      * @param string $event
-      * @param mixed $data
-      * 
-      * @return Bolt\Boltpay\Api\Data\UniversalApiResultInterface
-      */
-     public function execute(
-         $event = null,
-         $data = null
-     );
- }
+interface UniversalApiInterface
+{
+    /**
+     * Hook format:
+     * {"event":"create_order", "data":{requestData}}
+     * @api
+     *
+     * @param string $event
+     * @param mixed $data
+     *
+     * @return Bolt\Boltpay\Api\Data\UniversalApiResultInterface
+     */
+    public function execute(
+        $event = null,
+        $data = null
+    );
+}

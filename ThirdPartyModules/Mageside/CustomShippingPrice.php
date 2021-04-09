@@ -53,7 +53,7 @@ class CustomShippingPrice
 
     /**
      * CustomShippingPrice constructor.
-     * 
+     *
      * @param Bugsnag $bugsnagHelper
      * @param AuthSession $authSession
      * @param UserFactory $userFactory
@@ -66,8 +66,7 @@ class CustomShippingPrice
         UserFactory $userFactory,
         CacheInterface $cache,
         Serialize $serialize
-    )
-    {
+    ) {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->authSession = $authSession;
         $this->userFactory = $userFactory;
@@ -117,5 +116,4 @@ class CustomShippingPrice
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
 }

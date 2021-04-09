@@ -234,8 +234,7 @@ class TrackingSaveObserver implements ObserverInterface
             return true;
         }
         $origData = $track->getOrigData();
-        if (
-            $origData &&
+        if ($origData &&
             $origData['track_number'] == $track->getTrackNumber() &&
             $origData['carrier_code'] == $track->getCarrierCode()
         ) {

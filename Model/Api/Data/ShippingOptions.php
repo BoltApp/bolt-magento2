@@ -42,7 +42,7 @@ class ShippingOptions implements ShippingOptionsInterface, \JsonSerializable
      * Get all available shipping options.
      *
      * @api
-     * 
+     *
      * @return ShippingOptionInterface[]
      */
     public function getShippingOptions()
@@ -55,7 +55,7 @@ class ShippingOptions implements ShippingOptionsInterface, \JsonSerializable
      *
      * @api
      * @param ShippingOptionInterface[]
-     * 
+     *
      * @return $this
      */
     public function setShippingOptions($shippingOptions)
@@ -68,7 +68,7 @@ class ShippingOptions implements ShippingOptionsInterface, \JsonSerializable
      * Get order tax result.
      *
      * @api
-     * 
+     *
      * @return ShippingTaxInterface
      */
     public function getTaxResult()

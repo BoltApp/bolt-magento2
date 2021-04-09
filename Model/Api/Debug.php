@@ -178,18 +178,19 @@ class Debug implements DebugInterface
 
     /**
      * This method will handle universal api debug requests based on the type of request it is.
-     * 
+     *
      * @param string $type
      * @return \Bolt\Boltpay\Api\Data\DebugInfo
      * @throws BoltException
      * **/
-    public function universalDebug($type){
+    public function universalDebug($type)
+    {
         
         // Validate Request
         $this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
         
         // If debug v2 is not enabled then throw an error to be returned.
-        if(!$this->configHelper->isBoltDebugUniversalEnabled()){
+        if (!$this->configHelper->isBoltDebugUniversalEnabled()) {
             throw new BoltException(
                 __('Not allowed to fetch debug Data.'),
                 null,
@@ -203,6 +204,5 @@ class Debug implements DebugInterface
             null,
             BoltErrorResponse::ERR_SERVICE
         );
-
     }
 }

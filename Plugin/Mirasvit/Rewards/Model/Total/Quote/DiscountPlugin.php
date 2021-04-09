@@ -61,7 +61,7 @@ class DiscountPlugin
         \Mirasvit\Rewards\Model\Total\Quote\Discount $subject,
         $quote,
         $shippingAssignment,
-        $total   
+        $total
     ) {
         if ($this->eventsForThirdPartyModules->runFilter("checkMirasvitRewardsIsShippingIncluded", false)) {
             $address = $shippingAssignment->getShipping()->getAddress();
@@ -84,7 +84,7 @@ class DiscountPlugin
         $result,
         $quote,
         $shippingAssignment,
-        $total   
+        $total
     ) {
         if ($this->eventsForThirdPartyModules->runFilter("checkMirasvitRewardsIsShippingIncluded", false)) {
             $address = $shippingAssignment->getShipping()->getAddress();
@@ -92,9 +92,9 @@ class DiscountPlugin
             $checkoutSession = $this->sessionHelper->getCheckoutSession();
             $beforeShippingDiscountAmount = $checkoutSession->getBeforeMirasvitRewardsShippingDiscountAmount();
             $mirasvitRewardsShippingDiscountAmount = $afterShippingDiscountAmount - $beforeShippingDiscountAmount;
-            if($mirasvitRewardsShippingDiscountAmount > 0) {
+            if ($mirasvitRewardsShippingDiscountAmount > 0) {
                 $checkoutSession->setMirasvitRewardsShippingDiscountAmount($mirasvitRewardsShippingDiscountAmount);
-            }            
+            }
         }
 
         return $result;

@@ -240,7 +240,7 @@ class Discount extends AbstractHelper
      *
      * @param Quote $quote
      * @param string $giftCard
-     * 
+     *
      */
     public function addUnirgyGiftCertToQuote($quote, $giftCard)
     {
@@ -325,14 +325,14 @@ class Discount extends AbstractHelper
         try {
             $coupon = $this->loadCouponCodeData($couponCode);
             // Load the coupon discount rule
-            $rule = $this->ruleRepository->getById($coupon->getRuleId());        
+            $rule = $this->ruleRepository->getById($coupon->getRuleId());
             $type = $rule->getSimpleAction();
             
             return $this->getBoltDiscountType($type);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             throw $e;
-        }        
+        }
     }
     
     /**
