@@ -37,7 +37,8 @@ class FeatureSwitchRepository implements \Bolt\Boltpay\Api\FeatureSwitchReposito
         $this->featureSwitchFactory = $featureSwitchFactory;
     }
 
-    private function getSwitchesToCache() {
+    private function getSwitchesToCache()
+    {
         $switch = $this->featureSwitchFactory->create();
         $collection = $switch->getCollection();
         foreach ($collection as $item) {

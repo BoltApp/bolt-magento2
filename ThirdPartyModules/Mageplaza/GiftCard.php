@@ -60,9 +60,8 @@ class GiftCard
         Discount $discountHelper,
         Bugsnag $bugsnagHelper,
         Session $sessionHelper,
-        Decider  $featureSwitches        
-    )
-    {
+        Decider  $featureSwitches
+    ) {
         $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
         $this->sessionHelper = $sessionHelper;
@@ -83,8 +82,7 @@ class GiftCard
         $quote,
         $parentQuote,
         $paymentOnly
-    )
-    {
+    ) {
         $this->mageplazaGiftCardCollection = $mageplazaGiftCardCollection;
         list ($discounts, $totalAmount, $diff) = $result;
         $totals = $quote->getTotals();
@@ -101,7 +99,7 @@ class GiftCard
                 $giftCardCodes = $this->getMageplazaGiftCardCodes($quote);
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 foreach ($giftCardCodes as $giftCardCode) {
-                    $amount = abs($this->getMageplazaGiftCardCodesCurrentValue(array($giftCardCode)));
+                    $amount = abs($this->getMageplazaGiftCardCodesCurrentValue([$giftCardCode]));
                     $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                     $discountItem = [
                         'description' => self::MAGEPLAZA_GIFTCARD_TITLE . $giftCardCode,
@@ -123,7 +121,6 @@ class GiftCard
         } finally {
             return [$discounts, $totalAmount, $diff];
         }
-
     }
 
     /**

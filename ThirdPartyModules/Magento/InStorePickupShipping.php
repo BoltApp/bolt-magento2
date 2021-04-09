@@ -162,9 +162,9 @@ class InStorePickupShipping
                         ->setAreaSearchTerm($searchTerm)
                         ->setSearchRequestExtension($extensionAttributes)
                         ->setPageSize(50)
-                        ->create();                       
+                        ->create();
             $searchResult = $this->getPickupLocations->execute($searchRequest);
-            $distanceToSources = $this->getDistanceToSources->execute($searchRequest->getArea());   
+            $distanceToSources = $this->getDistanceToSources->execute($searchRequest->getArea());
             $shipToStoreOptions = [];
             if ($searchResult->getTotalCount() !== 0) {
                 $items = $searchResult->getItems();
@@ -219,9 +219,9 @@ class InStorePickupShipping
         try {
             $carrierCode = $addressInformation->getShippingCarrierCode();
             $methodCode = $addressInformation->getShippingMethodCode();
-            if ( $carrierCode . '_' . $methodCode == InStorePickup::DELIVERY_METHOD) {
+            if ($carrierCode . '_' . $methodCode == InStorePickup::DELIVERY_METHOD) {
                 $shippingAddress = $quote->getShippingAddress();
-                $pickupLocation = substr_replace($ship_to_store_option['reference'], '', 0, strlen(InStorePickup::DELIVERY_METHOD . '_'));    
+                $pickupLocation = substr_replace($ship_to_store_option['reference'], '', 0, strlen(InStorePickup::DELIVERY_METHOD . '_'));
                 $setAddressPickupLocation->execute($shippingAddress, $pickupLocation);
             }
         } catch (\Exception $e) {
@@ -268,7 +268,7 @@ class InStorePickupShipping
                 $shippingAddress = $quote->getShippingAddress();
                 $shippingAddress->setCollectShippingRates(true);
                 $pickupLocation = substr_replace($shipment->reference, '', 0, strlen(InStorePickup::DELIVERY_METHOD . '_'));
-                $setAddressPickupLocation->execute($shippingAddress, $pickupLocation);  
+                $setAddressPickupLocation->execute($shippingAddress, $pickupLocation);
                 $shippingAddress->setShippingMethod(InStorePickup::DELIVERY_METHOD)->save();
             }
         } catch (\Exception $e) {
@@ -302,8 +302,8 @@ class InStorePickupShipping
                     $pickupLocationCode,
                     SalesChannelInterface::TYPE_WEBSITE,
                     $quote->getStore()->getWebsite()->getCode()
-                );      
-                $shippingAddress = $addressConverter->convert($pickupLocation, $shippingAddress);  
+                );
+                $shippingAddress = $addressConverter->convert($pickupLocation, $shippingAddress);
                 $quote->setShippingAddress($shippingAddress)->save();
             }
         } catch (\Exception $e) {

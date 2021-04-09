@@ -45,4 +45,3 @@ class SalesRuleQuoteDiscountPlugin
         return [$quote, $shippingAssignment, $total];
     }
 }
-

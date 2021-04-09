@@ -53,8 +53,7 @@ class StoreCredit
     public function __construct(
         Discount $discountHelper,
         Bugsnag $bugsnagHelper
-    )
-    {
+    ) {
         $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
     }
@@ -75,8 +74,7 @@ class StoreCredit
         $quote,
         $parentQuote,
         $paymentOnly
-    )
-    {
+    ) {
         $this->bssStoreCreditHelper = $bssStoreCreditHelper;
         $this->bssStoreCreditCollection = $bssStoreCreditCollection;
         list ($discounts, $totalAmount, $diff) = $result;

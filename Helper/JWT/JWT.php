@@ -59,15 +59,15 @@ class JWT
      */
     public static $timestamp = null;
 
-    public static $supported_algs = array(
-        'ES256' => array('openssl', 'SHA256'),
-        'HS256' => array('hash_hmac', 'SHA256'),
-        'HS384' => array('hash_hmac', 'SHA384'),
-        'HS512' => array('hash_hmac', 'SHA512'),
-        'RS256' => array('openssl', 'SHA256'),
-        'RS384' => array('openssl', 'SHA384'),
-        'RS512' => array('openssl', 'SHA512'),
-    );
+    public static $supported_algs = [
+        'ES256' => ['openssl', 'SHA256'],
+        'HS256' => ['hash_hmac', 'SHA256'],
+        'HS384' => ['hash_hmac', 'SHA384'],
+        'HS512' => ['hash_hmac', 'SHA512'],
+        'RS256' => ['openssl', 'SHA256'],
+        'RS384' => ['openssl', 'SHA384'],
+        'RS512' => ['openssl', 'SHA512'],
+    ];
 
     /**
      * Decodes a JWT string into a PHP object.
@@ -89,7 +89,7 @@ class JWT
      * @uses jsonDecode
      * @uses urlsafeB64Decode
      */
-    public static function decode($jwt, $key, array $allowed_algs = array())
+    public static function decode($jwt, $key, array $allowed_algs = [])
     {
         $timestamp = \is_null(static::$timestamp) ? \time() : static::$timestamp;
 
@@ -183,14 +183,14 @@ class JWT
      */
     public static function encode($payload, $key, $alg = 'HS256', $keyId = null, $head = null)
     {
-        $header = array('typ' => 'JWT', 'alg' => $alg);
+        $header = ['typ' => 'JWT', 'alg' => $alg];
         if ($keyId !== null) {
             $header['kid'] = $keyId;
         }
         if (isset($head) && \is_array($head)) {
             $header = \array_merge($head, $header);
         }
-        $segments = array();
+        $segments = [];
         $segments[] = static::urlsafeB64Encode(static::jsonEncode($header));
         $segments[] = static::urlsafeB64Encode(static::jsonEncode($payload));
         $signing_input = \implode('.', $segments);
@@ -378,13 +378,13 @@ class JWT
      */
     private static function handleJsonError($errno)
     {
-        $messages = array(
+        $messages = [
             JSON_ERROR_DEPTH          => 'Maximum stack depth exceeded',
             JSON_ERROR_STATE_MISMATCH => 'Invalid or malformed JSON',
             JSON_ERROR_CTRL_CHAR      => 'Unexpected control character found',
             JSON_ERROR_SYNTAX         => 'Syntax error, malformed JSON',
             JSON_ERROR_UTF8           => 'Malformed UTF-8 characters' //PHP >= 5.3.3
-        );
+        ];
         throw new DomainException(
             isset($messages[$errno])
             ? $messages[$errno]
@@ -528,6 +528,6 @@ class JWT
             $data = null;
         }
 
-        return array($pos, $data);
+        return [$pos, $data];
     }
 }

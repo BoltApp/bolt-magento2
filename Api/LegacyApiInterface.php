@@ -25,7 +25,7 @@ interface LegacyApiInterface
     /**
      * @api
      *
-     * Order management 
+     * Order management
      * @param mixed $id
      * @param mixed $reference
      * @param mixed $order
@@ -55,7 +55,7 @@ interface LegacyApiInterface
 
     /**
      * @api
-     * 
+     *
      * Update cart
      * @param mixed $cart
      * @param mixed $add_items
@@ -74,7 +74,7 @@ interface LegacyApiInterface
 
     /**
      * @api
-     * 
+     *
      * Shipping and tax hook
      * @param mixed $cart cart details
      * @param mixed $shipping_address shipping address
@@ -84,7 +84,7 @@ interface LegacyApiInterface
 
     /**
      * @api
-     * 
+     *
      * Shipping hook
      * @param mixed $cart cart details
      * @param mixed $shipping_address shipping address
@@ -107,7 +107,7 @@ interface LegacyApiInterface
 
     /**
      * @api
-     * 
+     *
      * Discount validation
      * @return bool
      */
@@ -115,7 +115,7 @@ interface LegacyApiInterface
 
     /**
      * @api
-     * 
+     *
      * Create order.
      * Hook formats:
      * [{"type":"order.create","order":{},"currency":"USD"}]

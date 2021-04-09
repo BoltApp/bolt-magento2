@@ -132,7 +132,7 @@ trait UpdateDiscountTrait
      *
      * @return object|null
      */
-    protected function verifyCouponCode( $couponCode, $quote )
+    protected function verifyCouponCode($couponCode, $quote)
     {
         // Check if empty coupon was sent
         if ($couponCode === '') {
@@ -190,7 +190,7 @@ trait UpdateDiscountTrait
      *
      * @return boolean
      */
-    protected function applyDiscount( $couponCode, $coupon, $giftCard, $quote )
+    protected function applyDiscount($couponCode, $coupon, $giftCard, $quote)
     {
         if ($coupon && $coupon->getCouponId()) {
             $result = $this->applyingCouponCode($couponCode, $coupon, $quote);
@@ -271,9 +271,9 @@ trait UpdateDiscountTrait
             $date = $rule->getFromDate();
             if ($date && date('Y-m-d', strtotime($date)) > date('Y-m-d')) {
                 $desc = 'Code available from ' . $this->timezone->formatDate(
-                        new \DateTime($rule->getFromDate()),
-                        \IntlDateFormatter::MEDIUM
-                    );
+                    new \DateTime($rule->getFromDate()),
+                    \IntlDateFormatter::MEDIUM
+                );
                 throw new BoltException(
                     __($desc),
                     null,
@@ -565,5 +565,4 @@ trait UpdateDiscountTrait
             return false;
         }
     }
-
 }

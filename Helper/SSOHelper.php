@@ -197,6 +197,6 @@ class SSOHelper extends AbstractHelper
     {
         $multiLineKey = chunk_split($pubkey, 64, "\n");
         $formattedKey = "-----BEGIN PUBLIC KEY-----\n$multiLineKey-----END PUBLIC KEY-----";
-        return (array) JWT::decode($token, $formattedKey, array('RS256'));
+        return (array) JWT::decode($token, $formattedKey, ['RS256']);
     }
 }

@@ -27,7 +27,7 @@ interface DebugInterface
 
     /**
      * @param sring $type
-     *  
+     *
      * @return \Bolt\Boltpay\Api\Data\DebugInfo
      */
     public function universalDebug($type);

@@ -22,7 +22,7 @@ use Bolt\Boltpay\Api\Data\UpdateCartResultInterface;
 
 /**
  * Class UpdateCartResult.
- * 
+ *
  * @package Bolt\Boltpay\Model\Api\Data
  */
 class UpdateCartResult implements UpdateCartResultInterface

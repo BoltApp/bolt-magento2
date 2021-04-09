@@ -83,7 +83,7 @@ class UpdateSettings implements UpdateSettingsInterface
         $this->storeManager = $storeManager;
         $this->response = $response;
         $this->errorResponse = $errorResponse;
-        $this->logHelper = $logHelper;   
+        $this->logHelper = $logHelper;
     }
     
     /**
@@ -112,8 +112,7 @@ class UpdateSettings implements UpdateSettingsInterface
                 $settingValue = $setting['value'];
                 if ($settingName == 'api_key' || $settingName == 'signing_secret') {
                     continue;
-                }
-                else {
+                } else {
                     $this->configHelper->setConfigSetting($settingName, $settingValue);
                 }
             }
@@ -128,7 +127,6 @@ class UpdateSettings implements UpdateSettingsInterface
                 500
             );
         }
-        
     }
 
     /**

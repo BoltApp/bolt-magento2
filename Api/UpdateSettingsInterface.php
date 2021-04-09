@@ -24,7 +24,7 @@ interface UpdateSettingsInterface
      *
      * @api
      * @param mixed $debug_info
-     * 
+     *
      * @return void
      */
     public function execute(

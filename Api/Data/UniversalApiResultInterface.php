@@ -19,14 +19,14 @@ namespace Bolt\Boltpay\Api\Data;
 
 /**
  * UniversalApi result interface. Wrapping response object for universal api
- * 
+ *
  * @api
  */
 interface UniversalApiResultInterface
 {
     /**
      * Set event string
-     * 
+     *
      * @api
      * @param string $event
      * @return $this
@@ -35,7 +35,7 @@ interface UniversalApiResultInterface
 
     /**
      * Get event string
-     * 
+     *
      * @api
      * @return string
      */
@@ -43,7 +43,7 @@ interface UniversalApiResultInterface
 
     /**
      * Set status string success|failure
-     * 
+     *
      * @api
      * @param string $status
      * @return $this
@@ -52,7 +52,7 @@ interface UniversalApiResultInterface
 
     /**
      * Get status string
-     * 
+     *
      * @api
      * @return string
      */
@@ -60,7 +60,7 @@ interface UniversalApiResultInterface
 
     /**
      * Set response data
-     * 
+     *
      * @api
      * @param mixed $data
      * @return $this
@@ -69,7 +69,7 @@ interface UniversalApiResultInterface
 
     /**
      * Get response data
-     * 
+     *
      * @api
      * @return mixed
      */

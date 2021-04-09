@@ -64,17 +64,17 @@ class CustomFieldsHandler extends AbstractHelper
      * Handle custom fields
      *
      * @param OrderModel $order
-     * @param array $customFields 
+     * @param array $customFields
      */
     public function handle($order, $customFields)
     {
-        $comment = ''; 
+        $comment = '';
         $needSubscribe = false;
         foreach ($customFields as $customField) {
             // Currently only CHECKBOX and DROPDOWN custom fields are supported
             if ($customField['type'] === self::TYPE_CHECKBOX) {
                 $comment .= '<br>' . $customField['label'] . ': ' . ($customField['value'] ? 'Yes' : 'No');
-            } else if ($customField['type'] === self::TYPE_DROPDOWN) {
+            } elseif ($customField['type'] === self::TYPE_DROPDOWN) {
                 $comment .= '<br>' . $customField['label'] . ': ' . $customField['value'];
             }
 

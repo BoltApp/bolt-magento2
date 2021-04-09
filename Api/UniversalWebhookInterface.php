@@ -20,22 +20,22 @@
  /**
   * Universal webhook interface. Passes the request data to the right helper functions to handle the request
   */
- interface UniversalWebhookInterface
- {
+interface UniversalWebhookInterface
+{
     /**
      * Hook format:
      * {"type":"pending", "object":"transaction", "data":{requestData}}
      * @api
-     * 
+     *
      * @param string $type
      * @param string $object
      * @param mixed $data
-     * 
+     *
      * @return Bolt\Boltpay\Api\Data\UniversalWebhookResultInterface
      */
-    function execute(
+    public function execute(
         $type = null,
         $object = null,
         $data = null
     );
- }
+}

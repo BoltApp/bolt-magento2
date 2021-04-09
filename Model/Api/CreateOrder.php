@@ -712,7 +712,7 @@ class CreateOrder implements CreateOrderInterface
         $boltTotal = $this->getTotalAmountFromTransaction($transaction);
         $priceFaultTolerance = $this->configHelper->getPriceFaultTolerance();
 
-        if (abs($quoteTotal - $boltTotal) > $priceFaultTolerance ) {
+        if (abs($quoteTotal - $boltTotal) > $priceFaultTolerance) {
             $this->bugsnag->registerCallback(function ($report) use ($quoteTotal, $boltTotal) {
                 $report->setMetaData([
                     'Pre Auth' => [

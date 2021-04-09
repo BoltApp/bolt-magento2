@@ -36,7 +36,7 @@ class ErrorResponse
     const ERR_SERVICE                      = 6001;
 
     const ERR_PPC_OUT_OF_STOCK = 6301;
-    const ERR_PPC_INVALID_QUANTITY = 6303;    
+    const ERR_PPC_INVALID_QUANTITY = 6303;
     
     const ERR_ITEM_PRICE_HAS_BEEN_UPDATED  = 6604;
     const ERR_ITEM_OUT_OF_STOCK            = 6605;
@@ -77,7 +77,7 @@ class ErrorResponse
      * @return string
      */
     public function prepareUpdateCartErrorMessage($errCode, $message, $additionalData = [])
-    {        
+    {
         $errResponse = [
             'status' => 'failure',
             'errors' => [
@@ -92,6 +92,6 @@ class ErrorResponse
             $errResponse += $additionalData;
         }
 
-        return str_replace(array("\r\n", "\n", "\r"), ' ', json_encode($errResponse));
+        return str_replace(["\r\n", "\n", "\r"], ' ', json_encode($errResponse));
     }
 }

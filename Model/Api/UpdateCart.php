@@ -38,9 +38,11 @@ use Bolt\Boltpay\Exception\BoltException;
  */
 class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 {
-    use UpdateDiscountTrait { UpdateDiscountTrait::__construct as private UpdateDiscountTraitConstructor; }
+    use UpdateDiscountTrait { UpdateDiscountTrait::__construct as private UpdateDiscountTraitConstructor;
+    }
 
-    use UpdateCartItemTrait { UpdateCartItemTrait::__construct as private UpdateCartItemTraitConstructor; }
+    use UpdateCartItemTrait { UpdateCartItemTrait::__construct as private UpdateCartItemTraitConstructor;
+    }
 
     /**
      * @var CartDataInterfaceFactory
@@ -114,7 +116,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             }
 
             // Add discounts
-            if( !empty($discount_codes_to_add) ){
+            if (!empty($discount_codes_to_add)) {
                 // Get the coupon code
                 $discount_code = $discount_codes_to_add[0];
                 $couponCode = trim($discount_code);
@@ -132,7 +134,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             }
 
             // Remove discounts
-            if( !empty($discount_codes_to_remove) ){
+            if (!empty($discount_codes_to_remove)) {
                 $discount_code = $discount_codes_to_remove[0];
                 $couponCode = trim($discount_code);
 
@@ -143,7 +145,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                     $discounts = $quoteCart['discounts'];
                 }
 
-                if(empty($discounts)){
+                if (empty($discounts)) {
                     $this->sendErrorResponse(
                         BoltErrorResponse::ERR_CODE_INVALID,
                         'Coupon code does not exist!',
@@ -168,7 +170,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             }
 
             // Add items
-            if ( !empty($add_items) ) {
+            if (!empty($add_items)) {
                 $cartItems = $this->getCartItems($parentQuote);
 
                 foreach ($add_items as $addItem) {
@@ -201,7 +203,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
             }
 
             // Remove items
-            if ( !empty($remove_items) ) {
+            if (!empty($remove_items)) {
                 $cartItems = $this->getCartItems($parentQuote);
 
                 foreach ($remove_items as $removeItem) {
@@ -329,7 +331,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
         // Replace the quote with $parentQuote in checkout session.
         $this->updateSession($parentQuote, $cart['metadata'] ?? []);
 
-        if(!empty($discount_code)){
+        if (!empty($discount_code)) {
             // Get the coupon code
             $couponCode = trim($discount_code);
 
@@ -356,7 +358,6 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
         ];
 
         $this->sendSuccessResponse($responseBody);
-
     }
 
     /**
@@ -413,7 +414,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
      */
     protected function sendSuccessResponse($result, $quote = null)
     {
-        $result = str_replace(array("\r\n", "\n", "\r"), ' ', json_encode($result));
+        $result = str_replace(["\r\n", "\n", "\r"], ' ', json_encode($result));
         $this->logHelper->addInfoLog('### sendSuccessResponse');
         $this->logHelper->addInfoLog($result);
         $this->logHelper->addInfoLog('=== END ===');
@@ -440,7 +441,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
         $cartData->setTotalAmount($quoteCart['total_amount']);
         $cartData->setTaxAmount($quoteCart['tax_amount']);
         $cartData->setOrderReference($quoteCart['order_reference']);
-        $cartData->setShipments( (!empty($quoteCart['shipments'])) ? $quoteCart['shipments'] : [] );
+        $cartData->setShipments((!empty($quoteCart['shipments'])) ? $quoteCart['shipments'] : []);
 
         $updateCartResult = $this->updateCartResultFactory->create();
         $updateCartResult->setOrderCreate($cartData);
@@ -449,5 +450,4 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
         return $updateCartResult->getCartResult();
     }
-
 }

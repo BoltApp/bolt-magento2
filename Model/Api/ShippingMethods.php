@@ -327,8 +327,7 @@ class ShippingMethods implements ShippingMethodsInterface
                     null,
                     6103
                 );
-            }
-            else {
+            } else {
                 throw new BoltException(
                     __('Your cart total has changed and needs to be revised. Please reload the page and checkout again.'),
                     null,

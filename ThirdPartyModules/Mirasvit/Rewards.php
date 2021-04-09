@@ -123,8 +123,7 @@ class Rewards
         SessionHelper $sessionHelper,
         CartHelper $cartHelper,
         CustomerSession $customerSession
-    )
-    {
+    ) {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->discountHelper = $discountHelper;
         $this->scopeConfigInterface = $scopeConfigInterface;
@@ -149,8 +148,7 @@ class Rewards
         $mirasvitRewardsModelConfig,
         $mirasvitRewardsRuleQuoteSubtotalCalc,
         $immutableQuote
-    )
-    {
+    ) {
         $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->mirasvitRewardsBalanceHelper = $mirasvitRewardsBalanceHelper;
         $this->mirasvitRewardsSpendRulesListHelper = $mirasvitRewardsSpendRulesListHelper;
@@ -170,7 +168,7 @@ class Rewards
      * @param $quote
      * @param $parentQuote
      * @param $paymentOnly
-     * 
+     *
      * @return array
      */
     public function collectDiscounts(
@@ -183,8 +181,7 @@ class Rewards
         $quote,
         $parentQuote,
         $paymentOnly
-    )
-    {
+    ) {
         $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->mirasvitRewardsBalanceHelper = $mirasvitRewardsBalanceHelper;
         $this->mirasvitRewardsSpendRulesListHelper = $mirasvitRewardsSpendRulesListHelper;
@@ -228,7 +225,7 @@ class Rewards
      * @param \Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
      * @param \Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc $mirasvitRewardsRuleQuoteSubtotalCalc
      * @param $quote
-     * 
+     *
      * @return string
      */
     public function filterApplyExternalQuoteData(
@@ -239,8 +236,7 @@ class Rewards
         $mirasvitRewardsModelConfig,
         $mirasvitRewardsRuleQuoteSubtotalCalc,
         $quote
-    )
-    {
+    ) {
         $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->mirasvitRewardsBalanceHelper = $mirasvitRewardsBalanceHelper;
         $this->mirasvitRewardsSpendRulesListHelper = $mirasvitRewardsSpendRulesListHelper;
@@ -304,31 +300,31 @@ class Rewards
      * @return float  If enabled, the currency amount used in the order, otherwise 0
      */
     private function getMirasvitRewardsAmount($quote)
-    {        
-        try{
+    {
+        try {
             $this->getAppliedRewardsMode();
             
             if ($this->appliedRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_NONE) {
-                return 0;                
+                return 0;
             }
             
             $miravitRewardsPurchase = $this->mirasvitRewardsPurchaseHelper->getByQuote($quote);
             $spendAmount = $miravitRewardsPurchase->getSpendAmount();
 
             if ($this->appliedRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_PART) {
-                return $spendAmount;                
+                return $spendAmount;
             }
 
             // If the setting "Allow to spend points for shipping charges" is set to Yes,
             // we need to send full balance to the Bolt server.
-            if(($spendAmount > \Mirasvit\Rewards\Helper\Calculation::ZERO_VALUE) && $this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping()) {
+            if (($spendAmount > \Mirasvit\Rewards\Helper\Calculation::ZERO_VALUE) && $this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping()) {
                 $balancePoints = $this->mirasvitRewardsBalanceHelper->getBalancePoints($quote->getCustomerId());
                 $customer = $this->customerFactory->create()->load($quote->getCustomer()->getId());
                 $websiteId = $quote->getStore()->getWebsiteId();
                 $rules = $this->mirasvitRewardsSpendRulesListHelper->getRuleCollection($websiteId, $customer->getGroupId());
                 
                 if ($rules->count()) {
-                    $cartRange = $this->getCartPointsRange($quote, $customer, $rules, $balancePoints, self::MOCK_SUBTOTAL);                    
+                    $cartRange = $this->getCartPointsRange($quote, $customer, $rules, $balancePoints, self::MOCK_SUBTOTAL);
                     $cartMaxPointsNumber = min($cartRange->getMaxPoints(), $balancePoints);
                     $spendAmount = $this->calMaxSpendAmount($rules, $customer, $cartMaxPointsNumber, self::MOCK_SUBTOTAL);
                 } else {
@@ -340,7 +336,7 @@ class Rewards
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
             return 0;
-        }        
+        }
     }
     
     /**
@@ -451,8 +447,8 @@ class Rewards
      * @return SpendCartRangeData
      */
     private function calcPointsPerRule($tier, $data)
-    {        
-        $ruleSubTotal = $data->subtotal;       
+    {
+        $ruleSubTotal = $data->subtotal;
 
         $monetaryStep    = $tier->getMonetaryStep($ruleSubTotal);
         $ruleMinPoints   = $tier->getSpendMinAmount($ruleSubTotal);
@@ -524,7 +520,8 @@ class Rewards
      *
      * @return string
      */
-    private function getAppliedRewardsMode() {
+    private function getAppliedRewardsMode()
+    {
         if (!$this->customerSession->isLoggedIn()) {
             $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_NONE;
         }
@@ -532,7 +529,7 @@ class Rewards
         $boltCustomerMirasvitRewardsMode = $this->customerSession->getBoltMirasvitRewardsMode();
 
         if (!empty($boltCustomerMirasvitRewardsMode) && $boltCustomerMirasvitRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_PART) {
-            $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_PART;       
+            $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_PART;
         } else {
             $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_ALL;
         }
@@ -555,17 +552,16 @@ class Rewards
         $mirasvitRewardsCheckoutHelper,
         $mirasvitRewardsRuleQuoteSubtotalCalc,
         $quote
-    )
-    {
+    ) {
         $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
         $this->mirasvitRewardsBalanceHelper = $mirasvitRewardsBalanceHelper;
         $this->mirasvitRewardsSpendRulesListHelper = $mirasvitRewardsSpendRulesListHelper;
         $this->mirasvitRewardsModelConfig = $mirasvitRewardsModelConfig;
         $this->mirasvitRewardsRuleQuoteSubtotalCalc = $mirasvitRewardsRuleQuoteSubtotalCalc;
         
-        try{
+        try {
             $appliedMirasvitRewardsAmount = abs($this->getMirasvitRewardsAmount($quote));
-            if($this->appliedRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_ALL
+            if ($this->appliedRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_ALL
                && $appliedMirasvitRewardsAmount > 0
                && $this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping()) {
                 $balancePoints = $this->mirasvitRewardsBalanceHelper->getBalancePoints($quote->getCustomerId());
@@ -594,7 +590,7 @@ class Rewards
      *
      * @param boolean $result
      * @param Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
-     * 
+     *
      * @return boolean
      */
     public function checkMirasvitRewardsIsShippingIncluded($result, $mirasvitRewardsModelConfig)
@@ -608,7 +604,7 @@ class Rewards
      * @param float $result
      * @param Quote|object $quote
      * @param Address|object $shippingAddress
-     * 
+     *
      * @return float
      */
     public function collectShippingDiscounts($result, $quote, $shippingAddress)
@@ -620,7 +616,7 @@ class Rewards
     
     /**
      * Return code if the quote has Mirasvit rewards.
-     * 
+     *
      * @param $result
      * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
      * @param \Mirasvit\Rewards\Helper\Balance  $mirasvitRewardsBalanceHelper
@@ -629,10 +625,10 @@ class Rewards
      * @param \Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc $mirasvitRewardsRuleQuoteSubtotalCalc
      * @param $couponCode
      * @param $quote
-     * 
+     *
      * @return array
      */
-    public function filterVerifyAppliedStoreCredit (
+    public function filterVerifyAppliedStoreCredit(
         $result,
         $mirasvitRewardsPurchaseHelper,
         $mirasvitRewardsBalanceHelper,
@@ -641,8 +637,7 @@ class Rewards
         $mirasvitRewardsRuleQuoteSubtotalCalc,
         $couponCode,
         $quote
-    )
-    {
+    ) {
         if ($couponCode == self::MIRASVIT_REWARDS) {
             $this->mirasvitRewardsPurchaseHelper = $mirasvitRewardsPurchaseHelper;
             $this->mirasvitRewardsBalanceHelper = $mirasvitRewardsBalanceHelper;
@@ -671,17 +666,16 @@ class Rewards
      * @param $quote
      * @param $websiteId
      * @param $storeId
-     * 
+     *
      */
-    public function removeAppliedStoreCredit (
+    public function removeAppliedStoreCredit(
         $mirasvitRewardsPurchaseHelper,
         $mirasvitRewardsCheckoutHelper,
         $couponCode,
         $quote,
         $websiteId,
         $storeId
-    )
-    {
+    ) {
         try {
             if ($couponCode == self::MIRASVIT_REWARDS) {
                 $miravitRewardsPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($quote);
@@ -691,5 +685,4 @@ class Rewards
             throw $e;
         }
     }
-    
 }

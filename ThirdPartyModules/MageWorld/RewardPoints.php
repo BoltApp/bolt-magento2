@@ -75,11 +75,12 @@ class RewardPoints
      *
      * @return array
      */
-    public function collectDiscounts($result,
-                                     $mwRewardPointsHelperData,
-                                     $mwRewardPointsModelCustomer,
-                                     $quote)
-    {
+    public function collectDiscounts(
+        $result,
+        $mwRewardPointsHelperData,
+        $mwRewardPointsModelCustomer,
+        $quote
+    ) {
         list ($discounts, $totalAmount, $diff) = $result;
         $this->mwRewardPointsHelperData = $mwRewardPointsHelperData;
         $this->mwRewardPointsModelCustomer = $mwRewardPointsModelCustomer;
@@ -88,8 +89,7 @@ class RewardPoints
             if ($quote->getMwRewardpoint()) {
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 $storeCode = $quote->getStore()->getCode();
-                if (
-                    $quote->getMwRewardpointDiscount() >= $quote->getSubtotal()
+                if ($quote->getMwRewardpointDiscount() >= $quote->getSubtotal()
                     && ($this->mwRewardPointsHelperData->getRedeemedShippingConfig($storeCode)
                     || $this->mwRewardPointsHelperData->getRedeemedTaxConfig($storeCode))
                 ) {
@@ -114,7 +114,7 @@ class RewardPoints
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
-        } finally {        
+        } finally {
             return [$discounts, $totalAmount, $diff];
         }
     }
@@ -138,7 +138,7 @@ class RewardPoints
             });';
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
-        } finally {        
+        } finally {
             return $result;
         }
     }
@@ -151,23 +151,23 @@ class RewardPoints
      * @param Quote $quote
      *
      */
-    public function beforePrepareQuote($mwRewardPointsHelperData,
-                                     $mwRewardPointsModelCustomer,
-                                     $quote)
-    {
+    public function beforePrepareQuote(
+        $mwRewardPointsHelperData,
+        $mwRewardPointsModelCustomer,
+        $quote
+    ) {
         $this->mwRewardPointsHelperData = $mwRewardPointsHelperData;
         $this->mwRewardPointsModelCustomer = $mwRewardPointsModelCustomer;
         
         try {
             if ($quote->getMwRewardpoint()) {
                 $storeCode = $quote->getStore()->getCode();
-                if (
-                    $quote->getMwRewardpointDiscount() >= $quote->getSubtotal()
+                if ($quote->getMwRewardpointDiscount() >= $quote->getSubtotal()
                     && ($this->mwRewardPointsHelperData->getRedeemedShippingConfig($storeCode)
                     || $this->mwRewardPointsHelperData->getRedeemedTaxConfig($storeCode))
                 ) {
                     $rewardPoints = $this->mwRewardPointsModelCustomer->create()->load($quote->getCustomerId())->getMwRewardPoint();
-                    $amount = abs($this->mwRewardPointsHelperData->exchangePointsToMoneys($rewardPoints, $storeCode));                        
+                    $amount = abs($this->mwRewardPointsHelperData->exchangePointsToMoneys($rewardPoints, $storeCode));
                     $this->mwRewardPointsHelperData->setPointToCheckOut($rewardPoints);
                     $quote->setSpendRewardpointCart($rewardPoints);
                     
@@ -184,19 +184,18 @@ class RewardPoints
     
     /**
      * Return code if the quote has MW reward points
-     * 
+     *
      * @param $result
      * @param $couponCode
      * @param $quote
-     * 
+     *
      * @return array
      */
-    public function filterVerifyAppliedStoreCredit (
+    public function filterVerifyAppliedStoreCredit(
         $result,
         $couponCode,
         $quote
-    )
-    {
+    ) {
         if ($couponCode == self::MW_REWARDPOINTS && $quote->getMwRewardpoint()) {
             $result[] = $couponCode;
         }
@@ -212,15 +211,14 @@ class RewardPoints
      * @param $quote
      * @param $websiteId
      * @param $storeId
-     * 
+     *
      */
-    public function removeAppliedStoreCredit (
+    public function removeAppliedStoreCredit(
         $couponCode,
         $quote,
         $websiteId,
         $storeId
-    )
-    {
+    ) {
         try {
             if ($couponCode == self::MW_REWARDPOINTS && $quote->getMwRewardpoint()) {
                 $this->sessionManager->setMwRewardpointDiscountShowTotal(0)
@@ -244,5 +242,4 @@ class RewardPoints
             throw $e;
         }
     }
-    
 }

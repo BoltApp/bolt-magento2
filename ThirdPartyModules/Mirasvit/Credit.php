@@ -96,14 +96,15 @@ class Credit
      * @param $paymentOnly
      * @return array
      */
-    public function collectDiscounts($result,
-                                     $mirasvitStoreCreditHelper,
-                                     $mirasvitStoreCreditCalculationService,
-                                     $mirasvitStoreCreditCalculationConfig,
-                                     $quote,
-                                     $parentQuote,
-                                     $paymentOnly)
-    {
+    public function collectDiscounts(
+        $result,
+        $mirasvitStoreCreditHelper,
+        $mirasvitStoreCreditCalculationService,
+        $mirasvitStoreCreditCalculationConfig,
+        $quote,
+        $parentQuote,
+        $paymentOnly
+    ) {
         list ($discounts, $totalAmount, $diff) = $result;
         $this->mirasvitStoreCreditHelper = $mirasvitStoreCreditHelper;
         $this->mirasvitStoreCreditCalculationService = $mirasvitStoreCreditCalculationService;
@@ -130,7 +131,7 @@ class Credit
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
-        } finally {        
+        } finally {
             return [$discounts, $totalAmount, $diff];
         }
     }
@@ -146,7 +147,7 @@ class Credit
     {
         $miravitBalanceAmount = $this->getMirasvitStoreCreditUsedAmount($quote);
             
-        if (!$paymentOnly) {       
+        if (!$paymentOnly) {
             if ($this->ifMirasvitCreditIsShippingTaxIncluded($quote)) {
                 return $miravitBalanceAmount;
             }
@@ -218,13 +219,14 @@ class Credit
      * @param boolean $result
      * @param Mirasvit\Credit\Api\Config\CalculationConfigInterface|Mirasvit\Credit\Service\Config\CalculationConfig $mirasvitStoreCreditCalculationConfig
      * @param Quote|object $quote
-     * 
+     *
      * @return boolean
      */
-    public function checkMirasvitCreditIsShippingTaxIncluded($result,
-                                     $mirasvitStoreCreditCalculationConfig,
-                                     $quote)
-    {
+    public function checkMirasvitCreditIsShippingTaxIncluded(
+        $result,
+        $mirasvitStoreCreditCalculationConfig,
+        $quote
+    ) {
         $this->mirasvitStoreCreditCalculationConfig = $mirasvitStoreCreditCalculationConfig;
         
         return $this->ifMirasvitCreditIsShippingTaxIncluded($quote);
@@ -234,11 +236,11 @@ class Credit
      * If the Mirasvit credit amount can be applied to shipping/tax.
      *
      * @param Quote|object $quote
-     * 
+     *
      * @return boolean
      */
     private function ifMirasvitCreditIsShippingTaxIncluded($quote)
-    {   
+    {
         return ($this->mirasvitStoreCreditCalculationConfig->isTaxIncluded($quote->getStore())
                 || $this->mirasvitStoreCreditCalculationConfig->IsShippingIncluded($quote->getStore()));
     }
@@ -249,13 +251,14 @@ class Credit
      * @param float $result
      * @param Quote|object $quote
      * @param Address|object $shippingAddress
-     * 
+     *
      * @return float
      */
-    public function collectShippingDiscounts($result,
-                                     $quote,
-                                     $shippingAddress)
-    {
+    public function collectShippingDiscounts(
+        $result,
+        $quote,
+        $shippingAddress
+    ) {
         $mirasvitStoreCreditShippingDiscountAmount = $this->sessionHelper->getCheckoutSession()->getMirasvitStoreCreditShippingDiscountAmount(0);
         $result -= $mirasvitStoreCreditShippingDiscountAmount;
         return $result;
@@ -280,19 +283,18 @@ class Credit
 
     /**
      * Return code if the quote has Mirasvit store credits.
-     * 
+     *
      * @param $result
      * @param $couponCode
      * @param $quote
-     * 
+     *
      * @return array
      */
-    public function filterVerifyAppliedStoreCredit (
+    public function filterVerifyAppliedStoreCredit(
         $result,
         $couponCode,
         $quote
-    )
-    {
+    ) {
         if ($couponCode == self::MIRASVIT_STORECREDIT && $quote->getCreditAmountUsed() > 0) {
             $result[] = $couponCode;
         }
@@ -309,17 +311,16 @@ class Credit
      * @param $quote
      * @param $websiteId
      * @param $storeId
-     * 
+     *
      */
-    public function removeAppliedStoreCredit (
+    public function removeAppliedStoreCredit(
         $mirasvitStoreCreditHelper,
         $mirasvitStoreCreditCalculationService,
         $couponCode,
         $quote,
         $websiteId,
         $storeId
-    )
-    {
+    ) {
         $this->mirasvitStoreCreditHelper = $mirasvitStoreCreditHelper;
         $this->mirasvitStoreCreditCalculationService = $mirasvitStoreCreditCalculationService;
         

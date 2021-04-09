@@ -29,11 +29,12 @@ use Bolt\Boltpay\Model\Api\UpdateCartContext;
 
 /**
  * Trait UpdateCartItemTrait
- * 
+ *
  * @package Bolt\Boltpay\Model\Api
  */
 trait UpdateCartItemTrait
-{  
+{
+
     /**
      * @var ProductRepository
      */
@@ -54,7 +55,7 @@ trait UpdateCartItemTrait
      *
      * @param UpdateCartContext $updateCartContext
      */
-     public function __construct(
+    public function __construct(
         UpdateCartContext $updateCartContext
     ) {
         $this->productRepository = $updateCartContext->getProductRepositoryInterface();
@@ -145,7 +146,7 @@ trait UpdateCartItemTrait
                 $websiteId
             );
 
-            if ($checkQty->getHasError()) { 
+            if ($checkQty->getHasError()) {
                 $this->sendErrorResponse(
                     BoltErrorResponse::ERR_ITEM_OUT_OF_STOCK,
                     $checkQty->getMessage(),
@@ -210,7 +211,7 @@ trait UpdateCartItemTrait
      * @return boolean
      */
     protected function addItemToQuote($product, $quote, $itemToAdd, $quoteItem)
-    {            
+    {
         try {
             $added = false;
             
@@ -265,7 +266,7 @@ trait UpdateCartItemTrait
             $quoteItem['quote_item']->save();
             
             return true;
-        } else if ($quoteItem['quantity'] == $itemToRemove['quantity']) {
+        } elseif ($quoteItem['quantity'] == $itemToRemove['quantity']) {
             $quote->removeItem($quoteItem['quote_item_id']);
             
             return true;
@@ -281,5 +282,4 @@ trait UpdateCartItemTrait
         
         return false;
     }
-    
 }

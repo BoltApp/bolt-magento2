@@ -105,7 +105,7 @@ class Tax extends ShippingTax implements TaxInterface
 
         if ($shipping_option) {
             list($carrierCode, $methodCode) = explode('_', $shipping_option['reference'], 2);
-        } else { 
+        } else {
             list($carrierCode, $methodCode) = $this->eventsForThirdPartyModules->runFilter("getShipToStoreCarrierMethodCodes", ['', ''], $this->quote, $ship_to_store_option, $addressData);
         }
 

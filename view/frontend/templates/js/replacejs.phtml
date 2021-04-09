@@ -1432,7 +1432,7 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
             }
             <?php
             if ($isLoadConnectJsDynamic) {
-            ?>
+                ?>
             if (insertConnectScriptWithoutSrc()) {
                 $.getScript("<?= /* @noEscape */ $connectJsUrl; ?>", function(data, textStatus, jqxhr) {
                     callBoltAfterAddToCart();
@@ -1440,11 +1440,11 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
             } else {
                 callBoltAfterAddToCart();
             }
-            <?php
+                <?php
             } else {
-            ?>
+                ?>
             callBoltAfterAddToCart();
-            <?php
+                <?php
             }
             ?>
         });
@@ -1512,14 +1512,14 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
         
         <?php
         if ($isLoadConnectJsDynamic) {
-        ?>
+            ?>
         magentoCartDataListenerLoadConnectJs = function(data) {
             if (data.items !== undefined && data.items.length > 0) {
                 insertConnectScript();
             }            
         }
         customerData.get('cart').subscribe(magentoCartDataListenerLoadConnectJs);
-        <?php
+            <?php
         }
         ?>
     });

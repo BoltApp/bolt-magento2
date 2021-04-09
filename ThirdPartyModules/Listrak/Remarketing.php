@@ -53,8 +53,7 @@ class Remarketing
         Bugsnag $bugsnagHelper,
         ScopeConfigInterface $scopeConfigInterface,
         Decider $decider
-    )
-    {
+    ) {
         $this->scopeConfigInterface = $scopeConfigInterface;
         $this->bugsnagHelper = $bugsnagHelper;
         $this->decider = $decider;

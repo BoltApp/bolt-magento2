@@ -18,8 +18,6 @@
 namespace Bolt\Boltpay\Api\Data;
 
 /**
- * Ship to store option interface.
- *
  * @api
  */
 interface ShipToStoreOptionInterface

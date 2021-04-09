@@ -61,7 +61,7 @@ class CreditPlugin
         \Mirasvit\Credit\Model\Total\Quote\Credit $subject,
         $quote,
         $shippingAssignment,
-        $total   
+        $total
     ) {
         if ($this->eventsForThirdPartyModules->runFilter("checkMirasvitCreditIsShippingTaxIncluded", false, $quote)) {
             $address = $shippingAssignment->getShipping()->getAddress();
@@ -82,16 +82,16 @@ class CreditPlugin
         $result,
         $quote,
         $shippingAssignment,
-        $total   
+        $total
     ) {
         if ($this->eventsForThirdPartyModules->runFilter("checkMirasvitCreditIsShippingTaxIncluded", false, $quote)) {
             $address = $shippingAssignment->getShipping()->getAddress();
             $afterShippingDiscountAmount = $address->getShippingDiscountAmount();
             $beforeShippingDiscountAmount = $this->checkoutSession->getBeforeMirasvitStoreCreditShippingDiscountAmount();
             $mirasvitStoreCreditShippingDiscountAmount = $afterShippingDiscountAmount - $beforeShippingDiscountAmount;
-            if($mirasvitStoreCreditShippingDiscountAmount > 0) {
+            if ($mirasvitStoreCreditShippingDiscountAmount > 0) {
                 $this->checkoutSession->setMirasvitStoreCreditShippingDiscountAmount($mirasvitStoreCreditShippingDiscountAmount);
-            }            
+            }
         }
 
         return $result;
