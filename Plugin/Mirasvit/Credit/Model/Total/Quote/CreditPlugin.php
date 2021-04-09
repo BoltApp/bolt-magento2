@@ -20,11 +20,6 @@ namespace Bolt\Boltpay\Plugin\Mirasvit\Credit\Model\Total\Quote;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
-/**
- * Class CreditPlugin
- *
- * @package Bolt\Boltpay\Plugin
- */
 class CreditPlugin
 {
     /**
@@ -63,7 +58,11 @@ class CreditPlugin
         $shippingAssignment,
         $total
     ) {
-        if ($this->eventsForThirdPartyModules->runFilter("checkMirasvitCreditIsShippingTaxIncluded", false, $quote)) {
+        if ($this->eventsForThirdPartyModules->runFilter(
+            "checkMirasvitCreditIsShippingTaxIncluded",
+            false,
+            $quote
+        )) {
             $address = $shippingAssignment->getShipping()->getAddress();
             $beforeShippingDiscountAmount = $address->getShippingDiscountAmount();
             $this->checkoutSession->setBeforeMirasvitStoreCreditShippingDiscountAmount($beforeShippingDiscountAmount);
@@ -73,7 +72,8 @@ class CreditPlugin
     }
     
     /**
-     * Exclude the Mirasvit credit amount from shipping discount, so the Bolt can apply Mirasvit credit to shipping properly.
+     * Exclude the Mirasvit credit amount from shipping discount,
+     * so the Bolt can apply Mirasvit credit to shipping properly.
      *
      * @return mixed
      */
@@ -84,13 +84,20 @@ class CreditPlugin
         $shippingAssignment,
         $total
     ) {
-        if ($this->eventsForThirdPartyModules->runFilter("checkMirasvitCreditIsShippingTaxIncluded", false, $quote)) {
+        if ($this->eventsForThirdPartyModules->runFilter(
+            "checkMirasvitCreditIsShippingTaxIncluded",
+            false,
+            $quote
+        )) {
             $address = $shippingAssignment->getShipping()->getAddress();
             $afterShippingDiscountAmount = $address->getShippingDiscountAmount();
-            $beforeShippingDiscountAmount = $this->checkoutSession->getBeforeMirasvitStoreCreditShippingDiscountAmount();
+            $beforeShippingDiscountAmount =
+                $this->checkoutSession->getBeforeMirasvitStoreCreditShippingDiscountAmount();
             $mirasvitStoreCreditShippingDiscountAmount = $afterShippingDiscountAmount - $beforeShippingDiscountAmount;
             if ($mirasvitStoreCreditShippingDiscountAmount > 0) {
-                $this->checkoutSession->setMirasvitStoreCreditShippingDiscountAmount($mirasvitStoreCreditShippingDiscountAmount);
+                $this->checkoutSession->setMirasvitStoreCreditShippingDiscountAmount(
+                    $mirasvitStoreCreditShippingDiscountAmount
+                );
             }
         }
 

@@ -33,7 +33,10 @@ if (!$block->isSupportableType()) { return;
 $additionalClass = $block->getAdditionalCheckoutButtonClass();
 $additionalCheckoutButtonAttributes = '';
 foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrValue) {
-    $additionalCheckoutButtonAttributes .= $block->escapeHtmlAttr($attrName) . '="' . $block->escapeHtmlAttr($attrValue) . '" ';
+    $additionalCheckoutButtonAttributes .= $block->escapeHtmlAttr($attrName)
+        . '="'
+        . $block->escapeHtmlAttr($attrValue)
+        . '" ';
 }
 ?>
     <div class="bolt-product-checkout-button bolt-multi-step-checkout <?= /* @noEscape */ $additionalClass;?>"
@@ -270,7 +273,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                         if (childProductQty > 0) {
                             items.push({
                                 reference: '<?= /* @noEscape */ $childProduct->getId(); ?>',
-                                price: '<?php echo $childProduct->getPrice() ?>',
+                                price: '<?= /* @noEscape */ $childProduct->getPrice() ?>',
                                 name: '<?= /* @noEscape */ addcslashes($childProduct->getName(), "'"); ?>',
                                 quantity: childProductQty,
                                 options: JSON.stringify(options)

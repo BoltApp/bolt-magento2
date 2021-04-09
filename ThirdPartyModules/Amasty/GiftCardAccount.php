@@ -28,10 +28,6 @@ use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
-/**
- * Class GiftCardAccount
- * @package Bolt\Boltpay\ThirdPartyModules\Amasty
- */
 class GiftCardAccount
 {
 

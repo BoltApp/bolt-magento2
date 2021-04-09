@@ -122,8 +122,10 @@ class Credit
                     'reference'         => self::MIRASVIT_STORECREDIT,
                     'amount'            => $roundedAmount,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                    // For v1/discounts.code.apply and v2/cart.update
+                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                    // For v1/merchant/order
+                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'),
                 ];
     
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -246,7 +248,8 @@ class Credit
     }
     
     /**
-     * Exclude the Mirasvit credit amount from shipping discount, so the Bolt can apply Mirasvit credit to shipping properly.
+     * Exclude the Mirasvit credit amount from shipping discount,
+     * so the Bolt can apply Mirasvit credit to shipping properly.
      *
      * @param float $result
      * @param Quote|object $quote
@@ -259,7 +262,8 @@ class Credit
         $quote,
         $shippingAddress
     ) {
-        $mirasvitStoreCreditShippingDiscountAmount = $this->sessionHelper->getCheckoutSession()->getMirasvitStoreCreditShippingDiscountAmount(0);
+        $mirasvitStoreCreditShippingDiscountAmount = $this->sessionHelper->getCheckoutSession()
+            ->getMirasvitStoreCreditShippingDiscountAmount(0);
         $result -= $mirasvitStoreCreditShippingDiscountAmount;
         return $result;
     }

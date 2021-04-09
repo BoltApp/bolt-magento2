@@ -317,16 +317,31 @@ class Rewards
 
             // If the setting "Allow to spend points for shipping charges" is set to Yes,
             // we need to send full balance to the Bolt server.
-            if (($spendAmount > \Mirasvit\Rewards\Helper\Calculation::ZERO_VALUE) && $this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping()) {
+            if (($spendAmount > \Mirasvit\Rewards\Helper\Calculation::ZERO_VALUE)
+                && $this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping()) {
                 $balancePoints = $this->mirasvitRewardsBalanceHelper->getBalancePoints($quote->getCustomerId());
                 $customer = $this->customerFactory->create()->load($quote->getCustomer()->getId());
                 $websiteId = $quote->getStore()->getWebsiteId();
-                $rules = $this->mirasvitRewardsSpendRulesListHelper->getRuleCollection($websiteId, $customer->getGroupId());
+                $rules = $this->mirasvitRewardsSpendRulesListHelper->getRuleCollection(
+                    $websiteId,
+                    $customer->getGroupId()
+                );
                 
                 if ($rules->count()) {
-                    $cartRange = $this->getCartPointsRange($quote, $customer, $rules, $balancePoints, self::MOCK_SUBTOTAL);
+                    $cartRange = $this->getCartPointsRange(
+                        $quote,
+                        $customer,
+                        $rules,
+                        $balancePoints,
+                        self::MOCK_SUBTOTAL
+                    );
                     $cartMaxPointsNumber = min($cartRange->getMaxPoints(), $balancePoints);
-                    $spendAmount = $this->calMaxSpendAmount($rules, $customer, $cartMaxPointsNumber, self::MOCK_SUBTOTAL);
+                    $spendAmount = $this->calMaxSpendAmount(
+                        $rules,
+                        $customer,
+                        $cartMaxPointsNumber,
+                        self::MOCK_SUBTOTAL
+                    );
                 } else {
                     $spendAmount = 0;
                 }
@@ -358,8 +373,13 @@ class Rewards
                 
                 $tier = $rule->getTier($customer);
 
-                if ($tier->getSpendingStyle() == \Mirasvit\Rewards\Api\Config\Rule\SpendingStyleInterface::STYLE_PARTIAL) {
-                    $stepsSecond = round($rulePointsNumber / $tier->getSpendPoints(), 2, PHP_ROUND_HALF_DOWN);
+                if ($tier->getSpendingStyle() == \Mirasvit\Rewards\Api\Config\Rule\SpendingStyleInterface::STYLE_PARTIAL
+                ) {
+                    $stepsSecond = round(
+                        $rulePointsNumber / $tier->getSpendPoints(),
+                        2,
+                        PHP_ROUND_HALF_DOWN
+                    );
                 } else {
                     $spendPoints = $tier->getSpendPoints();
                     $rulePointsNumber = floor($rulePointsNumber / $spendPoints) * $spendPoints;
@@ -370,7 +390,11 @@ class Rewards
                     continue;
                 }
 
-                $stepsFirst = round($quoteSubTotal / $tier->getMonetaryStep($quoteSubTotal), 2, PHP_ROUND_HALF_DOWN);
+                $stepsFirst = round(
+                    $quoteSubTotal / $tier->getMonetaryStep($quoteSubTotal),
+                    2,
+                    PHP_ROUND_HALF_DOWN
+                );
                 if ($stepsFirst != $quoteSubTotal / $tier->getMonetaryStep($quoteSubTotal)) {
                     ++$stepsFirst;
                 }
@@ -409,7 +433,12 @@ class Rewards
         $minPoints     = 0;
         $totalPoints   = 0;
 
-        $data = new \Mirasvit\Rewards\Helper\Balance\SpendCartRangeData($quoteSubTotal, $balancePoints, $minPoints, $totalPoints);
+        $data = new \Mirasvit\Rewards\Helper\Balance\SpendCartRangeData(
+            $quoteSubTotal,
+            $balancePoints,
+            $minPoints,
+            $totalPoints
+        );
 
         foreach ($rules as $rule) {
             $rule->afterLoad();
@@ -505,7 +534,9 @@ class Rewards
         if ($ruleMinPoints && ($data->subtotal / $monetaryStep) < 1) {
             return false;
         }
-        if ($ruleMinPoints > $data->balancePoints || $ruleSpendPoints <= \Mirasvit\Rewards\Helper\Calculation::ZERO_VALUE) {
+        if ($ruleMinPoints > $data->balancePoints
+            || $ruleSpendPoints <= \Mirasvit\Rewards\Helper\Calculation::ZERO_VALUE
+        ) {
             return false;
         }
         if ($monetaryStep <= \Mirasvit\Rewards\Helper\Calculation::ZERO_VALUE) {
@@ -528,7 +559,9 @@ class Rewards
         
         $boltCustomerMirasvitRewardsMode = $this->customerSession->getBoltMirasvitRewardsMode();
 
-        if (!empty($boltCustomerMirasvitRewardsMode) && $boltCustomerMirasvitRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_PART) {
+        if (!empty($boltCustomerMirasvitRewardsMode)
+            && $boltCustomerMirasvitRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_PART
+        ) {
             $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_PART;
         } else {
             $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_ALL;
@@ -580,8 +613,12 @@ class Rewards
      * @param $transaction
      * @return boolean
      */
-    public function filterSkipValidateShippingForProcessNewOrder($result, $mirasvitRewardsModelConfig, $quote, $transaction)
-    {
+    public function filterSkipValidateShippingForProcessNewOrder(
+        $result,
+        $mirasvitRewardsModelConfig,
+        $quote,
+        $transaction
+    ) {
         return $result || $mirasvitRewardsModelConfig->getGeneralIsSpendShipping();
     }
     
@@ -599,7 +636,8 @@ class Rewards
     }
     
     /**
-     * Exclude the Mirasvit rewards points from shipping discount, so the Bolt can apply Mirasvit rewards points to shipping properly.
+     * Exclude the Mirasvit rewards points from shipping discount,
+     * so the Bolt can apply Mirasvit rewards points to shipping properly.
      *
      * @param float $result
      * @param Quote|object $quote
@@ -609,7 +647,8 @@ class Rewards
      */
     public function collectShippingDiscounts($result, $quote, $shippingAddress)
     {
-        $mirasvitRewardsShippingDiscountAmount = $this->sessionHelper->getCheckoutSession()->getMirasvitRewardsShippingDiscountAmount(0);
+        $mirasvitRewardsShippingDiscountAmount = $this->sessionHelper->getCheckoutSession()
+            ->getMirasvitRewardsShippingDiscountAmount(0);
         $result -= $mirasvitRewardsShippingDiscountAmount;
         return $result;
     }
