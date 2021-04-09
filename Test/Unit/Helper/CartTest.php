@@ -84,7 +84,6 @@ use Zend_Http_Client_Exception;
 use Zend_Validate_Exception;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
-;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\TestFramework\Helper\Bootstrap;
 use Zend\Serializer\Adapter\PhpSerialize as Serialize;
@@ -2438,7 +2437,7 @@ class CartTest extends BoltTestCase
             ]
           }
         }
-    ORDER
+ORDER
         );
         $boltOrderResponse = new Response();
         $boltOrderResponse->setResponse($order);
