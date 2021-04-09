@@ -79,9 +79,9 @@ class UniversalWebhookTest extends BoltTestCase
         ];
         $orderManagement = $this->createMock(OrderManagementInterface::class);
         $orderManagement->method('manage');
-        TestHelper::setProperty($this->universalWebhook,'orderManagement', $orderManagement);
+        TestHelper::setProperty($this->universalWebhook, 'orderManagement', $orderManagement);
         $this->assertTrue($this->universalWebhook->execute($type, $object, $data));
-        $response = json_decode(TestHelper::getProperty($this->universalWebhook,'response')->getBody(),true);
+        $response = json_decode(TestHelper::getProperty($this->universalWebhook, 'response')->getBody(), true);
         $this->assertEquals(['status' => 'success'], $response);
     }
 
@@ -114,9 +114,9 @@ class UniversalWebhookTest extends BoltTestCase
         $orderManagement = $this->createMock(OrderManagementInterface::class);
         $boltException =  new BoltException(__('The cart has products not allowed for Bolt checkout'));
         $orderManagement->method('manage')->willThrowException($boltException);
-        TestHelper::setProperty($this->universalWebhook,'orderManagement', $orderManagement);
+        TestHelper::setProperty($this->universalWebhook, 'orderManagement', $orderManagement);
         $this->assertFalse($this->universalWebhook->execute($type, $object, $data));
-        $response = json_decode(TestHelper::getProperty($this->universalWebhook,'response')->getBody(),true);
+        $response = json_decode(TestHelper::getProperty($this->universalWebhook, 'response')->getBody(), true);
         $errResponse = [
             'status' => 'failure',
             'error' => [

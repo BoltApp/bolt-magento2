@@ -16,6 +16,7 @@
  */
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
+
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Test\Unit\TestHelper;
@@ -111,7 +112,7 @@ class ShippingTest extends BoltTestCase
             ->setTaxAmount(0);
         $quote = TestUtils::createQuote(['store_id' => $this->storeId]);
         TestHelper::setProperty($this->shipping, 'quote', $quote);
-        $result = $this->shipping->generateResult($addressData,[], null);
+        $result = $this->shipping->generateResult($addressData, [], null);
         $this->assertEquals(
             [$shippingOptionData],
             $result->getShippingOptions()

@@ -30,7 +30,8 @@ use Zend\Code\Reflection\ClassReflection;
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\Data\UpdateCartResult
  */
 class UpdateCartResultTest extends BoltTestCase
-{    
+{
+
     const STATUS = 'STATUS';
     const ORDERREFERENCE = 'ORDERREFERENCE';
     
@@ -178,7 +179,8 @@ class UpdateCartResultTest extends BoltTestCase
      * to ensure the return type annotation of method {getCartResult}
      * in class Bolt\Boltpay\Api\Data\UpdateCartResultInterface is correct
      */
-    public function processTypeName(){
+    public function processTypeName()
+    {
         $classReflection = new ClassReflection(UpdateCartResultInterface::class);
         $methodReflection = $classReflection->getMethod('getCartResult');
 

@@ -83,7 +83,8 @@ use ReflectionException;
 use Zend_Http_Client_Exception;
 use Zend_Validate_Exception;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
-use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;;
+use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
+;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\TestFramework\Helper\Bootstrap;
 use Zend\Serializer\Adapter\PhpSerialize as Serialize;
@@ -388,7 +389,7 @@ class CartTest extends BoltTestCase
         $this->productMock = $this->createPartialMock(Product::class, ['getDescription', 'getTypeInstance']);
         $this->productMock->method('getTypeInstance')->willReturnSelf();
         $this->contextHelper = $this->createMock(ContextHelper::class);
-        $this->quoteMock = $this->createPartialMock(Quote::class,[
+        $this->quoteMock = $this->createPartialMock(Quote::class, [
             'getQuoteCurrencyCode','getAllVisibleItems',
             'getTotals','getStore','getStoreId',
             'getData','isVirtual','getId','getShippingAddress',
@@ -447,8 +448,10 @@ class CartTest extends BoltTestCase
         $this->metricsClient = $this->createMock(MetricsClient::class);
         $this->deciderHelper = $this->createPartialMock(DeciderHelper::class, ['ifShouldDisablePrefillAddressForLoggedInCustomer']);
         $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(Serialize::class);
-        $this->deciderHelper = $this->createPartialMock(DeciderHelper::class,
-            ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical', 'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata', 'isCustomizableOptionsSupport']);
+        $this->deciderHelper = $this->createPartialMock(
+            DeciderHelper::class,
+            ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical', 'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata', 'isCustomizableOptionsSupport']
+        );
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
         $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
@@ -458,7 +461,7 @@ class CartTest extends BoltTestCase
         );
         $this->currentMock = $this->getCurrentMock(null);
 
-        $this->objectsToClean = array();
+        $this->objectsToClean = [];
     }
 
     protected function tearDownInternal()
@@ -875,7 +878,6 @@ class CartTest extends BoltTestCase
             [$quoteId => $quote]
         );
         static::assertEquals($quote, $boltHelperCart->getQuoteById($quoteId));
-
     }
 
     /**
@@ -992,7 +994,8 @@ class CartTest extends BoltTestCase
 
         $isBoltOrderCachingEnabled = true;
         $configWriter = Bootstrap::getObjectManager()->create(\Magento\Framework\App\Config\Storage\WriterInterface::class);
-        $configWriter->save(ConfigHelper::XML_PATH_BOLT_ORDER_CACHING,
+        $configWriter->save(
+            ConfigHelper::XML_PATH_BOLT_ORDER_CACHING,
             $isBoltOrderCachingEnabled,
             $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
             self::STORE_ID
@@ -1263,7 +1266,7 @@ class CartTest extends BoltTestCase
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $result = TestHelper::invokeMethod($cartHelper, 'getCartCacheIdentifier', [$testCartData]);
         unset($testCartData['display_id']);
-        static::assertEquals(hash('md5',json_encode($testCartData)), $result);
+        static::assertEquals(hash('md5', json_encode($testCartData)), $result);
     }
 
     /**
@@ -1362,7 +1365,7 @@ class CartTest extends BoltTestCase
             ->with($this->quoteMock)->willReturn($addressCacheIdentifier);
         $result = TestHelper::invokeMethod($currentMock, 'getCartCacheIdentifier', [$testCartData]);
         unset($testCartData['display_id']);
-        static::assertEquals(hash('md5',json_encode($testCartData) . $addressCacheIdentifier. self::QUOTE_ITEM_ID.'-'.self::GIFT_WRAPPING_ID), $result);
+        static::assertEquals(hash('md5', json_encode($testCartData) . $addressCacheIdentifier. self::QUOTE_ITEM_ID.'-'.self::GIFT_WRAPPING_ID), $result);
     }
 
     /**
@@ -2371,7 +2374,7 @@ class CartTest extends BoltTestCase
 
         $order = json_decode(
         /** @lang JSON */
-<<<ORDER
+            <<<ORDER
         {
           "token": "f34fff50f8b89db7cbe867326404d782fb688bdd8b26ab3affe8c0ba22b2ced5",
           "cart": {
@@ -2435,30 +2438,30 @@ class CartTest extends BoltTestCase
             ]
           }
         }
-ORDER
+    ORDER
         );
         $boltOrderResponse = new Response();
         $boltOrderResponse->setResponse($order);
         return [$currentMock, $cart, $boltOrderResponse];
-        }
+    }
 
         /**
-        * @test
-        * that getBoltpayOrder always creates new Bolt order when caching is disabled
-        *
-        * @covers ::getBoltpayOrder
-        *
-        * @throws LocalizedException from tested method
-        * @throws Zend_Http_Client_Exception from tested method
-        */
-        public function getBoltpayOrder_withCachingDisabled_createsBoltOrder()
-        {
+         * @test
+         * that getBoltpayOrder always creates new Bolt order when caching is disabled
+         *
+         * @covers ::getBoltpayOrder
+         *
+         * @throws LocalizedException from tested method
+         * @throws Zend_Http_Client_Exception from tested method
+         */
+    public function getBoltpayOrder_withCachingDisabled_createsBoltOrder()
+    {
         list($currentMock, $cart, $boltOrder) = $this->getBoltpayOrderSetUp();
 
         $currentMock->expects(static::once())->method('getCartData')->with(false, '')->willReturn($cart);
         $currentMock->expects(static::once())->method('getSessionQuoteStoreId')->willReturn(self::STORE_ID);
         $currentMock->expects(static::once())->method('isBoltOrderCachingEnabled')->with(self::STORE_ID)
-            ->willReturn(false);
+        ->willReturn(false);
         $currentMock->expects(static::never())->method('getCartCacheIdentifier');
         $currentMock->expects(static::never())->method('loadFromCache');
         $currentMock->expects(static::never())->method('getImmutableQuoteIdFromBoltOrder');
@@ -2467,107 +2470,107 @@ ORDER
         $currentMock->expects(static::never())->method('deleteQuote');
         $currentMock->expects(static::once())->method('saveCartSession')->with(self::PARENT_QUOTE_ID);
         $currentMock->expects(static::once())->method('boltCreateOrder')->with($cart, self::STORE_ID)
-            ->willReturn($boltOrder);
+        ->willReturn($boltOrder);
         $currentMock->expects(static::never())->method('saveToCache');
         $result = $currentMock->getBoltpayOrder(false, '');
         static::assertEquals($result, $boltOrder);
-        }
+    }
 
         /**
-        * @test
-        * that getBoltpayOrder deactivates session quote if order for the cart already exists
-        *
-        * @covers ::getBoltpayOrder
-        *
-        * @throws LocalizedException from tested method
-        * @throws Zend_Http_Client_Exception from tested method
-        */
-        public function getBoltpayOrder_ifOrderExists_deactivatesSessionQuote()
-        {
+         * @test
+         * that getBoltpayOrder deactivates session quote if order for the cart already exists
+         *
+         * @covers ::getBoltpayOrder
+         *
+         * @throws LocalizedException from tested method
+         * @throws Zend_Http_Client_Exception from tested method
+         */
+    public function getBoltpayOrder_ifOrderExists_deactivatesSessionQuote()
+    {
         $this->currentMock = $this->getCurrentMock(
             [
-                'getCartData',
-                'doesOrderExist',
-                'deactivateSessionQuote',
-                'getSessionQuoteStoreId',
-                'isBoltOrderCachingEnabled',
+            'getCartData',
+            'doesOrderExist',
+            'deactivateSessionQuote',
+            'getSessionQuoteStoreId',
+            'isBoltOrderCachingEnabled',
             ]
         );
         $this->currentMock->expects(static::once())->method('getCartData')->with(false, '')
-            ->willReturn($this->quoteMock);
+        ->willReturn($this->quoteMock);
         $this->currentMock->expects(static::once())->method('doesOrderExist')->with($this->quoteMock)->willReturn(true);
         $this->currentMock->expects(static::once())->method('deactivateSessionQuote')->willReturnSelf();
         $this->currentMock->expects(static::never())->method('getSessionQuoteStoreId')->willReturn(static::STORE_ID);
         $this->currentMock->expects(static::never())->method('isBoltOrderCachingEnabled')->with(static::STORE_ID)
-            ->willReturn(false);
+        ->willReturn(false);
 
         static::assertNull($this->currentMock->getBoltpayOrder(false, ''));
-        }
+    }
 
         /**
-        * @test
-        * that deactivateSessionQuote deactivates session quote if it is active
-        *
-        * @covers ::deactivateSessionQuote
-        */
-        public function deactivateSessionQuote_ifQuoteIsActive_deactivatesQuote()
-        {
+         * @test
+         * that deactivateSessionQuote deactivates session quote if it is active
+         *
+         * @covers ::deactivateSessionQuote
+         */
+    public function deactivateSessionQuote_ifQuoteIsActive_deactivatesQuote()
+    {
 
-            $quote = TestUtils::createQuote(['is_active'=> true]);
-            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            $cartHelper->deactivateSessionQuote($quote);
-            self::assertFalse($quote->getIsActive());
-        }
-
-        /**
-        * @test
-        * that doesOrderExists return order from {@see \Bolt\Boltpay\Helper\Cart::getOrderByIncrementId}
-        * based on order increment id found in cart display id
-        *
-        * @covers ::doesOrderExist
-        */
-        public function doesOrderExist_withExistingOrder_basedOnGetOrderByIncrementId_returnsOrder()
-        {
-
-            $order = TestUtils::createDumpyOrder();
-            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            static::assertEquals($order->getId(), $boltHelperCart->doesOrderExist(
-                ['display_id' => $order->getIncrementId()],
-                null
-            )->getId());
-            TestUtils::cleanupSharedFixtures([$order]);
-        }
+        $quote = TestUtils::createQuote(['is_active'=> true]);
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $cartHelper->deactivateSessionQuote($quote);
+        self::assertFalse($quote->getIsActive());
+    }
 
         /**
-        * @test
-        * that doesOrderExists return order from {@see \Bolt\Boltpay\Helper\Cart::getOrderByQuoteId}
-        * based on session quote Id
-        *
-        * @covers ::doesOrderExist
-        */
-        public function doesOrderExist_withExistingOrder_basedOnGetOrderByQuoteId_returnsOrder()
-        {
+         * @test
+         * that doesOrderExists return order from {@see \Bolt\Boltpay\Helper\Cart::getOrderByIncrementId}
+         * based on order increment id found in cart display id
+         *
+         * @covers ::doesOrderExist
+         */
+    public function doesOrderExist_withExistingOrder_basedOnGetOrderByIncrementId_returnsOrder()
+    {
 
-            $quote = TestUtils::createQuote();
-            $order = TestUtils::createDumpyOrder(['quote_id' => $quote->getId()]);
-            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            static::assertEquals(
-                $order->getId(),
-                $boltHelperCart->doesOrderExist(['display_id' => self::ORDER_INCREMENT_ID], $quote)->getId()
-            );
-            TestUtils::cleanupSharedFixtures([$order]);
-        }
+        $order = TestUtils::createDumpyOrder();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        static::assertEquals($order->getId(), $boltHelperCart->doesOrderExist(
+            ['display_id' => $order->getIncrementId()],
+            null
+        )->getId());
+        TestUtils::cleanupSharedFixtures([$order]);
+    }
 
         /**
-        * @test
-        * that doesOrderExists returns false if order cannot be found based on order increment id found in cart display id and session quote id
-        * @see \Bolt\Boltpay\Helper\Cart::getOrderByIncrementId
-        * @see \Bolt\Boltpay\Helper\Cart::getOrderByQuoteId
-        *
-        * @covers ::doesOrderExist
-        */
-        public function doesOrderExist_getOrderByIncrementIdReturnsFalse_getOrderByQuoteIdReturnsFalse_returnsFalse()
-        {
+         * @test
+         * that doesOrderExists return order from {@see \Bolt\Boltpay\Helper\Cart::getOrderByQuoteId}
+         * based on session quote Id
+         *
+         * @covers ::doesOrderExist
+         */
+    public function doesOrderExist_withExistingOrder_basedOnGetOrderByQuoteId_returnsOrder()
+    {
+
+        $quote = TestUtils::createQuote();
+        $order = TestUtils::createDumpyOrder(['quote_id' => $quote->getId()]);
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        static::assertEquals(
+            $order->getId(),
+            $boltHelperCart->doesOrderExist(['display_id' => self::ORDER_INCREMENT_ID], $quote)->getId()
+        );
+        TestUtils::cleanupSharedFixtures([$order]);
+    }
+
+        /**
+         * @test
+         * that doesOrderExists returns false if order cannot be found based on order increment id found in cart display id and session quote id
+         * @see \Bolt\Boltpay\Helper\Cart::getOrderByIncrementId
+         * @see \Bolt\Boltpay\Helper\Cart::getOrderByQuoteId
+         *
+         * @covers ::doesOrderExist
+         */
+    public function doesOrderExist_getOrderByIncrementIdReturnsFalse_getOrderByQuoteIdReturnsFalse_returnsFalse()
+    {
 
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         static::assertFalse(
@@ -2576,49 +2579,49 @@ ORDER
                 $this->quoteMock
             )
         );
-        }
-
-        /**
-        * @test
-        */
-        public function getOrderByQuoteId()
-        {
-
-            $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
-            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            static::assertEquals($order->getId(), $boltHelperCart->getOrderByQuoteId(self::QUOTE_ID)->getId());
-            TestUtils::cleanupSharedFixtures([$order]);
-        }
+    }
 
         /**
          * @test
          */
-        public function getOrderById()
-        {
+    public function getOrderByQuoteId()
+    {
 
-            $order = TestUtils::createDumpyOrder();
-            $orderId = $order->getId();
-            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            static::assertEquals($order->getId(), $boltHelperCart->getOrderById($orderId)->getId());
-            TestUtils::cleanupSharedFixtures([$order]);
-        }
+        $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        static::assertEquals($order->getId(), $boltHelperCart->getOrderByQuoteId(self::QUOTE_ID)->getId());
+        TestUtils::cleanupSharedFixtures([$order]);
+    }
 
         /**
-        * @test
-        * that getBoltpayOrder creates new Bolt order when cache is enabled but current cart cannot be loaded
-        *
-        * @covers ::getBoltpayOrder
-        *
-        * @throws LocalizedException from tested method
-        * @throws Zend_Http_Client_Exception from tested method
-        */
-        public function getBoltpayOrder_whenCacheEnabledAndEmpty_createsBoltOrderAndSavesToCache()
-        {
+         * @test
+         */
+    public function getOrderById()
+    {
+
+        $order = TestUtils::createDumpyOrder();
+        $orderId = $order->getId();
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        static::assertEquals($order->getId(), $boltHelperCart->getOrderById($orderId)->getId());
+        TestUtils::cleanupSharedFixtures([$order]);
+    }
+
+        /**
+         * @test
+         * that getBoltpayOrder creates new Bolt order when cache is enabled but current cart cannot be loaded
+         *
+         * @covers ::getBoltpayOrder
+         *
+         * @throws LocalizedException from tested method
+         * @throws Zend_Http_Client_Exception from tested method
+         */
+    public function getBoltpayOrder_whenCacheEnabledAndEmpty_createsBoltOrderAndSavesToCache()
+    {
         list($currentMock, $cart, $boltOrder) = $this->getBoltpayOrderSetUp();
         $currentMock->expects(static::once())->method('getCartData')->with(false, '')->willReturn($cart);
         $currentMock->expects(static::once())->method('getSessionQuoteStoreId')->willReturn(self::STORE_ID);
         $currentMock->expects(static::once())->method('isBoltOrderCachingEnabled')->with(self::STORE_ID)
-            ->willReturn(true);
+        ->willReturn(true);
         $currentMock->expects(static::once())->method('getCartCacheIdentifier')->willReturn(self::CACHE_IDENTIFIER);
         $currentMock->expects(static::once())->method('loadFromCache')->with(self::CACHE_IDENTIFIER)->willReturn(false);
         $currentMock->expects(static::never())->method('getImmutableQuoteIdFromBoltOrder');
@@ -2627,7 +2630,7 @@ ORDER
         $currentMock->expects(static::never())->method('deleteQuote');
         $currentMock->expects(static::once())->method('saveCartSession')->with(self::PARENT_QUOTE_ID);
         $currentMock->expects(static::once())->method('boltCreateOrder')->with($cart, self::STORE_ID)
-            ->willReturn($boltOrder);
+        ->willReturn($boltOrder);
         $currentMock->expects(static::once())->method('saveToCache')->with(
             $boltOrder,
             self::CACHE_IDENTIFIER,
@@ -2636,32 +2639,32 @@ ORDER
         );
         $result = $currentMock->getBoltpayOrder(false, '');
         static::assertEquals($result, $boltOrder);
-        }
+    }
 
         /**
-        * @test
-        * that getBoltpayOrder returns Bolt order from cache if it exists in cache and related immutable quote is available
-        *
-        * @covers ::getBoltpayOrder
-        *
-        * @throws LocalizedException from tested method
-        * @throws Zend_Http_Client_Exception from tested method
-        */
-        public function getBoltpayOrder_whenInCacheAndQuoteIsAvailable_returnsFromCache()
-        {
+         * @test
+         * that getBoltpayOrder returns Bolt order from cache if it exists in cache and related immutable quote is available
+         *
+         * @covers ::getBoltpayOrder
+         *
+         * @throws LocalizedException from tested method
+         * @throws Zend_Http_Client_Exception from tested method
+         */
+    public function getBoltpayOrder_whenInCacheAndQuoteIsAvailable_returnsFromCache()
+    {
         list($currentMock, $cart, $boltOrder) = $this->getBoltpayOrderSetUp();
         $immutableQuote = $this->getQuoteMock($this->getAddressMock(), $this->getAddressMock());
         $currentMock->expects(static::once())->method('getCartData')->with(false, '')->willReturn($cart);
         $currentMock->expects(static::once())->method('getSessionQuoteStoreId')->willReturn(self::STORE_ID);
         $currentMock->expects(static::once())->method('isBoltOrderCachingEnabled')
-            ->with(self::STORE_ID)->willReturn(true);
+        ->with(self::STORE_ID)->willReturn(true);
         $currentMock->expects(static::once())->method('getCartCacheIdentifier')->willReturn(self::CACHE_IDENTIFIER);
         $currentMock->expects(static::once())->method('loadFromCache')->with(self::CACHE_IDENTIFIER)
-            ->willReturn($boltOrder);
+        ->willReturn($boltOrder);
         $currentMock->expects(static::once())->method('getImmutableQuoteIdFromBoltOrder')->with($boltOrder->getResponse())
-            ->willReturn(self::IMMUTABLE_QUOTE_ID);
+        ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $currentMock->expects(static::once())->method('isQuoteAvailable')->with(self::IMMUTABLE_QUOTE_ID)
-            ->willReturn(true);
+        ->willReturn(true);
         $currentMock->expects(static::exactly(2))->method('getLastImmutableQuote')->willReturn($immutableQuote);
         $currentMock->expects(static::once())->method('updateQuoteTimestamp')->with(self::IMMUTABLE_QUOTE_ID);
         $currentMock->expects(static::once())->method('clearExternalData')->with($immutableQuote);
@@ -2672,29 +2675,29 @@ ORDER
         $result = $currentMock->getBoltpayOrder(false, '');
 
         static::assertEquals($result, $boltOrder);
-        }
+    }
 
         /**
-        * @test
-        * that getBoltpayOrder returns Bolt order from cache if it exists in cache and related immutable quote is available
-        *
-        * @covers ::getBoltpayOrder
-        *
-        * @throws LocalizedException from tested method
-        * @throws Zend_Http_Client_Exception from tested method
-        */
-        public function getBoltpayOrder_whenInCacheAndQuoteIsNotAvailable_createsNewOrder()
-        {
+         * @test
+         * that getBoltpayOrder returns Bolt order from cache if it exists in cache and related immutable quote is available
+         *
+         * @covers ::getBoltpayOrder
+         *
+         * @throws LocalizedException from tested method
+         * @throws Zend_Http_Client_Exception from tested method
+         */
+    public function getBoltpayOrder_whenInCacheAndQuoteIsNotAvailable_createsNewOrder()
+    {
         list($currentMock, $cart, $boltOrder) = $this->getBoltpayOrderSetUp();
         $currentMock->expects(static::once())->method('getCartData')->with(false, '')->willReturn($cart);
         $currentMock->expects(static::once())->method('getSessionQuoteStoreId')->willReturn(self::STORE_ID);
         $currentMock->expects(static::once())->method('isBoltOrderCachingEnabled')->with(self::STORE_ID)
-            ->willReturn(true);
+        ->willReturn(true);
         $currentMock->expects(static::once())->method('getCartCacheIdentifier')->willReturn(self::CACHE_IDENTIFIER);
         $currentMock->expects(static::once())->method('loadFromCache')->with(self::CACHE_IDENTIFIER)
-            ->willReturn($boltOrder);
+        ->willReturn($boltOrder);
         $currentMock->expects(static::once())->method('getImmutableQuoteIdFromBoltOrder')->with($boltOrder->getResponse())
-            ->willReturn(self::IMMUTABLE_QUOTE_ID);
+        ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $currentMock->expects(static::once())->method('isQuoteAvailable')->with(self::IMMUTABLE_QUOTE_ID)->willReturn(
             false
         );
@@ -2702,105 +2705,106 @@ ORDER
         $currentMock->expects(static::never())->method('deleteQuote');
         $currentMock->expects(static::once())->method('saveCartSession')->with(self::PARENT_QUOTE_ID);
         $currentMock->expects(static::once())->method('boltCreateOrder')->with($cart, self::STORE_ID)
-            ->willReturn($boltOrder);
+        ->willReturn($boltOrder);
         $currentMock->expects(static::once())->method('saveToCache')
-            ->with(
-                $boltOrder,
-                self::CACHE_IDENTIFIER,
-                [BoltHelperCart::BOLT_ORDER_TAG, BoltHelperCart::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID],
-                3600
-            );
+        ->with(
+            $boltOrder,
+            self::CACHE_IDENTIFIER,
+            [BoltHelperCart::BOLT_ORDER_TAG, BoltHelperCart::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID],
+            3600
+        );
         $result = $currentMock->getBoltpayOrder(false, '');
         static::assertEquals($result, $boltOrder);
-        }
+    }
 
         /**
-        * @test
-        * that getBoltpayOrder doesn't create Bolt order
-        * if {@see \Bolt\Boltpay\Helper\Cart::getCartData} returns empty array
-        *
-        * @covers ::getBoltpayOrder
-        *
-        * @throws LocalizedException from tested method
-        * @throws Zend_Http_Client_Exception from tested method
-        */
-        public function getBoltpayOrder_withEmptyCartData_returnsWithoutCreatingOrder()
-        {
+         * @test
+         * that getBoltpayOrder doesn't create Bolt order
+         * if {@see \Bolt\Boltpay\Helper\Cart::getCartData} returns empty array
+         *
+         * @covers ::getBoltpayOrder
+         *
+         * @throws LocalizedException from tested method
+         * @throws Zend_Http_Client_Exception from tested method
+         */
+    public function getBoltpayOrder_withEmptyCartData_returnsWithoutCreatingOrder()
+    {
         $currentMock = $this->getCurrentMock(['getCartData', 'boltCreateOrder']);
         $currentMock->expects(static::once())->method('getCartData')->willReturn([]);
         $currentMock->expects(static::never())->method('boltCreateOrder')->willReturn(null);
         static::assertNull($currentMock->getBoltpayOrder(false, ''));
-        }
+    }
 
         /**
-        * @test
-        * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
-        * @covers ::getCartData
-        */
-        public function getCartData_inMultistepWithNoDiscount_returnsCartData(
-            $addSessionIdToMetadataValue,
-            $metadataSessionIdAssertMethod
-        ) {
+         * @test
+         * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
+         * @covers ::getCartData
+         */
+    public function getCartData_inMultistepWithNoDiscount_returnsCartData(
+        $addSessionIdToMetadataValue,
+        $metadataSessionIdAssertMethod
+    ) {
 
-            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            $quote = TestUtils::createQuote();
-            $product = TestUtils::getSimpleProduct();
-            $this->objectsToClean[] = $product;
-            $quote->addProduct($product,1);
-            TestUtils::setQuoteToSession($quote);
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote();
+        $product = TestUtils::getSimpleProduct();
+        $this->objectsToClean[] = $product;
+        $quote->addProduct($product, 1);
+        TestUtils::setQuoteToSession($quote);
 
-            $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(
-                Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA,
-                $addSessionIdToMetadataValue
-            );
-            $result = $boltHelperCart->getCartData(false, "");
-            TestUtils::cleanupFeatureSwitch($sessionToMetadataSwitch);
+        $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(
+            Definitions::M2_ADD_SESSION_ID_TO_CART_METADATA,
+            $addSessionIdToMetadataValue
+        );
+        $result = $boltHelperCart->getCartData(false, "");
+        TestUtils::cleanupFeatureSwitch($sessionToMetadataSwitch);
 
-            // check that created immutuble quote has correct parent quote id
-            $immutable_quote_id = $result['metadata']['immutable_quote_id'];
-            $immutable_quote = TestUtils::getQuoteById($immutable_quote_id);
-            static::assertEquals($immutable_quote->getBoltParentQuoteId(), $quote->getId());
+        // check that created immutuble quote has correct parent quote id
+        $immutable_quote_id = $result['metadata']['immutable_quote_id'];
+        $immutable_quote = TestUtils::getQuoteById($immutable_quote_id);
+        static::assertEquals($immutable_quote->getBoltParentQuoteId(), $quote->getId());
 
-            // check image url
-            static::assertMatchesRegularExpression(
-                "|http://localhost/(pub\/)?static/version\d+/frontend/Magento/luma/en_US/Magento_Catalog/images/product/placeholder/small_image.jpg|",
-                $result['items'][0]['image_url']
-            );
-            unset($result['items'][0]['image_url']);
+        // check image url
+        static::assertMatchesRegularExpression(
+            "|http://localhost/(pub\/)?static/version\d+/frontend/Magento/luma/en_US/Magento_Catalog/images/product/placeholder/small_image.jpg|",
+            $result['items'][0]['image_url']
+        );
+        unset($result['items'][0]['image_url']);
 
-            // check that session id is saved in metadata
-            $encrypted_session_id = $result['metadata']['encrypted_session_id'] ?? null;
-            static::$metadataSessionIdAssertMethod($encrypted_session_id);
-            unset($result['metadata']['encrypted_session_id']);
+        // check that session id is saved in metadata
+        $encrypted_session_id = $result['metadata']['encrypted_session_id'] ?? null;
+        static::$metadataSessionIdAssertMethod($encrypted_session_id);
+        unset($result['metadata']['encrypted_session_id']);
 
-            $expected = [
-                'order_reference' => $quote->getId(),
-                'display_id'      => '',
-                'currency'        => self::CURRENCY_CODE,
-                'items'           => [
-                    [
-                        'reference'    => $product->getId(),
-                        'name'         => 'Test Product',
-                        'total_amount' => 10000,
-                        'unit_price'   => 10000,
-                        'quantity'     => 1,
-                        'sku'          => $product->getSku(),
-                        'type'         => 'physical',
-                        'description'  => 'Product Description',
-                    ]
-                ],
-                'discounts'       => [],
-                'total_amount'    => 10000,
-                'tax_amount'      => 0,
-                'metadata'        => [
-                    'immutable_quote_id' => $immutable_quote_id,
-                ],
-            ];
+        $expected = [
+            'order_reference' => $quote->getId(),
+            'display_id'      => '',
+            'currency'        => self::CURRENCY_CODE,
+            'items'           => [
+                [
+                    'reference'    => $product->getId(),
+                    'name'         => 'Test Product',
+                    'total_amount' => 10000,
+                    'unit_price'   => 10000,
+                    'quantity'     => 1,
+                    'sku'          => $product->getSku(),
+                    'type'         => 'physical',
+                    'description'  => 'Product Description',
+                ]
+            ],
+            'discounts'       => [],
+            'total_amount'    => 10000,
+            'tax_amount'      => 0,
+            'metadata'        => [
+                'immutable_quote_id' => $immutable_quote_id,
+            ],
+        ];
 
-            static::assertEquals($expected, $result);
-        }
+        static::assertEquals($expected, $result);
+    }
 
-    public function dataProvider_sessionIdToCartMetadataSwitch() {
+    public function dataProvider_sessionIdToCartMetadataSwitch()
+    {
         return [
             [true, 'assertNotEmpty'],
             [false, 'assertEmpty'],
@@ -2808,52 +2812,52 @@ ORDER
     }
 
         /**
-        * @test
-        * that getCartData returns empty array if parent quote has no items and immutable quote is not provided
-        *
-        * @covers ::getCartData
-        *
-        * @throws Exception from tested method
-        */
-        public function getCartData_withParentQuoteEmptyAndNoImmutableQuote_returnsEmptyArray()
-        {
+         * @test
+         * that getCartData returns empty array if parent quote has no items and immutable quote is not provided
+         *
+         * @covers ::getCartData
+         *
+         * @throws Exception from tested method
+         */
+    public function getCartData_withParentQuoteEmptyAndNoImmutableQuote_returnsEmptyArray()
+    {
 
-            TestUtils::setQuoteToSession(null);
-            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            static::assertEquals([], $boltHelperCart->getCartData(false, '', null));
-        }
-
-        /**
-        * @test
-        * that getCartData returns empty array if immutable quote has no items
-        *
-        * @covers ::getCartData
-        *
-        * @throws Exception from tested method
-        */
-        public function getCartData_withEmptyImmutableQuote_returnsEmptyArray()
-        {
-
-            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            $quote = Bootstrap::getObjectManager()->create(Quote::class);
-            TestUtils::setQuoteToSession($quote);
-            $quote->setQuoteCurrencyCode("USD");
-            $quote->save();
-            static::assertEquals([], $boltHelperCart->getCartData(false, '', null));
-        }
+        TestUtils::setQuoteToSession(null);
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        static::assertEquals([], $boltHelperCart->getCartData(false, '', null));
+    }
 
         /**
-        * @test
-        * that getCartData returns expected cart data when checkout type is payment and order payload is valid
-        *
-        * @covers ::getCartData
-        * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
-        * @throws Exception from tested method
-        */
-        public function getCartData_whenPaymentOnlyAndHasOrderPayload_returnsCartData(
-            $addSessionIdToMetadataValue,
-            $metadataSessionIdAssertMethod
-        ) {
+         * @test
+         * that getCartData returns empty array if immutable quote has no items
+         *
+         * @covers ::getCartData
+         *
+         * @throws Exception from tested method
+         */
+    public function getCartData_withEmptyImmutableQuote_returnsEmptyArray()
+    {
+
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+        TestUtils::setQuoteToSession($quote);
+        $quote->setQuoteCurrencyCode("USD");
+        $quote->save();
+        static::assertEquals([], $boltHelperCart->getCartData(false, '', null));
+    }
+
+        /**
+         * @test
+         * that getCartData returns expected cart data when checkout type is payment and order payload is valid
+         *
+         * @covers ::getCartData
+         * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
+         * @throws Exception from tested method
+         */
+    public function getCartData_whenPaymentOnlyAndHasOrderPayload_returnsCartData(
+        $addSessionIdToMetadataValue,
+        $metadataSessionIdAssertMethod
+    ) {
 
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -2861,7 +2865,7 @@ ORDER
 
         $product = TestUtils::getSimpleProduct();
         $this->objectsToClean[] = $product;
-        $quote->addProduct($product,1);
+        $quote->addProduct($product, 1);
 
         TestUtils::setAddressToQuote($this->testAddressData, $quote, 'shipping');
         TestUtils::setAddressToQuote($this->testAddressData, $quote, 'billing');
@@ -2879,27 +2883,28 @@ ORDER
             true,
             json_encode(
                 [
-                    'billingAddress' => [
-                        'firstname'    => "IntegrationBolt",
-                        'lastname'     => "BoltTest",
-                        'company'      => "Bolt",
-                        'telephone'    => "132 231 1234",
-                        'street'       => ["228 7th Avenue", "228 7th Avenue"],
-                        'city'         => "New York",
-                        'region'       => "New York",
-                        'country'      => "United States",
-                        'country_code' => "US",
-                        'email'        => self::EMAIL_ADDRESS,
-                        'postal_code'  => "10011",
-                    ]
+                'billingAddress' => [
+                    'firstname'    => "IntegrationBolt",
+                    'lastname'     => "BoltTest",
+                    'company'      => "Bolt",
+                    'telephone'    => "132 231 1234",
+                    'street'       => ["228 7th Avenue", "228 7th Avenue"],
+                    'city'         => "New York",
+                    'region'       => "New York",
+                    'country'      => "United States",
+                    'country_code' => "US",
+                    'email'        => self::EMAIL_ADDRESS,
+                    'postal_code'  => "10011",
+                ]
                 ]
             )
         );
         TestUtils::cleanupFeatureSwitch($sessionToMetadataSwitch);
 
         // check image url
-        static::assertMatchesRegularExpression("|http://localhost/(pub\/)?static/version\d+/frontend/Magento/luma/en_US/Magento_Catalog/images/product/placeholder/small_image.jpg|",
-                $result['items'][0]['image_url']
+        static::assertMatchesRegularExpression(
+            "|http://localhost/(pub\/)?static/version\d+/frontend/Magento/luma/en_US/Magento_Catalog/images/product/placeholder/small_image.jpg|",
+            $result['items'][0]['image_url']
         );
         unset($result['items'][0]['image_url']);
 
@@ -2910,106 +2915,105 @@ ORDER
 
         static::assertEquals(
             [
-                'order_reference' => $quote->getId(),
-                'display_id'      => '',
-                'currency'        => self::CURRENCY_CODE,
-                'items'           =>  [
-                    [
-                        'reference'    => $product->getId(),
-                        'name'         => 'Test Product',
-                        'total_amount' => 10000.0,
-                        'unit_price'   => 10000,
-                        'quantity'     => 1.0,
-                        'sku'          => $product->getSku(),
-                        'type'         => 'physical',
-                        'description'  => 'Product Description',
-                    ]
-                ],
-                'discounts' => [],
-                'total_amount'    => 10500.0,
-                'tax_amount'      => 0,
-                'shipments'       => [
-                    [
-                        'cost'             => 500,
-                        'tax_amount'       => 0,
-                        'shipping_address' => [
-                            'first_name'      => 'IntegrationBolt',
-                            'last_name'       => 'BoltTest',
-                            'company'         => '',
-                            'phone'           => '132 231 1234',
-                            'street_address1' => '228 7th Avenue',
-                            'street_address2' => '228 7th Avenue 2',
-                            'locality'        => 'New York',
-                            'region'          => 'New York',
-                            'postal_code'     => '10011',
-                            'country_code'    => 'US',
-                            'email'           => self::EMAIL_ADDRESS,
-                        ],
-                        'service'          => 'Flat Rate - Fixed',
-                        'reference'        => 'flatrate_flatrate',
-                    ]
-                ],
-                'metadata'        => [
-                    'immutable_quote_id' => $quote->getId() + 1,
-                ],
+            'order_reference' => $quote->getId(),
+            'display_id'      => '',
+            'currency'        => self::CURRENCY_CODE,
+            'items'           =>  [
+                [
+                    'reference'    => $product->getId(),
+                    'name'         => 'Test Product',
+                    'total_amount' => 10000.0,
+                    'unit_price'   => 10000,
+                    'quantity'     => 1.0,
+                    'sku'          => $product->getSku(),
+                    'type'         => 'physical',
+                    'description'  => 'Product Description',
+                ]
+            ],
+            'discounts' => [],
+            'total_amount'    => 10500.0,
+            'tax_amount'      => 0,
+            'shipments'       => [
+                [
+                    'cost'             => 500,
+                    'tax_amount'       => 0,
+                    'shipping_address' => [
+                        'first_name'      => 'IntegrationBolt',
+                        'last_name'       => 'BoltTest',
+                        'company'         => '',
+                        'phone'           => '132 231 1234',
+                        'street_address1' => '228 7th Avenue',
+                        'street_address2' => '228 7th Avenue 2',
+                        'locality'        => 'New York',
+                        'region'          => 'New York',
+                        'postal_code'     => '10011',
+                        'country_code'    => 'US',
+                        'email'           => self::EMAIL_ADDRESS,
+                    ],
+                    'service'          => 'Flat Rate - Fixed',
+                    'reference'        => 'flatrate_flatrate',
+                ]
+            ],
+            'metadata'        => [
+                'immutable_quote_id' => $quote->getId() + 1,
+            ],
             ],
             $result
         );
-        }
+    }
 
         /**
-        * @test
-        * that getCartData returns empty array and notifies error when billing address data is insufficient
-        * for virtual quote
-        *
-        * @covers ::getCartData
-        *
-        * @throws Exception from tested method
-        */
-        public function getCartData_withVirtualQuoteAndInsufficientBillingAddressData_notifiesErrorAndReturnsEmptyArray()
-        {
+         * @test
+         * that getCartData returns empty array and notifies error when billing address data is insufficient
+         * for virtual quote
+         *
+         * @covers ::getCartData
+         *
+         * @throws Exception from tested method
+         */
+    public function getCartData_withVirtualQuoteAndInsufficientBillingAddressData_notifiesErrorAndReturnsEmptyArray()
+    {
 
-            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            $quote = Bootstrap::getObjectManager()->create(Quote::class);
-            $quote->setQuoteCurrencyCode("USD");
-            $product = TestUtils::createVirtualProduct();
-            $this->objectsToClean[] = $product;
-            $quote->addProduct($product,1);
-            TestUtils::setQuoteToSession($quote);
-            $result = $boltHelperCart->getCartData(true, json_encode(
-                [
-                    'billingAddress' => [
-                        'firstname'    => "IntegrationBolt",
-                        'lastname'     => "BoltTest",
-                        'company'      => "Bolt",
-                        'telephone'    => "132 231 1234",
-                        'street'       => ["228 7th Avenue", "228 7th Avenue"],
-                        'city'         => "New York",
-                        'region'       => "New York",
-                        'country'      => "United States",
-                        'country_code' => "US",
-                        'email'        => self::EMAIL_ADDRESS,
-                        'postal_code'  => "10011",
-                    ]
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+        $quote->setQuoteCurrencyCode("USD");
+        $product = TestUtils::createVirtualProduct();
+        $this->objectsToClean[] = $product;
+        $quote->addProduct($product, 1);
+        TestUtils::setQuoteToSession($quote);
+        $result = $boltHelperCart->getCartData(true, json_encode(
+            [
+                'billingAddress' => [
+                    'firstname'    => "IntegrationBolt",
+                    'lastname'     => "BoltTest",
+                    'company'      => "Bolt",
+                    'telephone'    => "132 231 1234",
+                    'street'       => ["228 7th Avenue", "228 7th Avenue"],
+                    'city'         => "New York",
+                    'region'       => "New York",
+                    'country'      => "United States",
+                    'country_code' => "US",
+                    'email'        => self::EMAIL_ADDRESS,
+                    'postal_code'  => "10011",
                 ]
-                )
-            );
+            ]
+        ));
 
-            static::assertEquals([], $result);
-        }
+        static::assertEquals([], $result);
+    }
 
         /**
-        * @test
-        * that getCartData returns expected cart data when checkout type is payment and quote is virtual
-        *
-        * @covers ::getCartData
-        * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
-        * @throws Exception from tested method
-        */
-        public function getCartData_whenPaymentOnlyAndVirtualQuote_returnsCartData(
-            $addSessionIdToMetadataValue,
-            $metadataSessionIdAssertMethod
-        ) {
+         * @test
+         * that getCartData returns expected cart data when checkout type is payment and quote is virtual
+         *
+         * @covers ::getCartData
+         * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
+         * @throws Exception from tested method
+         */
+    public function getCartData_whenPaymentOnlyAndVirtualQuote_returnsCartData(
+        $addSessionIdToMetadataValue,
+        $metadataSessionIdAssertMethod
+    ) {
 
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -3017,7 +3021,7 @@ ORDER
 
         $product = TestUtils::createVirtualProduct();
         $this->objectsToClean[] = $product;
-        $quote->addProduct($product,1);
+        $quote->addProduct($product, 1);
         $quote->getBillingAddress()->addData($this->testAddressData);
         $quote->getShippingAddress()->addData($this->testAddressData);
         $quote->save();
@@ -3032,19 +3036,19 @@ ORDER
             true,
             json_encode(
                 [
-                    'billingAddress' => [
-                        'firstname' => "IntegrationBolt",
-                        'lastname'  => "BoltTest",
-                        'company'   => "Bolt",
-                        'telephone' => "132 231 1234",
-                        'street'    => ["228 7th Avenue", "228 7th Avenue"],
-                        'city'      => "New York",
-                        'region'    => "New York",
-                        'country'   => "United States",
-                        'countryId' => "US",
-                        'email'     => self::EMAIL_ADDRESS,
-                        'postcode'  => "10011",
-                    ]
+                'billingAddress' => [
+                    'firstname' => "IntegrationBolt",
+                    'lastname'  => "BoltTest",
+                    'company'   => "Bolt",
+                    'telephone' => "132 231 1234",
+                    'street'    => ["228 7th Avenue", "228 7th Avenue"],
+                    'city'      => "New York",
+                    'region'    => "New York",
+                    'country'   => "United States",
+                    'countryId' => "US",
+                    'email'     => self::EMAIL_ADDRESS,
+                    'postcode'  => "10011",
+                ]
                 ]
             )
         );
@@ -3058,106 +3062,106 @@ ORDER
 
         static::assertEquals(
             [
-                'order_reference' => $quote->getId(),
-                'display_id'      => '',
-                'currency'        => 'USD',
-                'items'           => [
-                    [
-                        'reference'    => $product->getId(),
-                        'name'         => 'Test Virtual Product',
-                        'total_amount' => 10000.0,
-                        'unit_price'   => 10000,
-                        'quantity'     => 1.0,
-                        'sku'          => $product->getSku(),
-                        'type'         => 'digital',
-                        'description'  => 'Product Description',
-                    ]
+            'order_reference' => $quote->getId(),
+            'display_id'      => '',
+            'currency'        => 'USD',
+            'items'           => [
+                [
+                    'reference'    => $product->getId(),
+                    'name'         => 'Test Virtual Product',
+                    'total_amount' => 10000.0,
+                    'unit_price'   => 10000,
+                    'quantity'     => 1.0,
+                    'sku'          => $product->getSku(),
+                    'type'         => 'digital',
+                    'description'  => 'Product Description',
+                ]
+            ],
+            'billing_address' =>
+                [
+                    'first_name'      => 'IntegrationBolt',
+                    'last_name'       => 'BoltTest',
+                    'company'         => 'Bolt',
+                    'phone'           => '132 231 1234',
+                    'street_address1' => '228 7th Avenue',
+                    'street_address2' => '228 7th Avenue',
+                    'locality'        => 'New York',
+                    'region'          => 'New York',
+                    'postal_code'     => '10011',
+                    'country_code'    => 'US',
+                    'email'           => self::EMAIL_ADDRESS,
                 ],
-                'billing_address' =>
-                    [
-                        'first_name'      => 'IntegrationBolt',
-                        'last_name'       => 'BoltTest',
-                        'company'         => 'Bolt',
-                        'phone'           => '132 231 1234',
-                        'street_address1' => '228 7th Avenue',
-                        'street_address2' => '228 7th Avenue',
-                        'locality'        => 'New York',
-                        'region'          => 'New York',
-                        'postal_code'     => '10011',
-                        'country_code'    => 'US',
-                        'email'           => self::EMAIL_ADDRESS,
-                    ],
-                'discounts'       => [],
-                'total_amount'    => 10000.0,
-                'tax_amount'      => 0,
-                'metadata'        =>
-                    [
-                        'immutable_quote_id' => $quote->getId() + 1,
-                    ]
+            'discounts'       => [],
+            'total_amount'    => 10000.0,
+            'tax_amount'      => 0,
+            'metadata'        =>
+                [
+                    'immutable_quote_id' => $quote->getId() + 1,
+                ]
             ],
             $result
         );
-        }
+    }
 
         /**
-        * @test
-        * that getCartData populates registry rule_data when executed from backend
-        *
-        * @covers ::getCartData
-        */
-        public function getCartData_fromBackendAndCustomerGroupIdNotInQuote_initializesRuleData()
-        {
+         * @test
+         * that getCartData populates registry rule_data when executed from backend
+         *
+         * @covers ::getCartData
+         */
+    public function getCartData_fromBackendAndCustomerGroupIdNotInQuote_initializesRuleData()
+    {
         $this->checkoutSession = $this->createPartialMock(
             \Magento\Backend\Model\Session\Quote::class,
             ['getStore', 'getCustomerGroupId', 'getQuote', 'getOrderId']
         );
         $testItem = [
-            'reference'    => self::PRODUCT_ID,
-            'name'         => 'Test Product',
-            'total_amount' => 12345,
-            'unit_price'   => 12345,
-            'quantity'     => 1.0,
-            'sku'          => self::PRODUCT_SKU,
-            'type'         => 'physical',
-            'description'  => '',
+        'reference'    => self::PRODUCT_ID,
+        'name'         => 'Test Product',
+        'total_amount' => 12345,
+        'unit_price'   => 12345,
+        'quantity'     => 1.0,
+        'sku'          => self::PRODUCT_SKU,
+        'type'         => 'physical',
+        'description'  => '',
         ];
         $getCartItemsResult = [[$testItem], 12345, 0];
         $collectDiscountsResult = [[], 12345, 0];
         $currentMock = $this->getCurrentMock(
             [
-                'setLastImmutableQuote',
-                'getCartItems',
-                'getQuoteById',
-                'collectDiscounts',
-                'createImmutableQuote',
-                'getCalculationAddress'
+            'setLastImmutableQuote',
+            'getCartItems',
+            'getQuoteById',
+            'collectDiscounts',
+            'createImmutableQuote',
+            'getCalculationAddress'
             ]
         );
         $this->setUpAddressMock($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
-            ->willReturn($this->immutableQuoteMock);
+        ->willReturn($this->immutableQuoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
-            ->willReturn($this->quoteBillingAddress);
+        ->willReturn($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
         $currentMock->expects(static::once())->method('collectDiscounts')->willReturn($collectDiscountsResult);
         $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
         $this->quoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->quoteMock->expects(static::any())->method('getShippingAddress')
-            ->willReturn($this->quoteShippingAddress);
+        ->willReturn($this->quoteShippingAddress);
         $this->immutableQuoteMock->expects(static::once())->method('isVirtual')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
-            ->willReturn($this->quoteBillingAddress);
+        ->willReturn($this->quoteBillingAddress);
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
-            ->willReturn($this->getAddressMock());
+        ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
-            ->willReturn(self::PARENT_QUOTE_ID);
+        ->willReturn(self::PARENT_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
-            ->willReturn(self::IMMUTABLE_QUOTE_ID);
+        ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
-            ->willReturn(self::CURRENCY_CODE);
+        ->willReturn(self::CURRENCY_CODE);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getCustomerGroupId')
-            ->willReturn(null);
+        ->willReturn(null);
 
         $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
         $storeMock->method('getId')->willReturn(self::STORE_ID);
@@ -3165,15 +3169,15 @@ ORDER
 
         $this->checkoutSession->method('getStore')->willReturn($storeMock);
         $this->checkoutSession->method('getCustomerGroupId')
-            ->willReturn(\Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID);
+        ->willReturn(\Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID);
         $this->coreRegistry->expects(static::once())->method('unregister')->with('rule_data');
         $this->coreRegistry->expects(static::once())->method('register')->with(
             'rule_data',
             new DataObject(
                 [
-                    'store_id'          => self::STORE_ID,
-                    'website_id'        => 1,
-                    'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID
+                'store_id'          => self::STORE_ID,
+                'website_id'        => 1,
+                'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID
                 ]
             )
         );
@@ -3182,23 +3186,23 @@ ORDER
             true,
             json_encode(
                 [
-                    'billingAddress' => [
-                        'firstname' => "IntegrationBolt",
-                        'lastname'  => "BoltTest",
-                        'company'   => "Bolt",
-                        'telephone' => "132 231 1234",
-                        'street'    => ["228 7th Avenue", "228 7th Avenue"],
-                        'city'      => "New York",
-                        'region'    => "New York",
-                        'country'   => "United States",
-                        'countryId' => "US",
-                        'email'     => self::EMAIL_ADDRESS,
-                        'postcode'  => "10011",
-                    ]
+                'billingAddress' => [
+                    'firstname' => "IntegrationBolt",
+                    'lastname'  => "BoltTest",
+                    'company'   => "Bolt",
+                    'telephone' => "132 231 1234",
+                    'street'    => ["228 7th Avenue", "228 7th Avenue"],
+                    'city'      => "New York",
+                    'region'    => "New York",
+                    'country'   => "United States",
+                    'countryId' => "US",
+                    'email'     => self::EMAIL_ADDRESS,
+                    'postcode'  => "10011",
+                ]
                 ]
             )
         );
-        }
+    }
 
     /**
      * @test
@@ -3295,64 +3299,64 @@ ORDER
     }
 
         /**
-        * @test
-        * that getCartData populates registry rule_data when executed from backend
-        *
-        * @covers ::getCartData
-        */
-        public function getCartData_fromBackendAndCustomerGroupIdInQuote_initializesRuleData()
-        {
+         * @test
+         * that getCartData populates registry rule_data when executed from backend
+         *
+         * @covers ::getCartData
+         */
+    public function getCartData_fromBackendAndCustomerGroupIdInQuote_initializesRuleData()
+    {
         $this->checkoutSession = $this->createPartialMock(
             \Magento\Backend\Model\Session\Quote::class,
             ['getStore', 'getCustomerGroupId', 'getQuote', 'getOrderId']
         );
         $testItem = [
-            'reference'    => self::PRODUCT_ID,
-            'name'         => 'Test Product',
-            'total_amount' => 12345,
-            'unit_price'   => 12345,
-            'quantity'     => 1.0,
-            'sku'          => self::PRODUCT_SKU,
-            'type'         => 'physical',
-            'description'  => '',
+        'reference'    => self::PRODUCT_ID,
+        'name'         => 'Test Product',
+        'total_amount' => 12345,
+        'unit_price'   => 12345,
+        'quantity'     => 1.0,
+        'sku'          => self::PRODUCT_SKU,
+        'type'         => 'physical',
+        'description'  => '',
         ];
         $getCartItemsResult = [[$testItem], 12345, 0];
         $collectDiscountsResult = [[], 12345, 0];
         $currentMock = $this->getCurrentMock(
             [
-                'setLastImmutableQuote',
-                'getCartItems',
-                'getQuoteById',
-                'collectDiscounts',
-                'createImmutableQuote',
-                'getCalculationAddress'
+            'setLastImmutableQuote',
+            'getCartItems',
+            'getQuoteById',
+            'collectDiscounts',
+            'createImmutableQuote',
+            'getCalculationAddress'
             ]
         );
         $this->setUpAddressMock($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
-            ->willReturn($this->immutableQuoteMock);
+        ->willReturn($this->immutableQuoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
-            ->willReturn($this->quoteBillingAddress);
+        ->willReturn($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
         $currentMock->expects(static::once())->method('collectDiscounts')->willReturn($collectDiscountsResult);
         $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
         $this->quoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->quoteMock->expects(static::any())->method('getShippingAddress')
-            ->willReturn($this->quoteShippingAddress);
+        ->willReturn($this->quoteShippingAddress);
         $this->immutableQuoteMock->expects(static::once())->method('isVirtual')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
-            ->willReturn($this->quoteBillingAddress);
+        ->willReturn($this->quoteBillingAddress);
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
-            ->willReturn($this->getAddressMock());
+        ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
-            ->willReturn(self::PARENT_QUOTE_ID);
+        ->willReturn(self::PARENT_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
-            ->willReturn(self::IMMUTABLE_QUOTE_ID);
+        ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
-            ->willReturn(self::CURRENCY_CODE);
+        ->willReturn(self::CURRENCY_CODE);
         $this->immutableQuoteMock->expects(static::exactly(2))->method('getCustomerGroupId')
-            ->willReturn(\Magento\Customer\Api\Data\GroupInterface::CUST_GROUP_ALL);
+        ->willReturn(\Magento\Customer\Api\Data\GroupInterface::CUST_GROUP_ALL);
 
         $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
         $storeMock->method('getId')->willReturn(self::STORE_ID);
@@ -3365,9 +3369,9 @@ ORDER
             'rule_data',
             new DataObject(
                 [
-                    'store_id'          => self::STORE_ID,
-                    'website_id'        => 1,
-                    'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::CUST_GROUP_ALL
+                'store_id'          => self::STORE_ID,
+                'website_id'        => 1,
+                'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::CUST_GROUP_ALL
                 ]
             )
         );
@@ -3376,97 +3380,97 @@ ORDER
             true,
             json_encode(
                 [
-                    'billingAddress' => [
-                        'firstname' => "IntegrationBolt",
-                        'lastname'  => "BoltTest",
-                        'company'   => "Bolt",
-                        'telephone' => "132 231 1234",
-                        'street'    => ["228 7th Avenue", "228 7th Avenue"],
-                        'city'      => "New York",
-                        'region'    => "New York",
-                        'country'   => "United States",
-                        'countryId' => "US",
-                        'email'     => self::EMAIL_ADDRESS,
-                        'postcode'  => "10011",
-                    ]
+                'billingAddress' => [
+                    'firstname' => "IntegrationBolt",
+                    'lastname'  => "BoltTest",
+                    'company'   => "Bolt",
+                    'telephone' => "132 231 1234",
+                    'street'    => ["228 7th Avenue", "228 7th Avenue"],
+                    'city'      => "New York",
+                    'region'    => "New York",
+                    'country'   => "United States",
+                    'countryId' => "US",
+                    'email'     => self::EMAIL_ADDRESS,
+                    'postcode'  => "10011",
+                ]
                 ]
             )
         );
-        }
+    }
 
         /**
-        * Setup method for tests covering {@see \Bolt\Boltpay\Helper\Cart::getCartData}
-        *
-        * @param array $getCartItemsResult stubbed result for {@see \Bolt\Boltpay\Helper\Cart::getCartItems}
-        * @param array $collectDiscountsResult stubbed result for {@see \Bolt\Boltpay\Helper\Cart::collectDiscounts}
-        *
-        * @return BoltHelperCart|MockObject
-        */
-        private function getCartDataSetUp(array $getCartItemsResult, array $collectDiscountsResult)
-        {
+         * Setup method for tests covering {@see \Bolt\Boltpay\Helper\Cart::getCartData}
+         *
+         * @param array $getCartItemsResult stubbed result for {@see \Bolt\Boltpay\Helper\Cart::getCartItems}
+         * @param array $collectDiscountsResult stubbed result for {@see \Bolt\Boltpay\Helper\Cart::collectDiscounts}
+         *
+         * @return BoltHelperCart|MockObject
+         */
+    private function getCartDataSetUp(array $getCartItemsResult, array $collectDiscountsResult)
+    {
         $currentMock = $this->getCurrentMock(
             [
-                'setLastImmutableQuote',
-                'getCartItems',
-                'getQuoteById',
-                'collectDiscounts',
-                'createImmutableQuote',
-                'getCalculationAddress'
+            'setLastImmutableQuote',
+            'getCartItems',
+            'getQuoteById',
+            'collectDiscounts',
+            'createImmutableQuote',
+            'getCalculationAddress'
             ]
         );
         $this->setUpAddressMock($this->quoteShippingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
-            ->willReturn($this->immutableQuoteMock);
+        ->willReturn($this->immutableQuoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
-            ->willReturn($this->quoteShippingAddress);
+        ->willReturn($this->quoteShippingAddress);
         $currentMock->expects(static::any())->method('getCartItems')->willReturn($getCartItemsResult);
         $currentMock->expects(static::any())->method('collectDiscounts')->willReturn($collectDiscountsResult);
         $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
         $this->quoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->quoteMock->expects(static::any())->method('getShippingAddress')
-            ->willReturn($this->quoteShippingAddress);
+        ->willReturn($this->quoteShippingAddress);
         $this->immutableQuoteMock->expects(static::once())->method('isVirtual')->willReturn(false);
         $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
-            ->willReturn($this->getAddressMock());
+        ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
-            ->willReturn($this->getAddressMock());
+        ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
-            ->willReturn(self::IMMUTABLE_QUOTE_ID);
+        ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
-            ->willReturn(self::CURRENCY_CODE);
+        ->willReturn(self::CURRENCY_CODE);
         return $currentMock;
-        }
+    }
 
         /**
-        * @test
-        * that getCartData adds diff to the first item total to pass bolt order create check
-        *
-        * @covers ::getCartData
-        *
-        * @throws Exception from tested method
-        */
-        public function getCartData_withDiffAboveThreshold_diffIsAddedToFirstItem()
-        {
+         * @test
+         * that getCartData adds diff to the first item total to pass bolt order create check
+         *
+         * @covers ::getCartData
+         *
+         * @throws Exception from tested method
+         */
+    public function getCartData_withDiffAboveThreshold_diffIsAddedToFirstItem()
+    {
         $testItem = [
-            'reference'    => self::PRODUCT_ID,
-            'name'         => 'Test Product',
-            'total_amount' => 12345,
-            'unit_price'   => 12345,
-            'quantity'     => 1.0,
-            'sku'          => self::PRODUCT_SKU,
-            'type'         => 'physical',
-            'description'  => '',
+        'reference'    => self::PRODUCT_ID,
+        'name'         => 'Test Product',
+        'total_amount' => 12345,
+        'unit_price'   => 12345,
+        'quantity'     => 1.0,
+        'sku'          => self::PRODUCT_SKU,
+        'type'         => 'physical',
+        'description'  => '',
         ];
         $getCartItemsResult = [[$testItem], 12345, 123];
         $collectDiscountsResult = [[], 12345, 123];
         $currentMock = $this->getCartDataSetUp($getCartItemsResult, $collectDiscountsResult);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
-            ->willReturn(self::PARENT_QUOTE_ID);
+        ->willReturn(self::PARENT_QUOTE_ID);
 
         $this->quoteShippingAddress->expects(static::once())->method('setCollectShippingRates')->with(true);
         $this->quoteShippingAddress->expects(static::any())->method('getShippingMethod')
-            ->willReturn('flatrate_flatrate');
+        ->willReturn('flatrate_flatrate');
         $this->quoteShippingAddress->expects(static::any())->method('setShippingMethod')->with('flatrate_flatrate');
         $this->bugsnag->expects(static::once())->method('registerCallback')->with(
             static::callback(
@@ -3481,113 +3485,198 @@ ORDER
             )
         );
         $this->bugsnag->expects(static::once())->method('notifyError')
-            ->with('Cart Totals Mismatch', 'Totals adjusted by 123.');
+        ->with('Cart Totals Mismatch', 'Totals adjusted by 123.');
         $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $result = $currentMock->getCartData(
             true,
             json_encode(
                 [
-                    'billingAddress' => [
-                        'firstname'    => "IntegrationBolt",
-                        'lastname'     => "BoltTest",
-                        'company'      => "Bolt",
-                        'telephone'    => "132 231 1234",
-                        'street'       => ["228 7th Avenue", "228 7th Avenue"],
-                        'city'         => "New York",
-                        'region'       => "New York",
-                        'country'      => "United States",
-                        'country_code' => "US",
-                        'email'        => self::EMAIL_ADDRESS,
-                        'postal_code'  => "10011",
-                    ]
+                'billingAddress' => [
+                    'firstname'    => "IntegrationBolt",
+                    'lastname'     => "BoltTest",
+                    'company'      => "Bolt",
+                    'telephone'    => "132 231 1234",
+                    'street'       => ["228 7th Avenue", "228 7th Avenue"],
+                    'city'         => "New York",
+                    'region'       => "New York",
+                    'country'      => "United States",
+                    'country_code' => "US",
+                    'email'        => self::EMAIL_ADDRESS,
+                    'postal_code'  => "10011",
+                ]
                 ]
             )
         );
         static::assertEquals(
             [
-                'order_reference' => 1000,
-                'display_id'      => '',
-                'currency'        => 'USD',
-                'items'           => [
-                    ['total_amount' => 12468] + $testItem,
+            'order_reference' => 1000,
+            'display_id'      => '',
+            'currency'        => 'USD',
+            'items'           => [
+                ['total_amount' => 12468] + $testItem,
+            ],
+            'shipments'       => [
+                [
+                    'cost'             => 0,
+                    'tax_amount'       => 0,
+                    'shipping_address' =>
+                        [
+                            'first_name'      => 'IntegrationBolt',
+                            'last_name'       => 'BoltTest',
+                            'company'         => '',
+                            'phone'           => '132 231 1234',
+                            'street_address1' => '228 7th Avenue',
+                            'street_address2' => '228 7th Avenue 2',
+                            'locality'        => 'New York',
+                            'region'          => 'New York',
+                            'postal_code'     => '10011',
+                            'country_code'    => 'US',
+                            'email'           => self::EMAIL_ADDRESS,
+                        ],
+                    'service'          => null,
+                    'reference'        => null,
                 ],
-                'shipments'       => [
-                    [
-                        'cost'             => 0,
-                        'tax_amount'       => 0,
-                        'shipping_address' =>
-                            [
-                                'first_name'      => 'IntegrationBolt',
-                                'last_name'       => 'BoltTest',
-                                'company'         => '',
-                                'phone'           => '132 231 1234',
-                                'street_address1' => '228 7th Avenue',
-                                'street_address2' => '228 7th Avenue 2',
-                                'locality'        => 'New York',
-                                'region'          => 'New York',
-                                'postal_code'     => '10011',
-                                'country_code'    => 'US',
-                                'email'           => self::EMAIL_ADDRESS,
-                            ],
-                        'service'          => null,
-                        'reference'        => null,
-                    ],
-                ],
-                'discounts'       => [],
-                'total_amount'    => 12468,
-                'tax_amount'      => 0,
-                'metadata'        => [
-                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
-                    'encrypted_session_id' => ''
-                ],
+            ],
+            'discounts'       => [],
+            'total_amount'    => 12468,
+            'tax_amount'      => 0,
+            'metadata'        => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                'encrypted_session_id' => ''
+            ],
             ],
             $result
         );
-        }
+    }
 
         /**
-        * @test
-        * that getCartData adds fixed amount type to all discounts if total amount is negative and sets total to 0
-        *
-        * @covers ::getCartData
-        *
-        * @throws Exception from tested method
-        */
-        public function getCartData_withNegativeTotalAmount_returnsZeroTotalAndAppliesFixedAmountTypeToDiscounts()
-        {
+         * @test
+         * that getCartData adds fixed amount type to all discounts if total amount is negative and sets total to 0
+         *
+         * @covers ::getCartData
+         *
+         * @throws Exception from tested method
+         */
+    public function getCartData_withNegativeTotalAmount_returnsZeroTotalAndAppliesFixedAmountTypeToDiscounts()
+    {
         $testItem = [
-            'reference'    => self::PRODUCT_ID,
-            'name'         => 'Test Product',
-            'total_amount' => 12345,
-            'unit_price'   => 12345,
-            'quantity'     => 1.0,
-            'sku'          => self::PRODUCT_SKU,
-            'type'         => 'physical',
-            'description'  => '',
+        'reference'    => self::PRODUCT_ID,
+        'name'         => 'Test Product',
+        'total_amount' => 12345,
+        'unit_price'   => 12345,
+        'quantity'     => 1.0,
+        'sku'          => self::PRODUCT_SKU,
+        'type'         => 'physical',
+        'description'  => '',
         ];
         $getCartItemsResult = [[$testItem], 12345, 0];
         $testDiscount = [
-            'description' => 'Test discount',
-            'amount' => 22345,
-            'reference'   => self::COUPON_CODE,
-            'discount_category' => 'coupon',
-            'discount_type'   => 'fixed_amount',
-            'type'   => 'fixed_amount',
+        'description' => 'Test discount',
+        'amount' => 22345,
+        'reference'   => self::COUPON_CODE,
+        'discount_category' => 'coupon',
+        'discount_type'   => 'fixed_amount',
+        'type'   => 'fixed_amount',
         ];
         $collectDiscountsResult = [[$testDiscount], -10000, 0];
         $currentMock = $this->getCartDataSetUp($getCartItemsResult, $collectDiscountsResult);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getBoltParentQuoteId')
-            ->willReturn(self::PARENT_QUOTE_ID);
+        ->willReturn(self::PARENT_QUOTE_ID);
 
         $this->quoteShippingAddress->expects(static::once())->method('setCollectShippingRates')->with(true);
         $this->quoteShippingAddress->expects(static::any())->method('getShippingMethod')
-            ->willReturn('flatrate_flatrate');
+        ->willReturn('flatrate_flatrate');
         $this->quoteShippingAddress->expects(static::any())->method('setShippingMethod')->with('flatrate_flatrate');
         $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $result = $currentMock->getCartData(
             true,
             json_encode(
                 [
+                'billingAddress' => [
+                    'firstname'    => "IntegrationBolt",
+                    'lastname'     => "BoltTest",
+                    'company'      => "Bolt",
+                    'telephone'    => "132 231 1234",
+                    'street'       => ["228 7th Avenue", "228 7th Avenue"],
+                    'city'         => "New York",
+                    'region'       => "New York",
+                    'country'      => "United States",
+                    'country_code' => "US",
+                    'email'        => self::EMAIL_ADDRESS,
+                    'postal_code'  => "10011",
+                ]
+                ]
+            )
+        );
+        static::assertEquals(
+            [
+            'order_reference' => 1000,
+            'display_id'      => '',
+            'currency'        => 'USD',
+            'items'           => [$testItem,],
+            'shipments'       => [
+                [
+                    'cost'             => 0,
+                    'tax_amount'       => 0,
+                    'shipping_address' =>
+                        [
+                            'first_name'      => 'IntegrationBolt',
+                            'last_name'       => 'BoltTest',
+                            'company'         => '',
+                            'phone'           => '132 231 1234',
+                            'street_address1' => '228 7th Avenue',
+                            'street_address2' => '228 7th Avenue 2',
+                            'locality'        => 'New York',
+                            'region'          => 'New York',
+                            'postal_code'     => '10011',
+                            'country_code'    => 'US',
+                            'email'           => self::EMAIL_ADDRESS,
+                        ],
+                    'service'          => null,
+                    'reference'        => null,
+                ],
+            ],
+            'discounts'       => [$testDiscount],
+            'total_amount'    => 0,
+            'tax_amount'      => 0,
+            'metadata'        => [
+                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+                'encrypted_session_id' => ''
+            ],
+            ],
+            $result
+        );
+    }
+
+        /**
+         * @test
+         * that getCartData returns empty array and notifies error if shipping method is not set
+         *
+         * @covers ::getCartData
+         *
+         * @throws Exception from tested method
+         */
+    public function getCartData_paymentOnlyAndShippingMethodMissing_notifiesErrorAndReturnsEmptyArray()
+    {
+
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+        $quote->setQuoteCurrencyCode("USD");
+
+        $product = TestUtils::getSimpleProduct();
+        $this->objectsToClean[] = $product;
+        $quote->addProduct($product, 1);
+
+        TestUtils::setAddressToQuote($this->testAddressData, $quote, 'shipping');
+        TestUtils::setAddressToQuote($this->testAddressData, $quote, 'billing');
+
+        $quote->getShippingAddress()->setShippingMethod(null)->setCollectShippingRates(true);
+        $quote->collectTotals()->save();
+        TestUtils::setQuoteToSession($quote);
+        $result = $boltHelperCart->getCartData(
+            true,
+            json_encode(
+                [
                     'billingAddress' => [
                         'firstname'    => "IntegrationBolt",
                         'lastname'     => "BoltTest",
@@ -3605,180 +3694,95 @@ ORDER
             )
         );
         static::assertEquals(
-            [
-                'order_reference' => 1000,
-                'display_id'      => '',
-                'currency'        => 'USD',
-                'items'           => [$testItem,],
-                'shipments'       => [
-                    [
-                        'cost'             => 0,
-                        'tax_amount'       => 0,
-                        'shipping_address' =>
-                            [
-                                'first_name'      => 'IntegrationBolt',
-                                'last_name'       => 'BoltTest',
-                                'company'         => '',
-                                'phone'           => '132 231 1234',
-                                'street_address1' => '228 7th Avenue',
-                                'street_address2' => '228 7th Avenue 2',
-                                'locality'        => 'New York',
-                                'region'          => 'New York',
-                                'postal_code'     => '10011',
-                                'country_code'    => 'US',
-                                'email'           => self::EMAIL_ADDRESS,
-                            ],
-                        'service'          => null,
-                        'reference'        => null,
-                    ],
-                ],
-                'discounts'       => [$testDiscount],
-                'total_amount'    => 0,
-                'tax_amount'      => 0,
-                'metadata'        => [
-                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
-                    'encrypted_session_id' => ''
-                ],
-            ],
+            [],
             $result
         );
-        }
+    }
 
         /**
-        * @test
-        * that getCartData returns empty array and notifies error if shipping method is not set
-        *
-        * @covers ::getCartData
-        *
-        * @throws Exception from tested method
-        */
-        public function getCartData_paymentOnlyAndShippingMethodMissing_notifiesErrorAndReturnsEmptyArray()
-        {
-
-            $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            $quote = Bootstrap::getObjectManager()->create(Quote::class);
-            $quote->setQuoteCurrencyCode("USD");
-
-            $product = TestUtils::getSimpleProduct();
-            $this->objectsToClean[] = $product;
-            $quote->addProduct($product,1);
-
-            TestUtils::setAddressToQuote($this->testAddressData, $quote, 'shipping');
-            TestUtils::setAddressToQuote($this->testAddressData, $quote, 'billing');
-
-            $quote->getShippingAddress()->setShippingMethod(null)->setCollectShippingRates(true);
-            $quote->collectTotals()->save();
-            TestUtils::setQuoteToSession($quote);
-            $result = $boltHelperCart->getCartData(
-                true,
-                json_encode(
-                    [
-                        'billingAddress' => [
-                            'firstname'    => "IntegrationBolt",
-                            'lastname'     => "BoltTest",
-                            'company'      => "Bolt",
-                            'telephone'    => "132 231 1234",
-                            'street'       => ["228 7th Avenue", "228 7th Avenue"],
-                            'city'         => "New York",
-                            'region'       => "New York",
-                            'country'      => "United States",
-                            'country_code' => "US",
-                            'email'        => self::EMAIL_ADDRESS,
-                            'postal_code'  => "10011",
-                        ]
-                    ]
-                )
-            );
-            static::assertEquals(
-                [],
-                $result
-            );
-        }
-
-        /**
-        * @test
-        * that getCartData returns empty array and notifies error if shipping address is not complete
-        *
-        * @covers ::getCartData
-        *
-        * @throws Exception from tested method
-        */
-        public function getCartData_paymentOnlyAndShippingAddressIncomplete_returnsEmptyArrayAndNotifiesError()
-        {
+         * @test
+         * that getCartData returns empty array and notifies error if shipping address is not complete
+         *
+         * @covers ::getCartData
+         *
+         * @throws Exception from tested method
+         */
+    public function getCartData_paymentOnlyAndShippingAddressIncomplete_returnsEmptyArrayAndNotifiesError()
+    {
         $testItem = [
-            'reference'    => self::PRODUCT_ID,
-            'name'         => 'Test Product',
-            'total_amount' => 12345,
-            'unit_price'   => 12345,
-            'quantity'     => 1.0,
-            'sku'          => self::PRODUCT_SKU,
-            'type'         => 'physical',
-            'description'  => '',
+        'reference'    => self::PRODUCT_ID,
+        'name'         => 'Test Product',
+        'total_amount' => 12345,
+        'unit_price'   => 12345,
+        'quantity'     => 1.0,
+        'sku'          => self::PRODUCT_SKU,
+        'type'         => 'physical',
+        'description'  => '',
         ];
         $getCartItemsResult = [[$testItem], 12345, 123];
         $collectDiscountsResult = [[], 12345, 123];
         $currentMock = $this->getCurrentMock(
             [
-                'setLastImmutableQuote',
-                'getCartItems',
-                'getQuoteById',
-                'collectDiscounts',
-                'createImmutableQuote',
-                'getCalculationAddress'
+            'setLastImmutableQuote',
+            'getCartItems',
+            'getQuoteById',
+            'collectDiscounts',
+            'createImmutableQuote',
+            'getCalculationAddress'
             ]
         );
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
-            ->willReturn($this->immutableQuoteMock);
+        ->willReturn($this->immutableQuoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
-            ->willReturn($this->quoteShippingAddress);
+        ->willReturn($this->quoteShippingAddress);
         $currentMock->expects(static::any())->method('getCartItems')->willReturn($getCartItemsResult);
         $currentMock->expects(static::any())->method('collectDiscounts')->willReturn($collectDiscountsResult);
         $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
         $this->quoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->quoteMock->expects(static::any())->method('getShippingAddress')
-            ->willReturn($this->quoteShippingAddress);
+        ->willReturn($this->quoteShippingAddress);
         $this->immutableQuoteMock->expects(static::once())->method('isVirtual')->willReturn(false);
         $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
-            ->willReturn($this->getAddressMock());
+        ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
-            ->willReturn($this->getAddressMock());
+        ->willReturn($this->getAddressMock());
         $this->immutableQuoteMock->expects(static::never())->method('getBoltParentQuoteId')
-            ->willReturn(self::PARENT_QUOTE_ID);
+        ->willReturn(self::PARENT_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getId')
-            ->willReturn(self::IMMUTABLE_QUOTE_ID);
+        ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
-            ->willReturn(self::CURRENCY_CODE);
+        ->willReturn(self::CURRENCY_CODE);
         $this->quoteShippingAddress->expects(static::once())->method('setCollectShippingRates')->with(true);
         $this->quoteShippingAddress->expects(static::any())->method('getShippingMethod')
-            ->willReturn('flatrate_flatrate');
+        ->willReturn('flatrate_flatrate');
         $this->quoteShippingAddress->expects(static::any())->method('setShippingMethod')->with('flatrate_flatrate');
         $this->bugsnag->expects(static::once())->method('notifyError')
-            ->with('Order create error', 'Shipping address data insufficient.');
+        ->with('Order create error', 'Shipping address data insufficient.');
         $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $result = $currentMock->getCartData(true, json_encode([]));
         static::assertEquals([], $result);
-        }
+    }
 
         /**
-        * @test
-        * that getCartData will get email address from customer session
-        *
-        * @covers ::getCartData
-        *
-        * @throws Exception from tested method
-        */
-        public function getCartData_withEmptyAddressEmail_retrievesAddressFromSessionCustom()
-        {
+         * @test
+         * that getCartData will get email address from customer session
+         *
+         * @covers ::getCartData
+         *
+         * @throws Exception from tested method
+         */
+    public function getCartData_withEmptyAddressEmail_retrievesAddressFromSessionCustom()
+    {
         $currentMock = $this->getCurrentMock(
             [
-                'setLastImmutableQuote',
-                'getCartItems',
-                'getQuoteById',
-                'collectDiscounts',
-                'createImmutableQuote',
-                'reserveOrderId',
-                'getCalculationAddress'
+            'setLastImmutableQuote',
+            'getCartItems',
+            'getQuoteById',
+            'collectDiscounts',
+            'createImmutableQuote',
+            'reserveOrderId',
+            'getCalculationAddress'
             ]
         );
         $this->quoteShippingAddress->method('getFirstname')->willReturn($this->testAddressData['first_name']);
@@ -3786,60 +3790,60 @@ ORDER
         $this->quoteShippingAddress->method('getCompany')->willReturn($this->testAddressData['company']);
         $this->quoteShippingAddress->method('getTelephone')->willReturn($this->testAddressData['phone']);
         $this->quoteShippingAddress->method('getStreetLine')
-            ->willReturnMap(
-                [
-                    [1, $this->testAddressData['street_address1']],
-                    [2, $this->testAddressData['street_address2']]
-                ]
-            );
+        ->willReturnMap(
+            [
+                [1, $this->testAddressData['street_address1']],
+                [2, $this->testAddressData['street_address2']]
+            ]
+        );
         $this->quoteShippingAddress->method('getCity')->willReturn($this->testAddressData['locality']);
         $this->quoteShippingAddress->method('getRegion')->willReturn($this->testAddressData['region']);
         $this->quoteShippingAddress->method('getPostcode')->willReturn($this->testAddressData['postal_code']);
         $this->quoteShippingAddress->method('getCountryId')->willReturn($this->testAddressData['country_code']);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
-            ->willReturn($this->quoteShippingAddress);
+        ->willReturn($this->quoteShippingAddress);
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getQuoteCurrencyCode')
-            ->willReturn(self::CURRENCY_CODE);
+        ->willReturn(self::CURRENCY_CODE);
         $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
-            ->willReturn($this->quoteBillingAddress);
+        ->willReturn($this->quoteBillingAddress);
         $this->immutableQuoteMock->expects(static::once())->method('getShippingAddress')
-            ->willReturn($this->quoteShippingAddress);
+        ->willReturn($this->quoteShippingAddress);
         $this->customerSession->expects(static::once())->method('getCustomer')->willReturn($this->customerMock);
         $this->customerMock->expects(static::once())->method('getEmail')->willReturn(self::EMAIL_ADDRESS);
         $this->quoteShippingAddress->expects(static::atLeastOnce())->method('getShippingMethod')
-            ->willReturn('flatrate_flatrate');
+        ->willReturn('flatrate_flatrate');
         $testItems = [
-            [
-                'reference'    => 20102,
-                'name'         => 'Test Product',
-                'total_amount' => 10000,
-                'unit_price'   => 10000,
-                'quantity'     => 1.0,
-                'sku'          => self::PRODUCT_SKU,
-                'type'         => 'physical',
-                'description'  => '',
-            ],
+        [
+            'reference'    => 20102,
+            'name'         => 'Test Product',
+            'total_amount' => 10000,
+            'unit_price'   => 10000,
+            'quantity'     => 1.0,
+            'sku'          => self::PRODUCT_SKU,
+            'type'         => 'physical',
+            'description'  => '',
+        ],
         ];
         $currentMock->expects(static::once())->method('getCartItems')->willReturn([$testItems, 123456, 0]);
         $currentMock->expects(static::once())->method('collectDiscounts')->willReturn([[], 12345, 0]);
         $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $result = $currentMock->getCartData(true, json_encode([]), $this->immutableQuoteMock);
         static::assertEquals(self::EMAIL_ADDRESS, $result['shipments'][0]['shipping_address']['email']);
-        }
+    }
 
         /**
-        * @test
-        * that collectDiscounts returns provided parameters unchanged and an empty array for discounts
-        * if there are no discounts applied
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws LocalizedException  from tested method
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withNoDiscounts_returnsParametersUnchanged()
-        {
+         * @test
+         * that collectDiscounts returns provided parameters unchanged and an empty array for discounts
+         * if there are no discounts applied
+         *
+         * @covers ::collectDiscounts
+         *
+         * @throws LocalizedException  from tested method
+         * @throws NoSuchEntityException from tested method
+         */
+    public function collectDiscounts_withNoDiscounts_returnsParametersUnchanged()
+    {
 
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -3859,18 +3863,18 @@ ORDER
         static::assertEquals($diffResult, $diff);
         static::assertEquals(10000, $totalAmountResult);
         static::assertEquals([], $discounts);
-        }
+    }
 
         /**
-        * @test
-        * that collectDiscounts handles default coupon code discount
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from method tested
-        */
-        public function collectDiscounts_withCouponCode_collectsCouponCodeDiscount()
-        {
+         * @test
+         * that collectDiscounts handles default coupon code discount
+         *
+         * @covers ::collectDiscounts
+         *
+         * @throws NoSuchEntityException from method tested
+         */
+    public function collectDiscounts_withCouponCode_collectsCouponCodeDiscount()
+    {
         $currentMock = $this->getCurrentMock();
         $shippingAddress = $this->getAddressMock();
         $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
@@ -3878,7 +3882,7 @@ ORDER
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
         $quote->method('getTotals')->willReturn([]);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
-            ->willReturn($shippingAddress);
+        ->willReturn($shippingAddress);
         $quote->expects(static::any())->method('getCouponCode')->willReturn(self::COUPON_CODE);
         $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
         $this->discountHelper->expects(static::exactly(4))->method('convertToBoltDiscountType')->with(self::COUPON_CODE)->willReturn('fixed_amount');
@@ -3893,58 +3897,59 @@ ORDER
         $quote->method('getAppliedRuleIds')->willReturn('2,3,4,5');
 
         $rule2 = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['getCouponType', 'getDescription'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        ->setMethods(['getCouponType', 'getDescription'])
+        ->disableOriginalConstructor()
+        ->getMock();
         $rule2->expects(static::once())->method('getCouponType')
-            ->willReturn('SPECIFIC_COUPON');
+        ->willReturn('SPECIFIC_COUPON');
         $rule2->expects(static::once())->method('getDescription')
-            ->willReturn(self::COUPON_DESCRIPTION);
+        ->willReturn(self::COUPON_DESCRIPTION);
 
         $rule3 = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['getCouponType', 'getDescription', 'getSimpleAction'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        ->setMethods(['getCouponType', 'getDescription', 'getSimpleAction'])
+        ->disableOriginalConstructor()
+        ->getMock();
         $rule3->expects(static::once())->method('getCouponType')
-            ->willReturn('NO_COUPON');
+        ->willReturn('NO_COUPON');
         $rule3->expects(static::once())->method('getDescription')
-            ->willReturn('Shopping cart price rule for the cart over $10');
+        ->willReturn('Shopping cart price rule for the cart over $10');
         $rule3->expects(static::exactly(2))->method('getSimpleAction')
-            ->willReturn('by_fixed');
+        ->willReturn('by_fixed');
 
         $rule4 = $this->getMockBuilder(DataObject::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+        ->disableOriginalConstructor()
+        ->getMock();
 
         $rule5 = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['getCouponType', 'getDescription'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        ->setMethods(['getCouponType', 'getDescription'])
+        ->disableOriginalConstructor()
+        ->getMock();
         $rule5->expects(static::once())->method('getCouponType')
-            ->willReturn('SPECIFIC_COUPON');
+        ->willReturn('SPECIFIC_COUPON');
         $rule5->expects(static::once())->method('getDescription')
-            ->willReturn('');
+        ->willReturn('');
 
         $this->ruleRepository->expects(static::exactly(4))
-            ->method('getById')
-            ->withConsecutive(
-                [2],
-                [3],
-                [4],
-                [5]
-            )
-            ->willReturnOnConsecutiveCalls($rule2, $rule3, $rule4, $rule5);
+        ->method('getById')
+        ->withConsecutive(
+            [2],
+            [3],
+            [4],
+            [5]
+        )
+        ->willReturnOnConsecutiveCalls($rule2, $rule3, $rule4, $rule5);
 
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
 
-        $checkoutSession = $this->createPartialMock(CheckoutSession::class,
+        $checkoutSession = $this->createPartialMock(
+            CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts']
         );
         $checkoutSession->expects(static::once())
-                        ->method('getBoltCollectSaleRuleDiscounts')
-                        ->willReturn([2 => $appliedDiscount, 3 => $appliedDiscountNoCoupon, 4 => 0, 5 => $appliedDiscount]);
+                    ->method('getBoltCollectSaleRuleDiscounts')
+                    ->willReturn([2 => $appliedDiscount, 3 => $appliedDiscountNoCoupon, 4 => 0, 5 => $appliedDiscount]);
         $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
-             ->willReturn($checkoutSession);
+         ->willReturn($checkoutSession);
 
 
         $totalAmount = 10000; // cents
@@ -3962,44 +3967,44 @@ ORDER
         $expectedDiscountAmountNoCoupon = 100 * $appliedDiscountNoCoupon;
         $expectedTotalAmount = $totalAmount - (2 * $expectedDiscountAmount) - $expectedDiscountAmountNoCoupon;
         $expectedDiscount = [
-            [
-                'description' => self::COUPON_DESCRIPTION,
-                'amount'      => $expectedDiscountAmount,
-                'reference'   => self::COUPON_CODE,
-                'discount_category' => 'coupon',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ],
-            [
-                'description' => trim(__('Discount ') . 'Shopping cart price rule for the cart over $10'),
-                'amount'      => $expectedDiscountAmountNoCoupon,
-                'discount_category' => 'automatic_promotion',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ],
-            [
-                'description' => trim(__('Discount (' . self::COUPON_CODE . ')')),
-                'amount'      => $expectedDiscountAmount,
-                'reference'   => self::COUPON_CODE,
-                'discount_category' => 'coupon',
-                'discount_type'     => 'fixed_amount',
-                'type'              => 'fixed_amount',
-            ],
+        [
+            'description' => self::COUPON_DESCRIPTION,
+            'amount'      => $expectedDiscountAmount,
+            'reference'   => self::COUPON_CODE,
+            'discount_category' => 'coupon',
+            'discount_type'   => 'fixed_amount',
+            'type'   => 'fixed_amount',
+        ],
+        [
+            'description' => trim(__('Discount ') . 'Shopping cart price rule for the cart over $10'),
+            'amount'      => $expectedDiscountAmountNoCoupon,
+            'discount_category' => 'automatic_promotion',
+            'discount_type'   => 'fixed_amount',
+            'type'   => 'fixed_amount',
+        ],
+        [
+            'description' => trim(__('Discount (' . self::COUPON_CODE . ')')),
+            'amount'      => $expectedDiscountAmount,
+            'reference'   => self::COUPON_CODE,
+            'discount_category' => 'coupon',
+            'discount_type'     => 'fixed_amount',
+            'type'              => 'fixed_amount',
+        ],
         ];
         static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
+    }
 
         /**
-        * @test
-        * that collectDiscounts collects Store Credit from quote property if checkout type is payment
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withStoreCreditAndPaymentOnly_collectsDiscountFromQuote()
-        {
+         * @test
+         * that collectDiscounts collects Store Credit from quote property if checkout type is payment
+         *
+         * @covers ::collectDiscounts
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function collectDiscounts_withStoreCreditAndPaymentOnly_collectsDiscountFromQuote()
+    {
 
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -4021,33 +4026,33 @@ ORDER
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
         $expectedDiscount = [
-            [
-                'description' => 'Store Credit',
-                'amount'      => $expectedDiscountAmount,
-                'discount_category' => 'store_credit',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ]
+        [
+            'description' => 'Store Credit',
+            'amount'      => $expectedDiscountAmount,
+            'discount_category' => 'store_credit',
+            'discount_type'   => 'fixed_amount',
+            'type'   => 'fixed_amount',
+        ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
+    }
 
         /**
-        * @test
-        * that collectDiscounts properly handles Magento EE Store Credit when checkout type is not payment
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withStoreCreditAndNotPaymentOnly_loadsCustomerBalanceUsingModel()
-        {
+         * @test
+         * that collectDiscounts properly handles Magento EE Store Credit when checkout type is not payment
+         *
+         * @covers ::collectDiscounts
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function collectDiscounts_withStoreCreditAndNotPaymentOnly_loadsCustomerBalanceUsingModel()
+    {
         $currentMock = $this->getCurrentMock(
             [
-                'getWebsiteId',
-                'getQuoteById',
-                'getCalculationAddress'
+            'getWebsiteId',
+            'getQuoteById',
+            'getCalculationAddress'
             ]
         );
         $shippingAddress = $this->getAddressMock();
@@ -4055,11 +4060,11 @@ ORDER
         $currentMock->expects(static::once())->method('getWebsiteId')->willReturn(self::WEBSITE_ID);
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($this->quoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
-            ->willReturn($shippingAddress);
+        ->willReturn($shippingAddress);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $this->immutableQuoteMock->expects(static::once())->method('getTotals')->willReturn([]);
         $this->immutableQuoteMock->expects(static::once())->method('getQuoteCurrencyCode')
-            ->willReturn(self::CURRENCY_CODE);
+        ->willReturn(self::CURRENCY_CODE);
         $this->immutableQuoteMock->expects(static::once())->method('getUseCustomerBalance')->willReturn(true);
         $this->immutableQuoteMock->expects(static::any())->method('getCouponCode')->willReturn(false);
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
@@ -4067,17 +4072,17 @@ ORDER
 
         ObjectManager::setInstance($this->objectManagerMock);
         $customerBalanceMock = $this->getMockBuilder('Magento\CustomerBalance\Model\Balance')
-            ->disableOriginalConstructor()
-            ->setMethods(['setCustomer', 'setWebsiteId', 'loadByCustomer', 'getAmount'])
-            ->getMock();
+        ->disableOriginalConstructor()
+        ->setMethods(['setCustomer', 'setWebsiteId', 'loadByCustomer', 'getAmount'])
+        ->getMock();
         $this->objectManagerMock->expects(static::once())->method('create')
-            ->with('Magento\CustomerBalance\Model\Balance')->willReturn($customerBalanceMock);
+        ->with('Magento\CustomerBalance\Model\Balance')->willReturn($customerBalanceMock);
 
         $this->customerSession->expects(static::once())->method('getCustomer')->willReturn($this->customerMock);
         $customerBalanceMock->expects(static::once())->method('setCustomer')->with($this->customerMock)
-            ->willReturnSelf();
+        ->willReturnSelf();
         $customerBalanceMock->expects(static::once())->method('setWebsiteId')->with(self::WEBSITE_ID)
-            ->willReturnSelf();
+        ->willReturnSelf();
         $customerBalanceMock->expects(static::once())->method('loadByCustomer')->willReturnSelf();
         $appliedDiscount = 10; // $
         $customerBalanceMock->expects(static::once())->method('getAmount')->willReturn($appliedDiscount);
@@ -4098,33 +4103,33 @@ ORDER
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
         $expectedDiscount = [
-            [
-                'description' => 'Store Credit',
-                'amount'      => $expectedDiscountAmount,
-                'discount_category' => 'store_credit',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ]
+        [
+            'description' => 'Store Credit',
+            'amount'      => $expectedDiscountAmount,
+            'discount_category' => 'store_credit',
+            'discount_type'   => 'fixed_amount',
+            'type'   => 'fixed_amount',
+        ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
+    }
 
         /**
-        * @test
-        * that collectDiscounts properly handles Magento EE Reward Points when checkout type is not payment
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withRewardPointsAndNotPaymentOnly_loadsRewardPointsUsingModel()
-        {
+         * @test
+         * that collectDiscounts properly handles Magento EE Reward Points when checkout type is not payment
+         *
+         * @covers ::collectDiscounts
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function collectDiscounts_withRewardPointsAndNotPaymentOnly_loadsRewardPointsUsingModel()
+    {
         $currentMock = $this->getCurrentMock(
             [
-                'getWebsiteId',
-                'getQuoteById',
-                'getCalculationAddress'
+            'getWebsiteId',
+            'getQuoteById',
+            'getCalculationAddress'
             ]
         );
         $shippingAddress = $this->getAddressMock();
@@ -4132,29 +4137,29 @@ ORDER
         $currentMock->expects(static::once())->method('getWebsiteId')->willReturn(self::WEBSITE_ID);
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($this->quoteMock);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
-            ->willReturn($shippingAddress);
+        ->willReturn($shippingAddress);
 
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $this->immutableQuoteMock->expects(static::once())->method('getTotals')->willReturn([]);
         $this->immutableQuoteMock->expects(static::once())->method('getQuoteCurrencyCode')
-            ->willReturn(self::CURRENCY_CODE);
+        ->willReturn(self::CURRENCY_CODE);
         $this->immutableQuoteMock->expects(static::once())->method('getUseRewardPoints')->willReturn(true);
         $this->immutableQuoteMock->expects(static::any())->method('getCouponCode')->willReturn(false);
 
         ObjectManager::setInstance($this->objectManagerMock);
         $rewardModelMock = $this->getMockBuilder('Magento\Reward\Model\Reward')
-            ->disableOriginalConstructor()
-            ->setMethods(['setCustomer', 'setWebsiteId', 'loadByCustomer', 'getCurrencyAmount'])
-            ->getMock();
+        ->disableOriginalConstructor()
+        ->setMethods(['setCustomer', 'setWebsiteId', 'loadByCustomer', 'getCurrencyAmount'])
+        ->getMock();
         $this->objectManagerMock->expects(static::once())->method('create')
-            ->with('Magento\Reward\Model\Reward')->willReturn($rewardModelMock);
+        ->with('Magento\Reward\Model\Reward')->willReturn($rewardModelMock);
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
 
         $this->customerSession->expects(static::once())->method('getCustomer')->willReturn($this->customerMock);
         $rewardModelMock->expects(static::once())->method('setCustomer')->with($this->customerMock)
-            ->willReturnSelf();
+        ->willReturnSelf();
         $rewardModelMock->expects(static::once())->method('setWebsiteId')->with(self::WEBSITE_ID)
-            ->willReturnSelf();
+        ->willReturnSelf();
         $rewardModelMock->expects(static::once())->method('loadByCustomer')->willReturnSelf();
         $appliedDiscount = 10; // $
         $rewardModelMock->expects(static::once())->method('getCurrencyAmount')->willReturn($appliedDiscount);
@@ -4175,28 +4180,28 @@ ORDER
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
         $expectedDiscount = [
-            [
-                'description' => 'Reward Points',
-                'amount'      => $expectedDiscountAmount,
-                'discount_category' => 'store_credit',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ]
+        [
+            'description' => 'Reward Points',
+            'amount'      => $expectedDiscountAmount,
+            'discount_category' => 'store_credit',
+            'discount_type'   => 'fixed_amount',
+            'type'   => 'fixed_amount',
+        ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
+    }
 
         /**
-        * @test
-        * that collectDiscounts collects Reward Points from quote property if checkout type is payment
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withRewardPointsAndPaymentOnly_collectsRewardPointsFromQuote()
-        {
+         * @test
+         * that collectDiscounts collects Reward Points from quote property if checkout type is payment
+         *
+         * @covers ::collectDiscounts
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function collectDiscounts_withRewardPointsAndPaymentOnly_collectsRewardPointsFromQuote()
+    {
         $totalAmount = 10000; // cents
         $diff = 0;
         $paymentOnly = true;
@@ -4220,28 +4225,28 @@ ORDER
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
         $expectedDiscount = [
-            [
-                'description' => 'Reward Points',
-                'amount'      => $expectedDiscountAmount,
-                'discount_category' => 'store_credit',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ]
+        [
+            'description' => 'Reward Points',
+            'amount'      => $expectedDiscountAmount,
+            'discount_category' => 'store_credit',
+            'discount_type'   => 'fixed_amount',
+            'type'   => 'fixed_amount',
+        ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
+    }
 
         /**
-        * @test
-        * that collectDiscounts properly handles Unirgy Giftcert by reading amount from giftcert balance instead of total
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withUnirgyGiftcert_collectsUnirgyGiftcert()
-        {
+         * @test
+         * that collectDiscounts properly handles Unirgy Giftcert by reading amount from giftcert balance instead of total
+         *
+         * @covers ::collectDiscounts
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function collectDiscounts_withUnirgyGiftcert_collectsUnirgyGiftcert()
+    {
         $mock = $this->getCurrentMock();
         $shippingAddress = $this->getAddressMock();
         $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
@@ -4256,11 +4261,11 @@ ORDER
         $unirgyGiftcertCode = "12345";
         $quote->expects(static::any())->method("getData")->with("giftcert_code")->willReturn($unirgyGiftcertCode);
         $this->discountHelper->expects(static::once())->method('getUnirgyGiftCertBalanceByCode')
-            ->with($unirgyGiftcertCode)->willReturn($appliedDiscount);
+        ->with($unirgyGiftcertCode)->willReturn($appliedDiscount);
         $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
         $quote->expects(static::any())->method('getTotals')
-            ->willReturn([DiscountHelper::UNIRGY_GIFT_CERT => $this->quoteAddressTotal]);
+        ->willReturn([DiscountHelper::UNIRGY_GIFT_CERT => $this->quoteAddressTotal]);
         $totalAmount = 10000; // cents
         $diff = 0;
         $paymentOnly = true;
@@ -4274,29 +4279,29 @@ ORDER
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
         $expectedDiscount = [
-            [
-                'description' => '',
-                'amount'      => $expectedDiscountAmount,
-                'discount_category' => 'giftcard',
-                'reference' => '12345',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ]
+        [
+            'description' => '',
+            'amount'      => $expectedDiscountAmount,
+            'discount_category' => 'giftcard',
+            'reference' => '12345',
+            'discount_type'   => 'fixed_amount',
+            'type'   => 'fixed_amount',
+        ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
+    }
 
         /**
-        * @test
-        * that collectDiscounts properly handles gift voucher discount by subtracting it from regular discount
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withGiftVoucher_collectsGiftVoucher()
-        {
+         * @test
+         * that collectDiscounts properly handles gift voucher discount by subtracting it from regular discount
+         *
+         * @covers ::collectDiscounts
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function collectDiscounts_withGiftVoucher_collectsGiftVoucher()
+    {
         $mock = $this->getCurrentMock();
         $shippingAddress = $this->getAddressMock();
         $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
@@ -4321,27 +4326,28 @@ ORDER
         $quote->method('getAppliedRuleIds')->willReturn('2');
 
         $rule2 = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['getCouponType', 'getDescription'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        ->setMethods(['getCouponType', 'getDescription'])
+        ->disableOriginalConstructor()
+        ->getMock();
         $rule2->expects(static::once())->method('getCouponType')
-            ->willReturn('SPECIFIC_COUPON');
+        ->willReturn('SPECIFIC_COUPON');
         $rule2->expects(static::once())->method('getDescription')
-            ->willReturn(self::COUPON_DESCRIPTION);
+        ->willReturn(self::COUPON_DESCRIPTION);
 
         $this->ruleRepository->expects(static::once())
-            ->method('getById')
-            ->with(2)
-            ->willReturn($rule2);
+        ->method('getById')
+        ->with(2)
+        ->willReturn($rule2);
 
-        $checkoutSession = $this->createPartialMock(CheckoutSession::class,
+        $checkoutSession = $this->createPartialMock(
+            CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts']
         );
         $checkoutSession->expects(static::once())
-                        ->method('getBoltCollectSaleRuleDiscounts')
-                        ->willReturn([2 => ($discountAmount),]);
+                    ->method('getBoltCollectSaleRuleDiscounts')
+                    ->willReturn([2 => ($discountAmount),]);
         $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
-             ->willReturn($checkoutSession);
+         ->willReturn($checkoutSession);
 
         $totalAmount = 10000; // cents
         $diff = 0;
@@ -4357,41 +4363,41 @@ ORDER
         $expectedRegularDiscountAmount = 100 * ($discountAmount - $giftVoucherDiscount);
         $expectedTotalAmount = $totalAmount - $expectedRegularDiscountAmount - $expectedGiftVoucherAmount;
         $expectedDiscount = [
-            [
-                'description' => self::COUPON_DESCRIPTION,
-                'amount'      => $expectedRegularDiscountAmount,
-                'reference'   => $giftVoucher,
-                'discount_category' => 'coupon',
-                'discount_type'   => 'fixed_amount',
-                'type'   => 'fixed_amount',
-            ],
-            [
-                'description' => 'Gift Voucher',
-                'amount'      => $expectedGiftVoucherAmount,
-            ]
+        [
+            'description' => self::COUPON_DESCRIPTION,
+            'amount'      => $expectedRegularDiscountAmount,
+            'reference'   => $giftVoucher,
+            'discount_category' => 'coupon',
+            'discount_type'   => 'fixed_amount',
+            'type'   => 'fixed_amount',
+        ],
+        [
+            'description' => 'Gift Voucher',
+            'amount'      => $expectedGiftVoucherAmount,
+        ]
         ];
         static::assertEquals($expectedDiscount, $discounts);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
+    }
 
         /**
-        * @test
-        * that collectDiscounts properly handles discount contained within {@see \Bolt\Boltpay\Helper\Cart::$discountTypes}
-        * which doesn't require any special handling
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withOtherDiscount_collectsOtherDiscount()
-        {
+         * @test
+         * that collectDiscounts properly handles discount contained within {@see \Bolt\Boltpay\Helper\Cart::$discountTypes}
+         * which doesn't require any special handling
+         *
+         * @covers ::collectDiscounts
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function collectDiscounts_withOtherDiscount_collectsOtherDiscount()
+    {
         $currentMock = $this->getCurrentMock();
         $shippingAddress = $this->getAddressMock();
         $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
         $quote->method('getBoltParentQuoteId')->willReturn(999999);
         $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
-            ->willReturn($shippingAddress);
+        ->willReturn($shippingAddress);
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
@@ -4418,119 +4424,120 @@ ORDER
 
         static::assertEquals($expectedDiscountAmount, $discounts[0]['amount']);
         static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
+    }
         
         /**
-        * @test
-        * that collectDiscounts properly handles gift voucher discount by subtracting it from regular discount
-        *
-        * @covers ::collectDiscounts
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function collectDiscounts_withFreeShippingCoupon_collectsCoupon()
-        {
-            $currentMock = $this->getCurrentMock();
-            $shippingAddress = $this->getAddressMock();
-            $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
-            $quote->method('getBoltParentQuoteId')->willReturn(999999);
-            $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
-            $quote->method('getTotals')->willReturn([]);
-            $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
-                ->willReturn($shippingAddress);
-            $quote->expects(static::any())->method('getCouponCode')->willReturn(self::COUPON_CODE);
-            $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
-            $this->discountHelper->expects(static::exactly(2))->method('convertToBoltDiscountType')->with(self::COUPON_CODE)->willReturn('fixed_amount');
-            $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
-            $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
-            $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
-            $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-            $appliedDiscount = 0; // $
-            $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($appliedDiscount);
+         * @test
+         * that collectDiscounts properly handles gift voucher discount by subtracting it from regular discount
+         *
+         * @covers ::collectDiscounts
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function collectDiscounts_withFreeShippingCoupon_collectsCoupon()
+    {
+        $currentMock = $this->getCurrentMock();
+        $shippingAddress = $this->getAddressMock();
+        $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
+        $quote->method('getBoltParentQuoteId')->willReturn(999999);
+        $currentMock->expects(static::once())->method('getQuoteById')->willReturn($quote);
+        $quote->method('getTotals')->willReturn([]);
+        $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)
+            ->willReturn($shippingAddress);
+        $quote->expects(static::any())->method('getCouponCode')->willReturn(self::COUPON_CODE);
+        $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
+        $this->discountHelper->expects(static::exactly(2))->method('convertToBoltDiscountType')->with(self::COUPON_CODE)->willReturn('fixed_amount');
+        $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
+        $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
+        $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
+        $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
+        $appliedDiscount = 0; // $
+        $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($appliedDiscount);
     
-            $quote->method('getAppliedRuleIds')->willReturn('2');
+        $quote->method('getAppliedRuleIds')->willReturn('2');
     
-            $rule2 = $this->getMockBuilder(DataObject::class)
-                ->setMethods(['getCouponType', 'getDescription', 'getSimpleFreeShipping'])
-                ->disableOriginalConstructor()
-                ->getMock();
-            $rule2->expects(static::once())->method('getCouponType')
-                ->willReturn('SPECIFIC_COUPON');
-            $rule2->expects(static::once())->method('getDescription')
-                ->willReturn(self::COUPON_DESCRIPTION);
-            $rule2->expects(static::once())->method('getSimpleFreeShipping')
-                ->willReturn(2);
+        $rule2 = $this->getMockBuilder(DataObject::class)
+            ->setMethods(['getCouponType', 'getDescription', 'getSimpleFreeShipping'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $rule2->expects(static::once())->method('getCouponType')
+            ->willReturn('SPECIFIC_COUPON');
+        $rule2->expects(static::once())->method('getDescription')
+            ->willReturn(self::COUPON_DESCRIPTION);
+        $rule2->expects(static::once())->method('getSimpleFreeShipping')
+            ->willReturn(2);
     
-            $this->ruleRepository->expects(static::once())
-                ->method('getById')
-                ->with(2)
-                ->willReturn($rule2);
+        $this->ruleRepository->expects(static::once())
+            ->method('getById')
+            ->with(2)
+            ->willReturn($rule2);
 
-            $checkoutSession = $this->createPartialMock(CheckoutSession::class,
-                ['getBoltCollectSaleRuleDiscounts']
-            );
-            $checkoutSession->expects(static::once())
-                            ->method('getBoltCollectSaleRuleDiscounts')
-                            ->willReturn([2 => $appliedDiscount]);
-            $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
-                 ->willReturn($checkoutSession);
+        $checkoutSession = $this->createPartialMock(
+            CheckoutSession::class,
+            ['getBoltCollectSaleRuleDiscounts']
+        );
+        $checkoutSession->expects(static::once())
+                        ->method('getBoltCollectSaleRuleDiscounts')
+                        ->willReturn([2 => $appliedDiscount]);
+        $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
+             ->willReturn($checkoutSession);
     
     
-            $totalAmount = 10000; // cents
-            $diff = 0;
-            $paymentOnly = false;
-            list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
-                $totalAmount,
-                $diff,
-                $paymentOnly,
-                $quote
-            );
+        $totalAmount = 10000; // cents
+        $diff = 0;
+        $paymentOnly = false;
+        list($discounts, $totalAmountResult, $diffResult) = $currentMock->collectDiscounts(
+            $totalAmount,
+            $diff,
+            $paymentOnly,
+            $quote
+        );
     
-            static::assertEquals($diffResult, $diff);
-            $expectedDiscountAmount = 100 * $appliedDiscount;
-            $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
-            $expectedDiscount = [
-                [
-                    'description' => self::COUPON_DESCRIPTION,
-                    'amount'      => $expectedDiscountAmount,
-                    'reference'   => self::COUPON_CODE,
-                    'discount_category' => 'coupon',
-                    'discount_type'   => 'fixed_amount',
-                    'type'   => 'fixed_amount',
-                ],
-            ];
-            static::assertEquals($expectedDiscount, $discounts);
-            static::assertEquals($expectedTotalAmount, $totalAmountResult);
-        }
+        static::assertEquals($diffResult, $diff);
+        $expectedDiscountAmount = 100 * $appliedDiscount;
+        $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
+        $expectedDiscount = [
+            [
+                'description' => self::COUPON_DESCRIPTION,
+                'amount'      => $expectedDiscountAmount,
+                'reference'   => self::COUPON_CODE,
+                'discount_category' => 'coupon',
+                'discount_type'   => 'fixed_amount',
+                'type'   => 'fixed_amount',
+            ],
+        ];
+        static::assertEquals($expectedDiscount, $discounts);
+        static::assertEquals($expectedTotalAmount, $totalAmountResult);
+    }
 
         /**
-        * @test
-        * that getCartItems converts product attribute value to string if it's a boolean
-        *
-        * @covers ::getCartItems
-        */
-        public function getCartItems_withBooleanItemOption_convertsOptionValueToString()
-        {
+         * @test
+         * that getCartItems converts product attribute value to string if it's a boolean
+         *
+         * @covers ::getCartItems
+         */
+    public function getCartItems_withBooleanItemOption_convertsOptionValueToString()
+    {
         $color = 'Blue';
         $size = 'S';
         $insurence = true;
         $quoteItemOptions = [
-            'attributes_info' => [
-                ['label' => 'Size', 'value' => $size],
-                ['label' => 'Color', 'value' => $color],
-                ['label' => 'Insurence', 'value' => $insurence],
-            ]
+        'attributes_info' => [
+            ['label' => 'Size', 'value' => $size],
+            ['label' => 'Color', 'value' => $color],
+            ['label' => 'Insurence', 'value' => $insurence],
+        ]
         ];
         $productTypeConfigurableMock = $this->getMockBuilder(Configurable::class)
-            ->setMethods(['getOrderOptions'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        ->setMethods(['getOrderOptions'])
+        ->disableOriginalConstructor()
+        ->getMock();
         $productTypeConfigurableMock->method('getOrderOptions')->willReturn($quoteItemOptions);
 
         $this->productMock = $this->getMockBuilder(Product::class)
-            ->setMethods(['getId', 'getDescription', 'getTypeInstance', 'getCustomOption'])
-            ->disableOriginalConstructor()
-            ->getMock();
+        ->setMethods(['getId', 'getDescription', 'getTypeInstance', 'getCustomOption'])
+        ->disableOriginalConstructor()
+        ->getMock();
 
         $this->productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
         $this->productMock->method('getDescription')->willReturn('Product Description');
@@ -4561,15 +4568,15 @@ ORDER
         static::assertInternalType('string', $resultProductProperties[2]->value);
         static::assertEquals(
             [
-                (object)['name' => 'Size', 'value' => 'S'],
-                (object)['name' => 'Color', 'value' => 'Blue'],
-                (object)['name' => 'Insurence', 'value' => 'true'],
+            (object)['name' => 'Size', 'value' => 'S'],
+            (object)['name' => 'Color', 'value' => 'Blue'],
+            (object)['name' => 'Insurence', 'value' => 'true'],
             ],
             $resultProductProperties
         );
         static::assertEquals($size, $products[0]['size']);
         static::assertEquals($color, $products[0]['color']);
-        }
+    }
 
     /**
      * @test
@@ -4634,25 +4641,25 @@ ORDER
     }
 
         /**
-        * @test
-        * that getCartItems will notify 'Item image missing' error if both attempts to retrieve image url fail
-        *
-        * @covers ::getCartItems
-        */
-        public function getCartItems_withExceptionsRetrievingProductAndImages_notifiesErrors()
-        {
+         * @test
+         * that getCartItems will notify 'Item image missing' error if both attempts to retrieve image url fail
+         *
+         * @covers ::getCartItems
+         */
+    public function getCartItems_withExceptionsRetrievingProductAndImages_notifiesErrors()
+    {
         $this->appEmulation->expects(static::once())->method('startEnvironmentEmulation')
-            ->with(self::STORE_ID, \Magento\Framework\App\Area::AREA_FRONTEND, true);
+        ->with(self::STORE_ID, \Magento\Framework\App\Area::AREA_FRONTEND, true);
         $quoteItem = $this->createPartialMock(
             Item::class,
             [
-                'getCalculationPrice',
-                'getQty',
-                'getProduct',
-                'getProductId',
-                'getName',
-                'getSku',
-                'getIsVirtual',
+            'getCalculationPrice',
+            'getQty',
+            'getProduct',
+            'getProductId',
+            'getName',
+            'getSku',
+            'getIsVirtual',
             ]
         );
         $productMock = $this->createMock(Product::class);
@@ -4672,8 +4679,8 @@ ORDER
         $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
 
         $this->imageHelper->method('init')
-            ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
-            ->willThrowException(new Exception());
+        ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
+        ->willThrowException(new Exception());
 
         $this->bugsnag->expects(static::once())->method('registerCallback')->with(
             static::callback(
@@ -4713,22 +4720,22 @@ ORDER
         );
         static::assertEquals(
             [
-                [
-                    'reference'    => 20102,
-                    'name'         => 'Test Product',
-                    'total_amount' => 10000,
-                    'unit_price'   => 10000,
-                    'quantity'     => 1.0,
-                    'sku'          => self::PRODUCT_SKU,
-                    'type'         => 'physical',
-                    'description'  => '',
-                ],
+            [
+                'reference'    => 20102,
+                'name'         => 'Test Product',
+                'total_amount' => 10000,
+                'unit_price'   => 10000,
+                'quantity'     => 1.0,
+                'sku'          => self::PRODUCT_SKU,
+                'type'         => 'physical',
+                'description'  => '',
+            ],
             ],
             $products
         );
         static::assertEquals(10000, $totalAmount);
         static::assertEquals(0, $diff);
-        }
+    }
 
     /**
      * @test
@@ -4802,91 +4809,91 @@ ORDER
        *
        * @covers ::getCartItems
        */
-      public function getCartItems_withGiftWrapping()
-      {
-          $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
-          $this->appEmulation->expects(static::once())->method('startEnvironmentEmulation')
-              ->with(self::STORE_ID, \Magento\Framework\App\Area::AREA_FRONTEND, true);
-          $quoteItem = $this->createPartialMock(
-              Item::class,
-              [
-                  'getCalculationPrice',
-                  'getQty',
-                  'getProduct',
-                  'getProductId',
-                  'getName',
-                  'getSku',
-                  'getIsVirtual',
-              ]
-          );
-          $productMock = $this->createMock(Product::class);
-          $productMock->method('getId')->willReturn(self::PRODUCT_ID);
-          $productMock->method('getName')->willReturn('Test Product');
-          $productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
+    public function getCartItems_withGiftWrapping()
+    {
+        $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
+        $this->appEmulation->expects(static::once())->method('startEnvironmentEmulation')
+            ->with(self::STORE_ID, \Magento\Framework\App\Area::AREA_FRONTEND, true);
+        $quoteItem = $this->createPartialMock(
+            Item::class,
+            [
+                'getCalculationPrice',
+                'getQty',
+                'getProduct',
+                'getProductId',
+                'getName',
+                'getSku',
+                'getIsVirtual',
+            ]
+        );
+        $productMock = $this->createMock(Product::class);
+        $productMock->method('getId')->willReturn(self::PRODUCT_ID);
+        $productMock->method('getName')->willReturn('Test Product');
+        $productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
 
-          $quoteItem->method('getName')->willReturn('Test Product');
-          $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
-          $quoteItem->method('getQty')->willReturn(1);
-          $quoteItem->method('getCalculationPrice')->willReturn(self::PRODUCT_PRICE);
-          $quoteItem->method('getIsVirtual')->willReturn(false);
-          $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
-          $quoteItem->method('getProduct')->willReturn($productMock);
-          $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
+        $quoteItem->method('getName')->willReturn('Test Product');
+        $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
+        $quoteItem->method('getQty')->willReturn(1);
+        $quoteItem->method('getCalculationPrice')->willReturn(self::PRODUCT_PRICE);
+        $quoteItem->method('getIsVirtual')->willReturn(false);
+        $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
+        $quoteItem->method('getProduct')->willReturn($productMock);
+        $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
 
-          $this->imageHelper->method('init')
-              ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
-              ->willThrowException(new Exception());
+        $this->imageHelper->method('init')
+            ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
+            ->willThrowException(new Exception());
 
-          $this->appEmulation->expects(static::once())->method('stopEnvironmentEmulation');
+        $this->appEmulation->expects(static::once())->method('stopEnvironmentEmulation');
 
-          $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItem]);
-          $this->quoteMock->method('getQuoteCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItem]);
+        $this->quoteMock->method('getQuoteCurrencyCode')->willReturn(self::CURRENCY_CODE);
 
-          $this->giftwrapping = $this->getMockBuilder('\Magento\GiftWrapping\Model\Total\Quote\Giftwrapping')
-              ->disableOriginalConstructor()
-              ->setMethods(['getGwId','getGwItemsPrice','getGwCardPrice','getGwPrice','getText','getTitle','getCode'])
-              ->getMock();
+        $this->giftwrapping = $this->getMockBuilder('\Magento\GiftWrapping\Model\Total\Quote\Giftwrapping')
+            ->disableOriginalConstructor()
+            ->setMethods(['getGwId','getGwItemsPrice','getGwCardPrice','getGwPrice','getText','getTitle','getCode'])
+            ->getMock();
 
-          $this->giftwrapping->method('getGwId')->willReturn(1);
-          $this->giftwrapping->method('getGwItemsPrice')->willReturn('10');
-          $this->giftwrapping->method('getGwCardPrice')->willReturn('0');
-          $this->giftwrapping->method('getGwPrice')->willReturn('5');
-          $this->giftwrapping->method('getTitle')->willReturnSelf();
-          $this->giftwrapping->method('getText')->willReturn('Gift Wrapping');
-          $this->giftwrapping->method('getCode')->willReturn('gift_id');
-          $this->quoteMock->method('getTotals')->willReturn(['giftwrapping' => $this->giftwrapping]);
+        $this->giftwrapping->method('getGwId')->willReturn(1);
+        $this->giftwrapping->method('getGwItemsPrice')->willReturn('10');
+        $this->giftwrapping->method('getGwCardPrice')->willReturn('0');
+        $this->giftwrapping->method('getGwPrice')->willReturn('5');
+        $this->giftwrapping->method('getTitle')->willReturnSelf();
+        $this->giftwrapping->method('getText')->willReturn('Gift Wrapping');
+        $this->giftwrapping->method('getCode')->willReturn('gift_id');
+        $this->quoteMock->method('getTotals')->willReturn(['giftwrapping' => $this->giftwrapping]);
 
-          list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
-              $this->quoteMock,
-              self::STORE_ID
-          );
-          static::assertEquals(
-              [
-                  [
-                      'reference'    => 20102,
-                      'name'         => 'Test Product',
-                      'total_amount' => 10000,
-                      'unit_price'   => 10000,
-                      'quantity'     => 1.0,
-                      'sku'          => self::PRODUCT_SKU,
-                      'type'         => 'physical',
-                      'description'  => '',
-                  ],
-                  [
-                      'reference' => 1,
-                      'name' => 'Gift Wrapping',
-                      'total_amount' => 1500,
-                      'unit_price' => 1500,
-                      'quantity' => 1,
-                      'sku' => 'gift_id',
-                      'type' => 'physical',
-                  ]
-              ],
-              $products
-          );
-          static::assertEquals(11500, $totalAmount);
-          static::assertEquals(0, $diff);
-      }
+        list($products, $totalAmount, $diff) = $this->currentMock->getCartItems(
+            $this->quoteMock,
+            self::STORE_ID
+        );
+        static::assertEquals(
+            [
+                [
+                    'reference'    => 20102,
+                    'name'         => 'Test Product',
+                    'total_amount' => 10000,
+                    'unit_price'   => 10000,
+                    'quantity'     => 1.0,
+                    'sku'          => self::PRODUCT_SKU,
+                    'type'         => 'physical',
+                    'description'  => '',
+                ],
+                [
+                    'reference' => 1,
+                    'name' => 'Gift Wrapping',
+                    'total_amount' => 1500,
+                    'unit_price' => 1500,
+                    'quantity' => 1,
+                    'sku' => 'gift_id',
+                    'type' => 'physical',
+                ]
+            ],
+            $products
+        );
+        static::assertEquals(11500, $totalAmount);
+        static::assertEquals(0, $diff);
+    }
 
         /**
          * @test
@@ -4898,49 +4905,50 @@ ORDER
          * @param $childThumbnail
          * @param $expectedProductName
          */
-        public function getProductToGetImageForQuoteItem_withConfigurableItem($imageConfig, $childThumbnail, $expectedProductName)
-        {
-            $quoteItem = $this->createPartialMock(
-                Item::class,
-                [
-                    'getProduct',
-                    'getProductType',
-                    'getOptionByCode'
-                ]
-            );
+    public function getProductToGetImageForQuoteItem_withConfigurableItem($imageConfig, $childThumbnail, $expectedProductName)
+    {
+        $quoteItem = $this->createPartialMock(
+            Item::class,
+            [
+                'getProduct',
+                'getProductType',
+                'getOptionByCode'
+            ]
+        );
 
-            $scopeConfigMock = $this->createMock(ScopeConfigInterface::class);
+        $scopeConfigMock = $this->createMock(ScopeConfigInterface::class);
 
-            $scopeConfigMock->expects(static::once())->method('getValue')->with(
-                'checkout/cart/configurable_product_image',
-                ScopeInterface::SCOPE_STORE
-            )->willReturn($imageConfig);
-            $this->configHelper->method('getScopeConfig')->willReturn($scopeConfigMock);
+        $scopeConfigMock->expects(static::once())->method('getValue')->with(
+            'checkout/cart/configurable_product_image',
+            ScopeInterface::SCOPE_STORE
+        )->willReturn($imageConfig);
+        $this->configHelper->method('getScopeConfig')->willReturn($scopeConfigMock);
 
-            $parentProductMock = $this->createMock(Product::class);
-            $parentProductMock->method('getName')->willReturn('Parent Product Name');
-            $quoteItem->expects(self::once())->method('getProduct')->willReturn($parentProductMock);
-            $quoteItem->method('getProductType')->willReturn(\Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE);
-
-
-            $childProductMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
-            $childProductMock->method('getName')->willReturn('Child Product Name');
-            $childProductMock->method('getThumbnail')->willReturn($childThumbnail);
-            $quoteItemOption = $this->createPartialMock(\Magento\Quote\Model\Quote\Item\Option::class, ['getProduct']);
-            $quoteItemOption->method('getProduct')->willReturn($childProductMock);
-            $quoteItem->method('getOptionByCode')->with('simple_product')->willReturn($quoteItemOption);
+        $parentProductMock = $this->createMock(Product::class);
+        $parentProductMock->method('getName')->willReturn('Parent Product Name');
+        $quoteItem->expects(self::once())->method('getProduct')->willReturn($parentProductMock);
+        $quoteItem->method('getProductType')->willReturn(\Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE);
 
 
-            self::assertEquals($expectedProductName, $this->currentMock->getProductToGetImageForQuoteItem($quoteItem)->getName());
-        }
+        $childProductMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
+        $childProductMock->method('getName')->willReturn('Child Product Name');
+        $childProductMock->method('getThumbnail')->willReturn($childThumbnail);
+        $quoteItemOption = $this->createPartialMock(\Magento\Quote\Model\Quote\Item\Option::class, ['getProduct']);
+        $quoteItemOption->method('getProduct')->willReturn($childProductMock);
+        $quoteItem->method('getOptionByCode')->with('simple_product')->willReturn($quoteItemOption);
 
-        public function dataProvider_getProductToGetImageForQuoteItem_withConfigurableItem() {
-            return [
-                [ThumbnailSource::OPTION_USE_OWN_IMAGE, 'Child Image URL', 'Child Product Name'],
-                [ThumbnailSource::OPTION_USE_OWN_IMAGE, null, 'Parent Product Name'],
-                [ThumbnailSource::OPTION_USE_PARENT_IMAGE, 'Child Image URL', 'Parent Product Name']
-            ];
-        }
+
+        self::assertEquals($expectedProductName, $this->currentMock->getProductToGetImageForQuoteItem($quoteItem)->getName());
+    }
+
+    public function dataProvider_getProductToGetImageForQuoteItem_withConfigurableItem()
+    {
+        return [
+            [ThumbnailSource::OPTION_USE_OWN_IMAGE, 'Child Image URL', 'Child Product Name'],
+            [ThumbnailSource::OPTION_USE_OWN_IMAGE, null, 'Parent Product Name'],
+            [ThumbnailSource::OPTION_USE_PARENT_IMAGE, 'Child Image URL', 'Parent Product Name']
+        ];
+    }
 
         /**
          * @test
@@ -4950,69 +4958,70 @@ ORDER
          * @param $childThumbnail
          * @param $expectedProductName
          */
-        public function getProductToGetImageForQuoteItem_withGroupedItem($imageConfig, $childThumbnail, $expectedProductName)
-        {
-            $quoteItem = $this->createPartialMock(
-                Item::class,
-                [
-                    'getProduct',
-                    'getProductType',
-                    'getOptionByCode'
-                ]
-            );
+    public function getProductToGetImageForQuoteItem_withGroupedItem($imageConfig, $childThumbnail, $expectedProductName)
+    {
+        $quoteItem = $this->createPartialMock(
+            Item::class,
+            [
+                'getProduct',
+                'getProductType',
+                'getOptionByCode'
+            ]
+        );
 
-            $scopeConfigMock = $this->createMock(ScopeConfigInterface::class);
+        $scopeConfigMock = $this->createMock(ScopeConfigInterface::class);
 
-            $scopeConfigMock->expects(static::once())->method('getValue')->with(
-                'checkout/cart/grouped_product_image',
-                ScopeInterface::SCOPE_STORE
-            )->willReturn($imageConfig);
-            $this->configHelper->method('getScopeConfig')->willReturn($scopeConfigMock);
+        $scopeConfigMock->expects(static::once())->method('getValue')->with(
+            'checkout/cart/grouped_product_image',
+            ScopeInterface::SCOPE_STORE
+        )->willReturn($imageConfig);
+        $this->configHelper->method('getScopeConfig')->willReturn($scopeConfigMock);
 
-            $productMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
-            $productMock->method('getName')->willReturn('Child Product Name');
-            $productMock->method('getThumbnail')->willReturn($childThumbnail);
-            $quoteItem->expects(self::once())->method('getProduct')->willReturn($productMock);
-            $quoteItem->method('getProductType')->willReturn(\Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE);
+        $productMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
+        $productMock->method('getName')->willReturn('Child Product Name');
+        $productMock->method('getThumbnail')->willReturn($childThumbnail);
+        $quoteItem->expects(self::once())->method('getProduct')->willReturn($productMock);
+        $quoteItem->method('getProductType')->willReturn(\Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE);
 
-            $groupedProductMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
-            $groupedProductMock->method('getName')->willReturn('Grouped Product Name');
+        $groupedProductMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
+        $groupedProductMock->method('getName')->willReturn('Grouped Product Name');
 
-            $quoteItemOption = $this->createPartialMock(\Magento\Quote\Model\Quote\Item\Option::class, ['getProduct']);
-            $quoteItemOption->method('getProduct')->willReturn($groupedProductMock);
-            $quoteItem->method('getOptionByCode')->with('product_type')->willReturn($quoteItemOption);
+        $quoteItemOption = $this->createPartialMock(\Magento\Quote\Model\Quote\Item\Option::class, ['getProduct']);
+        $quoteItemOption->method('getProduct')->willReturn($groupedProductMock);
+        $quoteItem->method('getOptionByCode')->with('product_type')->willReturn($quoteItemOption);
 
 
-            self::assertEquals($expectedProductName, $this->currentMock->getProductToGetImageForQuoteItem($quoteItem)->getName());
-        }
+        self::assertEquals($expectedProductName, $this->currentMock->getProductToGetImageForQuoteItem($quoteItem)->getName());
+    }
 
-        public function dataProvider_getProductToGetImageForQuoteItem_withGroupedItem() {
-            return [
-                [ThumbnailSource::OPTION_USE_OWN_IMAGE, 'Child Image URL', 'Child Product Name'],
-                [ThumbnailSource::OPTION_USE_OWN_IMAGE, null, 'Grouped Product Name'],
-                [ThumbnailSource::OPTION_USE_PARENT_IMAGE, 'Child Image URL', 'Grouped Product Name']
-            ];
-        }
+    public function dataProvider_getProductToGetImageForQuoteItem_withGroupedItem()
+    {
+        return [
+            [ThumbnailSource::OPTION_USE_OWN_IMAGE, 'Child Image URL', 'Child Product Name'],
+            [ThumbnailSource::OPTION_USE_OWN_IMAGE, null, 'Grouped Product Name'],
+            [ThumbnailSource::OPTION_USE_PARENT_IMAGE, 'Child Image URL', 'Grouped Product Name']
+        ];
+    }
 
       /**
        * @return MockObject
        */
-      private function getQuoteItemMock()
-      {
+    private function getQuoteItemMock()
+    {
         $quoteItem = $this->getMockBuilder(Item::class)
-            ->setMethods(
-                [
-                    'getSku',
-                    'getQty',
-                    'getCalculationPrice',
-                    'getName',
-                    'getIsVirtual',
-                    'getProductId',
-                    'getProduct'
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
+          ->setMethods(
+              [
+                  'getSku',
+                  'getQty',
+                  'getCalculationPrice',
+                  'getName',
+                  'getIsVirtual',
+                  'getProductId',
+                  'getProduct'
+              ]
+          )
+          ->disableOriginalConstructor()
+          ->getMock();
         $quoteItem->method('getName')->willReturn('Test Product');
         $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
         $quoteItem->method('getQty')->willReturn(1);
@@ -5022,15 +5031,101 @@ ORDER
         $quoteItem->method('getProduct')->willReturn($this->productMock);
 
         return $quoteItem;
-        }
+    }
 
         /**
-        * Setup method for tests covering {@see \Bolt\Boltpay\Helper\Cart::createCartByRequest}
-        *
-        * @return array containing request data, payload, expected cart data and current mock
-        */
-        private function createCartByRequestSetUp()
-        {
+         * Setup method for tests covering {@see \Bolt\Boltpay\Helper\Cart::createCartByRequest}
+         *
+         * @return array containing request data, payload, expected cart data and current mock
+         */
+    private function createCartByRequestSetUp()
+    {
+        $request = [
+        'type'     => 'cart.create',
+        'items'    =>
+            [
+                [
+                    'reference'    => CartTest::PRODUCT_ID,
+                    'name'         => 'Product name',
+                    'description'  => null,
+                    'options'      => json_encode(['storeId' => CartTest::STORE_ID]),
+                    'total_amount' => CartTest::PRODUCT_PRICE,
+                    'unit_price'   => CartTest::PRODUCT_PRICE,
+                    'tax_amount'   => 0,
+                    'quantity'     => 1,
+                    'uom'          => null,
+                    'upc'          => null,
+                    'sku'          => null,
+                    'isbn'         => null,
+                    'brand'        => null,
+                    'manufacturer' => null,
+                    'category'     => null,
+                    'tags'         => null,
+                    'properties'   => null,
+                    'color'        => null,
+                    'size'         => null,
+                    'weight'       => null,
+                    'weight_unit'  => null,
+                    'image_url'    => null,
+                    'details_url'  => null,
+                    'tax_code'     => null,
+                    'type'         => 'unknown'
+                ]
+            ],
+        'currency' => self::CURRENCY_CODE,
+        'metadata' => null,
+        ];
+        $payload = ['user_id' => 1, 'timestamp' => time()];
+        $this->hookHelper->method('verifySignature')->willReturn(true);
+
+        $expectedCartData = [
+        'order_reference' => self::IMMUTABLE_QUOTE_ID,
+        'display_id'      => '',
+        'currency'        => self::CURRENCY_CODE,
+        'items'           => [
+            [
+                'reference'    => self::PRODUCT_ID,
+                'name'         => 'Affirm Water Bottle ',
+                'total_amount' => self::PRODUCT_PRICE,
+                'unit_price'   => self::PRODUCT_PRICE,
+                'quantity'     => 1,
+                'sku'          => self::PRODUCT_SKU,
+                'type'         => 'physical',
+                'description'  => 'Product description',
+            ],
+        ],
+        'discounts'       => [],
+        'total_amount'    => self::PRODUCT_PRICE,
+        'tax_amount'      => 0,
+        'metadata'        => [
+            'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+        ],
+        ];
+
+        $this->quoteManagement->expects(static::once())->method('createEmptyCart')
+        ->willReturn(self::IMMUTABLE_QUOTE_ID);
+        $this->quoteFactory->method('create')->withAnyParameters()->willReturnSelf();
+        $this->quoteFactory->method('load')->with(self::IMMUTABLE_QUOTE_ID)->willReturn($this->quoteMock);
+
+        $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
+        ->willReturn($this->productMock);
+
+        $currentMock = $this->getCurrentMock(['getCartData', 'isBoltOrderCachingEnabled']);
+        $currentMock->method('isBoltOrderCachingEnabled')->willReturn(false);
+        return [$request, $payload, $expectedCartData, $currentMock];
+    }
+
+        /**
+         * @test
+         * that createCartByRequest creates cart with simple product and returns expected cart data using
+         * @see \Bolt\Boltpay\Helper\Cart::getCartData
+         *
+         * @covers ::createCartByRequest
+         *
+         * @throws Exception from tested method
+         */
+    public function createCartByRequest_withGuestUserAndSimpleProduct_returnsExpectedCartData()
+    {
         $request = [
             'type'     => 'cart.create',
             'items'    =>
@@ -5066,11 +5161,9 @@ ORDER
             'currency' => self::CURRENCY_CODE,
             'metadata' => null,
         ];
-        $payload = ['user_id' => 1, 'timestamp' => time()];
-        $this->hookHelper->method('verifySignature')->willReturn(true);
 
         $expectedCartData = [
-            'order_reference' => self::IMMUTABLE_QUOTE_ID,
+            'order_reference' => self::QUOTE_ID,
             'display_id'      => '',
             'currency'        => self::CURRENCY_CODE,
             'items'           => [
@@ -5093,104 +5186,20 @@ ORDER
             ],
         ];
 
+        $cartMock = $this->getCurrentMock(['getCartData', 'isBoltOrderCachingEnabled']);
+        $cartMock->expects(static::once())->method('isBoltOrderCachingEnabled')->willReturn(false);
+        $cartMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
+            ->willReturn($expectedCartData);
         $this->quoteManagement->expects(static::once())->method('createEmptyCart')
-            ->willReturn(self::IMMUTABLE_QUOTE_ID);
+            ->willReturn(self::QUOTE_ID);
         $this->quoteFactory->method('create')->withAnyParameters()->willReturnSelf();
-        $this->quoteFactory->method('load')->with(self::IMMUTABLE_QUOTE_ID)->willReturn($this->quoteMock);
-
+        $this->quoteFactory->method('load')->with(self::QUOTE_ID)->willReturn($this->quoteMock);
         $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
             ->willReturn($this->productMock);
+        $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
 
-        $currentMock = $this->getCurrentMock(['getCartData', 'isBoltOrderCachingEnabled']);
-        $currentMock->method('isBoltOrderCachingEnabled')->willReturn(false);
-        return [$request, $payload, $expectedCartData, $currentMock];
-        }
-
-        /**
-        * @test
-        * that createCartByRequest creates cart with simple product and returns expected cart data using
-        * @see \Bolt\Boltpay\Helper\Cart::getCartData
-        *
-        * @covers ::createCartByRequest
-        *
-        * @throws Exception from tested method
-        */
-        public function createCartByRequest_withGuestUserAndSimpleProduct_returnsExpectedCartData()
-        {
-            $request = [
-                'type'     => 'cart.create',
-                'items'    =>
-                    [
-                        [
-                            'reference'    => CartTest::PRODUCT_ID,
-                            'name'         => 'Product name',
-                            'description'  => null,
-                            'options'      => json_encode(['storeId' => CartTest::STORE_ID]),
-                            'total_amount' => CartTest::PRODUCT_PRICE,
-                            'unit_price'   => CartTest::PRODUCT_PRICE,
-                            'tax_amount'   => 0,
-                            'quantity'     => 1,
-                            'uom'          => null,
-                            'upc'          => null,
-                            'sku'          => null,
-                            'isbn'         => null,
-                            'brand'        => null,
-                            'manufacturer' => null,
-                            'category'     => null,
-                            'tags'         => null,
-                            'properties'   => null,
-                            'color'        => null,
-                            'size'         => null,
-                            'weight'       => null,
-                            'weight_unit'  => null,
-                            'image_url'    => null,
-                            'details_url'  => null,
-                            'tax_code'     => null,
-                            'type'         => 'unknown'
-                        ]
-                    ],
-                'currency' => self::CURRENCY_CODE,
-                'metadata' => null,
-            ];
-
-            $expectedCartData = [
-                'order_reference' => self::QUOTE_ID,
-                'display_id'      => '',
-                'currency'        => self::CURRENCY_CODE,
-                'items'           => [
-                    [
-                        'reference'    => self::PRODUCT_ID,
-                        'name'         => 'Affirm Water Bottle ',
-                        'total_amount' => self::PRODUCT_PRICE,
-                        'unit_price'   => self::PRODUCT_PRICE,
-                        'quantity'     => 1,
-                        'sku'          => self::PRODUCT_SKU,
-                        'type'         => 'physical',
-                        'description'  => 'Product description',
-                    ],
-                ],
-                'discounts'       => [],
-                'total_amount'    => self::PRODUCT_PRICE,
-                'tax_amount'      => 0,
-                'metadata'        => [
-                    'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
-                ],
-            ];
-
-            $cartMock = $this->getCurrentMock(['getCartData', 'isBoltOrderCachingEnabled']);
-            $cartMock->expects(static::once())->method('isBoltOrderCachingEnabled')->willReturn(false);
-            $cartMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
-                ->willReturn($expectedCartData);
-            $this->quoteManagement->expects(static::once())->method('createEmptyCart')
-                ->willReturn(self::QUOTE_ID);
-            $this->quoteFactory->method('create')->withAnyParameters()->willReturnSelf();
-            $this->quoteFactory->method('load')->with(self::QUOTE_ID)->willReturn($this->quoteMock);
-            $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
-                ->willReturn($this->productMock);
-            $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
-
-            static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
-        }
+        static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
+    }
 
 
     /**
@@ -5313,101 +5322,101 @@ ORDER
     }
 
         /**
-        * @test
-        * that createCartByRequest creates cart with configurable product and returns expected cart data using
-        * @see \Bolt\Boltpay\Helper\Cart::getCartData
-        *
-        * @covers ::createCartByRequest
-        *
-        * @throws Exception from tested method
-        */
-        public function createCartByRequest_withGuestUserAndConfigurableProduct_returnsExpectedCartData()
-        {
+         * @test
+         * that createCartByRequest creates cart with configurable product and returns expected cart data using
+         * @see \Bolt\Boltpay\Helper\Cart::getCartData
+         *
+         * @covers ::createCartByRequest
+         *
+         * @throws Exception from tested method
+         */
+    public function createCartByRequest_withGuestUserAndConfigurableProduct_returnsExpectedCartData()
+    {
         $request = [
-            'type'     => 'cart.create',
-            'items'    => [
-                [
-                    'reference'    => CartTest::PRODUCT_ID,
-                    'name'         => 'Product name',
-                    'description'  => null,
-                    'options'      => json_encode(['storeId' => CartTest::STORE_ID]),
-                    'total_amount' => CartTest::PRODUCT_PRICE,
-                    'unit_price'   => CartTest::PRODUCT_PRICE,
-                    'tax_amount'   => 0,
-                    'quantity'     => 1,
-                    'type'         => 'unknown'
-                ]
-            ],
-            'currency' => self::CURRENCY_CODE,
-            'metadata' => null,
+        'type'     => 'cart.create',
+        'items'    => [
+            [
+                'reference'    => CartTest::PRODUCT_ID,
+                'name'         => 'Product name',
+                'description'  => null,
+                'options'      => json_encode(['storeId' => CartTest::STORE_ID]),
+                'total_amount' => CartTest::PRODUCT_PRICE,
+                'unit_price'   => CartTest::PRODUCT_PRICE,
+                'tax_amount'   => 0,
+                'quantity'     => 1,
+                'type'         => 'unknown'
+            ]
+        ],
+        'currency' => self::CURRENCY_CODE,
+        'metadata' => null,
         ];
         $request['items'][0]['options'] = json_encode(
             [
-                "product"                      => self::PRODUCT_ID,
-                "selected_configurable_option" => "",
-                "item"                         => self::PRODUCT_ID,
-                "related_product"              => "",
-                "form_key"                     => "8xaF8eKXVaiRVM53",
-                "super_attribute"              => self::SUPER_ATTRIBUTE,
-                "qty"                          => "1",
-                'storeId'                      => self::STORE_ID
+            "product"                      => self::PRODUCT_ID,
+            "selected_configurable_option" => "",
+            "item"                         => self::PRODUCT_ID,
+            "related_product"              => "",
+            "form_key"                     => "8xaF8eKXVaiRVM53",
+            "super_attribute"              => self::SUPER_ATTRIBUTE,
+            "qty"                          => "1",
+            'storeId'                      => self::STORE_ID
             ],
             JSON_FORCE_OBJECT
         );
 
         $expectedCartData = [
-            'order_reference' => self::QUOTE_ID,
-            'display_id'      => self::ORDER_INCREMENT_ID,
-            'currency'        => self::CURRENCY_CODE,
-            'items'           => [
-                [
-                    'reference'    => self::PRODUCT_ID,
-                    'name'         => 'Affirm Water Bottle ',
-                    'total_amount' => self::PRODUCT_PRICE,
-                    'unit_price'   => self::PRODUCT_PRICE,
-                    'quantity'     => 1,
-                    'sku'          => self::PRODUCT_SKU,
-                    'type'         => 'physical',
-                    'description'  => 'Product description',
-                ],
+        'order_reference' => self::QUOTE_ID,
+        'display_id'      => self::ORDER_INCREMENT_ID,
+        'currency'        => self::CURRENCY_CODE,
+        'items'           => [
+            [
+                'reference'    => self::PRODUCT_ID,
+                'name'         => 'Affirm Water Bottle ',
+                'total_amount' => self::PRODUCT_PRICE,
+                'unit_price'   => self::PRODUCT_PRICE,
+                'quantity'     => 1,
+                'sku'          => self::PRODUCT_SKU,
+                'type'         => 'physical',
+                'description'  => 'Product description',
             ],
-            'discounts'       => [],
-            'total_amount'    => self::PRODUCT_PRICE,
-            'tax_amount'      => 0,
-            'metadata'        => [
-                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
-            ],
+        ],
+        'discounts'       => [],
+        'total_amount'    => self::PRODUCT_PRICE,
+        'tax_amount'      => 0,
+        'metadata'        => [
+            'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
+        ],
         ];
 
         $cartMock = $this->getCurrentMock(['getCartData']);
         $cartMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
-            ->willReturn($expectedCartData);
+        ->willReturn($expectedCartData);
         $this->quoteManagement->expects(static::once())->method('createEmptyCart')
-            ->willReturn(self::QUOTE_ID);
+        ->willReturn(self::QUOTE_ID);
         $this->quoteFactory->method('create')->withAnyParameters()->willReturnSelf();
         $this->quoteFactory->method('load')->with(self::QUOTE_ID)->willReturn($this->quoteMock);
         $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
-            ->willReturn($this->productMock);
+        ->willReturn($this->productMock);
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
 
         static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
-        }
+    }
 
         /**
-        * @test
-        * that createCartByRequest assigns customer to quote by calling
-        * @see \Bolt\Boltpay\Helper\Cart::assignQuoteCustomerByEncryptedUserId
-        *
-        * @covers ::createCartByRequest
-        *
-        * @throws Exception from tested method
-        */
-        public function createCartByRequest_withEncryptedUserIdInRequest_assignsCustomerToQuote()
-        {
+         * @test
+         * that createCartByRequest assigns customer to quote by calling
+         * @see \Bolt\Boltpay\Helper\Cart::assignQuoteCustomerByEncryptedUserId
+         *
+         * @covers ::createCartByRequest
+         *
+         * @throws Exception from tested method
+         */
+    public function createCartByRequest_withEncryptedUserIdInRequest_assignsCustomerToQuote()
+    {
         list($request, $payload, $expectedCartData, $currentMock) = $this->createCartByRequestSetUp();
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
         $currentMock->expects(static::once())->method('getCartData')->with(false, '', $this->quoteMock)
-            ->willReturn($expectedCartData);
+        ->willReturn($expectedCartData);
 
         $request['metadata']['encrypted_user_id'] = json_encode($payload + ['signature' => 'correct_signature']);
 
@@ -5416,55 +5425,55 @@ ORDER
         $this->quoteMock->expects(static::once())->method('assignCustomer')->with($customer);
 
         static::assertEquals($expectedCartData, $currentMock->createCartByRequest($request));
-        }
+    }
 
         /**
-        * @test
-        * that createCartByRequest throws BoltException with if a stock exception occurs when adding product to cart
-        * @see \Bolt\Boltpay\Model\ErrorResponse::ERR_PPC_OUT_OF_STOCK used as exception code
-        *
-        * @covers ::createCartByRequest
-        *
-        * @throws Exception from tested method
-        */
-        public function createCartByRequest_withOutOfStockException_throwsBoltExceptionWithOutOfStockCode()
-        {
+         * @test
+         * that createCartByRequest throws BoltException with if a stock exception occurs when adding product to cart
+         * @see \Bolt\Boltpay\Model\ErrorResponse::ERR_PPC_OUT_OF_STOCK used as exception code
+         *
+         * @covers ::createCartByRequest
+         *
+         * @throws Exception from tested method
+         */
+    public function createCartByRequest_withOutOfStockException_throwsBoltExceptionWithOutOfStockCode()
+    {
         list($request, $payload, $expectedCartData, $currentMock) = $this->createCartByRequestSetUp();
 
         $this->quoteMock->expects(static::once())->method('addProduct')
-            ->with($this->productMock, new DataObject(['qty' => 1]))
-            ->willThrowException(new Exception('Product that you are trying to add is not available.'));
+        ->with($this->productMock, new DataObject(['qty' => 1]))
+        ->willThrowException(new Exception('Product that you are trying to add is not available.'));
 
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(BoltErrorResponse::ERR_PPC_OUT_OF_STOCK);
         $this->expectExceptionMessage('Product that you are trying to add is not available.');
 
         static::assertEquals($expectedCartData, $currentMock->createCartByRequest($request));
-        }
+    }
 
         /**
-        * @test
-        * that createCartByRequest throws BoltException with if a non-stock exception occurs when adding product to cart
-        * @see \Bolt\Boltpay\Model\ErrorResponse::ERR_PPC_INVALID_QUANTITY used as exception code
-        *
-        * @covers ::createCartByRequest
-        *
-        * @throws Exception from tested method
-        */
-        public function createCartByRequest_withExceptionWhenAddingProductToCart_throwsBoltException()
-        {
+         * @test
+         * that createCartByRequest throws BoltException with if a non-stock exception occurs when adding product to cart
+         * @see \Bolt\Boltpay\Model\ErrorResponse::ERR_PPC_INVALID_QUANTITY used as exception code
+         *
+         * @covers ::createCartByRequest
+         *
+         * @throws Exception from tested method
+         */
+    public function createCartByRequest_withExceptionWhenAddingProductToCart_throwsBoltException()
+    {
         list($request, $payload, $expectedCartData, $currentMock) = $this->createCartByRequestSetUp();
 
         $this->quoteMock->expects(static::once())->method('addProduct')
-            ->with($this->productMock, new DataObject(['qty' => 1]))
-            ->willThrowException(new Exception('Product unavailable.'));
+        ->with($this->productMock, new DataObject(['qty' => 1]))
+        ->willThrowException(new Exception('Product unavailable.'));
 
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(BoltErrorResponse::ERR_PPC_INVALID_QUANTITY);
         $this->expectExceptionMessage('The requested qty is not available');
 
         static::assertEquals($expectedCartData, $currentMock->createCartByRequest($request));
-        }
+    }
 
     /**
      * @test
@@ -5962,37 +5971,37 @@ ORDER
     }
 
         /**
-        * @test
-        * that getHints returns virtual_terminal_mode set to true when provided checkout type is admin
-        *
-        * @covers ::getHints
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function getHints_whenCheckoutTypeIsAdmin_setsVirtualTerminalModeToTrue()
-        {
+         * @test
+         * that getHints returns virtual_terminal_mode set to true when provided checkout type is admin
+         *
+         * @covers ::getHints
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function getHints_whenCheckoutTypeIsAdmin_setsVirtualTerminalModeToTrue()
+    {
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $result = $cartHelper->getHints(null, 'admin');
         static::assertTrue($result['virtual_terminal_mode']);
-        }
+    }
 
         /**
-        * @test
-        * that getHints returns encrypted user id if checkout type is product and customer is logged in
-        *
-        * @covers ::getHints
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function getHints_whenCheckoutTypeIsProductAndCustomerLoggedIn_returnsHintsWithEncryptedUserId()
-        {
+         * @test
+         * that getHints returns encrypted user id if checkout type is product and customer is logged in
+         *
+         * @covers ::getHints
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function getHints_whenCheckoutTypeIsProductAndCustomerLoggedIn_returnsHintsWithEncryptedUserId()
+    {
         $customerMock = $this->createPartialMock(
             Customer::class,
             [
-                'getId',
-                'getEmail',
-                'getDefaultBillingAddress',
-                'getDefaultShippingAddress'
+            'getId',
+            'getEmail',
+            'getDefaultBillingAddress',
+            'getDefaultShippingAddress'
             ]
         );
         $this->deciderHelper->expects(self::once())->method('ifShouldDisablePrefillAddressForLoggedInCustomer')->willReturn(false);
@@ -6010,12 +6019,12 @@ ORDER
         $requestDataMock->expects(static::once())->method('setDynamicApiUrl')->with(ApiHelper::API_SIGN);
         $requestDataMock->expects(static::once())->method('setApiKey')->with(self::API_KEY);
         $this->apiHelper->expects(static::once())->method('buildRequest')->with($requestDataMock)
-            ->willReturn($requestMock);
+        ->willReturn($requestMock);
         $this->apiHelper->expects(static::once())->method('sendRequest')->with($requestMock)->willReturn($responseMock);
         $signedMerchantUserId = [
-            'merchant_user_id' => self::CUSTOMER_ID,
-            'signature'        => self::SIGNATURE,
-            'nonce'            => 999999
+        'merchant_user_id' => self::CUSTOMER_ID,
+        'signature'        => self::SIGNATURE,
+        'nonce'            => 999999
         ];
         $responseMock->expects(static::once())->method('getResponse')->willReturn((object)$signedMerchantUserId);
         $hints = $this->getCurrentMock()->getHints(null, 'product');
@@ -6023,26 +6032,26 @@ ORDER
         static::assertEquals($signedMerchantUserId, $hints['signed_merchant_user_id']);
         $encryptedUserId = json_decode($hints['metadata']['encrypted_user_id'], true);
         self::assertEquals(self::CUSTOMER_ID, $encryptedUserId['user_id']);
-        }
+    }
 
         /**
-        * @test
-        * that getHints will return hints from customer default shipping address when quote is not virtual
-        *
-        * @covers ::getHints
-        * @dataProvider provider_getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints
-        * @param bool $ifShouldDisablePrefillAddressForLoggedInCustomer
-        * @throws NoSuchEntityException from tested method
-        */
-        public function getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints($ifShouldDisablePrefillAddressForLoggedInCustomer)
-        {
+         * @test
+         * that getHints will return hints from customer default shipping address when quote is not virtual
+         *
+         * @covers ::getHints
+         * @dataProvider provider_getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints
+         * @param bool $ifShouldDisablePrefillAddressForLoggedInCustomer
+         * @throws NoSuchEntityException from tested method
+         */
+    public function getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints($ifShouldDisablePrefillAddressForLoggedInCustomer)
+    {
         $customerMock = $this->createPartialMock(
             Customer::class,
             [
-                'getId',
-                'getEmail',
-                'getDefaultBillingAddress',
-                'getDefaultShippingAddress'
+            'getId',
+            'getEmail',
+            'getDefaultBillingAddress',
+            'getDefaultShippingAddress'
             ]
         );
         $this->deciderHelper->expects(self::any())->method('ifShouldDisablePrefillAddressForLoggedInCustomer')->willReturn($ifShouldDisablePrefillAddressForLoggedInCustomer);
@@ -6076,15 +6085,15 @@ ORDER
         $shippingAddressMock = $this->createPartialMock(
             Address::class,
             [
-                'getFirstname',
-                'getLastname',
-                'getEmail',
-                'getTelephone',
-                'getStreetLine',
-                'getCity',
-                'getRegion',
-                'getPostcode',
-                'getCountryId',
+            'getFirstname',
+            'getLastname',
+            'getEmail',
+            'getTelephone',
+            'getStreetLine',
+            'getCity',
+            'getRegion',
+            'getPostcode',
+            'getCountryId',
             ]
         );
         $shippingAddressMock->expects(static::once())->method('getFirstname')->willReturn('IntegrationBolt');
@@ -6104,16 +6113,16 @@ ORDER
 
         static::assertEquals(
             (object) [
-                'firstName'    => 'IntegrationBolt',
-                'lastName'     => 'BoltTest',
-                'email'        => self::EMAIL_ADDRESS,
-                'phone'        => '132 231 1234',
-                'addressLine1' => '228 7th Avenue',
-                'addressLine2' => '228 7th Avenue1',
-                'city'         => 'New York',
-                'state'        => 'New York',
-                'zip'          => '10011',
-                'country'      => '1111',
+            'firstName'    => 'IntegrationBolt',
+            'lastName'     => 'BoltTest',
+            'email'        => self::EMAIL_ADDRESS,
+            'phone'        => '132 231 1234',
+            'addressLine1' => '228 7th Avenue',
+            'addressLine2' => '228 7th Avenue1',
+            'city'         => 'New York',
+            'state'        => 'New York',
+            'zip'          => '10011',
+            'country'      => '1111',
             ],
             $hints['prefill']
         );
@@ -6124,32 +6133,33 @@ ORDER
         }
         $encryptedUserId = json_decode($hints['metadata']['encrypted_user_id'], true);
         self::assertEquals(self::CUSTOMER_ID, $encryptedUserId['user_id']);
-        }
+    }
 
-        public function provider_getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints(){
-            return [
-                [true],
-                [false],
-            ];
-        }
+    public function provider_getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints()
+    {
+        return [
+            [true],
+            [false],
+        ];
+    }
 
         /**
-        * @test
-        * that getHints will return hints from customer default billing address when quote is virtual
-        *
-        * @covers ::getHints
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function getHints_withVirtualQuoteAndCustomerLoggedIn_willReturnCustomerBillingAddressHints()
-        {
+         * @test
+         * that getHints will return hints from customer default billing address when quote is virtual
+         *
+         * @covers ::getHints
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function getHints_withVirtualQuoteAndCustomerLoggedIn_willReturnCustomerBillingAddressHints()
+    {
         $customerMock = $this->createPartialMock(
             Customer::class,
             [
-                'getId',
-                'getEmail',
-                'getDefaultBillingAddress',
-                'getDefaultShippingAddress'
+            'getId',
+            'getEmail',
+            'getDefaultBillingAddress',
+            'getDefaultShippingAddress'
             ]
         );
         $this->deciderHelper->expects(self::once())->method('ifShouldDisablePrefillAddressForLoggedInCustomer')->willReturn(false);
@@ -6167,26 +6177,26 @@ ORDER
         $requestDataMock->expects(static::once())->method('setDynamicApiUrl')->with(ApiHelper::API_SIGN);
         $requestDataMock->expects(static::once())->method('setApiKey')->with(self::API_KEY);
         $this->apiHelper->expects(static::once())->method('buildRequest')->with($requestDataMock)
-            ->willReturn($requestMock);
+        ->willReturn($requestMock);
         $this->apiHelper->expects(static::once())->method('sendRequest')->with($requestMock)->willReturn($responseMock);
         $signedMerchantUserId = [
-            'merchant_user_id' => self::CUSTOMER_ID,
-            'signature'        => self::SIGNATURE,
-            'nonce'            => 999999
+        'merchant_user_id' => self::CUSTOMER_ID,
+        'signature'        => self::SIGNATURE,
+        'nonce'            => 999999
         ];
         $responseMock->expects(static::once())->method('getResponse')->willReturn((object)$signedMerchantUserId);
         $billingAddressMock = $this->createPartialMock(
             Address::class,
             [
-                'getFirstname',
-                'getLastname',
-                'getEmail',
-                'getTelephone',
-                'getStreetLine',
-                'getCity',
-                'getRegion',
-                'getPostcode',
-                'getCountryId',
+            'getFirstname',
+            'getLastname',
+            'getEmail',
+            'getTelephone',
+            'getStreetLine',
+            'getCity',
+            'getRegion',
+            'getPostcode',
+            'getCountryId',
             ]
         );
         $billingAddressMock->expects(static::once())->method('getFirstname')->willReturn('IntegrationBolt');
@@ -6194,7 +6204,7 @@ ORDER
         $billingAddressMock->expects(static::once())->method('getEmail')->willReturn(self::EMAIL_ADDRESS);
         $billingAddressMock->expects(static::once())->method('getTelephone')->willReturn('132 231 1234');
         $billingAddressMock->expects(static::exactly(2))->method('getStreetLine')
-            ->willReturnOnConsecutiveCalls('228 7th Avenue', null);
+        ->willReturnOnConsecutiveCalls('228 7th Avenue', null);
         $billingAddressMock->expects(static::once())->method('getCity')->willReturn('New York');
         $billingAddressMock->expects(static::once())->method('getRegion')->willReturn('New York');
         $billingAddressMock->expects(static::once())->method('getPostcode')->willReturn('10011');
@@ -6206,276 +6216,276 @@ ORDER
         static::assertEquals(
             (object)
             [
-                'firstName'    => 'IntegrationBolt',
-                'lastName'     => 'BoltTest',
-                'email'        => self::EMAIL_ADDRESS,
-                'phone'        => '132 231 1234',
-                'addressLine1' => '228 7th Avenue',
-                'city'         => 'New York',
-                'state'        => 'New York',
-                'zip'          => '10011',
-                'country'      => '1111',
+            'firstName'    => 'IntegrationBolt',
+            'lastName'     => 'BoltTest',
+            'email'        => self::EMAIL_ADDRESS,
+            'phone'        => '132 231 1234',
+            'addressLine1' => '228 7th Avenue',
+            'city'         => 'New York',
+            'state'        => 'New York',
+            'zip'          => '10011',
+            'country'      => '1111',
             ],
             $hints['prefill']
         );
-        }
+    }
 
         /**
-        * @test
-        * that getHints returns hints from quote billing address if checkout type is not product and quote is virtual
-        *
-        * @covers ::getHints
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function getHints_withNonProductCheckoutTypeAndVirtualQuote_returnsHintsForQuoteBillingAddress()
-        {
-            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            $quote = TestUtils::createQuote();
-            $quoteId = $quote->getId();
-            $product = TestUtils::createVirtualProduct();
-            $quote->addProduct($product, 1);
-            TestUtils::setAddressToQuote($this->testAddressData, $quote, 'billing');
-            $quote->save();
-            $hints = $cartHelper->getHints($quoteId, 'multipage');
-            static::assertEquals(
-                [
-                    'prefill' => (object)[
-                        'firstName'    => 'IntegrationBolt',
-                        'lastName'     => 'BoltTest',
-                        'email'        => self::EMAIL_ADDRESS,
-                        'phone'        => '132 231 1234',
-                        'addressLine1' => '228 7th Avenue',
-                        'addressLine2' => '228 7th Avenue 2',
-                        'city'         => 'New York',
-                        'state'        => 'New York',
-                        'zip'          => '10011',
-                        'country'      => 'US',
-                    ]
-                ],
-                $hints
-            );
-            TestUtils::cleanupSharedFixtures([$product]);
-        }
-
-        /**
-        * @test
-        * that getHints returns hints from quote shipping address if checkout type is not product and quote is not virtual
-        *
-        * @covers ::getHints
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function getHints_withNonProductCheckoutTypeAndNonVirtualQuote_returnsHintsForQuoteShippingAddress()
-        {
-            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            $quote = TestUtils::createQuote();
-            $quoteId = $quote->getId();
-            TestUtils::setAddressToQuote($this->testAddressData, $quote, 'shipping');
-            $quote->save();
-            $hints = $cartHelper->getHints($quoteId, 'multipage');
-            static::assertEquals(
-                [
-                    'prefill' => (object)[
-                        'firstName'    => 'IntegrationBolt',
-                        'lastName'     => 'BoltTest',
-                        'email'        => self::EMAIL_ADDRESS,
-                        'phone'        => '132 231 1234',
-                        'addressLine1' => '228 7th Avenue',
-                        'addressLine2' => '228 7th Avenue 2',
-                        'city'         => 'New York',
-                        'state'        => 'New York',
-                        'zip'          => '10011',
-                        'country'      => 'US',
-                    ]
-                ],
-                $hints
-            );
-        }
-
-        /**
-        * @test
-        * that getHints skips pre-fill for Apple Pay related data when phone is 8005550111
-        *
-        * @covers ::getHints
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function getHints_withApplePayRelatedDataPhone_skipsPreFill()
-        {
-            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            $quote = TestUtils::createQuote();
-            $testAddressData = [
-                'company'         => "",
-                'country'         => "United States",
-                'country_code'    => "US",
-                'email'           => "test@bolt.com",
-                'first_name'      => "IntegrationBolt",
-                'last_name'       => "BoltTest",
-                'locality'        => "New York",
-                'phone'           => "8005550111",
-                'postal_code'     => "10011",
-                'region'          => "New York",
-                'street_address1' => "228 7th Avenue",
-                'street_address2' => "228 7th Avenue 2",
-            ];
-            TestUtils::setAddressToQuote($testAddressData, $quote, 'shipping');
-            $quote->save();
-            TestUtils::setQuoteToSession($quote);
-            $hints = $cartHelper->getHints();
-            static::assertEquals((object)[], $hints['prefill']);
-        }
-
-        /**
-        * @test
-        * that getHints skips pre-fill for Apple Pay related data when email is na@bolt.com
-        *
-        * @covers ::getHints
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function getHints_withApplePayRelatedDataEmail_skipsPreFill()
-        {
-            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            $quote = TestUtils::createQuote();
-            $testAddressData = [
-                'company'         => "",
-                'country'         => "United States",
-                'country_code'    => "US",
-                'email'           => "na@bolt.com",
-                'first_name'      => "IntegrationBolt",
-                'last_name'       => "BoltTest",
-                'locality'        => "New York",
-                'phone'           => "8005550111",
-                'postal_code'     => "10011",
-                'region'          => "New York",
-                'street_address1' => "228 7th Avenue",
-                'street_address2' => "228 7th Avenue 2",
-            ];
-            TestUtils::setAddressToQuote($testAddressData, $quote, 'shipping');
-            $quote->save();
-            TestUtils::setQuoteToSession($quote);
-            $hints = $cartHelper->getHints();
-            static::assertEquals((object)[], $hints['prefill']);
-        }
-
-        /**
-        * @test
-        * that getHints skips pre-fill for Apple Pay related data when address line is tbd
-        *
-        * @covers ::getHints
-        *
-        * @throws NoSuchEntityException from tested method
-        */
-        public function getHints_withApplePayRelatedDataAddressLine_skipsPreFill()
-        {
-            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            $quote = TestUtils::createQuote();
-            $testAddressData = [
-                'company'         => "",
-                'country'         => "United States",
-                'country_code'    => "US",
-                'email'           => "test@bolt.com",
-                'first_name'      => "IntegrationBolt",
-                'last_name'       => "BoltTest",
-                'locality'        => "New York",
-                'phone'           => "8005550111",
-                'postal_code'     => "10011",
-                'region'          => "New York",
-                'street_address1' => "tbd",
-                'street_address2' => "",
-            ];
-            TestUtils::setAddressToQuote($testAddressData, $quote, 'shipping');
-            $quote->save();
-            TestUtils::setQuoteToSession($quote);
-            $hints = $cartHelper->getHints();
-            static::assertEquals((object)[], $hints['prefill']);
-        }
-
-        /**
-        * @test
-        * that assignQuoteCustomerByEncryptedUserId throws {@see \Magento\Framework\Webapi\Exception}
-        * if provided encrypted user id is incomplete
-        *
-        * @covers ::assignQuoteCustomerByEncryptedUserId
-        *
-        * @dataProvider assignQuoteCustomerByEncryptedUserId_withInvalidEncryptedUserIdProvider
-        *
-        * @param string|null $encryptedUserId
-        *
-        * @throws ReflectionException if assignQuoteCustomerByEncryptedUserId method doesn't exist
-        */
-        public function assignQuoteCustomerByEncryptedUserId_withInvalidEncryptedUserId_throwsException($encryptedUserId)
-        {
-
-            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            $quote = TestUtils::createQuote();
-            $this->expectExceptionMessage("Incorrect encrypted_user_id");
-            $this->expectExceptionCode(6306);
-            $this->expectException(\Magento\Framework\Webapi\Exception::class);
-            TestHelper::invokeMethod(
-                $cartHelper,
-                'assignQuoteCustomerByEncryptedUserId',
-                [$quote, $encryptedUserId]
-            );
-        }
-
-        /**
-        * Data provider for {@see assignQuoteCustomerByEncryptedUserId_withInvalidEncryptedUserId_throwsException}
-        *
-        * @return array containing incomplete encrypted user ids
-        */
-        public function assignQuoteCustomerByEncryptedUserId_withInvalidEncryptedUserIdProvider()
-        {
-        return [
-            'Not defined'       => ['encryptedUserId' => null],
-            'Missing user id'   => [
-                'encryptedUserId' => json_encode(
-                    ['timestamp' => time(), 'signature' => 'signature']
-                )
+         * @test
+         * that getHints returns hints from quote billing address if checkout type is not product and quote is virtual
+         *
+         * @covers ::getHints
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function getHints_withNonProductCheckoutTypeAndVirtualQuote_returnsHintsForQuoteBillingAddress()
+    {
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        $product = TestUtils::createVirtualProduct();
+        $quote->addProduct($product, 1);
+        TestUtils::setAddressToQuote($this->testAddressData, $quote, 'billing');
+        $quote->save();
+        $hints = $cartHelper->getHints($quoteId, 'multipage');
+        static::assertEquals(
+            [
+                'prefill' => (object)[
+                    'firstName'    => 'IntegrationBolt',
+                    'lastName'     => 'BoltTest',
+                    'email'        => self::EMAIL_ADDRESS,
+                    'phone'        => '132 231 1234',
+                    'addressLine1' => '228 7th Avenue',
+                    'addressLine2' => '228 7th Avenue 2',
+                    'city'         => 'New York',
+                    'state'        => 'New York',
+                    'zip'          => '10011',
+                    'country'      => 'US',
+                ]
             ],
-            'Missing timestamp' => ['encryptedUserId' => json_encode(['user_id' => 234, 'signature' => 'signature'])],
-            'Missing signature' => ['encryptedUserId' => json_encode(['user_id' => 234, 'timestamp' => time()])],
+            $hints
+        );
+        TestUtils::cleanupSharedFixtures([$product]);
+    }
+
+        /**
+         * @test
+         * that getHints returns hints from quote shipping address if checkout type is not product and quote is not virtual
+         *
+         * @covers ::getHints
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function getHints_withNonProductCheckoutTypeAndNonVirtualQuote_returnsHintsForQuoteShippingAddress()
+    {
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        TestUtils::setAddressToQuote($this->testAddressData, $quote, 'shipping');
+        $quote->save();
+        $hints = $cartHelper->getHints($quoteId, 'multipage');
+        static::assertEquals(
+            [
+                'prefill' => (object)[
+                    'firstName'    => 'IntegrationBolt',
+                    'lastName'     => 'BoltTest',
+                    'email'        => self::EMAIL_ADDRESS,
+                    'phone'        => '132 231 1234',
+                    'addressLine1' => '228 7th Avenue',
+                    'addressLine2' => '228 7th Avenue 2',
+                    'city'         => 'New York',
+                    'state'        => 'New York',
+                    'zip'          => '10011',
+                    'country'      => 'US',
+                ]
+            ],
+            $hints
+        );
+    }
+
+        /**
+         * @test
+         * that getHints skips pre-fill for Apple Pay related data when phone is 8005550111
+         *
+         * @covers ::getHints
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function getHints_withApplePayRelatedDataPhone_skipsPreFill()
+    {
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote();
+        $testAddressData = [
+            'company'         => "",
+            'country'         => "United States",
+            'country_code'    => "US",
+            'email'           => "test@bolt.com",
+            'first_name'      => "IntegrationBolt",
+            'last_name'       => "BoltTest",
+            'locality'        => "New York",
+            'phone'           => "8005550111",
+            'postal_code'     => "10011",
+            'region'          => "New York",
+            'street_address1' => "228 7th Avenue",
+            'street_address2' => "228 7th Avenue 2",
         ];
-        }
+        TestUtils::setAddressToQuote($testAddressData, $quote, 'shipping');
+        $quote->save();
+        TestUtils::setQuoteToSession($quote);
+        $hints = $cartHelper->getHints();
+        static::assertEquals((object)[], $hints['prefill']);
+    }
 
         /**
-        * @test
-        * that assignQuoteCustomerByEncryptedUserId throws {@see \Magento\Framework\Webapi\Exception}
-        * if signature of encrypted user id is invalid
-        *
-        * @covers ::assignQuoteCustomerByEncryptedUserId
-        *
-        * @throws Exception from tested method
-        */
-        public function assignQuoteCustomerByEncryptedUserId_withInvalidSignature_throwsException()
-        {
-
-            $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
-            $quote = TestUtils::createQuote();
-            $this->expectExceptionMessage("Incorrect signature");
-            $this->expectException(\Magento\Framework\Webapi\Exception::class);
-            $this->expectExceptionCode(6306);
-            $payload = ['user_id' => 1, 'timestamp' => time() - 3600 - 1];
-            $encryptedUserId = json_encode($payload + ['signature' => 'incorrect_signature']);
-            TestHelper::invokeMethod(
-                $cartHelper,
-                'assignQuoteCustomerByEncryptedUserId',
-                [$quote, $encryptedUserId]
-            );
-        }
+         * @test
+         * that getHints skips pre-fill for Apple Pay related data when email is na@bolt.com
+         *
+         * @covers ::getHints
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function getHints_withApplePayRelatedDataEmail_skipsPreFill()
+    {
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote();
+        $testAddressData = [
+            'company'         => "",
+            'country'         => "United States",
+            'country_code'    => "US",
+            'email'           => "na@bolt.com",
+            'first_name'      => "IntegrationBolt",
+            'last_name'       => "BoltTest",
+            'locality'        => "New York",
+            'phone'           => "8005550111",
+            'postal_code'     => "10011",
+            'region'          => "New York",
+            'street_address1' => "228 7th Avenue",
+            'street_address2' => "228 7th Avenue 2",
+        ];
+        TestUtils::setAddressToQuote($testAddressData, $quote, 'shipping');
+        $quote->save();
+        TestUtils::setQuoteToSession($quote);
+        $hints = $cartHelper->getHints();
+        static::assertEquals((object)[], $hints['prefill']);
+    }
 
         /**
-        * @test
-        * that assignQuoteCustomerByEncryptedUserId throws {@see \Magento\Framework\Webapi\Exception}
-        * if timestamp in provided encrypted user id is older than 1 hour
-        *
-        * @covers ::assignQuoteCustomerByEncryptedUserId
-        *
-        * @throws Exception from tested method
-        */
-        public function assignQuoteCustomerByEncryptedUserId_withOutdatedTimestamp_throwsException()
-        {
+         * @test
+         * that getHints skips pre-fill for Apple Pay related data when address line is tbd
+         *
+         * @covers ::getHints
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function getHints_withApplePayRelatedDataAddressLine_skipsPreFill()
+    {
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote();
+        $testAddressData = [
+            'company'         => "",
+            'country'         => "United States",
+            'country_code'    => "US",
+            'email'           => "test@bolt.com",
+            'first_name'      => "IntegrationBolt",
+            'last_name'       => "BoltTest",
+            'locality'        => "New York",
+            'phone'           => "8005550111",
+            'postal_code'     => "10011",
+            'region'          => "New York",
+            'street_address1' => "tbd",
+            'street_address2' => "",
+        ];
+        TestUtils::setAddressToQuote($testAddressData, $quote, 'shipping');
+        $quote->save();
+        TestUtils::setQuoteToSession($quote);
+        $hints = $cartHelper->getHints();
+        static::assertEquals((object)[], $hints['prefill']);
+    }
+
+        /**
+         * @test
+         * that assignQuoteCustomerByEncryptedUserId throws {@see \Magento\Framework\Webapi\Exception}
+         * if provided encrypted user id is incomplete
+         *
+         * @covers ::assignQuoteCustomerByEncryptedUserId
+         *
+         * @dataProvider assignQuoteCustomerByEncryptedUserId_withInvalidEncryptedUserIdProvider
+         *
+         * @param string|null $encryptedUserId
+         *
+         * @throws ReflectionException if assignQuoteCustomerByEncryptedUserId method doesn't exist
+         */
+    public function assignQuoteCustomerByEncryptedUserId_withInvalidEncryptedUserId_throwsException($encryptedUserId)
+    {
+
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote();
+        $this->expectExceptionMessage("Incorrect encrypted_user_id");
+        $this->expectExceptionCode(6306);
+        $this->expectException(\Magento\Framework\Webapi\Exception::class);
+        TestHelper::invokeMethod(
+            $cartHelper,
+            'assignQuoteCustomerByEncryptedUserId',
+            [$quote, $encryptedUserId]
+        );
+    }
+
+        /**
+         * Data provider for {@see assignQuoteCustomerByEncryptedUserId_withInvalidEncryptedUserId_throwsException}
+         *
+         * @return array containing incomplete encrypted user ids
+         */
+    public function assignQuoteCustomerByEncryptedUserId_withInvalidEncryptedUserIdProvider()
+    {
+        return [
+        'Not defined'       => ['encryptedUserId' => null],
+        'Missing user id'   => [
+            'encryptedUserId' => json_encode(
+                ['timestamp' => time(), 'signature' => 'signature']
+            )
+        ],
+        'Missing timestamp' => ['encryptedUserId' => json_encode(['user_id' => 234, 'signature' => 'signature'])],
+        'Missing signature' => ['encryptedUserId' => json_encode(['user_id' => 234, 'timestamp' => time()])],
+        ];
+    }
+
+        /**
+         * @test
+         * that assignQuoteCustomerByEncryptedUserId throws {@see \Magento\Framework\Webapi\Exception}
+         * if signature of encrypted user id is invalid
+         *
+         * @covers ::assignQuoteCustomerByEncryptedUserId
+         *
+         * @throws Exception from tested method
+         */
+    public function assignQuoteCustomerByEncryptedUserId_withInvalidSignature_throwsException()
+    {
+
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote();
+        $this->expectExceptionMessage("Incorrect signature");
+        $this->expectException(\Magento\Framework\Webapi\Exception::class);
+        $this->expectExceptionCode(6306);
+        $payload = ['user_id' => 1, 'timestamp' => time() - 3600 - 1];
+        $encryptedUserId = json_encode($payload + ['signature' => 'incorrect_signature']);
+        TestHelper::invokeMethod(
+            $cartHelper,
+            'assignQuoteCustomerByEncryptedUserId',
+            [$quote, $encryptedUserId]
+        );
+    }
+
+        /**
+         * @test
+         * that assignQuoteCustomerByEncryptedUserId throws {@see \Magento\Framework\Webapi\Exception}
+         * if timestamp in provided encrypted user id is older than 1 hour
+         *
+         * @covers ::assignQuoteCustomerByEncryptedUserId
+         *
+         * @throws Exception from tested method
+         */
+    public function assignQuoteCustomerByEncryptedUserId_withOutdatedTimestamp_throwsException()
+    {
         $this->expectExceptionMessage("Outdated encrypted_user_id");
         $this->expectException(\Magento\Framework\Webapi\Exception::class);
         $this->expectExceptionCode(6306);
@@ -6487,19 +6497,19 @@ ORDER
             'assignQuoteCustomerByEncryptedUserId',
             [$this->quoteMock, $encryptedUserId]
         );
-        }
+    }
 
         /**
-        * @test
-        * that assignQuoteCustomerByEncryptedUserId throws {@see \Magento\Framework\Webapi\Exception}
-        * if customer with provided id cannot be found
-        *
-        * @covers ::assignQuoteCustomerByEncryptedUserId
-        *
-        * @throws Exception from tested method
-        */
-        public function assignQuoteCustomerByEncryptedUserId_withNonExistingUserIdInRequest_throwsException()
-        {
+         * @test
+         * that assignQuoteCustomerByEncryptedUserId throws {@see \Magento\Framework\Webapi\Exception}
+         * if customer with provided id cannot be found
+         *
+         * @covers ::assignQuoteCustomerByEncryptedUserId
+         *
+         * @throws Exception from tested method
+         */
+    public function assignQuoteCustomerByEncryptedUserId_withNonExistingUserIdInRequest_throwsException()
+    {
         $this->expectExceptionMessage("Incorrect user_id");
         $this->expectException(\Magento\Framework\Webapi\Exception::class);
         $this->expectExceptionCode(6306);
@@ -6507,30 +6517,30 @@ ORDER
         $encryptedUserId = json_encode($payload + ['signature' => 'correct_signature']);
         $this->hookHelper->expects(self::once())->method('verifySignature')->willReturn(true);
         $this->customerRepository->expects(static::once())->method('getById')->with(2)
-            ->willThrowException(new NoSuchEntityException());
+        ->willThrowException(new NoSuchEntityException());
         TestHelper::invokeMethod(
             $this->currentMock,
             'assignQuoteCustomerByEncryptedUserId',
             [$this->quoteMock, $encryptedUserId]
         );
-        }
+    }
 
         /**
-        * @test
-        * that assignQuoteCustomerByEncryptedUserId assigns customer to quote using
-        * {@see \Magento\Quote\Model\Quote::assignCustomer} based on provided encrypted user(customer) id
-        *
-        * @covers ::assignQuoteCustomerByEncryptedUserId
-        *
-        * @throws ReflectionException if assignQuoteCustomerByEncryptedUserId method is not defined
-        */
-        public function assignQuoteCustomerByEncryptedUserId_withValidEncryptedUserId_assignsCustomerToQuote()
-        {
+         * @test
+         * that assignQuoteCustomerByEncryptedUserId assigns customer to quote using
+         * {@see \Magento\Quote\Model\Quote::assignCustomer} based on provided encrypted user(customer) id
+         *
+         * @covers ::assignQuoteCustomerByEncryptedUserId
+         *
+         * @throws ReflectionException if assignQuoteCustomerByEncryptedUserId method is not defined
+         */
+    public function assignQuoteCustomerByEncryptedUserId_withValidEncryptedUserId_assignsCustomerToQuote()
+    {
         $payload = ['user_id' => 1, 'timestamp' => time()];
         $signature = 'correct_signature';
         $encryptedUserId = json_encode($payload + ['signature' => $signature]);
         $this->hookHelper->expects(self::once())->method('verifySignature')->with(json_encode($payload), $signature)
-            ->willReturn(true);
+        ->willReturn(true);
         $customerMock = $this->createMock(\Magento\Customer\Model\Data\Customer::class);
         $this->customerRepository->expects(self::once())->method('getById')->willReturn($customerMock);
         $this->quoteMock->expects(self::once())->method('assignCustomer')->with($customerMock);
@@ -6539,82 +6549,82 @@ ORDER
             'assignQuoteCustomerByEncryptedUserId',
             [$this->quoteMock, $encryptedUserId]
         );
-        }
+    }
 
-        private function calculateCartAndHints_initResponseData()
-        {
+    private function calculateCartAndHints_initResponseData()
+    {
         $requestShippingAddress = 'String';
 
         $response = (object) ( [
-            'cart' =>
-                (object) ( [
-                    'order_reference' => self::QUOTE_ID,
-                    'display_id'      => '100050001',
-                    'shipments'       =>
-                        [
-                            0 =>
-                                (object) ( [
-                                    'shipping_address' => $requestShippingAddress,
-                                    'shipping_method' => 'unknown',
-                                    'service'         => 'Flat Rate - Fixed',
-                                    'cost'            =>
-                                        (object) ( [
-                                            'amount'          => 500,
-                                            'currency'        => 'USD',
-                                            'currency_symbol' => '$',
-                                        ] ),
-                                    'tax_amount'      =>
-                                        (object) ( [
-                                            'amount'          => 0,
-                                            'currency'        => 'USD',
-                                            'currency_symbol' => '$',
-                                        ] ),
-                                    'reference'       => 'flatrate_flatrate'
-                                ] ),
-                        ],
-                    'metadata'        =>
-                        [
-                            'immutable_quote_id' => self::QUOTE_ID,
-                        ],
-                ] ),
-            'token' => self::TOKEN
+        'cart' =>
+            (object) ( [
+                'order_reference' => self::QUOTE_ID,
+                'display_id'      => '100050001',
+                'shipments'       =>
+                    [
+                        0 =>
+                            (object) ( [
+                                'shipping_address' => $requestShippingAddress,
+                                'shipping_method' => 'unknown',
+                                'service'         => 'Flat Rate - Fixed',
+                                'cost'            =>
+                                    (object) ( [
+                                        'amount'          => 500,
+                                        'currency'        => 'USD',
+                                        'currency_symbol' => '$',
+                                    ] ),
+                                'tax_amount'      =>
+                                    (object) ( [
+                                        'amount'          => 0,
+                                        'currency'        => 'USD',
+                                        'currency_symbol' => '$',
+                                    ] ),
+                                'reference'       => 'flatrate_flatrate'
+                            ] ),
+                    ],
+                'metadata'        =>
+                    [
+                        'immutable_quote_id' => self::QUOTE_ID,
+                    ],
+            ] ),
+        'token' => self::TOKEN
         ] );
 
         //weird bit of stuff here, copied from the code under test
         $responseData = json_decode(json_encode($response), true);
 
         $expectedCart = array_merge($responseData['cart'], [
-            'orderToken' => self::TOKEN,
-            'cartReference' => self::QUOTE_ID
+        'orderToken' => self::TOKEN,
+        'cartReference' => self::QUOTE_ID
         ]);
 
         return [$response,$expectedCart];
-        }
+    }
 
         /**
-        * @test
-        */
-        public function calculateCartAndHints_happyPath()
-        {
+         * @test
+         */
+    public function calculateCartAndHints_happyPath()
+    {
         list($response,$expectedCart) = $this->calculateCartAndHints_initResponseData();
         $expected = [
-            'status' => 'success',
-            'cart' => $expectedCart,
-            'hints' => self::HINT,
-            'backUrl' => ''
+        'status' => 'success',
+        'cart' => $expectedCart,
+        'hints' => self::HINT,
+        'backUrl' => ''
         ];
 
         $boltpayOrder = $this->getMockBuilder(Response::class)
-                                   ->setMethods(['getResponse'])
-                                   ->disableOriginalConstructor()
-                                   ->getMock();
+                               ->setMethods(['getResponse'])
+                               ->disableOriginalConstructor()
+                               ->getMock();
         $boltpayOrder->method('getResponse')->willReturn($response);
         $currentMock = $this->getCurrentMock(
             [
-                'isCheckoutAllowed',
-                'hasProductRestrictions',
-                'getBoltpayOrder',
-                'getHints',
+            'isCheckoutAllowed',
+            'hasProductRestrictions',
+            'getBoltpayOrder',
+            'getHints',
             ]
         );
 
@@ -6622,38 +6632,38 @@ ORDER
         $currentMock->method('hasProductRestrictions')->willReturn(false);
         $currentMock->method('getHints')->willReturn(self::HINT);
         $currentMock->method('getBoltpayOrder')
-                   ->withAnyParameters()
-                   ->willReturn($boltpayOrder);
+               ->withAnyParameters()
+               ->willReturn($boltpayOrder);
 
-            $this->assertEquals($expected, $currentMock->calculateCartAndHints());
-        }
+        $this->assertEquals($expected, $currentMock->calculateCartAndHints());
+    }
 
         /**
-        * @test
-        */
-        public function calculateCartAndHints_HasProductRestrictions()
-        {
+         * @test
+         */
+    public function calculateCartAndHints_HasProductRestrictions()
+    {
         list($response,$expectedCart) = $this->calculateCartAndHints_initResponseData();
 
         $expected = [
-            'status' => 'success',
-            'restrict' => true,
-            'message' => 'The cart has products not allowed for Bolt checkout',
-            'backUrl' => ''
+        'status' => 'success',
+        'restrict' => true,
+        'message' => 'The cart has products not allowed for Bolt checkout',
+        'backUrl' => ''
         ];
 
         $boltpayOrder = $this->getMockBuilder(Response::class)
-                             ->setMethods(['getResponse'])
-                             ->disableOriginalConstructor()
-                             ->getMock();
+                         ->setMethods(['getResponse'])
+                         ->disableOriginalConstructor()
+                         ->getMock();
         $boltpayOrder->method('getResponse')->willReturn($response);
 
         $currentMock = $this->getCurrentMock(
             [
-                'isCheckoutAllowed',
-                'hasProductRestrictions',
-                'getBoltpayOrder',
-                'getHints',
+            'isCheckoutAllowed',
+            'hasProductRestrictions',
+            'getBoltpayOrder',
+            'getHints',
             ]
         );
 
@@ -6661,36 +6671,36 @@ ORDER
         $currentMock->method('hasProductRestrictions')->willReturn(true);
         $currentMock->method('getHints')->willReturn(self::HINT);
         $currentMock->method('getBoltpayOrder')
-                    ->withAnyParameters()
-                    ->willReturn($boltpayOrder);
+                ->withAnyParameters()
+                ->willReturn($boltpayOrder);
 
         $this->assertEquals($expected, $currentMock->calculateCartAndHints());
-        }
+    }
 
         /**
-        * @test
-        */
-        public function calculateCartAndHints_DisallowedCheckout()
-        {
+         * @test
+         */
+    public function calculateCartAndHints_DisallowedCheckout()
+    {
         list($response,$expectedCart) = $this->calculateCartAndHints_initResponseData();
         $expected = [
-            'status' => 'success',
-            'restrict' => true,
-            'message' => 'Guest checkout is not allowed.',
-            'backUrl' => ''
+        'status' => 'success',
+        'restrict' => true,
+        'message' => 'Guest checkout is not allowed.',
+        'backUrl' => ''
         ];
 
         $boltpayOrder = $this->getMockBuilder(Response::class)
-                             ->setMethods(['getResponse'])
-                             ->disableOriginalConstructor()
-                             ->getMock();
+                         ->setMethods(['getResponse'])
+                         ->disableOriginalConstructor()
+                         ->getMock();
         $boltpayOrder->method('getResponse')->willReturn($response);
         $currentMock = $this->getCurrentMock(
             [
-                'isCheckoutAllowed',
-                'hasProductRestrictions',
-                'getBoltpayOrder',
-                'getHints',
+            'isCheckoutAllowed',
+            'hasProductRestrictions',
+            'getBoltpayOrder',
+            'getHints',
             ]
         );
 
@@ -6698,37 +6708,37 @@ ORDER
         $currentMock->method('hasProductRestrictions')->willReturn(false);
         $currentMock->method('getHints')->willReturn(self::HINT);
         $currentMock->method('getBoltpayOrder')
-                    ->withAnyParameters()
-                    ->willReturn($boltpayOrder);
+                ->withAnyParameters()
+                ->willReturn($boltpayOrder);
 
         $this->assertEquals($expected, $currentMock->calculateCartAndHints());
-        }
+    }
 
         /**
-        * @test
-        */
-        public function calculateCartAndHints_GeneralException()
-        {
+         * @test
+         */
+    public function calculateCartAndHints_GeneralException()
+    {
         $exceptionMessage = 'Test exception message';
         $exception = new \Exception($exceptionMessage);
         list($response,$expectedCart) = $this->calculateCartAndHints_initResponseData();
         $expected = [
-            'status' => 'failure',
-            'message' => $exceptionMessage,
-            'backUrl' => '',
+        'status' => 'failure',
+        'message' => $exceptionMessage,
+        'backUrl' => '',
         ];
 
         $boltpayOrder = $this->getMockBuilder(Response::class)
-                             ->setMethods(['getResponse'])
-                             ->disableOriginalConstructor()
-                             ->getMock();
+                         ->setMethods(['getResponse'])
+                         ->disableOriginalConstructor()
+                         ->getMock();
         $boltpayOrder->method('getResponse')->willReturn($response);
         $currentMock = $this->getCurrentMock(
             [
-                'isCheckoutAllowed',
-                'hasProductRestrictions',
-                'getBoltpayOrder',
-                'getHints',
+            'isCheckoutAllowed',
+            'hasProductRestrictions',
+            'getBoltpayOrder',
+            'getHints',
             ]
         );
 
@@ -6738,35 +6748,35 @@ ORDER
         $currentMock->method('getBoltpayOrder')->willThrowException($exception);
 
         $this->assertEquals($expected, $currentMock->calculateCartAndHints());
-        }
+    }
 
         /**
-        * @test
-        */
-        public function calculateCartAndHints_NullResponse()
-        {
+         * @test
+         */
+    public function calculateCartAndHints_NullResponse()
+    {
         list($response,$expectedCart) = $this->calculateCartAndHints_initResponseData();
         $expected = [
-            'status' => 'success',
-            'cart' => [
-                'orderToken' => '',
-                'cartReference' => ''
-            ],
-            'hints' => null,
-            'backUrl' => ''
+        'status' => 'success',
+        'cart' => [
+            'orderToken' => '',
+            'cartReference' => ''
+        ],
+        'hints' => null,
+        'backUrl' => ''
         ];
 
         $boltpayOrder = $this->getMockBuilder(Response::class)
-                             ->setMethods(['getResponse'])
-                             ->disableOriginalConstructor()
-                             ->getMock();
+                         ->setMethods(['getResponse'])
+                         ->disableOriginalConstructor()
+                         ->getMock();
         $boltpayOrder->method('getResponse')->willReturn($response);
         $currentMock = $this->getCurrentMock(
             [
-                'isCheckoutAllowed',
-                'hasProductRestrictions',
-                'getBoltpayOrder',
-                'getHints',
+            'isCheckoutAllowed',
+            'hasProductRestrictions',
+            'getBoltpayOrder',
+            'getHints',
             ]
         );
 
@@ -6775,7 +6785,7 @@ ORDER
         $currentMock->method('getBoltpayOrder')->willReturn(null);
 
         $this->assertEquals($expected, $currentMock->calculateCartAndHints());
-        }
+    }
 
     /**
      * @test
@@ -6792,8 +6802,10 @@ ORDER
 
         $websiteRepository = Bootstrap::getObjectManager()->get(\Magento\Store\Api\WebsiteRepositoryInterface::class);
         $websiteId = $websiteRepository->get('base')->getId();
-        TestUtils::createCustomer($websiteId, $storeId,
-            array(
+        TestUtils::createCustomer(
+            $websiteId,
+            $storeId,
+            [
                 "street_address1" => "street",
                 "street_address2" => "",
                 "locality"        => "Los Angeles",
@@ -6808,7 +6820,7 @@ ORDER
                 "last_name"       => "lastname",
                 "phone_number"    => "11111111",
                 "email_address"   => self::EMAIL_ADDRESS,
-            )
+            ]
         );
         static::assertEquals(
             self::EMAIL_ADDRESS,

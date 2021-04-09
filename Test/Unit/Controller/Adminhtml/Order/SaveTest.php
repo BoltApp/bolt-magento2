@@ -90,11 +90,11 @@ class SaveTest extends BoltTestCase
     }
     
      /**
-     * @test
-     * that constructor sets internal properties
-     *
-     * @covers ::__construct
-     */
+      * @test
+      * that constructor sets internal properties
+      *
+      * @covers ::__construct
+      */
     public function constructor_always_setsInternalProperties()
     {
         $instance = new Save(

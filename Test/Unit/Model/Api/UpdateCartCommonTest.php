@@ -208,7 +208,7 @@ class UpdateCartCommonTest extends BoltTestCase
         $this->response = $this->createMock(Response::class);
         $this->hookHelper = $this->createMock(HookHelper::class);
         $this->errorResponse = $this->createMock(BoltErrorResponse::class);
-        $this->logHelper = $this->createMock(LogHelper::class);       
+        $this->logHelper = $this->createMock(LogHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->regionModel = $this->createMock(RegionModel::class);
         $this->orderHelper = $this->createMock(OrderHelper::class);
@@ -481,7 +481,7 @@ class UpdateCartCommonTest extends BoltTestCase
             ));
 
         $this->orderHelper->expects(self::once())->method('getExistingOrder')
-            ->with(null,self::PARENT_QUOTE_ID)->willReturn(true);
+            ->with(null, self::PARENT_QUOTE_ID)->willReturn(true);
 
         $this->expectExceptionMessage(sprintf('The order with quote #%s has already been created ', self::PARENT_QUOTE_ID));
         $this->expectExceptionCode(BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION);

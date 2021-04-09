@@ -89,11 +89,12 @@ class UniversalApiTest extends BoltTestCase
         $event = "order.create";
         $data = ['order' => 'order', 'currency' => 'currency'];
         $createOrder = $this->createMock(CreateOrder::class);
-        $createOrder->expects(self::once())->method('execute')->with($event,
+        $createOrder->expects(self::once())->method('execute')->with(
+            $event,
             $data['order'],
             $data['currency']
         );
-        TestHelper::setProperty($this->universalApi,'createOrder', $createOrder);
+        TestHelper::setProperty($this->universalApi, 'createOrder', $createOrder);
 
         $this->assertTrue($this->universalApi->execute($event, $data));
     }
@@ -121,7 +122,7 @@ class UniversalApiTest extends BoltTestCase
             $data['discount_codes_to_remove']
         );
 
-        TestHelper::setProperty($this->universalApi,'updateCart', $updateCart);
+        TestHelper::setProperty($this->universalApi, 'updateCart', $updateCart);
         
         $this->assertTrue($this->universalApi->execute($event, $data));
     }
@@ -143,7 +144,7 @@ class UniversalApiTest extends BoltTestCase
                 $data['cart'],
                 $data['shipping_address']
             );
-        TestHelper::setProperty($this->universalApi,'shippingMethods', $shippingMethods);
+        TestHelper::setProperty($this->universalApi, 'shippingMethods', $shippingMethods);
 
         $this->assertTrue($this->universalApi->execute($event, $data));
     }
@@ -169,7 +170,7 @@ class UniversalApiTest extends BoltTestCase
                 $data['shipping_option']
             );
 
-        TestHelper::setProperty($this->universalApi,'shipping', $shipping);
+        TestHelper::setProperty($this->universalApi, 'shipping', $shipping);
 
         $this->assertTrue($this->universalApi->execute($event, $data));
     }
