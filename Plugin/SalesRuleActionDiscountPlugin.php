@@ -39,16 +39,10 @@ class SalesRuleActionDiscountPlugin
     ) {
         $checkoutSession = $this->sessionHelper->getCheckoutSession();
 
-        // If the sale rule has no coupon, its discount amount can not be retrieved directly,
-        // so we store the discount amount in the checkout session with the rule id as key.
-        $boltCollectSaleRuleDiscounts = $checkoutSession->getBoltCollectSaleRuleDiscounts([]);
+        // Save the sale rule id into session,
+        // so we can get the applied rule id in after method which is to save discount amount. (@see Bolt\Boltpay\Plugin\SalesRuleModelUtilityPlugin::afterMinFix)
         $ruleId = $rule->getId();
-        if (!isset($boltCollectSaleRuleDiscounts[$ruleId])) {
-            $boltCollectSaleRuleDiscounts[$ruleId] = $result->getAmount();
-        } else {
-            $boltCollectSaleRuleDiscounts[$ruleId] += $result->getAmount();
-        }
-        $checkoutSession->setBoltCollectSaleRuleDiscounts($boltCollectSaleRuleDiscounts);
+        $checkoutSession->setBoltNeedCollectSaleRuleDiscounts($ruleId);
 
         return $result;
     }
