@@ -102,13 +102,13 @@ class GetProduct implements GetProductInterface
      */
     public function execute($productID = '')
     {
-//        if (!$this->hookHelper->verifyRequest()) {
-//            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
-//        }
-//
-//        if ($sku === '') {
-//            throw new WebapiException(__('Missing email in the request body.'), 0, WebapiException::HTTP_BAD_REQUEST);
-//        }
+        if (!$this->hookHelper->verifyRequest()) {
+            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
+        }
+
+        if ($productID === '') {
+            throw new WebapiException(__('Missing product ID in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
+        }
 
         try {
             $storeId = $this->storeManager->getStore()->getId();

@@ -25,7 +25,7 @@ use \Bolt\Boltpay\Api\Data\GetProductDataInterfacee;
 interface GetProductInterface
 {
     /**
-     * Get user account associated with email
+     * Get product and stock information for specified product ID
      *
      * @api
      *

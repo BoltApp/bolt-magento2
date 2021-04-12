@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Model\Api\Data;
 use Bolt\Boltpay\Api\Data\GetProductDataInterface;
 
 /**
- * Class ShippingOption. Represents a single shipping option object.
+ * Class GetProductData. Represents a product info object containing products info and stock.
  *
  * @package Bolt\Boltpay\Model\Api\Data
  */
