@@ -87,7 +87,7 @@ class GetProduct implements GetProductInterface
         $this->bugsnag = $bugsnag;
     }
 
-
+    // TODO: ADD unit tests @ethan
     /**
      * Get user account associated with email
      *
