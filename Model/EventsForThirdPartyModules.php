@@ -38,6 +38,7 @@ use Bolt\Boltpay\ThirdPartyModules\Zonos\DutyTax as Zonos_DutyTax;
 use Bolt\Boltpay\ThirdPartyModules\Mageside\CustomShippingPrice as Mageside_CustomShippingPrice;
 use Bolt\Boltpay\ThirdPartyModules\MageWorld\Affiliate as MW_Affiliate;
 use Bolt\Boltpay\ThirdPartyModules\Magento\InStorePickupShipping as Magento_InStorePickupShipping;
+use Bolt\Boltpay\ThirdPartyModules\Magecomp\Extrafee as Magecomp_Extrafee;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -827,6 +828,30 @@ class EventsForThirdPartyModules
                     "module" => "Magento_InventoryInStorePickup",
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+            ],
+        ],
+        "filterCartItems" => [
+            'listeners' => [
+                'Magecomp_Extrafee' => [
+                    'module'      => 'Magecomp_Extrafee',
+                    'boltClass'   => Magecomp_Extrafee::class,
+                ],
+            ],
+        ],
+        "filterTransactionBeforeOrderCreateValidation" => [
+            'listeners' => [
+                'Magecomp_Extrafee' => [
+                    'module'      => 'Magecomp_Extrafee',
+                    'boltClass'   => Magecomp_Extrafee::class,
+                ],
+            ],
+        ],
+        "filterCartBeforeLegacyShippingAndTax" => [
+            'listeners' => [
+                'Magecomp_Extrafee' => [
+                    'module'      => 'Magecomp_Extrafee',
+                    'boltClass'   => Magecomp_Extrafee::class,
                 ],
             ],
         ],

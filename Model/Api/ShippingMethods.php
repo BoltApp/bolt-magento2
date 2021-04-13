@@ -411,6 +411,7 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     public function getShippingAndTax($cart, $shipping_address)
     {
+        $cart = $this->eventsForThirdPartyModules->runFilter('filterCartBeforeLegacyShippingAndTax', $cart);
         // get immutable quote id stored with transaction
         $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($cart);
         $immutableQuote = $this->getQuoteById($immutableQuoteId);
