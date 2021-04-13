@@ -137,7 +137,7 @@ class GetProduct implements GetProductInterface
 
             if ($this->product->getTypeId() == "configurable") {
                 $usedProducts = $this->product->getTypeInstance()->getUsedProducts($this->product);
-                $this->productData->setStock($usedProducts);
+                $this->productData->setChildren($usedProducts);
             }
 
             return $this->productData;
