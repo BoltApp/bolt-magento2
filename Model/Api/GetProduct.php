@@ -124,7 +124,7 @@ class GetProduct implements GetProductInterface
         try {
             $storeId = $this->storeManager->getStore()->getId();
             // productID will be and int and sku will be a string
-            if (is_numeric($productIdentifier)) {
+            if (is_int($productIdentifier)) {
                 $this->product = $this->productRepositoryInterface->getById($productIdentifier, false, $storeId, false);
             } else {
                 $this->product = $this->productRepositoryInterface->get($productIdentifier, false, $storeId, false);
