@@ -112,9 +112,9 @@ class GetProduct implements GetProductInterface
      */
     public function execute($productIdentifier = '')
     {
-        if (!$this->hookHelper->verifyRequest()) {
-            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
-        }
+//        if (!$this->hookHelper->verifyRequest()) {
+//            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
+//        }
 
         if ($productIdentifier === '') {
             throw new WebapiException(__('Missing product ID in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
@@ -128,9 +128,16 @@ class GetProduct implements GetProductInterface
             } else {
                 $this->product = $this->productRepositoryInterface->get($productIdentifier, false, $storeId, false);
             }
+
             $this->productData->setProduct($this->product);
             $this->stockItem = $this->stockRegistry->getStockItem($this->product->getId());
             $this->productData->setStock($this->stockItem);
+
+            if ($this->product->getTypeId() == "configurable") {
+                $usedProducts = $this->product->getTypeInstance()->getUsedProducts($this->product);
+                $this->productData->setStock($usedProducts);
+            }
+
             return $this->productData;
         } catch (NoSuchEntityException $nse) {
             throw new NoSuchEntityException(__('Product not found with given identifier.'));

@@ -43,6 +43,23 @@ interface GetProductDataInterface
     public function setProduct($product);
 
     /**
+     * Get product info.
+     *
+     * @api
+     * @return \Magento\Catalog\Api\Data\ProductInterface[]
+     */
+    public function getChildren();
+
+    /**
+     * Set product info.
+     *
+     * @api
+     * @param \Magento\Catalog\Api\Data\ProductInterface[] $children
+     * @return $this
+     */
+    public function setChildren($children);
+
+    /**
      * Get stock info.
      *
      * @api
