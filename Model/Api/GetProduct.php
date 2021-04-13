@@ -23,12 +23,14 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface;
-use \Magento\Catalog\Api\Data\ProductInterface;
+use Magento\CatalogInventory\Api\Data\StockItemInterface;
+use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 
 
 class GetProduct implements GetProductInterface
@@ -44,6 +46,11 @@ class GetProduct implements GetProductInterface
     private $product;
 
     /**
+     * @var integer
+     */
+    private $storeID;
+
+    /**
      * @var \Magento\CatalogInventory\Api\Data\StockItemInterface
      */
     private $stockItem;
@@ -57,6 +64,11 @@ class GetProduct implements GetProductInterface
      * @var StoreManagerInterface
      */
     private $storeManager;
+
+    /**
+     * @var \Magento\ConfigurableProduct\Model\Product\Type\Configurable
+     */
+    private $configurable;
 
     /**
      * @var StockRegistryInterface
@@ -78,6 +90,7 @@ class GetProduct implements GetProductInterface
      * @param StockRegistryInterface  $stockRegistry
      * @param GetProductDataInterface  $productData
      * @param StoreManagerInterface $storeManager
+     * @param Configurable          $configurable
      * @param HookHelper            $hookHelper
      * @param Bugsnag               $bugsnag
      */
@@ -86,6 +99,7 @@ class GetProduct implements GetProductInterface
         StockRegistryInterface  $stockRegistry,
         GetProductDataInterface  $productData,
         StoreManagerInterface $storeManager,
+        Configurable          $configurable,
         HookHelper $hookHelper,
         Bugsnag $bugsnag
     ) {
@@ -95,42 +109,64 @@ class GetProduct implements GetProductInterface
         $this->storeManager = $storeManager;
         $this->hookHelper = $hookHelper;
         $this->bugsnag = $bugsnag;
+        $this->configurable = $configurable;
+    }
+
+    private function getProduct($productID, $sku){
+        $this->storeID = $this->storeManager->getStore()->getId();
+        // get product
+        if ($productID != "") {
+            $this->product = $this->productRepositoryInterface->getById($productID, false, $this->storeID, false);
+            $this->productData->setProduct($this->product);
+        } elseif ($sku != "") {
+            $this->product = $this->productRepositoryInterface->get($sku, false, $this->storeID, false);
+            $this->productData->setProduct($this->product);
+        }
+    }
+
+    private function getStock(){
+        $this->stockItem = $this->stockRegistry->getStockItem($this->product->getId());
+        $this->productData->setStock($this->stockItem);
+    }
+
+    private function getProductFamily(){
+        $parent = $this->configurable->getParentIdsByChild($this->product->getId());
+        if(isset($parent[0])){
+            $parentProduct = $this->productRepositoryInterface->getById($parent[0], false, $this->storeID, false);
+            $this->productData->setParent($parentProduct);
+            $children = $parentProduct->getTypeInstance()->getUsedProducts($parentProduct);
+            $this->productData->setChildren($children);
+        } elseif ($this->product->getTypeId() == "configurable") {
+            $children = $this->product->getTypeInstance()->getUsedProducts($this->product);
+            $this->productData->setChildren($children);
+        }
     }
 
     // TODO: ADD unit tests @ethan
     /**
-     * Get user account associated with email
+     * Get product, its stock, and product family
      *
      * @api
      *
      * @param string $productID
+     * @param string $sku
      *
      * @return \Bolt\Boltpay\Api\Data\GetProductDataInterface
      *
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function execute($productIdentifier = '')
+    public function execute($productID = '', $sku = '')
     {
-        if (!$this->hookHelper->verifyRequest()) {
-            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
-        }
-
-        if ($productIdentifier === '') {
-            throw new WebapiException(__('Missing product ID in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
+        if ($productID === '' && $sku ==='') {
+            throw new WebapiException(__('Missing a product ID or a sku in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
         }
 
         try {
-            $storeId = $this->storeManager->getStore()->getId();
-            // productID will be and int and sku will be a string
-            if (is_int($productIdentifier)) {
-                $this->product = $this->productRepositoryInterface->getById($productIdentifier, false, $storeId, false);
-            } else {
-                $this->product = $this->productRepositoryInterface->get($productIdentifier, false, $storeId, false);
-            }
-            $this->productData->setProduct($this->product);
-            $this->stockItem = $this->stockRegistry->getStockItem($this->product->getId());
-            $this->productData->setStock($this->stockItem);
+            $this->getProduct($productID, $sku);
+            $this->getStock();
+            $this->getProductFamily();
+
             return $this->productData;
         } catch (NoSuchEntityException $nse) {
             throw new NoSuchEntityException(__('Product not found with given identifier.'));
