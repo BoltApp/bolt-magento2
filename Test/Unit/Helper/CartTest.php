@@ -2747,7 +2747,7 @@ ORDER
         $quote = TestUtils::createQuote();
         $product = TestUtils::getSimpleProduct();
         $this->objectsToClean[] = $product;
-        $quote->addProduct($product,1);
+        $quote->addProduct($product, 1);
         TestUtils::setQuoteToSession($quote);
 
         $sessionToMetadataSwitch = TestUtils::saveFeatureSwitch(
@@ -2902,7 +2902,7 @@ ORDER
         // check image url
         static::assertMatchesRegularExpression(
             "|https?://localhost/(pub\/)?static/version\d+/frontend/Magento/luma/en_US/Magento_Catalog/images/product/placeholder/small_image.jpg|",
-                $result['items'][0]['image_url']
+            $result['items'][0]['image_url']
         );
         unset($result['items'][0]['image_url']);
 

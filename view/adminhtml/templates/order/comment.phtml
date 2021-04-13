@@ -22,18 +22,17 @@ use Bolt\Boltpay\Model\Payment;
 $order = $block->getOrder();
 /** @var \Bolt\Boltpay\ViewModel\OrderComment $orderCommentModel */
 $orderCommentModel = $block->getOrderComment();
-$comment = $orderCommentModel->getCommentForOrder($order);
-if (!$comment || !$order->getPayment() || $order->getPayment()->getMethod() !== Payment::METHOD_CODE) {
+if (!$orderCommentModel->shouldDisplayForOrder($order)) {
     return;
 }
 ?>
 <section class="admin__page-section">
     <div class="admin__page-section-title">
-        <span class='title'><?= $block->escapeHtml(__('Order Comment')) ?></span>
+        <span class="title"><?php echo $block->escapeHtml(__('Order Comment')) ?></span>
     </div>
     <div class="admin__page-section-content">
         <div class="admin__page-section-item">
-            <?php echo nl2br($block->escapeHtml($comment)); ?>
+            <?php echo nl2br($block->escapeHtml($orderCommentModel->getCommentForOrder($order))); ?>
         </div>
     </div>
 </section>

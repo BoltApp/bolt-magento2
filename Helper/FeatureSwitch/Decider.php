@@ -298,19 +298,27 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_ENABLE_BOLT_SSO);
     }
-    
+
     public function isCustomizableOptionsSupport()
     {
         return $this->isSwitchEnabled(Definitions::M2_CUSTOMIZABLE_OPTIONS_SUPPORT);
     }
-    
+
     public function isLoadConnectJsOnSpecificPage()
     {
         return $this->isSwitchEnabled(Definitions::M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE);
     }
-  
+
     public function isReturnErrWhenRunFilter()
     {
         return $this->isSwitchEnabled(Definitions::M2_RETURN_ERR_WHEN_RUN_FILTER);
+    }
+
+    /**
+     * Checks whether the feature switch for displaying order comment in admin is enabled
+     */
+    public function isShowOrderCommentInAdmin()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_SHOW_ORDER_COMMENT_IN_ADMIN);
     }
 }
