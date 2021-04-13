@@ -41,6 +41,11 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
      */
     private $children;
 
+    /**
+     * @var \Magento\Catalog\Api\Data\ProductInterface
+     */
+    private $parent;
+
 
     /**
      * Get product info.
@@ -88,6 +93,32 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
     public function setStock($stockItem)
     {
         $this->stockItem = $stockItem;
+        return $this;
+    }
+
+
+    /**
+     * Get parent info.
+     *
+     * @api
+     * @return \Magento\Catalog\Api\Data\ProductInterface
+     */
+    public function getParent()
+    {
+        return $this->parent;
+    }
+
+    /**
+     * Set parent info.
+     *
+     * @api
+     * @param \Magento\Catalog\Api\Data\ProductInterface $parent
+     *
+     * @return $this
+     */
+    public function setParent($parent)
+    {
+        $this->parent = $parent;
         return $this;
     }
 

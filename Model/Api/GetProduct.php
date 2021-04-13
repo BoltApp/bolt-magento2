@@ -30,6 +30,7 @@ use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 
 
 class GetProduct implements GetProductInterface
@@ -60,6 +61,11 @@ class GetProduct implements GetProductInterface
     private $storeManager;
 
     /**
+     * @var \Magento\ConfigurableProduct\Model\Product\Type\Configurable
+     */
+    private $configurable;
+
+    /**
      * @var StockRegistryInterface
      */
     private $stockRegistry;
@@ -79,6 +85,7 @@ class GetProduct implements GetProductInterface
      * @param StockRegistryInterface  $stockRegistry
      * @param GetProductDataInterface  $productData
      * @param StoreManagerInterface $storeManager
+     * @param Configurable          $configurable
      * @param HookHelper            $hookHelper
      * @param Bugsnag               $bugsnag
      */
@@ -87,6 +94,7 @@ class GetProduct implements GetProductInterface
         StockRegistryInterface  $stockRegistry,
         GetProductDataInterface  $productData,
         StoreManagerInterface $storeManager,
+        Configurable          $configurable,
         HookHelper $hookHelper,
         Bugsnag $bugsnag
     ) {
@@ -96,6 +104,7 @@ class GetProduct implements GetProductInterface
         $this->storeManager = $storeManager;
         $this->hookHelper = $hookHelper;
         $this->bugsnag = $bugsnag;
+        $this->configurable = $configurable;
     }
 
     // TODO: ADD unit tests @ethan
@@ -105,35 +114,41 @@ class GetProduct implements GetProductInterface
      * @api
      *
      * @param string $productID
+     * @param string $sku
      *
      * @return \Bolt\Boltpay\Api\Data\GetProductDataInterface
      *
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function execute($productID = '')
+    public function execute($productID = '', $sku = '')
     {
 //        if (!$this->hookHelper->verifyRequest()) {
 //            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
 //        }
 
-        if ($productID === '') {
-            throw new WebapiException(__('Missing product ID in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
+        if ($productID === '' && $sku ==='') {
+            throw new WebapiException(__('Missing a product ID or a sku in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
         }
 
         try {
             $storeId = $this->storeManager->getStore()->getId();
-            // productID will be and int and sku will be a string
-//            if (is_integer($productIdentifier)) {
-//                $this->product = $this->productRepositoryInterface->getById($productIdentifier, false, $storeId, false);
-//            } else {
-//                $this->product = $this->productRepositoryInterface->get($productIdentifier, false, $storeId, false);
-//            }
 
-            $this->product = $this->productRepositoryInterface->getById($productID, false, $storeId, false);
-            $this->productData->setProduct($this->product);
+            if ($productID != "") {
+                $this->product = $this->productRepositoryInterface->getById($productID, false, $storeId, false);
+                $this->productData->setProduct($this->product);
+            } elseif ($sku != "") {
+                $this->product = $this->productRepositoryInterface->get($sku, false, $storeId, false);
+                $this->productData->setProduct($this->product);
+            }
+
             $this->stockItem = $this->stockRegistry->getStockItem($this->product->getId());
             $this->productData->setStock($this->stockItem);
+
+            $parent = $this->configurable->getParentIdsByChild($this->product->getId);
+            if(isset($parent[0])){
+                $this->productData->setParent($this->productRepositoryInterface->getById($parent[0], false, $storeId, false));
+            }
 
             if ($this->product->getTypeId() == "configurable") {
                 $usedProducts = $this->product->getTypeInstance()->getUsedProducts($this->product);

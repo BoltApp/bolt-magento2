@@ -30,11 +30,12 @@ interface GetProductInterface
      * @api
      *
      * @param string $productID
+     * @param string $sku
      *
      * @return \Bolt\Boltpay\Api\Data\GetProductDataInterface
      *
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function execute($productID = '');
+    public function execute($productID = '', $sku='');
 }
