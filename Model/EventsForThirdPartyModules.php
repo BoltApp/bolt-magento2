@@ -36,6 +36,7 @@ use Bolt\Boltpay\ThirdPartyModules\Magento\GiftCardAccount as Magento_GiftCardAc
 use Bolt\Boltpay\ThirdPartyModules\Magento\SalesRuleStaging as Magento_SalesRuleStaging;
 use Bolt\Boltpay\ThirdPartyModules\Zonos\DutyTax as Zonos_DutyTax;
 use Bolt\Boltpay\ThirdPartyModules\Mageside\CustomShippingPrice as Mageside_CustomShippingPrice;
+use Bolt\Boltpay\ThirdPartyModules\BagRiders\StoreCredit as BagRiders_StoreCredit;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -200,6 +201,12 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Mirasvit\Credit\Helper\Data",
                                       "Mirasvit\Credit\Service\Calculation"],
                     "boltClass" => Mirasvit_Credit::class,
+                ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "sendClasses" => ["BagRiders\StoreCredit\Model\StoreCredit\ApplyStoreCreditToQuote"],
+                    "boltClass" => BagRiders_StoreCredit::class,
                 ],
             ]
         ],
@@ -429,6 +436,11 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass" => Magento_GiftCardAccount::class,
                 ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "boltClass" => BagRiders_StoreCredit::class,
+                ],
             ],
         ],
         /** @see \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::verifyCouponCode */
@@ -639,6 +651,10 @@ class EventsForThirdPartyModules
                     "module" => "Magento_Reward",
                     "boltClass" => \Bolt\Boltpay\ThirdPartyModules\Magento\Reward::class,
                 ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "boltClass" => BagRiders_StoreCredit::class,
+                ],
             ],
         ],
         "filterMinicartAddonsLayout" => [
@@ -689,6 +705,11 @@ class EventsForThirdPartyModules
                     "module" => "Mirasvit_Credit",
                     "checkClasses" => ["Mirasvit\Credit\Helper\Data"],
                     "boltClass" => Mirasvit_Credit::class,
+                ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "boltClass" => BagRiders_StoreCredit::class,
                 ],
             ]
         ],
