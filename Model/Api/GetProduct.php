@@ -104,33 +104,35 @@ class GetProduct implements GetProductInterface
      *
      * @api
      *
-     * @param string $productIdentifier
+     * @param string $productID
      *
      * @return \Bolt\Boltpay\Api\Data\GetProductDataInterface
      *
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function execute($productIdentifier = '')
+    public function execute($productID = '')
     {
 //        if (!$this->hookHelper->verifyRequest()) {
 //            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
 //        }
 
-        if ($productIdentifier === '') {
+        if ($productID === '') {
             throw new WebapiException(__('Missing product ID in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
         }
 
         try {
             $storeId = $this->storeManager->getStore()->getId();
             // productID will be and int and sku will be a string
-            if (is_int($productIdentifier)) {
-                $this->product = $this->productRepositoryInterface->getById($productIdentifier, false, $storeId, false);
-            } else {
-                $this->product = $this->productRepositoryInterface->get($productIdentifier, false, $storeId, false);
-            }
+//            if (is_integer($productIdentifier)) {
+//                $this->product = $this->productRepositoryInterface->getById($productIdentifier, false, $storeId, false);
+//            } else {
+//                $this->product = $this->productRepositoryInterface->get($productIdentifier, false, $storeId, false);
+//            }
 
-            $this->product = $this->productRepositoryInterface->getById($productIdentifier, false, $storeId, false);
+            $this->product = $this->productRepositoryInterface->getById($productID, false, $storeId, false);
+
+            $this->product = $this->productRepositoryInterface->getById($productID, false, $storeId, false);
             $this->productData->setProduct($this->product);
             $this->stockItem = $this->stockRegistry->getStockItem($this->product->getId());
             $this->productData->setStock($this->stockItem);
