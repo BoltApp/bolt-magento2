@@ -98,12 +98,10 @@ class DebugInfoTest extends BoltTestCase
         $this->assertEquals(
             [
                 'bolt_config_settings' => 'boltConfigSetting',
-                'logs' => [],
                 'other_plugin_versions' => 'other',
                 'php_version' => '7.1',
                 'composer_version' => 'composer_version',
-                'platform_version' => 'magento231',
-                'automated_testing_config' => null
+                'platform_version' => 'magento231'
             ],
             $this->debugInfo->jsonSerialize()
         );
