@@ -145,7 +145,7 @@ class GetProduct implements GetProductInterface
             $this->stockItem = $this->stockRegistry->getStockItem($this->product->getId());
             $this->productData->setStock($this->stockItem);
 
-            $parent = $this->configurable->getParentIdsByChild($this->product->getId);
+            $parent = $this->configurable->getParentIdsByChild($this->product->getId());
             if(isset($parent[0])){
                 $this->productData->setParent($this->productRepositoryInterface->getById($parent[0], false, $storeId, false));
             }
