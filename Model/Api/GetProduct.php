@@ -104,7 +104,7 @@ class GetProduct implements GetProductInterface
      *
      * @api
      *
-     * @param string $productID
+     * @param string $productIdentifier
      *
      * @return \Bolt\Boltpay\Api\Data\GetProductDataInterface
      *
