@@ -132,8 +132,9 @@ class GetProduct implements GetProductInterface
     private function getProductFamily(){
         $parent = $this->configurable->getParentIdsByChild($this->product->getId());
         if(isset($parent[0])){
-            $this->productData->setParent($this->productRepositoryInterface->getById($parent[0], false, $this->storeID, false));
-            $children = $this->productData->getParent()->getTypeInstance()->getUsedProducts($this->productData->getParent());
+            $parentProduct = $this->productRepositoryInterface->getById($parent[0], false, $this->storeID, false);
+            $this->productData->setParent($parentProduct);
+            $children = $parentProduct->getTypeInstance()->getUsedProducts($parentProduct);
             $this->productData->setChildren($children);
         } elseif ($this->product->getTypeId() == "configurable") {
             $children = $this->product->getTypeInstance()->getUsedProducts($this->product);
