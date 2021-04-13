@@ -107,9 +107,38 @@ class GetProduct implements GetProductInterface
         $this->configurable = $configurable;
     }
 
+    private function getProduct($productID, $sku){
+        $storeId = $this->storeManager->getStore()->getId();
+        // get product
+        if ($productID != "") {
+            $this->product = $this->productRepositoryInterface->getById($productID, false, $storeId, false);
+            $this->productData->setProduct($this->product);
+        } elseif ($sku != "") {
+            $this->product = $this->productRepositoryInterface->get($sku, false, $storeId, false);
+            $this->productData->setProduct($this->product);
+        }
+    }
+
+    private function getStock(){
+        $this->stockItem = $this->stockRegistry->getStockItem($this->product->getId());
+        $this->productData->setStock($this->stockItem);
+    }
+
+    private function getProductFamily(){
+        $parent = $this->configurable->getParentIdsByChild($this->product->getId());
+        if(isset($parent[0])){
+            $this->productData->setParent($this->productRepositoryInterface->getById($parent[0], false, $storeId, false));
+            $children = $this->product->getTypeInstance()->getUsedProducts($this->productData->getParent());
+            $this->productData->setChildren($children);
+        } elseif ($this->product->getTypeId() == "configurable") {
+            $children = $this->product->getTypeInstance()->getUsedProducts($this->product);
+            $this->productData->setChildren($children);
+        }
+    }
+
     // TODO: ADD unit tests @ethan
     /**
-     * Get user account associated with email
+     * Get product, its stock, and product family
      *
      * @api
      *
@@ -132,28 +161,9 @@ class GetProduct implements GetProductInterface
         }
 
         try {
-            $storeId = $this->storeManager->getStore()->getId();
-
-            if ($productID != "") {
-                $this->product = $this->productRepositoryInterface->getById($productID, false, $storeId, false);
-                $this->productData->setProduct($this->product);
-            } elseif ($sku != "") {
-                $this->product = $this->productRepositoryInterface->get($sku, false, $storeId, false);
-                $this->productData->setProduct($this->product);
-            }
-
-            $this->stockItem = $this->stockRegistry->getStockItem($this->product->getId());
-            $this->productData->setStock($this->stockItem);
-
-            $parent = $this->configurable->getParentIdsByChild($this->product->getId());
-            if(isset($parent[0])){
-                $this->productData->setParent($this->productRepositoryInterface->getById($parent[0], false, $storeId, false));
-            }
-
-            if ($this->product->getTypeId() == "configurable") {
-                $usedProducts = $this->product->getTypeInstance()->getUsedProducts($this->product);
-                $this->productData->setChildren($usedProducts);
-            }
+            $this->getProduct($productID, $sku);
+            $this->getStock();
+            $this->getProductFamily();
 
             return $this->productData;
         } catch (NoSuchEntityException $nse) {
