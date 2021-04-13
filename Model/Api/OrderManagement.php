@@ -218,10 +218,10 @@ class OrderManagement implements OrderManagementInterface
 
     /**
      * public function for universal API use of cart.create
-     * 
+     *
      * @param mixed $items
      * @param mixed $currency
-     * 
+     *
      */
     public function createCart($items = null, $currency = null)
     {
@@ -321,7 +321,7 @@ class OrderManagement implements OrderManagementInterface
      * - generate quote by item data
      * - create bolt order
      * - return order in Bolt format
-     * 
+     *
      * @param boolean $isUniversal
      *
      * @throws \Exception
@@ -330,8 +330,7 @@ class OrderManagement implements OrderManagementInterface
     {
         $request = $this->request->getBodyParams();
 
-        if ($isUniversal)
-        {
+        if ($isUniversal) {
             $request = $request['data'];
         }
 

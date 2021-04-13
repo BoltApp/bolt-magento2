@@ -115,7 +115,6 @@ class GetAccountTest extends BoltTestCase
             ],
         ];
         TestUtils::setupBoltConfig($configData);
-
     }
 
     protected function tearDownInternal()
@@ -136,7 +135,6 @@ class GetAccountTest extends BoltTestCase
 
         $this->objectManager->removeSharedInstance(Request::class);
         $this->request = null;
-
     }
 
     private function resetResponse()
@@ -284,7 +282,7 @@ class GetAccountTest extends BoltTestCase
      */
     public function execute_returnsCustomerId_ifEverythingSucceeds()
     {
-        $customer = TestUtils::createCustomer($this->websiteId, $this->storeId, array(
+        $customer = TestUtils::createCustomer($this->websiteId, $this->storeId, [
             "street_address1" => "street",
             "street_address2" => "",
             "locality"        => "Los Angeles",
@@ -299,7 +297,7 @@ class GetAccountTest extends BoltTestCase
             "last_name"       => "lastname",
             "phone_number"    => "11111111",
             "email_address"   => "john@bolt.com",
-        ));
+        ]);
         $this->createRequest([]);
         $hookHelper = $this->objectManager->create(Hook::class);
         $stubApiHelper = new stubBoltApiHelper();

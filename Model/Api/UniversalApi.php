@@ -89,7 +89,7 @@ class UniversalApi implements UniversalApiInterface
      */
     protected $response;
 
-    /** 
+    /**
      * @var DebugInterface
      */
     protected $debug;
@@ -107,8 +107,7 @@ class UniversalApi implements UniversalApiInterface
         BoltErrorResponse $errorResponse,
         Response $response,
         DebugInterface $debug
-    )
-    {
+    ) {
         $this->createOrder = $createOrder;
         $this->orderManagement = $orderManagement;
         $this->shipping = $shipping;
@@ -126,10 +125,9 @@ class UniversalApi implements UniversalApiInterface
     public function execute(
         $event = null,
         $data = null
-    )
-    {
+    ) {
         try {
-            switch($event){
+            switch ($event) {
                 case "order.create":
                     //currently sends its own response updated for v2, no return
                     $this->createOrder->execute(
@@ -218,16 +216,14 @@ class UniversalApi implements UniversalApiInterface
 
                 $this->sendSuccessResponse($this->formatResponseBody($this->result));
             }
-        }
-        catch (BoltException $e) {
+        } catch (BoltException $e) {
             $this->sendErrorResponse(
                 $e->getCode(),
                 $e->getMessage(),
                 422
             );
             return false;
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),

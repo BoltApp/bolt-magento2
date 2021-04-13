@@ -18,80 +18,37 @@
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Bolt\Boltpay\Model\Api\UniversalWebhook;
-
-use Bolt\Boltpay\Model\Api\OrderManagement;
-use Bolt\Boltpay\Model\Api\Data\UniversalWebhookResult as Result;
-use Bolt\Boltpay\Exception\BoltException;
-use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\Log as LogHelper;
-use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\Webapi\Rest\Response;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\TestFramework\Helper\Bootstrap;
+use Bolt\Boltpay\Api\OrderManagementInterface;
+use Bolt\Boltpay\Exception\BoltException;
 
 class UniversalWebhookTest extends BoltTestCase
 {
     /**
-     * @var MockObject|OrderManagement
+     * @var UniversalWebhook
+     */
+    private $universalWebhook;
+
+    /**
+     * @var OrderManagementInterface
      */
     private $orderManagement;
 
-    /**
-     * @var Result
-     */
-    private $result;
-
-    /**
-     * @var Bugsnag
-     */
-    private $bugsnag;
-
-    /**
-     * @var LogHelper
-     */
-    private $logHelper;
-
-    /**
-     * @var BoltErrorResponse
-     */
-    private $errorResponse;
-
-    /**
-     * @var Response
-     */
-    private $response;
+    private $objectManager;
 
     /**
      * @inheritdoc
      */
     protected function setUpInternal()
     {
-        $this->initRequiredMocks();
-        $this->initCurrentMock();
-    }
-
-    /**
-     * @test
-     */
-    public function exceptionHandled_sendsErrorResponse()
-    {
-        $exception = new BoltException(
-            __("Test error message"),
-            null,
-            BoltErrorResponse::ERR_SERVICE
-        );
-
-        $this->orderManagement->expects(self::once())
-            ->method('manage')
-            ->willThrowException($exception);
-
-        $this->expectErrorResponse(
-            BoltErrorResponse::ERR_SERVICE,
-            __("Test error message"),
-            422
-        );
-
-        $this->currentMock->execute();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->universalWebhook = $this->objectManager->create(UniversalWebhook::class);
+        $this->orderManagement = $this->objectManager->create(OrderManagementInterface::class);
     }
 
     /**
@@ -120,80 +77,53 @@ class UniversalWebhookTest extends BoltTestCase
                 'reference' => 'otherstring'
             ]
         ];
-
-        $expectedResult = json_encode(['status' => 'success']);
-        $this->expectSuccessResponse($expectedResult, 200);
-
-        $this->assertTrue($this->currentMock->execute($type, $object, $data));
+        $orderManagement = $this->createMock(OrderManagementInterface::class);
+        $orderManagement->method('manage');
+        TestHelper::setProperty($this->universalWebhook, 'orderManagement', $orderManagement);
+        $this->assertTrue($this->universalWebhook->execute($type, $object, $data));
+        $response = json_decode(TestHelper::getProperty($this->universalWebhook, 'response')->getBody(), true);
+        $this->assertEquals(['status' => 'success'], $response);
     }
 
-    private function expectSuccessResponse($result, $httpResponseCode)
+    /**
+     * @test
+     */
+    public function updateOrder_returnsFalse()
     {
-        $this->response->expects(self::once())
-            ->method('setHttpResponseCode')
-            ->with($httpResponseCode);
-
-        $this->response->expects(self::once())
-            ->method('setBody')
-            ->with($result);
-
-        $this->response->expects(self::once())
-            ->method('sendResponse');
-    }
-
-    private function expectErrorResponse($errCode, $message, $httpStatusCode)
-    {
-        $encodeErrorResult = '';
-
-        $this->errorResponse->expects(self::once())
-            ->method('prepareErrorMessage')
-            ->with($errCode, $message)
-            ->willReturn($encodeErrorResult);
-
-        $this->bugsnag->expects(self::once())
-            ->method('notifyException')
-            ->with(new \Exception($message));
-
-        $this->response->expects(self::once())
-            ->method('setHttpResponseCode')
-            ->with($httpStatusCode);
-        $this->response->expects(self::once())
-            ->method('setBody')
-            ->with($encodeErrorResult);
-        $this->response->expects(self::once())
-            ->method('sendResponse');
-    }
-
-    private function initRequiredMocks()
-    {
-        $this->orderManagement = $this->createMock(OrderManagement::class);
-        $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->logHelper = $this->createMock(LogHelper::class);
-        $this->errorResponse = $this->createMock(BoltErrorResponse::class);
-        $this->response = $this->createMock(Response::class);
-
-        $this->result = $this->getMockBuilder(Result::class)
-            ->enableProxyingToOriginalMethods()
-            ->getMock();
-    }
-
-    private function initCurrentMock($methods = null)
-    {
-        $mockBuilder = $this->getMockBuilder(UniversalWebhook::class)
-            ->setConstructorArgs([
-                $this->orderManagement,
-                $this->result,
-                $this->bugsnag,
-                $this->logHelper,
-                $this->errorResponse,
-                $this->response
-            ]);
-        if ($methods) {
-            $mockBuilder->setMethods($methods);
-        } else {
-            $mockBuilder->enableProxyingToOriginalMethods();
-        }
-
-        $this->currentMock = $mockBuilder->getMock();
+        $type = 'testType';
+        $object = 'transaction';
+        $data = [
+            'id' => '1234',
+            'reference' => 'XXXX-XXXX-XXXX',
+            'order' => [
+                'cart' => [
+                    'order_reference' => '5678',
+                    'display_id' => '000001234'
+                ]
+            ],
+            'amount' => [
+                'amount' => '2233',
+                'currency' => 'USD'
+            ],
+            'status' => 'completed',
+            'source_transaction' => [
+                'id' => 'string',
+                'reference' => 'otherstring'
+            ]
+        ];
+        $orderManagement = $this->createMock(OrderManagementInterface::class);
+        $boltException =  new BoltException(__('The cart has products not allowed for Bolt checkout'));
+        $orderManagement->method('manage')->willThrowException($boltException);
+        TestHelper::setProperty($this->universalWebhook, 'orderManagement', $orderManagement);
+        $this->assertFalse($this->universalWebhook->execute($type, $object, $data));
+        $response = json_decode(TestHelper::getProperty($this->universalWebhook, 'response')->getBody(), true);
+        $errResponse = [
+            'status' => 'failure',
+            'error' => [
+                'code' => $boltException->getCode(),
+                'message' => $boltException->getMessage(),
+            ],
+        ];
+        $this->assertEquals($errResponse, $response);
     }
 }

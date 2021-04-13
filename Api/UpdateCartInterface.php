@@ -43,7 +43,7 @@ interface UpdateCartInterface
 
     /**
      * Handles discounts.code.apply event in universal API
-     * 
+     *
      * @api
      * @param string $discount_code
      * @param mixed $cart

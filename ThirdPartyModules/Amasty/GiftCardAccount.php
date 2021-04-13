@@ -28,10 +28,6 @@ use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
-/**
- * Class GiftCardAccount
- * @package Bolt\Boltpay\ThirdPartyModules\Amasty
- */
 class GiftCardAccount
 {
 
@@ -222,12 +218,12 @@ class GiftCardAccount
         try {
             foreach ([$parentQuote, $immutableQuote] as $quote) {
                 $isGiftcardApplied = !empty(
-                array_filter(
-                    $quote->getExtensionAttributes()->getAmGiftcardQuote()->getGiftCards(),
-                    function ($giftCardData) use ($giftCard) {
-                        return $giftCard->getAccountId() == $giftCardData['id'];
-                    }
-                )
+                    array_filter(
+                        $quote->getExtensionAttributes()->getAmGiftcardQuote()->getGiftCards(),
+                        function ($giftCardData) use ($giftCard) {
+                            return $giftCard->getAccountId() == $giftCardData['id'];
+                        }
+                    )
                 );
                 if ($isGiftcardApplied) {
                     continue;
@@ -339,7 +335,7 @@ class GiftCardAccount
      * @param Quote $quote
      */
     public function clearExternalData($quote)
-    {        
+    {
         try {
             $connection = $this->resourceConnection->getConnection();
             $giftCardTable = $this->resourceConnection->getTableName('amasty_giftcard_quote');
@@ -396,15 +392,15 @@ class GiftCardAccount
             $giftCodeExists = false;
             $giftCode = '';
             foreach ($cards as $k => $card) {
-                if($card['id'] == $codeId) {
+                if ($card['id'] == $codeId) {
                     $giftCodeExists = true;
                     $giftCode = $card['code'];
                     break;
                 }
             }
             
-            if($giftCodeExists) {
-                $amastyGiftCardAccountManagement->removeGiftCardFromCart($quote->getId(), $giftCode);                   
+            if ($giftCodeExists) {
+                $amastyGiftCardAccountManagement->removeGiftCardFromCart($quote->getId(), $giftCode);
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);

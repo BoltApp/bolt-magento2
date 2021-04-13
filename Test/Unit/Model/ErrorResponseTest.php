@@ -114,7 +114,7 @@ class ErrorResponseTest extends BoltTestCase
                     'display_id' => '',
                     'currency' => 'USD',
                     'total_amount' => 50500,
-                    'tax_amount' => 1000,            
+                    'tax_amount' => 1000,
                     'items' => [
                         [
                             'name'         => 'Beaded Long Dress',

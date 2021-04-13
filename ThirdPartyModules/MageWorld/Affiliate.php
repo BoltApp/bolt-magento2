@@ -25,7 +25,8 @@ use Bolt\Boltpay\Helper\Cart as BoltCart;
 use Magento\Quote\Model\Quote;
 
 class Affiliate
-{    
+{
+
     /**
      * @var Bugsnag
      */
@@ -147,7 +148,7 @@ class Affiliate
             if ($serialized = $this->cache->load($cacheIdentifier)) {
                 $sessionData = $this->serialize->unserialize($serialized);
                 if (isset($sessionData["mwAffiliateReferralCode"])) {
-                    $checkoutSession = $this->boltSessionHelper->getCheckoutSession();                    
+                    $checkoutSession = $this->boltSessionHelper->getCheckoutSession();
                     $checkoutSession->setReferralCode($sessionData["mwAffiliateReferralCode"]);
                     if (!is_a($quote, Quote::class, true)) {
                         $parentQuote = $this->boltCartHelper->getQuoteById($parentQuoteId);
@@ -159,5 +160,4 @@ class Affiliate
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
 }

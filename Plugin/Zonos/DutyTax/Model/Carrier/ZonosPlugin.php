@@ -54,10 +54,13 @@ class ZonosPlugin
     }
 
     /**
-     * For each method of Zonos shipping, the Zonos plugin would add an unique identifier at the end of the service id in
-     * order to retrieve the correct quote, the generation of this unique identifier is based on the address data and the related quote id.
+     * For each method of Zonos shipping, the Zonos plugin would add an unique identifier at the end of the service
+     * id in order to retrieve the correct quote, the generation of this unique identifier is based on the address data
+     * and the related quote id.
+     *
      * Due to the logic in the Bolt checkout, the quote in shipping step is different from the one in order creation,
-     * so the identifier key of selected Zonos shipping method changes, and Magento throws out such an exception `The shipping method is missing.`.
+     * so the identifier key of selected Zonos shipping method changes, and Magento throws out such an exception
+     * `The shipping method is missing.`.
      *
      * To fix this issue, this plugin function returns the Bolt parent quote id instead of quote id,
      * cause in the Bolt checkout, the order creation uses parent quote.
@@ -72,7 +75,7 @@ class ZonosPlugin
                 if (!empty($parentQuoteId)) {
                     $quoteId = $parentQuoteId;
                 }
-            }            
+            }
         } catch (\Exception $e) {
             $this->boltBugsnagHelper->notifyException($e);
         }

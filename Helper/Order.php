@@ -442,8 +442,8 @@ class Order extends AbstractHelper
             $this->eventsForThirdPartyModules->dispatchEvent("setInStoreShippingMethodForPrepareQuote", $quote, $transaction);
         } else {
             $shippingAddress = $quote->getShippingAddress();
-            $shippingAddress->setCollectShippingRates(true);    
-            $shippingMethod = $transaction->order->cart->shipments[0]->reference;    
+            $shippingAddress->setCollectShippingRates(true);
+            $shippingMethod = $transaction->order->cart->shipments[0]->reference;
             $shippingAddress->setShippingMethod($shippingMethod)->save();
         }
     }
@@ -1233,8 +1233,7 @@ class Order extends AbstractHelper
     public function processNewOrder($quote, $transaction)
     {
         $orderData = [];
-        if (
-            isset($transaction->order->cart->metadata->original_order_entity_id) &&
+        if (isset($transaction->order->cart->metadata->original_order_entity_id) &&
             $originalOrderId = $transaction->order->cart->metadata->original_order_entity_id
         ) {
             try {
@@ -1877,7 +1876,7 @@ class Order extends AbstractHelper
                 }
             );
             return end($unprocessedCaptures);
-        }catch (\Exception $exception) {
+        } catch (\Exception $exception) {
             $this->bugsnag->notifyException($exception);
             return false;
         }

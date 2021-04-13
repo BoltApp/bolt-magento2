@@ -56,7 +56,7 @@ class LogRetrieverTest extends BoltTestCase
             ]
         ];
         $this->file = $this->getMockBuilder(File::class)->enableProxyingToOriginalMethods()->getMock();
-        $this->bugsnag = $this->createPartialMock(Bugsnag::class,['notifyException']);
+        $this->bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
         $this->root = vfsStream::setup('root', null, $structure);
         $this->virtualLogPath = "/log/exception.log";
         $this->logRetriever = $this->getMockBuilder(LogRetriever::class)

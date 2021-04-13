@@ -53,7 +53,7 @@ class JWK
      */
     public static function parseKeySet(array $jwks)
     {
-        $keys = array();
+        $keys = [];
 
         if (!isset($jwks['keys'])) {
             throw new UnexpectedValueException('"keys" member must exist in the JWK Set');
@@ -136,10 +136,10 @@ class JWK
         $modulus = JWT::urlsafeB64Decode($n);
         $publicExponent = JWT::urlsafeB64Decode($e);
 
-        $components = array(
+        $components = [
             'modulus'        => \pack('Ca*a*', 2, self::encodeLength(\strlen($modulus)), $modulus),
             'publicExponent' => \pack('Ca*a*', 2, self::encodeLength(\strlen($publicExponent)), $publicExponent)
-        );
+        ];
 
         $rsaPublicKey = \pack(
             'Ca*a*a*',

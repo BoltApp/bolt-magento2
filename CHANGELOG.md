@@ -193,3 +193,10 @@
 - Custom fields (dropdowns, checkboxes) have been refactored for better performance in the future.
 - Resolved issue with tax calculations where fixed discounts on the whole cart caused the final calculation to throw the error `cart tax mismatched`.
 - Resolved issue where the mini cart occasionally displayed items after a shopper has checked out and is on the order success page.
+## [v2.21.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.20.0) 2021-04-08
+- This plugin now supports Zonos custom shipping.
+- This plugin now supports Mageside's Custom Shipping Price module.
+- We’ve optimized the way Bolt checkout handles store credit and rewards points.
+- We’ve improved how shopping sessions with cart persistence are handled when this Magento feature is enabled. 
+- Resolved issue where shoppers were unable to apply free shipping coupons during checkout.
+- Resolved issue where shoppers were unable to purchase digital products where selecting a product option was required (for example, an ebook where selecting “Special Edition” or “Standard” is required).

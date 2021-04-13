@@ -148,7 +148,6 @@ class ShippingTaxTest extends BoltTestCase
 
         $this->objectManager->removeSharedInstance(Request::class);
         $this->request = null;
-
     }
 
     private function resetResponse()
@@ -368,7 +367,6 @@ class ShippingTaxTest extends BoltTestCase
 
         $this->expectExceptionMessage('Precondition Failed');
         $this->shippingTax->handleRequest($cart, []);
-
     }
 
     /**

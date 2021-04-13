@@ -21,11 +21,6 @@ use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartTotalsLayout;
 use Bolt\Boltpay\Model\ThirdPartyEvents\FiltersMinicartAddonsLayout;
 
-/**
- * Class Reward
- *
- * @package Bolt\Boltpay\ThirdPartyModules\Magento
- */
 class Reward
 {
     use FiltersCartTotalsLayout;

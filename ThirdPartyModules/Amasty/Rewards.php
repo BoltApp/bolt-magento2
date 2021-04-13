@@ -69,16 +69,17 @@ class Rewards
      * @param array $result
      * @param Amasty\Rewards\Helper\Data $amastyRewardsHelperData
      * @param Quote $quote
-     * 
+     *
      * @return array
      */
-    public function collectDiscounts($result,
-                                     $amastyRewardsHelperData,
-                                     $amastyRewardsResourceModelQuote,
-                                     $quote,
-                                     $parentQuote,
-                                     $paymentOnly)
-    {
+    public function collectDiscounts(
+        $result,
+        $amastyRewardsHelperData,
+        $amastyRewardsResourceModelQuote,
+        $quote,
+        $parentQuote,
+        $paymentOnly
+    ) {
         list ($discounts, $totalAmount, $diff) = $result;
 
         try {
@@ -95,8 +96,10 @@ class Rewards
                     'amount'            => $roundedAmount,
                     'reference'         => self::AMASTY_REWARD,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                    // For v1/discounts.code.apply and v2/cart.update
+                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                    // For v1/merchant/order
+                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'),
                 ];
                 
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -104,7 +107,7 @@ class Rewards
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
-        } finally {        
+        } finally {
             return [$discounts, $totalAmount, $diff];
         }
     }
@@ -127,19 +130,18 @@ class Rewards
     
     /**
      * Return code if the quote has Amasty reward points.
-     * 
+     *
      * @param $result
      * @param $couponCode
      * @param $quote
-     * 
+     *
      * @return array
      */
-    public function filterVerifyAppliedStoreCredit (
+    public function filterVerifyAppliedStoreCredit(
         $result,
         $couponCode,
         $quote
-    )
-    {
+    ) {
         if ($couponCode == self::AMASTY_REWARD && $quote->getData('amrewards_point')) {
             $result[] = $couponCode;
         }
@@ -156,17 +158,16 @@ class Rewards
      * @param $quote
      * @param $websiteId
      * @param $storeId
-     * 
+     *
      */
-    public function removeAppliedStoreCredit (
+    public function removeAppliedStoreCredit(
         $amastyRewardsManagement,
         $amastyRewardsQuote,
         $couponCode,
         $quote,
         $websiteId,
         $storeId
-    )
-    {
+    ) {
         try {
             if ($couponCode == self::AMASTY_REWARD && $quote->getData('amrewards_point')) {
                 $amastyRewardsManagement->collectCurrentTotals($quote, 0);
@@ -184,7 +185,7 @@ class Rewards
     /**
      * Amasty reward points are held in a separate table
      * and are not assigned to the quote / totals directly out of the customer session.
-     * 
+     *
      * @param \Amasty\Rewards\Model\ResourceModel\Quote $amastyRewardsResourceQuote
      * @param \Amasty\Rewards\Model\Quote  $amastyRewardsQuote
      * @param $immutableQuote
@@ -193,8 +194,7 @@ class Rewards
         $amastyRewardsResourceQuote,
         $amastyRewardsQuote,
         $immutableQuote
-    )
-    {
+    ) {
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
         $this->amastyRewardsQuote = $amastyRewardsQuote;
 
@@ -203,7 +203,7 @@ class Rewards
     
     /**
      * If Amasty Reward Points extension is present clone applied reward points
-     * 
+     *
      * @param \Amasty\Rewards\Model\ResourceModel\Quote $amastyRewardsResourceQuote
      * @param \Amasty\Rewards\Model\Quote  $amastyRewardsQuote
      * @param $sourceQuote
@@ -214,8 +214,7 @@ class Rewards
         $amastyRewardsQuote,
         $sourceQuote,
         $destinationQuote
-    )
-    {
+    ) {
         $this->amastyRewardsResourceQuote = $amastyRewardsResourceQuote;
         $this->amastyRewardsQuote = $amastyRewardsQuote;
 

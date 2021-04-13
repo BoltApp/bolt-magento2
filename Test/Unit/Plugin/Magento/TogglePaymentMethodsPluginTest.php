@@ -146,5 +146,4 @@ class TogglePaymentMethodsPluginTest extends BoltTestCase
             ->with('is_available', true);
         $this->plugin->aroundExecute($this->subject, $this->proceed, $this->observer);
     }
-
 }

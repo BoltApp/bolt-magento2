@@ -67,8 +67,6 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 
-
-
 /**
  * Class OrderManagementTest
  *
@@ -134,7 +132,7 @@ class OrderManagementTest extends BoltTestCase
     protected function setUpInternal()
     {
         if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
-            return;    
+            return;
         }
         
         $this->objectManager = Bootstrap::getObjectManager();
@@ -184,7 +182,7 @@ class OrderManagementTest extends BoltTestCase
     protected function tearDownInternal()
     {
         if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
-            return;    
+            return;
         }
         
         $this->resetRequest();
@@ -216,7 +214,7 @@ class OrderManagementTest extends BoltTestCase
      * Request getter
      *
      * @param array $bodyParams
-     * 
+     *
      * @return \Magento\Framework\App\RequestInterface
      */
     public function createRequest($bodyParams)
@@ -230,9 +228,9 @@ class OrderManagementTest extends BoltTestCase
         $computed_signature  = base64_encode(hash_hmac('sha256', $requestContent, self::SECRET, true));
 
         $this->request->getHeaders()->clearHeaders();
-        $this->request->getHeaders()->addHeaderLine('X-Bolt-Hmac-Sha256',$computed_signature);
-        $this->request->getHeaders()->addHeaderLine('X-bolt-trace-id',self::TRACE_ID_HEADER);
-        $this->request->getHeaders()->addHeaderLine('Content-Type','application/json');
+        $this->request->getHeaders()->addHeaderLine('X-Bolt-Hmac-Sha256', $computed_signature);
+        $this->request->getHeaders()->addHeaderLine('X-bolt-trace-id', self::TRACE_ID_HEADER);
+        $this->request->getHeaders()->addHeaderLine('Content-Type', 'application/json');
 
         $this->request->setParams($bodyParams);
         
@@ -249,7 +247,6 @@ class OrderManagementTest extends BoltTestCase
      
         $this->objectManager->removeSharedInstance(Request::class);
         $this->request = null;
-
     }
     
     public function resetResponse()
@@ -260,11 +257,10 @@ class OrderManagementTest extends BoltTestCase
      
         $this->objectManager->removeSharedInstance(Response::class);
         $this->response = null;
-
     }
     
     public function resetTestObj()
-    {        
+    {
         $quoteCollection = $this->objectManager->create(QuoteCollection::class);
         foreach ($quoteCollection as $quote) {
             $quote->delete();
@@ -285,7 +281,7 @@ class OrderManagementTest extends BoltTestCase
         $customerCollection = $this->objectManager->create(CustomerCollection::class);
         foreach ($customerCollection as $customer) {
             $customer->delete();
-        }        
+        }
         
         /** @var \Magento\CatalogInventory\Model\StockRegistryStorage $stockRegistryStorage */
         $stockRegistryStorage = $this->objectManager->get(StockRegistryStorage::class);
@@ -293,7 +289,7 @@ class OrderManagementTest extends BoltTestCase
         $stockRegistryStorage->removeStockItem(1);
     }
     
-    private function createRequestData($quoteId, $immutableQuoteId, $status, $display_id = '', $captures = NULL, $type = self::TT_PAYMENT)
+    private function createRequestData($quoteId, $immutableQuoteId, $status, $display_id = '', $captures = null, $type = self::TT_PAYMENT)
     {
         $addressInfo = TestUtils::createSampleAddress();
         $requetData = [
@@ -354,7 +350,7 @@ class OrderManagementTest extends BoltTestCase
                         [
                             'cost'             => self::QUOTE_SHIPPING_TOTAL*100,
                             'tax_amount'       => self::QUOTE_SHIPPING_TAX_TOTAL*100,
-                            "shipping_address" => [                                
+                            "shipping_address" => [
                                 "street_address1" => $addressInfo["street_address1"],
                                 "locality"        => $addressInfo["locality"],
                                 "region"          => $addressInfo["region"],
@@ -438,13 +434,13 @@ class OrderManagementTest extends BoltTestCase
     }
     
     private function createOrder($quote, $product, $payment, $orderStatus)
-    {        
+    {
         $quoteId = $quote->getId();
         
         $addressData = TestUtils::createMagentoSampleAddress();
         
-        $orderItems = [];        
-        $orderItem = TestUtils::createOrderItemByProduct($product, 1);        
+        $orderItems = [];
+        $orderItem = TestUtils::createOrderItemByProduct($product, 1);
         $orderItems[] = $orderItem;
         
         $order = TestUtils::createDumpyOrder([], $addressData, $orderItems, $orderStatus, $orderStatus, $payment);
@@ -453,7 +449,7 @@ class OrderManagementTest extends BoltTestCase
             ->setCustomerIsGuest(true)
             ->setCustomerEmail($addressData['email'])
             ->setCustomerFirstname($addressData['firstname'])
-            ->setCustomerLastname($addressData['lastname'])           
+            ->setCustomerLastname($addressData['lastname'])
             ->setStoreId($this->storeId)
             ->setShippingAmount(self::ORDER_SHIPPING_TOTAL)
             ->setBaseShippingAmount(self::ORDER_SHIPPING_TOTAL)
@@ -504,7 +500,7 @@ class OrderManagementTest extends BoltTestCase
 
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -516,7 +512,7 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
-        $product = $this->createProduct();        
+        $product = $this->createProduct();
         
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
@@ -537,7 +533,7 @@ class OrderManagementTest extends BoltTestCase
         $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
         $immutableQuoteId = $immutableQuote->getId();
 
-        $requestbodyParams = array (
+        $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => self::REFERENCE,
             'order' => $quoteId,
@@ -547,11 +543,11 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'status' => 'authorized',
             'display_id' => '',
-        );
+        ];
         
         $this->createRequest($requestbodyParams);
             
-        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);    
+        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
         
         $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'authorized');
         $apiRequestResult = json_decode(json_encode($requetData));
@@ -579,7 +575,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -591,7 +587,7 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
-        $product = $this->createProduct();        
+        $product = $this->createProduct();
         
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
@@ -602,7 +598,7 @@ class OrderManagementTest extends BoltTestCase
         $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
         $immutableQuoteId = $immutableQuote->getId();
 
-        $requestbodyParams = array (
+        $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => self::REFERENCE,
             'order' => $quoteId,
@@ -612,7 +608,7 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'status' => 'authorized',
             'display_id' => self::ORDER_INCREMENTID,
-        );
+        ];
         
         $this->createRequest($requestbodyParams);
         
@@ -627,7 +623,7 @@ class OrderManagementTest extends BoltTestCase
         
         $order = $this->createOrder($quote, $product, $payment, Order::STATE_PAYMENT_REVIEW);
           
-        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);        
+        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
         
         $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'authorized', self::ORDER_INCREMENTID);
         $apiRequestResult = json_decode(json_encode($requetData));
@@ -656,7 +652,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -668,7 +664,7 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
-        $product = $this->createProduct();        
+        $product = $this->createProduct();
         
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
@@ -679,7 +675,7 @@ class OrderManagementTest extends BoltTestCase
         $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
         $immutableQuoteId = $immutableQuote->getId();
 
-        $requestbodyParams = array (
+        $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => self::REFERENCE,
             'order' => $quoteId,
@@ -689,7 +685,7 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'status' => 'completed',
             'display_id' => self::ORDER_INCREMENTID,
-        );
+        ];
         
         $this->createRequest($requestbodyParams);
         
@@ -704,7 +700,7 @@ class OrderManagementTest extends BoltTestCase
         
         $order = $this->createOrder($quote, $product, $payment, Order::STATE_PAYMENT_REVIEW);
           
-        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);        
+        $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
         
         $captures = [
             [
@@ -744,7 +740,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -756,7 +752,7 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
-        $product = $this->createProduct();        
+        $product = $this->createProduct();
         
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
@@ -767,7 +763,7 @@ class OrderManagementTest extends BoltTestCase
         $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
         $immutableQuoteId = $immutableQuote->getId();
 
-        $requestbodyParams = array (
+        $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => self::REFERENCE,
             'order' => $quoteId,
@@ -777,7 +773,7 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'status' => 'completed',
             'display_id' => self::ORDER_INCREMENTID,
-        );
+        ];
         
         $this->createRequest($requestbodyParams);
         
@@ -805,7 +801,7 @@ class OrderManagementTest extends BoltTestCase
             'decider'
         );
         $featureSwitchProperty->setAccessible(true);
-        $featureSwitchProperty->setValue($boltOrderManagement, $featureSwitch);        
+        $featureSwitchProperty->setValue($boltOrderManagement, $featureSwitch);
         
         $captures = [
             [
@@ -845,7 +841,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -857,7 +853,7 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
-        $product = $this->createProduct();        
+        $product = $this->createProduct();
         
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
@@ -868,7 +864,7 @@ class OrderManagementTest extends BoltTestCase
         $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
         $immutableQuoteId = $immutableQuote->getId();
 
-        $requestbodyParams = array (
+        $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => self::REFERENCE,
             'order' => $quoteId,
@@ -878,7 +874,7 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'status' => 'failed',
             'display_id' => self::ORDER_INCREMENTID,
-        );
+        ];
         
         $this->createRequest($requestbodyParams);
         
@@ -919,7 +915,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -931,7 +927,7 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
-        $product = $this->createProduct();        
+        $product = $this->createProduct();
         
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
@@ -942,7 +938,7 @@ class OrderManagementTest extends BoltTestCase
         $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
         $immutableQuoteId = $immutableQuote->getId();
 
-        $requestbodyParams = array (
+        $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => self::REFERENCE,
             'order' => $quoteId,
@@ -952,7 +948,7 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'status' => 'failed',
             'display_id' => self::ORDER_INCREMENTID,
-        );
+        ];
         
         $this->createRequest($requestbodyParams);
         
@@ -1019,7 +1015,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -1031,7 +1027,7 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
-        $product = $this->createProduct();        
+        $product = $this->createProduct();
         
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
@@ -1042,7 +1038,7 @@ class OrderManagementTest extends BoltTestCase
         $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
         $immutableQuoteId = $immutableQuote->getId();
 
-        $requestbodyParams = array (
+        $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => self::REFERENCE,
             'order' => $quoteId,
@@ -1052,7 +1048,7 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'status' => 'failed',
             'display_id' => self::ORDER_INCREMENTID,
-        );
+        ];
         
         $this->createRequest($requestbodyParams);
         
@@ -1110,7 +1106,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -1122,7 +1118,7 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
-        $product = $this->createProduct();        
+        $product = $this->createProduct();
         
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
@@ -1133,7 +1129,7 @@ class OrderManagementTest extends BoltTestCase
         $boltCartHelper->replicateQuoteData($quote, $immutableQuote);
         $immutableQuoteId = $immutableQuote->getId();
 
-        $requestbodyParams = array (
+        $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => self::REFERENCE,
             'order' => $quoteId,
@@ -1143,7 +1139,7 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'status' => 'rejected_irreversible',
             'display_id' => self::ORDER_INCREMENTID,
-        );
+        ];
         
         $this->createRequest($requestbodyParams);
         
@@ -1180,7 +1176,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -1192,12 +1188,12 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
-        $product = $this->createProduct();        
+        $product = $this->createProduct();
         
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
 
-        $requestbodyParams = array (
+        $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => self::REFERENCE,
             'order' => $quoteId,
@@ -1207,7 +1203,7 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'status' => 'rejected_irreversible',
             'display_id' => self::ORDER_INCREMENTID,
-        );
+        ];
         
         $this->createRequest($requestbodyParams);
           
@@ -1242,7 +1238,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -1254,12 +1250,12 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
-        $product = $this->createProduct();        
+        $product = $this->createProduct();
         
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
 
-        $requestbodyParams = array (
+        $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => self::REFERENCE,
             'order' => $quoteId,
@@ -1269,7 +1265,7 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'status' => 'completed',
             'display_id' => self::ORDER_INCREMENTID,
-        );
+        ];
         
         $this->createRequest($requestbodyParams);
         
@@ -1359,7 +1355,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -1371,12 +1367,12 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
-        $product = $this->createProduct();        
+        $product = $this->createProduct();
         
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
 
-        $requestbodyParams = array (
+        $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => self::REFERENCE,
             'order' => $quoteId,
@@ -1386,7 +1382,7 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'status' => 'completed',
             'display_id' => self::ORDER_INCREMENTID,
-        );
+        ];
         
         $this->createRequest($requestbodyParams);
         
@@ -1475,7 +1471,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -1487,12 +1483,12 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
-        $product = $this->createProduct();        
+        $product = $this->createProduct();
         
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
 
-        $requestbodyParams = array (
+        $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => self::REFERENCE,
             'order' => $quoteId,
@@ -1502,7 +1498,7 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'status' => 'cancelled',
             'display_id' => self::ORDER_INCREMENTID,
-        );
+        ];
         
         $this->createRequest($requestbodyParams);
         
@@ -1546,7 +1542,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -1558,12 +1554,12 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
-        $product = $this->createProduct();        
+        $product = $this->createProduct();
         
         $quote = $this->createQoute($product);
         $quoteId = $quote->getId();
 
-        $requestbodyParams = array (
+        $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => self::REFERENCE,
             'order' => $quoteId,
@@ -1573,7 +1569,7 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'status' => 'rejected_reversible',
             'display_id' => self::ORDER_INCREMENTID,
-        );
+        ];
         
         $this->createRequest($requestbodyParams);
         
@@ -1617,7 +1613,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -1645,7 +1641,7 @@ class OrderManagementTest extends BoltTestCase
                 [
                     'reference'    => $product->getId(),
                     'name'         => $product->getName(),
-                    'description'  => NULL,
+                    'description'  => null,
                     'options'      => json_encode($productOptions),
                     'total_amount' => self::QUOTE_PRODUCT_QTY*self::PRODUCT_PRICE*100,
                     'unit_price'   => self::PRODUCT_PRICE*100,
@@ -1654,17 +1650,17 @@ class OrderManagementTest extends BoltTestCase
                 ]
             ],
             'currency' => self::CURRENCY,
-            'metadata' => NULL,
+            'metadata' => null,
         ];
         
         $this->createRequest($requestbodyParams);
         
         $boltOrderManagement->manage(
-            NULL,
-            NULL,
-            NULL,
+            null,
+            null,
+            null,
             'cart.create',
-            NULL,
+            null,
             self::CURRENCY
         );
         
@@ -1678,12 +1674,11 @@ class OrderManagementTest extends BoltTestCase
 
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(CurrencyUtils::toMinor($totals['subtotal']['value'], self::CURRENCY), CurrencyUtils::toMinor(self::QUOTE_SUBTOTAL, self::CURRENCY));
-
     }
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -1709,7 +1704,7 @@ class OrderManagementTest extends BoltTestCase
                 [
                     'reference'    => 1010,
                     'name'         => 'Test',
-                    'description'  => NULL,
+                    'description'  => null,
                     'options'      => json_encode($productOptions),
                     'total_amount' => 101*self::PRODUCT_PRICE*100,
                     'unit_price'   => self::PRODUCT_PRICE*100,
@@ -1718,17 +1713,17 @@ class OrderManagementTest extends BoltTestCase
                 ]
             ],
             'currency' => self::CURRENCY,
-            'metadata' => NULL,
+            'metadata' => null,
         ];
         
         $this->createRequest($requestbodyParams);
         
         $boltOrderManagement->manage(
-            NULL,
-            NULL,
-            NULL,
+            null,
+            null,
+            null,
             'cart.create',
-            NULL,
+            null,
             self::CURRENCY
         );
         
@@ -1742,7 +1737,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      * @covers ::saveUpdateOrder
      */
@@ -1774,7 +1769,7 @@ class OrderManagementTest extends BoltTestCase
                 [
                     'reference'    => $product->getId(),
                     'name'         => $product->getName(),
-                    'description'  => NULL,
+                    'description'  => null,
                     'options'      => json_encode($productOptions),
                     'total_amount' => self::QUOTE_PRODUCT_QTY*self::PRODUCT_PRICE*100,
                     'unit_price'   => self::PRODUCT_PRICE*100,
@@ -1783,7 +1778,7 @@ class OrderManagementTest extends BoltTestCase
                 ]
             ],
             'currency' => self::CURRENCY,
-            'metadata' => NULL,
+            'metadata' => null,
         ];
         
         if (!$this->request) {
@@ -1794,9 +1789,9 @@ class OrderManagementTest extends BoltTestCase
          
         $computed_signature  = base64_encode(hash_hmac('sha256', $requestContent, '12425f51e0614482e17b6e913d74788eedb082e2e6f8067330b98ffa99adc809', true));
 
-        $this->request->getHeaders()->addHeaderLine('X-Bolt-Hmac-Sha256',$computed_signature);
-        $this->request->getHeaders()->addHeaderLine('X-bolt-trace-id',self::TRACE_ID_HEADER);
-        $this->request->getHeaders()->addHeaderLine('Content-Type','application/json');
+        $this->request->getHeaders()->addHeaderLine('X-Bolt-Hmac-Sha256', $computed_signature);
+        $this->request->getHeaders()->addHeaderLine('X-bolt-trace-id', self::TRACE_ID_HEADER);
+        $this->request->getHeaders()->addHeaderLine('Content-Type', 'application/json');
 
         $this->request->setParams($requestbodyParams);
         
@@ -1820,11 +1815,11 @@ class OrderManagementTest extends BoltTestCase
         $orderHelperProperty->setValue($boltOrderManagement, $hookHelper);
         
         $boltOrderManagement->manage(
-            NULL,
-            NULL,
-            NULL,
+            null,
+            null,
+            null,
             'cart.create',
-            NULL,
+            null,
             self::CURRENCY
         );
         
@@ -1838,7 +1833,7 @@ class OrderManagementTest extends BoltTestCase
     
     /**
      * @test
-     * 
+     *
      * @covers ::manage
      */
     public function testManageEmptyReference()
@@ -1847,7 +1842,7 @@ class OrderManagementTest extends BoltTestCase
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
         
-        $requestbodyParams = array (
+        $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => '',
             'order' => '',
@@ -1857,7 +1852,7 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'status' => 'authorized',
             'display_id' => '',
-        );
+        ];
         
         $this->createRequest($requestbodyParams);
         
@@ -1878,15 +1873,15 @@ class OrderManagementTest extends BoltTestCase
         $this->assertEquals('6009', $responseData['code']);
         $this->assertEquals('Unprocessable Entity: Missing required parameters.', $responseData['message']);
     }
-
 }
 
-class stubBoltApiHelper {
-	public function __construct() {
-		
-	}
+class stubBoltApiHelper
+{
+    public function __construct()
+    {
+    }
 
-	public function sendRequest($request)
+    public function sendRequest($request)
     {
         global $apiRequestResult;
         

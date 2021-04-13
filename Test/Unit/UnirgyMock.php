@@ -1,5 +1,6 @@
 <?php
 namespace Bolt\Boltpay\Test\Unit;
+
 /**
  * Mock class for \Unirgy\Giftcert\Model\Cert
  * @package Bolt\Boltpay\Test\Unit

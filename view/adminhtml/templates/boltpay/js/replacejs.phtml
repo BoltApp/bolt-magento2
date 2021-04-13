@@ -284,7 +284,7 @@ require([
                 isShippingMethodSelected = $('input[name="order[shipping_method]"][type=radio]:checked').length;
 
             if (create_request) {
-                throw '<?php echo __('There is a pending Bolt Cart creation request, please wait.'); ?>';
+                throw '<?= /* @noEscape */ __('There is a pending Bolt Cart creation request, please wait.'); ?>';
             }
 
             if (cart.errorMessage) {
@@ -292,7 +292,7 @@ require([
             }
 
             if (shippingRequired && !isShippingMethodSelected) {
-                throw '<?php echo __('Please specify the "Shipping Method"!'); ?>';
+                throw '<?= /* @noEscape */ __('Please specify the "Shipping Method"!'); ?>';
             }
             return true;
         } catch (e) {
@@ -400,7 +400,8 @@ require([
             if (data.paymentOnlyKey && settings.pay_by_link_url && cart.orderToken) {
                 $(".bolt-checkout-options-separator").toggle(!!data.backOfficeKey);
                 $(".bolt-checkout-pay-by-link").html("Send <a id='bolt-pay-by-link' href='"
-                    + settings.pay_by_link_url + "?" + $.param({ publishable_key: data.paymentOnlyKey, token: cart.orderToken })
+                    + settings.pay_by_link_url + "?"
+                    + $.param({ publishable_key: data.paymentOnlyKey, token: cart.orderToken })
                     + "'>this link</a> to consumer to receive payment");
             }
             create_request = null;

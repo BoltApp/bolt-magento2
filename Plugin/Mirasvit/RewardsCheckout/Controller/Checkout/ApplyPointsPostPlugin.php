@@ -20,10 +20,6 @@ namespace Bolt\Boltpay\Plugin\Mirasvit\RewardsCheckout\Controller\Checkout;
 use Magento\Customer\Model\Session as CustomerSession;
 use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Rewards as BoltMirasvitRewards;
 
-/**
- * Class ApplyPointsPostPlugin
- *
- */
 class ApplyPointsPostPlugin
 {
     /**
@@ -41,7 +37,7 @@ class ApplyPointsPostPlugin
      * Check how the customer choose to spend the reward points
      *
      * @param \Mirasvit\RewardsCheckout\Controller\Checkout\ApplyPointsPost $subject
-     * 
+     *
      * @return null
      */
     public function beforeExecute(\Mirasvit\RewardsCheckout\Controller\Checkout\ApplyPointsPost $subject)
@@ -54,9 +50,13 @@ class ApplyPointsPostPlugin
             $points_all = $subject->getRequest()->getParam('points_all');
 
             if (!empty($points_all)) {
-                $this->customerSession->setBoltMirasvitRewardsMode(BoltMirasvitRewards::MIRASVIT_REWARDS_APPLY_MODE_ALL);
+                $this->customerSession->setBoltMirasvitRewardsMode(
+                    BoltMirasvitRewards::MIRASVIT_REWARDS_APPLY_MODE_ALL
+                );
             } else {
-                $this->customerSession->setBoltMirasvitRewardsMode(BoltMirasvitRewards::MIRASVIT_REWARDS_APPLY_MODE_PART);
+                $this->customerSession->setBoltMirasvitRewardsMode(
+                    BoltMirasvitRewards::MIRASVIT_REWARDS_APPLY_MODE_PART
+                );
             }
         }
         

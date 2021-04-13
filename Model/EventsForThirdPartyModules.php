@@ -891,7 +891,7 @@ class EventsForThirdPartyModules
                 // so there are cases that the class does not exist,
                 // then we use sub-array to include classes for supported versions.
                 $classNames = is_array($classNameItem) ? $classNameItem : [$classNameItem];
-                $existClasses = array_filter($classNames, function($className) {
+                $existClasses = array_filter($classNames, function ($className) {
                     return $this->doesClassExist($className);
                 });
                 if (empty($existClasses)) {
@@ -930,7 +930,8 @@ class EventsForThirdPartyModules
      *
      * Call all filter listeners that relates to existing module and if necessary classes exist
      */
-    public function runFilter($filterName, $result, ...$arguments) {
+    public function runFilter($filterName, $result, ...$arguments)
+    {
         if (!isset(static::filterListeners[$filterName])) {
             return;
         }
@@ -961,7 +962,8 @@ class EventsForThirdPartyModules
      *
      * Call all listeners that relates to existing module and if necessary classes exist
      */
-    public function dispatchEvent($eventName, ...$arguments) {
+    public function dispatchEvent($eventName, ...$arguments)
+    {
         if (!isset(static::eventListeners[$eventName])) {
             return;
         }

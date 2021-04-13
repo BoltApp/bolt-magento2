@@ -650,7 +650,7 @@ class Cart extends AbstractHelper
     {
         $cacheIdentifier = "";
         // add gift message id into cart cache identifier
-        if($giftMessageId = $immutableQuote->getGiftMessageId()) {
+        if ($giftMessageId = $immutableQuote->getGiftMessageId()) {
             $cacheIdentifier .= $giftMessageId;
         }
 
@@ -737,8 +737,7 @@ class Cart extends AbstractHelper
     {
         $immutableQuoteId = null;
         // If response is null don't even bother trying, we return null
-        if ($response)
-        {
+        if ($response) {
             if (isset($response->cart->metadata->immutable_quote_id)) {
                 $immutableQuoteId = $response->cart->metadata->immutable_quote_id;
             } else {
@@ -1298,7 +1297,8 @@ class Cart extends AbstractHelper
      *
      * @return array
      */
-    private function getAdditionalAttributes($sku, $storeId, $additionalAttributes) {
+    private function getAdditionalAttributes($sku, $storeId, $additionalAttributes)
+    {
         if (!$additionalAttributes) {
             return [];
         }
@@ -1421,7 +1421,7 @@ class Cart extends AbstractHelper
                 // In current Bolt checkout flow, the shipping and tax endpoint is not called for virtual carts,
                 // It means we don't support taxes for virtual product and should handle all products as physical
                 // TODO: Remove the feature switch check when issue will be solved https://boltpay.atlassian.net/browse/DC-181
-                if ( $item->getIsVirtual() && !$this->deciderHelper->handleVirtualProductsAsPhysical()) {
+                if ($item->getIsVirtual() && !$this->deciderHelper->handleVirtualProductsAsPhysical()) {
                     $product['type'] = self::ITEM_TYPE_DIGITAL;
                 } else {
                     $product['type'] = self::ITEM_TYPE_PHYSICAL;
@@ -1461,7 +1461,7 @@ class Cart extends AbstractHelper
                     }
                 }
 
-                foreach ($this->getAdditionalAttributes($item->getSku(),$storeId, $additionalAttributes) as $attribute ) {
+                foreach ($this->getAdditionalAttributes($item->getSku(), $storeId, $additionalAttributes) as $attribute) {
                     $properties[] = $attribute;
                 }
 
@@ -1471,7 +1471,7 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 // Get product description and image
                 ////////////////////////////////////
-                $product['description'] = str_replace(array("\r\n", "\n", "\r"), ' ', strip_tags($_product->getDescription()));
+                $product['description'] = str_replace(["\r\n", "\n", "\r"], ' ', strip_tags($_product->getDescription()));
                 $variantProductToGetImage = $_product;
 
                 // This will override the $_product with the variant product to get the variant image rather than the main product image.
@@ -1651,7 +1651,7 @@ class Cart extends AbstractHelper
      * @param $item
      * @return \Magento\Catalog\Model\Product
      */
-    private function getProductToGetImageForGroupedItem ($item)
+    private function getProductToGetImageForGroupedItem($item)
     {
         /** @var \Magento\Quote\Model\Quote\Item\Option $option */
         $option = $item->getOptionByCode('product_type');
@@ -1680,7 +1680,8 @@ class Cart extends AbstractHelper
      * Return user group id for logged in users and "0" for guest users
      *
      */
-    private function getUserGroupId() {
+    private function getUserGroupId()
+    {
         if (!$this->customerSession->isLoggedIn()) {
             return "0";
         }

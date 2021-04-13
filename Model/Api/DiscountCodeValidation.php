@@ -194,7 +194,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         //remove previously cached Bolt order since we altered related immutable quote by applying a discount
         $this->cache->clean([CartHelper::BOLT_ORDER_TAG . '_' . $parentQuoteId]);
 
-        return array($result, $immutableQuote);
+        return [$result, $immutableQuote];
     }
 
     /**

@@ -135,7 +135,6 @@ class CreateOrderTest extends BoltTestCase
             ],
         ];
         TestUtils::setupBoltConfig($configData);
-
     }
 
     protected function tearDownInternal()
@@ -156,7 +155,6 @@ class CreateOrderTest extends BoltTestCase
 
         $this->objectManager->removeSharedInstance(Request::class);
         $this->request = null;
-
     }
 
     private function resetResponse()
@@ -607,7 +605,7 @@ class CreateOrderTest extends BoltTestCase
     {
         $quote = TestUtils::createQuote();
         $quoteId = $quote->getId();
-        self::assertEquals($quoteId ,$this->createOrder->loadQuoteData($quoteId)->getId());
+        self::assertEquals($quoteId, $this->createOrder->loadQuoteData($quoteId)->getId());
     }
 
     /**

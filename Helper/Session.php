@@ -206,8 +206,7 @@ class Session extends AbstractHelper
             }
         }
         // @todo remove when update.cart hook starts supporting metadata
-        else
-        if ($serialized = $this->cache->load($cacheIdentifier)) {
+        elseif ($serialized = $this->cache->load($cacheIdentifier)) {
             $sessionData = $this->serialize->unserialize($serialized);
             $sessionID = $sessionData["sessionID"];
             $storeId = $quote->getStoreId();

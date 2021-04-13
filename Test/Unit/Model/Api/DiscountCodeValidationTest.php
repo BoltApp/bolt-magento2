@@ -230,7 +230,7 @@ class DiscountCodeValidationTest extends BoltTestCase
      */
     public function setUpInternal()
     {
-        $this->initRequiredMocks();        
+        $this->initRequiredMocks();
     }
 
     /**
@@ -1204,7 +1204,7 @@ class DiscountCodeValidationTest extends BoltTestCase
         TestHelper::setProperty($this->currentMock, 'bugsnag', $this->bugsnag);
         TestHelper::setProperty($this->currentMock, 'eventsForThirdPartyModules', $this->eventsForThirdPartyModules);
         TestHelper::setProperty($this->currentMock, 'logHelper', $this->logHelper);
-        TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);        
+        TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);
         TestHelper::setProperty($this->currentMock, 'cache', $this->cache);
         TestHelper::setProperty($this->currentMock, 'discountHelper', $this->discountHelper);
         TestHelper::setProperty($this->currentMock, 'checkoutSession', $this->checkoutSession);

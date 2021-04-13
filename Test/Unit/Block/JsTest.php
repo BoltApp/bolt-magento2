@@ -1744,7 +1744,7 @@ JS;
      */
     public function getButtonCssStyles_prependsDisplayNone()
     {
-        $this->configHelper->expects(static::once())->method('getToggleCheckout')->willReturn((object) array('active' => true));
+        $this->configHelper->expects(static::once())->method('getToggleCheckout')->willReturn((object) ['active' => true]);
         $this->configHelper->expects(static::once())->method('getButtonColor')->willReturn('#EEEEEE');
         static::assertEquals('display:none;--bolt-primary-action-color:#EEEEEE;', $this->currentMock->getButtonCssStyles());
     }

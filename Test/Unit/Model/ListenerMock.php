@@ -17,7 +17,8 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model;
 
-class ListenerMock {
+class ListenerMock
+{
     public $methodCalled = false;
     public function shouldCall()
     {

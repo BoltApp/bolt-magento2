@@ -73,7 +73,9 @@ class RechargeCustomer implements ObserverInterface
             $event = $observer->getEvent();
             $order = $event->getOrder();
 
-            if (!$order->getPayment() || $order->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
+            if (!$order->getPayment() ||
+                $order->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE
+            ) {
                 return false;
             }
 

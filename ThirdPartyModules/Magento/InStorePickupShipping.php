@@ -25,10 +25,6 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup;
 use Magento\InventorySalesApi\Api\Data\SalesChannelInterface;
 
-/**
- * Class InStorePickupShipping
- * @package Bolt\Boltpay\ThirdPartyModules\Magento
- */
 class InStorePickupShipping
 {
     /**
@@ -154,7 +150,10 @@ class InStorePickupShipping
             }
             $extensionAttributes = $this->searchRequestExtension->create();
             $extensionAttributes->setProductsInfo($productsInfo);
-            $searchRadius = (float)$this->config->getValue(self::SEARCH_RADIUS, ScopeInterface::SCOPE_WEBSITE);
+            $searchRadius = (float)$this->config->getValue(
+                self::SEARCH_RADIUS,
+                ScopeInterface::SCOPE_WEBSITE
+            );
             $searchTerm = $addressData['postal_code'] . ':' . $addressData['country_code'];
             $searchRequest = $this->searchRequestBuilder->setScopeCode($quote->getStore()->getWebsite()->getCode())
                         ->setScopeType(SalesChannelInterface::TYPE_WEBSITE)
@@ -162,9 +161,9 @@ class InStorePickupShipping
                         ->setAreaSearchTerm($searchTerm)
                         ->setSearchRequestExtension($extensionAttributes)
                         ->setPageSize(50)
-                        ->create();                       
+                        ->create();
             $searchResult = $this->getPickupLocations->execute($searchRequest);
-            $distanceToSources = $this->getDistanceToSources->execute($searchRequest->getArea());   
+            $distanceToSources = $this->getDistanceToSources->execute($searchRequest->getArea());
             $shipToStoreOptions = [];
             if ($searchResult->getTotalCount() !== 0) {
                 $items = $searchResult->getItems();
@@ -219,9 +218,14 @@ class InStorePickupShipping
         try {
             $carrierCode = $addressInformation->getShippingCarrierCode();
             $methodCode = $addressInformation->getShippingMethodCode();
-            if ( $carrierCode . '_' . $methodCode == InStorePickup::DELIVERY_METHOD) {
+            if ($carrierCode . '_' . $methodCode == InStorePickup::DELIVERY_METHOD) {
                 $shippingAddress = $quote->getShippingAddress();
-                $pickupLocation = substr_replace($ship_to_store_option['reference'], '', 0, strlen(InStorePickup::DELIVERY_METHOD . '_'));    
+                $pickupLocation = substr_replace(
+                    $ship_to_store_option['reference'],
+                    '',
+                    0,
+                    strlen(InStorePickup::DELIVERY_METHOD . '_')
+                );
                 $setAddressPickupLocation->execute($shippingAddress, $pickupLocation);
             }
         } catch (\Exception $e) {
@@ -267,8 +271,13 @@ class InStorePickupShipping
             if ($this->checkIfMagentoInStorePickupByCode($referenceCodes)) {
                 $shippingAddress = $quote->getShippingAddress();
                 $shippingAddress->setCollectShippingRates(true);
-                $pickupLocation = substr_replace($shipment->reference, '', 0, strlen(InStorePickup::DELIVERY_METHOD . '_'));
-                $setAddressPickupLocation->execute($shippingAddress, $pickupLocation);  
+                $pickupLocation = substr_replace(
+                    $shipment->reference,
+                    '',
+                    0,
+                    strlen(InStorePickup::DELIVERY_METHOD . '_')
+                );
+                $setAddressPickupLocation->execute($shippingAddress, $pickupLocation);
                 $shippingAddress->setShippingMethod(InStorePickup::DELIVERY_METHOD)->save();
             }
         } catch (\Exception $e) {
@@ -297,13 +306,18 @@ class InStorePickupShipping
                 $shippingAddress->setData('firstname', $transaction->order->cart->in_store_shipments[0]->store_name);
                 $shippingAddress->setData('lastname', 'Store');
                 $shippingAddress->save();
-                $pickupLocationCode = substr_replace($shipment->reference, '', 0, strlen(InStorePickup::DELIVERY_METHOD . '_'));
+                $pickupLocationCode = substr_replace(
+                    $shipment->reference,
+                    '',
+                    0,
+                    strlen(InStorePickup::DELIVERY_METHOD . '_')
+                );
                 $pickupLocation = $getPickupLocation->execute(
                     $pickupLocationCode,
                     SalesChannelInterface::TYPE_WEBSITE,
                     $quote->getStore()->getWebsite()->getCode()
-                );      
-                $shippingAddress = $addressConverter->convert($pickupLocation, $shippingAddress);  
+                );
+                $shippingAddress = $addressConverter->convert($pickupLocation, $shippingAddress);
                 $quote->setShippingAddress($shippingAddress)->save();
             }
         } catch (\Exception $e) {
@@ -317,7 +331,8 @@ class InStorePickupShipping
      */
     private function checkIfMagentoInStorePickupByCode($referenceCodes)
     {
-        if (count($referenceCodes) > 2 && $referenceCodes[0] . '_' . $referenceCodes[1] == InStorePickup::DELIVERY_METHOD) {
+        if (count($referenceCodes) > 2 &&
+            $referenceCodes[0] . '_' . $referenceCodes[1] == InStorePickup::DELIVERY_METHOD) {
             return true;
         }
         

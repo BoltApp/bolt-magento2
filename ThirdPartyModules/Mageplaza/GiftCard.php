@@ -60,9 +60,8 @@ class GiftCard
         Discount $discountHelper,
         Bugsnag $bugsnagHelper,
         Session $sessionHelper,
-        Decider  $featureSwitches        
-    )
-    {
+        Decider  $featureSwitches
+    ) {
         $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
         $this->sessionHelper = $sessionHelper;
@@ -83,8 +82,7 @@ class GiftCard
         $quote,
         $parentQuote,
         $paymentOnly
-    )
-    {
+    ) {
         $this->mageplazaGiftCardCollection = $mageplazaGiftCardCollection;
         list ($discounts, $totalAmount, $diff) = $result;
         $totals = $quote->getTotals();
@@ -101,15 +99,17 @@ class GiftCard
                 $giftCardCodes = $this->getMageplazaGiftCardCodes($quote);
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 foreach ($giftCardCodes as $giftCardCode) {
-                    $amount = abs($this->getMageplazaGiftCardCodesCurrentValue(array($giftCardCode)));
+                    $amount = abs($this->getMageplazaGiftCardCodesCurrentValue([$giftCardCode]));
                     $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                     $discountItem = [
                         'description' => self::MAGEPLAZA_GIFTCARD_TITLE . $giftCardCode,
                         'amount' => $roundedAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                         'reference' => $giftCardCode,
-                        'discount_type' => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                        'type' => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                        // For v1/discounts.code.apply and v2/cart.update
+                        'discount_type' => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                        // For v1/merchant/order
+                        'type' => $this->discountHelper->getBoltDiscountType('by_fixed'),
                     ];
                     $discountAmount += $amount;
                     $roundedDiscountAmount += $roundedAmount;
@@ -123,7 +123,6 @@ class GiftCard
         } finally {
             return [$discounts, $totalAmount, $diff];
         }
-
     }
 
     /**
@@ -136,7 +135,8 @@ class GiftCard
     private function getMageplazaGiftCardCodes($quote)
     {
         $giftCardsData = $this->sessionHelper->getCheckoutSession()->getGiftCardsData();
-        $giftCardCodes = isset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY]) ? array_keys($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY]) : [];
+        $giftCardCodes = isset($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY]) ?
+            array_keys($giftCardsData[self::MAGEPLAZA_GIFTCARD_QUOTE_KEY]) : [];
 
         $giftCardsQuote = $quote->getMpGiftCards();
         if (!$giftCardCodes && $giftCardsQuote) {
@@ -169,8 +169,14 @@ class GiftCard
      * @return null
      * @throws \Exception
      */
-    public function applyGiftcard($result, $mageplazaGiftCardCheckoutHelper, $code, $giftCard, $immutableQuote, $parentQuote)
-    {
+    public function applyGiftcard(
+        $result,
+        $mageplazaGiftCardCheckoutHelper,
+        $code,
+        $giftCard,
+        $immutableQuote,
+        $parentQuote
+    ) {
         if (!empty($result)) {
             return $result;
         }
@@ -243,8 +249,13 @@ class GiftCard
      * @param $quote
      * @return bool
      */
-    public function filterApplyingGiftCardCode($result, $mageplazaGiftCardCheckoutHelper, $couponCode, $giftCard, $quote)
-    {
+    public function filterApplyingGiftCardCode(
+        $result,
+        $mageplazaGiftCardCheckoutHelper,
+        $couponCode,
+        $giftCard,
+        $quote
+    ) {
         $this->mageplazaGiftCardCheckoutHelper = $mageplazaGiftCardCheckoutHelper;
         if ($giftCard instanceof \Mageplaza\GiftCard\Model\GiftCard) {
             $this->removeMageplazaGiftCard($couponCode, $quote);

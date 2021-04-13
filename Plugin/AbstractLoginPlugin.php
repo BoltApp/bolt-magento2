@@ -25,8 +25,7 @@ use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Bugsnag;
 
-abstract class
-AbstractLoginPlugin
+abstract class AbstractLoginPlugin
 {
     const SHOPPING_CART_PATH = 'checkout/cart';
 

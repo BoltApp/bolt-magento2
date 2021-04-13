@@ -52,10 +52,12 @@ class SalesRuleQuoteDiscountPluginTest extends BoltTestCase
     public function setUpInternal()
     {
         $this->subject = $this->createMock(Discount::class);
-        $this->sessionHelper = $this->createPartialMock(SessionHelper::class,
+        $this->sessionHelper = $this->createPartialMock(
+            SessionHelper::class,
             ['getCheckoutSession']
         );
-        $this->checkoutSession = $this->createPartialMock(CheckoutSession::class,
+        $this->checkoutSession = $this->createPartialMock(
+            CheckoutSession::class,
             ['setBoltCollectSaleRuleDiscounts']
         );
         $this->plugin = (new ObjectManager($this))->getObject(

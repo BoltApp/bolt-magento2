@@ -470,7 +470,9 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
             if (!toggleCheckoutConfig) {
                 return;
             }
-            if (BoltState.codeIsLoaded.isResolved() === false || BoltState.beforeConfigureBarrier.isResolved() === false) {
+            if (BoltState.codeIsLoaded.isResolved() === false
+                || BoltState.beforeConfigureBarrier.isResolved() === false
+            ) {
                 // allow extensions to made their setup before we toggle buttons first time
                 return;
             }
@@ -670,7 +672,10 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
                 if (!BoltState.check.value()) {
                     // If check resolved to false, guest checkout is disallowed, and user isn't logged in
                     // show authentication popup
-                    if (!BoltState.initiateCheckout && !BoltState.magentoCart.isGuestCheckoutAllowed && !BoltState.isUserLoggedIn ) {
+                    if (!BoltState.initiateCheckout
+                        && !BoltState.magentoCart.isGuestCheckoutAllowed
+                        && !BoltState.isUserLoggedIn
+                    ) {
                         showAuthenticationPopup();
                     }
                     popUpOpen = false;
@@ -810,7 +815,9 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
                 if (magentoTotal === undefined) {
                     return;
                 }
-                if ((BoltState.boltCart.total_amount === undefined) || (BoltState.boltCart.total_amount.amount === undefined)) {
+                if ((BoltState.boltCart.total_amount === undefined)
+                    || (BoltState.boltCart.total_amount.amount === undefined)
+                ) {
                     return;
                 }
                 var boltTotal = BoltState.boltCart.total_amount.amount;
@@ -926,7 +933,9 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
 
                             for (var attribute_name in additional_button_attributes) {
                                 if (additional_button_attributes.hasOwnProperty(attribute_name)) {
-                                    bolt_button.setAttribute(attribute_name, additional_button_attributes[attribute_name]);
+                                    bolt_button.setAttribute(
+                                        attribute_name, additional_button_attributes[attribute_name]
+                                    );
                                 }
                             }
                         }
@@ -1091,9 +1100,12 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
                     BoltState.magentoCart = data;
                     if (boltCartDataID === undefined) {
                         var boltCart = customerData.get('boltcart')();
-                        if (boltCart !== undefined && boltCart.data_id !== undefined && data.data_id<=boltCart.data_id) {
-                            // If we have bolt cart, haven't processed it before and timestamp is actual
-                            // we need process it now. We haven't done it before because wanted to check if bolt cart is present
+                        if (boltCart !== undefined
+                            && boltCart.data_id !== undefined
+                            && data.data_id<=boltCart.data_id
+                        ) {
+                            // If we have bolt cart, haven't processed it before and timestamp is actual we need
+                            // process it now. We haven't done it before because wanted to check if bolt cart is present
                             boltCartDataListener(boltCart);
                         }
                     }
@@ -1113,7 +1125,7 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
                     }
 
                     if (BoltState.magentoCart === null) {
-                        // We haven't seen magento cart yet. If Magento cart isn't set it means that bolt cart is unactual
+                        // We haven't seen magento cart yet. If Magento cart isn't set it means that bolt cart is wrong
                         return;
                     }
                     
@@ -1157,7 +1169,9 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
                             hintBarrier.resolve(hints);
                         } else {
                             if (boltConfig.always_present_checkout) {
-                                boltCheckoutConfig = (BoltState.boltCart.orderToken && BoltState.boltCart.orderToken !== "") ?
+                                boltCheckoutConfig = (
+                                    BoltState.boltCart.orderToken && BoltState.boltCart.orderToken !== ""
+                                ) ?
                                     {floatingButtonMode: newItemAddedToCart ? "show_cart" : "show_cart_on_hover"} : {};
                                 newItemAddedToCart = false;
                             }
@@ -1432,7 +1446,7 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
             }
             <?php
             if ($isLoadConnectJsDynamic) {
-            ?>
+                ?>
             if (insertConnectScriptWithoutSrc()) {
                 $.getScript("<?= /* @noEscape */ $connectJsUrl; ?>", function(data, textStatus, jqxhr) {
                     callBoltAfterAddToCart();
@@ -1440,11 +1454,11 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
             } else {
                 callBoltAfterAddToCart();
             }
-            <?php
+                <?php
             } else {
-            ?>
+                ?>
             callBoltAfterAddToCart();
-            <?php
+                <?php
             }
             ?>
         });
@@ -1512,14 +1526,14 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
         
         <?php
         if ($isLoadConnectJsDynamic) {
-        ?>
+            ?>
         magentoCartDataListenerLoadConnectJs = function(data) {
             if (data.items !== undefined && data.items.length > 0) {
                 insertConnectScript();
             }            
         }
         customerData.get('cart').subscribe(magentoCartDataListenerLoadConnectJs);
-        <?php
+            <?php
         }
         ?>
     });

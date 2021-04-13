@@ -24,8 +24,8 @@ use Magento\Framework\App\Config\MutableScopeConfigInterface;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Session\SessionManagerInterface;
 
-
-class TestUtils {
+class TestUtils
+{
 
     /**
      * @param $quote
@@ -72,7 +72,7 @@ class TestUtils {
             ->addFieldToSelect('*')
             ->addFilter('entity_id', $orderId);
 
-        if ($orderCollection->getSize() > 0 ){
+        if ($orderCollection->getSize() > 0) {
             return $orderCollection->getFirstItem();
         }
 
@@ -97,13 +97,14 @@ class TestUtils {
      * @return Order
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    public static function createDumpyOrder($data = [],
-                                            $addressData = [],
-                                            $orderItems = [],
-                                            $state = Order::STATE_PENDING_PAYMENT,
-                                            $status = Order::STATE_PENDING_PAYMENT,
-                                            $payment = null)
-    {
+    public static function createDumpyOrder(
+        $data = [],
+        $addressData = [],
+        $orderItems = [],
+        $state = Order::STATE_PENDING_PAYMENT,
+        $status = Order::STATE_PENDING_PAYMENT,
+        $payment = null
+    ) {
         $objectManager = Bootstrap::getObjectManager();
 
         if (empty($addressData)) {
@@ -146,7 +147,7 @@ class TestUtils {
             if ($productCollection->getSize() > 0) {
                 /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $product */
                 $product =  $productCollection->getFirstItem();
-            }else {
+            } else {
                 $product = self::createSimpleProduct();
             }
 
@@ -186,7 +187,7 @@ class TestUtils {
             $order->addItem($orderItem);
         }
 
-        if ($data){
+        if ($data) {
             foreach ($data as $key => $value) {
                 $order->setData($key, $value);
             }
@@ -198,7 +199,8 @@ class TestUtils {
         return $order;
     }
 
-    public static function getSimpleProduct() {
+    public static function getSimpleProduct()
+    {
         $objectManager = Bootstrap::getObjectManager();
         $productCollection = $objectManager->create(\Magento\Catalog\Model\ResourceModel\Product\Collection::class);
 
@@ -217,7 +219,8 @@ class TestUtils {
     /**
      * @return mixed
      */
-    public static function getVirtualProduct() {
+    public static function getVirtualProduct()
+    {
         $objectManager = Bootstrap::getObjectManager();
         $productCollection = $objectManager->create(\Magento\Catalog\Model\ResourceModel\Product\Collection::class);
 
@@ -332,7 +335,7 @@ class TestUtils {
      * @param $quote
      * @param $addressType
      */
-    public static function setAddressToQuote($addressData ,$quote, $addressType)
+    public static function setAddressToQuote($addressData, $quote, $addressType)
     {
         if ($addressType === 'billing') {
             $address = $quote->getBillingAddress();
@@ -429,7 +432,7 @@ class TestUtils {
 
     public static function createSampleAddress()
     {
-        return array(
+        return [
             "street_address1" => "street",
             "street_address2" => "",
             "locality"        => "Los Angeles",
@@ -444,7 +447,7 @@ class TestUtils {
             "last_name"       => "lastname",
             "phone_number"    => "11111111",
             "email_address"   => "buy@test.com",
-        );
+        ];
     }
 
     public static function createMagentoSampleAddress()

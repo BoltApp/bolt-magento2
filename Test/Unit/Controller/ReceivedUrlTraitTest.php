@@ -83,7 +83,8 @@ class ReceivedUrlTraitTest extends BoltTestCase
         $this->cartHelper = $this->createPartialMock(Cart::class, ['getQuoteById']);
         $this->orderHelper = $this->createPartialMock(OrderHelper::class, ['getExistingOrder']);
         $this->configHelper = $this->createPartialMock(Config::class, ['getSigningSecret']);
-        $this->checkoutSession = $this->createPartialMock(CheckoutSession::class,
+        $this->checkoutSession = $this->createPartialMock(
+            CheckoutSession::class,
             ['setLastQuoteId', 'setLastSuccessQuoteId', 'clearHelperData', 'setLastOrderId', 'setRedirectUrl', 'setLastRealOrderId', 'setLastOrderStatus']
         );
         $this->quote = $this->createPartialMock(Quote::class, ['getId']);

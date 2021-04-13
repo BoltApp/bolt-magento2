@@ -116,7 +116,8 @@ class MinicartAddonsTest extends BoltTestCase
      *
      * @throws \ReflectionException if getLayout method is not defined
      */
-    public function getLayout_withVariousStates_returnsLayout() {
+    public function getLayout_withVariousStates_returnsLayout()
+    {
         $this->eventsForThirdPartyModulesMock->expects(static::once())->method('runFilter')
             ->with('filterMinicartAddonsLayout', [])
             ->willReturn(self::DEFAULT_LAYOUT);

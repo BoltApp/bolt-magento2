@@ -32,8 +32,11 @@ if (!$block->isSupportableType()) { return;
 
 $additionalClass = $block->getAdditionalCheckoutButtonClass();
 $additionalCheckoutButtonAttributes = '';
-foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrValue) {
-    $additionalCheckoutButtonAttributes .= $block->escapeHtmlAttr($attrName) . '="' . $block->escapeHtmlAttr($attrValue) . '" ';
+foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrValue) {
+    $additionalCheckoutButtonAttributes .= $block->escapeHtmlAttr($attrName)
+        . '="'
+        . $block->escapeHtmlAttr($attrValue)
+        . '" ';
 }
 ?>
     <div class="bolt-product-checkout-button bolt-multi-step-checkout <?= /* @noEscape */ $additionalClass;?>"
@@ -170,7 +173,7 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
                         return false;
                     }
 
-                    <?php if($block->isBoltOrderCachingEnabled()): ?>
+                    <?php if ($block->isBoltOrderCachingEnabled()): ?>
                     //if order caching is enabled cart request must contain a valid form key
                     try {
                         var options = cart['items'][0]['options'];
@@ -270,7 +273,7 @@ foreach($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVal
                         if (childProductQty > 0) {
                             items.push({
                                 reference: '<?= /* @noEscape */ $childProduct->getId(); ?>',
-                                price: '<?php echo $childProduct->getPrice() ?>',
+                                price: '<?= /* @noEscape */ $childProduct->getPrice() ?>',
                                 name: '<?= /* @noEscape */ addcslashes($childProduct->getName(), "'"); ?>',
                                 quantity: childProductQty,
                                 options: JSON.stringify(options)
