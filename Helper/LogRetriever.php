@@ -22,7 +22,7 @@ use Magento\Framework\Filesystem\Driver\File;
 class LogRetriever
 {
     const DEFAULT_LOG_PATH = "var/log/exception.log";
-
+    const LOG_FOLDER_PATH = "var/log/";
     /**
      * @var File
      */
@@ -55,6 +55,18 @@ class LogRetriever
     public function getLogs($logPath = self::DEFAULT_LOG_PATH, $lines = 100)
     {
         return explode("\n", $this->customTail($logPath, $lines));
+    }
+
+    /** 
+     * Function which returns the log of requested type if it exists.
+     * @param string $logType
+     * @return array
+     */
+    public function getLogOfType($logType){
+        if(isset($plugin)){
+            return $this->getLogs(SELF::LOG_FOLDER_PATH.$logType.'.log');
+        }
+        return $this->getLogs();
     }
 
     private function customTail($logPath, $lines)

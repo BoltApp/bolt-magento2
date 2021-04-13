@@ -24,7 +24,6 @@ use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\LogRetriever;
 use Bolt\Boltpay\Helper\ModuleRetriever;
-use Bolt\Boltpay\Helper\ThirdPartyConfig;
 use Bolt\Boltpay\Model\Api\Data\DebugInfoFactory;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Webapi\Rest\Response;
@@ -80,11 +79,6 @@ class Debug implements DebugInterface
     private $automatedTestingHelper;
 
     /**
-     * @var ThirdPartyConfig
-     */
-    private $thirdPartyConfig;
-
-    /**
      * @var LogHelper
      */
     private $logHelper;
@@ -111,7 +105,6 @@ class Debug implements DebugInterface
         ModuleRetriever $moduleRetriever,
         LogRetriever $logRetriever,
         AutomatedTestingHelper $automatedTestingHelper,
-        ThirdPartyConfig $thirdPartyConfig,
         LogHelper $logHelper
     ) {
         $this->response = $response;
@@ -123,7 +116,6 @@ class Debug implements DebugInterface
         $this->moduleRetriever = $moduleRetriever;
         $this->logRetriever = $logRetriever;
         $this->automatedTestingHelper = $automatedTestingHelper;
-        $this->thirdPartyConfig = $thirdPartyConfig;
         $this->logHelper = $logHelper;
     }
 
@@ -187,11 +179,11 @@ class Debug implements DebugInterface
     /**
      * This method will handle universal api debug requests based on the type of request it is.
      * 
-     * @param string $type
+     * @param array $data
      * @return \Bolt\Boltpay\Api\Data\DebugInfo
      * @throws BoltException
      * **/
-    public function universalDebug($type){
+    public function universalDebug($data){
         
         // Validate Request
         $this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
@@ -206,10 +198,9 @@ class Debug implements DebugInterface
         }
 
         $result = $this->debugInfoFactory->create();
-        
-        switch ($type){
+        switch ($data['type']){
             case 'log':
-                $result->setLogs($this->logRetriever->getLogs());
+                $result->setLogs($this->logRetriever->getLogOfType($data['log_type']));
                 break;
             default:
                 $result->setPhpVersion(PHP_VERSION);
@@ -217,8 +208,7 @@ class Debug implements DebugInterface
                 $result->setPlatformVersion($this->productMetadata->getVersion());
                 $result->setBoltConfigSettings($this->configHelper->getAllConfigSettings());
                 $result->setOtherPluginVersions($this->moduleRetriever->getInstalledModules());
-                $result->setThirdPartyPluginConfig($this->thirdPartyConfig->getThirdPartyPluginConfig());
         }
-
+        return $result;
     }
 }
