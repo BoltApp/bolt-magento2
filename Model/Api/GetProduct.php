@@ -46,6 +46,11 @@ class GetProduct implements GetProductInterface
     private $product;
 
     /**
+     * @var integer
+     */
+    private $storeID;
+
+    /**
      * @var \Magento\CatalogInventory\Api\Data\StockItemInterface
      */
     private $stockItem;
@@ -108,13 +113,13 @@ class GetProduct implements GetProductInterface
     }
 
     private function getProduct($productID, $sku){
-        $storeId = $this->storeManager->getStore()->getId();
+        $this->storeID = $this->storeManager->getStore()->getId();
         // get product
         if ($productID != "") {
-            $this->product = $this->productRepositoryInterface->getById($productID, false, $storeId, false);
+            $this->product = $this->productRepositoryInterface->getById($productID, false, $this->storeID, false);
             $this->productData->setProduct($this->product);
         } elseif ($sku != "") {
-            $this->product = $this->productRepositoryInterface->get($sku, false, $storeId, false);
+            $this->product = $this->productRepositoryInterface->get($sku, false, $this->storeID, false);
             $this->productData->setProduct($this->product);
         }
     }
@@ -127,7 +132,7 @@ class GetProduct implements GetProductInterface
     private function getProductFamily(){
         $parent = $this->configurable->getParentIdsByChild($this->product->getId());
         if(isset($parent[0])){
-            $this->productData->setParent($this->productRepositoryInterface->getById($parent[0], false, $storeId, false));
+            $this->productData->setParent($this->productRepositoryInterface->getById($parent[0], false, $this->storeID, false));
             $children = $this->product->getTypeInstance()->getUsedProducts($this->productData->getParent());
             $this->productData->setChildren($children);
         } elseif ($this->product->getTypeId() == "configurable") {
@@ -152,9 +157,9 @@ class GetProduct implements GetProductInterface
      */
     public function execute($productID = '', $sku = '')
     {
-//        if (!$this->hookHelper->verifyRequest()) {
-//            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
-//        }
+        if (!$this->hookHelper->verifyRequest()) {
+            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
+        }
 
         if ($productID === '' && $sku ==='') {
             throw new WebapiException(__('Missing a product ID or a sku in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
