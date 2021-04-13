@@ -56,12 +56,6 @@ class DebugInfo implements \JsonSerializable
      */
     private $automatedTestingConfig;
 
-
-    /**
-     * @var ThirdPartyPluginConfig
-     */
-    private $thirdPartyPluginConfig;
-
     /**
      * @return string
      */
@@ -196,26 +190,6 @@ class DebugInfo implements \JsonSerializable
         return $this;
     }
 
-
-    /** 
-     * @return ThirdPartyPluginConfig
-     */
-    public function getThirdPartyPluginConfig()
-    {
-        return $this->thirdPartyPluginConfig;
-    }
-
-    /**
-     * @param ThirdPartyPluginConfig $thirdPartyPluginConfig
-     *
-     * @return $this
-     */
-    public function setThirdPartyPluginConfig($thirdPartyPluginConfig)
-    {
-        $this->thirdPartyPluginConfig = $thirdPartyPluginConfig;
-        return $this;
-    }
-
     /**
      * @inheritDoc
      */
@@ -228,8 +202,7 @@ class DebugInfo implements \JsonSerializable
             'bolt_config_settings'     => $this->boltConfigSettings,
             'other_plugin_versions'    => $this->otherPluginVersions,
             'logs'                     => $this->logs,
-            'automated_testing_config' => $this->automatedTestingConfig,
-            'third_party_config'       => $this->thirdPartyPluginConfig
+            'automated_testing_config' => $this->automatedTestingConfig
         ]);
     }
 }
