@@ -157,10 +157,6 @@ class GetProduct implements GetProductInterface
      */
     public function execute($productID = '', $sku = '')
     {
-        if (!$this->hookHelper->verifyRequest()) {
-            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
-        }
-
         if ($productID === '' && $sku ==='') {
             throw new WebapiException(__('Missing a product ID or a sku in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
         }
