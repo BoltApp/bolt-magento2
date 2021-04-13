@@ -118,7 +118,7 @@ class GetProduct implements GetProductInterface
             $this->productData->setStock($stockItem);
             return $this->productData;
         } catch (NoSuchEntityException $nse) {
-            throw new NoSuchEntityException(__('Customer not found with given email.'));
+            throw new NoSuchEntityException(__('Product not found with given ID.'));
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
             throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
