@@ -192,7 +192,7 @@ class UniversalApiTest extends BoltTestCase
                 $data
             );
 
-        TestHelper::setProperty($this->universalApi,'universalDebug', $debug);
+        TestHelper::setProperty($this->universalApi,'debug', $debug);
         $this->assertTrue($this->universalApi->execute($event, $data));
     }
 }
