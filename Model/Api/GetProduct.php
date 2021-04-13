@@ -131,8 +131,6 @@ class GetProduct implements GetProductInterface
 //            }
 
             $this->product = $this->productRepositoryInterface->getById($productID, false, $storeId, false);
-
-            $this->product = $this->productRepositoryInterface->getById($productID, false, $storeId, false);
             $this->productData->setProduct($this->product);
             $this->stockItem = $this->stockRegistry->getStockItem($this->product->getId());
             $this->productData->setStock($this->stockItem);
