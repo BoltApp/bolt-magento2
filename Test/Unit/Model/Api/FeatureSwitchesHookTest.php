@@ -19,57 +19,18 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Manager;
-use Bolt\Boltpay\Helper\Hook as HookHelper;
-use Bolt\Boltpay\Helper\Log as LogHelper;
-use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Model\Api\FeatureSwitchesHook;
-use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Framework\Webapi\ErrorProcessor;
-use \Magento\Framework\App\State;
-use Magento\Framework\Webapi\Exception;
-use Magento\Framework\Webapi\Rest\Response\RendererFactory;
-use Magento\Framework\Webapi\Rest\Response;
-use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Magento\TestFramework\Helper\Bootstrap;
 
 class FeatureSwitchesHookTest extends BoltTestCase
 {
     /**
-     * @var HookHelper
+     * @var ObjectManager
      */
-    private $hookHelper;
-
-    /**
-     * @var LogHelper
-     */
-    private $logHelper;
-
-    /**
-     * @var MetricsClient
-     */
-    private $metricsClient;
-
-    /**
-     * @var Response
-     */
-    private $response;
-
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /* @var StoreManagerInterface */
-    protected $storeManager;
-
-    /* @var Manager */
-    protected $fsManager;
-
-    /**
-     * @var BoltErrorResponse
-     */
-    private $errorResponse;
+    private $objectManager;
 
     /**
      * @var FeatureSwitchesHook
@@ -81,33 +42,11 @@ class FeatureSwitchesHookTest extends BoltTestCase
      */
     public function setUpInternal()
     {
-        $rendererFactory = $this->createMock(RendererFactory::class);
-        $errorProcessor = $this->createMock(ErrorProcessor::class);
-        $appState = $this->createMock(State::class);
-
-        $this->hookHelper = $this->createMock(HookHelper::class);
-        $this->logHelper = $this->createMock(LogHelper::class);
-        $this->metricsClient = $this->createMock(MetricsClient::class);
-        $this->response = new Response($rendererFactory, $errorProcessor, $appState);
-        $this->configHelper = $this->createMock(ConfigHelper::class);
-        $this->storeManager = $this->createMock(StoreManagerInterface::class);
-        $this->fsManager = $this->createMock(Manager::class);
-        $this->errorResponse = new BoltErrorResponse();
-
-
-        $this->fsHook = (new ObjectManager($this))->getObject(
-            FeatureSwitchesHook::class,
-            [
-                'hookHelper' => $this->hookHelper,
-                'logHelper' => $this->logHelper,
-                'metricsClient' => $this->metricsClient,
-                'response' => $this->response,
-                'configHelper' => $this->configHelper,
-                'storeManager' => $this->storeManager,
-                'fsManager' => $this->fsManager,
-                'errorResponse' => $this->errorResponse,
-            ]
-        );
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->fsHook = $this->objectManager->create(FeatureSwitchesHook::class);
     }
 
     /**
@@ -115,18 +54,15 @@ class FeatureSwitchesHookTest extends BoltTestCase
      */
     public function workingUpdateFromBolt()
     {
-        $this->fsManager
-            ->expects($this->once())
-            ->method('updateSwitchesFromBolt');
+        $fsManager = $this->createMock(Manager::class);
+        $fsManager->method('updateSwitchesFromBolt');
 
+        TestHelper::setProperty($this->fsHook,'fsManager', $fsManager);
         $this->fsHook->notifyChanged();
 
-        $this->logHelper
-            ->expects($this->never())
-        ->method('addInfoLog');
-
-        $this->assertEquals(200, $this->response->getStatusCode());
-        $this->assertEquals('{"status":"success"}', $this->response->getBody());
+        $response = TestHelper::getProperty($this->fsHook, 'response');
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('{"status":"success"}', $response->getBody());
     }
 
     /**
@@ -134,24 +70,17 @@ class FeatureSwitchesHookTest extends BoltTestCase
      */
     public function notWorkingUpdatesFromBolt()
     {
-        $this->fsManager
-            ->expects($this->once())
-            ->method('updateSwitchesFromBolt')
-            ->willThrowException(new \Exception("oops"));
-
-        $this->logHelper
-            ->expects($this->exactly(2))
-            ->method('addInfoLog');
-
         $this->fsHook->notifyChanged();
-
+        $response = json_decode(TestHelper::getProperty($this->fsHook, 'response')->getBody(), true);
         $this->assertEquals(
-            Exception::HTTP_INTERNAL_ERROR,
-            $this->response->getStatusCode()
-        );
-        $this->assertEquals(
-            '{"status":"failure","error":{"code":6001,"message":"oops"}}',
-            $this->response->getBody()
+            [
+                'error' => [
+                    'code' => 6001,
+                    'message' => "Something went wrong when talking to Bolt."
+                ],
+                'status' => 'failure'
+            ],
+            $response
         );
     }
 }
