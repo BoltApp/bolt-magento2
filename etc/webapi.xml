@@ -117,4 +117,11 @@
             <resource ref="anonymous" />
         </resources>
     </route>
+    <!--Get Product Endpoint-->
+    <route url="/V1/bolt/boltpay/product" method="GET">
+        <service class="Bolt\Boltpay\Api\GetProductInterface" method="execute"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
 </routes>
