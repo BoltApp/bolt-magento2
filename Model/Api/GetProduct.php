@@ -39,6 +39,16 @@ class GetProduct implements GetProductInterface
     private $productData;
 
     /**
+     * @var \Magento\Catalog\Api\Data\ProductInterface
+     */
+    private $product;
+
+    /**
+     * @var \Magento\CatalogInventory\Api\Data\StockItemInterface
+     */
+    private $stockItem;
+
+    /**
      * @var ProductRepositoryInterface
      */
     protected $productRepositoryInterface;
@@ -100,25 +110,30 @@ class GetProduct implements GetProductInterface
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function execute($productID = '')
+    public function execute($productIdentifier = '')
     {
         if (!$this->hookHelper->verifyRequest()) {
             throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
         }
 
-        if ($productID === '') {
+        if ($productIdentifier === '') {
             throw new WebapiException(__('Missing product ID in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
         }
 
         try {
             $storeId = $this->storeManager->getStore()->getId();
-            $product = $this->productRepositoryInterface->getById($productID, false, $storeId, false);
-            $this->productData->setProduct($product);
-            $stockItem = $this->stockRegistry->getStockItem($product->getId());
-            $this->productData->setStock($stockItem);
+            // productID will be and int and sku will be a string
+            if (is_int($productIdentifier)) {
+                $this->product = $this->productRepositoryInterface->getById($productIdentifier, false, $storeId, false);
+            } else {
+                $this->product = $this->productRepositoryInterface->get($productIdentifier, false, $storeId, false);
+            }
+            $this->productData->setProduct($this->product);
+            $this->stockItem = $this->stockRegistry->getStockItem($this->product->getId());
+            $this->productData->setStock($this->stockItem);
             return $this->productData;
         } catch (NoSuchEntityException $nse) {
-            throw new NoSuchEntityException(__('Product not found with given ID.'));
+            throw new NoSuchEntityException(__('Product not found with given identifier.'));
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
             throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
