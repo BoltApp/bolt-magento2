@@ -380,6 +380,9 @@ class Config extends AbstractHelper
 
     const XML_PATH_PRODUCT_ATTRIBUTES_LIST = 'payment/boltpay/product_attributes_list';
 
+    /** @var string  */
+    const XML_PATH_ORDER_COMMENT_FIELD = 'payment/boltpay/order_comment_field';
+
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
@@ -1811,7 +1814,7 @@ class Config extends AbstractHelper
         // Show card type in the order grid
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('show_cc_type_in_order_grid')
-            ->setValue($this->getShowCcTypeInOrderGrid());
+            ->setValue(var_export($this->getShowCcTypeInOrderGrid(), true));
         // Enable Bolt SSO
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('bolt_sso')
@@ -1820,6 +1823,10 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('universal_debug')
             ->setValue(var_export($this->isBoltDebugUniversalEnabled(), true));
+        // Order comment field
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+            ->setName('order_comment_field')
+            ->setValue(var_export($this->getOrderCommentField(), true));
 
         return $boltSettings;
     }
@@ -2085,6 +2092,22 @@ class Config extends AbstractHelper
             return [];
         }
         return explode(',', $commaSeparateList);
+    }
+
+    /**
+     * Gets order field configured to store comment, if not set defaults to customer_note
+     *
+     * @param null|string $storeId
+     *
+     * @return string either the configured field or 'customer_note'
+     */
+    public function getOrderCommentField($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_ORDER_COMMENT_FIELD,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        ) ?: 'customer_note';
     }
 
     /**

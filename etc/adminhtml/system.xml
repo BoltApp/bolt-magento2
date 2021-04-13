@@ -362,6 +362,12 @@
                         <config_path>payment/boltpay/product_attributes_list</config_path>
                         <comment>Comma separated list of product attributes that we send to bolt server. Leave empty for include only standard attributes.</comment>
                     </field>
+                    <field id="order_comment_field" translate="label" type="text" sortOrder="390" showInDefault="1"
+                           showInWebsite="1" showInStore="1">
+                        <label>Order Comment DB field</label>
+                        <config_path>payment/boltpay/order_comment_field</config_path>
+                        <comment>Defaults to customer_note, if not set</comment>
+                    </field>
                 </group>
                 <group id="third_party_modules" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Third Party Modules Support</label>

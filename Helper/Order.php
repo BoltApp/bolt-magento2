@@ -1584,6 +1584,7 @@ class Order extends AbstractHelper
             ->addStatusHistoryComment($userNote)
             ->setIsVisibleOnFront(true)
             ->setIsCustomerNotified(false);
+        $order->setData($this->configHelper->getOrderCommentField($order->getStoreId()), $userNote);
     }
 
     /**
