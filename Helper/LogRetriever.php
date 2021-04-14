@@ -63,7 +63,7 @@ class LogRetriever
      * @return array
      */
     public function getLogOfType($logType){
-        if(isset($plugin)){
+        if(isset($logType)){
             return $this->getLogs(SELF::LOG_FOLDER_PATH.$logType.'.log');
         }
         return $this->getLogs();

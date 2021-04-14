@@ -198,9 +198,9 @@ class Debug implements DebugInterface
         }
 
         $result = $this->debugInfoFactory->create();
-        switch ($data['type']){
+        switch (isset($data['type']) ? $data['type'] : ''){
             case 'log':
-                $result->setLogs($this->logRetriever->getLogOfType($data['log_type']));
+                $result->setLogs($this->logRetriever->getLogOfType(isset($data['log_type']) ? $data['log_type'] : null));
                 break;
             default:
                 $result->setPhpVersion(PHP_VERSION);
