@@ -203,11 +203,14 @@ class AutomatedTesting extends AbstractHelper
                 ->setName($simpleStoreItem->getName())
                 ->setPrice($simpleStoreItem->getPrice())
                 ->setQuantity(1);
+            $tax = $this->pricePropertyFactory->create()
+                ->setName("tax")
+                ->setPrice($this->formatPrice($quote->getShippingAddress()->getTaxAmount()));
             $cart = $this->cartFactory->create()
                 ->setItems([$simpleCartItem])
                 ->setShipping(reset($shippingMethods))
                 ->setExpectedShippingMethods($shippingMethods)
-                ->setTax($this->formatPrice($quote->getShippingAddress()->getTaxAmount()))
+                ->setTax($tax)
                 ->setSubTotal($this->formatPrice($quote->getSubtotal()));
             $this->quoteRepository->delete($quote);
 

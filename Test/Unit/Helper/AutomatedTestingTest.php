@@ -245,6 +245,10 @@ class AutomatedTestingTest extends BoltTestCase
         $cartItem->expects(static::once())->method('setPrice')->willReturnSelf();
         $cartItem->expects(static::once())->method('setQuantity')->willReturnSelf();
         $this->cartItemFactory->expects(static::once())->method('create')->willReturn($cartItem);
+        $tax = $this->createMock(PriceProperty::class);
+        $tax->expects(static::once())->method('setName')->willReturnSelf();
+        $tax->expects(static::once())->method('setPrice')->willReturnSelf();
+        $this->pricePropertyFactory->expects(static::once())->method('create')->willReturn($tax);
         $cart = $this->createMock(Cart::class);
         $cart->expects(static::once())->method('setItems')->willReturnSelf();
         $cart->expects(static::once())->method('setShipping')->willReturnSelf();
@@ -283,6 +287,10 @@ class AutomatedTestingTest extends BoltTestCase
         $cartItem->expects(static::once())->method('setPrice')->willReturnSelf();
         $cartItem->expects(static::once())->method('setQuantity')->willReturnSelf();
         $this->cartItemFactory->expects(static::once())->method('create')->willReturn($cartItem);
+        $tax = $this->createMock(PriceProperty::class);
+        $tax->expects(static::once())->method('setName')->willReturnSelf();
+        $tax->expects(static::once())->method('setPrice')->willReturnSelf();
+        $this->pricePropertyFactory->expects(static::once())->method('create')->willReturn($tax);
         $cart = $this->createMock(Cart::class);
         $cart->expects(static::once())->method('setItems')->willReturnSelf();
         $cart->expects(static::once())->method('setShipping')->willReturnSelf();
