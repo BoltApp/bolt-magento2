@@ -21,14 +21,19 @@ use Bolt\Boltpay\Api\Data\GetProductDataInterface;
 use Bolt\Boltpay\Api\GetProductInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Model\Api\Data\ProductInventoryInfo;
 use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface;
-use \Magento\Catalog\Api\Data\ProductInterface;
+use Magento\CatalogInventory\Api\Data\StockItemInterface;
+use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\CatalogInventory\Api\StockRegistryInterface;
+use Magento\CatalogInventory\Model\Spi\StockRegistryProviderInterface;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\CatalogInventory\Api\StockConfigurationInterface;
+
 
 
 class GetProduct implements GetProductInterface
@@ -37,6 +42,17 @@ class GetProduct implements GetProductInterface
      * @var GetProductDataInterface
      */
     private $productData;
+
+
+    /**
+     * @var integer
+     */
+    private $storeID;
+
+    /**
+     * @var integer
+     */
+    private $websiteId;
 
     /**
      * @var ProductRepositoryInterface
@@ -49,9 +65,19 @@ class GetProduct implements GetProductInterface
     private $storeManager;
 
     /**
-     * @var StockRegistryInterface
+     * @var \Magento\ConfigurableProduct\Model\Product\Type\Configurable
+     */
+    private $configurable;
+
+    /**
+     * @var StockRegistryProviderInterface
      */
     private $stockRegistry;
+
+    /**
+     * @var StockConfigurationInterface
+     */
+    private $stockConfiguration;
 
     /**
      * @var HookHelper
@@ -65,60 +91,120 @@ class GetProduct implements GetProductInterface
 
     /**
      * @param ProductRepositoryInterface  $productRepositoryInterface
-     * @param StockRegistryInterface  $stockRegistry
+     * @param StockRegistryProviderInterface  $stockRegistry
+     * @param StockConfigurationInterface  $stockConfiguration
      * @param GetProductDataInterface  $productData
      * @param StoreManagerInterface $storeManager
+     * @param Configurable          $configurable
      * @param HookHelper            $hookHelper
      * @param Bugsnag               $bugsnag
      */
     public function __construct(
         ProductRepositoryInterface  $productRepositoryInterface,
-        StockRegistryInterface  $stockRegistry,
+        StockRegistryProviderInterface  $stockRegistry,
+        StockConfigurationInterface  $stockConfiguration,
         GetProductDataInterface  $productData,
         StoreManagerInterface $storeManager,
+        Configurable          $configurable,
         HookHelper $hookHelper,
         Bugsnag $bugsnag
     ) {
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockRegistry = $stockRegistry;
+        $this->stockConfiguration = $stockConfiguration;
         $this->productData = $productData;
         $this->storeManager = $storeManager;
         $this->hookHelper = $hookHelper;
         $this->bugsnag = $bugsnag;
+        $this->configurable = $configurable;
+    }
+
+    private function getStockStatus($product){
+        $stockStatus = $this->stockRegistry->getStockStatus($product->getId(), $this->websiteId);
+        if($stockStatus->getProductId() === null){
+            $stockStatus = $this->stockRegistry->getStockStatus($product->getId(), $this->stockConfiguration->getDefaultScopeId());
+        }
+        return $stockStatus;
+    }
+
+    private function getProduct($productID, $sku){
+        $this->storeID = $this->storeManager->getStore()->getId();
+        $this->websiteId = $this->storeManager->getStore()->getWebsiteId();
+        $productInventory = new ProductInventoryInfo();
+        if ($productID != "") {
+            $product = $this->productRepositoryInterface->getById($productID, false, $this->websiteId, false);
+            $productInventory->setProduct($product);
+            $productInventory->setStock($this->getStockStatus($product));
+            $this->productData->setProductInventory($productInventory);
+        } elseif ($sku != "") {
+            $product = $this->productRepositoryInterface->get($sku, false, $this->storeID, false);
+            $productInventory->setProduct($product);
+            $productInventory->setStock($this->getStockStatus($product));
+            $this->productData->setProductInventory($productInventory);
+        }
+    }
+
+
+    private function getProductFamily(){
+        $product = $this->productData->getProductInventory()->getProduct();
+        $parent = $this->configurable->getParentIdsByChild($product->getId());
+        if(isset($parent[0])){
+            $parentProductInventory = new ProductInventoryInfo();
+            $parentProduct = $this->productRepositoryInterface->getById($parent[0], false, $this->storeID, false);
+            $parentProductInventory->setProduct($parentProduct);
+            $parentProductInventory->setStock($this->getStockStatus($parentProduct));
+            $this->productData->setParent($parentProductInventory);
+
+
+            $children = $parentProduct->getTypeInstance()->getUsedProducts($parentProduct);
+            $childrenStockArray = array();
+            foreach ($children  as $child) {
+                $childProductInventory = new ProductInventoryInfo();
+                $childProductInventory->setProduct($child);
+                $childProductInventory->setStock($this->getStockStatus($child));
+                array_push($childrenStockArray, $childProductInventory);
+            }
+            $this->productData->setChildren($childrenStockArray);
+        } elseif ($product->getTypeId() == "configurable") {
+            $children = $product->getTypeInstance()->getUsedProducts($product);
+            $childrenStockArray = array();
+            foreach ($children  as $child) {
+                $childProductInventory = new ProductInventoryInfo();
+                $childProductInventory->setProduct($child);
+                $childProductInventory->setStock($this->getStockStatus($child));
+                array_push($childrenStockArray, $childProductInventory);
+            }
+            $this->productData->setChildren($childrenStockArray);
+        }
     }
 
     // TODO: ADD unit tests @ethan
     /**
-     * Get user account associated with email
+     * Get product, its stock, and product family
      *
      * @api
      *
      * @param string $productID
+     * @param string $sku
      *
      * @return \Bolt\Boltpay\Api\Data\GetProductDataInterface
      *
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function execute($productID = '')
+    public function execute($productID = '', $sku = '')
     {
-        if (!$this->hookHelper->verifyRequest()) {
-            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
-        }
-
-        if ($productID === '') {
-            throw new WebapiException(__('Missing product ID in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
+        if ($productID === '' && $sku ==='') {
+            throw new WebapiException(__('Missing a product ID or a sku in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
         }
 
         try {
-            $storeId = $this->storeManager->getStore()->getId();
-            $product = $this->productRepositoryInterface->getById($productID, false, $storeId, false);
-            $this->productData->setProduct($product);
-            $stockItem = $this->stockRegistry->getStockItem($product->getId());
-            $this->productData->setStock($stockItem);
+            $this->getProduct($productID, $sku);
+            $this->getProductFamily();
+
             return $this->productData;
         } catch (NoSuchEntityException $nse) {
-            throw new NoSuchEntityException(__('Product not found with given ID.'));
+            throw new NoSuchEntityException(__('Product not found with given identifier.'));
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
             throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);

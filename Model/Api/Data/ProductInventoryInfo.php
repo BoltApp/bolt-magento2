@@ -17,7 +17,6 @@
 
 namespace Bolt\Boltpay\Model\Api\Data;
 
-use Bolt\Boltpay\Api\Data\GetProductDataInterface;
 use Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface;
 
 /**
@@ -25,31 +24,26 @@ use Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface;
  *
  * @package Bolt\Boltpay\Model\Api\Data
  */
-class GetProductData implements GetProductDataInterface, \JsonSerializable
+class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerializable
 {
     /**
-     * @var ProductInventoryInfoInterface
+     * @var \Magento\Catalog\Api\Data\ProductInterface
      */
     private $product;
 
     /**
-     * @var ProductInventoryInfoInterface[]
+     * @var \Magento\CatalogInventory\Api\Data\StockStatusInterface
      */
-    private $children;
-
-    /**
-     * @var ProductInventoryInfoInterface
-     */
-    private $parent;
+    private $stockStatus;
 
 
     /**
      * Get product info.
      *
      * @api
-     * @return ProductInventoryInfoInterface
+     * @return \Magento\Catalog\Api\Data\ProductInterface
      */
-    public function getProductInventory()
+    public function getProduct()
     {
         return $this->product;
     }
@@ -58,66 +52,40 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
      * Set product info.
      *
      * @api
-     * @param ProductInventoryInfoInterface $product
+     * @param \Magento\Catalog\Api\Data\ProductInterface $product
      *
      * @return $this
      */
-    public function setProductInventory($product)
+    public function setProduct($product)
     {
         $this->product = $product;
         return $this;
     }
 
     /**
-     * Get parent info.
+     * Get stock info.
      *
      * @api
-     * @return ProductInventoryInfoInterface
+     * @return \Magento\CatalogInventory\Api\Data\StockStatusInterface
      */
-    public function getParent()
+    public function getStock()
     {
-        return $this->parent;
+        return $this->stockStatus;
     }
 
     /**
-     * Set parent info.
+     * Get stock info.
      *
      * @api
-     * @param ProductInventoryInfoInterface
-     *
+     * @param \Magento\CatalogInventory\Api\Data\StockStatusInterface $stockItem
      * @return $this
      */
-    public function setParent($parent)
+    public function setStock($stockStatus)
     {
-        $this->parent = $parent;
+        $this->stockStatus = $stockStatus;
         return $this;
     }
 
-
-    /**
-     * Get children info.
-     *
-     * @api
-     * @return ProductInventoryInfoInterface[]
-     */
-    public function getChildren()
-    {
-        return $this->children;
-    }
-
-    /**
-     * Set children info.
-     *
-     * @api
-     * @param ProductInventoryInfoInterface[] $children
-     *
-     * @return $this
-     */
-    public function setChildren($children)
-    {
-        $this->children = $children;
-        return $this;
-    }
 
 
     /**
@@ -127,8 +95,7 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
     {
         return [
             'product' => $this->product,
-            'children' => $this->children,
-            'parent' => $this->parent
+            'stock' => $this->stockStatus
         ];
     }
 }

@@ -29,33 +29,50 @@ interface GetProductDataInterface
      * Get product info.
      *
      * @api
-     * @return \Magento\Catalog\Api\Data\ProductInterface
+     * @return \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface;
      */
-    public function getProduct();
+    public function getProductInventory();
 
     /**
      * Set product info.
      *
      * @api
-     * @param \Magento\Catalog\Api\Data\ProductInterface $product
+     * @param \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface $product
      * @return $this
      */
-    public function setProduct($product);
+    public function setProductInventory($product);
 
     /**
-     * Get stock info.
+     * Get parent info.
      *
      * @api
-     * @return \Magento\CatalogInventory\Api\Data\StockItemInterface
+     * @return \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface
      */
-    public function getStock();
+    public function getParent();
 
     /**
-     * Get stock info.
+     * Set parent info.
      *
      * @api
-     * @param \Magento\CatalogInventory\Api\Data\StockItemInterface $stockItem
+     * @param \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface $product
      * @return $this
      */
-    public function setStock($stockItem);
+    public function setParent($product);
+
+    /**
+     * Get product info.
+     *
+     * @api
+     * @return \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface[]
+     */
+    public function getChildren();
+
+    /**
+     * Set product info.
+     *
+     * @api
+     * @param \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface[] $children
+     * @return $this
+     */
+    public function setChildren($children);
 }
