@@ -17,14 +17,14 @@
 
 namespace Bolt\Boltpay\Model\Api\Data;
 
-use Bolt\Boltpay\Api\Data\GetProductDataInterface;
+use Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface;
 
 /**
  * Class GetProductData. Represents a product info object containing products info and stock.
  *
  * @package Bolt\Boltpay\Model\Api\Data
  */
-class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerializable, \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface
+class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerializable
 {
     /**
      * @var \Magento\Catalog\Api\Data\ProductInterface
