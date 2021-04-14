@@ -29,7 +29,7 @@ interface GetProductDataInterface
      * Get product info.
      *
      * @api
-     * @return ProductInventoryInfoInterface;
+     * @return \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface;
      */
     public function getProductInventory();
 
@@ -37,7 +37,7 @@ interface GetProductDataInterface
      * Set product info.
      *
      * @api
-     * @param ProductInventoryInfoInterface $product
+     * @param \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface $product
      * @return $this
      */
     public function setProductInventory($product);
@@ -46,7 +46,7 @@ interface GetProductDataInterface
      * Get parent info.
      *
      * @api
-     * @return ProductInventoryInfoInterface
+     * @return \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface
      */
     public function getParent();
 
@@ -54,7 +54,7 @@ interface GetProductDataInterface
      * Set parent info.
      *
      * @api
-     * @param ProductInventoryInfoInterface $product
+     * @param \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface $product
      * @return $this
      */
     public function setParent($product);
@@ -63,7 +63,7 @@ interface GetProductDataInterface
      * Get product info.
      *
      * @api
-     * @return ProductInventoryInfoInterface[]
+     * @return \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface[]
      */
     public function getChildren();
 
@@ -71,7 +71,7 @@ interface GetProductDataInterface
      * Set product info.
      *
      * @api
-     * @param ProductInventoryInfoInterface[] $children
+     * @param \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface[] $children
      * @return $this
      */
     public function setChildren($children);
