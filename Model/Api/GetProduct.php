@@ -132,8 +132,9 @@ class GetProduct implements GetProductInterface
             $parentProductInventory->setProduct($parentProduct);
             $parentStockItem = $this->stockRegistry->getStockItem($parentProduct->getId());
             $parentProductInventory->setStock($parentStockItem);
+            $this->productData->setParent($parentProductInventory);
 
-            $this->productData->setParent($parentProduct);
+
             $children = $parentProduct->getTypeInstance()->getUsedProducts($parentProduct);
             $childrenStockArray = array();
             foreach ($children  as $child) {
