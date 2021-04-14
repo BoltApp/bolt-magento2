@@ -22,57 +22,40 @@ namespace Bolt\Boltpay\Api\Data;
  *
  * @api
  */
-interface GetProductDataInterface
+interface ProductInventoryInfoInterface
 {
 
     /**
      * Get product info.
      *
      * @api
-     * @return ProductInventoryInfoInterface;
+     * @return \Magento\Catalog\Api\Data\ProductInterface
      */
-    public function getProductInventory();
+    public function getProduct();
 
     /**
      * Set product info.
      *
      * @api
-     * @param ProductInventoryInfoInterface $product
+     * @param \Magento\Catalog\Api\Data\ProductInterface $product
      * @return $this
      */
-    public function setProductInventory($product);
+    public function setProduct($product);
 
     /**
-     * Get parent info.
+     * Get stock info.
      *
      * @api
-     * @return ProductInventoryInfoInterface
+     * @return \Magento\CatalogInventory\Api\Data\StockItemInterface
      */
-    public function getParent();
+    public function getStock();
 
     /**
-     * Set parent info.
+     * Get stock info.
      *
      * @api
-     * @param ProductInventoryInfoInterface $product
+     * @param \Magento\CatalogInventory\Api\Data\StockItemInterface $stockItem
      * @return $this
      */
-    public function setParent($product);
-
-    /**
-     * Get product info.
-     *
-     * @api
-     * @return ProductInventoryInfoInterface[]
-     */
-    public function getChildren();
-
-    /**
-     * Set product info.
-     *
-     * @api
-     * @param ProductInventoryInfoInterface[] $children
-     * @return $this
-     */
-    public function setChildren($children);
+    public function setStock($stockItem);
 }

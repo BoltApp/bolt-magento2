@@ -21,6 +21,7 @@ use Bolt\Boltpay\Api\Data\GetProductDataInterface;
 use Bolt\Boltpay\Api\GetProductInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Model\Api\Data\ProductInventoryInfo;
 use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\CatalogInventory\Api\Data\StockItemInterface;
@@ -40,20 +41,11 @@ class GetProduct implements GetProductInterface
      */
     private $productData;
 
-    /**
-     * @var \Magento\Catalog\Api\Data\ProductInterface
-     */
-    private $product;
 
     /**
      * @var integer
      */
     private $storeID;
-
-    /**
-     * @var \Magento\CatalogInventory\Api\Data\StockItemInterface
-     */
-    private $stockItem;
 
     /**
      * @var ProductRepositoryInterface
@@ -114,31 +106,55 @@ class GetProduct implements GetProductInterface
 
     private function getProduct($productID, $sku){
         $this->storeID = $this->storeManager->getStore()->getId();
-        // get product
+        $productInventory = new ProductInventoryInfo();
         if ($productID != "") {
-            $this->product = $this->productRepositoryInterface->getById($productID, false, $this->storeID, false);
-            $this->productData->setProduct($this->product);
+            $product = $this->productRepositoryInterface->getById($productID, false, $this->storeID, false);
+            $productInventory->setProduct($product);
+            $stockItem = $this->stockRegistry->getStockItem($product->getId());
+            $productInventory->setStock($stockItem);
+            $this->productData->setProduct($productInventory);
         } elseif ($sku != "") {
-            $this->product = $this->productRepositoryInterface->get($sku, false, $this->storeID, false);
-            $this->productData->setProduct($this->product);
+            $product = $this->productRepositoryInterface->get($sku, false, $this->storeID, false);
+            $productInventory->setProduct($product);
+            $stockItem = $this->stockRegistry->getStockItem($product->getId());
+            $productInventory->setStock($stockItem);
+            $this->productData->setProduct($productInventory);
         }
     }
 
-    private function getStock(){
-        $this->stockItem = $this->stockRegistry->getStockItem($this->product->getId());
-        $this->productData->setStock($this->stockItem);
-    }
 
     private function getProductFamily(){
-        $parent = $this->configurable->getParentIdsByChild($this->product->getId());
+        $product = $this->productData->getProductInventory()->getProduct();
+        $parent = $this->configurable->getParentIdsByChild($product->getId());
         if(isset($parent[0])){
+            $parentProductInventory = new ProductInventoryInfo();
             $parentProduct = $this->productRepositoryInterface->getById($parent[0], false, $this->storeID, false);
+            $parentProductInventory->setProduct($parentProduct);
+            $parentStockItem = $this->stockRegistry->getStockItem($parentProduct->getId());
+            $parentProductInventory->setStock($parentStockItem);
+
             $this->productData->setParent($parentProduct);
             $children = $parentProduct->getTypeInstance()->getUsedProducts($parentProduct);
-            $this->productData->setChildren($children);
-        } elseif ($this->product->getTypeId() == "configurable") {
-            $children = $this->product->getTypeInstance()->getUsedProducts($this->product);
-            $this->productData->setChildren($children);
+            var $childrenStockArray = array();
+            foreach ($children  as $child) {
+                $childProductInventory = new ProductInventoryInfo();
+                $childProductInventory->setProduct($child);
+                $childStockItem = $this->stockRegistry->getStockItem($child->getId());
+                $childProductInventory->setStock($childStockItem);
+                array_push($childrenStockArray, $childProductInventory);
+            }
+            $this->productData->setChildren($childrenStockArray);
+        } elseif ($product->getTypeId() == "configurable") {
+            $children = $product->getTypeInstance()->getUsedProducts($product);
+            var $childrenStockArray = array();
+            foreach ($children  as $child) {
+                $childProductInventory = new ProductInventoryInfo();
+                $childProductInventory->setProduct($child);
+                $childStockItem = $this->stockRegistry->getStockItem($child->getId());
+                $childProductInventory->setStock($childStockItem);
+                array_push($childrenStockArray, $childProductInventory);
+            }
+            $this->productData->setChildren($childrenStockArray);
         }
     }
 
@@ -164,7 +180,6 @@ class GetProduct implements GetProductInterface
 
         try {
             $this->getProduct($productID, $sku);
-            $this->getStock();
             $this->getProductFamily();
 
             return $this->productData;
