@@ -135,7 +135,7 @@ class GetProduct implements GetProductInterface
 
             $this->productData->setParent($parentProduct);
             $children = $parentProduct->getTypeInstance()->getUsedProducts($parentProduct);
-            var $childrenStockArray = array();
+            $childrenStockArray = array();
             foreach ($children  as $child) {
                 $childProductInventory = new ProductInventoryInfo();
                 $childProductInventory->setProduct($child);
@@ -146,7 +146,7 @@ class GetProduct implements GetProductInterface
             $this->productData->setChildren($childrenStockArray);
         } elseif ($product->getTypeId() == "configurable") {
             $children = $product->getTypeInstance()->getUsedProducts($product);
-            var $childrenStockArray = array();
+            $childrenStockArray = array();
             foreach ($children  as $child) {
                 $childProductInventory = new ProductInventoryInfo();
                 $childProductInventory->setProduct($child);
