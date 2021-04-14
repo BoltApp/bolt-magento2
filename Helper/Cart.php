@@ -1546,7 +1546,6 @@ class Cart extends AbstractHelper
      */
     public function getProductCustomizableOptions($item)
     {
-        $item = $product;
         $optionIds = $item->getOptionByCode('option_ids');
         if (!$optionIds) {
             return [];

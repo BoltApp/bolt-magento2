@@ -717,12 +717,18 @@ class UpdateCartCommonTest extends BoltTestCase
         
         $quoteItem->method('getProduct')->willReturn($productMock);
         
-        $customizableOptions = ['customizableOptions'];
+        $customizableOptions = [
+            [
+                'title' => 'custom option',
+                'value' => 'custom value',
+                'sku'   => 'option'
+            ]
+        ];
         
         $this->featureSwitches->expects(self::once())->method('isCustomizableOptionsSupport')->willReturn(true);
         
         $this->cartHelper->expects(self::once())->method('getProductCustomizableOptions')
-            ->with($productMock)->willReturn($customizableOptions);
+            ->with($quoteItem)->willReturn($customizableOptions);
         $this->cartHelper->expects(self::once())->method('getProductActualSkuByCustomizableOptions')
             ->with('psku-option', $customizableOptions)->willReturn('psku');
             
