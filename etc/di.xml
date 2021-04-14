@@ -83,6 +83,7 @@
     <!-- For get product endpoint -->
     <preference for="Bolt\Boltpay\Api\GetProductInterface" type="Bolt\Boltpay\Model\Api\GetProduct" />
     <preference for="Bolt\Boltpay\Api\Data\GetProductDataInterface"   type="Bolt\Boltpay\Model\Api\Data\GetProductData" />
+    <preference for="Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface"   type="Bolt\Boltpay\Model\Api\Data\ProductInventoryInfo" />
 
     <preference for="Bolt\Boltpay\Api\Data\ExternalCustomerEntityInterface" type="Bolt\Boltpay\Model\ExternalCustomerEntity"/>
     <preference for="Bolt\Boltpay\Api\ExternalCustomerEntityRepositoryInterface" type="Bolt\Boltpay\Model\ExternalCustomerEntityRepository"/>
