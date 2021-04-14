@@ -1323,7 +1323,7 @@ class Cart extends AbstractHelper
     }
 
     /**
-     * Create cart data items array
+     * Create cart data items array, given a quote
      * @param $quote
      * @param null $storeId
      * @param int $totalAmount
@@ -1336,6 +1336,42 @@ class Cart extends AbstractHelper
         $items = $quote->getAllVisibleItems();
         $currencyCode = $quote->getQuoteCurrencyCode();
 
+        // $data is of the form [products[], totalAmount, diff]
+        $data = getCartItemsFromItems($items, $currencyCode, $storeId, $totalAmount, $diff);
+
+        // getTotals is only available on a quote
+        $total = $quote->getTotals();
+        if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
+            $giftWrapping = $total['giftwrapping'];
+            $totalPrice = $giftWrapping->getGwPrice() + $giftWrapping->getGwItemsPrice() + $quote->getGwCardPrice();
+            $product = [];
+            $product['reference']    = $giftWrapping->getGwId();
+            $product['name']         = $giftWrapping->getTitle()->getText();
+            $product['total_amount'] = CurrencyUtils::toMinor($totalPrice, $currencyCode);
+            $product['unit_price']   = CurrencyUtils::toMinor($totalPrice, $currencyCode);
+            $product['quantity']     = 1;
+            $product['sku']          = trim($giftWrapping->getCode());
+            $product['type']         =  self::ITEM_TYPE_PHYSICAL;
+
+            $totalAmount +=  $product['total_amount'];
+            $data[0][] = $product;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Create cart data items array, given an array of items
+     * fetched from either a quote or an order
+     * @param $quote
+     * @param null $storeId
+     * @param int $totalAmount
+     * @param int $diff
+     * @return array
+     * @throws \Exception
+     */
+    public function getCartItemsFromItems($items, $currencyCode, $storeId = null, $totalAmount = 0, $diff = 0)
+    {
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         // The "appEmulation" is necessary for geting correct image url from an API call.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1507,23 +1543,6 @@ class Cart extends AbstractHelper
             },
             $items
         );
-
-        $total = $quote->getTotals();
-        if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
-            $giftWrapping = $total['giftwrapping'];
-            $totalPrice = $giftWrapping->getGwPrice() + $giftWrapping->getGwItemsPrice() + $quote->getGwCardPrice();
-            $product = [];
-            $product['reference']    = $giftWrapping->getGwId();
-            $product['name']         = $giftWrapping->getTitle()->getText();
-            $product['total_amount'] = CurrencyUtils::toMinor($totalPrice, $currencyCode);
-            $product['unit_price']   = CurrencyUtils::toMinor($totalPrice, $currencyCode);
-            $product['quantity']     = 1;
-            $product['sku']          = trim($giftWrapping->getCode());
-            $product['type']         =  self::ITEM_TYPE_PHYSICAL;
-
-            $totalAmount +=  $product['total_amount'];
-            $products[] = $product;
-        }
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         $this->appEmulation->stopEnvironmentEmulation();
