@@ -243,7 +243,7 @@
                         <config_path>payment/boltpay/ip_whitelist</config_path>
                         <comment>Comma separated list of allowed IP addresses, used for test purposes. Leave empty for no restrictions. Clearing page cache is mandatory for the change to take effect.</comment>
                     </field>
-                    <field id="universal_debug" translate="label" type="select" sortOrder="240" showInDefault="0" showInWebsite="0" showInStore="0">
+                    <field id="universal_debug" translate="label" type="select" sortOrder="240" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Bolt Debug Enabled</label>
                         <config_path>payment/boltpay/universal_debug</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>

@@ -195,7 +195,7 @@ class DebugInfo implements \JsonSerializable
      */
     public function jsonSerialize()
     {
-        return [
+        return array_filter([
             'php_version'              => $this->phpVersion,
             'composer_version'         => $this->composerVersion,
             'platform_version'         => $this->platformVersion,
@@ -203,6 +203,6 @@ class DebugInfo implements \JsonSerializable
             'other_plugin_versions'    => $this->otherPluginVersions,
             'logs'                     => $this->logs,
             'automated_testing_config' => $this->automatedTestingConfig
-        ];
+        ]);
     }
 }

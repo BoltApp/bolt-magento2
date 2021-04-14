@@ -178,13 +178,12 @@ class Debug implements DebugInterface
 
     /**
      * This method will handle universal api debug requests based on the type of request it is.
-     *
-     * @param string $type
+     * 
+     * @param array $data
      * @return \Bolt\Boltpay\Api\Data\DebugInfo
      * @throws BoltException
      * **/
-    public function universalDebug($type)
-    {
+    public function universalDebug($data){
         
         // Validate Request
         $this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
@@ -198,11 +197,18 @@ class Debug implements DebugInterface
             );
         }
 
-        // Throw debg not implemented exception for now untill it is implemented.
-        throw new BoltException(
-            __('Webhook of type Debug has not been implemented'),
-            null,
-            BoltErrorResponse::ERR_SERVICE
-        );
+        $result = $this->debugInfoFactory->create();
+        switch (isset($data['type']) ? $data['type'] : ''){
+            case 'log':
+                $result->setLogs($this->logRetriever->getLogOfType(isset($data['log_type']) ? $data['log_type'] : null));
+                break;
+            default:
+                $result->setPhpVersion(PHP_VERSION);
+                $result->setComposerVersion($this->configHelper->getComposerVersion());
+                $result->setPlatformVersion($this->productMetadata->getVersion());
+                $result->setBoltConfigSettings($this->configHelper->getAllConfigSettings());
+                $result->setOtherPluginVersions($this->moduleRetriever->getInstalledModules());
+        }
+        return $result;
     }
 }
