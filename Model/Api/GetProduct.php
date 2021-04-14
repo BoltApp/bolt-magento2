@@ -112,13 +112,13 @@ class GetProduct implements GetProductInterface
             $productInventory->setProduct($product);
             $stockItem = $this->stockRegistry->getStockItem($product->getId());
             $productInventory->setStock($stockItem);
-            $this->productData->setProduct($productInventory);
+            $this->productData->setProductInventory($productInventory);
         } elseif ($sku != "") {
             $product = $this->productRepositoryInterface->get($sku, false, $this->storeID, false);
             $productInventory->setProduct($product);
             $stockItem = $this->stockRegistry->getStockItem($product->getId());
             $productInventory->setStock($stockItem);
-            $this->productData->setProduct($productInventory);
+            $this->productData->setProductInventory($productInventory);
         }
     }
 
