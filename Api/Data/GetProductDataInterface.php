@@ -29,24 +29,24 @@ interface GetProductDataInterface
      * Get product info.
      *
      * @api
-     * @return \Magento\Catalog\Api\Data\ProductInterface
+     * @return \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface;
      */
-    public function getProduct();
+    public function getProductInventory();
 
     /**
      * Set product info.
      *
      * @api
-     * @param \Magento\Catalog\Api\Data\ProductInterface $product
+     * @param \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface $product
      * @return $this
      */
-    public function setProduct($product);
+    public function setProductInventory($product);
 
     /**
      * Get parent info.
      *
      * @api
-     * @return \Magento\Catalog\Api\Data\ProductInterface
+     * @return \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface
      */
     public function getParent();
 
@@ -54,7 +54,7 @@ interface GetProductDataInterface
      * Set parent info.
      *
      * @api
-     * @param \Magento\Catalog\Api\Data\ProductInterface $product
+     * @param \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface $product
      * @return $this
      */
     public function setParent($product);
@@ -63,7 +63,7 @@ interface GetProductDataInterface
      * Get product info.
      *
      * @api
-     * @return \Magento\Catalog\Api\Data\ProductInterface[]
+     * @return \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface[]
      */
     public function getChildren();
 
@@ -71,25 +71,8 @@ interface GetProductDataInterface
      * Set product info.
      *
      * @api
-     * @param \Magento\Catalog\Api\Data\ProductInterface[] $children
+     * @param \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface[] $children
      * @return $this
      */
     public function setChildren($children);
-
-    /**
-     * Get stock info.
-     *
-     * @api
-     * @return \Magento\CatalogInventory\Api\Data\StockItemInterface
-     */
-    public function getStock();
-
-    /**
-     * Get stock info.
-     *
-     * @api
-     * @param \Magento\CatalogInventory\Api\Data\StockItemInterface $stockItem
-     * @return $this
-     */
-    public function setStock($stockItem);
 }
