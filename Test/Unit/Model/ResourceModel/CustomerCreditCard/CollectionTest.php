@@ -14,17 +14,19 @@
  * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel\CustomerCreditCard;
 
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\Collection;
-use Bolt\Boltpay\Model\CustomerCreditCard;
+use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Store\Api\WebsiteRepositoryInterface;
 
 class CollectionTest extends BoltTestCase
 {
     const ID = '1110';
-    const CUSTOMER_ID = '1111';
     const CONSUMER_ID = '1112';
     const CREDIT_CARD_ID = '1113';
     const CARD_INFO = '{"last4":"1111","display_network":"Visa"}';
@@ -32,57 +34,67 @@ class CollectionTest extends BoltTestCase
     /**
      * @var \Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\Collection
      */
-    private $mockCustomerCreditCardCollection;
+    private $customerCreditCardCollection;
 
     /**
-     * @var \Bolt\Boltpay\Model\CustomerCreditCard
+     * @var \Bolt\Boltpay\Model\CustomerCreditCardFactory
      */
-    private $mockCustomerCreditCard;
+    private $customerCreditCard;
+
+    private $objectManager;
+
+    private $storeId;
+
+    private $websiteId;
+
 
     /**
      * Setup for CollectionTest Class
      */
     public function setUpInternal()
     {
-        $this->mockCustomerCreditCardCollection = $this->getMockBuilder(Collection::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['_init','addFilter'])
-            ->getMock();
-        $this->mockCustomerCreditCard = $this->getMockBuilder(CustomerCreditCard::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getCardInfo','getCustomerId','getConsumerId','getCreditCardId','getId'])
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->customerCreditCardCollection = $this->objectManager->create(Collection::class);
+        $this->customerCreditCard = $this->objectManager->create(CustomerCreditCardFactory::class);
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $this->storeId = $store->getStore()->getId();
+
+        $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
+        $this->websiteId = $websiteRepository->get('base')->getId();
     }
 
-    /**
-     * @test
-     */
-    public function testConstruct()
-    {
-        $this->mockCustomerCreditCardCollection->expects($this->once())->method('_init')
-            ->with('Bolt\Boltpay\Model\CustomerCreditCard', 'Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard')
-            ->willReturnSelf();
-
-        $testMethod = new \ReflectionMethod(Collection::class, '_construct');
-        $testMethod->setAccessible(true);
-        $testMethod->invokeArgs($this->mockCustomerCreditCardCollection, []);
-        $this->assertTrue(class_exists('Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard'));
-        $this->assertTrue(class_exists('Bolt\Boltpay\Model\CustomerCreditCard'));
-    }
-
-    /**
-     * @test
-     */
     /**
      * @test
      */
     public function getCreditCardInfosByCustomerId()
     {
-        $this->mockCustomerCreditCardCollection->expects($this->once())->method('addFilter')
-            ->with('customer_id', self::CUSTOMER_ID)
-            ->willReturn([$this->mockCustomerCreditCard]);
-
-        $result = $this->mockCustomerCreditCardCollection->getCreditCardInfosByCustomerId(self::CUSTOMER_ID);
-        $this->assertEquals([$this->mockCustomerCreditCard], $result);
+        $customer = TestUtils::createCustomer($this->websiteId, $this->storeId, [
+            "street_address1" => "street",
+            "street_address2" => "",
+            "locality"        => "Los Angeles",
+            "region"          => "California",
+            'region_code'     => 'CA',
+            'region_id'       => '12',
+            "postal_code"     => "11111",
+            "country_code"    => "US",
+            "country"         => "United States",
+            "name"            => "lastname firstname",
+            "first_name"      => "firstname",
+            "last_name"       => "lastname",
+            "phone_number"    => "11111111",
+            "email_address"   => "john@bolt.com",
+        ]);
+        $customerId = $customer->getId();
+        $customerCreditCard = $this->customerCreditCard->create()->saveCreditCard(
+            $customerId,
+            self::CONSUMER_ID,
+            self::CREDIT_CARD_ID,
+            []
+        );
+        $result = $this->customerCreditCardCollection->getCreditCardInfosByCustomerId($customerId);
+        $this->assertEquals($customerCreditCard->getId(), $result->getFirstItem()->getId());
     }
 }
