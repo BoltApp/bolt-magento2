@@ -46,7 +46,7 @@ interface ProductInventoryInfoInterface
      * Get stock info.
      *
      * @api
-     * @return \Magento\CatalogInventory\Api\Data\StockItemInterface
+     * @return \Magento\CatalogInventory\Api\Data\StockStatusInterface
      */
     public function getStock();
 
@@ -54,8 +54,8 @@ interface ProductInventoryInfoInterface
      * Get stock info.
      *
      * @api
-     * @param \Magento\CatalogInventory\Api\Data\StockItemInterface $stockItem
+     * @param \Magento\CatalogInventory\Api\Data\StockStatusInterface $stockStatus
      * @return $this
      */
-    public function setStock($stockItem);
+    public function setStock($stockStatus);
 }

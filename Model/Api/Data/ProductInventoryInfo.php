@@ -32,19 +32,9 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
     private $product;
 
     /**
-     * @var \Magento\CatalogInventory\Api\Data\StockItemInterface
+     * @var \Magento\CatalogInventory\Api\Data\StockStatusInterface
      */
-    private $stockItem;
-
-    /**
-     * @var \Magento\Catalog\Api\Data\ProductInterface[]
-     */
-    private $children;
-
-    /**
-     * @var \Magento\Catalog\Api\Data\ProductInterface
-     */
-    private $parent;
+    private $stockStatus;
 
 
     /**
@@ -76,23 +66,23 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
      * Get stock info.
      *
      * @api
-     * @return \Magento\CatalogInventory\Api\Data\StockItemInterface
+     * @return \Magento\CatalogInventory\Api\Data\StockStatusInterface
      */
     public function getStock()
     {
-        return $this->stockItem;
+        return $this->stockStatus;
     }
 
     /**
      * Get stock info.
      *
      * @api
-     * @param \Magento\CatalogInventory\Api\Data\StockItemInterface $stockItem
+     * @param \Magento\CatalogInventory\Api\Data\StockStatusInterface $stockItem
      * @return $this
      */
-    public function setStock($stockItem)
+    public function setStock($stockStatus)
     {
-        $this->stockItem = $stockItem;
+        $this->stockStatus = $stockStatus;
         return $this;
     }
 
@@ -105,7 +95,7 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
     {
         return [
             'product' => $this->product,
-            'stock' => $this->stockItem
+            'stock' => $this->stockStatus
         ];
     }
 }

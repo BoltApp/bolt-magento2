@@ -30,8 +30,10 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\CatalogInventory\Api\StockRegistryInterface;
+use Magento\CatalogInventory\Model\Spi\StockRegistryProviderInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\CatalogInventory\Api\StockConfigurationInterface;
+
 
 
 class GetProduct implements GetProductInterface
@@ -46,6 +48,11 @@ class GetProduct implements GetProductInterface
      * @var integer
      */
     private $storeID;
+
+    /**
+     * @var integer
+     */
+    private $websiteId;
 
     /**
      * @var ProductRepositoryInterface
@@ -63,9 +70,14 @@ class GetProduct implements GetProductInterface
     private $configurable;
 
     /**
-     * @var StockRegistryInterface
+     * @var StockRegistryProviderInterface
      */
     private $stockRegistry;
+
+    /**
+     * @var StockConfigurationInterface
+     */
+    private $stockConfiguration;
 
     /**
      * @var HookHelper
@@ -79,7 +91,8 @@ class GetProduct implements GetProductInterface
 
     /**
      * @param ProductRepositoryInterface  $productRepositoryInterface
-     * @param StockRegistryInterface  $stockRegistry
+     * @param StockRegistryProviderInterface  $stockRegistry
+     * @param StockConfigurationInterface  $stockConfiguration
      * @param GetProductDataInterface  $productData
      * @param StoreManagerInterface $storeManager
      * @param Configurable          $configurable
@@ -88,7 +101,8 @@ class GetProduct implements GetProductInterface
      */
     public function __construct(
         ProductRepositoryInterface  $productRepositoryInterface,
-        StockRegistryInterface  $stockRegistry,
+        StockRegistryProviderInterface  $stockRegistry,
+        StockConfigurationInterface  $stockConfiguration,
         GetProductDataInterface  $productData,
         StoreManagerInterface $storeManager,
         Configurable          $configurable,
@@ -97,6 +111,7 @@ class GetProduct implements GetProductInterface
     ) {
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockRegistry = $stockRegistry;
+        $this->stockConfiguration = $stockConfiguration;
         $this->productData = $productData;
         $this->storeManager = $storeManager;
         $this->hookHelper = $hookHelper;
@@ -104,20 +119,27 @@ class GetProduct implements GetProductInterface
         $this->configurable = $configurable;
     }
 
+    private function getStockStatus($product){
+        $stockStatus = $this->stockRegistry->getStockStatus($product->getId(), $this->websiteId);
+        if($stockStatus->getProductId() === null){
+            $stockStatus = $this->stockRegistry->getStockStatus($product->getId(), $this->stockConfiguration->getDefaultScopeId());
+        }
+        return $stockStatus;
+    }
+
     private function getProduct($productID, $sku){
         $this->storeID = $this->storeManager->getStore()->getId();
+        $this->websiteId = $this->storeManager->getStore()->getWebsiteId();
         $productInventory = new ProductInventoryInfo();
         if ($productID != "") {
-            $product = $this->productRepositoryInterface->getById($productID, false, $this->storeID, false);
+            $product = $this->productRepositoryInterface->getById($productID, false, $this->websiteId, false);
             $productInventory->setProduct($product);
-            $stockItem = $this->stockRegistry->getStockItem($product->getId());
-            $productInventory->setStock($stockItem);
+            $productInventory->setStock($this->getStockStatus($product));
             $this->productData->setProductInventory($productInventory);
         } elseif ($sku != "") {
             $product = $this->productRepositoryInterface->get($sku, false, $this->storeID, false);
             $productInventory->setProduct($product);
-            $stockItem = $this->stockRegistry->getStockItem($product->getId());
-            $productInventory->setStock($stockItem);
+            $productInventory->setStock($this->getStockStatus($product));
             $this->productData->setProductInventory($productInventory);
         }
     }
@@ -130,8 +152,7 @@ class GetProduct implements GetProductInterface
             $parentProductInventory = new ProductInventoryInfo();
             $parentProduct = $this->productRepositoryInterface->getById($parent[0], false, $this->storeID, false);
             $parentProductInventory->setProduct($parentProduct);
-            $parentStockItem = $this->stockRegistry->getStockItem($parentProduct->getId());
-            $parentProductInventory->setStock($parentStockItem);
+            $parentProductInventory->setStock($this->getStockStatus($parentProduct));
             $this->productData->setParent($parentProductInventory);
 
 
@@ -140,8 +161,7 @@ class GetProduct implements GetProductInterface
             foreach ($children  as $child) {
                 $childProductInventory = new ProductInventoryInfo();
                 $childProductInventory->setProduct($child);
-                $childStockItem = $this->stockRegistry->getStockItem($child->getId());
-                $childProductInventory->setStock($childStockItem);
+                $childProductInventory->setStock($this->getStockStatus($child));
                 array_push($childrenStockArray, $childProductInventory);
             }
             $this->productData->setChildren($childrenStockArray);
@@ -151,8 +171,7 @@ class GetProduct implements GetProductInterface
             foreach ($children  as $child) {
                 $childProductInventory = new ProductInventoryInfo();
                 $childProductInventory->setProduct($child);
-                $childStockItem = $this->stockRegistry->getStockItem($child->getId());
-                $childProductInventory->setStock($childStockItem);
+                $childProductInventory->setStock($this->getStockStatus($child));
                 array_push($childrenStockArray, $childProductInventory);
             }
             $this->productData->setChildren($childrenStockArray);
