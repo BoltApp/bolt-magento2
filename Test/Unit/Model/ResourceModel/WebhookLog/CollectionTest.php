@@ -18,43 +18,48 @@
 namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel\WebhookLog;
 
 use Bolt\Boltpay\Model\ResourceModel\WebhookLog\Collection;
+use Bolt\Boltpay\Model\WebhookLogFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\TestFramework\Helper\Bootstrap;
 
 class CollectionTest extends BoltTestCase
 {
-    const TRANSACTION_ID = '1111';
+    const TRANSACTION_ID = '11112';
     const HOOK_TYPE = 'pending';
 
     /**
      * @var \Bolt\Boltpay\Model\ResourceModel\WebhookLog\Collection
      */
-    private $webhookLogCollectionMock;
+    private $webhookLogCollection;
+
+    /**
+     * @var WebhookLogFactory
+     */
+    private $webhookLogFactory;
+
+    private $objectManager;
 
     /**
      * Setup for CollectionTest Class
      */
     public function setUpInternal()
     {
-        $this->webhookLogCollectionMock = $this->getMockBuilder(Collection::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['_init', 'addFilter', 'getSize', 'getFirstItem'])
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->webhookLogCollection = $this->objectManager->create(Collection::class);
+        $this->webhookLogFactory = $this->objectManager->create(WebhookLogFactory::class);
     }
+
 
     /**
      * @test
      */
-    public function construct()
+    public function getWebhookLogByTransactionId_returnNoItems()
     {
-        $this->webhookLogCollectionMock->expects($this->once())->method('_init')
-            ->with('Bolt\Boltpay\Model\WebhookLog', 'Bolt\Boltpay\Model\ResourceModel\WebhookLog')
-            ->willReturnSelf();
-
-        TestHelper::invokeMethod($this->webhookLogCollectionMock, '_construct');
-
-        $this->assertTrue(class_exists('Bolt\Boltpay\Model\ResourceModel\WebhookLog'));
-        $this->assertTrue(class_exists('Bolt\Boltpay\Model\WebhookLog'));
+        $result = $this->webhookLogCollection->getWebhookLogByTransactionId(self::TRANSACTION_ID, 'notfound');
+        $this->assertFalse($result);
     }
 
     /**
@@ -62,21 +67,8 @@ class CollectionTest extends BoltTestCase
      */
     public function getWebhookLogByTransactionId()
     {
-        $this->webhookLogCollectionMock->expects(self::any())->method('addFilter')->willReturnSelf();
-        $this->webhookLogCollectionMock->expects(self::once())->method('getSize')->willReturn(1);
-        $this->webhookLogCollectionMock->expects(self::once())->method('getFirstItem')->willReturnSelf();
-        $this->webhookLogCollectionMock->getWebhookLogByTransactionId(self::TRANSACTION_ID, self::HOOK_TYPE);
-    }
-
-    /**
-     * @test
-     */
-    public function getWebhookLogByTransactionId_returnNoItems()
-    {
-        $this->webhookLogCollectionMock->expects(self::any())->method('addFilter')->willReturnSelf();
-        $this->webhookLogCollectionMock->expects(self::once())->method('getSize')->willReturn(0);
-        $this->webhookLogCollectionMock->expects(self::never())->method('getFirstItem')->willReturnSelf();
-        $result = $this->webhookLogCollectionMock->getWebhookLogByTransactionId(self::TRANSACTION_ID, self::HOOK_TYPE);
-        $this->assertFalse($result);
+        $webhookFactory = $this->webhookLogFactory->create()->recordAttempt(self::TRANSACTION_ID, self::HOOK_TYPE);;
+        $result = $this->webhookLogCollection->getWebhookLogByTransactionId(self::TRANSACTION_ID, self::HOOK_TYPE);
+        $this->assertEquals($webhookFactory->getId(), $result->getId());
     }
 }
