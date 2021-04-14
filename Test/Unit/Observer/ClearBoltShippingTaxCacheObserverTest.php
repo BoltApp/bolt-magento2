@@ -21,8 +21,10 @@ namespace Bolt\Boltpay\Test\Unit\Observer;
 use Bolt\Boltpay\Model\Api\ShippingMethods;
 use Bolt\Boltpay\Observer\ClearBoltShippingTaxCacheObserver;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\App\CacheInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Event\Observer;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Framework\App\CacheInterface;
 
 /**
  * Class ClearBoltShippingTaxCacheObserver
@@ -32,28 +34,43 @@ use Magento\Framework\Event\Observer;
 class ClearBoltShippingTaxCacheObserverTest extends BoltTestCase
 {
     /**
+     * @var ObjectManager
+     */
+    private $objectManager;
+
+    /**
      * @var ClearBoltShippingTaxCacheObserver
      */
-    protected $currentMock;
+    private $clearBoltShippingTaxCacheObserver;
+
+    /**
+     * @var Observer
+     */
+    private $eventObserver;
 
     /**
      * @var CacheInterface
      */
     private $cache;
 
+    public function setUpInternal()
+    {
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->clearBoltShippingTaxCacheObserver = $this->objectManager->create(ClearBoltShippingTaxCacheObserver::class);
+        $this->eventObserver = $this->objectManager->create(Observer::class);
+        $this->cache = $this->objectManager->create(CacheInterface::class);
+    }
+
     /**
      * @test
      */
     public function execute()
     {
-        $eventObserver = $this->createMock(Observer::class);
-        $this->cache->expects(self::once())->method('clean')->with([ShippingMethods::BOLT_SHIPPING_TAX_CACHE_TAG]);
-        $this->currentMock->execute($eventObserver);
-    }
-
-    protected function setUpInternal()
-    {
-        $this->cache = $this->createPartialMock(CacheInterface::class, ['clean', 'remove', 'save', 'load', 'getFrontend']);
-        $this->currentMock = new ClearBoltShippingTaxCacheObserver($this->cache);
+        $this->cache->save('test', 'test', [ShippingMethods::BOLT_SHIPPING_TAX_CACHE_TAG]);
+        $this->clearBoltShippingTaxCacheObserver->execute($this->eventObserver);
+        $this->assertFalse($this->cache->load('test'));
     }
 }
