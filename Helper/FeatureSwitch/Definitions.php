@@ -68,6 +68,11 @@ class Definitions
     const M2_TRACK_SHIPMENT = 'M2_TRACK_SHIPMENT';
 
     /**
+     * Enable order updates
+     */
+    const M2_ORDER_UPDATE = 'M2_ORDER_UPDATE';
+
+    /**
      * Enable non-Bolt order tracking
      */
     const M2_TRACK_NON_BOLT = 'M2_TRACK_NON_BOLT';
@@ -208,6 +213,12 @@ class Definitions
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_ORDER_UPDATE => [
+            self::NAME_KEY        => self::M2_ORDER_UPDATE,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_TRACK_NON_BOLT => [
             self::NAME_KEY        => self::M2_TRACK_NON_BOLT,

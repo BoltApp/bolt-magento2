@@ -108,20 +108,9 @@ class OrderSaveObserver implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        // TODO: Add new switch
-        // if (!$this->decider->isTrackShipmentEnabled()) {
-        //     return;
-        // }
-
-
-        // generate cart (no order token yet)
-        // convert it to string and hash it (md5) to generate a cache key
-        // look it up in cache
-        // if found - skip it, already sent to Bolt in some previous attempt before caching
-        // if not found - fetch transaction, get the order token, add it to the cart object, send it to Bolt, on success (200 OK) store it in cache with the above key
-        // additionally you can also store the order token in cache, with the transaction_reference as key, so you reduce the number of fetch calls to only one per order (during the cache lifetime of course)
-
-// to create a refund: credit memo, select item
+        if (!$this->decider->isOrderUpdateEnabled()) {
+            return;
+        }
 
         $success = false;
         try {
@@ -132,33 +121,34 @@ class OrderSaveObserver implements ObserverInterface
             $currencyCode = $order->getOrderCurrencyCode();
             $items = $order->getAllVisibleItems();
             $itemData = $this->cartHelper->getCartItemsFromItems($items, $currencyCode, $storeId); 
-            // hash and cache itemData to detect changes           
+
+            // TODO: Before this goes into production, we should hash and cache
+            // the resulting itemData to avoid sending updates for unchanged carts.
+
             $orderUpdateData = [
+                'order_reference' => $order->getQuoteId(),
                 'cart' => [
                     'display_id' => $order->getIncrementId(),
-                    'order_reference' => $order->getQuoteId(),
                     'total_amount' => CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode),
                     'tax_amount' => CurrencyUtils::toMinor($order->getTaxAmount(), $currencyCode),
                     'items' => $itemData[0],
                 ]
             ];
-            $this->logHelper->addInfoLog(json_encode($orderUpdateData));
+            // $this->logHelper->addInfoLog(json_encode($orderUpdateData));
 
-            //Request Data
             $requestData = $this->dataObjectFactory->create();
             $requestData->setApiData($orderUpdateData);
             $requestData->setDynamicApiUrl(ApiHelper::API_UPDATE_ORDER);
             $apiKey = $this->configHelper->getApiKey($storeId);
             $requestData->setApiKey($apiKey);
 
-            //Build Request
             $request = $this->apiHelper->buildRequest($requestData);
             $result = $this->apiHelper->sendRequest($request);
             if ($result == 200) {
                 $success = true;
             }
         } catch (Exception $e) {
-            $this->logHelper->addInfoLog($e);
+            // $this->logHelper->addInfoLog($e);
             $this->bugsnag->notifyException($e);
         } finally {
             $this->metricsClient->processMetric(
