@@ -1374,7 +1374,7 @@ class Cart extends AbstractHelper
     public function getCartItemsFromItems($items, $currencyCode, $storeId = null, $totalAmount = 0, $diff = 0)
     {
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // The "appEmulation" is necessary for geting correct image url from an API call.
+        // The "appEmulation" is necessary for getting correct image url from an API call.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         $this->appEmulation->startEnvironmentEmulation(
             $storeId,
