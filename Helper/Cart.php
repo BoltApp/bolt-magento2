@@ -1353,7 +1353,7 @@ class Cart extends AbstractHelper
             $product['sku']          = trim($giftWrapping->getCode());
             $product['type']         =  self::ITEM_TYPE_PHYSICAL;
 
-            $totalAmount +=  $product['total_amount'];
+            $data[1] +=  $product['total_amount'];
             $data[0][] = $product;
         }
 
