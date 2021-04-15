@@ -1337,7 +1337,7 @@ class Cart extends AbstractHelper
         $currencyCode = $quote->getQuoteCurrencyCode();
 
         // $data is of the form [products[], totalAmount, diff]
-        $data = getCartItemsFromItems($items, $currencyCode, $storeId, $totalAmount, $diff);
+        $data = $this->getCartItemsFromItems($items, $currencyCode, $storeId, $totalAmount, $diff);
 
         // getTotals is only available on a quote
         $total = $quote->getTotals();
@@ -1363,7 +1363,8 @@ class Cart extends AbstractHelper
     /**
      * Create cart data items array, given an array of items
      * fetched from either a quote or an order
-     * @param $quote
+     * @param $items
+     * @param $currencyCode
      * @param null $storeId
      * @param int $totalAmount
      * @param int $diff

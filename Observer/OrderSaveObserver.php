@@ -134,7 +134,7 @@ class OrderSaveObserver implements ObserverInterface
                     'items' => $itemData[0],
                 ]
             ];
-            // $this->logHelper->addInfoLog(json_encode($orderUpdateData));
+            $this->logHelper->addInfoLog(json_encode($orderUpdateData));
 
             $requestData = $this->dataObjectFactory->create();
             $requestData->setApiData($orderUpdateData);
@@ -148,7 +148,7 @@ class OrderSaveObserver implements ObserverInterface
                 $success = true;
             }
         } catch (Exception $e) {
-            // $this->logHelper->addInfoLog($e);
+            $this->logHelper->addInfoLog($e);
             $this->bugsnag->notifyException($e);
         } finally {
             $this->metricsClient->processMetric(
