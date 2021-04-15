@@ -1336,8 +1336,7 @@ class Cart extends AbstractHelper
         $items = $quote->getAllVisibleItems();
         $currencyCode = $quote->getQuoteCurrencyCode();
 
-        // $data is of the form [products[], totalAmount, diff]
-        $data = $this->getCartItemsFromItems($items, $currencyCode, $storeId, $totalAmount, $diff);
+        list($products, $totalAmount, $diff) = $this->getCartItemsFromItems($items, $currencyCode, $storeId, $totalAmount, $diff);
 
         // getTotals is only available on a quote
         $total = $quote->getTotals();
@@ -1351,13 +1350,13 @@ class Cart extends AbstractHelper
             $product['unit_price']   = CurrencyUtils::toMinor($totalPrice, $currencyCode);
             $product['quantity']     = 1;
             $product['sku']          = trim($giftWrapping->getCode());
-            $product['type']         =  self::ITEM_TYPE_PHYSICAL;
+            $product['type']         = self::ITEM_TYPE_PHYSICAL;
 
-            $data[1] +=  $product['total_amount'];
-            $data[0][] = $product;
+            $totalAmount += $product['total_amount'];
+            $products[] = $product;
         }
 
-        return $data;
+        return [$products, $totalAmount, $diff];
     }
 
     /**
