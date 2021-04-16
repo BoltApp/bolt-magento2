@@ -23,7 +23,6 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Exception;
@@ -37,11 +36,6 @@ class OrderSaveObserver implements ObserverInterface
      * @var ConfigHelper
      */
     private $configHelper;
-
-    /**
-     * @var LogHelper
-     */
-    protected $logHelper;
 
     /**
      * @var DataObjectFactory
@@ -75,7 +69,6 @@ class OrderSaveObserver implements ObserverInterface
 
     /**
      * @param ConfigHelper      $configHelper
-     * @param LogHelper         $logHelper
      * @param DataObjectFactory $dataObjectFactory
      * @param ApiHelper         $apiHelper
      * @param CartHelper        $cartHelper
@@ -85,7 +78,6 @@ class OrderSaveObserver implements ObserverInterface
      */
     public function __construct(
         ConfigHelper $configHelper,
-        LogHelper $logHelper,
         DataObjectFactory $dataObjectFactory,
         ApiHelper $apiHelper,
         CartHelper $cartHelper,
@@ -94,7 +86,6 @@ class OrderSaveObserver implements ObserverInterface
         Decider $decider
     ) {
         $this->configHelper = $configHelper;
-        $this->logHelper = $logHelper;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->apiHelper = $apiHelper;
         $this->cartHelper = $cartHelper;
@@ -120,7 +111,7 @@ class OrderSaveObserver implements ObserverInterface
 
             $currencyCode = $order->getOrderCurrencyCode();
             $items = $order->getAllVisibleItems();
-            $itemData = $this->cartHelper->getCartItemsFromItems($items, $currencyCode, $storeId); 
+            $itemData = $this->cartHelper->getCartItemsFromItems($items, $currencyCode, $storeId);
 
             // TODO: Before this goes into production, we should hash and cache
             // the resulting itemData to avoid sending updates for unchanged carts.
@@ -134,7 +125,6 @@ class OrderSaveObserver implements ObserverInterface
                     'items' => $itemData[0],
                 ]
             ];
-            $this->logHelper->addInfoLog(json_encode($orderUpdateData));
 
             $requestData = $this->dataObjectFactory->create();
             $requestData->setApiData($orderUpdateData);
@@ -148,7 +138,7 @@ class OrderSaveObserver implements ObserverInterface
                 $success = true;
             }
         } catch (Exception $e) {
-            $this->logHelper->addInfoLog($e);
+            print($e);
             $this->bugsnag->notifyException($e);
         } finally {
             $this->metricsClient->processMetric(
