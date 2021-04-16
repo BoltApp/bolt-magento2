@@ -8,6 +8,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+use Magento\Framework\Pricing\PriceCurrencyInterface;
 
 class StoreCredit
 {
@@ -25,28 +26,36 @@ class StoreCredit
     /**
      * @var Discount
      */
-    protected $discountHelper;
+    private $discountHelper;
 
     /**
      * @var Config
      */
-    protected $configHelper;
+    private $configHelper;
+    
+    /**
+     * @var PriceCurrencyInterface
+     */
+    private $priceCurrency;
 
     /**
      * StoreCredit constructor.
      * @param Discount $discountHelper
      * @param Bugsnag $bugsnagHelper
      * @param Config $configHelper
+     * @param PriceCurrencyInterface $priceCurrency
      */
     public function __construct(
         Discount $discountHelper,
         Bugsnag $bugsnagHelper,
-        Config $configHelper
+        Config $configHelper,
+        PriceCurrencyInterface $priceCurrency
     )
     {
         $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
         $this->configHelper = $configHelper;
+        $this->priceCurrency = $priceCurrency;
     }
 
     /**
@@ -58,6 +67,7 @@ class StoreCredit
      */
     public function collectDiscounts(
         $result,
+        $storeCreditRepository,
         $quote,
         $parentQuote,
         $paymentOnly
@@ -68,21 +78,32 @@ class StoreCredit
 
         try {
             if (array_key_exists(self::BAGRIDERS_STORECREDIT, $totals)) {
-                $amount = abs($totals[self::BAGRIDERS_STORECREDIT]->getValue());
-                $currencyCode = $quote->getQuoteCurrencyCode();
-                $roundedDiscountAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-                $discountType = $this->discountHelper->getBoltDiscountType('by_fixed');
-                $discounts[] = [
-                    'description' => 'Bag Riders Store Credit',
-                    'amount' => $roundedDiscountAmount,
-                    'reference' => self::BAGRIDERS_STORECREDIT_REFERENCE,
-                    'discount_type' => $discountType, // For v1/discounts.code.apply and v2/cart.update
-                    'type' => $discountType, // For v1/discounts.code.apply and v2/cart.update
-                    'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT
-                ];
-
-                $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedDiscountAmount;
-                $totalAmount -= $roundedDiscountAmount;
+                $availableBaseStoreCredit = $storeCreditRepository->getByCustomerId(
+                    $quote->getCustomerId()
+                )->getStoreCredit();
+                
+                if ($availableBaseStoreCredit) {
+                    $currencyCode = $quote->getQuoteCurrencyCode();
+                    $amount = $this->priceCurrency->convertAndRound(
+                        $availableBaseStoreCredit,
+                        null,
+                        $currencyCode,
+                        2
+                    );                   
+                    $roundedDiscountAmount = CurrencyUtils::toMinor($amount, $currencyCode);
+                    $discountType = $this->discountHelper->getBoltDiscountType('by_fixed');
+                    $discounts[] = [
+                        'description' => 'Bag Riders Store Credit',
+                        'amount' => $roundedDiscountAmount,
+                        'reference' => self::BAGRIDERS_STORECREDIT_REFERENCE,
+                        'discount_type' => $discountType, // For v1/discounts.code.apply and v2/cart.update
+                        'type' => $discountType, // For v1/discounts.code.apply and v2/cart.update
+                        'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT
+                    ];
+    
+                    $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedDiscountAmount;
+                    $totalAmount -= $roundedDiscountAmount;
+                }
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
@@ -150,6 +171,37 @@ class StoreCredit
             }
         } catch (\Exception $e) {
             throw $e;
+        }
+    }
+    
+    /**
+     * @param \BagRiders\StoreCredit\Api\StoreCreditRepositoryInterface $storeCreditRepository
+     * @param $quote
+     */
+    public function beforeValidateQuoteDataForProcessNewOrder(
+        $storeCreditRepository,
+        $quote
+    )
+    {
+        try{
+            $availableBaseStoreCredit = $storeCreditRepository->getByCustomerId(
+                $quote->getCustomerId()
+            )->getStoreCredit();
+            $currencyCode = $quote->getQuoteCurrencyCode();
+            $amount = $this->priceCurrency->convertAndRound(
+                $availableBaseStoreCredit,
+                null,
+                $currencyCode,
+                2
+            );
+            $quote->setData(SalesFieldInterface::AMSC_USE, 1);
+            $quote->setData('am_store_credit_set', 1);
+            $quote->setBrstorecreditAmount($amount);
+            $quote->setTotalsCollectedFlag(false);
+            $quote->collectTotals();
+            $quote->save();
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
         }
     }
 }

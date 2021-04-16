@@ -222,6 +222,12 @@ class EventsForThirdPartyModules
                                       "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"],
                     "boltClass" => Mirasvit_Rewards::class,
                 ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "sendClasses" => ["BagRiders\StoreCredit\Api\StoreCreditRepositoryInterface"],
+                    "boltClass" => BagRiders_StoreCredit::class,
+                ],
             ]
         ],
         'clearExternalData' => [
@@ -439,6 +445,7 @@ class EventsForThirdPartyModules
                 [
                     "module" => "BagRiders_StoreCredit",
                     "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "sendClasses" => ["BagRiders\StoreCredit\Api\StoreCreditRepositoryInterface"],
                     "boltClass" => BagRiders_StoreCredit::class,
                 ],
             ],
