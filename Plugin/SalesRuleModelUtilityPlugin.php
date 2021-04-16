@@ -39,7 +39,7 @@ class SalesRuleModelUtilityPlugin
             // so we store the discount amount in the checkout session with the rule id as key.
             $boltCollectSaleRuleDiscounts = $checkoutSession->getBoltCollectSaleRuleDiscounts([]);            
             if (!isset($boltCollectSaleRuleDiscounts[$savedRuleId])) {
-            $boltCollectSaleRuleDiscounts[$savedRuleId] = $discountData->getAmount();            
+                $boltCollectSaleRuleDiscounts[$savedRuleId] = $discountData->getAmount();            
             } else {
                 $boltCollectSaleRuleDiscounts[$savedRuleId] += $discountData->getAmount();
             }
