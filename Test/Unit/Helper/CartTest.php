@@ -4894,6 +4894,65 @@ ORDER
         static::assertEquals(0, $diff);
     }
 
+    /**
+     * @test
+     * that getCartItemsFromItems returns expected data and attributes
+     *
+     * @covers ::getCartItemsFromItems
+     */
+    public function getCartItemsFromItems_convertsOptionValueToString()
+    {
+        $color = 'Fuchsia';
+        $size = 'XL';
+
+        $quoteItemOptions = [
+            'attributes_info' => [
+                ['label' => 'Size', 'value' => $size],
+                ['label' => 'Color', 'value' => $color],
+            ]
+        ];
+
+        $productTypeConfigurableMock = $this->getMockBuilder(Configurable::class)
+            ->setMethods(['getOrderOptions'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $productTypeConfigurableMock->method('getOrderOptions')->willReturn($quoteItemOptions);
+
+        $this->productMock = $this->getMockBuilder(Product::class)
+            ->setMethods(['getId', 'getDescription', 'getTypeInstance', 'getCustomOption'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
+        $this->productMock->method('getDescription')->willReturn('Product Description');
+        $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
+
+        $this->imageHelper->method('init')->willReturnSelf();
+        $this->imageHelper->method('getUrl')->willReturn('no-image');
+
+        list($products, $totalAmount, $diff) = $this->currentMock->getCartItemsFromItems(
+            [$this->getQuoteItemMock()],
+            self::CURRENCY_CODE,
+            self::STORE_ID,
+        );
+
+        $resultProductProperties = $products[0]['properties'];
+        static::assertCount(1, $products);
+        static::assertArrayHasKey('properties', $products[0]);
+        static::assertCount(2, $resultProductProperties);
+        static::assertInternalType('string', $resultProductProperties[0]->value);
+        static::assertInternalType('string', $resultProductProperties[1]->value);
+        static::assertEquals(
+            [
+            (object)['name' => 'Size', 'value' => 'XL'],
+            (object)['name' => 'Color', 'value' => 'Fuchsia'],
+            ],
+            $resultProductProperties
+        );
+        static::assertEquals($size, $products[0]['size']);
+        static::assertEquals($color, $products[0]['color']);
+    }
+
         /**
          * @test
          * @dataProvider dataProvider_getProductToGetImageForQuoteItem_withConfigurableItem
