@@ -218,4 +218,9 @@
     <type name="Zonos\DutyTax\Model\Carrier\Zonos">
         <plugin name="BoltBoltZonosDutyTaxCarrierPlugin" type="Bolt\Boltpay\Plugin\Zonos\DutyTax\Model\Carrier\ZonosPlugin" sortOrder="1"/>
     </type>
+    
+    <type name="Shineretrofits\ShippingMethod\Model\Carrier\Customshipping">
+        <plugin name="Bolt_Boltpay_Shineretrofits_CustomshippingPlugin"
+                type="Bolt\Boltpay\Plugin\Shineretrofits\ShippingMethod\Model\Carrier\CustomshippingPlugin" sortOrder="1"/>
+    </type>
 </config>
