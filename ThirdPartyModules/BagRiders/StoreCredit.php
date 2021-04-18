@@ -184,6 +184,9 @@ class StoreCredit
     )
     {
         try{
+            if (!$quote->getData('am_store_credit_set')) {
+                return false;
+            }
             $availableBaseStoreCredit = $storeCreditRepository->getByCustomerId(
                 $quote->getCustomerId()
             )->getStoreCredit();
