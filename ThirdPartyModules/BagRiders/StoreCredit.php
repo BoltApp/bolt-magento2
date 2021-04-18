@@ -184,7 +184,7 @@ class StoreCredit
     )
     {
         try{
-            if (!$quote->getData('am_store_credit_set')) {
+            if (!$quote->getData('am_store_credit_set') && !$quote->getData(SalesFieldInterface::AMSC_USE)) {
                 return false;
             }
             $availableBaseStoreCredit = $storeCreditRepository->getByCustomerId(
