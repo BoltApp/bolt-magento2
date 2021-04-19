@@ -181,8 +181,12 @@ class GetProduct implements GetProductInterface
             foreach($attributes as $attr) {
                 foreach ($attr as $p) {
                     $attribute = $this->eavConfig->getAttribute('catalog_product', $p['attribute_code']);
-                    $update = array_merge($this->productData->getOptions(), $attribute->getSource()->getAllOptions());
-                    $this->productData->setOptions($update);
+                    if ($this->productData->getOptions()) {
+                        $update = array_merge($this->productData->getOptions(), $attribute->getSource()->getAllOptions());
+                        $this->productData->setOptions($update);
+                    } else {
+                        $this->productData->setOptions($attribute->getSource()->getAllOptions());
+                    }
                 }
             }
 
@@ -202,8 +206,12 @@ class GetProduct implements GetProductInterface
             foreach($attributes as $attr) {
                 foreach ($attr as $p) {
                     $attribute = $this->eavConfig->getAttribute('catalog_product', $p['attribute_code']);
-                    $update = array_merge($this->productData->getOptions(), $attribute->getSource()->getAllOptions());
-                    $this->productData->setOptions($update);
+                    if ($this->productData->getOptions()) {
+                        $update = array_merge($this->productData->getOptions(), $attribute->getSource()->getAllOptions());
+                        $this->productData->setOptions($update);
+                    } else {
+                        $this->productData->setOptions($attribute->getSource()->getAllOptions());
+                    }
                 }
             }
         }
