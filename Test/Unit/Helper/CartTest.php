@@ -4933,7 +4933,7 @@ ORDER
         list($products, $totalAmount, $diff) = $this->currentMock->getCartItemsFromItems(
             [$this->getQuoteItemMock()],
             self::CURRENCY_CODE,
-            self::STORE_ID,
+            self::STORE_ID
         );
 
         $resultProductProperties = $products[0]['properties'];
