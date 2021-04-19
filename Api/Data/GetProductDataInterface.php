@@ -75,4 +75,22 @@ interface GetProductDataInterface
      * @return $this
      */
     public function setChildren($children);
+
+    /**
+     * Get options info.
+     *
+     * @api
+     * @return array
+     */
+    public function getOptions();
+
+    /**
+     * Set options info.
+     *
+     * @api
+     * @param array $options
+     *
+     * @return $this
+     */
+    public function setOptions($options);
 }
