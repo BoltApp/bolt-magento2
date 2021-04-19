@@ -80,7 +80,7 @@ interface GetProductDataInterface
      * Get options info.
      *
      * @api
-     * @return array
+     * @return \Magento\ConfigurableProduct\Api\Data\OptionInterface[]
      */
     public function getOptions();
 
@@ -88,7 +88,7 @@ interface GetProductDataInterface
      * Set options info.
      *
      * @api
-     * @param array $options
+     * @param \Magento\ConfigurableProduct\Api\Data\OptionInterface[] $options
      *
      * @return $this
      */

@@ -129,7 +129,7 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
      * Get children info.
      *
      * @api
-     * @return array
+     * @return \Magento\ConfigurableProduct\Api\Data\OptionInterface[]
      */
     public function getOptions()
     {
@@ -140,7 +140,7 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
      * Set children info.
      *
      * @api
-     * @param array $options
+     * @param \Magento\ConfigurableProduct\Api\Data\OptionInterface $options
      *
      * @return $this
      */
