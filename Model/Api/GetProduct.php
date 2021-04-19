@@ -181,10 +181,10 @@ class GetProduct implements GetProductInterface
             foreach($attributes as $attr) {
                 foreach ($attr as $p) {
                     $attribute = $this->eavConfig->getAttribute('catalog_product', $p['attribute_code']);
-                    $this->productData->setOptions($attribute->getSource()->getAllOptions());
+                    $update = array_merge($this->productData->getOptions(), $attribute->getSource()->getAllOptions());
+                    $this->productData->setOptions($update);
                 }
             }
-            $this->productData->setOptions($options);
 
         } elseif ($product->getTypeId() == "configurable") {
             $children = $product->getTypeInstance()->getUsedProducts($product);
@@ -202,7 +202,8 @@ class GetProduct implements GetProductInterface
             foreach($attributes as $attr) {
                 foreach ($attr as $p) {
                     $attribute = $this->eavConfig->getAttribute('catalog_product', $p['attribute_code']);
-                    $this->productData->setOptions($attribute->getSource()->getAllOptions());
+                    $update = array_merge($this->productData->getOptions(), $attribute->getSource()->getAllOptions());
+                    $this->productData->setOptions($update);
                 }
             }
         }
