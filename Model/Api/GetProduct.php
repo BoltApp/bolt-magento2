@@ -34,6 +34,8 @@ use Magento\CatalogInventory\Model\Spi\StockRegistryProviderInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\CatalogInventory\Api\StockConfigurationInterface;
 use Magento\Eav\Model\Config;
+use Magento\Catalog\Helper\Image;
+
 
 
 
@@ -105,6 +107,8 @@ class GetProduct implements GetProductInterface
      * @param Config $eavConfig
      * @param HookHelper $hookHelper
      * @param Bugsnag $bugsnag
+     * @param Image               $imageHelper
+
      */
     public function __construct(
         ProductRepositoryInterface  $productRepositoryInterface,
@@ -115,7 +119,8 @@ class GetProduct implements GetProductInterface
         Configurable          $configurable,
         Config $eavConfig,
         HookHelper $hookHelper,
-        Bugsnag $bugsnag
+        Bugsnag $bugsnag,
+        Image $imageHelper,
     ) {
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockRegistry = $stockRegistry;
@@ -126,6 +131,7 @@ class GetProduct implements GetProductInterface
         $this->bugsnag = $bugsnag;
         $this->configurable = $configurable;
         $this->eavConfig = $eavConfig;
+        $this->imageHelper = $imageHelper;
     }
 
     private function getStockStatus($product){
@@ -137,19 +143,25 @@ class GetProduct implements GetProductInterface
     }
 
     private function getProduct($productID, $sku){
-        $this->storeID = $this->storeManager->getStore()->getId();
+        $store = $this->storeManager->getStore();
+        $this->storeID = $store->getId();
         $this->websiteId = $this->storeManager->getStore()->getWebsiteId();
         $productInventory = new ProductInventoryInfo();
+
         if ($productID != "") {
             $product = $this->productRepositoryInterface->getById($productID, false, $this->websiteId, false);
             $productInventory->setProduct($product);
             $productInventory->setStock($this->getStockStatus($product));
             $this->productData->setProductInventory($productInventory);
+            $productImageUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product' .$product->getImage();
+            $this->productData->setImageUrl($productImageUrl);
         } elseif ($sku != "") {
             $product = $this->productRepositoryInterface->get($sku, false, $this->storeID, false);
             $productInventory->setProduct($product);
             $productInventory->setStock($this->getStockStatus($product));
             $this->productData->setProductInventory($productInventory);
+            $productImageUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product' .$product->getImage();
+            $this->productData->setImageUrl($productImageUrl);
         }
     }
 

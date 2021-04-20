@@ -46,6 +46,11 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
      * @var array
      */
     private $options;
+    
+    /**
+     * @var string
+     */
+    private $imageurl;
 
 
     /**
@@ -121,6 +126,31 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
     public function setChildren($children)
     {
         $this->children = $children;
+        return $this;
+    }
+
+    /**
+     * Get children info.
+     *
+     * @api
+     * @return string
+     */
+    public function getImageUrl()
+    {
+        return $this->imageurl;
+    }
+
+    /**
+     * Set children info.
+     *
+     * @api
+     * @param string $imageurl
+     *
+     * @return $this
+     */
+    public function setImageUrl($imageurl)
+    {
+        $this->imageurl = $imageurl;
         return $this;
     }
 
