@@ -120,7 +120,7 @@ class GetProduct implements GetProductInterface
         Config $eavConfig,
         HookHelper $hookHelper,
         Bugsnag $bugsnag,
-        Image $imageHelper,
+        Image $imageHelper
     ) {
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockRegistry = $stockRegistry;
