@@ -30,6 +30,7 @@ use Bolt\Boltpay\Model\Request;
 use Bolt\Boltpay\Observer\OrderSaveObserver as Observer;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Exception;
+use Magento\Framework\App\CacheInterface;
 use Magento\Framework\DataObject;
 use Magento\Framework\DataObjectFactory;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
@@ -90,7 +91,10 @@ class OrderSaveObserverTest extends BoltTestCase
 
     /**
      * @test
-     */
+     * that OrderSaveObserver::execute works as intended
+     *
+     * @covers ::execute
+    **/
     public function testExecute()
     {
         $this->decider->expects($this->once())->method('isOrderUpdateEnabled')->willReturn(true);
@@ -163,6 +167,57 @@ class OrderSaveObserverTest extends BoltTestCase
         $this->observer->execute($eventObserver);
     }
 
+    /**
+     * @test
+     * that OrderSaveObserver::execute properly caches carts and avoids extraneous network calls
+     *
+     * @covers ::execute
+    **/
+    public function testExecute_withCache()
+    {
+        $this->decider->method('isOrderUpdateEnabled')->willReturn(true);
+        
+        $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $order->method('getStoreId')->willReturn(self::ORDER_STORE_ID);
+        $order->method('getOrderCurrencyCode')->willReturn(self::ORDER_CURRENCY_CODE);
+        $order->method('getQuoteId')->willReturn(self::ORDER_QUOTE_ID);
+        $order->method('getIncrementId')->willReturn(self::ORDER_INCREMENT_ID);
+        $order->method('getGrandTotal')->willReturn(self::ORDER_TOTAL_AMOUNT);
+        $order->method('getTaxAmount')->willReturn(self::ORDER_TAX_AMOUNT);
+
+        $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
+            ->setMethods(['getOrder'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $eventObserver->method('getEvent')->willReturn($event);
+        $event->method('getOrder')->willReturn($order);
+
+        $this->cartHelper
+            ->method('getCartItemsFromItems')
+            ->with(null, self::ORDER_CURRENCY_CODE, self::ORDER_STORE_ID, 0, 0)
+            ->willReturn(['item_data', 0, 0]);
+        
+        $this->cache->expects($this->exactly(2))->method('load')->willReturnOnConsecutiveCalls(false, true);
+        $this->cache->expects($this->once())->method('save');
+
+        $this->apiHelper->expects($this->once())->method('buildRequest')->willReturn(new Request());
+        $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn(200);
+
+        $this->metricsClient->expects($this->exactly(2))->method('getCurrentTime')->willReturn(5000);
+        $this->metricsClient->expects($this->exactly(2))->method('processMetric')->withConsecutive(
+            ['order_update.success', 1, 'order_update.latency', 5000],
+            ['order_update.cached', 1, 'order_update.latency', 5000]
+        );
+                
+        $this->observer->execute($eventObserver);
+        $this->observer->execute($eventObserver);
+    }
+
     protected function setUpInternal()
     {
         $this->initRequiredMocks();
@@ -170,6 +225,7 @@ class OrderSaveObserverTest extends BoltTestCase
 
     private function initRequiredMocks()
     {
+        $this->cache = $this->createMock(CacheInterface::class);
         $this->configHelper = $this->createMock(ConfigHelper::class);
         
         $this->dataObject = $this->getMockBuilder(DataObject::class)
@@ -186,6 +242,7 @@ class OrderSaveObserverTest extends BoltTestCase
         $this->decider = $this->createMock(Decider::class);
 
         $this->observer = new Observer(
+            $this->cache,
             $this->configHelper,
             $this->dataObjectFactory,
             $this->apiHelper,

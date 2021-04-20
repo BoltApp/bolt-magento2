@@ -26,12 +26,20 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Exception;
+use Magento\Framework\App\CacheInterface;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 
 class OrderSaveObserver implements ObserverInterface
 {
+    const RESULT_SUCCESS = 'order_update.success';
+    const RESULT_FAILURE = 'order_update.failure';
+    const RESULT_CACHED = 'order_update.cached';
+    
+    /** @var CacheInterface */
+    private $cache;
+    
     /**
      * @var ConfigHelper
      */
@@ -68,6 +76,7 @@ class OrderSaveObserver implements ObserverInterface
     private $decider;
 
     /**
+     * @param CacheInterface    $cache
      * @param ConfigHelper      $configHelper
      * @param DataObjectFactory $dataObjectFactory
      * @param ApiHelper         $apiHelper
@@ -77,6 +86,7 @@ class OrderSaveObserver implements ObserverInterface
      * @param Decider           $decider
      */
     public function __construct(
+        CacheInterface $cache,
         ConfigHelper $configHelper,
         DataObjectFactory $dataObjectFactory,
         ApiHelper $apiHelper,
@@ -85,6 +95,7 @@ class OrderSaveObserver implements ObserverInterface
         MetricsClient $metricsClient,
         Decider $decider
     ) {
+        $this->cache = $cache;
         $this->configHelper = $configHelper;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->apiHelper = $apiHelper;
@@ -103,7 +114,7 @@ class OrderSaveObserver implements ObserverInterface
             return;
         }
 
-        $success = false;
+        $result = self::RESULT_FAILURE;
         try {
             $startTime = $this->metricsClient->getCurrentTime();
             $order = $observer->getEvent()->getOrder();
@@ -112,9 +123,6 @@ class OrderSaveObserver implements ObserverInterface
             $currencyCode = $order->getOrderCurrencyCode();
             $items = $order->getAllVisibleItems();
             $itemData = $this->cartHelper->getCartItemsFromItems($items, $currencyCode, $storeId);
-
-            // TODO: Before this goes into production, we should hash and cache
-            // the resulting itemData to avoid sending updates for unchanged carts.
 
             $orderUpdateData = [
                 'order_reference' => $order->getQuoteId(),
@@ -126,6 +134,15 @@ class OrderSaveObserver implements ObserverInterface
                 ]
             ];
 
+            $cacheIdentifier = base64_encode(json_encode($orderUpdateData));
+            // If we've already sent this update, don't send it again
+            $cached = $this->cache->load($cacheIdentifier);
+            if ($cached) {
+                $result = self::RESULT_CACHED;
+                return;
+            }
+            $this->cache->save(true, $cacheIdentifier);
+
             $requestData = $this->dataObjectFactory->create();
             $requestData->setApiData($orderUpdateData);
             $requestData->setDynamicApiUrl(ApiHelper::API_UPDATE_ORDER);
@@ -135,18 +152,12 @@ class OrderSaveObserver implements ObserverInterface
             $request = $this->apiHelper->buildRequest($requestData);
             $result = $this->apiHelper->sendRequest($request);
             if ($result == 200) {
-                $success = true;
+                $result = self::RESULT_SUCCESS;
             }
         } catch (Exception $e) {
-            print($e);
             $this->bugsnag->notifyException($e);
         } finally {
-            $this->metricsClient->processMetric(
-                $success ? 'order_update.success' : 'order_update.failure',
-                1,
-                'order_update.latency',
-                $startTime
-            );
+            $this->metricsClient->processMetric($result, 1, 'order_update.latency', $startTime);
         }
     }
 }
