@@ -247,7 +247,7 @@ class GetProduct implements GetProductInterface
             $store = $this->storeManager->getStore();
             $this->storeID = $store->getId();
             $baseImageUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
-            $this->productData->setImageUrl($baseImageUrl);
+            $this->productData->setBaseImageUrl($baseImageUrl);
 
             $this->getProduct($productID, $sku);
             $this->getProductFamily();

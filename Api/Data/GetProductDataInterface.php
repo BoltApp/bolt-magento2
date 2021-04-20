@@ -97,20 +97,20 @@ interface GetProductDataInterface
     public function setOptions($options);
 
     /**
-     * Get image url.
+     * Get base image url.
      *
      * @api
      * @return string
      */
-    public function getImageUrl();
+    public function getBaseImageUrl();
 
     /**
-     * Set image url.
+     * Set base image url.
      *
      * @api
-     * @param string $imageurl
+     * @param string $baseImageUrl
      *
      * @return $this
      */
-    public function setImageUrl($imageurl);
+    public function setBaseImageUrl($baseImageUrl);
 }

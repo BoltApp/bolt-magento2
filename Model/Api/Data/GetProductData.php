@@ -135,7 +135,7 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
      * @api
      * @return string
      */
-    public function getImageUrl()
+    public function getBaseImageUrl()
     {
         return $this->baseImageUrl;
     }
@@ -148,7 +148,7 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
      * @return $this
      * @api
      */
-    public function setImageUrl($baseImageUrl)
+    public function setBaseImageUrl($baseImageUrl)
     {
         $this->baseImageUrl = $baseImageUrl;
         return $this;
