@@ -115,7 +115,7 @@ class GetProduct implements GetProductInterface
         Configurable          $configurable,
         Config $eavConfig,
         HookHelper $hookHelper,
-        Bugsnag $bugsnag,
+        Bugsnag $bugsnag
     ) {
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockRegistry = $stockRegistry;
