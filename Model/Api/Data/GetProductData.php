@@ -190,7 +190,8 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
             'product' => $this->product,
             'children' => $this->children,
             'parent' => $this->parent,
-            'options' => $this->options
+            'options' => $this->options,
+            'baseImageUrl' => $this->imageurl
         ];
     }
 }

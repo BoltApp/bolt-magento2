@@ -143,8 +143,6 @@ class GetProduct implements GetProductInterface
     }
 
     private function getProduct($productID, $sku){
-        $store = $this->storeManager->getStore();
-        $this->storeID = $store->getId();
         $this->websiteId = $this->storeManager->getStore()->getWebsiteId();
         $productInventory = new ProductInventoryInfo();
 
@@ -153,15 +151,11 @@ class GetProduct implements GetProductInterface
             $productInventory->setProduct($product);
             $productInventory->setStock($this->getStockStatus($product));
             $this->productData->setProductInventory($productInventory);
-            $productImageUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product' .$product->getImage();
-            $this->productData->setImageUrl($productImageUrl);
         } elseif ($sku != "") {
             $product = $this->productRepositoryInterface->get($sku, false, $this->storeID, false);
             $productInventory->setProduct($product);
             $productInventory->setStock($this->getStockStatus($product));
             $this->productData->setProductInventory($productInventory);
-            $productImageUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product' .$product->getImage();
-            $this->productData->setImageUrl($productImageUrl);
         }
     }
 
@@ -250,9 +244,13 @@ class GetProduct implements GetProductInterface
         }
 
         try {
+            $store = $this->storeManager->getStore();
+            $this->storeID = $store->getId();
+            $baseImageUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
+            $this->productData->setImageUrl($baseImageUrl);
+
             $this->getProduct($productID, $sku);
             $this->getProductFamily();
-
             return $this->productData;
         } catch (NoSuchEntityException $nse) {
             throw new NoSuchEntityException(__('Product not found with given identifier.'));
