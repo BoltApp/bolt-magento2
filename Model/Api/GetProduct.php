@@ -34,8 +34,6 @@ use Magento\CatalogInventory\Model\Spi\StockRegistryProviderInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\CatalogInventory\Api\StockConfigurationInterface;
 use Magento\Eav\Model\Config;
-use Magento\Catalog\Helper\Image;
-
 
 
 
@@ -107,8 +105,6 @@ class GetProduct implements GetProductInterface
      * @param Config $eavConfig
      * @param HookHelper $hookHelper
      * @param Bugsnag $bugsnag
-     * @param Image               $imageHelper
-
      */
     public function __construct(
         ProductRepositoryInterface  $productRepositoryInterface,
@@ -120,7 +116,6 @@ class GetProduct implements GetProductInterface
         Config $eavConfig,
         HookHelper $hookHelper,
         Bugsnag $bugsnag,
-        Image $imageHelper
     ) {
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockRegistry = $stockRegistry;
@@ -131,7 +126,6 @@ class GetProduct implements GetProductInterface
         $this->bugsnag = $bugsnag;
         $this->configurable = $configurable;
         $this->eavConfig = $eavConfig;
-        $this->imageHelper = $imageHelper;
     }
 
     private function getStockStatus($product){
