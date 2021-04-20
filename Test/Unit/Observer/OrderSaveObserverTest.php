@@ -38,7 +38,7 @@ use PHPUnit_Framework_MockObject_MockObject as MockObject;
 /**
  * Class OrderSaveObserverTest
  *
- * @coversDefaultClass \Bolt\Boltpay\Observer\OrderSaveObserverTest
+ * @coversDefaultClass \Bolt\Boltpay\Observer\OrderSaveObserver
  */
 class OrderSaveObserverTest extends BoltTestCase
 {
