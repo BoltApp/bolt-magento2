@@ -33,6 +33,7 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\CatalogInventory\Model\Spi\StockRegistryProviderInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\CatalogInventory\Api\StockConfigurationInterface;
+use Magento\Eav\Model\Config;
 
 
 
@@ -90,14 +91,20 @@ class GetProduct implements GetProductInterface
     private $bugsnag;
 
     /**
-     * @param ProductRepositoryInterface  $productRepositoryInterface
-     * @param StockRegistryProviderInterface  $stockRegistry
-     * @param StockConfigurationInterface  $stockConfiguration
-     * @param GetProductDataInterface  $productData
+     * @var \Magento\Eav\Model\Config
+     */
+    private $eavConfig;
+
+    /**
+     * @param ProductRepositoryInterface $productRepositoryInterface
+     * @param StockRegistryProviderInterface $stockRegistry
+     * @param StockConfigurationInterface $stockConfiguration
+     * @param GetProductDataInterface $productData
      * @param StoreManagerInterface $storeManager
-     * @param Configurable          $configurable
-     * @param HookHelper            $hookHelper
-     * @param Bugsnag               $bugsnag
+     * @param Configurable $configurable
+     * @param Config $eavConfig
+     * @param HookHelper $hookHelper
+     * @param Bugsnag $bugsnag
      */
     public function __construct(
         ProductRepositoryInterface  $productRepositoryInterface,
@@ -106,6 +113,7 @@ class GetProduct implements GetProductInterface
         GetProductDataInterface  $productData,
         StoreManagerInterface $storeManager,
         Configurable          $configurable,
+        Config $eavConfig,
         HookHelper $hookHelper,
         Bugsnag $bugsnag
     ) {
@@ -117,6 +125,7 @@ class GetProduct implements GetProductInterface
         $this->hookHelper = $hookHelper;
         $this->bugsnag = $bugsnag;
         $this->configurable = $configurable;
+        $this->eavConfig = $eavConfig;
     }
 
     private function getStockStatus($product){
@@ -165,6 +174,22 @@ class GetProduct implements GetProductInterface
                 array_push($childrenStockArray, $childProductInventory);
             }
             $this->productData->setChildren($childrenStockArray);
+
+            $attributes = $parentProduct->getTypeInstance()->getConfigurableOptions($parentProduct);
+            $options = array();
+
+            foreach($attributes as $attr) {
+                foreach ($attr as $p) {
+                    $attribute = $this->eavConfig->getAttribute('catalog_product', $p['attribute_code']);
+                    if ($this->productData->getOptions()) {
+                        $update = array_merge($this->productData->getOptions(), $attribute->getSource()->getAllOptions());
+                        $this->productData->setOptions($update);
+                    } else {
+                        $this->productData->setOptions($attribute->getSource()->getAllOptions());
+                    }
+                }
+            }
+
         } elseif ($product->getTypeId() == "configurable") {
             $children = $product->getTypeInstance()->getUsedProducts($product);
             $childrenStockArray = array();
@@ -175,6 +200,20 @@ class GetProduct implements GetProductInterface
                 array_push($childrenStockArray, $childProductInventory);
             }
             $this->productData->setChildren($childrenStockArray);
+
+            $attributes = $product->getTypeInstance()->getConfigurableOptions($product);
+
+            foreach($attributes as $attr) {
+                foreach ($attr as $p) {
+                    $attribute = $this->eavConfig->getAttribute('catalog_product', $p['attribute_code']);
+                    if ($this->productData->getOptions()) {
+                        $update = array_merge($this->productData->getOptions(), $attribute->getSource()->getAllOptions());
+                        $this->productData->setOptions($update);
+                    } else {
+                        $this->productData->setOptions($attribute->getSource()->getAllOptions());
+                    }
+                }
+            }
         }
     }
 

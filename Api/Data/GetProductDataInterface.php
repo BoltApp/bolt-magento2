@@ -75,4 +75,22 @@ interface GetProductDataInterface
      * @return $this
      */
     public function setChildren($children);
+
+    /**
+     * Get options info.
+     *
+     * @api
+     * @return \Magento\ConfigurableProduct\Api\Data\OptionInterface[]
+     */
+    public function getOptions();
+
+    /**
+     * Set options info.
+     *
+     * @api
+     * @param \Magento\ConfigurableProduct\Api\Data\OptionInterface[] $options
+     *
+     * @return $this
+     */
+    public function setOptions($options);
 }
