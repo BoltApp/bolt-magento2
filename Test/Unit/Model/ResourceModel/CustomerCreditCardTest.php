@@ -19,36 +19,35 @@ namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel;
 
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Magento\TestFramework\Helper\Bootstrap;
 
 class CustomerCreditCardTest extends BoltTestCase
 {
     /**
-     * @var \Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard
+     * @var CustomerCreditCard
      */
-    private $mockCustomerCreditCard;
+    private $customerCreditCard;
+
+    private $objectManager;
 
     /**
-     * Setup for CustomerCreditCardTest Class
+     * Setup for CollectionTest Class
      */
     public function setUpInternal()
     {
-        $this->mockCustomerCreditCard = $this->getMockBuilder(CustomerCreditCard::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['_init'])
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->customerCreditCard = $this->objectManager->create(CustomerCreditCard::class);
     }
 
     /**
      * @test
      */
-    public function testConstruct()
+    public function construct()
     {
-        $this->mockCustomerCreditCard->expects($this->once())->method('_init')
-            ->with('bolt_customer_credit_cards', 'id')
-            ->willReturnSelf();
-
-        $testMethod = new \ReflectionMethod(CustomerCreditCard::class, '_construct');
-        $testMethod->setAccessible(true);
-        $testMethod->invokeArgs($this->mockCustomerCreditCard, []);
+        self::assertEquals('bolt_customer_credit_cards',$this->customerCreditCard->getMainTable());
+        self::assertEquals('id',$this->customerCreditCard->getIdFieldName());
     }
 }
