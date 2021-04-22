@@ -1356,7 +1356,12 @@ class Cart extends AbstractHelper
             $products[] = $product;
         }
 
-        return [$products, $totalAmount, $diff];
+        return $this->eventsForThirdPartyModules->runFilter(
+            'filterCartItems',
+            [$products, $totalAmount, $diff],
+            $quote,
+            $storeId
+        );
     }
 
     /**
@@ -1548,12 +1553,7 @@ class Cart extends AbstractHelper
         $this->appEmulation->stopEnvironmentEmulation();
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        return $this->eventsForThirdPartyModules->runFilter(
-            'filterCartItems',
-            [$products, $totalAmount, $diff],
-            $quote,
-            $storeId
-        );
+        return [$products, $totalAmount, $diff];
     }
 
     /**
