@@ -38,6 +38,8 @@ use Bolt\Boltpay\ThirdPartyModules\Zonos\DutyTax as Zonos_DutyTax;
 use Bolt\Boltpay\ThirdPartyModules\Mageside\CustomShippingPrice as Mageside_CustomShippingPrice;
 use Bolt\Boltpay\ThirdPartyModules\MageWorld\Affiliate as MW_Affiliate;
 use Bolt\Boltpay\ThirdPartyModules\Magento\InStorePickupShipping as Magento_InStorePickupShipping;
+use Bolt\Boltpay\ThirdPartyModules\Magecomp\Extrafee as Magecomp_Extrafee;
+use Bolt\Boltpay\ThirdPartyModules\Webkul\Odoomagentoconnect as Webkul_Odoomagentoconnect;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -338,6 +340,15 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup",
                                        "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
                     "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+            ],
+        ],
+        'afterUpdateOrderPayment' => [
+            "listeners" => [
+                'Webkul_Odoomagentoconnect' => [
+                    "module" => "Webkul_Odoomagentoconnect",
+                    'sendClasses' => ['Webkul\Odoomagentoconnect\Observer\SalesOrderAfterObserver'],
+                    "boltClass" => Webkul_Odoomagentoconnect::class,
                 ],
             ],
         ],
@@ -827,6 +838,42 @@ class EventsForThirdPartyModules
                     "module" => "Magento_InventoryInStorePickup",
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+            ],
+        ],
+        "filterCartItems" => [
+            'listeners' => [
+                'Magecomp_Extrafee' => [
+                    'module'      => 'Magecomp_Extrafee',
+                    'boltClass'   => Magecomp_Extrafee::class,
+                ],
+                'Brainvire_Engraving' => [
+                    'module'      => 'Brainvire_Engraving',
+                    'boltClass'   => Magecomp_Extrafee::class,
+                ],
+            ],
+        ],
+        "filterTransactionBeforeOrderCreateValidation" => [
+            'listeners' => [
+                'Magecomp_Extrafee' => [
+                    'module'      => 'Magecomp_Extrafee',
+                    'boltClass'   => Magecomp_Extrafee::class,
+                ],
+                'Brainvire_Engraving' => [
+                    'module'      => 'Brainvire_Engraving',
+                    'boltClass'   => Magecomp_Extrafee::class,
+                ],
+            ],
+        ],
+        "filterCartBeforeLegacyShippingAndTax" => [
+            'listeners' => [
+                'Magecomp_Extrafee' => [
+                    'module'      => 'Magecomp_Extrafee',
+                    'boltClass'   => Magecomp_Extrafee::class,
+                ],
+                'Brainvire_Engraving' => [
+                    'module'      => 'Brainvire_Engraving',
+                    'boltClass'   => Magecomp_Extrafee::class,
                 ],
             ],
         ],

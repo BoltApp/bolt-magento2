@@ -18,8 +18,12 @@
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Bolt\Boltpay\Model\ResourceModel\WebhookLogFactory;
+use Bolt\Boltpay\Model\WebhookLogFactory;
 use Bolt\Boltpay\Cron\DeleteOldWebHookLogs;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Stdlib\DateTime\DateTime;
+use Bolt\Boltpay\Model\ResourceModel\WebhookLog\CollectionFactory;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class DeleteOldWebHookLogsTest
@@ -27,30 +31,41 @@ use Bolt\Boltpay\Cron\DeleteOldWebHookLogs;
  */
 class DeleteOldWebHookLogsTest extends BoltTestCase
 {
+    /**
+     * @var ObjectManager
+     */
+    private $objectManager;
 
     /**
      * @var DeleteOldWebHookLogs
      */
-    private $currentMock;
+    private $deleteOldWebHookLogs;
 
     /**
      * @var WebhookLogFactory
      */
     private $webhookLogFactory;
 
+    /**
+     * @var CollectionFactory
+     */
+    private $collectionFactory;
+
+    /**
+     * @var DateTime
+     */
+    private $coreDate;
+
     public function setUpInternal()
     {
-        $this->webhookLogFactory = $this->createPartialMock(
-            WebhookLogFactory::class,
-            ['create', 'deleteOldAttempts']
-        );
-
-        $this->currentMock = $this->getMockBuilder(DeleteOldWebHookLogs::class)
-            ->setConstructorArgs([
-               $this->webhookLogFactory
-            ])
-            ->enableProxyingToOriginalMethods()
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->deleteOldWebHookLogs = $this->objectManager->create(DeleteOldWebHookLogs::class);
+        $this->webhookLogFactory = $this->objectManager->create(WebhookLogFactory::class);
+        $this->collectionFactory = $this->objectManager->create(CollectionFactory::class);
+        $this->coreDate = $this->objectManager->create(DateTime::class);
     }
 
     /**
@@ -58,8 +73,14 @@ class DeleteOldWebHookLogsTest extends BoltTestCase
      */
     public function execute()
     {
-        $this->webhookLogFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->webhookLogFactory->expects(self::once())->method('deleteOldAttempts')->willReturnSelf();
-        $this->currentMock->execute();
+        $this->webhookLogFactory->create()->setTransactionId('XXXX')
+            ->setHookType('pending')
+            ->setNumberOfMissingQuoteFailedHooks(1)
+            ->setUpdatedAt($this->coreDate->gmtDate(null, time() - 86400 * 31))
+            ->save();
+
+        $this->deleteOldWebHookLogs->execute();
+
+        self::assertEquals(0, $this->collectionFactory->create()->getSize());
     }
 }

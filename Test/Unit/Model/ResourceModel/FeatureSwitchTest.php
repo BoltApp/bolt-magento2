@@ -19,35 +19,35 @@ namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel;
 
 use Bolt\Boltpay\Model\ResourceModel\FeatureSwitch;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\TestFramework\Helper\Bootstrap;
 
 class FeatureSwitchTest extends BoltTestCase
 {
     /**
-     * @var \Bolt\Boltpay\Model\ResourceModel\FeatureSwitch
+     * @var FeatureSwitch
      */
-    private $mockFeatureSwitch;
+    private $featureSwitch;
+
+    private $objectManager;
 
     /**
-     * Setup for CustomerCreditCardTest Class
+     * @inheritdoc
      */
     public function setUpInternal()
     {
-        $this->mockFeatureSwitch = $this->getMockBuilder(FeatureSwitch::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['_init'])
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->featureSwitch = $this->objectManager->create(FeatureSwitch::class);
     }
 
     /**
      * @test
      */
-    public function testConstruct()
+    public function construct()
     {
-        $this->mockFeatureSwitch->expects($this->once())->method('_init')
-            ->with('bolt_feature_switches', 'id')
-            ->willReturnSelf();
-
-        TestHelper::invokeMethod($this->mockFeatureSwitch, '_construct');
+        self::assertEquals('bolt_feature_switches', $this->featureSwitch->getMainTable());
+        self::assertEquals('id', $this->featureSwitch->getIdFieldName());
     }
 }

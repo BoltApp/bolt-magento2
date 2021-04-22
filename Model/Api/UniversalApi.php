@@ -196,9 +196,7 @@ class UniversalApi implements UniversalApiInterface
                 case "debug":
                     //Returns DebugInterface
                     $this->result->setData(
-                        $this->debug->universalDebug(
-                            isset($data['type']) ? $data['type'] : null
-                        )
+                        $this->debug->universalDebug($data)
                     );
                     break;
                 default:

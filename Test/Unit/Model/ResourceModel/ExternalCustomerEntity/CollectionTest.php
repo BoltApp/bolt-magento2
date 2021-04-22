@@ -17,41 +17,43 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel\ExternalCustomerEntity;
 
-use Bolt\Boltpay\Model\ExternalCustomerEntity;
 use Bolt\Boltpay\Model\ResourceModel\ExternalCustomerEntity\Collection as ExternalCustomerEntityCollection;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Bolt\Boltpay\Test\Unit\TestHelper;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Framework\ObjectManagerInterface;
+use Bolt\Boltpay\Model\ExternalCustomerEntityFactory;
 
 class CollectionTest extends BoltTestCase
 {
+    const EXTERNAL_ID = 1;
+    const CUSTOMER_ID = 1;
+
     /**
-     * @var ExternalCustomerEntityCollection|MockObject
+     * @var ExternalCustomerEntityCollection
      */
-    private $externalCustomerEntityCollectionMock;
+    private $externalCustomerEntityCollection;
+
+    /**
+     * @var ExternalCustomerEntityFactory
+     */
+    private $externalCustomerEntityFactory;
+
+    /**
+     * @var ObjectManagerInterface
+     */
+    private $objectManager;
 
     /**
      * Setup for CollectionTest Class
      */
     public function setUpInternal()
     {
-        $this->externalCustomerEntityCollectionMock = $this->getMockBuilder(ExternalCustomerEntityCollection::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['_init', 'addFilter', 'getSize', 'getFirstItem'])
-            ->getMock();
-    }
-
-    /**
-     * @test
-     */
-    public function construct()
-    {
-        $this->externalCustomerEntityCollectionMock->expects($this->once())->method('_init')
-            ->with('Bolt\Boltpay\Model\ExternalCustomerEntity', 'Bolt\Boltpay\Model\ResourceModel\ExternalCustomerEntity')
-            ->willReturnSelf();
-        TestHelper::invokeMethod($this->externalCustomerEntityCollectionMock, '_construct');
-        $this->assertTrue(class_exists('Bolt\Boltpay\Model\ExternalCustomerEntity'));
-        $this->assertTrue(class_exists('Bolt\Boltpay\Model\ResourceModel\ExternalCustomerEntity'));
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->externalCustomerEntityCollection = $this->objectManager->create(ExternalCustomerEntityCollection::class);
+        $this->externalCustomerEntityFactory = $this->objectManager->create(ExternalCustomerEntityFactory::class);
     }
 
     /**
@@ -59,13 +61,16 @@ class CollectionTest extends BoltTestCase
      */
     public function getExternalCustomerEntityByExternalID_returnsCorrectObject_ifCollectionIsNotEmpty()
     {
-        $this->externalCustomerEntityCollectionMock->expects(self::once())->method('addFilter')->with('external_id', 'test_external_id')->willReturnSelf();
-        $this->externalCustomerEntityCollectionMock->expects(self::once())->method('getSize')->willReturn(1);
-        $externalCustomerEntity = $this->createMock(ExternalCustomerEntity::class);
-        $this->externalCustomerEntityCollectionMock->expects(self::once())->method('getFirstItem')->willReturn($externalCustomerEntity);
+        $externalCustomerEntityFactory = $this->externalCustomerEntityFactory->create()
+            ->setData('external_id', self::EXTERNAL_ID)
+            ->setData('customer_id', self::CUSTOMER_ID)
+            ->save();
+        $externalCustomerEntityFactoryId = $externalCustomerEntityFactory->getId();
         $this->assertEquals(
-            $externalCustomerEntity,
-            TestHelper::invokeMethod($this->externalCustomerEntityCollectionMock, 'getExternalCustomerEntityByExternalID', ['test_external_id'])
+            $externalCustomerEntityFactoryId,
+            $this->externalCustomerEntityCollection
+                ->getExternalCustomerEntityByExternalID(self::EXTERNAL_ID)
+                ->getId()
         );
     }
 
@@ -74,12 +79,6 @@ class CollectionTest extends BoltTestCase
      */
     public function getExternalCustomerEntityByExternalID_returnsNull_ifNoItemsFound()
     {
-        $this->externalCustomerEntityCollectionMock->expects(self::once())->method('addFilter')->with('external_id', 'test_external_id')->willReturnSelf();
-        $this->externalCustomerEntityCollectionMock->expects(self::once())->method('getSize')->willReturn(0);
-        $this->externalCustomerEntityCollectionMock->expects(self::never())->method('getFirstItem');
-        $this->assertEquals(
-            null,
-            TestHelper::invokeMethod($this->externalCustomerEntityCollectionMock, 'getExternalCustomerEntityByExternalID', ['test_external_id'])
-        );
+        $this->assertNull($this->externalCustomerEntityCollection->getExternalCustomerEntityByExternalID('test_external_id'));
     }
 }

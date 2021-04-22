@@ -243,7 +243,7 @@
                         <config_path>payment/boltpay/ip_whitelist</config_path>
                         <comment>Comma separated list of allowed IP addresses, used for test purposes. Leave empty for no restrictions. Clearing page cache is mandatory for the change to take effect.</comment>
                     </field>
-                    <field id="universal_debug" translate="label" type="select" sortOrder="240" showInDefault="0" showInWebsite="0" showInStore="0">
+                    <field id="universal_debug" translate="label" type="select" sortOrder="240" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Bolt Debug Enabled</label>
                         <config_path>payment/boltpay/universal_debug</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
@@ -361,6 +361,12 @@
                         <label>Product attributes</label>
                         <config_path>payment/boltpay/product_attributes_list</config_path>
                         <comment>Comma separated list of product attributes that we send to bolt server. Leave empty for include only standard attributes.</comment>
+                    </field>
+                    <field id="order_comment_field" translate="label" type="text" sortOrder="390" showInDefault="1"
+                           showInWebsite="1" showInStore="1">
+                        <label>Order Comment DB field</label>
+                        <config_path>payment/boltpay/order_comment_field</config_path>
+                        <comment>Defaults to customer_note, if not set</comment>
                     </field>
                 </group>
                 <group id="third_party_modules" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">

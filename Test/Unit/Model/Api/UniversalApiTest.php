@@ -22,6 +22,7 @@ use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Api\Shipping;
 use Bolt\Boltpay\Model\Api\ShippingMethods;
 use Bolt\Boltpay\Model\Api\UpdateCart;
+use Bolt\Boltpay\Model\Api\Debug;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\ObjectManager;
@@ -172,6 +173,26 @@ class UniversalApiTest extends BoltTestCase
 
         TestHelper::setProperty($this->universalApi, 'shipping', $shipping);
 
+        $this->assertTrue($this->universalApi->execute($event, $data));
+    }
+
+    /**
+     * @test
+     */
+    public function debug_returnsTrue()
+    {
+        $event = "debug";
+        $data = [
+            'type' => 'log',
+        ];
+        $debug = $this->createMock(Debug::class);
+        $debug->expects(self::once())
+            ->method('universalDebug')
+            ->with(
+                $data
+            );
+
+        TestHelper::setProperty($this->universalApi,'debug', $debug);
         $this->assertTrue($this->universalApi->execute($event, $data));
     }
 }

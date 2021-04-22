@@ -1548,7 +1548,12 @@ class Cart extends AbstractHelper
         $this->appEmulation->stopEnvironmentEmulation();
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        return [$products, $totalAmount, $diff];
+        return $this->eventsForThirdPartyModules->runFilter(
+            'filterCartItems',
+            [$products, $totalAmount, $diff],
+            $quote,
+            $storeId
+        );
     }
 
     /**

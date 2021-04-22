@@ -124,7 +124,7 @@ class CreateOrder implements CreateOrderInterface
      * @var SessionHelper
      */
     private $sessionHelper;
-    
+
     /**
      * @var EventsForThirdPartyModules
      */
@@ -448,6 +448,10 @@ class CreateOrder implements CreateOrderInterface
      */
     public function validateQuoteData($quote, $transaction)
     {
+        $transaction = $this->eventsForThirdPartyModules->runFilter(
+            'filterTransactionBeforeOrderCreateValidation',
+            $transaction
+        );
         $this->validateMinimumAmount($quote);
         $this->validateCartItems($quote, $transaction);
         $this->validateTax($quote, $transaction);

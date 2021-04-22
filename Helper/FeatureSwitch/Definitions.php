@@ -166,7 +166,7 @@ class Definitions
      * Support Customizable Options
      */
     const M2_CUSTOMIZABLE_OPTIONS_SUPPORT = 'M2_CUSTOMIZABLE_OPTIONS_SUPPORT';
-    
+
     /**
      * Enable connect.js on cart page or product page (if PPC enabled) only
      */
@@ -176,6 +176,11 @@ class Definitions
      * Enable always return error if there is any exception when running filter.
      */
     const M2_RETURN_ERR_WHEN_RUN_FILTER = 'M2_RETURN_ERR_WHEN_RUN_FILTER';
+
+    /**
+     * Display order comment block in admin
+     */
+    const M2_SHOW_ORDER_COMMENT_IN_ADMIN = 'M2_SHOW_ORDER_COMMENT_IN_ADMIN';
 
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
@@ -345,6 +350,12 @@ class Definitions
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
-        ]
+        ],
+        self::M2_SHOW_ORDER_COMMENT_IN_ADMIN => [
+            self::NAME_KEY        => self::M2_SHOW_ORDER_COMMENT_IN_ADMIN,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
+        ],
     ];
 }

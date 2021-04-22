@@ -132,7 +132,7 @@ class OrderTest extends BoltTestCase
     const HOOK_TYPE_AUTH = 'auth';
     const HOOK_PAYLOAD = ['checkboxes' => ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true, 'is_custom_field'=>false],
                           'custom_fields' =>  ['label'=>'Gift', 'type'=>'CHECKBOX', 'is_custom_field'=>true,'value'=>true]];
-    
+
     const CUSTOMER_ID = 1111;
 
     /** @var string test cart network */
@@ -678,7 +678,7 @@ class OrderTest extends BoltTestCase
      */
     public function setShippingMethod_withVirtualQuote_doesNothing()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
         $product = TestUtils::createVirtualProduct();
@@ -704,7 +704,7 @@ class OrderTest extends BoltTestCase
      */
     public function setShippingMethod_withPhysicalQuote()
     {
-        
+
         $quote = TestUtils::createQuote();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
@@ -738,9 +738,7 @@ class OrderTest extends BoltTestCase
      */
     public function setAddress()
     {
-        
         $addressObject = (object) self::ADDRESS_DATA;
-        ;
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $quote = TestUtils::createQuote();
         $quoteAddress = $quote->getShippingAddress();
@@ -826,7 +824,7 @@ class OrderTest extends BoltTestCase
      */
     public function checkExistingOrder_orderAlreadyExists_notifiesError()
     {
-        
+
         $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
@@ -850,7 +848,7 @@ class OrderTest extends BoltTestCase
      */
     public function checkExistingOrder_orderDoesntExist_returnsFalse()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
         static::assertFalse(
@@ -1131,7 +1129,7 @@ class OrderTest extends BoltTestCase
      */
     public function setOrderPaymentInfoData_ifPaymentIsMissingLastFourOrType_theyAreUpdated()
     {
-        
+
         $order = TestUtils::createDumpyOrder();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $payment = $order->getPayment();
@@ -1179,7 +1177,7 @@ class OrderTest extends BoltTestCase
      */
     public function resetOrderState()
     {
-        
+
         $order = TestUtils::createDumpyOrder();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $boltHelperOrder->resetOrderState($order);
@@ -1199,7 +1197,7 @@ class OrderTest extends BoltTestCase
      */
     public function getOrderByQuoteId()
     {
-        
+
         $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         static::assertEquals($order->getId(), $boltHelperOrder->getOrderByQuoteId(self::QUOTE_ID)->getId());
@@ -1681,7 +1679,7 @@ class OrderTest extends BoltTestCase
      */
     public function processExistingOrder_noOrder()
     {
-        
+
         $quote = TestUtils::createQuote();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         self::assertFalse($boltHelperOrder->processExistingOrder($quote, new stdClass()));
@@ -1725,7 +1723,7 @@ class OrderTest extends BoltTestCase
      */
     public function processExistingOrder_pendingOrder()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -1758,7 +1756,7 @@ class OrderTest extends BoltTestCase
      */
     public function processExistingOrder_samePriceOrder()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -1798,7 +1796,7 @@ class OrderTest extends BoltTestCase
      */
     public function processExistingOrder_deleteOrder()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -2357,7 +2355,7 @@ class OrderTest extends BoltTestCase
      */
     public function deleteOrder()
     {
-        
+
         $order = TestUtils::createDumpyOrder();
         $orderId = $order->getId();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
@@ -2408,7 +2406,7 @@ class OrderTest extends BoltTestCase
      */
     public function tryDeclinedPaymentCancelation_noOrder()
     {
-        
+
 
         $this->expectException(BoltException::class);
         $this->expectExceptionMessage(
@@ -2433,7 +2431,7 @@ class OrderTest extends BoltTestCase
      */
     public function tryDeclinedPaymentCancelation_pendingOrder()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
         $order = TestUtils::createDumpyOrder();
@@ -2452,7 +2450,7 @@ class OrderTest extends BoltTestCase
      */
     public function tryDeclinedPaymentCancelation_canceledOrder()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
         $order = TestUtils::createDumpyOrder(
@@ -2472,7 +2470,7 @@ class OrderTest extends BoltTestCase
      */
     public function tryDeclinedPaymentCancelation_completeOrder()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
         $order = TestUtils::createDumpyOrder(
@@ -2492,7 +2490,7 @@ class OrderTest extends BoltTestCase
      */
     public function deleteOrderByIncrementId_noOrder()
     {
-        
+
         $this->bugsnag->expects(self::once())->method('notifyError');
         $this->currentMock->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
     }
@@ -2533,7 +2531,7 @@ class OrderTest extends BoltTestCase
      */
     public function deleteOrderByIncrementId_ifParentQuoteIdIsNotEqualToImmutableQuoteId_reactivateSessionQuote()
     {
-        
+
 
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
         $quote->setQuoteCurrencyCode("USD");
@@ -2555,7 +2553,7 @@ class OrderTest extends BoltTestCase
      */
     public function deleteOrderByIncrementId_ifBoltCheckoutTypeIsComplete_changesCheckoutTypeToPPC()
     {
-        
+
 
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
         $quote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
@@ -2581,7 +2579,7 @@ class OrderTest extends BoltTestCase
      */
     public function getExistingOrder()
     {
-        
+
         $order = TestUtils::createDumpyOrder();
 
         $incrementId = $order->getIncrementId();
@@ -2602,7 +2600,7 @@ class OrderTest extends BoltTestCase
      */
     public function quoteAfterChange()
     {
-        
+
         $quote = TestUtils::createQuote();
         $quoteId = $quote->getId();
         $orderHelper = Bootstrap::getObjectManager()->create(OrderHelper::class);
@@ -2757,18 +2755,48 @@ class OrderTest extends BoltTestCase
 
     /**
      * @test
+     * that setOrderUserNote will both add a new status history containing the user note, and set the configured order
+     * order field
      *
      * @covers ::setOrderUserNote
+     *
+     * @dataProvider setOrderUserNote_withVariousCommentFieldsConfiguredProvider
      */
-    public function setOrderUserNote()
-    {
-        
+    public function setOrderUserNote_withVariousCommentFieldsConfigured_setsOrderFieldAndAddsStatusHistory(
+        $configuredField,
+        $expectedField
+    ) {
+        TestUtils::setupBoltConfig(
+            [
+                [
+                    'path'    => \Bolt\Boltpay\Helper\Config::XML_PATH_ORDER_COMMENT_FIELD,
+                    'value'   => $configuredField,
+                    'scope'   => ScopeInterface::SCOPE_STORE,
+                    'scopeId' => 0,
+                ]
+            ]
+        );
         $userNote = 'Test note';
         $order = TestUtils::createDumpyOrder();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $boltHelperOrder->setOrderUserNote($order, $userNote);
         self::assertEquals($userNote, $order->getStatusHistories()[0]->getComment());
+        self::assertEquals($userNote, $order->getData($expectedField));
         TestUtils::cleanupSharedFixtures([$order]);
+    }
+
+    public function setOrderUserNote_withVariousCommentFieldsConfiguredProvider()
+    {
+        return [
+            'Not configured - defaults to `customer_note`' => [
+                'configuredField' => null,
+                'expectedField'   => 'customer_note'
+            ],
+            'Custom field configured' => [
+                'configuredField' => 'custom_comment_field',
+                'expectedField'   => 'custom_comment_field'
+            ],
+        ];
     }
 
     /**
@@ -2778,7 +2806,7 @@ class OrderTest extends BoltTestCase
      */
     public function formatReferenceUrl()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         static::assertEquals(
             sprintf(
@@ -2807,7 +2835,7 @@ class OrderTest extends BoltTestCase
         $itemTypeAdditionalInformation,
         $expectedResult
     ) {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $payment = Bootstrap::getObjectManager()->create(Payment::class);
         $payment->setAdditionalInformation(
@@ -2855,7 +2883,7 @@ class OrderTest extends BoltTestCase
      */
     public function getProcessedRefunds()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $payment = Bootstrap::getObjectManager()->create(Payment::class);
         $payment->setAdditionalInformation(
@@ -2882,7 +2910,7 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_CreditCardAuthorize()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $payment = Bootstrap::getObjectManager()->create(Payment::class);
 
@@ -2913,7 +2941,7 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_PaypalCompleted()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $payment = Bootstrap::getObjectManager()->create(Payment::class);
         $payment->setAdditionalInformation(
@@ -2941,7 +2969,7 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_APMInitialAuthorized()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         list($paymentMock, $transaction) = $this->getTransactionStateSetUp(
             null,
@@ -2994,7 +3022,7 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_TSCreditCompleted()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         list($payment, $transaction) = $this->getTransactionStateSetUp(
             null,
@@ -3014,7 +3042,7 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_TSAuthorized()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         list($payment, $transaction) = $this->getTransactionStateSetUp(
             OrderHelper::TS_PENDING,
@@ -3035,7 +3063,7 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_TSAuthorizedFromPending()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         list($payment, $transaction) = $this->getTransactionStateSetUp(
             OrderHelper::TS_PENDING,
@@ -3056,7 +3084,7 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_TSCaptured()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         list($payment, $transaction) = $this->getTransactionStateSetUp(
             OrderHelper::TS_AUTHORIZED,
@@ -3077,7 +3105,7 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_TSCapturedFromAuthorized()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         list($payment, $transaction) = $this->getTransactionStateSetUp(
             OrderHelper::TS_AUTHORIZED,
@@ -3098,7 +3126,7 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_TSCapturedFromACompleted()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         list($payment, $transaction) = $this->getTransactionStateSetUp(
             OrderHelper::TS_CREDIT_COMPLETED,
@@ -3119,7 +3147,7 @@ class OrderTest extends BoltTestCase
      */
     public function getTransactionState_TSPartialVoided()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         list($paymentMock, $transaction) = $this->getTransactionStateSetUp(
             OrderHelper::TS_CAPTURED,
@@ -3325,7 +3353,7 @@ class OrderTest extends BoltTestCase
         $orderState,
         $isHookFromBolt = false
     ) {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         Hook::$fromBolt = $isHookFromBolt;
         static::assertEquals(
@@ -3362,7 +3390,7 @@ class OrderTest extends BoltTestCase
      */
     public function formatTransactionData()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $order = TestUtils::createDumpyOrder();
 
@@ -3396,7 +3424,7 @@ class OrderTest extends BoltTestCase
      */
     public function setOrderState_holdedOrder()
     {
-        
+
         $order = TestUtils::createDumpyOrder();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $boltHelperOrder->setOrderState($order, Order::STATE_HOLDED);
@@ -3432,9 +3460,9 @@ class OrderTest extends BoltTestCase
      */
     public function setOrderState_canceledOrder()
     {
-        
+
         $state = Order::STATE_CANCELED;
-        
+
         $order = TestUtils::createDumpyOrder();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $boltHelperOrder->setOrderState($order, $state);
@@ -3481,7 +3509,7 @@ class OrderTest extends BoltTestCase
      */
     public function setOrderState_nonSpecialStateOrder()
     {
-        
+
         $state = Order::STATE_PAYMENT_REVIEW;
         $order = TestUtils::createDumpyOrder();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
@@ -3499,7 +3527,7 @@ class OrderTest extends BoltTestCase
      */
     public function cancelOrder()
     {
-        
+
         $order = TestUtils::createDumpyOrder();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         TestHelper::invokeMethod($boltHelperOrder, 'cancelOrder', [$order]);
@@ -3536,7 +3564,7 @@ class OrderTest extends BoltTestCase
      */
     public function checkPaymentMethod()
     {
-        
+
         $orderPayment = Bootstrap::getObjectManager()->create(OrderPayment::class);
         $orderPayment->setMethod(Payment::METHOD_CODE);
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
@@ -3553,7 +3581,7 @@ class OrderTest extends BoltTestCase
      */
     public function checkPaymentMethod_notBolt_throwsException()
     {
-        
+
         $orderPayment = Bootstrap::getObjectManager()->create(OrderPayment::class);
         $orderPayment->setMethod('checkmo');
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
@@ -3755,7 +3783,7 @@ class OrderTest extends BoltTestCase
          */
     public function updateOrderPayment_handleCustomFields()
     {
-       
+
         list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp(OrderHelper::TS_AUTHORIZED);
         $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
             ->withConsecutive(['transaction_state'])
@@ -4457,7 +4485,7 @@ class OrderTest extends BoltTestCase
         $transactionState,
         $expectedResult
     ) {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         Hook::$fromBolt = $isHookFromBolt;
         static::assertEquals($expectedResult, $boltHelperOrder->isZeroAmountHook($transactionState));
@@ -4491,7 +4519,7 @@ class OrderTest extends BoltTestCase
      */
     public function isCaptureHookRequest($isHookFromBolt, $newCapture, $expectedResult)
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         Hook::$fromBolt = $isHookFromBolt;
         static::assertEquals(
@@ -4522,7 +4550,7 @@ class OrderTest extends BoltTestCase
      */
     public function validateCaptureAmount_invalidCaptureAmount_throwsException()
     {
-        
+
         $order = TestUtils::createDumpyOrder();
         TestUtils::cleanupSharedFixtures([$order]);
         $this->expectException(Exception::class);
@@ -4539,7 +4567,7 @@ class OrderTest extends BoltTestCase
      */
     public function validateCaptureAmount_captureAmountAndGrandTotalMismatch_throwsException()
     {
-        
+
         $order = TestUtils::createDumpyOrder([
             'total_invoiced' => 200,
             'grand_total' => 100,
@@ -4566,7 +4594,7 @@ class OrderTest extends BoltTestCase
      */
     public function validateCaptureAmount_captureAmountAndGrandTotalMatch_doesNothing()
     {
-        
+
         $order = TestUtils::createDumpyOrder([
             'total_invoiced' => 50,
             'grand_total' => 100,
@@ -4597,7 +4625,7 @@ class OrderTest extends BoltTestCase
         $orderState,
         $expectedResult
     ) {
-        
+
         $order = TestUtils::createDumpyOrder(['state' => $orderState]);
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         Hook::$fromBolt = $isHookFromBolt;
@@ -4692,7 +4720,7 @@ class OrderTest extends BoltTestCase
      */
     public function formatAmountForDisplay_withValidAmount_returnsFormattedAmount()
     {
-        
+
         $order = TestUtils::createDumpyOrder();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         static::assertEquals("$1.23", $boltHelperOrder->formatAmountForDisplay($order, 1.23));
@@ -4706,7 +4734,7 @@ class OrderTest extends BoltTestCase
      */
     public function getStoreIdByQuoteId_withValidQuote_returnsStoreIdFromQuote()
     {
-        
+
         $quote = TestUtils::createQuote(['store_id' => self::STORE_ID]);
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         static::assertEquals(self::STORE_ID, $boltHelperOrder->getStoreIdByQuoteId($quote->getId()));
@@ -4719,7 +4747,7 @@ class OrderTest extends BoltTestCase
      */
     public function getStoreIdByQuoteId_withEmptyQuoteId_returnsNull()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         static::assertNull($boltHelperOrder->getStoreIdByQuoteId(''));
     }
@@ -4731,7 +4759,7 @@ class OrderTest extends BoltTestCase
      */
     public function getOrderStoreIdByDisplayId_withEmptyDisplayId_returnsNull()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         static::assertNull($boltHelperOrder->getOrderStoreIdByDisplayId(''));
     }
@@ -4743,7 +4771,7 @@ class OrderTest extends BoltTestCase
      */
     public function getOrderStoreIdByDisplayId_withInvalidDisplayId_returnsNull()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         static::assertNull($boltHelperOrder->getOrderStoreIdByDisplayId(' / '));
     }
@@ -4756,7 +4784,7 @@ class OrderTest extends BoltTestCase
      */
     public function getOrderStoreIdByDisplayId_withValidDisplayId_returnsStoreId()
     {
-        
+
         $order = TestUtils::createDumpyOrder(['store_id'=>self::STORE_ID]);
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         static::assertEquals(self::STORE_ID, $boltHelperOrder->getOrderStoreIdByDisplayId($order->getIncrementId()));
@@ -4770,7 +4798,7 @@ class OrderTest extends BoltTestCase
      */
     public function setBillingAddress()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $transaction = json_decode(
             json_encode(
@@ -4804,7 +4832,7 @@ class OrderTest extends BoltTestCase
      */
     public function setShippingAddress()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $transaction = json_decode(
             json_encode(
@@ -4917,7 +4945,7 @@ class OrderTest extends BoltTestCase
         $hookType,
         $expectException
     ) {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         Hook::$fromBolt = $hookFromBolt;
         if ($expectException) {
@@ -4966,7 +4994,7 @@ class OrderTest extends BoltTestCase
      */
     public function getOrderByQuoteId_withVariousQuoteIds_returnsOrder()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
         $this->assertEquals($order->getId(), $boltHelperOrder->getOrderByQuoteId(self::QUOTE_ID)->getId());
@@ -5228,7 +5256,7 @@ class OrderTest extends BoltTestCase
      */
     public function validateRefundAmount_withInvalidRefundAmount($refundAmount)
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $order = Bootstrap::getObjectManager()->create(OrderModel::class);
         $this->expectException(\Exception::class);
@@ -5252,7 +5280,7 @@ class OrderTest extends BoltTestCase
      */
     public function validateRefundAmount_withRefundAmountIsMoreThanAvailableRefund()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $order = TestUtils::createDumpyOrder(
             [
@@ -5281,7 +5309,7 @@ class OrderTest extends BoltTestCase
      */
     public function validateRefundAmount_withRefundAmountValidAndLowerThanAvailable_succeeds()
     {
-        
+
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $order = TestUtils::createDumpyOrder(
             [
@@ -5316,7 +5344,7 @@ class OrderTest extends BoltTestCase
         $grandTotal,
         $priceFaultTolerance
     ) {
-        
+
         $orderHelper = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $quote = TestUtils::createQuote();
         $quoteId = $quote->getId();
@@ -5389,7 +5417,6 @@ class OrderTest extends BoltTestCase
      */
     public function getExistingOrder_byParenQuoteId()
     {
-        
         $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
 
         $orderHelper = Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class);
@@ -5489,7 +5516,7 @@ class OrderTest extends BoltTestCase
      */
     public function deleteOrCancelFailedPaymentOrder_deleteOrderByIncrementId()
     {
-        
+
         $quote = TestUtils::createQuote();
         $order = TestUtils::createDumpyOrder(
             [
@@ -5512,7 +5539,6 @@ class OrderTest extends BoltTestCase
      */
     public function deleteOrCancelFailedPaymentOrder_cancelFailedPaymentOrder()
     {
-        
         $this->featureSwitches->method('isCancelFailedPaymentOrderInsteadOfDeleting')
             ->willReturn(true);
         $quote = TestUtils::createQuote();
@@ -5523,7 +5549,7 @@ class OrderTest extends BoltTestCase
             ]
         );
         $displayId = $order->getIncrementId();
-        
+
         self::assertEquals(
             'Order was canceled: '.$displayId,
             $this->currentMock->deleteOrCancelFailedPaymentOrder($displayId, $quote->getId())
@@ -5542,7 +5568,7 @@ class OrderTest extends BoltTestCase
      */
     public function cancelFailedPaymentOrder_ifOrderStateIsNotPendingPayment_throwsBoltException()
     {
-        
+
         $order = TestUtils::createDumpyOrder(['state' => OrderModel::STATE_PROCESSING]);
         $incrementId = $order->getIncrementId();
         $orderHelper = Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class);
