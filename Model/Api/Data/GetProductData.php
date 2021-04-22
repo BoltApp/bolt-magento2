@@ -46,6 +46,11 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
      * @var array
      */
     private $options;
+    
+    /**
+     * @var string
+     */
+    private $baseImageUrl;
 
 
     /**
@@ -124,6 +129,31 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
         return $this;
     }
 
+    /**
+     * Get children info.
+     *
+     * @api
+     * @return string
+     */
+    public function getBaseImageUrl()
+    {
+        return $this->baseImageUrl;
+    }
+
+    /**
+     * Set children info.
+     *
+     * @param string $baseImageUrl
+     *
+     * @return $this
+     * @api
+     */
+    public function setBaseImageUrl($baseImageUrl)
+    {
+        $this->baseImageUrl = $baseImageUrl;
+        return $this;
+    }
+
 
     /**
      * Get children info.
@@ -160,7 +190,8 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
             'product' => $this->product,
             'children' => $this->children,
             'parent' => $this->parent,
-            'options' => $this->options
+            'options' => $this->options,
+            'baseImageUrl' => $this->baseImageUrl
         ];
     }
 }

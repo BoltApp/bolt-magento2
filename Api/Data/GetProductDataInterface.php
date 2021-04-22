@@ -17,6 +17,8 @@
 
 namespace Bolt\Boltpay\Api\Data;
 
+use Bolt\Boltpay\Model\Api\Data\GetProductData;
+
 /**
  * Get Product interface.
  *
@@ -93,4 +95,22 @@ interface GetProductDataInterface
      * @return $this
      */
     public function setOptions($options);
+
+    /**
+     * Get base image url.
+     *
+     * @api
+     * @return string
+     */
+    public function getBaseImageUrl();
+
+    /**
+     * Set base image url.
+     *
+     * @api
+     * @param string $baseImageUrl
+     *
+     * @return $this
+     */
+    public function setBaseImageUrl($baseImageUrl);
 }

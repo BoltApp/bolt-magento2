@@ -137,9 +137,9 @@ class GetProduct implements GetProductInterface
     }
 
     private function getProduct($productID, $sku){
-        $this->storeID = $this->storeManager->getStore()->getId();
         $this->websiteId = $this->storeManager->getStore()->getWebsiteId();
         $productInventory = new ProductInventoryInfo();
+
         if ($productID != "") {
             $product = $this->productRepositoryInterface->getById($productID, false, $this->websiteId, false);
             $productInventory->setProduct($product);
@@ -238,9 +238,13 @@ class GetProduct implements GetProductInterface
         }
 
         try {
+            $store = $this->storeManager->getStore();
+            $this->storeID = $store->getId();
+            $baseImageUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
+            $this->productData->setBaseImageUrl($baseImageUrl);
+
             $this->getProduct($productID, $sku);
             $this->getProductFamily();
-
             return $this->productData;
         } catch (NoSuchEntityException $nse) {
             throw new NoSuchEntityException(__('Product not found with given identifier.'));
