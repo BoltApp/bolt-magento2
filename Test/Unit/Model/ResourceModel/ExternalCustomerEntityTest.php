@@ -19,34 +19,35 @@ namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel;
 
 use Bolt\Boltpay\Model\ResourceModel\ExternalCustomerEntity;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\TestFramework\Helper\Bootstrap;
 
 class ExternalCustomerEntityTest extends BoltTestCase
 {
     /**
      * @var ExternalCustomerEntity
      */
-    private $externalCustomerEntityMock;
+    private $externalCustomerEntity;
+
+    private $objectManager;
 
     /**
      * @inheritdoc
      */
     public function setUpInternal()
     {
-        $this->externalCustomerEntityMock = $this->getMockBuilder(ExternalCustomerEntity::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['_init'])
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->externalCustomerEntity = $this->objectManager->create(ExternalCustomerEntity::class);
     }
 
     /**
      * @test
      */
-    public function testConstruct()
+    public function construct()
     {
-        $this->externalCustomerEntityMock->expects($this->once())->method('_init')
-            ->with('bolt_external_customer_entity', 'id')
-            ->willReturnSelf();
-        TestHelper::invokeMethod($this->externalCustomerEntityMock, '_construct');
+        self::assertEquals('bolt_external_customer_entity', $this->externalCustomerEntity->getMainTable());
+        self::assertEquals('id', $this->externalCustomerEntity->getIdFieldName());
     }
 }
