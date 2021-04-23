@@ -4919,6 +4919,8 @@ ORDER
         static::assertEquals($products[0]['total_amount'], CurrencyUtils::toMinor($product->getPrice() * $quantity, self::CURRENCY_CODE));
         static::assertEquals($products[0]['quantity'], $quantity);        
         static::assertEquals($products[0]['sku'], $product->getSku());
+
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
         /**
