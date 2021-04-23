@@ -207,6 +207,14 @@ class Decider extends AbstractHelper
     }
 
     /**
+     * Checks whether the feature switch for updating orders is enabled
+     */
+    public function isOrderUpdateEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_ORDER_UPDATE);
+    }
+
+    /**
      * Checks whether the feature switch for ingesting Non-Bolt order information is enabled
      */
     public function isNonBoltTrackingEnabled()

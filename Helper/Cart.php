@@ -1323,7 +1323,7 @@ class Cart extends AbstractHelper
     }
 
     /**
-     * Create cart data items array
+     * Create cart data items array, given a quote
      * @param $quote
      * @param null $storeId
      * @param int $totalAmount
@@ -1336,8 +1336,68 @@ class Cart extends AbstractHelper
         $items = $quote->getAllVisibleItems();
         $currencyCode = $quote->getQuoteCurrencyCode();
 
+        list($products, $totalAmount, $diff) = $this->getCartItemsFromItems($items, false, $currencyCode, $storeId, $totalAmount, $diff);
+
+        // getTotals is only available on a quote
+        $total = $quote->getTotals();
+        if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
+            $giftWrapping = $total['giftwrapping'];
+            $totalPrice = $giftWrapping->getGwPrice() + $giftWrapping->getGwItemsPrice() + $quote->getGwCardPrice();
+            $product = [];
+            $product['reference']    = $giftWrapping->getGwId();
+            $product['name']         = $giftWrapping->getTitle()->getText();
+            $product['total_amount'] = CurrencyUtils::toMinor($totalPrice, $currencyCode);
+            $product['unit_price']   = CurrencyUtils::toMinor($totalPrice, $currencyCode);
+            $product['quantity']     = 1;
+            $product['sku']          = trim($giftWrapping->getCode());
+            $product['type']         = self::ITEM_TYPE_PHYSICAL;
+
+            $totalAmount += $product['total_amount'];
+            $products[] = $product;
+        }
+
+        return $this->eventsForThirdPartyModules->runFilter(
+            'filterCartItems',
+            [$products, $totalAmount, $diff],
+            $quote,
+            $storeId
+        );
+    }
+
+    /**
+     * Create cart data items array, given an order
+     * @param $order
+     * @param null $storeId
+     * @param int $totalAmount
+     * @param int $diff
+     * @return array
+     * @throws \Exception
+     */
+    public function getCartItemsForOrder($order, $storeId = null, $totalAmount = 0, $diff = 0)
+    {
+        $storeId = $order->getStoreId();
+        $currencyCode = $order->getOrderCurrencyCode();
+        $items = $order->getAllVisibleItems();
+
+        return $this->getCartItemsFromItems($items, true, $currencyCode, $storeId, $totalAmount, $diff);
+    }
+
+    /**
+     * Create cart data items array, given an array of items
+     * fetched from either a quote or an order
+     * @param $items
+     * @param $isOrder
+     * @param $currencyCode
+     * @param null $storeId
+     * @param int $totalAmount
+     * @param int $diff
+     * @return array
+     * @throws \Exception
+     */
+    protected function getCartItemsFromItems($items, $isOrder, $currencyCode, $storeId = null, $totalAmount = 0, $diff = 0)
+    {
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // The "appEmulation" is necessary for geting correct image url from an API call.
+        // The "appEmulation" is necessary for getting correct image url from an API call.
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         $this->appEmulation->startEnvironmentEmulation(
             $storeId,
@@ -1350,13 +1410,19 @@ class Cart extends AbstractHelper
         $additionalAttributes = $this->configHelper->getProductAttributesList($storeId);
 
         $products = array_map(
-            function ($item) use ($imageHelper, &$totalAmount, &$diff, $storeId, $currencyCode, $additionalAttributes) {
+            function ($item) use ($imageHelper, &$totalAmount, &$diff, $isOrder, $storeId, $currencyCode, $additionalAttributes) {
                 $product = [];
 
-                $unitPrice   = $item->getCalculationPrice();
-                $itemTotalAmount = $unitPrice * $item->getQty();
-
-                $roundedTotalAmount = CurrencyUtils::toMinor($unitPrice, $currencyCode) * round($item->getQty());
+                if ($isOrder) {
+                    $unitPrice = $item->getPrice();
+                    $quantity = round($item->getQtyOrdered());
+                } else {
+                    $unitPrice = $item->getCalculationPrice();
+                    $quantity = round($item->getQty());
+                }
+                
+                $itemTotalAmount = $unitPrice * $quantity;
+                $roundedTotalAmount = CurrencyUtils::toMinor($unitPrice, $currencyCode) * $quantity;
 
                 // Aggregate eventual total differences if prices are stored with more than 2 decimal places
                 $diff += CurrencyUtils::toMinorWithoutRounding($itemTotalAmount, $currencyCode) -$roundedTotalAmount;
@@ -1415,7 +1481,7 @@ class Cart extends AbstractHelper
                 $product['name']         = $itemName;
                 $product['total_amount'] = $roundedTotalAmount;
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
-                $product['quantity']     = round($item->getQty());
+                $product['quantity']     = $quantity;
                 $product['sku']          = trim($item->getSku());
 
                 // In current Bolt checkout flow, the shipping and tax endpoint is not called for virtual carts,
@@ -1508,33 +1574,11 @@ class Cart extends AbstractHelper
             $items
         );
 
-        $total = $quote->getTotals();
-        if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
-            $giftWrapping = $total['giftwrapping'];
-            $totalPrice = $giftWrapping->getGwPrice() + $giftWrapping->getGwItemsPrice() + $quote->getGwCardPrice();
-            $product = [];
-            $product['reference']    = $giftWrapping->getGwId();
-            $product['name']         = $giftWrapping->getTitle()->getText();
-            $product['total_amount'] = CurrencyUtils::toMinor($totalPrice, $currencyCode);
-            $product['unit_price']   = CurrencyUtils::toMinor($totalPrice, $currencyCode);
-            $product['quantity']     = 1;
-            $product['sku']          = trim($giftWrapping->getCode());
-            $product['type']         =  self::ITEM_TYPE_PHYSICAL;
-
-            $totalAmount +=  $product['total_amount'];
-            $products[] = $product;
-        }
-
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         $this->appEmulation->stopEnvironmentEmulation();
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        return $this->eventsForThirdPartyModules->runFilter(
-            'filterCartItems',
-            [$products, $totalAmount, $diff],
-            $quote,
-            $storeId
-        );
+        return [$products, $totalAmount, $diff];
     }
 
     /**

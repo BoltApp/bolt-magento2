@@ -22,6 +22,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as BoltHelperCart;
 use Bolt\Boltpay\Helper\Log;
 use Bolt\Boltpay\Helper\MetricsClient;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Model\Request;
 use Bolt\Boltpay\Test\Unit\TestHelper;
@@ -4891,6 +4892,35 @@ ORDER
         );
         static::assertEquals(11500, $totalAmount);
         static::assertEquals(0, $diff);
+    }
+
+    /**
+     * @test
+     * that getCartItemsForOrder returns expected data and attributes
+     *
+     * @covers ::getCartItemsForOrder
+     */
+    public function getCartItemsForOrder()
+    {
+        $product = TestUtils::getSimpleProduct();
+        $quantity = 2;
+
+        $order = TestUtils::createDumpyOrder([], [], [TestUtils::createOrderItemByProduct($product, $quantity)]);
+        
+        $this->imageHelper->method('init')->willReturnSelf();
+        $this->imageHelper->method('getUrl')->willReturn('no-image');
+        
+        list($products, $totalAmount, $diff) = $this->currentMock->getCartItemsForOrder($order, self::STORE_ID);
+
+        static::assertCount(1, $products);
+        static::assertEquals($products[0]['reference'], $product->getId());
+        static::assertEquals($products[0]['name'], $product->getName());
+        static::assertEquals($products[0]['unit_price'], CurrencyUtils::toMinor($product->getPrice(), self::CURRENCY_CODE));
+        static::assertEquals($products[0]['total_amount'], CurrencyUtils::toMinor($product->getPrice() * $quantity, self::CURRENCY_CODE));
+        static::assertEquals($products[0]['quantity'], $quantity);        
+        static::assertEquals($products[0]['sku'], $product->getSku());
+
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
         /**
