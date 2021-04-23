@@ -241,11 +241,9 @@ class OAuthRedirect implements OAuthRedirectInterface
         }
 
         try {
-            $shouldLinkOrder = $order_id !== '' && $customer === null;
-
             $customer = $customer ?: $this->createNewCustomer($websiteId, $storeId, $payload);
 
-            if ($shouldLinkOrder) {
+            if ($order_id !== '') {
                 $order = $this->cartHelper->getOrderByIncrementId($order_id);
                 if ($order !== false && !$order->getCustomerId() && $order->getBillingAddress()->getEmail() === $payload['email']) {
                     $order->setCustomerId($customer->getId());
