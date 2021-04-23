@@ -136,8 +136,8 @@ class OrderSaveObserverTest extends BoltTestCase
             ->willReturn($order);
 
         $this->cartHelper->expects($this->once())
-            ->method('getCartItemsFromItems')
-            ->with(null, self::ORDER_CURRENCY_CODE, self::ORDER_STORE_ID, 0, 0)
+            ->method('getCartItemsForOrder')
+            ->with($order, self::ORDER_STORE_ID, 0, 0)
             ->willReturn(['item_data', 0, 0]);
 
         $expectedData = [
@@ -198,8 +198,8 @@ class OrderSaveObserverTest extends BoltTestCase
         $event->method('getOrder')->willReturn($order);
 
         $this->cartHelper
-            ->method('getCartItemsFromItems')
-            ->with(null, self::ORDER_CURRENCY_CODE, self::ORDER_STORE_ID, 0, 0)
+            ->method('getCartItemsForOrder')
+            ->with($order, self::ORDER_STORE_ID, 0, 0)
             ->willReturn(['item_data', 0, 0]);
         
         $this->cache->expects($this->exactly(2))->method('load')->willReturnOnConsecutiveCalls(false, true);

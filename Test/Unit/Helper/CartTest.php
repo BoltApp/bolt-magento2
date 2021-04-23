@@ -22,6 +22,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as BoltHelperCart;
 use Bolt\Boltpay\Helper\Log;
 use Bolt\Boltpay\Helper\MetricsClient;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Model\Request;
 use Bolt\Boltpay\Test\Unit\TestHelper;
@@ -4895,61 +4896,29 @@ ORDER
 
     /**
      * @test
-     * that getCartItemsFromItems returns expected data and attributes
+     * that getCartItemsForOrder returns expected data and attributes
      *
-     * @covers ::getCartItemsFromItems
+     * @covers ::getCartItemsForOrder
      */
-    public function getCartItemsFromItems_convertsOptionValueToString()
+    public function getCartItemsForOrder()
     {
-        $color = 'Fuchsia';
-        $size = 'XL';
+        $product = TestUtils::getSimpleProduct();
+        $quantity = 2;
 
-        $quoteItemOptions = [
-            'attributes_info' => [
-                ['label' => 'Size', 'value' => $size],
-                ['label' => 'Color', 'value' => $color],
-            ]
-        ];
-
-        $productTypeConfigurableMock = $this->getMockBuilder(Configurable::class)
-            ->setMethods(['getOrderOptions'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $productTypeConfigurableMock->method('getOrderOptions')->willReturn($quoteItemOptions);
-
-        $this->productMock = $this->getMockBuilder(Product::class)
-            ->setMethods(['getId', 'getDescription', 'getTypeInstance', 'getCustomOption'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
-        $this->productMock->method('getDescription')->willReturn('Product Description');
-        $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
-
+        $order = TestUtils::createDumpyOrder([], [], [TestUtils::createOrderItemByProduct($product, $quantity)]);
+        
         $this->imageHelper->method('init')->willReturnSelf();
         $this->imageHelper->method('getUrl')->willReturn('no-image');
+        
+        list($products, $totalAmount, $diff) = $this->currentMock->getCartItemsForOrder($order, self::STORE_ID);
 
-        list($products, $totalAmount, $diff) = $this->currentMock->getCartItemsFromItems(
-            [$this->getQuoteItemMock()],
-            self::CURRENCY_CODE,
-            self::STORE_ID
-        );
-
-        $resultProductProperties = $products[0]['properties'];
         static::assertCount(1, $products);
-        static::assertArrayHasKey('properties', $products[0]);
-        static::assertCount(2, $resultProductProperties);
-        static::assertInternalType('string', $resultProductProperties[0]->value);
-        static::assertInternalType('string', $resultProductProperties[1]->value);
-        static::assertEquals(
-            [
-            (object)['name' => 'Size', 'value' => 'XL'],
-            (object)['name' => 'Color', 'value' => 'Fuchsia'],
-            ],
-            $resultProductProperties
-        );
-        static::assertEquals($size, $products[0]['size']);
-        static::assertEquals($color, $products[0]['color']);
+        static::assertEquals($products[0]['reference'], $product->getId());
+        static::assertEquals($products[0]['name'], $product->getName());
+        static::assertEquals($products[0]['unit_price'], CurrencyUtils::toMinor($product->getPrice(), self::CURRENCY_CODE));
+        static::assertEquals($products[0]['total_amount'], CurrencyUtils::toMinor($product->getPrice() * $quantity, self::CURRENCY_CODE));
+        static::assertEquals($products[0]['quantity'], $quantity);        
+        static::assertEquals($products[0]['sku'], $product->getSku());
     }
 
         /**

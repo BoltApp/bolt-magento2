@@ -117,13 +117,12 @@ class OrderSaveObserver implements ObserverInterface
         $result = self::RESULT_FAILURE;
         try {
             $startTime = $this->metricsClient->getCurrentTime();
+            
             $order = $observer->getEvent()->getOrder();
             $storeId = $order->getStoreId();
-
             $currencyCode = $order->getOrderCurrencyCode();
-            $items = $order->getAllVisibleItems();
-            $itemData = $this->cartHelper->getCartItemsFromItems($items, $currencyCode, $storeId);
 
+            $itemData = $this->cartHelper->getCartItemsForOrder($order, $storeId);
             $orderUpdateData = [
                 'order_reference' => $order->getQuoteId(),
                 'cart' => [

@@ -530,6 +530,8 @@ class TestUtils
         $orderItem->setRowTotalInclTax($product->getPrice());
         $orderItem->setBaseRowTotalInclTax($product->getPrice());
         $orderItem->setProductType($product->getTypeId());
+        $orderItem->setName($product->getName());
+        $orderItem->setSku($product->getSku());
 
         return $orderItem;
     }
