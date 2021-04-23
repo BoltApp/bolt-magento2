@@ -49,11 +49,8 @@ $checkoutKey = $block->getCheckoutKey();
         'jquery',
         'matchMedia',
     ], function ($, mediaCheck) {
-        var insertAccountScript = function () {
-            var scriptTag = document.getElementById('bolt-account');
-            if (scriptTag) {
-                return;
-            }
+        let scriptTag = document.getElementById('bolt-account');
+        if (!scriptTag) {
             scriptTag = document.createElement('script');
             scriptTag.setAttribute('type', 'text/javascript');
             scriptTag.setAttribute('async', '');
@@ -62,31 +59,41 @@ $checkoutKey = $block->getCheckoutKey();
             scriptTag.setAttribute('data-publishable-key', '<?= /* @noEscape */ $checkoutKey; ?>');
             document.head.appendChild(scriptTag);
         }
+
+        let injectButtonsWhenScriptLoaded = function() {
+            if (typeof BoltAccount === 'undefined') {
+                window.setTimeout(insertButton, 100);
+                return;
+            }
+
+            BoltAccount.injectButtons();
+        }
+
         mediaCheck({
             media: '(max-width: 768px)',
             entry: function () {
                 // When magento constructs mobile menu it copies elements instead of moving
-                // We need to wait for this coping, remove first bolt-account-login div
+                // We need to wait for this copying, remove first bolt-account-login div
                 // And only ofter that insert account.js script
-                var ATTEMPT_LIMIT = 3;
-                var attempts = 0;
-                var timerId = setTimeout(function boltAccountLookup() {
-                    var $account_div = $("div.bolt-account-login");
-                    if ($account_div.length==2) {
+                let ATTEMPT_LIMIT = 3;
+                let attempts = 0;
+                let timerId = setTimeout(function boltAccountLookup() {
+                    let $account_div = $("div.bolt-account-login");
+                    if ($account_div.length === 2) {
                         $account_div.eq(0).remove();
-                        insertAccountScript();
+                        injectButtonsWhenScriptLoaded();
                     } else {
                         if(attempts === ATTEMPT_LIMIT){
-                            return insertAccountScript();
+                            return injectButtonsWhenScriptLoaded();
                         }
                         attempts ++;
                         timerId = setTimeout(boltAccountLookup, 1000)
                     }
-                }, 1000);
+                }, 100);
             },
             exit: function () {
-                // For desktop we are ready to insert script
-                insertAccountScript();
+                // For desktop we are ready to inject the buttons immediately since there is no copying happening
+                injectButtonsWhenScriptLoaded();
             }
         });
     });
