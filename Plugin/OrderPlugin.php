@@ -29,6 +29,11 @@ class OrderPlugin
      * @var \Magento\Framework\App\RequestInterface
      */
     private $request;
+    
+    /**
+     * @var array
+     */
+    private $disallowedOrderState;
 
     /**
      * OrderPlugin constructor.
@@ -37,6 +42,11 @@ class OrderPlugin
     public function __construct(\Magento\Framework\App\RequestInterface $request)
     {
         $this->request = $request;
+        $this->disallowedOrderStates = [
+            Order::STATE_PROCESSING,
+            Order::STATE_COMPLETE,
+            Order::STATE_CLOSED,
+        ];
     }
 
     /**
@@ -70,6 +80,15 @@ class OrderPlugin
         } elseif (!$subject->getState() || $state === Order::STATE_NEW) {
             $state = Order::STATE_PENDING_PAYMENT;
         }
+         
+        // When the create_order hook (thread 1) takes a lot of time to execute and returns a timeout, the authorize/payment hook (thread 2) is sent to Magento.
+        // It updates the order prior to the create_order hook (thread 1) process.
+        // This ensures that the order in processing/complete/closed status won't be updated back to pending_review.
+        if (!empty($this->oldState) && in_array($this->oldState,$this->disallowedOrderStates)
+            && ($state === Order::STATE_PENDING_PAYMENT || $state === Order::STATE_NEW)) {
+            return [$this->oldState];
+        }
+        
         return [$state];
     }
 
@@ -93,17 +112,28 @@ class OrderPlugin
             // Check and set the recharged order state to processing
             return [Order::STATE_PROCESSING];
         }
+        
+        $oldStatus = $subject->getStatus();
 
         if ($status === \Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATUS_PENDING) {
             $status = $subject->getConfig()->getStateDefaultStatus(Order::STATE_NEW);
         } elseif ((
-            !  $subject->getStatus()
-            || $subject->getStatus() == Order::STATE_PENDING_PAYMENT
-            || $subject->getStatus() == Order::STATE_NEW
+            !  $oldStatus
+            || $oldStatus == Order::STATE_PENDING_PAYMENT
+            || $oldStatus == Order::STATE_NEW
             ) && $status === \Bolt\Boltpay\Helper\Order::MAGENTO_ORDER_STATUS_PENDING
         ) {
             $status = $subject->getConfig()->getStateDefaultStatus(Order::STATE_PENDING_PAYMENT);
         }
+         
+        // When the create_order hook (thread 1) takes a lot of time to execute and returns a timeout, the authorize/payment hook (thread 2) is sent to Magento.
+        // It updates the order prior to the create_order hook (thread 1) process.
+        // This ensures that the order in processing/complete/closed status won't be updated back to pending_review.
+        if (!empty($oldStatus) && in_array($oldStatus,$this->disallowedOrderStates)
+            && ($status === Order::STATE_PENDING_PAYMENT || $status === Order::STATE_NEW)) {
+            return [$oldStatus];
+        }
+        
         return [$status];
     }
 

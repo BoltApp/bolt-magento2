@@ -118,6 +118,7 @@ class OrderPluginTest extends BoltTestCase
             ['', OrderHelper::TS_REJECTED_IRREVERSIBLE, [Order::STATE_PENDING_PAYMENT]],
             [Order::STATE_NEW, Order::STATE_NEW, [Order::STATE_PENDING_PAYMENT]],
             [Order::STATE_COMPLETE, Order::STATE_COMPLETE, [Order::STATE_COMPLETE]],
+            [Order::STATE_PROCESSING, Order::STATE_PENDING_PAYMENT, [Order::STATE_PROCESSING]],
         ];
     }
 
@@ -185,6 +186,8 @@ class OrderPluginTest extends BoltTestCase
             [Order::STATE_COMPLETE, OrderHelper::MAGENTO_ORDER_STATUS_PENDING, Order::STATE_PENDING_PAYMENT, [Order::STATE_COMPLETE]],
             [Order::STATE_COMPLETE, OrderHelper::MAGENTO_ORDER_STATUS_PENDING, Order::STATE_NEW, [Order::STATE_COMPLETE]],
             [Order::STATE_COMPLETE, OrderHelper::MAGENTO_ORDER_STATUS_PENDING, '', [Order::STATE_COMPLETE]],
+            [Order::STATE_COMPLETE, OrderHelper::MAGENTO_ORDER_STATUS_PENDING, '', [Order::STATE_COMPLETE]],
+            [Order::STATE_PENDING_PAYMENT, Order::STATE_PENDING_PAYMENT, Order::STATE_PROCESSING, [Order::STATE_PROCESSING]],
         ];
     }
 
