@@ -19,35 +19,35 @@ namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel;
 
 use Bolt\Boltpay\Model\ResourceModel\WebhookLog;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\TestFramework\Helper\Bootstrap;
 
 class WebhookLogTest extends BoltTestCase
 {
     /**
-     * @var \Bolt\Boltpay\Model\ResourceModel\WebhookLog
+     * @var WebhookLog
      */
-    private $wehookLogMock;
+    private $webhookLog;
+
+    private $objectManager;
 
     /**
-     * Setup for CustomerCreditCardTest Class
+     * @inheritdoc
      */
     public function setUpInternal()
     {
-        $this->wehookLogMock = $this->getMockBuilder(WebhookLog::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['_init'])
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->webhookLog = $this->objectManager->create(WebhookLog::class);
     }
 
     /**
      * @test
      */
-    public function testConstruct()
+    public function construct()
     {
-        $this->wehookLogMock->expects($this->once())->method('_init')
-            ->with('bolt_webhook_log', 'id')
-            ->willReturnSelf();
-
-        TestHelper::invokeMethod($this->wehookLogMock, '_construct');
+        self::assertEquals('bolt_webhook_log', $this->webhookLog->getMainTable());
+        self::assertEquals('id', $this->webhookLog->getIdFieldName());
     }
 }
