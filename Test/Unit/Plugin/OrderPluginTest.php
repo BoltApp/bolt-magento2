@@ -17,13 +17,13 @@
 namespace Bolt\Boltpay\Test\Unit\Plugin;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Plugin\OrderPlugin;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Model\Payment as BoltPayment;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\OrderPlugin
@@ -53,13 +53,16 @@ class OrderPluginTest extends BoltTestCase
     /** @var callable|MockObject */
     protected $callback;
 
+    protected $objectManager;
+
     public function setUpInternal()
     {
-        $this->plugin = (new ObjectManager($this))->getObject(OrderPlugin::class);
-        $this->subject = $this->createPartialMock(Order::class, [
-            'getPayment', 'getState', 'getConfig', 'getStateDefaultStatus', 'getStatus', 'setState', 'setStatus', 'place','getIsRechargedOrder'
-        ]);
-        $this->payment = $this->createPartialMock(Payment::class, ['getMethod']);
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->plugin = $this->objectManager->create(OrderPlugin::class);
+
         /** @var callable $callback */
         $this->callback = $callback = $this->getMockBuilder(\stdClass::class)
             ->setMethods(['__invoke'])->getMock();
@@ -74,9 +77,8 @@ class OrderPluginTest extends BoltTestCase
      */
     public function beforeSetState_withoutPayment()
     {
-        $this->subject->expects(self::once())->method('getState');
-        $this->subject->expects(self::once())->method('getPayment')->willReturn(null);
-        $result = $this->plugin->beforeSetState($this->subject, 'normal_state');
+        $order = $this->objectManager->create(Order::class);
+        $result = $this->plugin->beforeSetState($order, 'normal_state');
         $this->assertEquals(['normal_state'], $result);
     }
 
@@ -86,10 +88,12 @@ class OrderPluginTest extends BoltTestCase
      */
     public function beforeSetState_withPaymentMethodIsNotBoltPay()
     {
-        $this->subject->expects(self::once())->method('getState');
-        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
-        $this->payment->expects(self::once())->method('getMethod')->willReturn('is_not_boltpay');
-        $result = $this->plugin->beforeSetState($this->subject, 'normal_state');
+        $order = $this->objectManager->create(Order::class);
+        $payment = $this->objectManager->create(Payment::class);
+        $payment->setMethod('is_not_boltpay');
+        $order->setPayment($payment);
+
+        $result = $this->plugin->beforeSetState($order, 'normal_state');
         $this->assertEquals(['normal_state'], $result);
     }
 
@@ -104,10 +108,12 @@ class OrderPluginTest extends BoltTestCase
      */
     public function beforeSetState_withPaymentMethodIsBoltPay($orderState, $stateParameter, $expected)
     {
-        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
-        $this->payment->expects(self::once())->method('getMethod')->willReturn('boltpay');
-        $this->subject->expects(self::any())->method('getState')->willReturn($orderState);
-        $result = $this->plugin->beforeSetState($this->subject, $stateParameter);
+        $order = $this->objectManager->create(Order::class);
+        $order->setState($orderState);
+        $payment = $this->objectManager->create(Payment::class);
+        $payment->setMethod('boltpay');
+        $order->setPayment($payment);
+        $result = $this->plugin->beforeSetState($order, $stateParameter);
         $this->assertEquals($expected, $result);
     }
 
@@ -128,10 +134,13 @@ class OrderPluginTest extends BoltTestCase
      */
     public function beforeSetState_withRechargedOrder()
     {
-        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
-        $this->payment->expects(self::once())->method('getMethod')->willReturn('boltpay');
-        $this->subject->expects(self::once())->method('getIsRechargedOrder')->willReturn(true);
-        $result = $this->plugin->beforeSetState($this->subject, 'new');
+        $order = $this->objectManager->create(Order::class);
+        $payment = $this->objectManager->create(Payment::class);
+        $payment->setMethod('boltpay');
+        $order->setPayment($payment);
+        $order->setIsRechargedOrder(true);
+
+        $result = $this->plugin->beforeSetState($order, 'new');
         $this->assertEquals([Order::STATE_PROCESSING], $result);
     }
 
@@ -141,8 +150,8 @@ class OrderPluginTest extends BoltTestCase
      */
     public function beforeSetStatus_withoutPayment()
     {
-        $this->subject->expects(self::once())->method('getPayment')->willReturn(null);
-        $result = $this->plugin->beforeSetStatus($this->subject, 'normal_status');
+        $order = $this->objectManager->create(Order::class);
+        $result = $this->plugin->beforeSetStatus($order, 'normal_status');
         $this->assertEquals(['normal_status'], $result);
     }
 
@@ -152,9 +161,11 @@ class OrderPluginTest extends BoltTestCase
      */
     public function beforeSetStatus_withPaymentMethodIsNotBoltPay()
     {
-        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
-        $this->payment->expects(self::once())->method('getMethod')->willReturn('is_not_boltpay');
-        $result = $this->plugin->beforeSetStatus($this->subject, 'normal_status');
+        $order = $this->objectManager->create(Order::class);
+        $payment = $this->objectManager->create(Payment::class);
+        $payment->setMethod('is_not_boltpay');
+        $order->setPayment($payment);
+        $result = $this->plugin->beforeSetStatus($order, 'normal_status');
         $this->assertEquals(['normal_status'], $result);
     }
 
@@ -170,12 +181,16 @@ class OrderPluginTest extends BoltTestCase
      */
     public function beforeSetStatus_withPaymentMethodIsBoltPay($stateDefaultStatus, $statusParameter, $orderStatus, $expected)
     {
-        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
-        $this->payment->expects(self::once())->method('getMethod')->willReturn('boltpay');
-        $this->subject->expects(self::any())->method('getConfig')->willReturnSelf();
-        $this->subject->expects(self::any())->method('getStateDefaultStatus')->willReturn($stateDefaultStatus);
-        $this->subject->expects(self::any())->method('getStatus')->willReturn($orderStatus);
-        $result = $this->plugin->beforeSetStatus($this->subject, $statusParameter);
+        $order = $this->createPartialMock(Order::class, [
+            'getPayment', 'getConfig', 'getStateDefaultStatus', 'getStatus',
+        ]);
+        $payment = $this->createPartialMock(Payment::class, ['getMethod']);
+        $order->expects(self::exactly(2))->method('getPayment')->willReturn($payment);
+        $payment->expects(self::once())->method('getMethod')->willReturn('boltpay');
+        $order->expects(self::any())->method('getConfig')->willReturnSelf();
+        $order->expects(self::any())->method('getStateDefaultStatus')->willReturn($stateDefaultStatus);
+        $order->expects(self::any())->method('getStatus')->willReturn($orderStatus);
+        $result = $this->plugin->beforeSetStatus($order, $statusParameter);
         $this->assertEquals($expected, $result);
     }
 
@@ -198,12 +213,15 @@ class OrderPluginTest extends BoltTestCase
      */
     public function aroundPlace_ifPaymentMethodIsBoltPayAndNoAppropriateOrderState_noProceedCallbackCalled($orderState)
     {
-        $this->payment->expects(self::once())->method('getMethod')->willReturn(BoltPayment::METHOD_CODE);
-        $this->subject->expects(self::atMost(2))->method('getPayment')->willReturn($this->payment);
-        $this->subject->expects(self::atMost(2))->method('getState')->willReturn($orderState);
-        $this->callback->expects(self::never())->method('__invoke');
-        $result = $this->plugin->aroundPlace($this->subject, $this->proceed);
-        $this->assertEquals($result, $this->subject);
+        $order = $this->objectManager->create(Order::class);
+        $payment = $this->objectManager->create(Payment::class);
+        $payment->setMethod(BoltPayment::METHOD_CODE);
+        $order->setPayment($payment);
+        $order->setState($orderState);
+        $result = $this->plugin->aroundPlace($order, $this->proceed);
+        $this->assertEquals($result, $order);
+
+
     }
 
     public function dataProvider_aroundPlace_noProceedCallbackCalled()
@@ -221,11 +239,13 @@ class OrderPluginTest extends BoltTestCase
      */
     public function aroundPlace_ifNotBoltPayment_proceedCallbackCalled($paymentMethod)
     {
-        $this->payment->expects(self::atMost(1))->method('getMethod')->willReturn($paymentMethod);
-        $this->subject->expects(self::atLeast(1))->method('getPayment')->willReturn($this->payment);
-        $this->subject->expects(self::never())->method('getState');
+        $order = $this->objectManager->create(Order::class);
+        $payment = $this->objectManager->create(Payment::class);
+        $payment->setMethod($paymentMethod);
+        $order->setPayment($payment);
+
         $this->callback->expects(self::once())->method('__invoke');
-        $this->plugin->aroundPlace($this->subject, $this->proceed);
+        $this->plugin->aroundPlace($order, $this->proceed);
     }
 
     public function dataProvider_aroundPlace_noBoltPayment()
@@ -242,11 +262,13 @@ class OrderPluginTest extends BoltTestCase
      */
     public function aroundPlace_ifBoltPaymentAndStateNew_proceedCallbackCalled()
     {
-        $this->payment->expects(self::once())->method('getMethod')->willReturn(BoltPayment::METHOD_CODE);
-        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
-        $this->subject->method('getState')->willReturn(Order::STATE_NEW);
+        $order = $this->createPartialMock(Order::class, ['getPayment', 'getState']);
+        $payment = $this->createPartialMock(Payment::class, ['getMethod']);
+        $payment->method('getMethod')->willReturn('other_method');
+        $order->method('getPayment')->willReturn($payment);
+        $order->method('getState')->willReturn(Order::STATE_NEW);
         $this->callback->expects(self::once())->method('__invoke');
-        $this->plugin->aroundPlace($this->subject, $this->proceed);
+        $this->plugin->aroundPlace($order, $this->proceed);
     }
 
     /**
@@ -255,13 +277,15 @@ class OrderPluginTest extends BoltTestCase
      */
     public function afterPlace_ifNotBoltPayment_setStateNotCalled()
     {
-        $this->payment->expects(self::once())->method('getMethod')->willReturn('other_method');
-        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
-        $this->subject->expects(self::never())->method('getState');
-        $this->subject->expects(self::never())->method('setState');
-        $this->subject->expects(self::never())->method('setStatus');
-        $result = $this->plugin->afterPlace($this->subject, $this->subject);
-        $this->assertEquals($result, $this->subject);
+        $subjectParameter = $this->objectManager->create(Order::class);
+        $resultParameter = $this->objectManager->create(Order::class);
+        $payment = $this->objectManager->create(Payment::class);
+        $payment->setMethod('other_method');
+        $subjectParameter->setPayment($payment);
+        $subjectParameter->setState(Order::STATE_PROCESSING);
+        $result = $this->plugin->afterPlace($subjectParameter, $resultParameter);
+        $this->assertEquals($resultParameter, $result);
+        $this->assertEquals(Order::STATE_PROCESSING, $subjectParameter->getState());
     }
 
     /**
@@ -270,17 +294,15 @@ class OrderPluginTest extends BoltTestCase
      */
     public function afterPlace_ifBoltPaymentAndNoStateSet_setStateIsCalled()
     {
-        $this->payment->expects(self::once())->method('getMethod')->willReturn(BoltPayment::METHOD_CODE);
-        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
-        $this->subject->expects(self::once())->method('getState')->willReturn(null);
-        $this->subject->expects(self::once())->method('setState')->with(Order::STATE_NEW);
-        $orderConfig = $this->createMock('\Magento\Sales\Model\Order\Config');
-        $orderConfig->expects(self::once())->method('getStateDefaultStatus')->with(Order::STATE_NEW)
-            ->willReturn('pending');
-        $this->subject->expects(self::once())->method('getConfig')->willReturn($orderConfig);
-        $this->subject->expects(self::once())->method('setStatus')->with('pending');
-        $result = $this->plugin->afterPlace($this->subject, $this->subject);
-        $this->assertEquals($result, $this->subject);
+        $subjectParameter = $this->objectManager->create(Order::class);
+        $resultParameter = $this->objectManager->create(Order::class);
+        $payment = $this->objectManager->create(Payment::class);
+        $payment->setMethod(BoltPayment::METHOD_CODE);
+        $subjectParameter->setPayment($payment);
+        $subjectParameter->setStatus(Order::STATE_PROCESSING);
+        $result = $this->plugin->afterPlace($subjectParameter, $resultParameter);
+        $this->assertEquals($resultParameter, $result);
+        $this->assertEquals(Order::STATE_PENDING_PAYMENT, $subjectParameter->getState());
     }
 
     /**
@@ -289,12 +311,15 @@ class OrderPluginTest extends BoltTestCase
      */
     public function afterSetState_ifNotBoltPayment_orderPlaceNotCalled()
     {
-        $this->payment->expects(self::once())->method('getMethod')->willReturn('other_method');
-        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
-        $this->subject->expects(self::never())->method('getState');
-        $this->subject->expects(self::never())->method('place');
-        $result = $this->plugin->afterSetState($this->subject, $this->subject);
-        $this->assertEquals($result, $this->subject);
+        $order = $this->createPartialMock(Order::class, ['getPayment', 'getState', 'place',]);
+        $payment = $this->createPartialMock(Payment::class, ['getMethod']);
+        $payment->method('getMethod')->willReturn('other_method');
+        $order->method('getPayment')->willReturn($payment);
+        $order->method('getState');
+        $order->expects(self::never())->method('place');
+        $resultParameter = $this->objectManager->create(Order::class);
+        $result = $this->plugin->afterSetState($order, $resultParameter);
+        $this->assertEquals($result, $resultParameter);
     }
 
     /**
@@ -303,12 +328,15 @@ class OrderPluginTest extends BoltTestCase
      */
     public function afterSetState_ifBoltPaymentAndOrderStateNotNew_orderPlaceNotCalled()
     {
-        $this->payment->expects(self::once())->method('getMethod')->willReturn(BoltPayment::METHOD_CODE);
-        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
-        $this->subject->expects(self::once())->method('getState')->willReturn('other_state');
-        $this->subject->expects(self::never())->method('place');
-        $result = $this->plugin->afterSetState($this->subject, $this->subject);
-        $this->assertEquals($result, $this->subject);
+        $order = $this->createPartialMock(Order::class, ['getPayment', 'getState', 'place',]);
+        $payment = $this->createPartialMock(Payment::class, ['getMethod']);
+        $payment->method('getMethod')->willReturn(BoltPayment::METHOD_CODE);
+        $order->method('getPayment')->willReturn($payment);
+        $order->method('getState')->willReturn('other_state');
+        $order->expects(self::never())->method('place');
+        $resultParameter = $this->objectManager->create(Order::class);
+        $result = $this->plugin->afterSetState($order, $resultParameter);
+        $this->assertEquals($result, $resultParameter);
     }
 
     /**
@@ -317,13 +345,16 @@ class OrderPluginTest extends BoltTestCase
      */
     public function afterSetState_ifBoltPaymentAndOrderStateNewAndOldOrderStateNotPendingPayment_orderPlaceNotCalled()
     {
-        $this->payment->expects(self::once())->method('getMethod')->willReturn(BoltPayment::METHOD_CODE);
-        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
-        $this->subject->expects(self::once())->method('getState')->willReturn(Order::STATE_NEW);
+        $order = $this->createPartialMock(Order::class, ['getPayment', 'getState', 'place',]);
+        $payment = $this->createPartialMock(Payment::class, ['getMethod']);
+        $payment->method('getMethod')->willReturn(BoltPayment::METHOD_CODE);
+        $order->method('getPayment')->willReturn($payment);
+        $order->method('getState')->willReturn(Order::STATE_NEW);
         TestHelper::setProperty($this->plugin, 'oldState', 'other_state');
-        $this->subject->expects(self::never())->method('place');
-        $result = $this->plugin->afterSetState($this->subject, $this->subject);
-        $this->assertEquals($result, $this->subject);
+        $order->expects(self::never())->method('place');
+        $resultParameter = $this->objectManager->create(Order::class);
+        $result = $this->plugin->afterSetState($order, $resultParameter);
+        $this->assertEquals($result, $resultParameter);
     }
 
     /**
@@ -332,13 +363,15 @@ class OrderPluginTest extends BoltTestCase
      */
     public function afterSetState_ifBoltPaymentAndOrderStateNewAndOldOrderStatePendingPayment_orderPlaceCalled()
     {
-        $this->payment->expects(self::once())->method('getMethod')->willReturn(BoltPayment::METHOD_CODE);
-        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
-        $this->subject->expects(self::once())->method('getState')->willReturn(Order::STATE_NEW);
+        $order = $this->createPartialMock(Order::class, ['getPayment', 'getState', 'place',]);
+        $payment = $this->createPartialMock(Payment::class, ['getMethod']);
+        $payment->expects(self::once())->method('getMethod')->willReturn(BoltPayment::METHOD_CODE);
+        $order->expects(self::exactly(2))->method('getPayment')->willReturn($payment);
+        $order->expects(self::once())->method('getState')->willReturn(Order::STATE_NEW);
         TestHelper::setProperty($this->plugin, 'oldState', Order::STATE_PENDING_PAYMENT);
-        $this->subject->expects(self::once())->method('place');
-        $result = $this->plugin->afterSetState($this->subject, $this->subject);
-        $this->assertEquals($result, $this->subject);
+        $order->expects(self::once())->method('place');
+        $result = $this->plugin->afterSetState($order, $order);
+        $this->assertEquals($result, $order);
     }
 
     /**
@@ -347,10 +380,12 @@ class OrderPluginTest extends BoltTestCase
      */
     public function beforeSetStatus_withRechargedOrder()
     {
-        $this->subject->expects(self::exactly(2))->method('getPayment')->willReturn($this->payment);
-        $this->payment->expects(self::once())->method('getMethod')->willReturn('boltpay');
-        $this->subject->expects(self::once())->method('getIsRechargedOrder')->willReturn(true);
-        $result = $this->plugin->beforeSetStatus($this->subject, \Bolt\Boltpay\Helper\Order::MAGENTO_ORDER_STATUS_PENDING);
+        $order = $this->objectManager->create(Order::class);
+        $payment = $this->objectManager->create(Payment::class);
+        $payment->setMethod(BoltPayment::METHOD_CODE);
+        $order->setPayment($payment);
+        $order->setIsRechargedOrder(true);
+        $result = $this->plugin->beforeSetStatus($order, \Bolt\Boltpay\Helper\Order::MAGENTO_ORDER_STATUS_PENDING);
         $this->assertEquals([Order::STATE_PROCESSING], $result);
     }
 }
