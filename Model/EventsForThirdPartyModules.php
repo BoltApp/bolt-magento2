@@ -40,6 +40,7 @@ use Bolt\Boltpay\ThirdPartyModules\MageWorld\Affiliate as MW_Affiliate;
 use Bolt\Boltpay\ThirdPartyModules\Magento\InStorePickupShipping as Magento_InStorePickupShipping;
 use Bolt\Boltpay\ThirdPartyModules\Magecomp\Extrafee as Magecomp_Extrafee;
 use Bolt\Boltpay\ThirdPartyModules\Webkul\Odoomagentoconnect as Webkul_Odoomagentoconnect;
+use Bolt\Boltpay\ThirdPartyModules\J2t\Rewardpoints as J2t_Rewardpoints;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -125,6 +126,13 @@ class EventsForThirdPartyModules
                                       "MW\RewardPoints\Model\CustomerFactory"],
                     "boltClass" => MW_RewardPoints::class,
                 ],
+                [
+                    "module" => "J2t_Rewardpoints",
+                    "sendClasses" => [
+                        "J2t\Rewardpoints\Helper\Data",
+                    ],
+                    "boltClass" => J2t_Rewardpoints::class,
+                ],
             ]
         ],
         'replicateQuoteData' => [
@@ -209,6 +217,13 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Mirasvit\Credit\Helper\Data",
                                       "Mirasvit\Credit\Service\Calculation"],
                     "boltClass" => Mirasvit_Credit::class,
+                ],
+                [
+                    "module" => "J2t_Rewardpoints",
+                    "checkClasses" => [
+                        "J2t\Rewardpoints\Helper\Data",
+                    ],
+                    "boltClass" => J2t_Rewardpoints::class,
                 ],
             ]
         ],
@@ -488,6 +503,13 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass" => Magento_GiftCardAccount::class,
                 ],
+                [
+                    "module" => "J2t_Rewardpoints",
+                    "sendClasses" => [
+                        "J2t\Rewardpoints\Helper\Data",
+                    ],
+                    "boltClass" => J2t_Rewardpoints::class,
+                ],
             ],
         ],
         /** @see \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::verifyCouponCode */
@@ -584,6 +606,13 @@ class EventsForThirdPartyModules
                     "module" => "Magento_GiftCardAccount",
                     "checkClasses" => ["Magento\GiftCardAccount\Model\Giftcardaccount"],
                     "boltClass" => Magento_GiftCardAccount::class,
+                ],
+                [
+                    "module" => "J2t_Rewardpoints",
+                    "checkClasses" => [
+                        "J2t\Rewardpoints\Helper\Data",
+                    ],
+                    "boltClass" => J2t_Rewardpoints::class,
                 ],
             ],
         ],
@@ -748,6 +777,13 @@ class EventsForThirdPartyModules
                     "module" => "Mirasvit_Credit",
                     "checkClasses" => ["Mirasvit\Credit\Helper\Data"],
                     "boltClass" => Mirasvit_Credit::class,
+                ],
+                [
+                    "module" => "J2t_Rewardpoints",
+                    "checkClasses" => [
+                        "J2t\Rewardpoints\Helper\Data",
+                    ],
+                    "boltClass" => J2t_Rewardpoints::class,
                 ],
             ]
         ],
