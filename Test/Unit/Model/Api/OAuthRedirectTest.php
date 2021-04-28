@@ -29,6 +29,7 @@ use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Quote\Model\Quote;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\OAuthRedirect
@@ -50,7 +51,7 @@ class OAuthRedirectTest extends BoltTestCase
      */
     public function setUpInternal()
     {
-        $this->objectManager = ObjectManager::getInstance();
+        $this->objectManager = Bootstrap::getObjectManager();
         $this->oAuthRedirect = $this->objectManager->create(OAuthRedirect::class);
     }
 
@@ -191,7 +192,7 @@ class OAuthRedirectTest extends BoltTestCase
 
         $cartHelper = $this->createMock(CartHelper::class);
         $cartHelper->expects(static::once())->method('getOrderByQuoteId')->willReturn(false);
-        $testQuote = $this->objectManager->create(Quote::class);
+        $testQuote = $this->createMock(Quote::class);
         $cartHelper->expects(static::once())->method('getQuoteById')->willReturn($testQuote);
         $cartHelper->expects(static::once())->method('saveQuote');
 
