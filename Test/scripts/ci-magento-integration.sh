@@ -38,4 +38,3 @@ cp -r magento/app/code/Bolt/Boltpay .
 rm -rf magento
 mkdir -p magento/app/code/Bolt
 mv Boltpay magento/app/code/Bolt
-bash <(curl -s https://bolt-devops.s3-us-west-2.amazonaws.com/testing/codecov_uploader) -f /home/circleci/project/artifacts/coverage.xml -F $TEST_ENV
