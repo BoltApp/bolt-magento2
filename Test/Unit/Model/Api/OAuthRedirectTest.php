@@ -25,7 +25,6 @@ use Bolt\Boltpay\Model\Api\OAuthRedirect;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Test\Unit\TestUtils;
-use Magento\Framework\App\Bootstrap;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
@@ -51,7 +50,7 @@ class OAuthRedirectTest extends BoltTestCase
      */
     public function setUpInternal()
     {
-        $this->objectManager = Bootstrap::getObjectManager();
+        $this->objectManager = ObjectManager::getInstance();
         $this->oAuthRedirect = $this->objectManager->create(OAuthRedirect::class);
     }
 
