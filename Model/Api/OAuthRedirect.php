@@ -27,13 +27,17 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\SSOHelper;
 use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
+use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Api\Data\CustomerInterfaceFactory;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Customer\Model\Url;
+use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
+use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\QuoteFactory;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Store\Model\StoreManagerInterface;
 
@@ -100,6 +104,16 @@ class OAuthRedirect implements OAuthRedirectInterface
     private $orderRepository;
 
     /**
+     * @var ResourceConnection
+     */
+    private $resourceConnection;
+
+    /**
+     * @var QuoteFactory
+     */
+    private $quoteFactory;
+
+    /**
      * @var Url
      */
     private $url;
@@ -122,6 +136,8 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param CustomerInterfaceFactory         $customerInterfaceFactory
      * @param CustomerFactory                  $customerFactory
      * @param OrderRepository                  $orderRepository
+     * @param ResourceConnection               $resourceConnection
+     * @param QuoteFactory                     $quoteFactory
      * @param Url                              $url
      * @param Bugsnag                          $bugsnag
      */
@@ -138,6 +154,8 @@ class OAuthRedirect implements OAuthRedirectInterface
         CustomerInterfaceFactory $customerInterfaceFactory,
         CustomerFactory $customerFactory,
         OrderRepository $orderRepository,
+        ResourceConnection $resourceConnection,
+        QuoteFactory $quoteFactory,
         Url $url,
         Bugsnag $bugsnag
     ) {
@@ -153,6 +171,8 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->customerInterfaceFactory = $customerInterfaceFactory;
         $this->customerFactory = $customerFactory;
         $this->orderRepository = $orderRepository;
+        $this->resourceConnection = $resourceConnection;
+        $this->quoteFactory = $quoteFactory;
         $this->url = $url;
         $this->bugsnag = $bugsnag;
     }
@@ -243,12 +263,29 @@ class OAuthRedirect implements OAuthRedirectInterface
         try {
             $customer = $customer ?: $this->createNewCustomer($websiteId, $storeId, $payload);
 
+            // Order ID is actually the parent quote ID, which is referred to as "reference" in Storm
             if ($order_id !== '') {
-                $order = $this->cartHelper->getOrderByIncrementId($order_id);
-                if ($order !== false && !$order->getCustomerId() && $order->getBillingAddress()->getEmail() === $payload['email']) {
+                $order = $this->cartHelper->getOrderByQuoteId($order_id);
+                if ($order !== false) {
                     $order->setCustomerId($customer->getId());
+                    $order->setCustomerFirstname($customer->getFirstname());
+                    $order->setCustomerMiddlename($customer->getMiddlename());
+                    $order->setCustomerLastname($customer->getLastname());
+                    $order->setCustomerGroupId($customer->getGroupId());
                     $order->setCustomerIsGuest(0);
                     $this->orderRepository->save($order);
+                } else {
+                    // The checkout may not have been completed yet, but the user may have logged in via Bolt SSO
+                    $quote = $this->cartHelper->getQuoteById($order_id);
+                    if ($quote != false && $quote->getBillingAddress()->getEmail() === $payload['email']) {
+                        $quote->setCustomer($customer);
+                        $quote->setCustomerIsGuest(false);
+                        $this->cartHelper->saveQuote($quote);
+
+                        $this->updateImmutableQuotes($quote, $customer);
+                    } else {
+                        $this->bugsnag->notifyError("Cannot find quote or order","Quote Id: {$order_id}");
+                    }
                 }
             }
 
@@ -256,6 +293,37 @@ class OAuthRedirect implements OAuthRedirectInterface
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
             throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+        }
+    }
+
+    /**
+     * Update all immutable (child) quotes with logged-in customer
+     *
+     * @param Quote               $parentQuote
+     * @param CustomerInterface   $customer
+     */
+    private function updateImmutableQuotes($parentQuote, $customer)
+    {
+        $quoteTable = $this->resourceConnection->getTableName('quote');
+        $connection = $this->resourceConnection->getConnection();
+        $select = $connection->select()
+            ->from(
+                ['c' => $quoteTable],
+                ['*']
+            )
+            ->where('c.bolt_parent_quote_id = :bolt_parent_quote_id')
+            ->where('c.entity_id != :entity_id');
+        $bind = [
+            'bolt_parent_quote_id' => $parentQuote->getId(),
+            'entity_id' => $parentQuote->getId()
+        ];
+
+        $results = $connection->fetchAll($select, $bind);
+        foreach ($results as $data) {
+            $immutableQuote = $this->quoteFactory->create();
+            $immutableQuote->setData($data);
+            $immutableQuote->setCustomer($customer);
+            $this->cartHelper->saveQuote($immutableQuote);
         }
     }
 

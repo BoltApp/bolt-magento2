@@ -19,15 +19,17 @@
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\SSOHelper;
 use Bolt\Boltpay\Model\Api\OAuthRedirect;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\Framework\App\Bootstrap;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
-use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Quote\Model\Quote;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\OAuthRedirect
@@ -164,6 +166,38 @@ class OAuthRedirectTest extends BoltTestCase
         ]);
         TestHelper::setProperty($this->oAuthRedirect, 'ssoHelper', $ssoHelper);
         $this->oAuthRedirect->login('code', 'scope', 'state', '');
+        $this->assertEquals('t@t.com', TestHelper::getProperty($this->oAuthRedirect, 'customerSession')->getCustomer()->getEmail());
+    }
+
+
+    /**
+     * @test
+     */
+    public function login_associatesCustomerWithQuote()
+    {
+        TestUtils::saveFeatureSwitch(
+            Definitions::M2_ENABLE_BOLT_SSO,
+            true
+        );
+        $ssoHelper = $this->createMock(SSOHelper::class);
+        $ssoHelper->expects(static::once())->method('getOAuthConfiguration')->willReturn(['clientid', 'clientsecret', 'boltpublickey']);
+        $ssoHelper->expects(static::once())->method('exchangeToken')->willReturn((object)['access_token' => 'test access token', 'id_token' => 'test id token']);
+        $ssoHelper->expects(static::once())->method('parseAndValidateJWT')->willReturn([
+            'sub' => 'abc',
+            'first_name' => 'first',
+            'last_name' => 'last',
+            'email' => 't@t.com',
+            'email_verified' => true
+        ]);
+
+        $cartHelper = $this->createMock(CartHelper::class);
+        $cartHelper->expects(static::once())->method('getOrderByQuoteId')->willReturn(false);
+        $testQuote = $this->objectManager->create(Quote::class);
+        $cartHelper->expects(static::once())->method('getQuoteById')->willReturn($testQuote);
+        $cartHelper->expects(static::once())->method('saveQuote');
+
+        TestHelper::setProperty($this->oAuthRedirect, 'ssoHelper', $ssoHelper);
+        $this->oAuthRedirect->login('code', 'scope', 'state', '222');
         $this->assertEquals('t@t.com', TestHelper::getProperty($this->oAuthRedirect, 'customerSession')->getCustomer()->getEmail());
     }
 }
