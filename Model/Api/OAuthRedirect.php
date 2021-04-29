@@ -185,7 +185,6 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param string $code
      * @param string $scope
      * @param string $state
-     * @param string $display_id
      * @param string $reference
      *
      * @return void
@@ -193,7 +192,7 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function login($code = '', $scope = '', $state = '', $display_id = '', $reference = '')
+    public function login($code = '', $scope = '', $state = '', $reference = '')
     {
         if (!$this->deciderHelper->isBoltSSOEnabled()) {
             throw new NoSuchEntityException(__('Request does not match any route.'));
@@ -264,9 +263,9 @@ class OAuthRedirect implements OAuthRedirectInterface
         try {
             $customer = $customer ?: $this->createNewCustomer($websiteId, $storeId, $payload);
 
-            // Order ID is actually the order increment ID, which is referred to as "display ID" in Storm
-            if ($display_id !== '') {
-                $order = $this->cartHelper->getOrderByIncrementId($display_id);
+            // The reference parameter is actually the Bolt Parent Quote ID
+            if ($reference !== '') {
+                $order = $this->cartHelper->getOrderByQuoteId($reference);
                 if ($order !== false) {
                     $order->setCustomerId($customer->getId());
                     $order->setCustomerFirstname($customer->getFirstname());
@@ -275,13 +274,9 @@ class OAuthRedirect implements OAuthRedirectInterface
                     $order->setCustomerGroupId($customer->getGroupId());
                     $order->setCustomerIsGuest(0);
                     $this->orderRepository->save($order);
-                } else {
-                    $this->bugsnag->notifyError("Cannot find order", "ID: {$display_id}");
                 }
-            }
 
-            // The checkout may not have been completed yet, but the user may have logged in via Bolt SSO
-            if ($reference !== '') {
+                // The checkout may not have been completed yet, but the user may have logged in via Bolt SSO
                 $quote = $this->cartHelper->getQuoteById($reference);
                 if ($quote !== false) {
                     $quote->setCustomer($customer);
