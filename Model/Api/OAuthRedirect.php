@@ -216,6 +216,7 @@ class OAuthRedirect implements OAuthRedirectInterface
             throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
 
+        $this->logHelper->addInfoLog("1");
         $externalID = $payload['sub'];
 
         $websiteId = $this->storeManager->getStore()->getWebsiteId();
@@ -238,6 +239,7 @@ class OAuthRedirect implements OAuthRedirectInterface
             // customer not found
         }
 
+        $this->logHelper->addInfoLog("2");
         // External customer entity exists, but the customer it links to doesn't
         // This should happen very rarely, if at all, which is why we notify bugsnag when this happens
         if ($externalCustomerEntity !== null && $customer === null) {
@@ -262,9 +264,10 @@ class OAuthRedirect implements OAuthRedirectInterface
 
         try {
             $customer = $customer ?: $this->createNewCustomer($websiteId, $storeId, $payload);
-
+            $this->logHelper->addInfoLog("3");
             // Order ID is actually the parent quote ID, which is referred to as "reference" in Storm
             if ($order_id !== '') {
+                $this->logHelper->addInfoLog("4");
                 $order = $this->cartHelper->getOrderByQuoteId($order_id);
                 if ($order !== false) {
                     $order->setCustomerId($customer->getId());
