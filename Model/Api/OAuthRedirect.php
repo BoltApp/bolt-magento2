@@ -277,14 +277,14 @@ class OAuthRedirect implements OAuthRedirectInterface
                 } else {
                     // The checkout may not have been completed yet, but the user may have logged in via Bolt SSO
                     $quote = $this->cartHelper->getQuoteById($order_id);
-                    if ($quote != false && $quote->getBillingAddress()->getEmail() === $payload['email']) {
+                    if ($quote !== false) {
                         $quote->setCustomer($customer);
                         $quote->setCustomerIsGuest(false);
                         $this->cartHelper->saveQuote($quote);
 
                         $this->updateImmutableQuotes($quote, $customer);
                     } else {
-                        $this->bugsnag->notifyError("Cannot find quote or order","Quote Id: {$order_id}");
+                        $this->bugsnag->notifyError("Cannot find quote or order", "Quote Id: {$order_id}");
                     }
                 }
             }

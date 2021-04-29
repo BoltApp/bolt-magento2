@@ -169,7 +169,6 @@ class OAuthRedirectTest extends BoltTestCase
         $this->assertEquals('t@t.com', TestHelper::getProperty($this->oAuthRedirect, 'customerSession')->getCustomer()->getEmail());
     }
 
-
     /**
      * @test
      */
