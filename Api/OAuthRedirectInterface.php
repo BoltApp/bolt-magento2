@@ -38,5 +38,5 @@ interface OAuthRedirectInterface
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function login($code = '', $scope = '', $state = '', $order_id = '');
+    public function login($code = '', $scope = '', $state = '', $order_id = '', $quote_id = '');
 }

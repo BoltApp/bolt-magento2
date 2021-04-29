@@ -192,7 +192,7 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function login($code = '', $scope = '', $state = '', $order_id = '')
+    public function login($code = '', $scope = '', $state = '', $order_id = '', $quote_id = '')
     {
         if (!$this->deciderHelper->isBoltSSOEnabled()) {
             throw new NoSuchEntityException(__('Request does not match any route.'));
@@ -263,9 +263,9 @@ class OAuthRedirect implements OAuthRedirectInterface
         try {
             $customer = $customer ?: $this->createNewCustomer($websiteId, $storeId, $payload);
 
-            // Order ID is actually the parent quote ID, which is referred to as "reference" in Storm
+            // Order ID is actually the order increment ID, which is referred to as "display ID" in Storm
             if ($order_id !== '') {
-                $order = $this->cartHelper->getOrderByQuoteId($order_id);
+                $order = $this->cartHelper->getOrderByIncrementId($order_id);
                 if ($order !== false) {
                     $order->setCustomerId($customer->getId());
                     $order->setCustomerFirstname($customer->getFirstname());
@@ -274,18 +274,20 @@ class OAuthRedirect implements OAuthRedirectInterface
                     $order->setCustomerGroupId($customer->getGroupId());
                     $order->setCustomerIsGuest(0);
                     $this->orderRepository->save($order);
-                } else {
-                    // The checkout may not have been completed yet, but the user may have logged in via Bolt SSO
-                    $quote = $this->cartHelper->getQuoteById($order_id);
-                    if ($quote !== false) {
-                        $quote->setCustomer($customer);
-                        $quote->setCustomerIsGuest(false);
-                        $this->cartHelper->saveQuote($quote);
+                }
+            }
 
-                        $this->updateImmutableQuotes($quote, $customer);
-                    } else {
-                        $this->bugsnag->notifyError("Cannot find quote or order", "Quote Id: {$order_id}");
-                    }
+            // The checkout may not have been completed yet, but the user may have logged in via Bolt SSO
+            if ($quote_id !== '') {
+                $quote = $this->cartHelper->getQuoteById($order_id);
+                if ($quote !== false) {
+                    $quote->setCustomer($customer);
+                    $quote->setCustomerIsGuest(false);
+                    $this->cartHelper->saveQuote($quote);
+
+                    $this->updateImmutableQuotes($quote, $customer);
+                } else {
+                    $this->bugsnag->notifyError("Cannot find quote or order", "Quote Id: {$order_id}");
                 }
             }
 
