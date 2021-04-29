@@ -186,14 +186,14 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param string $scope
      * @param string $state
      * @param string $display_id
-     * @param string $quote_id
+     * @param string $reference
      *
      * @return void
      *
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function login($code = '', $scope = '', $state = '', $display_id = '', $quote_id = '')
+    public function login($code = '', $scope = '', $state = '', $display_id = '', $reference = '')
     {
         if (!$this->deciderHelper->isBoltSSOEnabled()) {
             throw new NoSuchEntityException(__('Request does not match any route.'));
@@ -265,8 +265,8 @@ class OAuthRedirect implements OAuthRedirectInterface
             $customer = $customer ?: $this->createNewCustomer($websiteId, $storeId, $payload);
 
             // Order ID is actually the order increment ID, which is referred to as "display ID" in Storm
-            if ($order_id !== '') {
-                $order = $this->cartHelper->getOrderByIncrementId($order_id);
+            if ($display_id !== '') {
+                $order = $this->cartHelper->getOrderByIncrementId($display_id);
                 if ($order !== false) {
                     $order->setCustomerId($customer->getId());
                     $order->setCustomerFirstname($customer->getFirstname());
@@ -275,12 +275,14 @@ class OAuthRedirect implements OAuthRedirectInterface
                     $order->setCustomerGroupId($customer->getGroupId());
                     $order->setCustomerIsGuest(0);
                     $this->orderRepository->save($order);
+                } else {
+                    $this->bugsnag->notifyError("Cannot find order", "ID: {$display_id}");
                 }
             }
 
             // The checkout may not have been completed yet, but the user may have logged in via Bolt SSO
-            if ($quote_id !== '') {
-                $quote = $this->cartHelper->getQuoteById($order_id);
+            if ($reference !== '') {
+                $quote = $this->cartHelper->getQuoteById($reference);
                 if ($quote !== false) {
                     $quote->setCustomer($customer);
                     $quote->setCustomerIsGuest(false);
@@ -288,7 +290,7 @@ class OAuthRedirect implements OAuthRedirectInterface
 
                     $this->updateImmutableQuotes($quote, $customer);
                 } else {
-                    $this->bugsnag->notifyError("Cannot find quote or order", "Quote Id: {$order_id}");
+                    $this->bugsnag->notifyError("Cannot find quote", "ID: {$reference}");
                 }
             }
 
