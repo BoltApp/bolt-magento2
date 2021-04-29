@@ -31,12 +31,13 @@ interface OAuthRedirectInterface
      * @param string $code
      * @param string $scope
      * @param string $state
-     * @param string $order_id
+     * @param string $display_id
+     * @param string $quote_id
      *
      * @return void
      *
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function login($code = '', $scope = '', $state = '', $order_id = '', $quote_id = '');
+    public function login($code = '', $scope = '', $state = '', $display_id = '', $quote_id = '');
 }
