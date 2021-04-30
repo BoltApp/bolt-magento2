@@ -221,7 +221,7 @@ require([
      * Inject connect.js
      * return void
      */
-    var insertConnectScript = function(publishableKey) {
+    var insertConnectScript = function(publishableKey, connectUrl) {
         var scriptTag = document.getElementById('bolt-connect');
         if (scriptTag) {
             BoltCheckout.configure(cart, hints, callbacks);
@@ -231,9 +231,13 @@ require([
             console.error('No publishable key set');
             return;
         }
+        if (!connectUrl) {
+            console.error('No connect url set');
+            return;
+        }
         scriptTag = document.createElement('script');
         scriptTag.setAttribute('type', 'text/javascript');
-        scriptTag.setAttribute('src', settings.connect_url);
+        scriptTag.setAttribute('src', connectUrl);
         scriptTag.setAttribute('id', 'bolt-connect');
         scriptTag.setAttribute('data-publishable-key', publishableKey);
         scriptTag.onload = function() {BoltCheckout.configure(cart, hints, callbacks);}
@@ -394,8 +398,8 @@ require([
             settings.storeId = data.storeId;
             settings.isPreAuth = data.isPreAuth;
 
-            if (data.backOfficeKey) {
-                insertConnectScript(data.backOfficeKey);
+            if (data.backOfficeKey && data.connectUrl) {
+                insertConnectScript(data.backOfficeKey, data.connectUrl);
             }
             if (data.paymentOnlyKey && settings.pay_by_link_url && cart.orderToken) {
                 $(".bolt-checkout-options-separator").toggle(!!data.backOfficeKey);
