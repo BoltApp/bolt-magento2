@@ -20,6 +20,8 @@ namespace Bolt\Boltpay\Test\Unit\Controller\Cart;
 use Bolt\Boltpay\Controller\Cart\Email;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\App\Action\Context;
@@ -28,6 +30,8 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 
 /**
  * Class EmailTest
@@ -74,70 +78,17 @@ class EmailTest extends BoltTestCase
     /**
      * @var Email
      */
-    private $currentMock;
+    private $email;
+
+    private $objectManager;
 
     public function setUpInternal()
     {
-        $this->initRequiredMocks();
-        $this->initCurrentMock();
-    }
-
-    private function initRequiredMocks()
-    {
-        //objects needed for constructor
-        $this->context = $this->createMock(Context::class);
-        $this->checkoutSession = $this->createMock(CheckoutSession::class);
-        $this->customerSession = $this->createMock(CustomerSession::class);
-
-        $this->bugsnag = $this->createMock(Bugsnag::class);
-
-        $this->cartHelper = $this->createMock(CartHelper::class);
-
-        //objects needed for method
-        $this->quote = $this->createMock(Quote::class);
-        $this->quote->method('getId')->willReturn('1234');
-
-        $this->request = $this->createMock(RequestInterface::class);
-
-        //methods
-        $this->cartHelper->method('quoteResourceSave')->willReturn(null);
-        $this->context->method('getRequest')->willReturn($this->request);
-    }
-
-    private function initCurrentMock()
-    {
-        $this->currentMock = $this->getMockBuilder(Email::class)
-            ->setConstructorArgs([
-                $this->context,
-                $this->checkoutSession,
-                $this->customerSession,
-                $this->bugsnag,
-                $this->cartHelper
-            ])
-            ->enableProxyingToOriginalMethods()
-            ->getMock();
-    }
-
-    /**
-     * @test
-     * that constructor sets internal properties
-     *
-     * @covers ::__construct
-     */
-    public function constructor_always_setsInternalProperties()
-    {
-        $instance = new Email(
-            $this->context,
-            $this->checkoutSession,
-            $this->customerSession,
-            $this->bugsnag,
-            $this->cartHelper
-        );
-        
-        static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
-        static::assertAttributeEquals($this->customerSession, 'customerSession', $instance);
-        static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
-        static::assertAttributeEquals($this->cartHelper, 'cartHelper', $instance);
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->checkoutSession = Bootstrap::getObjectManager()->create(CheckoutSession::class);
+        $this->email = (new ObjectManager($this))->getObject(Email::class);
     }
 
     /**
@@ -145,12 +96,11 @@ class EmailTest extends BoltTestCase
      */
     public function execute_quoteDoesNotExist()
     {
-        $this->checkoutSession->method('getQuote')->willReturn(null);
+        $bugsnag = $this->createMock(Bugsnag::class);
         $exception = new LocalizedException(__('Quote does not exist.'));
-        $this->bugsnag->expects($this->once())
-            ->method('notifyException')
-            ->with($this->equalTo($exception));
-        $this->currentMock->execute();
+        $bugsnag->method('notifyException')->with($this->equalTo($exception));
+        TestHelper::setProperty($this->email, 'bugsnag', $bugsnag);
+        $this->email->execute();
     }
 
     /**
@@ -158,12 +108,12 @@ class EmailTest extends BoltTestCase
      */
     public function execute_noQuoteId()
     {
-        $this->quote->method('getId')->willReturn(false);
+        $bugsnag = $this->createMock(Bugsnag::class);
+        $this->checkoutSession->setQuoteId(false);
         $exception = new LocalizedException(__('Quote does not exist.'));
-        $this->bugsnag->expects($this->once())
-                    ->method('notifyException')
-                    ->with($this->equalTo($exception));
-        $this->currentMock->execute();
+        $bugsnag->method('notifyException')->with($this->equalTo($exception));
+        TestHelper::setProperty($this->email, 'bugsnag', $bugsnag);
+        $this->email->execute();
     }
 
     /**
@@ -171,41 +121,40 @@ class EmailTest extends BoltTestCase
      */
     public function execute_noEmail()
     {
-        $this->checkoutSession->method('getQuote')->willReturn($this->quote);
-        $this->request->method('getParam')->willReturn('');
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        $this->checkoutSession->setQuoteId($quoteId);
         $exception = new LocalizedException(__('No email received.'));
-        $this->bugsnag->expects($this->once())
-                    ->method('notifyException')
-                    ->with($this->equalTo($exception));
-        $this->currentMock->execute();
+        $bugsnag = $this->createMock(Bugsnag::class);
+        $bugsnag->expects($this->once())->method('notifyException')->with($this->equalTo($exception));
+        TestHelper::setProperty($this->email, 'bugsnag', $bugsnag);
+        TestHelper::setProperty($this->email, 'checkoutSession', $this->checkoutSession);
+        $this->email->execute();
+
     }
 
     /**
      * @test
      */
-    // Note: This doesn't really seem to test invalid emails as the validateEmail method
-    // needs to be mocked. Generally just making sure that if validateEmail comes
-    // back false we error handle properly
     public function execute_invalidEmail()
     {
         $invalidEmail = 'invalidemail';
-        $this->checkoutSession->method('getQuote')->willReturn($this->quote);
-        $this->request->method('getParam')->willReturn($invalidEmail);
-        $this->cartHelper->method('validateEmail')->willReturn(false);
-        $exception = new LocalizedException(__('Invalid email: %1', $invalidEmail));
-        $this->bugsnag->expects($this->once())
-                    ->method('notifyException')
-                    ->with($this->equalTo($exception));
-        $this->currentMock->execute();
-    }
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
 
-    /**
-     * @test
-     */
-    public function execute_notifyException()
-    {
-        $this->bugsnag->expects($this->once())->method('notifyException');
-        $this->currentMock->execute();
+        $this->checkoutSession->setQuoteId($quoteId);
+        /** @var $request RequestInterface */
+        $request = Bootstrap::getObjectManager()->get(RequestInterface::class);
+        $request->setParams(['email' => $invalidEmail]);
+
+        $exception = new LocalizedException(__('Invalid email: %1', $invalidEmail));
+        $bugsnag = $this->createPartialMock(Bugsnag::class,['notifyException']);
+        $bugsnag->expects($this->once())->method('notifyException')->with($this->equalTo($exception));
+
+        TestHelper::setProperty($this->email, 'bugsnag', $bugsnag);
+        TestHelper::setInaccessibleProperty($this->email, '_request', $request);
+        TestHelper::setProperty($this->email, 'checkoutSession', $this->checkoutSession);
+        $this->email->execute();
     }
 
     /**
@@ -213,11 +162,25 @@ class EmailTest extends BoltTestCase
      */
     public function execute_happyPath()
     {
-        $this->checkoutSession->method('getQuote')->willReturn($this->quote);
-        $this->cartHelper->method('validateEmail')->willReturn(true);
-        $this->request->method('getParam')->willReturn('example@email.com');
-        $this->checkoutSession->expects($this->once())->method('getQuote');
-        $this->cartHelper->expects($this->once())->method('quoteResourceSave');
-        $this->currentMock->execute();
+        $validEmail = 'integration@bolt.com';
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+
+        $this->checkoutSession->setQuoteId($quoteId);
+        /** @var $request RequestInterface */
+        $request = Bootstrap::getObjectManager()->get(RequestInterface::class);
+        $request->setParams(['email' => $validEmail]);
+
+        $cartHelper = Bootstrap::getObjectManager()->create(CartHelper::class);
+
+        TestHelper::setInaccessibleProperty($this->email, '_request', $request);
+        TestHelper::setProperty($this->email, 'checkoutSession', $this->checkoutSession);
+        TestHelper::setProperty($this->email, 'cartHelper', $cartHelper);
+
+        $this->email->execute();
+        $this->assertEquals(
+            $validEmail,
+            Bootstrap::getObjectManager()->create(Quote::class)->load($quoteId)->getCustomerEmail()
+        );
     }
 }
