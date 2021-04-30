@@ -46,6 +46,8 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use ReflectionException;
+use Magento\Framework\App\State;
+use Magento\Framework\App\Area;
 
 /**
  * Class JsTest
@@ -145,6 +147,9 @@ class JsTest extends BoltTestCase
      * @var MockObject|EventsForThirdPartyModules
      */
     private $eventsForThirdPartyModules;
+    
+    /** @var State */
+    private $_appState;
 
     /**
      * @test
@@ -1372,8 +1377,15 @@ JS;
      */
     public function isEnabled_withVariousConfigActiveStates_returnsBoltPaymentModuleIsActive(
         $isActive,
+        $areaCode,
         $expectedResult
     ) {
+        $this->_appState = $this->createPartialMock(
+            State::class,
+            ['getAreaCode']
+        );
+        TestHelper::setProperty($this->currentMock, '_appState', $this->_appState);
+        $this->_appState->expects(self::once())->method('getAreaCode')->willReturn($areaCode);
         $this->currentMock->expects(static::once())->method('getStoreId')->willReturn(static::STORE_ID);
         $this->configHelper->expects(static::once())
             ->method('isActive')
@@ -1391,8 +1403,10 @@ JS;
     public function isEnabled_withVariousConfigActiveStatesProvider()
     {
         return [
-            ['isActive' => false, 'expectedResult' => false],
-            ['isActive' => true, 'expectedResult' => true],
+            ['isActive' => false, 'areaCode' => Area::AREA_WEBAPI_SOAP, 'expectedResult' => false],
+            ['isActive' => true, 'areaCode' => Area::AREA_WEBAPI_SOAP, 'expectedResult' => true],
+            ['isActive' => false, 'areaCode' => Area::AREA_ADMINHTML, 'expectedResult' => true],
+            ['isActive' => true, 'areaCode' => Area::AREA_ADMINHTML, 'expectedResult' => true],
         ];
     }
 
