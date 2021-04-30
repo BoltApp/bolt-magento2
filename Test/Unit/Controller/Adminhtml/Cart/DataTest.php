@@ -51,7 +51,8 @@ class DataTest extends BoltTestCase
     const HINT = 'hint!';
     const RESPONSE_TOKEN = 'response_token';
     const CUSTOMER_EMAIL = 'test@bolt.com';
-    const CDN_URL_SANDBOX = 'https://connect-sandbox.bolt.com/connect.js';
+    const CDN_URL_SANDBOX = 'https://connect-sandbox.bolt.com';
+    const CDN_URL_SANDBOX_JS = 'https://connect-sandbox.bolt.com/connect.js';
 
     /**
      * @var Context
@@ -173,7 +174,7 @@ class DataTest extends BoltTestCase
             'isPreAuth'      => self::IS_PREAUTH,
             'backOfficeKey'  => self::PUBLISHABLE_KEY,
             'paymentOnlyKey' => null,
-            'connectUrl'     => self::CDN_URL_SANDBOX,
+            'connectUrl'     => self::CDN_URL_SANDBOX_JS,
         ];
 
         $this->noTokenCartArray = ['orderToken' => ''];
@@ -186,7 +187,7 @@ class DataTest extends BoltTestCase
             'isPreAuth'      => self::IS_PREAUTH,
             'backOfficeKey'  => self::PUBLISHABLE_KEY,
             'paymentOnlyKey' => '',
-            'connectUrl'     => self::CDN_URL_SANDBOX,
+            'connectUrl'     => self::CDN_URL_SANDBOX_JS,
         ];
 
         $this->map = [
@@ -486,7 +487,7 @@ class DataTest extends BoltTestCase
                 'paymentOnlyKey' => '',
                 'storeId'        => self::STORE_ID,
                 'isPreAuth'      => self::IS_PREAUTH,
-                'connectUrl'     => self::CDN_URL_SANDBOX,
+                'connectUrl'     => self::CDN_URL_SANDBOX_JS,
             ]
         );
 

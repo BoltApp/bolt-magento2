@@ -22,8 +22,6 @@ use Bolt\Boltpay\Block\BlockTrait;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-use Magento\Framework\App\State;
-use Magento\Framework\App\Area;
 
 /**
  * Class BlockTraitTest
@@ -48,17 +46,9 @@ class BlockTraitTest extends BoltTestCase
 
     /** @var Decider */
     private $featureSwitches;
-    
-    /** @var State */
-    private $_appState;
 
     public function setUpInternal()
     {
-        $this->_appState = $this->createPartialMock(
-            State::class,
-            ['getAreaCode']
-        );
-        
         $this->currentMock = $this->getMockBuilder(BlockTrait::class)
             ->enableOriginalConstructor()
             ->setMethods([
@@ -82,7 +72,6 @@ class BlockTraitTest extends BoltTestCase
         $this->featureSwitches = $this->createPartialMock(Decider::class, ['isInstantCheckoutButton', 'isBoltEnabled']);
         TestHelper::setProperty($this->currentMock, 'configHelper', $this->configHelper);
         TestHelper::setProperty($this->currentMock, 'featureSwitches', $this->featureSwitches);
-        TestHelper::setProperty($this->currentMock, '_appState', $this->_appState);
     }
 
     /**
@@ -159,32 +148,6 @@ class BlockTraitTest extends BoltTestCase
             ['checkout_key', 'api_key', '', true],
             ['checkout_key', '', '', true],
             ['', '', '', true],
-        ];
-    }
-
-
-    /**
-     * @test
-     * @dataProvider dataProvider_isEnabled
-     * @param $apiKey
-     * @param $areaCode
-     * @param $expected
-     */
-    public function isEnabled($apiKey, $areaCode, $expected)
-    {
-        $this->_appState->expects(self::once())->method('getAreaCode')->willReturn($areaCode);
-        $this->currentMock->expects(self::any())->method('getStoreId')->willReturn(self::STORE_ID);
-        $this->configHelper->expects(self::any())->method('isActive')->with(self::STORE_ID)->willReturn($apiKey);
-        $this->assertEquals($expected, $this->currentMock->isEnabled());
-    }
-
-    public function dataProvider_isEnabled()
-    {
-        return [
-            [true, Area::AREA_WEBAPI_SOAP, true],
-            [false, Area::AREA_WEBAPI_SOAP, false],
-            [true, Area::AREA_ADMINHTML, true],
-            [false, Area::AREA_ADMINHTML, true]
         ];
     }
 

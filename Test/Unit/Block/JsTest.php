@@ -1387,7 +1387,7 @@ JS;
         TestHelper::setProperty($this->currentMock, '_appState', $this->_appState);
         $this->_appState->expects(self::once())->method('getAreaCode')->willReturn($areaCode);
         $this->currentMock->expects(static::once())->method('getStoreId')->willReturn(static::STORE_ID);
-        $this->configHelper->expects(static::once())
+        $this->configHelper->expects($areaCode == Area::AREA_ADMINHTML ? static::never() : static::once())
             ->method('isActive')
             ->with(static::STORE_ID)
             ->willReturn($isActive);
