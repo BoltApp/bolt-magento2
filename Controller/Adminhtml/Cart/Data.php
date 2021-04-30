@@ -142,9 +142,10 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
             $quote = $this->_getOrderCreateModel()->getQuote();
             $this->storeManager->setCurrentStore($storeId);
 
-            $backOfficeKey = $this->configHelper->getPublishableKeyBackOffice();
-            $paymentOnlyKey = $this->configHelper->getPublishableKeyPayment();
-            $isPreAuth = $this->configHelper->getIsPreAuth();
+            $backOfficeKey = $this->configHelper->getPublishableKeyBackOffice($storeId);
+            $paymentOnlyKey = $this->configHelper->getPublishableKeyPayment($storeId);
+            $isPreAuth = $this->configHelper->getIsPreAuth($storeId);
+            $connectUrl = $this->configHelper->getCdnUrl($storeId) . '/connect.js';
 
             $customerEmail = $quote->getCustomerEmail();
             if (!$quote->getCustomerId() && $this->cartHelper->getCustomerByEmail($customerEmail)) {
@@ -185,6 +186,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
                         'paymentOnlyKey' => $paymentOnlyKey,
                         'storeId'        => $storeId,
                         'isPreAuth'      => $isPreAuth,
+                        'connectUrl'     => $connectUrl
                     ]
                 );
         } catch (LocalizedException $e) {
@@ -196,6 +198,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
                     'paymentOnlyKey' => $paymentOnlyKey ?? '',
                     'storeId'        => $storeId ?? '',
                     'isPreAuth'      => $isPreAuth ?? '',
+                    'connectUrl'     => $connectUrl ?? '',
                 ]
             );
         } catch (Exception $e) {
