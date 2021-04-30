@@ -645,7 +645,7 @@ class OrderTest extends BoltTestCase
 
         $request = $this->createMock(Request::class);
 
-        $this->apiHelper->expects(static::once())->method('buildRequest')->with($requestObject)
+        $this->apiHelper->expects(static::once())->method('buildRequest')->with($requestObject, self::STORE_ID)
             ->willReturn($request);
 
         /** @var MockObject|Response $result */
@@ -5019,7 +5019,7 @@ class OrderTest extends BoltTestCase
         $this->dataObjectFactory->expects(self::once())->method('setApiKey')->willReturnSelf();
 
         $this->apiHelper->expects(self::once())->method('buildRequest')
-            ->with($this->dataObjectFactory)->willReturn($this->boltRequest);
+            ->with($this->dataObjectFactory, self::STORE_ID)->willReturn($this->boltRequest);
         $this->apiHelper->expects(self::once())->method('sendRequest')
             ->withAnyParameters()->willReturn($this->responseFactory);
 
