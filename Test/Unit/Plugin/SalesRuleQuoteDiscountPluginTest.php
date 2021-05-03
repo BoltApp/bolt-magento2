@@ -19,11 +19,13 @@ namespace Bolt\Boltpay\Test\Unit\Plugin;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Plugin\SalesRuleQuoteDiscountPlugin;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Checkout\Model\Session as CheckoutSession;
+
 use Magento\SalesRule\Model\Quote\Discount;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\Quote\Api\Data\ShippingAssignmentInterface;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 
 /**
  * Class SalesRuleQuoteDiscountPluginTest
@@ -39,69 +41,55 @@ class SalesRuleQuoteDiscountPluginTest extends BoltTestCase
 
     /** @var CheckoutSession */
     protected $checkoutSession;
-    
-    /** @var SessionHelper */
-    protected $sessionHelper;
-    
-    /** @var Discount */
+
+    /**
+     * @var Discount
+     */
     protected $subject;
-    
+
     /** @var ShippingAssignmentInterface */
     protected $shippingAssignment;
 
+    /**
+     * @var ObjectManager
+     */
+    protected $objectManager;
+
     public function setUpInternal()
     {
-        $this->subject = $this->createMock(Discount::class);
-        $this->sessionHelper = $this->createPartialMock(
-            SessionHelper::class,
-            ['getCheckoutSession']
-        );
-        $this->checkoutSession = $this->createPartialMock(
-            CheckoutSession::class,
-            ['setBoltCollectSaleRuleDiscounts']
-        );
-        $this->plugin = (new ObjectManager($this))->getObject(
-            SalesRuleQuoteDiscountPlugin::class,
-            [
-                'sessionHelper' => $this->sessionHelper
-            ]
-        );
-        $this->shippingAssignment = $this->createMock(ShippingAssignmentInterface::class);
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->plugin = $this->objectManager->create(SalesRuleQuoteDiscountPlugin::class);
+        $this->subject = $this->objectManager->create(Discount::class);
+        $this->checkoutSession = $this->objectManager->create(CheckoutSession::class);
+        $this->shippingAssignment = $this->objectManager->create(ShippingAssignmentInterface::class);
     }
 
     /**
      * @test
      * @covers ::beforeCollect
      */
-    public function beforeCollecte_resetSaleRuleDiscountsToCheckoutSession()
+    public function beforeCollect_resetSaleRuleDiscountsToCheckoutSession()
     {
-        $this->checkoutSession->expects(self::once())
-                            ->method('setBoltCollectSaleRuleDiscounts')
-                            ->with([]);
-        $this->sessionHelper->expects(self::once())
-                            ->method('getCheckoutSession')
-                            ->willReturn($this->checkoutSession);
-        $this->shippingAssignment->expects(self::once())
-                            ->method('getItems')
-                            ->willReturn(['item']);
-        $this->plugin->beforeCollect($this->subject, null, $this->shippingAssignment, null);
+        $quote = TestUtils::createQuote();
+        $product = TestUtils::getSimpleProduct();
+        $quote->addProduct($product, 1)->save();
+        $this->checkoutSession->setBoltCollectSaleRuleDiscounts([1]);
+        $this->shippingAssignment->setItems($quote->getAllItems());
+        $result = $this->plugin->beforeCollect($this->subject, $quote, $this->shippingAssignment, null);
+        self::assertEquals($this->checkoutSession->getBoltCollectSaleRuleDiscounts(), []);
+        self::assertEquals([$quote, $this->shippingAssignment, null], $result);
     }
-    
+
     /**
      * @test
      * @covers ::beforeCollect
      */
-    public function beforeCollecte_noItemInShippingAssignment_doNothing()
+    public function beforeCollect_noItemInShippingAssignment_doNothing()
     {
-        $this->checkoutSession->expects(self::never())
-                            ->method('setBoltCollectSaleRuleDiscounts')
-                            ->with([]);
-        $this->sessionHelper->expects(self::never())
-                            ->method('getCheckoutSession')
-                            ->willReturn($this->checkoutSession);
-        $this->shippingAssignment->expects(self::once())
-                            ->method('getItems')
-                            ->willReturn([]);
-        $this->plugin->beforeCollect($this->subject, null, $this->shippingAssignment, null);
+        $this->shippingAssignment->setItems([]);
+        $this->checkoutSession->setBoltCollectSaleRuleDiscounts([1]);
+        $result = $this->plugin->beforeCollect($this->subject, null, $this->shippingAssignment, null);
+        self::assertEquals($this->checkoutSession->getBoltCollectSaleRuleDiscounts(), [1]);
+        self::assertEquals([null, $this->shippingAssignment, null], $result);
     }
 }
