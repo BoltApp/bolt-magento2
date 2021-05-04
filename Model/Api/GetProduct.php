@@ -240,6 +240,7 @@ class GetProduct implements GetProductInterface
         try {
             $store = $this->storeManager->getStore();
             $this->storeID = $store->getId();
+            $this->productData->setStoreID($this->storeID);
             $baseImageUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
             $this->productData->setBaseImageUrl($baseImageUrl);
 
