@@ -32,6 +32,11 @@ class Address implements \JsonSerializable
     /**
      * @var string
      */
+    private $street;
+
+    /**
+     * @var string
+     */
     private $city;
 
     /**
@@ -68,6 +73,14 @@ class Address implements \JsonSerializable
     public function getLastName()
     {
         return $this->lastName;
+    }
+
+    /**
+     * @return string
+     */
+    public function getStreet()
+    {
+        return $this->street;
     }
 
     /**
@@ -130,6 +143,15 @@ class Address implements \JsonSerializable
         return $this;
     }
 
+    /**
+     * @param string $street
+     * @return $this
+     */
+    public function setStreet($street)
+    {
+        $this->street = $street;
+        return $this;
+    }
 
     /**
      * @param string $city
@@ -157,7 +179,7 @@ class Address implements \JsonSerializable
      */
     public function setPostalCode($postalCode)
     {
-        return $this->postalCode = $postalCode;
+        $this->postalCode = $postalCode;
         return $this;
     }
 

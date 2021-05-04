@@ -30,6 +30,11 @@ class Config implements \JsonSerializable
     private $cart;
 
     /**
+     * @var Order
+     */
+    private $pastOrder;
+
+    /**
      * @return StoreItem[]
      */
     public function getStoreItems()
@@ -68,13 +73,32 @@ class Config implements \JsonSerializable
     }
 
     /**
+     * @return Order
+     */
+    public function getPastOrder()
+    {
+        return $this->pastOrder;
+    }
+
+    /**
+     * @param Order $order
+     * @return $this
+     */
+    public function setPastOrder($order)
+    {
+        $this->pastOrder = $order;
+        return $this;
+    }
+
+    /**
      * @inheritDoc
      */
     public function jsonSerialize()
     {
         return [
             'storeItems' => $this->storeItems,
-            'cart'       => $this->cart
+            'cart'       => $this->cart,
+            'pastOrder'  => $this->pastOrder
         ];
     }
 }

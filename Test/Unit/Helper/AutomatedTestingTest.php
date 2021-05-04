@@ -26,20 +26,27 @@ use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\CartItem;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\CartItemFactory;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Config as AutomatedTestingConfig;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\ConfigFactory;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Order;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\PriceProperty;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\PricePropertyFactory;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\StoreItem;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\StoreItemFactory;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\OrderFactory;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\OrderItemFactory;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\AddressFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Exception;
 use Magento\Catalog\Api\Data\ProductSearchResultsInterface;
+use Magento\Sales\Api\Data\OrderSearchResultInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface as ProductRepository;
+use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Catalog\Model\Product;
 use Magento\CatalogInventory\Api\Data\StockItemInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Framework\Api\SearchCriteria;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Api\SortOrderBuilder;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Pricing\Price\PriceInterface;
 use Magento\Framework\Pricing\PriceInfoInterface;
@@ -53,6 +60,10 @@ use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\ResourceModel\Quote\Address\Rate;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Framework\Api\SortOrder;
+use Magento\Sales\Model\Order as ModelOrder;
+use Magento\Sales\Model\Order\Address as ModelOrderAddress;
+use Magento\Sales\Model\Order\Item as ModelOrderItem;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 
 /**
@@ -71,9 +82,19 @@ class AutomatedTestingTest extends BoltTestCase
     private $productRepository;
 
     /**
+     * @var OrderRepository|MockObject
+     */
+    private $orderRepository;
+
+    /**
      * @var SearchCriteriaBuilder|MockObject
      */
     private $searchCriteriaBuilder;
+
+    /**
+     * @var SortOrderBuilder|MockObject
+     */
+    private $sortOrderBuilder;
 
     /**
      * @var ConfigFactory|MockObject
@@ -140,6 +161,21 @@ class AutomatedTestingTest extends BoltTestCase
      */
     private $currentMock;
 
+    /***
+     * @var OrderItemFactory|MockObject
+     */
+    private $orderItemFactory;
+
+    /***
+     * @var OrderFactory|MockObject
+     */
+    private $orderFactory;
+
+    /***
+     * @var AddressFactory|MockObject
+     */
+    private $addressFactory;
+
     /**
      * @inheritdoc
      */
@@ -147,6 +183,8 @@ class AutomatedTestingTest extends BoltTestCase
     {
         $this->context = $this->createMock(Context::class);
         $this->productRepository = $this->createMock(ProductRepository::class);
+        $this->orderRepository = $this->createMock(OrderRepository::class);
+        $this->sortOrderBuilder = $this->createMock(SortOrderBuilder::class);
         $this->searchCriteriaBuilder = $this->createMock(SearchCriteriaBuilder::class);
         $this->configFactory = $this->createMock(ConfigFactory::class);
         $this->storeItemFactory = $this->createMock(StoreItemFactory::class);
@@ -160,18 +198,33 @@ class AutomatedTestingTest extends BoltTestCase
         $this->quoteManagement = $this->createMock(CartManagementInterface::class);
         $this->quoteRepository = $this->createMock(QuoteRepository::class);
         $this->stockRegistry = $this->createMock(StockRegistryInterface::class);
+        $this->orderFactory = $this->createMock(OrderFactory::class);
+        $this->orderItemFactory = $this->createMock(OrderItemFactory::class);
+        $this->addressFactory = $this->createMock(AddressFactory::class);
 
         $this->currentMock = $this->getMockBuilder(AutomatedTestingHelper::class)
-            ->setMethods(['getAutomatedTestingConfig', 'getProduct', 'convertToStoreItem', 'createQuoteWithItem', 'getShippingMethods'])
+            ->setMethods(['getAutomatedTestingConfig',
+                'getProduct',
+                'convertToStoreItem',
+                'createQuoteWithItem',
+                'getShippingMethods',
+                'getPastOrder',
+                'convertToAddress',
+                'convertToOrder'])
             ->setConstructorArgs([
                 $this->context,
                 $this->productRepository,
                 $this->searchCriteriaBuilder,
+                $this->sortOrderBuilder,
                 $this->configFactory,
                 $this->storeItemFactory,
                 $this->cartFactory,
                 $this->cartItemFactory,
                 $this->pricePropertyFactory,
+                $this->addressFactory,
+                $this->orderFactory,
+                $this->orderRepository,
+                $this->orderItemFactory,
                 $this->shippingMethodConverter,
                 $this->bugsnag,
                 $this->storeManager,
@@ -256,6 +309,10 @@ class AutomatedTestingTest extends BoltTestCase
         $cart->expects(static::once())->method('setTax')->willReturnSelf();
         $cart->expects(static::once())->method('setSubTotal')->willReturnSelf();
         $this->cartFactory->expects(static::once())->method('create')->willReturn($cart);
+        $order = $this->createMock(Order::class);
+        $pastOrder = $this->createMock(ModelOrder::class);
+        $this->currentMock->expects(static::once())->method('getPastOrder')->willReturn($pastOrder);
+        $this->currentMock->expects(static::once())->method('convertToOrder')->willReturn($order);
         $config = $this->createMock(AutomatedTestingConfig::class);
         $config->expects(static::once())->method('setStoreItems')->with(static::callback(
             function ($cartItems) {
@@ -263,6 +320,7 @@ class AutomatedTestingTest extends BoltTestCase
             }
         ))->willReturnSelf();
         $config->expects(static::once())->method('setCart')->willReturnSelf();
+        $config->expects(static::once())->method('setPastOrder')->willReturnSelf();
         $this->configFactory->expects(static::once())->method('create')->willReturn($config);
         TestHelper::invokeMethod($this->currentMock, 'getAutomatedTestingConfig');
     }
@@ -297,6 +355,10 @@ class AutomatedTestingTest extends BoltTestCase
         $cart->expects(static::once())->method('setExpectedShippingMethods')->willReturnSelf();
         $cart->expects(static::once())->method('setTax')->willReturnSelf();
         $cart->expects(static::once())->method('setSubTotal')->willReturnSelf();
+        $order = $this->createMock(Order::class);
+        $pastOrder = $this->createMock(ModelOrder::class);
+        $this->currentMock->expects(static::once())->method('getPastOrder')->willReturn($pastOrder);
+        $this->currentMock->expects(static::once())->method('convertToOrder')->willReturn($order);
         $this->cartFactory->expects(static::once())->method('create')->willReturn($cart);
         $config = $this->createMock(AutomatedTestingConfig::class);
         $config->expects(static::once())->method('setStoreItems')->with(static::callback(
@@ -305,6 +367,7 @@ class AutomatedTestingTest extends BoltTestCase
             }
         ))->willReturnSelf();
         $config->expects(static::once())->method('setCart')->willReturnSelf();
+        $config->expects(static::once())->method('setPastOrder')->willReturnSelf();
         $this->configFactory->expects(static::once())->method('create')->willReturn($config);
         TestHelper::invokeMethod($this->currentMock, 'getAutomatedTestingConfig');
     }
@@ -470,5 +533,164 @@ class AutomatedTestingTest extends BoltTestCase
         $atcShippingMethod->expects(static::once())->method('setPrice')->with('Free')->willReturnSelf();
         $this->pricePropertyFactory->expects(static::once())->method('create')->willReturn($atcShippingMethod);
         static::assertEquals([$atcShippingMethod], TestHelper::invokeMethod($this->currentMock, 'getShippingMethods', [$quote]));
+    }
+
+    /**
+     * @test
+     */
+    public function getPastOrder_ReturnsOrderWithNonZeroTaxAndDiscount()
+    {
+        $sortOrder = $this->createMock(SortOrder::class);
+        $this->sortOrderBuilder->expects(static::once())->method('setField')->with('entity_id')->willReturnSelf();
+        $this->sortOrderBuilder->expects(static::once())->method('setDirection')->with('DESC')->willReturnSelf();
+        $this->sortOrderBuilder->expects(static::once())->method('create')->willReturn($sortOrder);
+
+        $this->searchCriteriaBuilder->expects(static::exactly(2))->method('addFilter')->withConsecutive(
+            ['discount_amount', 0, 'lt'],
+            ['tax_amount', 0, 'gt']
+        )->willReturnSelf();
+
+        $searchCriteria = $this->createMock(SearchCriteria::class);
+        $this->searchCriteriaBuilder->expects(static::exactly(2))->method('setPageSize')->with(1)->willReturnSelf();
+        $this->searchCriteriaBuilder->expects(static::exactly(2))->method('setCurrentPage')->with(1)->willReturnSelf();
+        $this->searchCriteriaBuilder->expects(static::exactly(2))->method('setSortOrders')->with([$sortOrder])->willReturnSelf();
+        $this->searchCriteriaBuilder->expects(static::exactly(2))->method('create')->willReturn($searchCriteria);
+
+        $pastOrder = $this->createMock(ModelOrder::class);
+        $orderSearchResults = $this->createMock(OrderSearchResultInterface::class);
+        $this->orderRepository->expects(static::once())->method('getList')->with($searchCriteria)->willReturn($orderSearchResults);
+        $orderSearchResults->expects(static::once())->method('getItems')->willReturn([$pastOrder]);
+        static::assertEquals($pastOrder, TestHelper::invokeMethod($this->currentMock, 'getPastOrder', []));
+    }
+
+    /**
+     * @test
+     */
+    public function getPastOrder_ReturnsDefaultOrder()
+    {
+        $sortOrder = $this->createMock(SortOrder::class);
+        $this->sortOrderBuilder->expects(static::once())->method('setField')->with('entity_id')->willReturnSelf();
+        $this->sortOrderBuilder->expects(static::once())->method('setDirection')->with('DESC')->willReturnSelf();
+        $this->sortOrderBuilder->expects(static::once())->method('create')->willReturn($sortOrder);
+
+        $this->searchCriteriaBuilder->expects(static::exactly(2))->method('addFilter')->withConsecutive(
+            ['discount_amount', 0, 'lt'],
+            ['tax_amount', 0, 'gt']
+        )->willReturnSelf();
+
+        $searchCriteria = $this->createMock(SearchCriteria::class);
+        $this->searchCriteriaBuilder->expects(static::exactly(2))->method('setPageSize')->with(1)->willReturnSelf();
+        $this->searchCriteriaBuilder->expects(static::exactly(2))->method('setCurrentPage')->with(1)->willReturnSelf();
+        $this->searchCriteriaBuilder->expects(static::exactly(2))->method('setSortOrders')->with([$sortOrder])->willReturnSelf();
+        $this->searchCriteriaBuilder->expects(static::exactly(2))->method('create')->willReturn($searchCriteria);
+
+        $defaultOrder = $this->createMock(ModelOrder::class);
+        $orderSearchResults = $this->createMock(OrderSearchResultInterface::class);
+        $this->orderRepository->expects(static::exactly(2))->method('getList')->with($searchCriteria)->willReturn($orderSearchResults);
+        $orderSearchResults->expects(static::exactly(2))->method('getItems')->willReturnOnConsecutiveCalls([], [$defaultOrder]);
+        static::assertEquals($defaultOrder, TestHelper::invokeMethod($this->currentMock, 'getPastOrder', []));
+    }
+
+    /**
+     * @test
+     */
+    public function convertToAddress_returnsNull_ifAddressIsNull()
+    {
+        static::assertEquals(null, TestHelper::invokeMethod($this->currentMock, 'convertToAddress', [null]));
+    }
+
+    /**
+     * @test
+     */
+    public function convertToOrder_returnsNull_ifOrderIsNull()
+    {
+        static::assertEquals(null, TestHelper::invokeMethod($this->currentMock, 'convertToOrder', [null]));
+    }
+
+    /**
+     * @test
+     */
+    public function convertToAddress_returnsAddress_ifAddressIsNotNull()
+    {
+        $addressIn = $this->createMock(ModelOrderAddress::class);
+        $addressIn->expects(static::once())->method('getFirstName')->willReturn('Bolt');
+        $addressIn->expects(static::once())->method('getLastName')->willReturn('User');
+        $addressIn->expects(static::once())->method('getStreet')->willReturn(['25 upper street']);
+        $addressIn->expects(static::once())->method('getCity')->willReturn('San Francisco');
+        $addressIn->expects(static::once())->method('getRegion')->willReturn('California');
+        $addressIn->expects(static::once())->method('getPostCode')->willReturn('12345');
+        $addressIn->expects(static::once())->method('getTelephone')->willReturn('1234567890');
+        $addressIn->expects(static::once())->method('getCountryId')->willReturn('US');
+        $addressOut = $this->createMock(\Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Address::class);
+        $this->addressFactory->expects(static::once())->method('create')->willReturn($addressOut);
+        $addressOut->expects(static::once())->method('setFirstName')->with('Bolt')->willReturnSelf();
+        $addressOut->expects(static::once())->method('setLastName')->with('User')->willReturnSelf();
+        $addressOut->expects(static::once())->method('setStreet')->with('25 upper street')->willReturnSelf();
+        $addressOut->expects(static::once())->method('setCity')->with('San Francisco')->willReturnSelf();
+        $addressOut->expects(static::once())->method('setRegion')->with('California')->willReturnSelf();
+        $addressOut->expects(static::once())->method('setPostalCode')->with('12345')->willReturnSelf();
+        $addressOut->expects(static::once())->method('setTelephone')->with('1234567890')->willReturnSelf();
+        $addressOut->expects(static::once())->method('setCountry')->with('US')->willReturnSelf();
+        static::assertEquals($addressOut, TestHelper::invokeMethod($this->currentMock, 'convertToAddress', [$addressIn]));
+    }
+
+    /**
+     * @test
+     */
+    public function convertToOrder_returnsOrder_ifOrderIsNotNull()
+    {
+        $orderIn = $this->createMock(ModelOrder::class);
+        $addressIn = $this->createMock(ModelOrderAddress::class);
+        $addressOut = $this->createMock(\Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Address::class);
+        $orderItemIn = $this->createMock(ModelOrderItem::class);
+        $product = $this->createMock(Product::class);
+        $product->expects(static::once())->method('getProductUrl')->willReturn('http://test.com/url');
+        $orderItemIn->expects(static::once())->method('getName')->willReturn('item A');
+        $orderItemIn->expects(static::once())->method('getSku')->willReturn('WS12-XL-Purple');
+        $orderItemIn->expects(static::once())->method('getProduct')->willReturn($product);
+        $orderItemIn->expects(static::once())->method('getPrice')->willReturn('24.0000');
+        $orderItemIn->expects(static::once())->method('getQtyOrdered')->willReturn('3.0000');
+        $orderItemIn->expects(static::exactly(2))->method('getRowTotal')->willReturn('72.000');
+        $orderItemIn->expects(static::exactly(2))->method('getTaxAmount')->willReturn('7.2000');
+        $orderItemIn->expects(static::once())->method('getTaxPercent')->willReturn('10.0000');
+        $orderItemIn->expects(static::exactly(2))->method('getDiscountAmount')->willReturn('5.0000');
+
+        $orderItemOut = $this->createMock(\Bolt\Boltpay\Model\Api\Data\AutomatedTesting\OrderItem::class);
+        $this->orderItemFactory->expects(static::once())->method('create')->willReturn($orderItemOut);
+        $orderItemOut->expects(static::once())->method('setProductName')->with('item A')->willReturnSelf();
+        $orderItemOut->expects(static::once())->method('setProductSku')->with('WS12-XL-Purple')->willReturnSelf();
+        $orderItemOut->expects(static::once())->method('setProductUrl')->with('http://test.com/url')->willReturnSelf();
+        $orderItemOut->expects(static::once())->method('setPrice')->with('$24.00')->willReturnSelf();
+        $orderItemOut->expects(static::once())->method('setQuantityOrdered')->with('3.0000')->willReturnSelf();
+        $orderItemOut->expects(static::once())->method('setSubtotal')->with('$72.00')->willReturnSelf();
+        $orderItemOut->expects(static::once())->method('setTaxAmount')->with('$7.20')->willReturnSelf();
+        $orderItemOut->expects(static::once())->method('setTaxPercent')->with('10.0000')->willReturnSelf();
+        $orderItemOut->expects(static::once())->method('setDiscountAmount')->with('$5.00')->willReturnSelf();
+        $orderItemOut->expects(static::once())->method('setTotal')->with('$74.20')->willReturnSelf();
+
+        $orderIn->expects(static::once())->method('getAllVisibleItems')->willReturn([$orderItemIn]);
+        $orderIn->expects(static::once())->method('getBillingAddress')->willReturn($addressIn);
+        $orderIn->expects(static::once())->method('getShippingAddress')->willReturn($addressIn);
+        $orderIn->expects(static::once())->method('getShippingDescription')->willReturn('Flat Rate - Fixed');
+        $orderIn->expects(static::once())->method('getShippingAmount')->willReturn('22.0000');
+        $orderIn->expects(static::once())->method('getSubtotal')->willReturn('72.0000');
+        $orderIn->expects(static::once())->method('getTaxAmount')->willReturn('7.2000');
+        $orderIn->expects(static::once())->method('getDiscountAmount')->willReturn('-5.0000');
+        $orderIn->expects(static::once())->method('getGrandTotal')->willReturn('74.2000');
+
+        $orderOut = $this->createMock(Order::class);
+        $this->orderFactory->expects(static::once())->method('create')->willReturn($orderOut);
+        $this->currentMock->expects(static::exactly(2))->method('convertToAddress')->willReturn($addressOut);
+        $orderOut->expects(static::once())->method('setBillingAddress')->with($addressOut)->willReturnSelf();
+        $orderOut->expects(static::once())->method('setShippingAddress')->with($addressOut)->willReturnSelf();
+        $orderOut->expects(static::once())->method('setShippingMethod')->with('Flat Rate - Fixed')->willReturnSelf();
+        $orderOut->expects(static::once())->method('setShippingAmount')->with('$22.00')->willReturnSelf();
+        $orderOut->expects(static::once())->method('setOrderItems')->with([$orderItemOut])->willReturnSelf();
+        $orderOut->expects(static::once())->method('setSubtotal')->with('$72.00')->willReturnSelf();
+        $orderOut->expects(static::once())->method('setTax')->with('$7.20')->willReturnSelf();
+        $orderOut->expects(static::once())->method('setDiscount')->with('$-5.00')->willReturnSelf();
+        $orderOut->expects(static::once())->method('setGrandTotal')->with('$74.20')->willReturnSelf();
+
+        static::assertEquals($orderOut, TestHelper::invokeMethod($this->currentMock, 'convertToOrder', [$orderIn]));
     }
 }
