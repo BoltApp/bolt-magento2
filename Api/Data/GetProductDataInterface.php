@@ -113,4 +113,23 @@ interface GetProductDataInterface
      * @return $this
      */
     public function setBaseImageUrl($baseImageUrl);
+
+    /**
+     * Get store ID.
+     *
+     * @api
+     * @return integer
+     */
+    public function getStoreID();
+
+    /**
+     * Set store ID.
+     *
+     * @api
+     * @param integer $storeID
+     *
+     * @return $this
+     */
+    public function setStoreID($storeID);
+}
 }

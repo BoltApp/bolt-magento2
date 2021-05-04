@@ -52,6 +52,11 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
      */
     private $baseImageUrl;
 
+    /**
+     * @var integer
+     */
+    private $storeID;
+
 
     /**
      * Get product info.
@@ -154,6 +159,29 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
         return $this;
     }
 
+    /**
+     * Get store ID.
+     *
+     * @api
+     * @return integer
+     */
+    public function getStoreID(){
+        return $this->storeID;
+    }
+
+    /**
+     * Set store ID.
+     *
+     * @api
+     * @param integer $storeID
+     *
+     * @return $this
+     */
+    public function setStoreID($storeID){
+        $this->storeID = $storeID;
+        return $this;
+    }
+
 
     /**
      * Get children info.
@@ -191,7 +219,8 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
             'children' => $this->children,
             'parent' => $this->parent,
             'options' => $this->options,
-            'baseImageUrl' => $this->baseImageUrl
+            'baseImageUrl' => $this->baseImageUrl,
+            'storeID' => $this->storeID
         ];
     }
 }
