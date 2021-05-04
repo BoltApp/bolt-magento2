@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
+use Bolt\Boltpay\Api\GetProductInterface;
 use Bolt\Boltpay\Api\UniversalApiInterface;
 use Bolt\Boltpay\Api\CreateOrderInterface;
 use Bolt\Boltpay\Api\OrderManagementInterface;
@@ -65,6 +66,11 @@ class UniversalApi implements UniversalApiInterface
     protected $updateCart;
 
     /**
+     * @var GetProductInterface
+     */
+    protected $getProduct;
+
+    /**
      * @var UniversalApiResultInterface
      */
     protected $result;
@@ -101,6 +107,7 @@ class UniversalApi implements UniversalApiInterface
         ShippingMethodsInterface $shippingMethods,
         TaxInterface $tax,
         UpdateCartInterface $updateCart,
+        GetProductInterface $getProduct,
         UniversalApiResultInterface $result,
         Bugsnag $bugsnag,
         LogHelper $logHelper,
@@ -114,6 +121,7 @@ class UniversalApi implements UniversalApiInterface
         $this->shippingMethods = $shippingMethods;
         $this->tax = $tax;
         $this->updateCart = $updateCart;
+        $this->getProduct = $getProduct;
         $this->result = $result;
         $this->bugsnag = $bugsnag;
         $this->logHelper = $logHelper;
@@ -190,6 +198,15 @@ class UniversalApi implements UniversalApiInterface
                             isset($data['cart']) ? $data['cart'] : null,
                             isset($data['shipping_address']) ? $data['shipping_address'] : null,
                             isset($data['shipping_option']) ? $data['shipping_option'] : null
+                        )
+                    );
+                    break;
+                case "product.get":
+                    //Returns GetProductInterface
+                    $this->result->setData(
+                        $this->getProduct->execute(
+                            isset($data['productID']) ? $data['productID'] : "",
+                            isset($data['sku']) ? $data['sku'] : ""
                         )
                     );
                     break;

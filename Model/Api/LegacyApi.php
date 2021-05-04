@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\CreateOrderInterface;
 use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
+use Bolt\Boltpay\Api\GetProductInterface;
 use Bolt\Boltpay\Api\LegacyApiInterface;
 use Bolt\Boltpay\Api\OrderManagementInterface;
 use Bolt\Boltpay\Api\ShippingInterface;
@@ -64,6 +65,11 @@ class LegacyApi implements LegacyApiInterface
     protected $updateCart;
 
     /**
+     * @var GetProductInterface
+     */
+    protected $getProduct;
+
+    /**
      * @var CreateOrderInterface $createOrder
      * @var DiscountCodeValidationInterface $discountCodeValidation
      * @var OrderManagementInterface $orderManagement
@@ -71,6 +77,7 @@ class LegacyApi implements LegacyApiInterface
      * @var ShippingMethodsInterface $shippingMethods
      * @var TaxInterface $tax
      * @var UpdateCartInterface $updateCart
+     * @var GetProductInterface $getProduct
      */
     public function __construct(
         CreateOrderInterface $createOrder,
@@ -79,7 +86,8 @@ class LegacyApi implements LegacyApiInterface
         ShippingInterface $shipping,
         ShippingMethodsInterface $shippingMethods,
         TaxInterface $tax,
-        UpdateCartInterface $updateCart
+        UpdateCartInterface $updateCart,
+        GetProductInterface $getProduct
     ) {
         $this->createOrder = $createOrder;
         $this->discountCodeValidation = $discountCodeValidation;
@@ -88,6 +96,7 @@ class LegacyApi implements LegacyApiInterface
         $this->shippingMethods = $shippingMethods;
         $this->tax = $tax;
         $this->updateCart = $updateCart;
+        $this->getProduct = $getProduct;
     }
 
     /**
@@ -237,6 +246,22 @@ class LegacyApi implements LegacyApiInterface
             $type,
             $order,
             $currency
+        );
+    }
+
+    /**
+     * @api
+     * @param string $productID
+     * @param string $sku
+     * @return \Bolt\Boltpay\Api\Data\GetProductDataInterface
+     */
+    public function getProduct(
+        $productID = '',
+        $sku = ''
+    ) {
+        return $this->getProduct->execute(
+            $productID,
+            $sku
         );
     }
 }
