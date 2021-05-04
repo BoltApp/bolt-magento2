@@ -142,9 +142,9 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
             $quote = $this->_getOrderCreateModel()->getQuote();
             $this->storeManager->setCurrentStore($storeId);
 
-            $backOfficeKey = $this->configHelper->getPublishableKeyBackOffice();
-            $paymentOnlyKey = $this->configHelper->getPublishableKeyPayment();
-            $isPreAuth = $this->configHelper->getIsPreAuth();
+            $backOfficeKey = $this->configHelper->getPublishableKeyBackOffice($storeId);
+            $paymentOnlyKey = $this->configHelper->getPublishableKeyPayment($storeId);
+            $isPreAuth = $this->configHelper->getIsPreAuth($storeId);
 
             $customerEmail = $quote->getCustomerEmail();
             if (!$quote->getCustomerId() && $this->cartHelper->getCustomerByEmail($customerEmail)) {
