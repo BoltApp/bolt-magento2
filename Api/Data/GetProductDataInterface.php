@@ -132,4 +132,3 @@ interface GetProductDataInterface
      */
     public function setStoreID($storeID);
 }
-}
