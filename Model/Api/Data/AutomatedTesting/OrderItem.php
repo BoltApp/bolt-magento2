@@ -32,6 +32,11 @@ class OrderItem implements \JsonSerializable
     /**
      * @var string
      */
+    private $productUrl;
+
+    /**
+     * @var string
+     */
     private $price;
 
     /**
@@ -78,6 +83,14 @@ class OrderItem implements \JsonSerializable
     public function getProductSku()
     {
         return $this->productSku;
+    }
+
+    /**
+     * @return string
+     */
+    public function getProductUrl()
+    {
+        return $this->productUrl;
     }
 
     /**
@@ -153,6 +166,16 @@ class OrderItem implements \JsonSerializable
     public function setProductSku($productSku)
     {
         $this->productSku = $productSku;
+        return $this;
+    }
+
+    /**
+     * @param string $productUrl
+     * @return $this
+     */
+    public function setProductUrl($productUrl)
+    {
+        $this->productUrl = $productUrl;
         return $this;
     }
 
