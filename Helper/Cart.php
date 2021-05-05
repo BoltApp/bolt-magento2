@@ -1540,7 +1540,7 @@ class Cart extends AbstractHelper
     /**
      * Return the selected customizable options of quote item.
      *
-     * @param $item
+     * @param Quote/Item $item
      *
      * @return array
      */
@@ -1557,7 +1557,7 @@ class Cart extends AbstractHelper
             $option = $product->getOptionById($optionId);
             if ($option) {
                 $confItemOption = $product->getCustomOption(\Magento\Catalog\Model\Product\Type\AbstractType::OPTION_PREFIX . $optionId);
-                $itemOption = $item->getOptionByCode('option_' . $option->getId());
+                $itemOption = $item->getOptionByCode(\Magento\Catalog\Model\Product\Type\AbstractType::OPTION_PREFIX . $option->getId());
                 $group = $option->groupFactory($option->getType())
                     ->setOption($option)
                     ->setConfigurationItem($item)
