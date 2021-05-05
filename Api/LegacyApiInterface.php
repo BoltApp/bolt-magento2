@@ -127,4 +127,12 @@ interface LegacyApiInterface
      * @return void
      */
     public function createOrder($type = null, $order = null, $currency = null);
+
+    /**
+     * @api
+     * @param string $productID
+     * @param string $sku
+     * @return \Bolt\Boltpay\Api\Data\GetProductDataInterface
+     */
+    public function getProduct($productID = '', $sku = '');
 }
