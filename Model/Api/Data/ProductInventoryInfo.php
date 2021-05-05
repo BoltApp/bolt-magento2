@@ -94,7 +94,25 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
     public function jsonSerialize()
     {
         return [
-            'product' => $this->product->getData(),
+            'product' => [
+                'id' => $this->product->getId(),
+                'sku' => $this->product->getCartData(),
+                'name' => $this->product->getName(),
+                'attribute_set_id' => $this->product->getAttributeSetId(),
+                'price' => $this->product->getPrice(),
+                'status' => $this->product->getStatus(),
+                'visibility' => $this->product->getVisibility(),
+                'type_id' => $this->product->getTypeId(),
+                'created_at' => $this->product->getCreatedAt(),
+                'updated_at' => $this->product->getUpdatedAt(),
+                'weight' => $this->product->getWeight(),
+                'product_links' => $this->product->getProductLinks(),
+                'extension_attributes' => $this->product->getExtensionAttributes(),
+                'options' => $this->product->getOptions(),
+                'media_gallery_entries' => $this->product->getMediaGalleryEntries(),
+                'tier_prices' => $this->product->getTierPrices(),
+                'custom_attributes' => $this->product->getCustomAttributes(),
+            ],
             'stock' => $this->stockStatus
         ];
     }
