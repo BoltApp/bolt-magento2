@@ -63,20 +63,19 @@ class CustomshippingPlugin
      */
     protected function isBoltCalculation()
     {
-        if ($this->_appState->getAreaCode() !== 'webapi_rest') {
+        if ($this->_appState->getAreaCode() !== \Magento\Framework\App\Area::AREA_WEBAPI_REST) {
             return false;
         }
-        if (!empty($this->_restRequest)) {
-            $payload = $this->_restRequest->getContent();
-            if (!empty($payload)) {
-                $transaction = json_decode($payload);
-                if (isset($transaction->order->cart->shipments[0]->reference)
-                    && $transaction->order->cart->shipments[0]->reference == 'shineretrofits_shippingmethod_shineretrofits_shippingmethod'
-                ) {
-                    return true;
-                }
+        $payload = $this->_restRequest->getContent();
+        if (!empty($payload)) {
+            $transaction = json_decode($payload);
+            if (isset($transaction->order->cart->shipments[0]->reference)
+                && $transaction->order->cart->shipments[0]->reference == 'shineretrofits_shippingmethod_shineretrofits_shippingmethod'
+            ) {
+                return true;
             }
         }
+
         return false;
     }
 
@@ -84,6 +83,12 @@ class CustomshippingPlugin
      * The original method prohibits using Shineretrofits shipping method shipping method for webapi_rest,
      * so it returns false for Bolt backoffice order.
      * We need to check if calculation was called for Bolt and return rates if so.
+     *
+     * @param ShineretrofitsCustomshipping $subject
+     * @param \Magento\Shipping\Model\Rate\Result|bool|null $result
+     *
+     * @return \Magento\Shipping\Model\Rate\Result|bool|null
+     * @throws \Magento\Framework\Exception\LocalizedException if the area code is not set
      */
     public function afterCollectRates(
         ShineretrofitsCustomshipping $subject,
@@ -91,19 +96,15 @@ class CustomshippingPlugin
     ) {
         if ($result !== false) {
             return $result;
-        }        
-        if (!$subject->isActive()) {
-            return false;
-        }
-        if($this->_appState->getAreaCode() == 'frontend'){
-            return false;
-        }
-        if($this->_appState->getAreaCode() == 'webrest_api'){
-            return false;
-        }
-        if (!$this->isBoltCalculation()) {
-            return false;
-        }
+        }       
+        if (
+		    !$subject->isActive()
+		    || $this->_appState->getAreaCode() == \Magento\Framework\App\Area::AREA_FRONTEND
+		    || $this->_appState->getAreaCode() == 'webrest_api'
+		    || !$this->isBoltCalculation()
+		) {
+		    return false;
+		}
 
         $result = $this->_rateResultFactory->create();
         $shippingPrice = $subject->getConfigData('price');
