@@ -21,6 +21,7 @@ use Bolt\Boltpay\Api\Data\GetProductDataInterface;
 use Bolt\Boltpay\Api\GetProductInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Model\Api\Data\ProductInventoryInfo;
 use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface;
@@ -96,6 +97,11 @@ class GetProduct implements GetProductInterface
     private $eavConfig;
 
     /**
+     * @var LogHelper
+     */
+    protected $logHelper;
+
+    /**
      * @param ProductRepositoryInterface $productRepositoryInterface
      * @param StockRegistryProviderInterface $stockRegistry
      * @param StockConfigurationInterface $stockConfiguration
@@ -104,6 +110,7 @@ class GetProduct implements GetProductInterface
      * @param Configurable $configurable
      * @param Config $eavConfig
      * @param HookHelper $hookHelper
+     * @param LogHelper $logHelper
      * @param Bugsnag $bugsnag
      */
     public function __construct(
@@ -115,6 +122,7 @@ class GetProduct implements GetProductInterface
         Configurable          $configurable,
         Config $eavConfig,
         HookHelper $hookHelper,
+        LogHelper $logHelper,
         Bugsnag $bugsnag
     ) {
         $this->productRepositoryInterface = $productRepositoryInterface;
@@ -126,6 +134,7 @@ class GetProduct implements GetProductInterface
         $this->bugsnag = $bugsnag;
         $this->configurable = $configurable;
         $this->eavConfig = $eavConfig;
+        $this->logHelper = $logHelper;
     }
 
     private function getStockStatus($product){
@@ -141,11 +150,13 @@ class GetProduct implements GetProductInterface
         $productInventory = new ProductInventoryInfo();
 
         if ($productID != "") {
+            $this->logHelper("id hit");
             $product = $this->productRepositoryInterface->getById($productID, false, $this->websiteId, false);
             $productInventory->setProduct($product);
             $productInventory->setStock($this->getStockStatus($product));
             $this->productData->setProductInventory($productInventory);
         } elseif ($sku != "") {
+            $this->logHelper("sku hit");
             $product = $this->productRepositoryInterface->get($sku, false, $this->storeID, false);
             $productInventory->setProduct($product);
             $productInventory->setStock($this->getStockStatus($product));
@@ -244,6 +255,9 @@ class GetProduct implements GetProductInterface
             $baseImageUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
             $this->productData->setBaseImageUrl($baseImageUrl);
 
+            $this->logHelper("PRODUCTINFOOOOOOO");
+            $this->logHelper($productID);
+            $this->logHelper($sku);
             $this->getProduct($productID, $sku);
             $this->getProductFamily();
             return $this->productData;
