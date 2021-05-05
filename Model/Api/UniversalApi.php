@@ -205,6 +205,7 @@ class UniversalApi implements UniversalApiInterface
                     //Returns GetProductInterface
                     $this->logHelper->addInfoLog('### DATADATATA');
                     $this->logHelper->addInfoLog($data);
+                    $this->logHelper->addInfoLog($data['productID']);
                     $this->result->setData(
                         $this->getProduct->execute(
                             isset($data['productID']) ? $data['productID'] : "",
