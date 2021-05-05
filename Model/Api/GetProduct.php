@@ -150,13 +150,13 @@ class GetProduct implements GetProductInterface
         $productInventory = new ProductInventoryInfo();
 
         if ($productID != "") {
-            $this->logHelper("id hit");
+            $this->logHelper->addInfoLog("id hit");
             $product = $this->productRepositoryInterface->getById($productID, false, $this->websiteId, false);
             $productInventory->setProduct($product);
             $productInventory->setStock($this->getStockStatus($product));
             $this->productData->setProductInventory($productInventory);
         } elseif ($sku != "") {
-            $this->logHelper("sku hit");
+            $this->logHelper->addInfoLog("sku hit");
             $product = $this->productRepositoryInterface->get($sku, false, $this->storeID, false);
             $productInventory->setProduct($product);
             $productInventory->setStock($this->getStockStatus($product));
@@ -255,9 +255,9 @@ class GetProduct implements GetProductInterface
             $baseImageUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
             $this->productData->setBaseImageUrl($baseImageUrl);
 
-            $this->logHelper("PRODUCTINFOOOOOOO");
-            $this->logHelper($productID);
-            $this->logHelper($sku);
+            $this->logHelper->addInfoLog("PRODUCTINFOOOOOOO");
+            $this->logHelper->addInfoLog($productID);
+            $this->logHelper->addInfoLog($sku);
             $this->getProduct($productID, $sku);
             $this->getProductFamily();
             return $this->productData;
