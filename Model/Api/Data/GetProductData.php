@@ -207,20 +207,4 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
         $this->options = $options;
         return $this;
     }
-
-
-    /**
-     * @inheritDoc
-     */
-    public function jsonSerialize()
-    {
-        return [
-            'product_inventory' => $this->product,
-            'children' => $this->children,
-            'parent' => $this->parent,
-            'options' => $this->options,
-            'baseImageUrl' => $this->baseImageUrl,
-            'storeID' => $this->storeID
-        ];
-    }
 }
