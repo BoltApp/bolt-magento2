@@ -85,4 +85,17 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
         $this->stockStatus = $stockStatus;
         return $this;
     }
+
+
+
+    /**
+     * @inheritDoc
+     */
+    public function jsonSerialize()
+    {
+        return [
+            'product' => $this->product,
+            'stock' => $this->stockStatus
+        ];
+    }
 }
