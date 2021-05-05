@@ -203,6 +203,8 @@ class UniversalApi implements UniversalApiInterface
                     break;
                 case "product.get":
                     //Returns GetProductInterface
+                    $this->logHelper->addInfoLog('### DATADATATA');
+                    $this->logHelper->addInfoLog($data);
                     $this->result->setData(
                         $this->getProduct->execute(
                             isset($data['productID']) ? $data['productID'] : "",
