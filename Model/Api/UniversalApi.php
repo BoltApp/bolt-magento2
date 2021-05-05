@@ -206,11 +206,14 @@ class UniversalApi implements UniversalApiInterface
                     $this->logHelper->addInfoLog('### DATADATATA');
                     $this->logHelper->addInfoLog(json_encode($data));
                     $this->logHelper->addInfoLog($data['productID']);
+                    $test = $this->getProduct->execute(
+                        isset($data['productID']) ? $data['productID'] : "",
+                        isset($data['sku']) ? $data['sku'] : ""
+                    );
+                    $this->logHelper->addInfoLog(json_encode($test));
+
                     $this->result->setData(
-                        $this->getProduct->execute(
-                            isset($data['productID']) ? $data['productID'] : "",
-                            isset($data['sku']) ? $data['sku'] : ""
-                        )
+                        $test
                     );
                     break;
                 case "debug":
