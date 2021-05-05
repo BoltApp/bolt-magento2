@@ -118,8 +118,8 @@
         </resources>
     </route>
     <!--Get Product Endpoint-->
-    <route url="/V1/bolt/boltpay/product" method="GET">
-        <service class="Bolt\Boltpay\Api\GetProductInterface" method="execute"/>
+    <route url="/V1/bolt/boltpay/product" method="POST">
+        <service class="Bolt\Boltpay\Api\LegacyApiInterface" method="getProduct"/>
         <resources>
             <resource ref="anonymous" />
         </resources>

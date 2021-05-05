@@ -234,7 +234,7 @@ class GetProduct implements GetProductInterface
     public function execute($productID = '', $sku = '')
     {
         if ($productID === '' && $sku ==='') {
-            throw new WebapiException(__('Missing a product ID or a sku in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
+            throw new WebapiException(__('Missing a product ID or a sku in the request body.'), 0, WebapiException::HTTP_BAD_REQUEST);
         }
 
         try {
