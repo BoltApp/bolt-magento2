@@ -94,7 +94,7 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
     public function jsonSerialize()
     {
         return [
-            'product' => $this->product,
+            'product' => $this->product->getData(),
             'stock' => $this->stockStatus
         ];
     }
