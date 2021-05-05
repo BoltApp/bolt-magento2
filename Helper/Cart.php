@@ -1442,7 +1442,7 @@ class Cart extends AbstractHelper
 
                 if ($this->deciderHelper->isCustomizableOptionsSupport()) {
                     try {
-                        $customizableOptions = $this->getProductCustomizableOptions($_product);
+                        $customizableOptions = $this->getProductCustomizableOptions($item);
                         if ($customizableOptions) {
                             $itemSku = $this->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
                         }
@@ -1584,29 +1584,30 @@ class Cart extends AbstractHelper
     /**
      * Return the selected customizable options of quote item.
      *
-     * @param $product
+     * @param Quote/Item $item
      *
      * @return array
      */
-    public function getProductCustomizableOptions($product)
+    public function getProductCustomizableOptions($item)
     {
-        $optionIds = $product->getCustomOption('option_ids');
+        $optionIds = $item->getOptionByCode('option_ids');
         if (!$optionIds) {
             return [];
         }
 
         $customizableOptions = [];
+        $product = $item->getProduct();
         foreach (explode(',', $optionIds->getValue()) as $optionId) {
             $option = $product->getOptionById($optionId);
             if ($option) {
                 $confItemOption = $product->getCustomOption(\Magento\Catalog\Model\Product\Type\AbstractType::OPTION_PREFIX . $optionId);
-
+                $itemOption = $item->getOptionByCode(\Magento\Catalog\Model\Product\Type\AbstractType::OPTION_PREFIX . $option->getId());
                 $group = $option->groupFactory($option->getType())
                     ->setOption($option)
+                    ->setConfigurationItem($item)
+                    ->setConfigurationItemOption($itemOption)
                     ->setListener(new \Magento\Framework\DataObject());
-
                 $optionSku = $group->getOptionSku($confItemOption->getValue(), self::MAGENTO_SKU_DELIMITER);
-
                 $customizableOptions[] = [
                     'title' => $option->getTitle(),
                     'value' => $group->getFormattedOptionValue($confItemOption->getValue()),
@@ -1629,13 +1630,13 @@ class Cart extends AbstractHelper
      */
     public function getProductActualSkuByCustomizableOptions($sku, $customizableOptions)
     {
-        $skuElements = explode(self::MAGENTO_SKU_DELIMITER, $sku);
         foreach ($customizableOptions as $customizableOption) {
-            if ($customizableOption['sku'] && ($skuKey = array_search($customizableOption['sku'], $skuElements)) !== false) {
-                unset($skuElements[$skuKey]);
+            if ($customizableOption['sku']) {
+                $sku = str_replace(self::MAGENTO_SKU_DELIMITER.$customizableOption['sku'], '', $sku);
             }
         }
-        return implode(self::MAGENTO_SKU_DELIMITER, $skuElements);
+
+        return $sku;
     }
 
     /**

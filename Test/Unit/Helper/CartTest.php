@@ -4659,6 +4659,8 @@ ORDER
             'getName',
             'getSku',
             'getIsVirtual',
+            'getOptionByCode',
+            'getProductType',
             ]
         );
         $productMock = $this->createMock(Product::class);
@@ -4673,6 +4675,8 @@ ORDER
         $quoteItem->method('getIsVirtual')->willReturn(false);
         $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
         $quoteItem->method('getProduct')->willReturn($productMock);
+        $quoteItem->method('getOptionByCode')->with('option_ids')->willReturn([]);
+        $quoteItem->method('getProductType')->willReturn('simple');
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
 
         $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);

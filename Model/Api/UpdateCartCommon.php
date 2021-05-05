@@ -324,7 +324,7 @@ abstract class UpdateCartCommon
             //By default this feature switch is enabled.
             if ($this->featureSwitches->isCustomizableOptionsSupport()) {
                 $itemProduct = $item->getProduct();
-                $customizableOptions = $this->cartHelper->getProductCustomizableOptions($itemProduct);
+                $customizableOptions = $this->cartHelper->getProductCustomizableOptions($item);
                 $itemSku = trim($item->getSku());
 
                 if ($customizableOptions) {
