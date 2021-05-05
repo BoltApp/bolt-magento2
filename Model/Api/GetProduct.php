@@ -165,8 +165,8 @@ class GetProduct implements GetProductInterface
             $product = $this->productRepositoryInterface->getById($productID, false, $this->websiteId, false);
             $productInventory->setProduct($product);
             $this->logHelper->addInfoLog(json_encode($productInventory));
-            $this->logHelper->addInfoLog(json_encode($product->getData('stock_data')));
-            $this->logHelper->addInfoLog($this->serializer->serialize($product->getData('stock_data')));
+            $this->logHelper->addInfoLog(json_encode($product));
+            $this->logHelper->addInfoLog($this->serializer->serialize($product));
             $productInventory->setStock($this->getStockStatus($product));
             $this->productData->setProductInventory($productInventory);
         } elseif ($sku != "") {
