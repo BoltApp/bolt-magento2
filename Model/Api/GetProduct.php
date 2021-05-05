@@ -153,6 +153,9 @@ class GetProduct implements GetProductInterface
             $this->logHelper->addInfoLog("id hit");
             $product = $this->productRepositoryInterface->getById($productID, false, $this->websiteId, false);
             $productInventory->setProduct($product);
+            $this->logHelper->addInfoLog(json_encode($productInventory));
+            $this->logHelper->addInfoLog(json_encode($product));
+
             $productInventory->setStock($this->getStockStatus($product));
             $this->productData->setProductInventory($productInventory);
         } elseif ($sku != "") {
@@ -259,7 +262,11 @@ class GetProduct implements GetProductInterface
             $this->logHelper->addInfoLog($productID);
             $this->logHelper->addInfoLog($sku);
             $this->getProduct($productID, $sku);
+            $this->logHelper->addInfoLog("FIRST");
+            $this->logHelper->addInfoLog(json_encode($this->productData));
             $this->getProductFamily();
+            $this->logHelper->addInfoLog("Family");
+            $this->logHelper->addInfoLog(json_encode($this->productData));
             return $this->productData;
         } catch (NoSuchEntityException $nse) {
             throw new NoSuchEntityException(__('Product not found with given identifier.'));
