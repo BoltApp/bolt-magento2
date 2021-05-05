@@ -217,17 +217,6 @@ class GetProduct implements GetProductInterface
         }
     }
 
-    protected function sendSuccessResponse($result, $quote = null)
-    {
-        $result = str_replace(["\r\n", "\n", "\r"], ' ', json_encode($result));
-        $this->logHelper->addInfoLog('### sendSuccessResponse');
-        $this->logHelper->addInfoLog($result);
-        $this->logHelper->addInfoLog('=== END ===');
-
-        $this->response->setBody($result);
-        $this->response->sendResponse();
-    }
-
     // TODO: ADD unit tests @ethan
     /**
      * Get product, its stock, and product family
@@ -257,16 +246,6 @@ class GetProduct implements GetProductInterface
 
             $this->getProduct($productID, $sku);
             $this->getProductFamily();
-            if (isset($this->request->getBodyParams()['data'])) {
-                $result = [
-                    'event' => "product.get",
-                    'status' => "success",
-                    'data' => [
-                        'product' => $this->productData
-                    ]
-                ];
-                $this->sendSuccessResponse($result);
-            }
             return $this->productData;
         } catch (NoSuchEntityException $nse) {
             throw new NoSuchEntityException(__('Product not found with given identifier.'));
