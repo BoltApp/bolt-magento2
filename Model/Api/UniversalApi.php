@@ -210,8 +210,6 @@ class UniversalApi implements UniversalApiInterface
                         isset($data['productID']) ? $data['productID'] : "",
                         isset($data['sku']) ? $data['sku'] : ""
                     );
-                    $this->logHelper->addInfoLog(json_encode($test));
-
                     $this->result->setData(
                         $test
                     );

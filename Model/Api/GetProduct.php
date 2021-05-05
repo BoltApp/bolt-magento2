@@ -151,6 +151,7 @@ class GetProduct implements GetProductInterface
 
         if ($productID != "") {
             $this->logHelper->addInfoLog("id hit");
+            $this->logHelper->addInfoLog($this->websiteId);
             $product = $this->productRepositoryInterface->getById($productID, false, $this->websiteId, false);
             $productInventory->setProduct($product);
             $this->logHelper->addInfoLog(json_encode($productInventory));
@@ -266,7 +267,6 @@ class GetProduct implements GetProductInterface
             $this->logHelper->addInfoLog(json_encode($this->productData));
             $this->getProductFamily();
             $this->logHelper->addInfoLog("Family");
-            $this->logHelper->addInfoLog(json_encode($this->productData));
             return $this->productData;
         } catch (NoSuchEntityException $nse) {
             throw new NoSuchEntityException(__('Product not found with given identifier.'));
