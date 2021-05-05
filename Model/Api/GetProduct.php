@@ -35,6 +35,8 @@ use Magento\CatalogInventory\Model\Spi\StockRegistryProviderInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\CatalogInventory\Api\StockConfigurationInterface;
 use Magento\Eav\Model\Config;
+use Magento\Framework\Serialize\SerializerInterface;
+
 
 
 
@@ -102,6 +104,11 @@ class GetProduct implements GetProductInterface
     protected $logHelper;
 
     /**
+     * @var SerializerInterface
+     */
+    protected $serializer;
+
+    /**
      * @param ProductRepositoryInterface $productRepositoryInterface
      * @param StockRegistryProviderInterface $stockRegistry
      * @param StockConfigurationInterface $stockConfiguration
@@ -112,6 +119,7 @@ class GetProduct implements GetProductInterface
      * @param HookHelper $hookHelper
      * @param LogHelper $logHelper
      * @param Bugsnag $bugsnag
+     * @param SerializerInterface $serializer
      */
     public function __construct(
         ProductRepositoryInterface  $productRepositoryInterface,
@@ -123,7 +131,8 @@ class GetProduct implements GetProductInterface
         Config $eavConfig,
         HookHelper $hookHelper,
         LogHelper $logHelper,
-        Bugsnag $bugsnag
+        Bugsnag $bugsnag,
+        SerializerInterface $serializer
     ) {
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockRegistry = $stockRegistry;
@@ -135,6 +144,7 @@ class GetProduct implements GetProductInterface
         $this->configurable = $configurable;
         $this->eavConfig = $eavConfig;
         $this->logHelper = $logHelper;
+        $this->serializer = $serializer;
     }
 
     private function getStockStatus($product){
@@ -156,6 +166,7 @@ class GetProduct implements GetProductInterface
             $productInventory->setProduct($product);
             $this->logHelper->addInfoLog(json_encode($productInventory));
             $this->logHelper->addInfoLog(json_encode($product));
+            $this->logHelper->addInfoLog($this->serializer->serialize($product));
             $productInventory->setStock($this->getStockStatus($product));
             $this->productData->setProductInventory($productInventory);
         } elseif ($sku != "") {
