@@ -27,7 +27,6 @@ use Magento\Quote\Model\QuoteRepository;
 class Rewardpoints
 {
     const J2T_REWARD_POINTS = 'j2t_reward_points';
-    const J2T_REWARD_POINTS_TOTAL_KEY = 'rewardpoints';
 
     /**
      * @var Bugsnag Bugsnag helper instance
@@ -48,11 +47,6 @@ class Rewardpoints
      * @var QuoteRepository
      */
     private $quoteRepository;
-    
-    /**
-     * @var float
-     */
-    private $customerPoints;
     
     /**
      * @var \J2t\Rewardpoints\Helper\Data
@@ -96,9 +90,8 @@ class Rewardpoints
 
         try {
             $this->rewardHelper = $rewardHelper;
-            $totals = $quote->getTotals();
-            $totalDiscount = $totals[self::J2T_REWARD_POINTS_TOTAL_KEY] ?? null;
-            if ($totalDiscount && $amount = $totalDiscount->getValue()) {
+            $pointsUsed = $quote->getRewardpointsQuantity();
+            if ($pointsUsed > 0) {
                 list ($discounts, $totalAmount, $diff) = $result;
                 
                 // J2t reward points can not be applied to shipping.
@@ -106,15 +99,12 @@ class Rewardpoints
                 // the discount can be applied to tax.
                 // But since Bolt checkout does not support such a behavior,
                 // we have to exclude tax from the discount calculation.
-                if ($rewardHelper->getIncludeTax($quote->getStoreId())) {
-                    $pointsUsed = $quote->getRewardpointsQuantity();
-                    $maxPointUsage = $this->getMaxPointUsage($quote, $pointsUsed);
-                    $pointsValue = $rewardHelper->getPointMoneyEquivalence($maxPointUsage, true, $quote, $quote->getStoreId());
-                    $discountAmount = abs($this->priceCurrency->convert($pointsValue));
-                } else {
-                    $discountAmount = abs($amount);               
-                }                
-        
+                $storeId = $quote->getStoreId();
+                if ($rewardHelper->getIncludeTax($storeId)) {
+                    $pointsUsed = $this->getMaxPointUsage($quote, $pointsUsed);    
+                }
+                $pointsValue = $rewardHelper->getPointMoneyEquivalence($pointsUsed, true, $quote, $storeId);
+                $discountAmount = abs($this->priceCurrency->convert($pointsValue));        
                 $currencyCode = $quote->getQuoteCurrencyCode();                
                 $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
                 $discount_type = $this->discountHelper->getBoltDiscountType('by_fixed');
@@ -230,9 +220,10 @@ class Rewardpoints
                 // the discount can be applied to tax.
                 // But since Bolt checkout does not support such a behavior,
                 // we have to exclude tax from the discount calculation.
-                if ($rewardHelper->getIncludeTax($quote->getStoreId())) {
+                $storeId = $quote->getStoreId();
+                if ($rewardHelper->getIncludeTax($storeId)) {
                     $maxPointUsage = $this->getMaxPointUsage($quote, $pointsUsed);
-                    $pointsValue = $rewardHelper->getPointMoneyEquivalence($maxPointUsage, true, $quote, $quote->getStoreId());
+                    $pointsValue = $rewardHelper->getPointMoneyEquivalence($maxPointUsage, true, $quote, $storeId);
                     $quote->setRewardpointsQuantity($maxPointUsage);
                     $quote->setBaseRewardpoints($pointsValue);
                     $quote->setRewardpoints($this->priceCurrency->convert($pointsValue));
@@ -245,21 +236,6 @@ class Rewardpoints
     }
     
     /**
-     * Return the reward points of customer.
-     *
-     * @param Quote $quote
-     *
-     */
-    protected function getCustomerPoints($quote)
-    {
-        if ($this->customerPoints === null) {
-            $this->customerPoints = $this->rewardHelper->getCurrentCustomerPoints($quote->getCustomerId(), $quote->getStoreId());
-        }
-        
-        return $this->customerPoints;
-    }
-    
-    /**
      * Return the max amount of reward points can be applied to quote.
      *
      * @param Quote $quote
@@ -269,11 +245,10 @@ class Rewardpoints
     protected function getMaxPointUsage($quote, $points)
     {
         if ($points > 0) {
-            $customerPoints = $this->getCustomerPoints($quote);
-            $points = min($points, $customerPoints);
+            $customerPoints = $this->rewardHelper->getCurrentCustomerPoints($quote->getCustomerId(), $quote->getStoreId());
+            $points = max($points, $customerPoints);
         }
-
-        $points = $this->getMaxOrderUsage($quote, $points, true, $quote->getStoreId());
+        $points = $this->getMaxOrderUsage($quote, $points, true);
         return $points;
     }
     
@@ -283,11 +258,11 @@ class Rewardpoints
      * @param Quote $quote
      * @param float $points
      * @param bool  $collectTotals
-     * @param int   $storeId
      *
      */
-    protected function getMaxOrderUsage($quote, $points, $collectTotals = false, $storeId = null) {
+    protected function getMaxOrderUsage($quote, $points, $collectTotals = false) {
         //check cart base subtotal
+        $storeId = $quote->getStoreId();
         if ($percent = $this->rewardHelper->getMaxPercentUsage($storeId)) {
             //do collect totals
             $subtotalPrice = $quote->getShippingAddress()->getBaseSubtotal();
@@ -305,7 +280,7 @@ class Rewardpoints
                 }
             }
             
-            $baseSubtotalInPoints = $this->rewardHelper->getPointsProductPriceEquivalence($subtotalPrice, $quote->getStoreId()) * $percent / 100;
+            $baseSubtotalInPoints = $this->rewardHelper->getPointsProductPriceEquivalence($subtotalPrice, $storeId) * $percent / 100;
             $points = min($points, $baseSubtotalInPoints);
         }
         if ($maxPointUsage = $this->rewardHelper->getMaxPointUsage()) {
