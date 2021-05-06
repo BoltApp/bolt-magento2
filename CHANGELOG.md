@@ -203,3 +203,5 @@
 ## [v2.21.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.21.1) 2021-05-04
 - Include account.bolt.com in M2 Content Security Policy allow-list
 - Fix a bug with order associations for Bolt SSO
+## [v2.21.2](https://github.com/BoltApp/bolt-magento2/releases/tag/2.21.2)
+- Fix bug with backoffice orders
