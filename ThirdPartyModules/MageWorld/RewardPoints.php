@@ -246,4 +246,78 @@ class RewardPoints
             throw $e;
         }
     }
+
+    /**
+     * @param int                                    $result
+     * @param \MW\RewardPoints\Helper\Data           $mwRewardPointsHelperData
+     * @param \MW\RewardPoints\Model\CustomerFactory $mwRewardPointsModelCustomerFactory
+     * @param \Magento\Quote\Model\Quote             $quote
+     *
+     * @return int
+     */
+    public function filterShippingAmount($result,
+                                         $mwRewardPointsHelperData,
+                                         $mwRewardPointsModelCustomerFactory,
+                                         $quote)
+    {
+        $this->mwRewardPointsHelperData = $mwRewardPointsHelperData;
+        $this->mwRewardPointsModelCustomer = $mwRewardPointsModelCustomerFactory;
+        try {
+            if ($quote->getMwRewardpoint()) {
+                $storeCode = $quote->getStore()->getCode();
+                if (
+                    $quote->getMwRewardpointDiscount() >= $quote->getSubtotal()
+                    && $this->mwRewardPointsHelperData->getRedeemedShippingConfig($storeCode)
+                    && !$this->mwRewardPointsHelperData->getRedeemedTaxConfig($storeCode)
+                ) {
+                    $rewardPoints = $this->mwRewardPointsModelCustomer->create()
+                        ->load($quote->getCustomerId())->getMwRewardPoint();
+                    $currencyCode = $quote->getQuoteCurrencyCode();
+                    $maximumAmount = CurrencyUtils::toMinor(abs($this->mwRewardPointsHelperData->exchangePointsToMoneys($rewardPoints, $storeCode)), $currencyCode);
+                    $quoteSubtotal = CurrencyUtils::toMinor($quote->getSubtotal(), $currencyCode);
+                    $quoteSubtotalIncludingShipping = $quoteSubtotal + $result;
+                    if ($maximumAmount > $quoteSubtotalIncludingShipping) {
+                        $result = $maximumAmount - $quoteSubtotal;
+                    }
+                }
+            }
+        } catch (\Exception $exception) {
+            $this->bugsnagHelper->notifyException($exception);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param bool                         $result
+     * @param \MW\RewardPoints\Helper\Data $mwRewardPointsHelperData
+     * @param \Magento\Quote\Model\Quote   $quote
+     * @param \stdClass                    $transaction
+     *
+     * @return bool
+     */
+    public function filterSkipValidateShippingForProcessNewOrder(
+        $result,
+        $mwRewardPointsHelperData,
+        $quote,
+        $transaction
+    ) {
+        try {
+            $this->mwRewardPointsHelperData = $mwRewardPointsHelperData;
+            if ($quote->getMwRewardpoint()) {
+                $storeCode = $quote->getStore()->getCode();
+                if (
+                    $quote->getMwRewardpointDiscount() >= $quote->getSubtotal()
+                    && $this->mwRewardPointsHelperData->getRedeemedShippingConfig($storeCode)
+                    && !$this->mwRewardPointsHelperData->getRedeemedTaxConfig($storeCode)
+                ) {
+                    return true;
+                }
+            }
+        }catch (\Exception $exception) {
+            $this->bugsnagHelper->notifyException($exception);
+        }
+
+        return $result;
+    }
 }
