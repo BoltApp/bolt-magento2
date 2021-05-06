@@ -78,7 +78,7 @@ class CustomFieldsHandler extends AbstractHelper
                 $comment .= '<br>' . $customField['label'] . ': ' . $customField['value'];
             }
 
-            $needSubscribe = isset($customField['features']) && in_array($customField['features'], self::FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER);
+            $needSubscribe = isset($customField['features']) && in_array(self::FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER, $customField['features']);
         }
 
         if ($comment) {

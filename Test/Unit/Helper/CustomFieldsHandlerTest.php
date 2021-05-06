@@ -177,15 +177,20 @@ class CustomFieldsHandlerTest extends BoltTestCase
 
     public function handleCustomFieldsDataProvider()
     {
-        $customField1 = ['label' => 'Gift', 'type'=>'CHECKBOX', 'is_custom_field' => true, 'value' => false];
+        $customField1 = ['label' => 'Gift', 'type' => 'CHECKBOX', 'is_custom_field' => true, 'value' => false];
         $comment1 = '<br>Gift: No';
       
         $customField2 = ['label' => 'Question', 'type' => 'DROPDOWN', 'is_custom_field' => true, 'value' => 'Answer'];
         $comment2 = '<br>Question: Answer';
+
+        $customField3 = ['label' => 'Subscription', 'type' => 'CHECKBOX', 'is_custom_field' => true, 'value' => true, 'features' => ['subscribe_to_platform_newsletter']];
+        $comment3 = '<br>Subscription: Yes';
+
         return [
             [[], '', false],
             [[$customField1], $comment1, false],
-            [[$customField2], $comment2, false]           
+            [[$customField2], $comment2, false],
+            [[$customField3], $comment3, true]
         ];
     }
 }
