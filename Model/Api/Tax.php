@@ -198,15 +198,20 @@ class Tax extends ShippingTax implements TaxInterface
     /**
      * @param TotalsInterface $totalsInformation
      * @param string $currencyCode
-     * @param array $shipping_option
+     * @param array $shippingOption
      * @return array
      * @throws \Exception
      */
-    protected function getShippingDiscount($totalsInformation, $currencyCode, $shipping_option)
+    protected function getShippingDiscount($totalsInformation, $currencyCode, $shippingOption)
     {
-        $shippingDiscountAmount = $this->eventsForThirdPartyModules->runFilter("collectShippingDiscounts", $totalsInformation->getShippingDiscountAmount(), $this->quote, $this->quote->getShippingAddress());
+        $shippingDiscountAmount = $this->eventsForThirdPartyModules->runFilter(
+            "collectShippingDiscounts",
+            $totalsInformation->getShippingDiscountAmount(),
+            $this->quote,
+            $this->quote->getShippingAddress()
+        );
         if ($shippingDiscountAmount >= DiscountHelper::MIN_NONZERO_VALUE) {
-            $service = $shipping_option['service'] ?? '';
+            $service = $shippingOption['service'] ?? '';
             $shippingCost = $totalsInformation->getShippingAmount() - $shippingDiscountAmount;
             $shippingRoundedCost = CurrencyUtils::toMinor($shippingCost, $currencyCode);
             $diff = CurrencyUtils::toMinorWithoutRounding($shippingCost, $currencyCode) - $shippingRoundedCost;
@@ -217,16 +222,16 @@ class Tax extends ShippingTax implements TaxInterface
                 $discount = $this->priceHelper->currency($shippingDiscountAmount, true, false);
                 $service .= " [$discount" . "&nbsp;discount]";
             }
-            $shipping_option['service'] = html_entity_decode($service);
+            $shippingOption['service'] = html_entity_decode($service);
         } else {
             $shippingRoundedCost = CurrencyUtils::toMinor($totalsInformation->getShippingAmount(), $currencyCode);
             $taxAmount = CurrencyUtils::toMinor($totalsInformation->getShippingTaxAmount(), $currencyCode);
         }
         
-        $shipping_option['cost'] = $shippingRoundedCost;
-        $shipping_option['tax_amount'] = $taxAmount;
+        $shippingOption['cost'] = $shippingRoundedCost;
+        $shippingOption['tax_amount'] = $taxAmount;
         
-        return $shipping_option;
+        return $shippingOption;
     }
 
     /**
