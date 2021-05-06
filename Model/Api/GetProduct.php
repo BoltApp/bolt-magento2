@@ -176,21 +176,11 @@ class GetProduct implements GetProductInterface
             $this->productData->setChildren($childrenStockArray);
 
             $attributes = $parentProduct->getTypeInstance()->getConfigurableOptions($parentProduct);
-            $options = array();
 
-            foreach($attributes as $attr) {
-                foreach ($attr as $p) {
-                    $attribute = $this->eavConfig->getAttribute('catalog_product', $p['attribute_code']);
-                    if ($this->productData->getOptions()) {
-                        $update = array_merge($this->productData->getOptions(), $attribute->getSource()->getAllOptions());
-                        $this->productData->setOptions($update);
-                    } else {
-                        $this->productData->setOptions($attribute->getSource()->getAllOptions());
-                    }
-                }
+            if ($parentProduct->getTypeId() == Configurable::TYPE_CODE) {
+                $this->collectConfigurableProductOptions($parentProduct);
             }
-
-        } elseif ($product->getTypeId() == "configurable") {
+        } elseif ($product->getTypeId() == Configurable::TYPE_CODE) {
             $children = $product->getTypeInstance()->getUsedProducts($product);
             $childrenStockArray = array();
             foreach ($children  as $child) {
@@ -201,19 +191,7 @@ class GetProduct implements GetProductInterface
             }
             $this->productData->setChildren($childrenStockArray);
 
-            $attributes = $product->getTypeInstance()->getConfigurableOptions($product);
-
-            foreach($attributes as $attr) {
-                foreach ($attr as $p) {
-                    $attribute = $this->eavConfig->getAttribute('catalog_product', $p['attribute_code']);
-                    if ($this->productData->getOptions()) {
-                        $update = array_merge($this->productData->getOptions(), $attribute->getSource()->getAllOptions());
-                        $this->productData->setOptions($update);
-                    } else {
-                        $this->productData->setOptions($attribute->getSource()->getAllOptions());
-                    }
-                }
-            }
+            $this->collectConfigurableProductOptions($product);
         }
     }
 
@@ -252,6 +230,30 @@ class GetProduct implements GetProductInterface
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
             throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
+        }
+    }
+
+    /**
+     * Collects configurable options (super attributes) available for the provided configurable product
+     *
+     * @param ProductInterface $product for which to collect configurable options
+     *
+     * @return void
+     */
+    protected function collectConfigurableProductOptions(ProductInterface $product)
+    {
+        foreach ($product->getTypeInstance()->getConfigurableOptions($product) as $attribute) {
+            foreach ($attribute as $option) {
+                $existingOptions = $this->productData->getOptions() ?: [];
+                $optionId = $option['value_index'];
+                if (!in_array($optionId, array_column($existingOptions, 'value'))) {
+                    $existingOptions[] = [
+                        'value' => $optionId,
+                        'label' => $option['option_title'] ?: $option['default_title']
+                    ];
+                    $this->productData->setOptions($existingOptions);
+                }
+            }
         }
     }
 }
