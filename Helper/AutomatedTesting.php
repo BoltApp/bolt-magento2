@@ -422,7 +422,8 @@ class AutomatedTesting extends AbstractHelper
                 ->setTotal($this->formatPrice(
                     $item->getRowTotal() +
                     $item->getTaxAmount() -
-                    $item->getDiscountAmount()));
+                    $item->getDiscountAmount()
+                ));
         }
 
         return $this->orderFactory->create()
