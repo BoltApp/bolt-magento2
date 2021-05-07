@@ -30,7 +30,7 @@ class Config implements \JsonSerializable
     private $cart;
 
     /**
-     * @var Order
+     * @var Order|null
      */
     private $pastOrder;
 
@@ -73,7 +73,7 @@ class Config implements \JsonSerializable
     }
 
     /**
-     * @return Order
+     * @return Order|null
      */
     public function getPastOrder()
     {
@@ -81,7 +81,7 @@ class Config implements \JsonSerializable
     }
 
     /**
-     * @param Order $order
+     * @param Order|null $order
      * @return $this
      */
     public function setPastOrder($order)

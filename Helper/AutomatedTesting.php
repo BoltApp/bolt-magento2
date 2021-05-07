@@ -221,7 +221,6 @@ class AutomatedTesting extends AbstractHelper
      */
     protected function getPastOrder()
     {
-        try {
             $sortOrder = $this->sortOrderBuilder
                 ->setField('entity_id')
                 ->setDirection('DESC')
@@ -245,20 +244,13 @@ class AutomatedTesting extends AbstractHelper
                 ->getList($nonZeroDiscountTaxSearchCriteria)
                 ->getItems();
 
-            if ($ordersFound === null || count($ordersFound) === 0) {
+            if (count($ordersFound) === 0) {
                 $ordersFound = $this->orderRepository
                     ->getList($defaultSearchCritieria)
                     ->getItems();
             }
 
-            if ($ordersFound !== null && count($ordersFound) > 0) {
-                return array_shift($ordersFound);
-            }
-            return null;
-        } catch (Exception $e) {
-            $this->bugsnag->notifyException($e);
-            return $e->getMessage();
-        }
+            return count($ordersFound) > 0 ? reset($ordersFound) : null;
     }
 
     /**
@@ -309,11 +301,10 @@ class AutomatedTesting extends AbstractHelper
                 ->setTax($tax)
                 ->setSubTotal($this->formatPrice($quote->getSubtotal()));
             $this->quoteRepository->delete($quote);
-            $pastOrder = $this->convertToOrder($this->getPastOrder());
             return $this->configFactory->create()
                 ->setStoreItems($storeItems)
                 ->setCart($cart)
-                ->setPastOrder($pastOrder);
+                ->setPastOrder($this->convertToOrder($this->getPastOrder()));
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
             return $e->getMessage();
@@ -406,9 +397,9 @@ class AutomatedTesting extends AbstractHelper
     /**
      * Convert $order to an Order
      *
-     * @param ModelOrder $order
+     * @param ModelOrder|null $order
      *
-     * @return Order
+     * @return Order|null
      */
     protected function convertToOrder($order)
     {
@@ -427,9 +418,10 @@ class AutomatedTesting extends AbstractHelper
                 ->setTaxAmount($this->formatPrice($item->getTaxAmount()))
                 ->setTaxPercent($item->getTaxPercent())
                 ->setDiscountAmount($this->formatPrice($item->getDiscountAmount()))
-                ->setTotal($this->formatPrice($item->getRowTotal()
-                    + $item->getTaxAmount()
-                    - $item->getDiscountAmount()));
+                ->setTotal($this->formatPrice(
+                    $item->getRowTotal() +
+                    $item->getTaxAmount() -
+                    $item->getDiscountAmount()));
         }
 
         return $this->orderFactory->create()

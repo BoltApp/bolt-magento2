@@ -210,7 +210,8 @@ class AutomatedTestingTest extends BoltTestCase
                 'getShippingMethods',
                 'getPastOrder',
                 'convertToAddress',
-                'convertToOrder'])
+                'convertToOrder'
+            ])
             ->setConstructorArgs([
                 $this->context,
                 $this->productRepository,
