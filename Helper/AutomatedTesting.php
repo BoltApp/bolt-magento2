@@ -224,7 +224,7 @@ class AutomatedTesting extends AbstractHelper
         $sortOrder = $this->sortOrderBuilder
             ->setField('entity_id')
             ->setDirection('DESC')
-                ->create();
+            ->create();
 
         $nonZeroDiscountTaxSearchCriteria = $this->searchCriteriaBuilder
             ->addFilter('discount_amount', 0, 'lt')
