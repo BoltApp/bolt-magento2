@@ -538,7 +538,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
-    public function getPastOrder_ReturnsOrderWithNonZeroTaxAndDiscount()
+    public function getPastOrder_returnsOrderWithNonZeroTaxAndDiscount()
     {
         $sortOrder = $this->createMock(SortOrder::class);
         $this->sortOrderBuilder->expects(static::once())->method('setField')->with('entity_id')->willReturnSelf();
@@ -566,7 +566,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
-    public function getPastOrder_ReturnsDefaultOrder()
+    public function getPastOrder_returnsDefaultOrder()
     {
         $sortOrder = $this->createMock(SortOrder::class);
         $this->sortOrderBuilder->expects(static::once())->method('setField')->with('entity_id')->willReturnSelf();
