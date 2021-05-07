@@ -301,6 +301,7 @@ class AutomatedTesting extends AbstractHelper
                 ->setTax($tax)
                 ->setSubTotal($this->formatPrice($quote->getSubtotal()));
             $this->quoteRepository->delete($quote);
+
             return $this->configFactory->create()
                 ->setStoreItems($storeItems)
                 ->setCart($cart)
