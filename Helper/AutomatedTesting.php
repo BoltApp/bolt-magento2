@@ -221,36 +221,36 @@ class AutomatedTesting extends AbstractHelper
      */
     protected function getPastOrder()
     {
-            $sortOrder = $this->sortOrderBuilder
-                ->setField('entity_id')
-                ->setDirection('DESC')
+        $sortOrder = $this->sortOrderBuilder
+            ->setField('entity_id')
+            ->setDirection('DESC')
                 ->create();
 
-            $nonZeroDiscountTaxSearchCriteria = $this->searchCriteriaBuilder
-                ->addFilter('discount_amount', 0, 'lt')
-                ->addFilter('tax_amount', 0, 'gt')
-                ->setPageSize(1)
-                ->setCurrentPage(1)
-                ->setSortOrders([$sortOrder])
-                ->create();
+        $nonZeroDiscountTaxSearchCriteria = $this->searchCriteriaBuilder
+            ->addFilter('discount_amount', 0, 'lt')
+            ->addFilter('tax_amount', 0, 'gt')
+            ->setPageSize(1)
+            ->setCurrentPage(1)
+            ->setSortOrders([$sortOrder])
+            ->create();
 
-            $defaultSearchCritieria = $this->searchCriteriaBuilder
-                ->setPageSize(1)
-                ->setCurrentPage(1)
-                ->setSortOrders([$sortOrder])
-                ->create();
+        $defaultSearchCritieria = $this->searchCriteriaBuilder
+            ->setPageSize(1)
+            ->setCurrentPage(1)
+            ->setSortOrders([$sortOrder])
+            ->create();
 
+        $ordersFound = $this->orderRepository
+            ->getList($nonZeroDiscountTaxSearchCriteria)
+            ->getItems();
+
+        if (count($ordersFound) === 0) {
             $ordersFound = $this->orderRepository
-                ->getList($nonZeroDiscountTaxSearchCriteria)
+                ->getList($defaultSearchCritieria)
                 ->getItems();
+        }
 
-            if (count($ordersFound) === 0) {
-                $ordersFound = $this->orderRepository
-                    ->getList($defaultSearchCritieria)
-                    ->getItems();
-            }
-
-            return count($ordersFound) > 0 ? reset($ordersFound) : null;
+        return count($ordersFound) > 0 ? reset($ordersFound) : null;
     }
 
     /**
