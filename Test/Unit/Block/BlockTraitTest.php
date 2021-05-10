@@ -152,28 +152,6 @@ class BlockTraitTest extends BoltTestCase
         ];
     }
 
-
-    /**
-     * @test
-     * @dataProvider dataProvider_isEnabled
-     * @param $apiKey
-     * @param $expected
-     */
-    public function isEnabled($apiKey, $expected)
-    {
-        $this->currentMock->expects(self::any())->method('getStoreId')->willReturn(self::STORE_ID);
-        $this->configHelper->expects(self::any())->method('isActive')->with(self::STORE_ID)->willReturn($apiKey);
-        $this->assertEquals($expected, $this->currentMock->isEnabled());
-    }
-
-    public function dataProvider_isEnabled()
-    {
-        return [
-            [true, true],
-            [false, false]
-        ];
-    }
-
     /**
      * @test
      */

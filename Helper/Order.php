@@ -415,7 +415,7 @@ class Order extends AbstractHelper
         $requestData->setApiKey($this->configHelper->getApiKey($storeId));
         $requestData->setRequestMethod('GET');
         //Build Request
-        $request = $this->apiHelper->buildRequest($requestData);
+        $request = $this->apiHelper->buildRequest($requestData, $storeId);
 
         $result = $this->apiHelper->sendRequest($request);
         $response = $result->getResponse();
@@ -996,7 +996,7 @@ class Order extends AbstractHelper
         $requestData->setDynamicApiUrl(ApiHelper::API_VOID_TRANSACTION);
         $requestData->setApiKey($apiKey);
         //Build Request
-        $request = $this->apiHelper->buildRequest($requestData);
+        $request = $this->apiHelper->buildRequest($requestData, $storeId);
         $result = $this->apiHelper->sendRequest($request);
         $response = $result->getResponse();
 

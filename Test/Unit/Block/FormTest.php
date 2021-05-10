@@ -95,7 +95,7 @@ class FormTest extends BoltTestCase
 
         $this->quoteMock = $this->getMockBuilder(BackendQuote::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getBillingAddress'])
+            ->setMethods(['getBillingAddress','getStoreId'])
             ->getMock();
 
         $this->addressMock = $this->getMockBuilder(Address::class)
@@ -188,11 +188,29 @@ class FormTest extends BoltTestCase
      */
     public function getPublishableKeyBackOfficeShouldReturnConfigValue()
     {
+        $this->quoteMock->expects(self::once())->method('getStoreId')->willReturn(1);
+        $this->block->expects(self::once())->method('getQuoteData')->willReturn($this->quoteMock);        
         $this->configHelperMock
             ->method('getPublishableKeyBackOffice')
+            ->with(1)
             ->willReturn("backoffice-key");
 
         $this->assertEquals("backoffice-key", $this->block->getPublishableKeyBackOffice());
+    }
+    
+    /**
+     * @test
+     */
+    public function getPublishableKeyPaymentOnlyShouldReturnConfigValue()
+    {
+        $this->quoteMock->expects(self::once())->method('getStoreId')->willReturn(1);
+        $this->block->expects(self::once())->method('getQuoteData')->willReturn($this->quoteMock);        
+        $this->configHelperMock
+            ->method('getPublishableKeyPayment')
+            ->with(1)
+            ->willReturn("payment-key");
+
+        $this->assertEquals("payment-key", $this->block->getPublishableKeyPaymentOnly());
     }
 
     /**

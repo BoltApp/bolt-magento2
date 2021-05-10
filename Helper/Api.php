@@ -267,10 +267,10 @@ class Api extends AbstractHelper
      *
      * @return Request
      */
-    public function buildRequest($requestData)
+    public function buildRequest($requestData, $storeId = null)
     {
         $apiData = $requestData->getApiData();
-        $apiUrl = $this->configHelper->getApiUrl() . self::API_CURRENT_VERSION . $requestData->getDynamicApiUrl();
+        $apiUrl = $this->configHelper->getApiUrl($storeId) . self::API_CURRENT_VERSION . $requestData->getDynamicApiUrl();
         $apiKey = $requestData->getApiKey();
         $requestMethod = $requestData->getRequestMethod() ?: 'POST';
         $contentType = $requestData->getContentType() ?: 'application/json';
