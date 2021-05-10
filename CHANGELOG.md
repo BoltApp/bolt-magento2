@@ -205,3 +205,4 @@
 - Fix a bug with order associations for Bolt SSO
 ## [v2.21.2](https://github.com/BoltApp/bolt-magento2/releases/tag/2.21.2)
 - Fix bug with backoffice orders
+- Fix a regression with handling custome fields
