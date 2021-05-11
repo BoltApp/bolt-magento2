@@ -26,11 +26,17 @@ use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\PriceProperty;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\PricePropertyFactory;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\StoreItem;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\StoreItemFactory;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Address;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\AddressFactory;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Order;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\OrderFactory;
+use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\OrderItemFactory;
 use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface as ProductRepository;
 use Magento\Catalog\Model\Product;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\Api\SortOrderBuilder;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Quote\Api\CartManagementInterface;
@@ -39,7 +45,9 @@ use Magento\Quote\Model\Cart\ShippingMethodConverter;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Store\Model\StoreManagerInterface;
-
+use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
+use Magento\Sales\Model\Order as ModelOrder;
+use Magento\Sales\Model\Order\Address as ModelOrderAddress;
 /**
  * Helper for automated testing
  */
@@ -54,6 +62,11 @@ class AutomatedTesting extends AbstractHelper
      * @var SearchCriteriaBuilder
      */
     private $searchCriteriaBuilder;
+
+    /**
+     * @var SortOrderBuilder;
+     */
+    private $sortOrderBuilder;
 
     /**
      * @var ConfigFactory
@@ -79,6 +92,21 @@ class AutomatedTesting extends AbstractHelper
      * @var PricePropertyFactory
      */
     private $pricePropertyFactory;
+
+    /**
+     * @var AddressFactory
+     */
+    private $addressFactory;
+
+    /**
+     * @var OrderFactory
+     */
+    private $orderFactory;
+
+    /**
+     * @var OrderItemFactory
+     */
+    private $orderItemFactory;
 
     /**
      * @var ShippingMethodConverter
@@ -116,30 +144,46 @@ class AutomatedTesting extends AbstractHelper
     private $stockRegistry;
 
     /**
+     * @var OrderRepository
+     */
+    private $orderRepository;
+
+    /**
      * @param Context                 $context
      * @param ProductRepository       $productRepository
      * @param SearchCriteriaBuilder   $searchCriteriaBuilder
+     * @param SortOrderBuilder        $sortOrderBuilder
      * @param ConfigFactory           $configFactory
      * @param StoreItemFactory        $storeItemFactory
      * @param CartFactory             $cartFactory
      * @param CartItemFactory         $cartItemFactory
      * @param PricePropertyFactory    $pricePropertyFactory
+     * @param AddressFactory          $addressFactory
+     * @param OrderFactory            $orderFactory
+     * @param OrderItemFactory        $orderItemFactory
      * @param ShippingMethodConverter $shippingMethodConverter
      * @param Bugsnag                 $bugsnag
      * @param StoreManagerInterface   $storeManager
+     * @param QuoteFactory            $quoteFactory
      * @param CartManagementInterface $quoteManagement
      * @param QuoteRepository         $quoteRepository
      * @param StockRegistryInterface  $stockRegistry
+     * @param OrderRepository         $orderRepository
      */
     public function __construct(
         Context $context,
         ProductRepository $productRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
+        SortOrderBuilder $sortOrderBuilder,
         ConfigFactory $configFactory,
         StoreItemFactory $storeItemFactory,
         CartFactory $cartFactory,
         CartItemFactory $cartItemFactory,
         PricePropertyFactory $pricePropertyFactory,
+        AddressFactory $addressFactory,
+        OrderFactory $orderFactory,
+        OrderRepository $orderRepository,
+        OrderItemFactory $orderItemFactory,
         ShippingMethodConverter $shippingMethodConverter,
         Bugsnag $bugsnag,
         StoreManagerInterface $storeManager,
@@ -151,11 +195,16 @@ class AutomatedTesting extends AbstractHelper
         parent::__construct($context);
         $this->productRepository = $productRepository;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->sortOrderBuilder = $sortOrderBuilder;
         $this->configFactory = $configFactory;
         $this->storeItemFactory = $storeItemFactory;
         $this->cartFactory = $cartFactory;
         $this->cartItemFactory = $cartItemFactory;
         $this->pricePropertyFactory = $pricePropertyFactory;
+        $this->addressFactory = $addressFactory;
+        $this->orderFactory = $orderFactory;
+        $this->orderRepository = $orderRepository;
+        $this->orderItemFactory = $orderItemFactory;
         $this->shippingMethodConverter = $shippingMethodConverter;
         $this->bugsnag = $bugsnag;
         $this->storeManager = $storeManager;
@@ -163,6 +212,45 @@ class AutomatedTesting extends AbstractHelper
         $this->quoteManagement = $quoteManagement;
         $this->quoteRepository = $quoteRepository;
         $this->stockRegistry = $stockRegistry;
+    }
+
+    /**
+     * Retrieve an Order from the repository
+     *
+     * @return Order|null
+     */
+    protected function getPastOrder()
+    {
+        $sortOrder = $this->sortOrderBuilder
+            ->setField('entity_id')
+            ->setDirection('DESC')
+            ->create();
+
+        $nonZeroDiscountTaxSearchCriteria = $this->searchCriteriaBuilder
+            ->addFilter('discount_amount', 0, 'lt')
+            ->addFilter('tax_amount', 0, 'gt')
+            ->setPageSize(1)
+            ->setCurrentPage(1)
+            ->setSortOrders([$sortOrder])
+            ->create();
+
+        $defaultSearchCritieria = $this->searchCriteriaBuilder
+            ->setPageSize(1)
+            ->setCurrentPage(1)
+            ->setSortOrders([$sortOrder])
+            ->create();
+
+        $ordersFound = $this->orderRepository
+            ->getList($nonZeroDiscountTaxSearchCriteria)
+            ->getItems();
+
+        if (count($ordersFound) === 0) {
+            $ordersFound = $this->orderRepository
+                ->getList($defaultSearchCritieria)
+                ->getItems();
+        }
+
+        return count($ordersFound) > 0 ? reset($ordersFound) : null;
     }
 
     /**
@@ -214,7 +302,10 @@ class AutomatedTesting extends AbstractHelper
                 ->setSubTotal($this->formatPrice($quote->getSubtotal()));
             $this->quoteRepository->delete($quote);
 
-            return $this->configFactory->create()->setStoreItems($storeItems)->setCart($cart);
+            return $this->configFactory->create()
+                ->setStoreItems($storeItems)
+                ->setCart($cart)
+                ->setPastOrder($this->convertToOrder($this->getPastOrder()));
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
             return $e->getMessage();
@@ -279,6 +370,72 @@ class AutomatedTesting extends AbstractHelper
             ->setName(trim($product->getName()))
             ->setPrice($this->formatPrice($product->getFinalPrice()))
             ->setType($type);
+    }
+
+    /**
+     * Convert $address to an Address
+     *
+     * @param ModelOrderAddress|null $address
+     *
+     * @return Address|null
+     */
+    protected function convertToAddress($address)
+    {
+        if ($address === null) {
+            return null;
+        }
+        return $this->addressFactory->create()
+            ->setFirstName($address->getFirstName())
+            ->setLastName($address->getLastName())
+            ->setStreet(implode(" ", $address->getStreet()))
+            ->setCity($address->getCity())
+            ->setRegion($address->getRegion())
+            ->setPostalCode($address->getPostCode())
+            ->setTelephone($address->getTelephone())
+            ->setCountry($address->getCountryId());
+    }
+
+    /**
+     * Convert $order to an Order
+     *
+     * @param ModelOrder|null $order
+     *
+     * @return Order|null
+     */
+    protected function convertToOrder($order)
+    {
+        if ($order === null) {
+            return null;
+        }
+        $orderItems = [];
+        foreach($order->getAllVisibleItems() as $item) {
+            $orderItems[] = $this->orderItemFactory->create()
+                ->setProductName($item->getName())
+                ->setProductSku($item->getSku())
+                ->setProductUrl($item->getProduct()->getProductUrl())
+                ->setPrice($this->formatPrice($item->getPrice()))
+                ->setQuantityOrdered($item->getQtyOrdered())
+                ->setSubtotal($this->formatPrice($item->getRowTotal()))
+                ->setTaxAmount($this->formatPrice($item->getTaxAmount()))
+                ->setTaxPercent($item->getTaxPercent())
+                ->setDiscountAmount($this->formatPrice($item->getDiscountAmount()))
+                ->setTotal($this->formatPrice(
+                    $item->getRowTotal() +
+                    $item->getTaxAmount() -
+                    $item->getDiscountAmount()
+                ));
+        }
+
+        return $this->orderFactory->create()
+            ->setBillingAddress($this->convertToAddress($order->getBillingAddress()))
+            ->setShippingAddress($this->convertToAddress($order->getShippingAddress()))
+            ->setShippingMethod($order->getShippingDescription())
+            ->setShippingAmount($this->formatPrice($order->getShippingAmount(), true))
+            ->setOrderItems($orderItems)
+            ->setSubtotal($this->formatPrice($order->getSubtotal()))
+            ->setTax($this->formatPrice($order->getTaxAmount()))
+            ->setDiscount($this->formatPrice($order->getDiscountAmount()))
+            ->setGrandTotal($this->formatPrice($order->getGrandTotal()));
     }
 
     /**
