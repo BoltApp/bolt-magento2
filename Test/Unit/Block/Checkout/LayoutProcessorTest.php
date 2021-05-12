@@ -18,9 +18,11 @@
 
 namespace Bolt\Boltpay\Test\Unit\Block\Checkout;
 
-use Bolt\Boltpay\Block\Checkout\LayoutProcessor;
+use Bolt\Boltpay\Block\Checkout\ComponentSwitcherProcessor as LayoutProcessor;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\TestFramework\ObjectManager;
 
 /**
  * Class LayoutProcessorTest
@@ -31,9 +33,14 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 class LayoutProcessorTest extends BoltTestCase
 {
     /**
-     * @var MockObject|ConfigHelper mocked instance of Config helper
+     * @var ConfigHelper
      */
     protected $configHelper;
+
+    /**
+     * @var ObjectManager
+     */
+    protected $objectManager;
 
     /**
      * @test
@@ -43,11 +50,7 @@ class LayoutProcessorTest extends BoltTestCase
      */
     public function constructor_always_setsInternalProperties()
     {
-        $instance = $this->getMockBuilder(LayoutProcessor::class)
-            ->setConstructorArgs([$this->configHelper])
-            ->enableOriginalConstructor()
-            ->getMockForAbstractClass();
-
+        $instance = $this->objectManager->create(LayoutProcessor::class);
         static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
     }
 
@@ -56,6 +59,10 @@ class LayoutProcessorTest extends BoltTestCase
      */
     protected function setUpInternal()
     {
-        $this->configHelper = $this->createMock(ConfigHelper::class);
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->configHelper = $this->objectManager->create(ConfigHelper::class);
     }
 }
