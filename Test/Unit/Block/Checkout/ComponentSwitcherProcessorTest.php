@@ -19,8 +19,9 @@
 namespace Bolt\Boltpay\Test\Unit\Block\Checkout;
 
 use Bolt\Boltpay\Block\Checkout\ComponentSwitcherProcessor;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\TestFramework\ObjectManager;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Block\Checkout\ComponentSwitcherProcessor
@@ -28,26 +29,27 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 class ComponentSwitcherProcessorTest extends BoltTestCase
 {
     /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
      * @var ComponentSwitcherProcessor
      */
-    private $componentSwitcherProcessor;
+    protected $componentSwitcherProcessor;
 
-    public function setUpInternal()
+    /**
+     * @var ObjectManager
+     */
+    protected $objectManager;
+
+    /**
+     * Setup test dependencies
+     *
+     * @return void
+     */
+    protected function setUpInternal()
     {
-        $this->configHelper = $this->createPartialMock(ConfigHelper::class, ['isPaymentOnlyCheckoutEnabled']);
-        $this->componentSwitcherProcessor = $this->getMockBuilder(ComponentSwitcherProcessor::class)
-            ->setConstructorArgs(
-                [
-                    $this->configHelper
-                ]
-            )
-            ->enableProxyingToOriginalMethods()
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->componentSwitcherProcessor = $this->objectManager->create(ComponentSwitcherProcessor::class);
     }
 
     /**
@@ -56,10 +58,8 @@ class ComponentSwitcherProcessorTest extends BoltTestCase
      */
     public function process()
     {
-        $this->configHelper->method('isPaymentOnlyCheckoutEnabled')->willReturn(true);
         $jsLayout = $this->componentSwitcherProcessor->process([]);
-
-        $this->assertFalse(
+        $this->assertTrue(
             $jsLayout['components']['checkout']['children']['steps']['children']['billing-step']['children']['payment']['children']['renders']['children']['boltpay-payments']['config']['componentDisabled']
         );
     }
