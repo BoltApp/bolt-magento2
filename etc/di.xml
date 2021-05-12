@@ -236,4 +236,9 @@
         <plugin name="bolt_boltpay_webkul_odoomagentoconnect_model_resourcemodel_order_plugin"
                 type="Bolt\Boltpay\Plugin\Webkul\Odoomagentoconnect\Model\ResourceModel\OrderPlugin"/>
     </type>
+    
+    <type name="Shineretrofits\ShippingMethod\Model\Carrier\Customshipping">
+        <plugin name="Bolt_Boltpay_Shineretrofits_CustomshippingPlugin"
+                type="Bolt\Boltpay\Plugin\Shineretrofits\ShippingMethod\Model\Carrier\CustomshippingPlugin" sortOrder="1"/>
+    </type>
 </config>
