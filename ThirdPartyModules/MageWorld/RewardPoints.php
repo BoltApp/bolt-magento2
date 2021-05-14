@@ -89,9 +89,9 @@ class RewardPoints
             if ($quote->getMwRewardpoint()) {
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 $storeCode = $quote->getStore()->getCode();
-                if ($quote->getMwRewardpointDiscount() >= $quote->getSubtotal()
-                    && ($this->mwRewardPointsHelperData->getRedeemedShippingConfig($storeCode)
-                    || $this->mwRewardPointsHelperData->getRedeemedTaxConfig($storeCode))
+                if (
+                    CurrencyUtils::toMinor($quote->getMwRewardpointDiscount(), $currencyCode) >= CurrencyUtils::toMinor($quote->getSubtotal(), $currencyCode) - $this->getDiscountedAmount($quote, $currencyCode)
+                    && ($this->mwRewardPointsHelperData->getRedeemedShippingConfig($storeCode) || $this->mwRewardPointsHelperData->getRedeemedTaxConfig($storeCode))
                 ) {
                     $rewardPoints = $this->mwRewardPointsModelCustomer->create()
                         ->load($quote->getCustomerId())->getMwRewardPoint();
@@ -161,20 +161,22 @@ class RewardPoints
     ) {
         $this->mwRewardPointsHelperData = $mwRewardPointsHelperData;
         $this->mwRewardPointsModelCustomer = $mwRewardPointsModelCustomer;
-        
+
         try {
             if ($quote->getMwRewardpoint()) {
                 $storeCode = $quote->getStore()->getCode();
-                if ($quote->getMwRewardpointDiscount() >= $quote->getSubtotal()
+                $currencyCode = $quote->getQuoteCurrencyCode();
+                if (
+                    CurrencyUtils::toMinor($quote->getMwRewardpointDiscount(), $currencyCode) >= CurrencyUtils::toMinor($quote->getSubtotal(), $currencyCode) - $this->getDiscountedAmount($quote, $currencyCode)
                     && ($this->mwRewardPointsHelperData->getRedeemedShippingConfig($storeCode)
-                    || $this->mwRewardPointsHelperData->getRedeemedTaxConfig($storeCode))
+                        || $this->mwRewardPointsHelperData->getRedeemedTaxConfig($storeCode))
                 ) {
                     $rewardPoints = $this->mwRewardPointsModelCustomer->create()
                         ->load($quote->getCustomerId())->getMwRewardPoint();
                     $amount = abs($this->mwRewardPointsHelperData->exchangePointsToMoneys($rewardPoints, $storeCode));
                     $this->mwRewardPointsHelperData->setPointToCheckOut($rewardPoints);
                     $quote->setSpendRewardpointCart($rewardPoints);
-                    
+
                     $quote->setMwRewardpoint($rewardPoints)
                           ->setMwRewardpointDiscount($amount)
                           ->setMwRewardpointDiscountShow($amount)
@@ -265,19 +267,21 @@ class RewardPoints
         try {
             if ($quote->getMwRewardpoint()) {
                 $storeCode = $quote->getStore()->getCode();
+                $currencyCode = $quote->getQuoteCurrencyCode();
+                $discountedAmount = $this->getDiscountedAmount($quote, $currencyCode);
                 if (
-                    $quote->getMwRewardpointDiscount() >= $quote->getSubtotal()
+                    CurrencyUtils::toMinor($quote->getMwRewardpointDiscount(), $currencyCode) >= CurrencyUtils::toMinor($quote->getSubtotal(), $currencyCode) - $discountedAmount
                     && $this->mwRewardPointsHelperData->getRedeemedShippingConfig($storeCode)
                     && !$this->mwRewardPointsHelperData->getRedeemedTaxConfig($storeCode)
                 ) {
                     $rewardPoints = $this->mwRewardPointsModelCustomer->create()
                         ->load($quote->getCustomerId())->getMwRewardPoint();
-                    $currencyCode = $quote->getQuoteCurrencyCode();
                     $maximumAmount = CurrencyUtils::toMinor(abs($this->mwRewardPointsHelperData->exchangePointsToMoneys($rewardPoints, $storeCode)), $currencyCode);
                     $quoteSubtotal = CurrencyUtils::toMinor($quote->getSubtotal(), $currencyCode);
-                    $quoteSubtotalIncludingShipping = $quoteSubtotal + $result;
-                    if ($maximumAmount > $quoteSubtotalIncludingShipping) {
-                        $result = $maximumAmount - $quoteSubtotal;
+
+                    $quoteSubtotalIncludeShippingAndDiscount = $quoteSubtotal - $discountedAmount + $result;
+                    if ($maximumAmount > $quoteSubtotalIncludeShippingAndDiscount) {
+                        $result = $maximumAmount - $quoteSubtotal + $discountedAmount;
                     }
                 }
             }
@@ -306,8 +310,10 @@ class RewardPoints
             $this->mwRewardPointsHelperData = $mwRewardPointsHelperData;
             if ($quote->getMwRewardpoint()) {
                 $storeCode = $quote->getStore()->getCode();
+                $currencyCode = $quote->getQuoteCurrencyCode();
+                $discountedAmount = $this->getDiscountedAmount($quote, $currencyCode);
                 if (
-                    $quote->getMwRewardpointDiscount() >= $quote->getSubtotal()
+                    CurrencyUtils::toMinor($quote->getMwRewardpointDiscount(), $currencyCode) >= CurrencyUtils::toMinor($quote->getSubtotal(), $currencyCode) - $discountedAmount
                     && $this->mwRewardPointsHelperData->getRedeemedShippingConfig($storeCode)
                     && !$this->mwRewardPointsHelperData->getRedeemedTaxConfig($storeCode)
                 ) {
@@ -319,5 +325,21 @@ class RewardPoints
         }
 
         return $result;
+    }
+
+    /**
+     * @param $quote
+     * @param $currencyCode
+     * @return int
+     * @throws \Exception
+     */
+    public function getDiscountedAmount($quote, $currencyCode) {
+        $amastyGift = 0;
+        if (isset($quote->getTotals()['amasty_giftcard'])) {
+            $amastyGift = CurrencyUtils::toMinor(abs($quote->getTotals()['amasty_giftcard']->getValue()), $currencyCode);
+        }
+
+        $discountedAmount = CurrencyUtils::toMinor($quote->getSubtotal(), $currencyCode) -  CurrencyUtils::toMinor($quote->getSubtotalWithDiscount(), $currencyCode);
+        return $discountedAmount + $amastyGift;
     }
 }
