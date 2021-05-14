@@ -786,7 +786,26 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Mirasvit\Rewards\Model\Config"],
                     "boltClass" => Mirasvit_Rewards::class,
                 ],
+                'MW_RewardPoints' => [
+                    'module'      => 'MW_RewardPoints',
+                    "sendClasses" => [
+                        "MW\RewardPoints\Helper\Data",
+                    ],
+                    'boltClass'   => MW_RewardPoints::class,
+                ],
             ]
+        ],
+        "filterShippingAmount" => [
+            'listeners' => [
+                'MW_RewardPoints' => [
+                    'module'      => 'MW_RewardPoints',
+                    "sendClasses" => [
+                        "MW\RewardPoints\Helper\Data",
+                        "MW\RewardPoints\Model\CustomerFactory"
+                    ],
+                    'boltClass'   => MW_RewardPoints::class,
+                ],
+            ],
         ],
         "getAdditionalInvalidateBoltCartJavascript" => [
             "listeners" => [

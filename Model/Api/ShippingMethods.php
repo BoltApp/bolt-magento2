@@ -831,6 +831,12 @@ class ShippingMethods implements ShippingMethodsInterface
                 continue;
             }
 
+            $roundedCost = $this->eventsForThirdPartyModules->runFilter(
+                "filterShippingAmount",
+                $roundedCost,
+                $quote
+            );
+
             $shippingMethods[] = $this->shippingOptionInterfaceFactory
                 ->create()
                 ->setService($service)
