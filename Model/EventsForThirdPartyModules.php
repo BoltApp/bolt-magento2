@@ -40,6 +40,7 @@ use Bolt\Boltpay\ThirdPartyModules\MageWorld\Affiliate as MW_Affiliate;
 use Bolt\Boltpay\ThirdPartyModules\Magento\InStorePickupShipping as Magento_InStorePickupShipping;
 use Bolt\Boltpay\ThirdPartyModules\Magecomp\Extrafee as Magecomp_Extrafee;
 use Bolt\Boltpay\ThirdPartyModules\Webkul\Odoomagentoconnect as Webkul_Odoomagentoconnect;
+use Bolt\Boltpay\ThirdPartyModules\BagRiders\StoreCredit as BagRiders_StoreCredit;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -210,6 +211,12 @@ class EventsForThirdPartyModules
                                       "Mirasvit\Credit\Service\Calculation"],
                     "boltClass" => Mirasvit_Credit::class,
                 ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "sendClasses" => ["BagRiders\StoreCredit\Model\StoreCredit\ApplyStoreCreditToQuote"],
+                    "boltClass" => BagRiders_StoreCredit::class,
+                ],
             ]
         ],
         'beforeValidateQuoteDataForProcessNewOrder' => [
@@ -223,6 +230,12 @@ class EventsForThirdPartyModules
                                       "Mirasvit\Rewards\Helper\Checkout",
                                       "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"],
                     "boltClass" => Mirasvit_Rewards::class,
+                ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "sendClasses" => ["BagRiders\StoreCredit\Api\StoreCreditRepositoryInterface"],
+                    "boltClass" => BagRiders_StoreCredit::class,
                 ],
             ]
         ],
@@ -488,6 +501,12 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass" => Magento_GiftCardAccount::class,
                 ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "sendClasses" => ["BagRiders\StoreCredit\Api\StoreCreditRepositoryInterface"],
+                    "boltClass" => BagRiders_StoreCredit::class,
+                ],
             ],
         ],
         /** @see \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::verifyCouponCode */
@@ -698,6 +717,10 @@ class EventsForThirdPartyModules
                     "module" => "Magento_Reward",
                     "boltClass" => \Bolt\Boltpay\ThirdPartyModules\Magento\Reward::class,
                 ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "boltClass" => BagRiders_StoreCredit::class,
+                ],
             ],
         ],
         "filterMinicartAddonsLayout" => [
@@ -748,6 +771,11 @@ class EventsForThirdPartyModules
                     "module" => "Mirasvit_Credit",
                     "checkClasses" => ["Mirasvit\Credit\Helper\Data"],
                     "boltClass" => Mirasvit_Credit::class,
+                ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "boltClass" => BagRiders_StoreCredit::class,
                 ],
             ]
         ],
