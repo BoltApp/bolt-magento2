@@ -206,7 +206,7 @@
 ## [v2.21.2](https://github.com/BoltApp/bolt-magento2/releases/tag/2.21.2) 2021-05-10
 - Fix bug with backoffice orders
 - Fix a regression with handling custom fields
-## [v2.22.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.22.0) 2021-05-14
+## [v2.22.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.22.0) 2021-05-20
 - Native Magento BOPIS now supported
 - Adds support for Magecomp Extrafee
 - Adds support for Webkul Oodo Magento Connect
