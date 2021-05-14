@@ -13,7 +13,7 @@ sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-net
 cd integration-tests/operations/docker/m2
 gzip -d basic240.sql.gz
 ls 
-sudo mysql magento2 < basic240.sql.gz
+sudo mysql magento2 < basic240.sql
 cd /home/circleci/project
 cp Test/scripts/CouponCode.php ../$MAGENTO_DIR
 cp Test/scripts/FreeShipping.php ../$MAGENTO_DIR
