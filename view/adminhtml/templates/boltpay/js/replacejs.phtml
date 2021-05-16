@@ -554,6 +554,19 @@ require([
             }
             return result;
         }
+        <?php
+        if (version_compare($block->getMagentoVersion(), '2.4.0') >= 0) {
+        ?>
+        onElementReady("#order-shipping_same_as_billing", function(element) {
+            if (document.getElementById('order-shipping_same_as_billing').checked) {
+                order.disableShippingAddress(true); 
+            } else {
+                order.disableShippingAddress(false); 
+            }
+        });
+        <?php
+        }
+        ?>
     });
 });
 
