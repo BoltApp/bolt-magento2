@@ -1241,8 +1241,8 @@ JSON;
             ['order_comment_field', "'customer_note'"],
         ];
         $actual = $this->currentMock->getAllConfigSettings();
-        $this->assertEquals(46, count($actual));
-        for ($i = 0; $i < 46; $i++) {
+        $this->assertEquals(47, count($actual));
+        for ($i = 0; $i < 47; $i++) {
             $this->assertEquals($expected[$i][0], $actual[$i]->getName());
             $this->assertEquals($expected[$i][1], $actual[$i]->getValue(), 'actual value for ' . $expected[$i][0] . ' is not equals to expected');
         }
