@@ -91,6 +91,11 @@ class Config extends AbstractHelper
      * Path for Global CSS
      */
     const XML_PATH_GLOBAL_CSS = 'payment/boltpay/global_css';
+    
+    /**
+     * Path for Global Javascript
+     */
+    const XML_PATH_GLOBAL_JS = 'payment/boltpay/global_js';
 
     /**
      * Path for show card type in the order grid
@@ -411,6 +416,7 @@ class Config extends AbstractHelper
         'replace_selectors'                  => self::XML_PATH_REPLACE_SELECTORS,
         'totals_change_selectors'            => self::XML_PATH_TOTALS_CHANGE_SELECTORS,
         'global_css'                         => self::XML_PATH_GLOBAL_CSS,
+        'global_js'                          => self::XML_PATH_GLOBAL_JS,
         'additional_checkout_button_class'   => self::XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS,
         'success_page'                       => self::XML_PATH_SUCCESS_PAGE_REDIRECT,
         'prefetch_shipping'                  => self::XML_PATH_PREFETCH_SHIPPING,
@@ -798,6 +804,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_GLOBAL_CSS,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+    
+    /**
+     * Get Global Javascript from config
+     *
+     * @param int|string $storeId
+     *
+     * @return string
+     */
+    public function getGlobalJS($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_GLOBAL_JS,
             ScopeInterface::SCOPE_STORE,
             $storeId
         );
@@ -1703,6 +1725,10 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('global_css')
             ->setValue($this->getGlobalCSS());
+        // Global CSS
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+            ->setName('global_js')
+            ->setValue($this->getGlobalJS());
         // Additional Checkout Button Class
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('additional_checkout_button_class')
