@@ -1207,6 +1207,7 @@ JSON;
             ['replace_selectors', '#replace'],
             ['totals_change_selectors', '.totals'],
             ['global_css', '#customerbalance-placer {width: 210px;}'],
+            ['global_js', 'require(["jquery"], function ($) {});'],
             ['additional_checkout_button_class', 'with-cards'],
             ['success_page', 'checkout/onepage/success'],
             ['prefetch_shipping', 'true'],
