@@ -41,6 +41,7 @@ use Bolt\Boltpay\ThirdPartyModules\Magento\InStorePickupShipping as Magento_InSt
 use Bolt\Boltpay\ThirdPartyModules\Magecomp\Extrafee as Magecomp_Extrafee;
 use Bolt\Boltpay\ThirdPartyModules\Webkul\Odoomagentoconnect as Webkul_Odoomagentoconnect;
 use Bolt\Boltpay\ThirdPartyModules\BagRiders\StoreCredit as BagRiders_StoreCredit;
+use Bolt\Boltpay\ThirdPartyModules\Teamwork\StoreCredit as Teamwork_StoreCredit;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -506,6 +507,13 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
                     "sendClasses" => ["BagRiders\StoreCredit\Api\StoreCreditRepositoryInterface"],
                     "boltClass" => BagRiders_StoreCredit::class,
+                ],
+                "Teamwork_StoreCredit" => [
+                    "module" => "Teamwork_StoreCredit",
+                    "sendClasses" => [
+                        "Teamwork\StoreCredit\Model\StoreCreditStorage"
+                    ],
+                    "boltClass" => Teamwork_StoreCredit::class,
                 ],
             ],
         ],
