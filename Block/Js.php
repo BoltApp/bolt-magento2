@@ -211,6 +211,17 @@ class Js extends Template
     {
         return $this->configHelper->getGlobalCSS();
     }
+    
+    /**
+     * Get the global javascript to be added to any page.
+     *
+     * @return string global javascript
+     */
+    public function getGlobalJS()
+    {
+        $storeId = $this->getStoreId();
+        return $this->configHelper->getGlobalJS($storeId);
+    }
 
     /**
      * Get Javascript function call on success.

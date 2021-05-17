@@ -24,7 +24,11 @@
  */
 if ($block->shouldDisableBoltCheckout()) { return;
 }
-
+?>
+<script type="text/javascript">
+    <?= /* @noEscape */ $block->getGlobalJS(); ?>
+</script>
+<?php
 //check if we need Bolt on this page
 if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled() && !$block->isBoltProductPage()) { return;
 }
