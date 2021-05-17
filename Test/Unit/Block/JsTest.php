@@ -570,6 +570,30 @@ class JsTest extends BoltTestCase
 
         static::assertEquals($value, $result, 'getGlobalCSS() method: not working properly');
     }
+    
+    /**
+     * @test
+     * that getGlobalJS returns global javascript from config to be added to any page
+     *
+     * @see \Bolt\Boltpay\Helper\Config::getGlobalJS
+     *
+     * @covers ::getGlobalJS
+     */
+    public function getGlobalJS_always_returnsJSCode()
+    {
+        $value = 'require([
+            "jquery"
+        ], function ($) {       
+        });';
+
+        $this->configHelper->expects(static::once())
+            ->method('getGlobalJS')
+            ->willReturn($value);
+
+        $result = $this->currentMock->getGlobalJS();
+
+        static::assertEquals($value, $result, 'getGlobalJS() method: not working properly');
+    }
 
     /**
      * @test
@@ -2074,6 +2098,7 @@ function(arg) {
             'getPublishableKeyBackOffice',
             'getReplaceSelectors',
             'getGlobalCSS',
+            'getGlobalJS',
             'getPrefetchShipping',
             'getQuoteIsVirtual',
             'getTotalsChangeSelectors',

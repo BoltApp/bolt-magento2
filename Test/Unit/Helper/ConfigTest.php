@@ -764,6 +764,7 @@ JSON;
     {
         return [
             ['getGlobalCSS', BoltConfig::XML_PATH_GLOBAL_CSS, '.replaceable-example-selector1 {color: black;}]'],
+            ['getGlobalJS', BoltConfig::XML_PATH_GLOBAL_JS, 'require(["jquery"], function ($) {});'],
             ['getShowCcTypeInOrderGrid', BoltConfig::XML_PATH_SHOW_CC_TYPE_IN_ORDER_GRID, '1'],
             ['getAdditionalCheckoutButtonClass', BoltConfig::XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS, 'with-cards'],
             ['getPrefetchAddressFields', BoltConfig::XML_PATH_PREFETCH_ADDRESS_FIELDS, 'address_field1, address_field2'],
@@ -1107,6 +1108,7 @@ JSON;
             'getReplaceSelectors',
             'getTotalsChangeSelectors',
             'getGlobalCSS',
+            'getGlobalJS',
             'getAdditionalCheckoutButtonClass',
             'getAdditionalCheckoutButtonAttributes',
             'getSuccessPageRedirect',
@@ -1155,6 +1157,7 @@ JSON;
         $this->currentMock->method('getReplaceSelectors')->willReturn('#replace');
         $this->currentMock->method('getTotalsChangeSelectors')->willReturn('.totals');
         $this->currentMock->method('getGlobalCSS')->willReturn('#customerbalance-placer {width: 210px;}');
+        $this->currentMock->method('getGlobalJS')->willReturn('require(["jquery"], function ($) {});');
         $this->currentMock->method('getAdditionalCheckoutButtonClass')->willReturn('with-cards');
         $this->currentMock->method('getSuccessPageRedirect')->willReturn('checkout/onepage/success');
         $this->currentMock->method('getPrefetchShipping')->willReturn(true);
