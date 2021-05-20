@@ -2826,7 +2826,27 @@ ORDER
         static::assertEquals([], $boltHelperCart->getCartData(false, '', null));
     }
 
-        /**
+    /**
+     * @test
+     * that getCartData returns empty array if the quote has an error and the feature switch is enabled
+     *
+     * @covers ::getCartData
+     *
+     * @throws Exception from tested method
+     */
+    public function getCartData_withQuoteErrorAndFSEnabled_returnsEmptyArray()
+    {
+
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = Bootstrap::getObjectManager()->create(Quote::class);
+        TestUtils::setQuoteToSession($quote);
+        $quote->setQuoteCurrencyCode('USD');
+        TestUtils::saveFeatureSwitch(Definitions::M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR, true);
+        $quote->addErrorInfo('error', null, null, 'Quote error');
+        static::assertEquals([], $boltHelperCart->getCartData(false, '', null));
+    }
+
+    /**
          * @test
          * that getCartData returns empty array if immutable quote has no items
          *
@@ -4910,10 +4930,10 @@ ORDER
         $quantity = 2;
 
         $order = TestUtils::createDumpyOrder([], [], [TestUtils::createOrderItemByProduct($product, $quantity)]);
-        
+
         $this->imageHelper->method('init')->willReturnSelf();
         $this->imageHelper->method('getUrl')->willReturn('no-image');
-        
+
         list($products, $totalAmount, $diff) = $this->currentMock->getCartItemsForOrder($order, self::STORE_ID);
 
         static::assertCount(1, $products);
@@ -4921,7 +4941,7 @@ ORDER
         static::assertEquals($products[0]['name'], $product->getName());
         static::assertEquals($products[0]['unit_price'], CurrencyUtils::toMinor($product->getPrice(), self::CURRENCY_CODE));
         static::assertEquals($products[0]['total_amount'], CurrencyUtils::toMinor($product->getPrice() * $quantity, self::CURRENCY_CODE));
-        static::assertEquals($products[0]['quantity'], $quantity);        
+        static::assertEquals($products[0]['quantity'], $quantity);
         static::assertEquals($products[0]['sku'], $product->getSku());
 
         TestUtils::cleanupSharedFixtures([$order]);

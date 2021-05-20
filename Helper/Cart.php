@@ -1420,7 +1420,7 @@ class Cart extends AbstractHelper
                     $unitPrice = $item->getCalculationPrice();
                     $quantity = round($item->getQty());
                 }
-                
+
                 $itemTotalAmount = $unitPrice * $quantity;
                 $roundedTotalAmount = CurrencyUtils::toMinor($unitPrice, $currencyCode) * $quantity;
 
@@ -1771,6 +1771,34 @@ class Cart extends AbstractHelper
         $quote = $immutableQuote ?
             $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
             $this->checkoutSession->getQuote();
+
+        if ($this->deciderHelper->isPreventBoltCartForQuotesWithError() && !empty($quote->getHasError())) {
+            $this->bugsnag->notifyError(
+                'Bolt cart prevented for quote with error',
+                '',
+                /**
+                 * @param \Bugsnag\Report $report
+                 */
+                function ($report) use ($quote) {
+                    $report->addMetaData(
+                        [
+                            'quote_error_messages' => array_map(
+                                /**
+                                 * @param \Magento\Framework\Message\Error $error
+                                 *
+                                 * @return string
+                                 */
+                                function ($error) {
+                                    return $error->toString();
+                                },
+                                $quote->getErrors()
+                            )
+                        ]
+                    );
+                }
+            );
+            return [];
+        }
 
         // The cart creation sometimes gets called when no (parent) quote exists:
         // 1. From frontend event handler: It is store specific, for example a minicart with 0 items.
