@@ -513,11 +513,7 @@ class Order extends AbstractHelper
      */
     protected function setShippingAddress($quote, $transaction)
     {
-        if (isset($transaction->order->cart->in_store_shipments[0]->shipment->shipping_address)) {
-            $address = $transaction->order->cart->in_store_shipments[0]->shipment->shipping_address ?? null;
-            if ($address) {
-                $this->setAddress($quote->getShippingAddress(), $address);
-            }
+        if ($address = $this->eventsForThirdPartyModules->runFilter('isInStorePickupShipping', null, $quote, $transaction)) {
             $this->eventsForThirdPartyModules->dispatchEvent("setInStoreShippingAddressForPrepareQuote", $quote, $transaction);
         } else {
             $address = $transaction->order->cart->shipments[0]->shipping_address ?? null;
