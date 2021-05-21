@@ -924,6 +924,15 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        "isInStorePickupShipping" => [
+            "listeners" => [
+                [
+                    "module" => "Magento_InventoryInStorePickup",
+                    "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
+                    "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+            ],
+        ],
     ];
 
     /**
