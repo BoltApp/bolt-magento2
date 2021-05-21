@@ -534,6 +534,7 @@ class OrderTest extends BoltTestCase
         $this->creditmemoFactory = $this->createPartialMock(CreditmemoFactory::class, ['createByOrder']);
         $this->creditmemoManagement = $this->createMock(CreditmemoManagementInterface::class);
         $this->eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
+        $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
         $this->orderManagementMock = $this->createMock(\Magento\Sales\Api\OrderManagementInterface::class);
         $this->orderIncrementIdChecker = $this->getMockBuilder(\Magento\Sales\Model\OrderIncrementIdChecker::class)
             ->disableOriginalConstructor()
