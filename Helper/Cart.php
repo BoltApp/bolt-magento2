@@ -1772,7 +1772,18 @@ class Cart extends AbstractHelper
             $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
             $this->checkoutSession->getQuote();
 
-        if ($this->deciderHelper->isPreventBoltCartForQuotesWithError() && !empty($quote->getHasError())) {
+        // The cart creation sometimes gets called when no (parent) quote exists:
+        // 1. From frontend event handler: It is store specific, for example a minicart with 0 items.
+        // 2. From backend, with $immutableQuote passed as parameter, parent already inactive / deleted:
+        //    a) discount code validation
+        //    b) bugsnag report generation
+        // In case #1 the empty cart is returned
+        // In case #2 the cart generation continues for the cloned quote
+        if (!$immutableQuote && (!$quote || !$quote->getAllVisibleItems())) {
+            return [];
+        }
+
+        if ($this->deciderHelper->isPreventBoltCartForQuotesWithError() && $quote && !empty($quote->getHasError())) {
             $this->bugsnag->notifyError(
                 'Bolt cart prevented for quote with error',
                 '',
@@ -1797,17 +1808,6 @@ class Cart extends AbstractHelper
                     );
                 }
             );
-            return [];
-        }
-
-        // The cart creation sometimes gets called when no (parent) quote exists:
-        // 1. From frontend event handler: It is store specific, for example a minicart with 0 items.
-        // 2. From backend, with $immutableQuote passed as parameter, parent already inactive / deleted:
-        //    a) discount code validation
-        //    b) bugsnag report generation
-        // In case #1 the empty cart is returned
-        // In case #2 the cart generation continues for the cloned quote
-        if (!$immutableQuote && (!$quote || !$quote->getAllVisibleItems())) {
             return [];
         }
 
