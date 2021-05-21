@@ -312,6 +312,7 @@ class InStorePickupShipping
                     strlen(InStorePickup::DELIVERY_METHOD . '_')
                 );
             } else {
+                // For payment only
                 $pickupLocationCode = $shippingAddress->getExtensionAttributes()->getPickupLocationCode();
             }
             if (!empty($pickupLocationCode)) {
@@ -341,8 +342,7 @@ class InStorePickupShipping
         $transaction
     ) {
         if (isset($transaction->order->cart->in_store_shipments[0]->shipment->shipping_address)) {
-            $shipment = $transaction->order->cart->in_store_shipments[0]->shipment;
-            $referenceCodes = explode('_', $shipment->reference);
+            $referenceCodes = explode('_', $transaction->order->cart->in_store_shipments[0]->shipment->reference);
             if ($this->checkIfMagentoInStorePickupByCode($referenceCodes)) {
                 $address = $transaction->order->cart->in_store_shipments[0]->shipment->shipping_address ?? null;
                 return $address;
