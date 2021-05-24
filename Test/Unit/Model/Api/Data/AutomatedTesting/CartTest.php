@@ -75,7 +75,7 @@ class CartTest extends BoltTestCase
      */
     public function setAndGetTax()
     {
-        $this->assertEquals('4.000', $this->cart->getTax());
+        $this->assertEquals('4.00', $this->cart->getTax());
     }
 
     /**
@@ -112,7 +112,7 @@ class CartTest extends BoltTestCase
             'items'                   => [$this->cartItem],
             'shipping'                => $this->priceProperty,
             'expectedShippingMethods' => ['bolt_shipping'],
-            'tax'                     => '4.000',
+            'tax'                     => '4.00',
             'subTotal'                => '100'
         ], $result);
     }
