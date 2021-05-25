@@ -43,6 +43,7 @@ use Bolt\Boltpay\ThirdPartyModules\Webkul\Odoomagentoconnect as Webkul_Odoomagen
 use Bolt\Boltpay\ThirdPartyModules\BagRiders\StoreCredit as BagRiders_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\Teamwork\Token as Teamwork_Token;
 use Bolt\Boltpay\ThirdPartyModules\Teamwork\StoreCredit as Teamwork_StoreCredit;
+use Bolt\Boltpay\ThirdPartyModules\SomethingDigital\InStorePickupBoltIntegration as SomethingDigital_InStorePickupBoltIntegration;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
@@ -344,6 +345,12 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
                 ],
+                'SomethingDigital_InStorePickupBoltIntegration' => [
+                    "module" => "SomethingDigital_InStorePickupBoltIntegration",
+                    "sendClasses" => ["SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker"],
+                    "checkClasses" => ["Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"],
+                    "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
+                ]
             ],
         ],
         "setInStoreShippingAddressForPrepareQuote" => [
@@ -356,6 +363,17 @@ class EventsForThirdPartyModules
                                        "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
                     "boltClass" => Magento_InStorePickupShipping::class,
                 ],
+                'SomethingDigital_InStorePickupBoltIntegration' => [
+                    "module" => "SomethingDigital_InStorePickupBoltIntegration",
+                    "sendClasses" => [
+                        "SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker",
+                        "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"
+                    ],
+                    "checkClasses" => [
+                        "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver",
+                    ],
+                    "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
+                ]
             ],
         ],
         'afterUpdateOrderPayment' => [
@@ -891,6 +909,17 @@ class EventsForThirdPartyModules
                                        "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
                     "boltClass" => Magento_InStorePickupShipping::class,
                 ],
+                "SomethingDigital_InStorePickupBoltIntegration" => [
+                    "module" => "SomethingDigital_InStorePickupBoltIntegration",
+                    "sendClasses" => [
+                        "SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker",
+                        "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"
+                    ],
+                    "checkClasses" => [
+                        "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"
+                    ],
+                    "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
+                ],
             ],
         ],
         "getShipToStoreCarrierMethodCodes" => [
@@ -899,6 +928,16 @@ class EventsForThirdPartyModules
                     "module" => "Magento_InventoryInStorePickup",
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+                "SomethingDigital_InStorePickupBoltIntegration" => [
+                    "module" => "SomethingDigital_InStorePickupBoltIntegration",
+                    "sendClasses" => [
+                        "SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker",
+                    ],
+                    "checkClasses" => [
+                        "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"
+                    ],
+                    "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
                 ],
             ],
         ],
