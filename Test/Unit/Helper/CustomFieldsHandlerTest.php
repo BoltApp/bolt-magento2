@@ -183,7 +183,7 @@ class CustomFieldsHandlerTest extends BoltTestCase
         $customField2 = ['label' => 'Question', 'type' => 'DROPDOWN', 'is_custom_field' => true, 'value' => 'Answer'];
         $comment2 = '<br>Question: Answer';
 
-        $customField3 = ['label' => 'Subscription', 'type' => 'CHECKBOX', 'is_custom_field' => true, 'value' => true, 'features' => ['subscribe_to_platform_newsletter']];
+        $customField3 = ['label' => 'Subscription', 'type' => 'CHECKBOX', 'is_custom_field' => true, 'value' => true, 'features' => ['subscribe_to_newsletter']];
         $comment3 = '<br>Subscription: Yes';
 
         return [
