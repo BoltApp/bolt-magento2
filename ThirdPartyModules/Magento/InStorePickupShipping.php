@@ -321,6 +321,7 @@ class InStorePickupShipping
                     SalesChannelInterface::TYPE_WEBSITE,
                     $quote->getStore()->getWebsite()->getCode()
                 );
+                $extraData = ['telephone'=>$pickupLocation->getPhone()];
                 $shippingAddress = $addressConverter->convert($pickupLocation, $shippingAddress);
                 $quote->setShippingAddress($shippingAddress)->save();
             }
