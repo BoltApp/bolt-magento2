@@ -45,6 +45,7 @@ use Bolt\Boltpay\ThirdPartyModules\Teamwork\Token as Teamwork_Token;
 use Bolt\Boltpay\ThirdPartyModules\Teamwork\StoreCredit as Teamwork_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\SomethingDigital\InStorePickupBoltIntegration as SomethingDigital_InStorePickupBoltIntegration;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMedia_TmwGiftCard;
 use Exception;
 
 class EventsForThirdPartyModules
@@ -538,6 +539,13 @@ class EventsForThirdPartyModules
                     "module" => "Teamwork_Token",
                     "checkClasses" => ["Teamwork\Token\Model\TokenStorage"],
                     "boltClass" => Teamwork_Token::class,
+                ],
+                "ImaginationMedia_TmwGiftCard" => [
+                    "module" => "ImaginationMedia_TmwGiftCard",
+                    "sendClasses" => [
+                        "ImaginationMedia\TmwGiftCard\Helper\Data"
+                    ],
+                    "boltClass" => ImaginationMedia_TmwGiftCard::class,
                 ],
             ],
         ],
