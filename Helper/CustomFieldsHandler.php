@@ -29,9 +29,8 @@ use Magento\Newsletter\Model\SubscriberFactory;
  */
 class CustomFieldsHandler extends AbstractHelper
 {
-    const CATEGORY_NEWSLETTER = 'NEWSLETTER';
     const COMMENT_PREFIX_TEXT = 'BOLTPAY INFO :: customfields';
-    const FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER = 'subscribe_to_platform_newsletter';
+    const FEATURE_SUBSCRIBE_TO_NEWSLETTER = 'subscribe_to_newsletter';
     const TYPE_CHECKBOX = 'CHECKBOX';
     const TYPE_DROPDOWN = 'DROPDOWN';
 
@@ -78,7 +77,7 @@ class CustomFieldsHandler extends AbstractHelper
                 $comment .= '<br>' . $customField['label'] . ': ' . $customField['value'];
             }
 
-            $needSubscribe = isset($customField['features']) && in_array(self::FEATURE_SUBSCRIBE_TO_PLATFORM_NEWSLETTER, $customField['features']);
+            $needSubscribe = isset($customField['features']) && in_array(self::FEATURE_SUBSCRIBE_TO_NEWSLETTER, $customField['features']);
         }
 
         if ($comment) {
