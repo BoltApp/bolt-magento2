@@ -342,6 +342,16 @@ class Js extends Template
     {
         return $this->configHelper->getModuleVersion();
     }
+    
+    /**
+     * Get Magento version
+     *
+     * @return string
+     */
+    public function getMagentoVersion()
+    {
+        return $this->configHelper->getStoreVersion();
+    }
 
     /**
      * Takes a string containing javascript and removes unneeded characters in
