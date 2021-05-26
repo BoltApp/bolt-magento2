@@ -764,6 +764,7 @@ JSON;
     {
         return [
             ['getGlobalCSS', BoltConfig::XML_PATH_GLOBAL_CSS, '.replaceable-example-selector1 {color: black;}]'],
+            ['getGlobalJS', BoltConfig::XML_PATH_GLOBAL_JS, 'require(["jquery"], function ($) {});'],
             ['getShowCcTypeInOrderGrid', BoltConfig::XML_PATH_SHOW_CC_TYPE_IN_ORDER_GRID, '1'],
             ['getAdditionalCheckoutButtonClass', BoltConfig::XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS, 'with-cards'],
             ['getPrefetchAddressFields', BoltConfig::XML_PATH_PREFETCH_ADDRESS_FIELDS, 'address_field1, address_field2'],
@@ -1107,6 +1108,7 @@ JSON;
             'getReplaceSelectors',
             'getTotalsChangeSelectors',
             'getGlobalCSS',
+            'getGlobalJS',
             'getAdditionalCheckoutButtonClass',
             'getAdditionalCheckoutButtonAttributes',
             'getSuccessPageRedirect',
@@ -1155,6 +1157,7 @@ JSON;
         $this->currentMock->method('getReplaceSelectors')->willReturn('#replace');
         $this->currentMock->method('getTotalsChangeSelectors')->willReturn('.totals');
         $this->currentMock->method('getGlobalCSS')->willReturn('#customerbalance-placer {width: 210px;}');
+        $this->currentMock->method('getGlobalJS')->willReturn('require(["jquery"], function ($) {});');
         $this->currentMock->method('getAdditionalCheckoutButtonClass')->willReturn('with-cards');
         $this->currentMock->method('getSuccessPageRedirect')->willReturn('checkout/onepage/success');
         $this->currentMock->method('getPrefetchShipping')->willReturn(true);
@@ -1204,6 +1207,7 @@ JSON;
             ['replace_selectors', '#replace'],
             ['totals_change_selectors', '.totals'],
             ['global_css', '#customerbalance-placer {width: 210px;}'],
+            ['global_js', 'require(["jquery"], function ($) {});'],
             ['additional_checkout_button_class', 'with-cards'],
             ['success_page', 'checkout/onepage/success'],
             ['prefetch_shipping', 'true'],
@@ -1237,8 +1241,8 @@ JSON;
             ['order_comment_field', "'customer_note'"],
         ];
         $actual = $this->currentMock->getAllConfigSettings();
-        $this->assertEquals(46, count($actual));
-        for ($i = 0; $i < 46; $i++) {
+        $this->assertEquals(47, count($actual));
+        for ($i = 0; $i < 47; $i++) {
             $this->assertEquals($expected[$i][0], $actual[$i]->getName());
             $this->assertEquals($expected[$i][1], $actual[$i]->getValue(), 'actual value for ' . $expected[$i][0] . ' is not equals to expected');
         }
