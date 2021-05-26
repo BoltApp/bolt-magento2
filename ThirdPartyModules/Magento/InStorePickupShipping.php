@@ -322,7 +322,7 @@ class InStorePickupShipping
                     $quote->getStore()->getWebsite()->getCode()
                 );
                 $extraData = ['telephone'=>$pickupLocation->getPhone()];
-                $shippingAddress = $addressConverter->convert($pickupLocation, $shippingAddress);
+                $shippingAddress = $addressConverter->convert($pickupLocation, $shippingAddress, $extraData);
                 $quote->setShippingAddress($shippingAddress)->save();
             }
         } catch (\Exception $e) {
