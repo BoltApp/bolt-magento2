@@ -182,6 +182,11 @@ class Definitions
      */
     const M2_SHOW_ORDER_COMMENT_IN_ADMIN = 'M2_SHOW_ORDER_COMMENT_IN_ADMIN';
 
+    /**
+     * Prevent bolt cart creation for quotes with error
+     */
+    const M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR = 'M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -353,6 +358,12 @@ class Definitions
         ],
         self::M2_SHOW_ORDER_COMMENT_IN_ADMIN => [
             self::NAME_KEY        => self::M2_SHOW_ORDER_COMMENT_IN_ADMIN,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR => [
+            self::NAME_KEY        => self::M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100

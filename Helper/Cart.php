@@ -1420,7 +1420,7 @@ class Cart extends AbstractHelper
                     $unitPrice = $item->getCalculationPrice();
                     $quantity = round($item->getQty());
                 }
-                
+
                 $itemTotalAmount = $unitPrice * $quantity;
                 $roundedTotalAmount = CurrencyUtils::toMinor($unitPrice, $currencyCode) * $quantity;
 
@@ -1780,6 +1780,34 @@ class Cart extends AbstractHelper
         // In case #1 the empty cart is returned
         // In case #2 the cart generation continues for the cloned quote
         if (!$immutableQuote && (!$quote || !$quote->getAllVisibleItems())) {
+            return [];
+        }
+
+        if ($this->deciderHelper->isPreventBoltCartForQuotesWithError() && $quote && !empty($quote->getHasError())) {
+            $this->bugsnag->notifyError(
+                'Bolt cart prevented for quote with error',
+                '',
+                /**
+                 * @param \Bugsnag\Report $report
+                 */
+                function ($report) use ($quote) {
+                    $report->addMetaData(
+                        [
+                            'quote_error_messages' => array_map(
+                                /**
+                                 * @param \Magento\Framework\Message\Error $error
+                                 *
+                                 * @return string
+                                 */
+                                function ($error) {
+                                    return $error->toString();
+                                },
+                                $quote->getErrors()
+                            )
+                        ]
+                    );
+                }
+            );
             return [];
         }
 

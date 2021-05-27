@@ -329,4 +329,14 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_SHOW_ORDER_COMMENT_IN_ADMIN);
     }
+
+    /**
+     * Checks whether the feature switch for preventing bolt cart for quotes with error is enabled
+     *
+     * @return bool
+     */
+    public function isPreventBoltCartForQuotesWithError()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR);
+    }
 }
