@@ -324,6 +324,9 @@ class TestUtils
                 case "Magento\Sales\Model\Order\Interceptor":
                     $object->delete();
                     break;
+                case "Bolt\Boltpay\Model\CustomerCreditCard":
+                    $object->delete();
+                    break;
                 default:
                     throw new \Exception("Unexpected type for delete:".get_class($object));
             }

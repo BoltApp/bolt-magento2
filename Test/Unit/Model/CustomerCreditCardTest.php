@@ -18,18 +18,17 @@
 namespace Bolt\Boltpay\Test\Unit\Model;
 
 use Bolt\Boltpay\Model\CustomerCreditCard;
+use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Bolt\Boltpay\Model\Request as BoltRequest;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\DataObjectFactory;
-use Magento\Sales\Model\Order;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
-use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Magento\Framework\Model\Context;
-use Magento\Framework\Registry;
-use Magento\Framework\Model\ResourceModel\AbstractResource;
-use Magento\Framework\Data\Collection\AbstractDb;
+use Magento\Framework\App\ObjectManager;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\Store\Model\StoreManagerInterface;
 
 class CustomerCreditCardTest extends BoltTestCase
 {
@@ -44,120 +43,73 @@ class CustomerCreditCardTest extends BoltTestCase
     const INCREMENT_ID = '1111';
 
     /**
-     * @var \Bolt\Boltpay\Model\CustomerCreditCard
+     * @var CustomerCreditCard
      */
-    private $mockCustomerCreditCard;
+    private $customerCreditCard;
 
     /**
-     * @var BoltRequest
+     * @var CustomerCreditCardFactory
      */
-    private $boltRequest;
+    private $customerCreditCardFactory;
 
     /**
-     * @var Order
+     * @var ObjectManager
      */
-    private $order;
+    private $objectManager;
 
     /**
      * @var DataObjectFactory
      */
     private $dataObjectFactory;
 
-    /**
-     * @var Context
-     */
-    private $context;
+    private $customer;
 
-    /**
-     * @var AbstractResource
-     */
-    private $resource;
-
-    /**
-     * @var AbstractDb
-     */
-    private $resourceCollection;
-
-    /**
-     * @var Registry
-     */
-    private $registry;
-
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
-
-    /**
-     * @var ApiHelper
-     */
-    private $apiHelper;
-
-    /**
-     * @var CartHelper
-     */
-    private $cartHelper;
+    private $order;
 
     /**
      * Setup for CustomerCreditCardTest Class
      */
     public function setUpInternal()
     {
-        $this->dataObjectFactory = $this->getMockBuilder(DataObjectFactory::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['create','setApiData', 'setDynamicApiUrl','setApiKey','setData'])
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->customerCreditCard = $this->objectManager->create(CustomerCreditCard::class);
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
 
-        $this->order = $this->createPartialMock(
-            Order::class,
-            [
-                'getQuoteId',
-                'getOrderCurrencyCode',
-                'getGrandTotal',
-                'getIncrementId'
-            ]
-        );
-        $this->boltRequest = $this->createMock(BoltRequest::class);
-        $this->registry = $this->createMock(Registry::class);
-        $this->context = $this->createMock(Context::class);
-        $this->configHelper = $this->createMock(ConfigHelper::class);
-        $this->apiHelper = $this->getMockBuilder(ApiHelper::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['buildRequest','sendRequest'])
-            ->getMock();
-        $this->cartHelper = $this->createMock(CartHelper::class);
-        $this->resource = $this->createMock(AbstractResource::class);
-        $this->resourceCollection = $this->createMock(AbstractDb::class);
+        $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
+        $websiteId = $websiteRepository->get('base')->getId();
+        $this->customer = TestUtils::createCustomer($websiteId, $storeId, [
+            "street_address1" => "street",
+            "street_address2" => "",
+            "locality" => "Los Angeles",
+            "region" => "California",
+            'region_code' => 'CA',
+            'region_id' => '12',
+            "postal_code" => "11111",
+            "country_code" => "US",
+            "country" => "United States",
+            "name" => "lastname firstname",
+            "first_name" => "firstname",
+            "last_name" => "lastname",
+            "phone_number" => "11111111",
+            "email_address" => "johntest@bolt.com",
+        ]);
+        $this->customerCreditCardFactory = $this->objectManager->create(CustomerCreditCardFactory::class)->create()
+            ->setCustomerId($this->customer->getId())->setConsumerId(self::CONSUMER_ID)
+            ->setCreditCardId(self::CREDIT_CARD_ID)->setCardInfo(self::CARD_INFO)
+            ->save();
 
-        $this->mockCustomerCreditCard = $this->getMockBuilder(CustomerCreditCard::class)
-            ->setConstructorArgs([
-                $this->context,
-                $this->registry,
-                $this->configHelper,
-                $this->dataObjectFactory,
-                $this->apiHelper,
-                $this->cartHelper,
-                $this->resource,
-                $this->resourceCollection,
-                []
-            ])
-            ->setMethods(['_init','getCardInfo', 'getCardInfoObject','getId', 'setCustomerId','setConsumerId', 'setCreditCardId','setCardInfo', 'save'])
-            ->getMock();
+        $this->dataObjectFactory = $this->objectManager->create(DataObjectFactory::class);
+        $this->order = TestUtils::createDumpyOrder();
     }
 
-    /**
-     * @test
-     */
-    public function testConstruct()
+    protected function tearDownInternal()
     {
-        $this->mockCustomerCreditCard->expects($this->once())->method('_init')
-            ->with('Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard')
-            ->willReturnSelf();
-
-        $testMethod = new \ReflectionMethod(CustomerCreditCard::class, '_construct');
-        $testMethod->setAccessible(true);
-        $testMethod->invokeArgs($this->mockCustomerCreditCard, []);
-        $this->assertTrue(class_exists('Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard'));
+        TestUtils::cleanupSharedFixtures([$this->order]);
+        TestUtils::cleanupSharedFixtures([$this->customerCreditCardFactory]);
     }
 
     /**
@@ -165,24 +117,9 @@ class CustomerCreditCardTest extends BoltTestCase
      */
     public function recharge_withException()
     {
-        $this->configHelper->expects(self::once())->method('getApiKey')->willReturnSelf();
-
-        $this->order->expects(self::any())->method('getQuoteId')->willReturn(self::QUOTE_ID);
-        $this->order->expects(self::once())->method('getIncrementId')->willReturn(self::INCREMENT_ID);
-        $this->order->expects(self::once())->method('getGrandTotal')->willReturn(self::QUOTE_GRAND_TOTAL);
-        $this->order->expects(self::once())->method('getOrderCurrencyCode')->willReturn(self::ORDER_CURRENCY_CODE);
-
-        $this->dataObjectFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->dataObjectFactory->expects(self::once())->method('setDynamicApiUrl')->with(ApiHelper::API_AUTHORIZE_TRANSACTION)->willReturnSelf();
-        $this->dataObjectFactory->expects(self::once())->method('setApiKey')->willReturnSelf();
-
-        $this->apiHelper->expects(self::once())->method('buildRequest')->with($this->dataObjectFactory)->willReturn($this->boltRequest);
-        $this->apiHelper->expects(self::once())->method('sendRequest')->willReturn(null);
-
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Bad payment response from boltpay');
-
-        $this->mockCustomerCreditCard->recharge($this->order);
+        $this->expectExceptionMessage('Authentication error. Authorization required.');
+        $this->customerCreditCard->recharge($this->order);
     }
 
     /**
@@ -190,158 +127,45 @@ class CustomerCreditCardTest extends BoltTestCase
      */
     public function recharge()
     {
-        $this->configHelper->expects(self::once())->method('getApiKey')->willReturnSelf();
+        $apiHelper = $this->createPartialMock(ApiHelper::class, ['buildRequest', 'sendRequest']);
+        $apiHelper->expects(self::once())->method('buildRequest')->willReturnSelf();
+        $apiHelper->expects(self::once())->method('sendRequest')->willReturn(true);
 
-        $this->order->expects(self::any())->method('getQuoteId')->willReturn(self::QUOTE_ID);
-        $this->order->expects(self::once())->method('getIncrementId')->willReturn(self::INCREMENT_ID);
-        $this->order->expects(self::once())->method('getGrandTotal')->willReturn(self::QUOTE_GRAND_TOTAL);
-        $this->order->expects(self::once())->method('getOrderCurrencyCode')->willReturn(self::ORDER_CURRENCY_CODE);
-
-        $this->dataObjectFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->dataObjectFactory->expects(self::once())->method('setDynamicApiUrl')->with(ApiHelper::API_AUTHORIZE_TRANSACTION)->willReturnSelf();
-        $this->dataObjectFactory->expects(self::once())->method('setApiKey')->willReturnSelf();
-
-        $this->apiHelper->expects(self::once())->method('buildRequest')->with($this->dataObjectFactory)->willReturn($this->boltRequest);
-        $this->apiHelper->expects(self::once())->method('sendRequest')->willReturn(true);
-
-        $this->assertTrue($this->mockCustomerCreditCard->recharge($this->order));
+        TestHelper::setProperty($this->customerCreditCard, 'apiHelper', $apiHelper);
+        $this->assertTrue($this->customerCreditCard->recharge($this->order));
     }
 
     /**
      * @test
-     * @param $data
-     * @dataProvider providerGetCardInfoObject
      */
-    public function getCardInfoObject($data)
+    public function getCardInfoObject()
     {
-        $mockCustomerCreditCard = $this->getMockBuilder(CustomerCreditCard::class)
-            ->setConstructorArgs([
-                $this->context,
-                $this->registry,
-                $this->configHelper,
-                $this->dataObjectFactory,
-                $this->apiHelper,
-                $this->cartHelper,
-                $this->resource,
-                $this->resourceCollection,
-                []
-            ])
-            ->setMethods(['_init','getCardInfo','getId'])
-            ->getMock();
+        $cartInfo = $this->dataObjectFactory->create();
+        $cartInfo->setData([
+            'id' => 'CAfe9tP97CMXs',
+            'last4' => '1111',
+            'display_network' => 'Visa'
+        ]);
 
-        $mockCustomerCreditCard->expects(self::once())->method('getCardInfo')->willReturn($data['info']);
-
-        $this->dataObjectFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->dataObjectFactory->expects(self::once())->method('setData')->will($this->returnCallback(
-            function ($result) use ($data) {
-                $this->assertEquals($data['expected'], $result);
-            }
-        ));
-
-        $mockCustomerCreditCard->getCardInfoObject();
-    }
-
-    public function providerGetCardInfoObject()
-    {
-        return [
-            ['data' =>
-                [
-                    'info' => self::CARD_INFO,
-                    'expected' => [
-                        'id' => 'CAfe9tP97CMXs',
-                        'last4' => '1111',
-                        'display_network' => 'Visa'
-                    ]
-                ]
-            ],
-            ['data' =>
-                [
-                    'info' => '',
-                    'expected' => ''
-                ]
-            ],
-            ['data' =>
-                [
-                    'info' => '{"id":"","last4":"1111","display_network":"Visa"}',
-                    'expected' => [
-                        'id' => '',
-                        'last4' => '1111',
-                        'display_network' => 'Visa'
-                    ]
-                ]
-            ]
-
-        ];
+        $this->assertEquals($cartInfo, $this->customerCreditCardFactory->getCardInfoObject());
     }
 
     /**
      * @test
-     * @param $data
-     * @dataProvider providerGetCardType
      */
-    public function getCardType($data)
+    public function getCardType()
     {
-        $this->mockCustomerCreditCard->expects(self::once())->method('getCardInfoObject')->willReturn($data['info']);
-        $result = $this->mockCustomerCreditCard->getCardType();
-        $this->assertEquals($data['expected'], $result);
-    }
-
-    public function providerGetCardType()
-    {
-        return [
-            ['data' =>
-                [
-                    'info' => new \Magento\Framework\DataObject([
-                            'id' => 'CAfe9tP97CMXs',
-                            'last4' => '1111',
-                            'display_network' => 'Visa'
-                    ]),
-                    'expected' => 'Visa'
-                ]
-            ],
-            ['data' =>
-                [
-                    'info' => new \Magento\Framework\DataObject(),
-                    'expected' => ''
-                ]
-            ]
-
-        ];
+        $result = $this->customerCreditCardFactory->getCardType();
+        $this->assertEquals('Visa', $result);
     }
 
     /**
      * @test
-     * @param $data
-     * @dataProvider providerGetCardLast4Digit
      */
-    public function getCardLast4Digit($data)
+    public function getCardLast4Digit()
     {
-        $this->mockCustomerCreditCard->expects(self::once())->method('getCardInfoObject')->willReturn($data['info']);
-        $result = $this->mockCustomerCreditCard->getCardLast4Digit();
-        $this->assertEquals($data['expected'], $result);
-    }
-
-    public function providerGetCardLast4Digit()
-    {
-        return [
-            ['data' =>
-                [
-                    'info' => new \Magento\Framework\DataObject([
-                        'id' => 'CAfe9tP97CMXs',
-                        'last4' => '1111',
-                        'display_network' => 'Visa'
-                    ]),
-                    'expected' => 'XXXX-1111'
-                ]
-            ],
-            ['data' =>
-                [
-                    'info' => new \Magento\Framework\DataObject(),
-                    'expected' => ''
-                ]
-            ]
-
-        ];
+        $result = $this->customerCreditCardFactory->getCardLast4Digit();
+        $this->assertEquals('XXXX-1111', $result);
     }
 
     /**
@@ -349,9 +173,8 @@ class CustomerCreditCardTest extends BoltTestCase
      */
     public function getIdentities()
     {
-        $this->mockCustomerCreditCard->expects(self::once())->method('getId')->willReturn(self::ENTITY_ID);
-        $result = $this->mockCustomerCreditCard->getIdentities();
-        $this->assertEquals(['bolt_customer_credit_cards_1'], $result);
+        $result = $this->customerCreditCardFactory->getIdentities();
+        $this->assertEquals(['bolt_customer_credit_cards_' . $this->customerCreditCardFactory->getId()], $result);
     }
 
     /**
@@ -359,12 +182,14 @@ class CustomerCreditCardTest extends BoltTestCase
      */
     public function saveCreditCard()
     {
-        $this->mockCustomerCreditCard->expects(self::once())->method('setCustomerId')->willReturnSelf();
-        $this->mockCustomerCreditCard->expects(self::once())->method('setConsumerId')->willReturnSelf();
-        $this->mockCustomerCreditCard->expects(self::once())->method('setCreditCardId')->willReturnSelf();
-        $this->mockCustomerCreditCard->expects(self::once())->method('setCardInfo')->willReturnSelf();
-        $this->mockCustomerCreditCard->expects(self::once())->method('save')->willReturn($this->mockCustomerCreditCard);
-        $result = $this->mockCustomerCreditCard->saveCreditCard(self::CUSTOMER_ID, self::CONSUMER_ID, self::CREDIT_CARD_ID, self::CARD_INFO);
-        $this->assertEquals($this->mockCustomerCreditCard, $result);
+        $customerCreditCard = $this->objectManager->create(CustomerCreditCardFactory::class)->create()
+            ->saveCreditCard(
+                $this->customer->getId(),
+                '1122',
+                self::CREDIT_CARD_ID,
+                []
+            );
+        $this->assertNotNull($customerCreditCard->getId());
+        TestUtils::cleanupSharedFixtures([$customerCreditCard]);
     }
 }
