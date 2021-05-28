@@ -21,24 +21,32 @@ use Bolt\Boltpay\Model\ExternalCustomerEntity;
 use Bolt\Boltpay\Model\ResourceModel;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
-use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Magento\Framework\App\ObjectManager;
+use Magento\TestFramework\Helper\Bootstrap;
 
 class ExternalCustomerEntityTest extends BoltTestCase
 {
+
     /**
-     * @var ExternalCustomerEntity|MockObject
+     * @var \Bolt\Boltpay\Model\ExternalCustomerEntity
      */
-    private $externalCustomerEntityMock;
+    private $externalCustomerEntity;
+
+    /**
+     * @var ObjectManager
+     */
+    private $objectManager;
 
     /**
      * @inheritdoc
      */
     public function setUpInternal()
     {
-        $this->externalCustomerEntityMock = $this->getMockBuilder(ExternalCustomerEntity::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['_init'])
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->externalCustomerEntity = $this->objectManager->create(ExternalCustomerEntity::class);
     }
 
     /**
@@ -46,10 +54,8 @@ class ExternalCustomerEntityTest extends BoltTestCase
      */
     public function testConstruct()
     {
-        $this->externalCustomerEntityMock->expects($this->once())->method('_init')
-            ->with(ResourceModel\ExternalCustomerEntity::class)
-            ->willReturnSelf();
-        TestHelper::invokeMethod($this->externalCustomerEntityMock, '_construct');
+        TestHelper::invokeMethod($this->externalCustomerEntity, '_construct');
+        self::assertEquals(ResourceModel\ExternalCustomerEntity::class, $this->externalCustomerEntity->getResourceName());
     }
 
     /**
@@ -57,8 +63,8 @@ class ExternalCustomerEntityTest extends BoltTestCase
      */
     public function setAndGetExternalID()
     {
-        $this->externalCustomerEntityMock->setExternalID('test_external_id');
-        $this->assertEquals('test_external_id', $this->externalCustomerEntityMock->getExternalID());
+        $this->externalCustomerEntity->setExternalID('test_external_id');
+        $this->assertEquals('test_external_id', $this->externalCustomerEntity->getExternalID());
     }
 
     /**
@@ -66,7 +72,7 @@ class ExternalCustomerEntityTest extends BoltTestCase
      */
     public function setAndGetCustomerID()
     {
-        $this->externalCustomerEntityMock->setCustomerID(123);
-        $this->assertEquals(123, $this->externalCustomerEntityMock->getCustomerID());
+        $this->externalCustomerEntity->setCustomerID(123);
+        $this->assertEquals(123, $this->externalCustomerEntity->getCustomerID());
     }
 }
