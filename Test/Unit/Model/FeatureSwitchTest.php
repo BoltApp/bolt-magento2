@@ -21,23 +21,31 @@ use Bolt\Boltpay\Model\FeatureSwitch;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\ResourceModel;
+use Magento\Framework\App\ObjectManager;
+use Magento\TestFramework\Helper\Bootstrap;
 
 class FeatureSwitchTest extends BoltTestCase
 {
     /**
      * @var \Bolt\Boltpay\Model\FeatureSwitch
      */
-    private $mockFeatureSwitch;
+    private $featureSwitch;
+
+    /**
+     * @var ObjectManager
+     */
+    private $objectManager;
 
     /**
      * Setup for FeatureSwitchTest Class
      */
     public function setUpInternal()
     {
-        $this->mockFeatureSwitch = $this->getMockBuilder(FeatureSwitch::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['_init'])
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->featureSwitch = $this->objectManager->create(FeatureSwitch::class);
     }
 
     /**
@@ -45,11 +53,8 @@ class FeatureSwitchTest extends BoltTestCase
      */
     public function testConstruct()
     {
-        $this->mockFeatureSwitch->expects($this->once())->method('_init')
-            ->with(ResourceModel\FeatureSwitch::class)
-            ->willReturnSelf();
-
-        TestHelper::invokeMethod($this->mockFeatureSwitch, '_construct');
+        TestHelper::invokeMethod($this->featureSwitch, '_construct');
+        self::assertEquals(ResourceModel\FeatureSwitch::class,$this->featureSwitch->getResourceName());
     }
 
     /**
@@ -57,8 +62,8 @@ class FeatureSwitchTest extends BoltTestCase
      */
     public function setAndGetName()
     {
-        $this->mockFeatureSwitch->setName('name');
-        $this->assertEquals('name', $this->mockFeatureSwitch->getName());
+        $this->featureSwitch->setName('name');
+        $this->assertEquals('name', $this->featureSwitch->getName());
     }
 
     /**
@@ -66,8 +71,8 @@ class FeatureSwitchTest extends BoltTestCase
      */
     public function setAndGetValue()
     {
-        $this->mockFeatureSwitch->setValue(true);
-        $this->assertEquals(true, $this->mockFeatureSwitch->getValue());
+        $this->featureSwitch->setValue(true);
+        $this->assertEquals(true, $this->featureSwitch->getValue());
     }
 
     /**
@@ -75,8 +80,8 @@ class FeatureSwitchTest extends BoltTestCase
      */
     public function setAndGetDefaultValue()
     {
-        $this->mockFeatureSwitch->setDefaultValue(false);
-        $this->assertEquals(false, $this->mockFeatureSwitch->getDefaultValue());
+        $this->featureSwitch->setDefaultValue(false);
+        $this->assertEquals(false, $this->featureSwitch->getDefaultValue());
     }
 
     /**
@@ -84,7 +89,7 @@ class FeatureSwitchTest extends BoltTestCase
      */
     public function setAndGetRolloutPercentage()
     {
-        $this->mockFeatureSwitch->setRolloutPercentage('rolloutPercentage');
-        $this->assertEquals('rolloutPercentage', $this->mockFeatureSwitch->getRolloutPercentage());
+        $this->featureSwitch->setRolloutPercentage('rolloutPercentage');
+        $this->assertEquals('rolloutPercentage', $this->featureSwitch->getRolloutPercentage());
     }
 }
