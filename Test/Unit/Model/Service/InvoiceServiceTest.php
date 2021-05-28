@@ -17,19 +17,11 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model;
 
-use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Sales\Api\InvoiceRepositoryInterface;
-use Magento\Sales\Api\InvoiceCommentRepositoryInterface;
-use Magento\Framework\Api\SearchCriteriaBuilder;
-use Magento\Framework\Api\FilterBuilder;
-use Magento\Sales\Model\Order\InvoiceNotifier;
-use Magento\Sales\Api\OrderRepositoryInterface;
-use Magento\Sales\Model\Convert\Order;
-use Magento\Sales\Api\Data\OrderInterface;
-use Magento\Sales\Model\Order as OrderModel;
+use Magento\Framework\App\ObjectManager;
+use Magento\TestFramework\Helper\Bootstrap;
 use Bolt\Boltpay\Model\Service\InvoiceService;
-use Magento\Sales\Model\Order\Item;
 
 /**
  * Class InvoiceServiceTest
@@ -41,59 +33,9 @@ class InvoiceServiceTest extends BoltTestCase
     const AMOUNT = 20;
 
     /**
-     * Repository
-     *
-     * @var InvoiceRepositoryInterface
+     * @var ObjectManager
      */
-    protected $repository;
-
-    /**
-     * Repository
-     *
-     * @var InvoiceCommentRepositoryInterface
-     */
-    protected $commentRepository;
-
-    /**
-     * Search Criteria Builder
-     *
-     * @var SearchCriteriaBuilder
-     */
-    protected $criteriaBuilder;
-
-    /**
-     * Filter Builder
-     *
-     * @var FilterBuilder
-     */
-    protected $filterBuilder;
-
-    /**
-     * Invoice Notifier
-     *
-     * @var InvoiceNotifier
-     */
-    protected $invoiceNotifier;
-
-    /**
-     * @var OrderRepositoryInterface
-     */
-    protected $orderRepository;
-
-    /**
-     * @var Order
-     */
-    protected $orderConverter;
-
-    /**
-     * @var OrderInterface
-     */
-    protected $order;
-
-    /**
-     * @var Item
-     */
-    protected $orderItem;
+    private $objectManager;
 
     /**
      * @var InvoiceService
@@ -102,48 +44,11 @@ class InvoiceServiceTest extends BoltTestCase
 
     public function setUpInternal()
     {
-        $this->repository = $this->createMock(InvoiceRepositoryInterface::class);
-        $this->commentRepository = $this->createMock(InvoiceCommentRepositoryInterface::class);
-        $this->criteriaBuilder = $this->createMock(SearchCriteriaBuilder::class);
-        $this->filterBuilder = $this->createMock(FilterBuilder::class);
-        $this->invoiceNotifier = $this->createMock(InvoiceNotifier::class);
-        $this->orderRepository = $this->createMock(OrderRepositoryInterface::class);
-        $this->orderConverter = $this->createPartialMock(
-            Order::class,
-            [
-                'toInvoice',
-                'setBaseGrandTotal',
-                'setSubtotal',
-                'setBaseSubtotal',
-                'setGrandTotal'
-            ]
-        );
-        $this->order = $this->createPartialMock(
-            OrderModel::class,
-            ['getInvoiceCollection']
-        );
-
-
-        $this->orderItem = $this->createPartialMock(
-            Item::class,
-            ['addItem']
-        );
-
-        $this->serializer = $this->createMock(JsonSerializer::class);
-
-        $this->currentMock = $this->getMockBuilder(InvoiceService::class)
-            ->setConstructorArgs([
-                $this->repository,
-                $this->commentRepository,
-                $this->criteriaBuilder,
-                $this->filterBuilder,
-                $this->invoiceNotifier,
-                $this->orderRepository,
-                $this->orderConverter,
-                $this->serializer
-            ])
-            ->enableProxyingToOriginalMethods()
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->currentMock = $this->objectManager->create(InvoiceService::class);
     }
 
     /**
@@ -152,14 +57,12 @@ class InvoiceServiceTest extends BoltTestCase
      */
     public function prepareInvoiceWithoutItems()
     {
-        $this->orderConverter->expects(self::once())->method('toInvoice')->with($this->order)->willReturnSelf();
-        $this->orderConverter->expects(self::once())->method('setBaseGrandTotal')->with(self::AMOUNT)->willReturnSelf();
-        $this->orderConverter->expects(self::once())->method('setSubtotal')->with(self::AMOUNT)->willReturnSelf();
-        $this->orderConverter->expects(self::once())->method('setBaseSubtotal')->with(self::AMOUNT)->willReturnSelf();
-        $this->orderConverter->expects(self::once())->method('setGrandTotal')->with(self::AMOUNT)->willReturnSelf();
-        $this->order->expects(self::once())->method('getInvoiceCollection')->willReturn($this->orderItem);
-        $this->orderItem->expects(self::once())->method('addItem')->willReturn($this->repository);
-
-        $this->currentMock->prepareInvoiceWithoutItems($this->order, self::AMOUNT);
+        $order = TestUtils::createDumpyOrder();
+        $invoice = $this->currentMock->prepareInvoiceWithoutItems($order, self::AMOUNT);
+        self::assertEquals(self::AMOUNT, $invoice->getGrandTotal());
+        self::assertEquals(self::AMOUNT, $invoice->getSubtotal());
+        self::assertEquals(self::AMOUNT, $invoice->getBaseGrandTotal());
+        self::assertEquals(self::AMOUNT, $invoice->getBaseSubtotal());
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 }
