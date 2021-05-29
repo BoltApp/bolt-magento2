@@ -2530,6 +2530,9 @@ class Cart extends AbstractHelper
 
         $quote->setIsActive(false);
         $this->saveQuote($quote);
+        $this->sessionHelper->loadSession($quote, $metadata);
+        //make sure we recollect totals
+        $quote->setTotalsCollectedFlag(false);
         $cart_data = $this->getCartData(false, '', $quote);
         $cart_data['order_reference'] = $quoteId;
         $this->quoteResourceSave($quote);

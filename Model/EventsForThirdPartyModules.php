@@ -44,6 +44,7 @@ use Bolt\Boltpay\ThirdPartyModules\BagRiders\StoreCredit as BagRiders_StoreCredi
 use Bolt\Boltpay\ThirdPartyModules\Teamwork\Token as Teamwork_Token;
 use Bolt\Boltpay\ThirdPartyModules\Teamwork\StoreCredit as Teamwork_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\SomethingDigital\InStorePickupBoltIntegration as SomethingDigital_InStorePickupBoltIntegration;
+use Bolt\Boltpay\ThirdPartyModules\Route\Route as Route_Route;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMedia_TmwGiftCard;
 use Exception;
@@ -959,6 +960,12 @@ class EventsForThirdPartyModules
                     'module'      => 'Brainvire_Engraving',
                     'boltClass'   => Magecomp_Extrafee::class,
                 ],
+                'Route_Route' => [
+                    'module'      => 'Route_Route',
+                    'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
+                    'sendClasses' => ['Route\Route\Helper\Data'],
+                    'boltClass'   => Route_Route::class,
+                ],
             ],
         ],
         "filterTransactionBeforeOrderCreateValidation" => [
@@ -971,6 +978,11 @@ class EventsForThirdPartyModules
                     'module'      => 'Brainvire_Engraving',
                     'boltClass'   => Magecomp_Extrafee::class,
                 ],
+                'Route_Route' => [
+                    'module'      => 'Route_Route',
+                    'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
+                    'boltClass'   => Route_Route::class,
+                ],
             ],
         ],
         "filterCartBeforeLegacyShippingAndTax" => [
@@ -982,6 +994,11 @@ class EventsForThirdPartyModules
                 'Brainvire_Engraving' => [
                     'module'      => 'Brainvire_Engraving',
                     'boltClass'   => Magecomp_Extrafee::class,
+                ],
+                'Route_Route' => [
+                    'module'      => 'Route_Route',
+                    'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
+                    'boltClass'   => Route_Route::class,
                 ],
             ],
         ],
