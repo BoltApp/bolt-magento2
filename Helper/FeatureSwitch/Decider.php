@@ -349,4 +349,14 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_SET_ORDER_PAYMENT_INFO_DATA_ON_SUCCESS_PAGE);
     }
+
+    /**
+     * Checks whether the feature switch for seting customer name to order for guests is enabled
+     *
+     * @return bool
+     */
+    public function isSetCustomerNameToOrderForGuests()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_SET_CUSTOMER_NAME_TO_ORDER_FOR_GUESTS);
+    }
 }
