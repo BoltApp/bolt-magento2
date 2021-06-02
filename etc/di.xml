@@ -214,8 +214,13 @@
         <plugin name="bolt_boltpay_taxjar_salestax_model_smartcalcs_plugin"
                 type="Bolt\Boltpay\Plugin\Taxjar\SalesTax\Model\SmartcalcsPlugin"/>
     </type>
-    
+
     <type name="Zonos\DutyTax\Model\Carrier\Zonos">
         <plugin name="BoltBoltZonosDutyTaxCarrierPlugin" type="Bolt\Boltpay\Plugin\Zonos\DutyTax\Model\Carrier\ZonosPlugin" sortOrder="1"/>
+    </type>
+
+    <type name="ClassyLlama\AvaTax\Plugin\Model\ResourceModel\ExtensionAttributesPersistencePlugin">
+        <plugin name="bolt_boltpay_extension_attributes_persistence_plugin_plugin"
+                type="Bolt\Boltpay\Plugin\ClassyLlama\AvaTax\Plugin\Model\ResourceModel\ExtensionAttributesPersistencePluginPlugin"/>
     </type>
 </config>
