@@ -65,7 +65,7 @@ class Route
                 'total_amount' => $roundedTotalAmount,
                 'unit_price'   => CurrencyUtils::toMinor($unitPrice, $currencyCode),
                 'quantity'     => 1,
-                'image_url'    => 'https://ps.w.org/routeapp/assets/icon-128x128.png',
+                'image_url'    => 'https://cdn.routeapp.io/route-widget/images/RouteLogoIcon.png',
             ];
 
             $products[] = $product;
