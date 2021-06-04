@@ -19,12 +19,12 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\ModuleRetriever;
-use Bolt\Boltpay\Model\Api\Data\PluginVersionFactory;
-use Bolt\Boltpay\Model\Api\Data\PluginVersion;
+use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Magento\TestFramework\Helper\Bootstrap;
 
 class ModuleRetrieverTest extends BoltTestCase
 {
@@ -34,72 +34,17 @@ class ModuleRetrieverTest extends BoltTestCase
     private $moduleRetriever;
 
     /**
-     * @var ResourceConnection
+     * @var ObjectManager
      */
-    private $resource;
-
-    /**
-     * @var AdapterInterface
-     */
-    private $dbConnection;
-
-    /**
-     * @var PluginVersionFactory
-     */
-    private $pluginVersionFactory;
-
-    /**
-     * @var Bugsnag
-     */
-    private $bugsnag;
-
-    /**
-     * @var array
-     */
-    private $dbResult;
-
+    private $objectManager;
 
     /**
      * @inheritdoc
      */
     public function setUpInternal()
     {
-        $this->dbResult = [
-            [
-                'module' => 'bolt',
-                'schema_version' => '2.3.0'
-            ],
-            [
-                'module' => 'amazon',
-                'schema_version' => '1.3.0'
-            ]
-        ];
-
-        // prepare resource and dbConnection
-        $this->dbConnection = $this->createMock(AdapterInterface::class);
-        $this->resource = $this->createMock(ResourceConnection::class);
-        $this->resource->method('getConnection')->willReturn($this->dbConnection);
-        $this->dbConnection->method('fetchAll')->willReturn($this->dbResult);
-
-        // prepare plugin version factory
-        $this->pluginVersionFactory = $this->createMock(PluginVersionFactory::class);
-        $this->pluginVersionFactory->method('create')->willReturnCallback(function () {
-            return new PluginVersion();
-        });
-
-        // prepare bugsnag
-        $this->bugsnag = $this->createMock(Bugsnag::class);
-
-        // initialize test object
-        $objectManager = new ObjectManager($this);
-        $this->moduleRetriever = $objectManager->getObject(
-            ModuleRetriever::class,
-            [
-                'resource' => $this->resource,
-                'pluginVersionFactory' => $this->pluginVersionFactory,
-                'bugsnag' => $this->bugsnag
-            ]
-        );
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->moduleRetriever = $this->objectManager->create(ModuleRetriever::class);
     }
 
     /**
@@ -108,11 +53,7 @@ class ModuleRetrieverTest extends BoltTestCase
     public function getInstalledModules_success()
     {
         $actual = $this->moduleRetriever->getInstalledModules();
-        $this->assertEquals(count($this->dbResult), count($actual));
-        for ($i = 0; $i < count($this->dbResult); $i++) {
-            $this->assertEquals($this->dbResult[$i]['module'], $actual[$i]->getName());
-            $this->assertEquals($this->dbResult[$i]['schema_version'], $actual[$i]->getVersion());
-        }
+        $this->assertGreaterThan(1, count($actual));
     }
 
     /**
@@ -120,8 +61,14 @@ class ModuleRetrieverTest extends BoltTestCase
      */
     public function getInstalledModules_fail()
     {
-        $this->dbConnection->method('fetchAll')->willThrowException(new \Exception());
-        $this->bugsnag->expects($this->once())->method('notifyException');
+        $dbConnection = $this->createMock(AdapterInterface::class);
+        $dbConnection->method('fetchAll')->willThrowException(new \Exception());
+        $resource = $this->createMock(ResourceConnection::class);
+        $resource->method('getConnection')->willReturn($dbConnection);
+        $bugsnag = $this->createMock(Bugsnag::class);
+        $bugsnag->expects($this->once())->method('notifyException');
+        TestHelper::setInaccessibleProperty($this->moduleRetriever, 'bugsnag', $bugsnag);
+        TestHelper::setInaccessibleProperty($this->moduleRetriever, 'resource', $resource);
         $this->moduleRetriever->getInstalledModules();
     }
 }
