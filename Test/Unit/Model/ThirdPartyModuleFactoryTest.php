@@ -20,8 +20,9 @@ namespace Bolt\Boltpay\Test\Unit\Model;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
-use Magento\Framework\ObjectManagerInterface;
-use Magento\Framework\Module\Manager;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class ThirdPartyModuleFactoryTest
@@ -31,52 +32,30 @@ use Magento\Framework\Module\Manager;
 class ThirdPartyModuleFactoryTest extends BoltTestCase
 {
     const MODULE_NAME = 'Bolt_Boltpay';
-    const CLASS_NAME = 'Bolt\Boltpay\Model\ThirdPartyModuleFactory';
+    const CLASS_NAME = 'Bolt\Boltpay\Helper\Cart';
 
     /**
-     * @var Manager
+     * @var ObjectManager
      */
-    protected $_moduleManager;
-
-    /**
-     * @var ObjectManagerInterface
-     */
-    protected $_objectManager;
+    private $objectManager;
 
     /**
      * @var LogHelper
      */
     private $logHelper;
 
-    private $moduleName;
-
-    private $className;
-
     /**
      * @var ThirdPartyModuleFactory
      */
-    private $currentMock;
+    private $thirdPartyModuleFactory;
 
     public function setUpInternal()
     {
-        $this->_moduleManager = $this->createPartialMock(
-            Manager::class,
-            ['isEnabled']
-        );
-        $this->_objectManager = $this->createMock(ObjectManagerInterface::class);
-        $this->logHelper = $this->createPartialMock(LogHelper::class, ['addInfoLog']);
-        $this->moduleName = self::MODULE_NAME;
-        $this->className = self::CLASS_NAME;
-        $this->currentMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-            ->setConstructorArgs([
-                $this->_moduleManager,
-                $this->_objectManager,
-                $this->logHelper,
-                $this->moduleName,
-                $this->className
-            ])
-            ->enableProxyingToOriginalMethods()
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->thirdPartyModuleFactory = $this->objectManager->create(ThirdPartyModuleFactory::class);
     }
 
     /**
@@ -85,15 +64,7 @@ class ThirdPartyModuleFactoryTest extends BoltTestCase
      */
     public function getInstance_withModuleIsNotAvailable_returnNull()
     {
-        $this->_moduleManager->expects(self::once())
-            ->method('isEnabled')->with(self::MODULE_NAME)
-            ->willReturn(false);
-
-        $this->logHelper->expects(self::once())
-            ->method('addInfoLog')->with('# Module is Disabled or not Found: Bolt_Boltpay')
-            ->willReturnSelf();
-
-        $this->assertNull($this->currentMock->getInstance());
+        $this->assertNull($this->thirdPartyModuleFactory->getInstance());
     }
 
     /**
@@ -102,18 +73,10 @@ class ThirdPartyModuleFactoryTest extends BoltTestCase
      */
     public function getInstance_withModuleIsAvailable_returnObjectManagerObject()
     {
-        $this->_moduleManager->expects(self::once())
-            ->method('isEnabled')->with(self::MODULE_NAME)
-            ->willReturn(true);
-
-        $this->logHelper->expects(self::exactly(2))->method('addInfoLog')
-            ->withConsecutive(
-                ['# Module is Enabled: Bolt_Boltpay'],
-                ['# Class: Bolt\Boltpay\Model\ThirdPartyModuleFactory']
-            );
-
-        $this->_objectManager->expects(self::once())->method('create')->willReturnSelf();
-        $this->assertSame($this->_objectManager, $this->currentMock->getInstance());
+        TestHelper::setInaccessibleProperty($this->thirdPartyModuleFactory, 'moduleName', self::MODULE_NAME);
+        TestHelper::setInaccessibleProperty($this->thirdPartyModuleFactory, 'className', self::CLASS_NAME);
+        $object = $this->thirdPartyModuleFactory->getInstance();
+        self::assertEquals(self::CLASS_NAME, get_class($object));
     }
 
     /**
@@ -122,20 +85,18 @@ class ThirdPartyModuleFactoryTest extends BoltTestCase
      */
     public function isAvailable()
     {
-        $this->_moduleManager->expects(self::once())
-            ->method('isEnabled')->with(self::MODULE_NAME)
-            ->willReturn(true);
-
-        $this->assertTrue($this->currentMock->isAvailable());
+        TestHelper::setInaccessibleProperty($this->thirdPartyModuleFactory, 'moduleName', self::MODULE_NAME);
+        $this->assertTrue($this->thirdPartyModuleFactory->isAvailable());
     }
-    
+
     /**
      * @test
      * @covers ::isExists
      */
     public function isExists_withClass_returnTrue()
     {
-        $this->assertTrue($this->currentMock->isExists());
+        TestHelper::setInaccessibleProperty($this->thirdPartyModuleFactory, 'className', self::CLASS_NAME);
+        $this->assertTrue($this->thirdPartyModuleFactory->isExists());
     }
 
     /**
@@ -144,17 +105,7 @@ class ThirdPartyModuleFactoryTest extends BoltTestCase
      */
     public function isExists_withInterface_returnTrue()
     {
-        $this->currentMock = $this->getMockBuilder(ThirdPartyModuleFactory::class)
-        ->setConstructorArgs([
-            $this->_moduleManager,
-            $this->_objectManager,
-            $this->logHelper,
-            "Bolt\Boltpay\Api\CreateOrderInterface",
-            $this->className
-        ])
-        ->enableProxyingToOriginalMethods()
-        ->getMock();
-
-        $this->assertTrue($this->currentMock->isExists());
+        TestHelper::setInaccessibleProperty($this->thirdPartyModuleFactory, 'className', 'Bolt\Boltpay\Api\CreateOrderInterface');
+        $this->assertTrue($this->thirdPartyModuleFactory->isExists());
     }
 }
