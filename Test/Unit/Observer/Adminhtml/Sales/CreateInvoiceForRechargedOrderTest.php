@@ -21,11 +21,14 @@ namespace Bolt\Boltpay\Test\Unit\Observer\Adminhtml\Sales;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Observer\Adminhtml\Sales\CreateInvoiceForRechargedOrder;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Exception;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Event\Observer;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
-use Magento\Sales\Model\Service\InvoiceService;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class CreateInvoiceForRechargedOrderTest
@@ -40,56 +43,17 @@ class CreateInvoiceForRechargedOrderTest extends BoltTestCase
     protected $createInvoiceForRechargedOrderTest;
 
     /**
-     * @var Observer
+     * @var ObjectManager
      */
-    protected $observer;
+    private $objectManager;
 
-    /**
-     * @var Order
-     */
-    protected $order;
-
-    /**
-     * @var Order\Invoice
-     */
-    protected $invoice;
-    /**
-     * @var InvoiceService
-     */
-    private $invoiceService;
-
-    /**
-     * @var InvoiceSender
-     */
-    private $invoiceSender;
-
-    /**
-     * @var Bugsnag
-     */
-    private $bugsnag;
-
-    /**
-     * @test
-     * @covers ::execute
-     */
-    public function execute_withRechargeOrder()
+    protected function setUpInternal()
     {
-        $this->order->expects(self::once())->method('getIsRechargedOrder')->willReturn(true);
-        $this->order->expects(self::once())->method('canInvoice')->willReturn(true);
-        $this->order->expects(self::once())->method('addStatusHistoryComment')->willReturnSelf();
-        $this->order->expects(self::once())->method('setIsCustomerNotified')->willReturnSelf();
-        $this->observer->expects(self::once())->method('getEvent')->willReturnSelf();
-        $this->observer->expects(self::once())->method('getOrder')->willReturn($this->order);
-        $this->invoiceService->expects(self::once())->method('prepareInvoice')->with($this->order)->willReturn($this->invoice);
-        $this->invoice->expects(self::once())->method('setRequestedCaptureCase')->with(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE)->willReturnSelf();
-        $this->invoice->expects(self::once())->method('register')->willReturnSelf();
-
-        $this->order->expects(self::once())->method('addRelatedObject')->willReturnSelf();
-        $this->invoice->expects(self::once())->method('getEmailSent')->willReturn(false);
-        $this->invoiceSender->expects(self::once())->method('send')->with($this->invoice)->willReturnSelf();
-
-        $this->invoice->expects(self::once())->method('save')->willReturn($this->invoice);
-        $this->createInvoiceForRechargedOrderTest->execute($this->observer);
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->createInvoiceForRechargedOrderTest = $this->objectManager->create(CreateInvoiceForRechargedOrder::class);
     }
 
     /**
@@ -98,51 +62,50 @@ class CreateInvoiceForRechargedOrderTest extends BoltTestCase
      */
     public function execute_withoutRechargeOrder()
     {
-        $this->order->expects(self::once())->method('getIsRechargedOrder')->willReturn(false);
-        $this->observer->expects(self::once())->method('getEvent')->willReturnSelf();
-        $this->observer->expects(self::once())->method('getOrder')->willReturn($this->order);
-        $this->invoiceService->expects(self::never())->method('prepareInvoice')->with($this->order)->willReturnSelf();
-
-        $this->createInvoiceForRechargedOrderTest->execute($this->observer);
+        $order = TestUtils::createDumpyOrder();
+        $observer = $this->objectManager->create(Observer::class);
+        $event = $this->objectManager->create(\Magento\Framework\DataObject::class);
+        $event->setOrder($order);
+        $observer->setEvent($event);
+        $this->createInvoiceForRechargedOrderTest->execute($observer);
+        self::assertEquals(0, $order->getStatusHistoryCollection()->getSize());
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
      * @test
+     * @covers ::execute
+     */
+    public function execute_withRechargeOrder()
+    {
+        $order = TestUtils::createDumpyOrder();
+        $order->setIsRechargedOrder(true);
+        $observer = $this->objectManager->create(Observer::class);
+        $event = $this->objectManager->create(\Magento\Framework\DataObject::class);
+        $event->setOrder($order);
+        $observer->setEvent($event);
+        $invoiceSender = $this->createPartialMock(InvoiceSender::class, ['send']);
+        $invoiceSender->method('send')->withAnyParameters()->willReturnSelf();
+        TestHelper::setProperty($this->createInvoiceForRechargedOrderTest, 'invoiceSender', $invoiceSender);
+        $this->createInvoiceForRechargedOrderTest->execute($observer);
+        self::assertEquals('Invoice #%1 is created. Notification email is sent to customer.', $order->getStatusHistories()[0]->getComment()->getText());
+        TestUtils::cleanupSharedFixtures([$order]);
+    }
+
+    /**
+     * @test
+     * @covers ::execute
      */
     public function execute_throwsException()
     {
         $e = new Exception('test exception');
-        $this->observer->expects(self::once())->method('getEvent')->willThrowException($e);
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($e);
+        $observer = $this->createPartialMock(Observer::class, ['getEvent']);
+        $observer->expects(self::once())->method('getEvent')->willThrowException($e);
 
-        $this->createInvoiceForRechargedOrderTest->execute($this->observer);
-    }
+        $bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
+        $bugsnag->expects(self::once())->method('notifyException')->with($e);
 
-    protected function setUpInternal()
-    {
-        $this->invoiceService = $this->createMock(InvoiceService::class);
-        $this->invoiceSender = $this->createMock(InvoiceSender::class);
-        $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->observer = $this->createPartialMock(
-            Observer::class,
-            ['getEvent', 'getOrder']
-        );
-        $this->order = $this->createPartialMock(
-            Order::class,
-            ['getIsRechargedOrder', 'canInvoice', 'addRelatedObject', 'addStatusHistoryComment', 'setIsCustomerNotified']
-        );
-
-        $this->invoice = $this->createPartialMock(
-            Order\Invoice::class,
-            ['getEmailSent', 'setRequestedCaptureCase', 'register', 'save']
-        );
-        $this->createInvoiceForRechargedOrderTest = $this->getMockBuilder(CreateInvoiceForRechargedOrder::class)
-            ->setConstructorArgs([
-                $this->invoiceService,
-                $this->invoiceSender,
-                $this->bugsnag
-            ])
-            ->setMethods(['_init'])
-            ->getMock();
+        TestHelper::setProperty($this->createInvoiceForRechargedOrderTest, 'bugsnag', $bugsnag);
+        $this->createInvoiceForRechargedOrderTest->execute($observer);
     }
 }
