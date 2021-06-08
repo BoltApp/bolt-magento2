@@ -92,11 +92,22 @@ trait ReceivedUrlTrait
                 }
 
                 if ($order->getState() === Order::STATE_PENDING_PAYMENT) {
+                    $reference = $this->getReferenceFromPayload($payloadArray);
+                    try {
+                        if (
+                            $this->cartHelper->getFeatureSwitchDeciderHelper()->isSetOrderPaymentInfoDataOnSuccessPage()
+                            && ($orderPayment = $order->getPayment())
+                            && ($transaction = $this->orderHelper->fetchTransactionInfo($reference))) {
+                            $this->orderHelper->setOrderPaymentInfoData($order->getPayment(), $transaction);
+                        }
+                    } catch (LocalizedException $e) {
+                        $this->bugsnag->notifyException($e);
+                    }
                     // Save reference to the Bolt transaction with the order
                     $order->addStatusHistoryComment(
                         __(
                             'Bolt transaction: %1',
-                            $this->orderHelper->formatReferenceUrl($this->getReferenceFromPayload($payloadArray))
+                            $this->orderHelper->formatReferenceUrl($reference)
                         )
                     )->save();
                 } else {
