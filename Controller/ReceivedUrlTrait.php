@@ -98,7 +98,7 @@ trait ReceivedUrlTrait
                             $this->cartHelper->getFeatureSwitchDeciderHelper()->isSetOrderPaymentInfoDataOnSuccessPage()
                             && ($orderPayment = $order->getPayment())
                             && ($transaction = $this->orderHelper->fetchTransactionInfo($reference))) {
-                            $this->orderHelper->setOrderPaymentInfoData($order->getPayment(), $transaction);
+                            $this->orderHelper->setOrderPaymentInfoData($orderPayment, $transaction);
                         }
                     } catch (LocalizedException $e) {
                         $this->bugsnag->notifyException($e);
