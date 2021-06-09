@@ -11,9 +11,9 @@ git clone --depth 1 git@github.com:BoltApp/integration-tests.git
 sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-networking --protocol=socket
 
 cd integration-tests/operations/docker/m2
-gzip -d basic240_old.sql.gz
+gzip -d m2ci.sql.gz
 ls 
-sudo mysql magento2 < basic240_old.sql
+sudo mysql magento2 < m2ci.sql
 cd /home/circleci/project
 cp Test/scripts/CouponCode.php ../$MAGENTO_DIR
 cp Test/scripts/FreeShipping.php ../$MAGENTO_DIR
