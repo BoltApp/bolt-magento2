@@ -20,21 +20,15 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 use Bolt\Boltpay\Helper\Session;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\App\Helper\Context;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Backend\Model\Session\Quote as AdminCheckoutSession;
-use Magento\Customer\Model\Session as CustomerSession;
-use Bolt\Boltpay\Helper\Log as LogHelper;
-use Magento\Framework\App\CacheInterface;
-use Magento\Framework\App\Cache;
-use Magento\Quote\Model\Quote;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
-use Magento\Framework\Data\Form\FormKey;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Framework\App\Cache;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
-use PHPUnit\Framework\MockObject\MockObject;
-use Zend\Serializer\Adapter\PhpSerialize as Serialize;
 
 /**
  * Class SessionTest
@@ -52,14 +46,14 @@ class SessionTest extends BoltTestCase
     const FORM_KEY = '2222';
 
     /**
-     * @var Session|MockObject
+     * @var \Magento\Framework\TestFramework\Unit\Helper\ObjectManager
      */
-    private $currentMock;
+    protected $objectManager;
 
     /**
-     * @var Context
+     * @var Session
      */
-    private $context;
+    private $session;
 
     /**
      * @var CheckoutSession
@@ -67,405 +61,13 @@ class SessionTest extends BoltTestCase
     private $checkoutSession;
 
     /**
-     * @var AdminCheckoutSession
-     */
-    private $adminCheckoutSession;
-
-    /**
-     * @var CustomerSession
-     */
-    private $customerSession;
-
-    /**
-     * @var LogHelper
-     */
-    private $logHelper;
-
-    /** @var CacheInterface */
-    private $cache;
-
-    /** @var State */
-    private $appState;
-
-    /** @var FormKey */
-    private $formKey;
-
-    /** @var EventsForThirdPartyModules|MockObject */
-    private $eventsForThirdPartyModules;
-
-    /** @var ConfigHelper|MockObject */
-    private $configHelper;
-
-    /**
-     * @var \Magento\Framework\TestFramework\Unit\Helper\ObjectManager
-     */
-    protected $objectManager;
-
-    /**
-     * @var Quote|MockObject
-     */
-    protected $quote;
-
-    /**
-     * @var Serialize
-     */
-    private $serialize;
-
-    /**
      * @inheritdoc
      */
     public function setUpInternal()
     {
-        $this->initRequiredMocks();
-        $this->initCurrentMock();
-    }
-
-    private function initRequiredMocks()
-    {
-        $this->context = $this->createMock(Context::class);
-
-        $this->checkoutSession = $this->createPartialMock(
-            CheckoutSession::class,
-            ['getSessionId', 'replaceQuote', 'writeClose', 'setSessionId', 'start']
-        );
-
-        $this->adminCheckoutSession = $this->createPartialMock(
-            AdminCheckoutSession::class,
-            ['isDebugModeOn']
-        );
-
-        $this->customerSession = $this->createPartialMock(
-            CustomerSession::class,
-            ['loginById']
-        );
-
-        $this->logHelper = $this->createPartialMock(
-            LogHelper::class,
-            ['isDebugModeOn']
-        );
-
-        $this->cache = $this->createPartialMock(
-            Cache::class,
-            ['save', 'load']
-        );
-
-        $this->appState = $this->createPartialMock(
-            State::class,
-            ['getAreaCode']
-        );
-
-        $this->formKey = $this->createPartialMock(
-            FormKey::class,
-            ['set', 'getFormKey']
-        );
-        $this->quote = $this->createPartialMock(
-            Quote::class,
-            ['getCustomerId', 'getBoltParentQuoteId', 'getStoreId', 'getID', 'getData']
-        );
-
-        $this->eventsForThirdPartyModules = $this->createMock(
-            EventsForThirdPartyModules::class
-        );
-        
-        $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
-
-        $this->configHelper = $this->createPartialMock(
-            ConfigHelper::class,
-            ['isSessionEmulationEnabled', 'encrypt', 'decrypt']
-        );
-
-        $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(Serialize::class);
-    }
-
-    private function initCurrentMock($methods = ['replaceQuote'])
-    {
-        $this->currentMock = $this->getMockBuilder(Session::class)
-            ->setMethods($methods)
-            ->enableOriginalConstructor()
-            ->setConstructorArgs(
-                [
-                    $this->context,
-                    $this->checkoutSession,
-                    $this->adminCheckoutSession,
-                    $this->customerSession,
-                    $this->logHelper,
-                    $this->cache,
-                    $this->appState,
-                    $this->formKey,
-                    $this->configHelper,
-                    $this->eventsForThirdPartyModules,
-                    $this->serialize
-                ]
-            )
-            ->getMock();
-    }
-
-     /**
-      * @test
-      * that constructor sets internal properties
-      *
-      * @covers ::__construct
-      */
-    public function constructor_always_setsInternalProperties()
-    {
-        $instance = new Session(
-            $this->context,
-            $this->checkoutSession,
-            $this->adminCheckoutSession,
-            $this->customerSession,
-            $this->logHelper,
-            $this->cache,
-            $this->appState,
-            $this->formKey,
-            $this->configHelper,
-            $this->eventsForThirdPartyModules,
-            $this->serialize
-        );
-        
-        static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
-        static::assertAttributeEquals($this->adminCheckoutSession, 'adminCheckoutSession', $instance);
-        static::assertAttributeEquals($this->customerSession, 'customerSession', $instance);
-        static::assertAttributeEquals($this->logHelper, 'logHelper', $instance);
-        static::assertAttributeEquals($this->cache, 'cache', $instance);
-        static::assertAttributeEquals($this->appState, 'appState', $instance);
-        static::assertAttributeEquals($this->eventsForThirdPartyModules, 'eventsForThirdPartyModules', $instance);
-        static::assertAttributeEquals($this->formKey, 'formKey', $instance);
-        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
-        static::assertAttributeEquals($this->serialize, 'serialize', $instance);
-    }
-
-    /**
-     * @test
-     */
-    public function saveSession()
-    {
-        $this->checkoutSession->expects(self::once())->method('getSessionId')->willReturn(self::SESSION_ID);
-
-        $this->cache->expects(self::once())->method('save')->will($this->returnCallback(
-            function ($data) {
-                $this->assertEquals('a:2:{s:11:"sessionType";s:8:"frontend";s:9:"sessionID";s:4:"1111";}', $data);
-            }
-        ));
-
-        $this->currentMock->saveSession(self::QUOTE_ID, $this->checkoutSession);
-    }
-
-    /**
-     * @test
-     */
-    public function setSession_withSessionEmulationIsDisabled()
-    {
-        $this->configHelper->expects(self::once())->method('isSessionEmulationEnabled')->with(self::STORE_ID)->willReturn(false);
-        $result = TestHelper::invokeMethod($this->currentMock, 'setSession', [$this->checkoutSession, self::SESSION_ID, self::STORE_ID]);
-        $this->assertNull($result);
-    }
-
-    /**
-     * @test
-     */
-    public function setSession_withSessionEmulationIsEnabled()
-    {
-        $this->configHelper->expects(self::once())->method('isSessionEmulationEnabled')->with(self::STORE_ID)->willReturn(true);
-        $this->checkoutSession->expects(self::once())->method('writeClose')->willReturnSelf();
-        $this->checkoutSession->expects(self::once())->method('setSessionId')->willReturnSelf();
-        $this->checkoutSession->expects(self::once())->method('start')->willReturnSelf();
-
-        $result = TestHelper::invokeMethod($this->currentMock, 'setSession', [$this->checkoutSession, self::SESSION_ID, self::STORE_ID]);
-        $this->assertNull($result);
-    }
-
-    /**
-     * @test
-     */
-    public function replaceQuote()
-    {
-        $this->checkoutSession->expects(self::once())->method('replaceQuote')->with($this->quote)->willReturnSelf();
-        $result = TestHelper::invokeMethod($this->currentMock, 'replaceQuote', [$this->quote]);
-        $this->assertNull($result);
-    }
-
-    /**
-     * @test
-     */
-    public function loadSession_withAreaCodeIsNotWebApiRest()
-    {
-        $this->appState->expects(self::once())->method('getAreaCode')->willReturn(Area::AREA_WEBAPI_SOAP);
-        $this->checkoutSession->expects(self::once())->method('replaceQuote')->with($this->quote)->willReturnSelf();
-        $this->assertNull($this->currentMock->loadSession($this->quote));
-    }
-
-    /**
-     * @test
-     */
-    public function loadSession_withCacheIdentifierIsLoaded()
-    {
-        $this->appState->expects(self::once())->method('getAreaCode')->willReturn(Area::AREA_WEBAPI_REST);
-
-        $this->quote->expects(self::once())->method('getCustomerId')->willReturn(self::CUSTOMER_ID);
-        $this->quote->expects(self::once())->method('getBoltParentQuoteId')->willReturn(self::BOLT_PARENT_QUOTE_ID);
-        $this->quote->expects(self::once())->method('getStoreId')->willReturn(self::STORE_ID);
-        $this->cache->expects(self::once())->method('load')->willReturn('a:2:{s:11:"sessionType";s:8:"frontend";s:9:"sessionID";s:4:"1111";}');
-
-        $this->customerSession->expects(self::once())->method('loginById')->with(self::CUSTOMER_ID)->willReturnSelf();
-
-        $this->checkoutSession->expects(self::once())->method('replaceQuote')->with($this->quote)->willReturnSelf();
-
-        $result = $this->currentMock->loadSession($this->quote);
-        $this->assertNull($result);
-    }
-
-    /**
-     * @test
-     */
-    public function loadSession_withCacheIdentifierIsNotLoaded()
-    {
-        $this->appState->expects(self::once())->method('getAreaCode')->willReturn(Area::AREA_WEBAPI_REST);
-
-        $this->quote->expects(self::once())->method('getCustomerId')->willReturn(self::CUSTOMER_ID);
-        $this->quote->expects(self::once())->method('getBoltParentQuoteId')->willReturn(self::BOLT_PARENT_QUOTE_ID);
-        $this->cache->expects(self::once())->method('load')->willReturn(false);
-
-        $this->customerSession->expects(self::once())->method('loginById')->with(self::CUSTOMER_ID)->willReturnSelf();
-
-        $this->checkoutSession->expects(self::once())->method('replaceQuote')->with($this->quote)->willReturnSelf();
-        $result = $this->currentMock->loadSession($this->quote);
-
-        $this->assertNull($result);
-    }
-
-    /**
-     * @test
-     * that loadSession dispatches the restoreSessionData third party event when session data is present in the metadata
-     *
-     * @covers ::loadSession
-     */
-    public function loadSession_withEncryptedSessionDataInMetadata_dispatchesRestoreSessionDataThirdPartyEvent()
-    {
-        $this->initCurrentMock();
-        $this->appState->expects(self::once())->method('getAreaCode')->willReturn(Area::AREA_WEBAPI_REST);
-
-        $sessionData = [
-            'idme_group' => 'nurse'
-        ];
-
-        $this->configHelper->expects(static::once())->method('decrypt')
-            ->willReturn(json_encode($sessionData));
-        $this->eventsForThirdPartyModules->expects(static::exactly(2))
-            ->method('dispatchEvent')
-            ->withConsecutive(
-                ['restoreSessionData', $sessionData, $this->quote],
-                ['afterLoadSession', $this->quote]
-            );
-        $this->currentMock->loadSession(
-            $this->quote,
-            [
-                Session::ENCRYPTED_SESSION_DATA_KEY => base64_encode(json_encode($sessionData))
-            ]
-        );
-    }
-
-    /**
-     * @test
-     * that loadSession dispatches the appropriate third party event when session data is present in the metadata
-     *
-     * @covers ::loadSession
-     *
-     * @dataProvider loadSession_withEncryptedSessionIdInMetadataProvider
-     *
-     * @param string $checkoutType
-     *
-     * @throws \Magento\Framework\Exception\LocalizedException
-     */
-    public function loadSession_withEncryptedSessionIdInMetadata_configuresSessionIdFromTheOneInMetadata($checkoutType)
-    {
-        $this->initCurrentMock(['replaceQuote', 'setSession']);
-        $this->appState->expects(self::once())->method('getAreaCode')->willReturn(Area::AREA_WEBAPI_REST);
-
-        $sessionId = md5('bolt');
-
-        $this->configHelper->expects(static::once())->method('decrypt')
-            ->willReturn($sessionId);
-        $this->quote->method('getStoreId')->willReturn(self::STORE_ID);
-        $this->quote->method('getData')->with('bolt_checkout_type')->willReturn($checkoutType);
-
-        if ($checkoutType == \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
-            $this->currentMock->expects(static::once())->method('setSession')
-                ->with($this->adminCheckoutSession, $sessionId, self::STORE_ID);
-        } else {
-            $this->currentMock->expects(static::exactly(2))->method('setSession')
-                ->withConsecutive(
-                    [$this->checkoutSession, $sessionId, self::STORE_ID],
-                    [$this->customerSession, $sessionId, self::STORE_ID]
-                );
-        }
-
-        $this->currentMock->loadSession(
-            $this->quote,
-            [
-                Session::ENCRYPTED_SESSION_ID_KEY => base64_encode($sessionId)
-            ]
-        );
-    }
-
-    /**
-     * Data provider for {@see loadSession_withEncryptedSessionIdInMetadata_configuresSessionIdFromTheOneInMetadata}
-     *
-     * @return array[]
-     */
-    public function loadSession_withEncryptedSessionIdInMetadataProvider()
-    {
-        return [
-            ['checkoutType' => \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_MULTISTEP],
-            ['checkoutType' => \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_PPC],
-            ['checkoutType' => \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_BACKOFFICE],
-            ['checkoutType' => \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_PPC_COMPLETE],
-        ];
-    }
-
-    /**
-     * @test
-     */
-    public function setFormKey()
-    {
-        $this->quote->expects(self::once())->method('getId')->willReturn(self::CUSTOMER_ID);
-        $this->cache->expects(self::once())->method('load')->will($this->returnCallback(
-            function ($data) {
-                $this->assertEquals('BOLT_SESSION_FORM_KEY_1111', $data);
-            }
-        ));
-
-        $this->formKey->expects(self::once())->method('set')->withAnyParameters()->willReturnSelf();
-        $this->currentMock->setFormKey($this->quote);
-    }
-
-    /**
-     * @test
-     */
-    public function cacheFormKey()
-    {
-        $this->quote->expects(self::once())->method('getId')->willReturn(self::CUSTOMER_ID);
-        $this->formKey->expects(self::once())->method('getFormKey')->willReturn(self::FORM_KEY);
-        $this->cache->expects(self::once())->method('save')->with(
-            self::FORM_KEY,
-            'BOLT_SESSION_FORM_KEY_1111',
-            [],
-            14400
-        )->will($this->returnCallback(
-            function ($data) {
-                $this->assertEquals(self::FORM_KEY, $data);
-            }
-        ));
-
-        $this->currentMock->cacheFormKey($this->quote);
-    }
-
-    /**
-     * @test
-     */
-    public function getCheckoutSession_withAreaIsAdmin()
-    {
-        $this->appState->expects(self::once())->method('getAreaCode')->willReturn(Area::AREA_ADMINHTML);
-        $this->assertSame($this->adminCheckoutSession, $this->currentMock->getCheckoutSession());
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->session = $this->objectManager->create(Session::class);
+        $this->checkoutSession = $this->objectManager->create(\Magento\Checkout\Model\Session::class);
     }
 
     /**
@@ -474,8 +76,11 @@ class SessionTest extends BoltTestCase
      */
     public function getCheckoutSession_withAreaIsNotAdmin($data)
     {
-        $this->appState->expects(self::once())->method('getAreaCode')->willReturn($data['area']);
-        $this->assertSame($this->checkoutSession, $this->currentMock->getCheckoutSession());
+        $appState = $this->objectManager->create(State::class);
+        $appState->setAreaCode($data['area']);
+        TestHelper::setInaccessibleProperty($this->session, 'appState', $appState);
+        $result = $this->session->getCheckoutSession();
+        self::assertEquals($this->checkoutSession, $result);
     }
 
     public function getCheckoutSession_withAreaIsNotAdminProvider()
@@ -488,5 +93,209 @@ class SessionTest extends BoltTestCase
             ['data' => ['area' => Area::AREA_WEBAPI_SOAP]],
             ['data' => ['area' => Area::AREA_WEBAPI_REST]]
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function saveSession()
+    {
+        $this->session->saveSession(self::QUOTE_ID, $this->checkoutSession);
+        self::assertEquals(
+            [
+                'sessionType' => 'frontend',
+                'sessionID' => $this->checkoutSession->getSessionId()
+            ],
+            unserialize(
+                TestHelper::getProperty($this->session, 'cache')->load(Session::BOLT_SESSION_PREFIX . self::QUOTE_ID)
+            )
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function setSession_withSessionEmulationIsDisabled()
+    {
+        $result = TestHelper::invokeMethod($this->session, 'setSession', [$this->checkoutSession, self::SESSION_ID, self::STORE_ID]);
+        $this->assertNull($result);
+    }
+
+    /**
+     * @covers ::setSession
+     * @test
+     */
+    public function setSession_withSessionEmulationIsEnabled()
+    {
+        $store = $this->objectManager->get(\Magento\Store\Model\StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
+        $configData = [
+            [
+                'path' => ConfigHelper::XML_PATH_API_EMULATE_SESSION,
+                'value' => true,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $storeId
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        TestHelper::invokeMethod($this->session, 'setSession', [$this->checkoutSession, self::SESSION_ID, self::STORE_ID]);
+        $this->assertEquals(self::SESSION_ID, $this->checkoutSession->getSessionId());
+    }
+
+    /**
+     * @test
+     * @covers ::replaceQuote
+     */
+    public function replaceQuote()
+    {
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        TestHelper::invokeMethod($this->session, 'replaceQuote', [$quote]);
+        self::assertEquals($quoteId, TestHelper::getProperty($this->session, 'checkoutSession')->getQuoteId());
+    }
+
+    /**
+     * @test
+     * @covers ::loadSession
+     */
+    public function loadSession_withAreaCodeIsNotWebApiRest()
+    {
+        $quote = TestUtils::createQuote();
+        $appState = $this->objectManager->create(State::class);
+        $appState->setAreaCode(Area::AREA_WEBAPI_SOAP);
+        $quoteId = $quote->getId();
+        TestHelper::setProperty($this->session, 'appState', $appState);
+        $this->session->loadSession($quote);
+        self::assertEquals($quoteId, TestHelper::getProperty($this->session, 'checkoutSession')->getQuoteId());
+    }
+
+    /**
+     * @test
+     * @covers ::loadSession
+     */
+    public function loadSession_withCacheIdentifierIsLoaded()
+    {
+        $quote = TestUtils::createQuote();
+        $appState = $this->objectManager->create(State::class);
+        $appState->setAreaCode(Area::AREA_WEBAPI_REST);
+        $cache = $this->createPartialMock(
+            Cache::class,
+            ['save', 'load']
+        );
+
+        $cache->expects(self::once())->method('load')->willReturn('a:2:{s:11:"sessionType";s:8:"frontend";s:9:"sessionID";s:4:"1111";}');
+        TestHelper::setProperty($this->session, 'appState', $appState);
+        TestHelper::setInaccessibleProperty($this->session, 'cache', $cache);
+        $result = $this->session->loadSession($quote);
+
+        $this->assertEquals('1111', $this->checkoutSession->getSessionId());
+        $this->assertNull($result);
+    }
+
+    /**
+     * @test
+     * @covers ::loadSession
+     */
+    public function loadSession_withCacheIdentifierIsNotLoaded()
+    {
+        $quote = TestUtils::createQuote();
+        $sesionId = $this->checkoutSession->getSessionId();
+        $appState = $this->objectManager->create(State::class);
+        $appState->setAreaCode(Area::AREA_WEBAPI_REST);
+
+        $cache = $this->createPartialMock(
+            Cache::class,
+            ['save', 'load']
+        );
+        $cache->expects(self::once())->method('load')->willReturn(false);
+        TestHelper::setProperty($this->session, 'appState', $appState);
+        TestHelper::setInaccessibleProperty($this->session, 'cache', $cache);
+        $result = $this->session->loadSession($quote);
+
+        $this->assertEquals($sesionId, $this->checkoutSession->getSessionId());
+        $this->assertNull($result);
+    }
+
+    /**
+     * @test
+     * that loadSession dispatches the restoreSessionData third party event when session data is present in the metadata
+     *
+     * @covers ::loadSession
+     */
+    public function loadSession_withEncryptedSessionDataInMetadata_dispatchesRestoreSessionDataThirdPartyEvent()
+    {
+        $quote = TestUtils::createQuote();
+        $appState = $this->objectManager->create(State::class);
+        $appState->setAreaCode(Area::AREA_WEBAPI_REST);
+        $sessionData = [
+            'idme_group' => 'nurse'
+        ];
+        $eventsForThirdPartyModules = $this->createMock(
+            EventsForThirdPartyModules::class
+        );
+        $eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
+
+        $configHelper = $this->createPartialMock(
+            ConfigHelper::class,
+            ['isSessionEmulationEnabled', 'encrypt', 'decrypt']
+        );
+        $configHelper->expects(static::once())->method('decrypt')
+            ->willReturn(json_encode($sessionData));
+        $eventsForThirdPartyModules->expects(static::exactly(2))
+            ->method('dispatchEvent')
+            ->withConsecutive(
+                ['restoreSessionData', $sessionData, $quote]
+            );
+
+        TestHelper::setInaccessibleProperty($this->session, 'eventsForThirdPartyModules', $eventsForThirdPartyModules);
+        TestHelper::setInaccessibleProperty($this->session, 'appState', $appState);
+        TestHelper::setInaccessibleProperty($this->session, 'configHelper', $configHelper);
+
+        $this->session->loadSession(
+            $quote,
+            [
+                Session::ENCRYPTED_SESSION_DATA_KEY => base64_encode(json_encode($sessionData))
+            ]
+        );
+    }
+
+    /**
+     * @test
+     * @covers ::setFormKey
+     */
+    public function setFormKey()
+    {
+        $expected = 'Formkey';
+        $quote = TestUtils::createQuote();
+        $cache = TestHelper::getProperty($this->session, 'cache');
+        $cache->save($expected, Session::BOLT_SESSION_PREFIX_FORM_KEY . $quote->getId(), [], 86400);
+        $this->session->setFormKey($quote);
+        $result = TestHelper::getProperty($this->session, 'formKey')->getFormKey();
+        self::assertEquals($expected, $result);
+    }
+
+    /**
+     * @test
+     */
+    public function cacheFormKey()
+    {
+        $quote = TestUtils::createQuote();
+        $this->session->cacheFormKey($quote);
+        self::assertEquals(
+            TestHelper::getProperty($this->session, 'formKey')->getFormKey(),
+            TestHelper::getProperty($this->session, 'cache')->load(Session::BOLT_SESSION_PREFIX_FORM_KEY . $quote->getId())
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function getCheckoutSession_withAreaIsAdmin()
+    {
+        $appState = $this->objectManager->create(State::class);
+        $adminCheckoutSession = $this->objectManager->create(AdminCheckoutSession::class);
+        $appState->setAreaCode(Area::AREA_ADMINHTML);
+        TestHelper::setInaccessibleProperty($this->session, 'appState', $appState);
+        $this->assertEquals($adminCheckoutSession, $this->session->getCheckoutSession());
     }
 }
