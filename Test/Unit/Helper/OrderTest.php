@@ -108,6 +108,7 @@ class OrderTest extends BoltTestCase
     const REFERENCE_ID = '1123123123';
     const PROCESSOR_VANTIV = 'vantiv';
     const PROCESSOR_PAYPAL = 'paypal';
+    const TOKEN_BOLT = 'bolt';
     const STORE_ID = 1;
     const API_KEY = 'aaaabbbbcccc';
     const BOLT_TRACE_ID = 'aaaabbbbcccc';
@@ -2922,6 +2923,7 @@ class OrderTest extends BoltTestCase
                 'real_transaction_id' => self::TRANSACTION_ID,
                 'captures' => null,
                 'processor' => self::PROCESSOR_VANTIV,
+                'token_type' => self::TOKEN_BOLT,
             ]
         );
 
@@ -3005,6 +3007,7 @@ class OrderTest extends BoltTestCase
                 'real_transaction_id' => null,
                 'captures' => null,
                 'processor' => self::PROCESSOR_VANTIV,
+                'token_type' => self::TOKEN_BOLT,
             ]
         );
 
@@ -3684,6 +3687,9 @@ class OrderTest extends BoltTestCase
                                 'amount' => 10
                             ]
                         ]
+                    ],
+                    'from_credit_card' => [
+                        'token_type' => self::TOKEN_BOLT
                     ]
                 ]
             )
@@ -3730,7 +3736,8 @@ class OrderTest extends BoltTestCase
                 ['real_transaction_id'],
                 ['authorized'],
                 ['captures'],
-                ['processor']
+                ['processor'],
+                ['token_type']
             )
             ->willReturnOnConsecutiveCalls(
                 $prevTransactionState,
@@ -3738,7 +3745,8 @@ class OrderTest extends BoltTestCase
                 self::TRANSACTION_ID,
                 true,
                 '',
-                self::PROCESSOR_VANTIV
+                self::PROCESSOR_VANTIV,
+                self::TOKEN_BOLT
             );
 
         $this->currentMock->updateOrderPayment($this->orderMock, $transaction);
