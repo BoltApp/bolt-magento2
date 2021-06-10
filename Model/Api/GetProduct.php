@@ -243,13 +243,15 @@ class GetProduct implements GetProductInterface
     protected function collectConfigurableProductOptions(ProductInterface $product)
     {
         foreach ($product->getTypeInstance()->getConfigurableOptions($product) as $attribute) {
+            $i = 0;
             foreach ($attribute as $option) {
                 $existingOptions = $this->productData->getOptions() ?: [];
                 $optionId = $option['value_index'];
                 if (!in_array($optionId, array_column($existingOptions, 'value'))) {
                     $existingOptions[] = [
                         'value' => $optionId,
-                        'label' => $option['option_title'] ?: $option['default_title']
+                        'label' => $option['option_title'] ?: $option['default_title'],
+                        'position' => $i++
                     ];
                     $this->productData->setOptions($existingOptions);
                 }
