@@ -540,7 +540,7 @@ class CreateOrder implements CreateOrderInterface
         foreach ($quoteItems as $item) {
             /** @var QuoteItem $item */
             $sku = trim($item->getSku());
-            $itemPrice = CurrencyUtils::toMinor($item->getPrice(), $quote->getQuoteCurrencyCode());
+            $itemPrice = CurrencyUtils::toMinor($item->getCalculationPrice(), $quote->getQuoteCurrencyCode());
 
             $this->hasItemErrors($item);
             $this->validateItemPrice($sku, $itemPrice, $transactionItems);
