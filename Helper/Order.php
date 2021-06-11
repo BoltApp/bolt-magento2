@@ -2158,9 +2158,7 @@ class Order extends AbstractHelper
             'authorized' => $paymentAuthorized || in_array($transactionState, [self::TS_AUTHORIZED, self::TS_CAPTURED]),
             'refunds' => implode(',', $processedRefunds),
             'processor' => $transaction->processor,
-            'token_type' => isset($transaction->from_credit_card->token_type)
-                            ? $transaction->from_credit_card->token_type
-                            : $transaction->processor
+            'token_type' => $transaction->from_credit_card->token_type ?? $transaction->processor
         ];
 
         $message = __(
