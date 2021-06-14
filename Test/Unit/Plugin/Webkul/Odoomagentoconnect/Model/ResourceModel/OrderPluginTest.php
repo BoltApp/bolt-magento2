@@ -19,9 +19,9 @@ namespace Bolt\Boltpay\Test\Unit\Plugin\Webkul\Odoomagentoconnect\Model\Resource
 
 use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Plugin\Webkul\Odoomagentoconnect\Model\ResourceModel\OrderPlugin;
-use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
-use PHPUnit\Framework\MockObject\MockObject;
+use Magento\TestFramework\ObjectManager;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class OrderPluginTest
@@ -30,45 +30,51 @@ use PHPUnit\Framework\MockObject\MockObject;
  */
 class OrderPluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
 {
-
-    /**
-     * @var OrderPlugin|MockObject
-     */
-    private $currentMock;
-
     /**
      * @var \PHPUnit_Framework_MockObject_MockObject|\Webkul\Odoomagentoconnect\Model\ResourceModel\Order
      */
     private $subjectMock;
 
     /**
-     * @var Order|\PHPUnit_Framework_MockObject_MockObject
+     * @var Order
      */
-    private $orderMock;
+    private $orderModel;
 
     /**
-     * @var \Magento\Sales\Model\Order\Payment|\PHPUnit_Framework_MockObject_MockObject
+     * @var \Magento\Sales\Model\Order\Payment
      */
-    private $paymentMock;
+    private $payment;
 
     /**
-     * @var Quote|MockObject
+     * @var OrderPlugin
      */
-    private $quoteMock;
+    private $orderPlugin;
+
+    /**
+     * @var ObjectManager
+     */
+    private $objectManager;
+
+    private $proceedMock;
 
     /**
      * Setup test dependencies, called before each test
      */
     public function setUpInternal()
     {
-        $this->currentMock = $this->getMockBuilder(OrderPlugin::class)->setMethods(null)->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->orderPlugin = $this->objectManager->create(OrderPlugin::class);
+        $this->orderModel = $this->objectManager->create(Order::class);
+        $this->payment = $this->objectManager->create(\Magento\Sales\Model\Order\Payment::class);
+        $this->proceedMock = $this->getMockBuilder(\stdClass::class)->setMethods(['proceed'])->getMock();
+
         $this->subjectMock = $this->getMockBuilder('\Webkul\Odoomagentoconnect\Model\ResourceModel\Order')
             ->disableAutoload()
             ->disableOriginalConstructor()
             ->getMock();
-        $this->paymentMock = $this->createMock(\Magento\Sales\Model\Order\Payment::class);
-        $this->orderMock = $this->createMock(Order::class);
-        $this->quoteMock = $this->createMock(Quote::class);
     }
 
     /**
@@ -79,17 +85,15 @@ class OrderPluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
      */
     public function aroundExportOrder_withBoltOrderAndPendingPaymentState_doesNotProceed()
     {
-        $this->orderMock->method('getPayment')->willReturn($this->paymentMock);
-        $this->paymentMock->expects(static::once())->method('getMethod')->willReturn(Payment::METHOD_CODE);
-        $this->orderMock->expects(static::once())->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
-        $proceedMock = $this->getMockBuilder(\stdClass::class)->setMethods(['proceed'])->getMock();
-        $proceedMock->expects(static::never())->method('proceed');
+        $this->payment->setMethod('checkmo');
+        $this->orderModel->setPayment($this->payment);
+        $this->orderModel->setState(Order::STATE_PENDING_PAYMENT);
         static::assertEquals(
             0,
-            $this->currentMock->aroundExportOrder(
+            $this->orderPlugin->aroundExportOrder(
                 $this->subjectMock,
-                [$proceedMock, 'proceed'],
-                $this->orderMock
+                [$this->proceedMock, 'proceed'],
+                $this->orderModel
             )
         );
     }
@@ -103,19 +107,15 @@ class OrderPluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
     public function aroundExportOrder_withNonBoltOrder_proceedsToOriginal()
     {
         $odooId = mt_rand();
-        $this->orderMock->method('getPayment')->willReturn($this->paymentMock);
-        $this->paymentMock->expects(static::once())->method('getMethod')->willReturn('checkmo');
-        $this->orderMock->expects(static::never())->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
-        $proceedMock = $this->getMockBuilder(\stdClass::class)->setMethods(['proceed'])->getMock();
-        $proceedMock->expects(static::once())->method('proceed')->with($this->orderMock, $this->quoteMock)
-            ->willReturn($odooId);
+        $this->payment->setMethod('checkmo');
+        $this->orderModel->setPayment($this->payment);
+        $this->proceedMock->expects(static::once())->method('proceed')->withAnyParameters()->willReturn($odooId);
         static::assertEquals(
             $odooId,
-            $this->currentMock->aroundExportOrder(
+            $this->orderPlugin->aroundExportOrder(
                 $this->subjectMock,
-                [$proceedMock, 'proceed'],
-                $this->orderMock,
-                $this->quoteMock
+                [$this->proceedMock, 'proceed'],
+                $this->orderModel
             )
         );
     }
@@ -129,19 +129,20 @@ class OrderPluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
     public function aroundExportOrder_withNonPendingBoltOrder_proceedsToOriginal()
     {
         $odooId = mt_rand();
-        $this->orderMock->method('getPayment')->willReturn($this->paymentMock);
-        $this->paymentMock->expects(static::once())->method('getMethod')->willReturn(Payment::METHOD_CODE);
-        $this->orderMock->expects(static::once())->method('getState')->willReturn(Order::STATE_NEW);
+        $this->payment->setMethod(Payment::METHOD_CODE);
+        $this->orderModel->setPayment($this->payment);
+        $this->orderModel->setState(\Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATE_NEW);
+
         $proceedMock = $this->getMockBuilder(\stdClass::class)->setMethods(['proceed'])->getMock();
-        $proceedMock->expects(static::once())->method('proceed')->with($this->orderMock, $this->quoteMock)
+        $proceedMock->expects(static::once())->method('proceed')
+            ->withAnyParameters()
             ->willReturn($odooId);
         static::assertEquals(
             $odooId,
-            $this->currentMock->aroundExportOrder(
+            $this->orderPlugin->aroundExportOrder(
                 $this->subjectMock,
                 [$proceedMock, 'proceed'],
-                $this->orderMock,
-                $this->quoteMock
+                $this->orderModel
             )
         );
     }
