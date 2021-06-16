@@ -7011,6 +7011,9 @@ ORDER
         $this->stockState->method('verifyStock')->willReturn(true);
         $checkQtyResult->expects(static::once())->method('getHasError')->willReturn(true);
         $this->stockState->method('checkQuoteItemQty')->willReturn($checkQtyResult);
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getWebsiteId')->willReturn(self::WEBSITE_ID);
+        $this->quoteMock->method('getStore')->willReturn($storeMock);
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(2001005);
         $this->expectExceptionMessage('The requested qty of [Test Product] is not available');
