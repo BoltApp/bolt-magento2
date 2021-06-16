@@ -57,6 +57,9 @@ class ShippingMethods implements ShippingMethodsInterface
     const NO_SHIPPING_SERVICE = 'No Shipping Required';
     const NO_SHIPPING_REFERENCE = 'noshipping';
     const BOLT_SHIPPING_TAX_CACHE_TAG = 'BOLT_SHIPPING_TAX_CACHE_TAG';
+    
+    const E_BOLT_CUSTOM_ERROR = 6103;
+    const E_BOLT_GENERAL_ERROR = 6009;
 
     /**
      * @var HookHelper
@@ -300,7 +303,7 @@ class ShippingMethods implements ShippingMethodsInterface
             throw new BoltException(
                 __('The cart is empty. Please reload the page and checkout again.'),
                 null,
-                6103
+                self::E_BOLT_CUSTOM_ERROR
             );
         }
 
@@ -325,13 +328,13 @@ class ShippingMethods implements ShippingMethodsInterface
                 throw new BoltException(
                     __('The quantity of items in your cart has changed and needs to be revised. Please reload the page and checkout again.'),
                     null,
-                    6103
+                    self::E_BOLT_CUSTOM_ERROR
                 );
             } else {
                 throw new BoltException(
                     __('Your cart total has changed and needs to be revised. Please reload the page and checkout again.'),
                     null,
-                    6103
+                    self::E_BOLT_CUSTOM_ERROR
                 );
             }
         }
@@ -397,7 +400,7 @@ class ShippingMethods implements ShippingMethodsInterface
         } catch (\Exception $e) {
             $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
-            $this->catchExceptionAndSendError($e, $msg, 6009, 422);
+            $this->catchExceptionAndSendError($e, $msg, self::E_BOLT_GENERAL_ERROR, 422);
         }
     }
 
@@ -419,7 +422,7 @@ class ShippingMethods implements ShippingMethodsInterface
             throw new BoltException(
                 __('Unknown quote id: %1.', $immutableQuoteId),
                 null,
-                6103
+                self::E_BOLT_CUSTOM_ERROR
             );
         }
 
@@ -431,6 +434,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->quote = $parentQuote;
         $this->quote->getStore()->setCurrentCurrencyCode($this->quote->getQuoteCurrencyCode());
         $this->checkCartItems($cart);
+        $this->cartHelper->checkCartItemStockState($this->quote, self::E_BOLT_CUSTOM_ERROR);
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace parent quote with immutable quote in checkout session.
         $this->sessionHelper->loadSession($this->quote, $cart['metadata'] ?? []);
@@ -470,7 +474,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param int    $code
      * @param int    $httpStatusCode
      */
-    protected function catchExceptionAndSendError($exception, $msg = '', $code = 6009, $httpStatusCode = 422)
+    protected function catchExceptionAndSendError($exception, $msg = '', $code = self::E_BOLT_GENERAL_ERROR, $httpStatusCode = 422)
     {
         $this->bugsnag->notifyException($exception);
 

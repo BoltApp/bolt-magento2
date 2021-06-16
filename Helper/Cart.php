@@ -66,6 +66,7 @@ use Zend\Serializer\Adapter\PhpSerialize as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\SalesRule\Model\RuleRepository;
 use Magento\SalesRule\Api\Data\RuleInterface;
+use Magento\CatalogInventory\Api\StockStateInterface as StockState;
 
 /**
  * Boltpay Cart helper
@@ -267,6 +268,11 @@ class Cart extends AbstractHelper
      * @var Serialize
      */
     private $serialize;
+    
+    /**
+     * @var StockState
+     */
+    private $stockState;
 
     /**
      * @param Context                    $context
@@ -300,6 +306,7 @@ class Cart extends AbstractHelper
      * @param Serialize                  $serialize
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      * @param RuleRepository             $ruleRepository
+     * @param StockState                 $stockState
      */
     public function __construct(
         Context $context,
@@ -332,7 +339,8 @@ class Cart extends AbstractHelper
         DeciderHelper $deciderHelper,
         Serialize $serialize,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
-        RuleRepository $ruleRepository
+        RuleRepository $ruleRepository,
+        StockState $stockState
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -365,6 +373,7 @@ class Cart extends AbstractHelper
         $this->serialize = $serialize;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         $this->ruleRepository = $ruleRepository;
+        $this->stockState = $stockState;
     }
 
     /**
@@ -2744,5 +2753,51 @@ class Cart extends AbstractHelper
          */
         $quote->setCartFixedRules([]);
         $this->totalsCollector->collectAddressTotals($quote, $address);
+    }
+    
+    /**
+     * Check stock status of quote items.
+     *
+     * @param \Magento\Quote\Model\Quote $quote
+     * @param string $excCode
+     *
+     * @throws BoltException
+     */
+    public function checkCartItemStockState($quote, $excCode)
+    {
+        list ($cartItems,,) = $this->getCartItems($quote, $quote->getStoreId());        
+        foreach ($cartItems as $item) {
+            if (!$this->stockState->verifyStock($item['reference'])) {
+                $this->bugsnag->registerCallback(function ($report) use ($item) {   
+                    $report->setMetaData([
+                        'CART_ITEM_OUT_OF_STOCK' => $item
+                    ]);
+                });    
+                throw new BoltException(
+                    __('The item [' . $item['name'] . '] is out of stock.'),
+                    null,
+                    $excCode
+                );
+            }
+            $checkQty = $this->stockState->checkQuoteItemQty(
+                $item['reference'],
+                $item['quantity'],
+                $item['quantity'],
+                $item['quantity'],
+                $quote->getStore()->getWebsiteId()
+            );
+            if ($checkQty->getHasError()) {
+                $this->bugsnag->registerCallback(function ($report) use ($item) {   
+                    $report->setMetaData([
+                        'CART_ITEM_QTY_UNAVAILABLE' => $item
+                    ]);
+                });    
+                throw new BoltException(
+                    __('The requested qty of [' . $item['name'] . '] is not available'),
+                    null,
+                    $excCode
+                );
+            }
+        }
     }
 }
