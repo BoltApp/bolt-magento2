@@ -534,6 +534,7 @@ class OrderTest extends BoltTestCase
                 'isCancelFailedPaymentOrderInsteadOfDeleting',
                 'isSetCustomerNameToOrderForGuests',
                 'isSaveCustomerCreditCardEnabled',
+                'isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled'
             ]
         );
         $this->creditmemoFactory = $this->createPartialMock(CreditmemoFactory::class, ['createByOrder']);
@@ -1590,6 +1591,7 @@ class OrderTest extends BoltTestCase
         $this->orderMock->expects(self::atLeastOnce())->method('getGrandTotal')->willReturn(1);
         $this->currentMock->expects(self::once())->method('updateOrderPayment')
             ->with($this->orderMock, $transaction, null, $type = 'pending')->willReturn($this->orderMock);
+        $this->featureSwitches->expects(self::once())->method('isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled')->willReturn(false);
 
         $this->currentMock->saveUpdateOrder(
             self::REFERENCE_ID,

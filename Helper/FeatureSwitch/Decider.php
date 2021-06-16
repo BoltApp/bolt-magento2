@@ -367,4 +367,9 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_SAVE_CUSTOMER_CREDIT_CARD);
     }
+
+    public function isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_IGNORE_TOTAL_VALIDATION_WHEN_CREDIT_HOOK_IS_SENT_TO_MAGENTO);
+    }
 }

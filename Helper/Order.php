@@ -982,10 +982,33 @@ class Order extends AbstractHelper
             // if called from hook update order payment transactions
             $this->updateOrderPayment($order, $transaction, null, $hookType, $hookPayload);
             // Check for total amount mismatch between magento and bolt order.
+            if (
+                $this->featureSwitches->isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled()
+                && $hookType === Hook::HT_CREDIT
+                && $this->isTotalValidationIgnored($transaction, $order)
+            ) {
+                return [$parentQuote, $order];
+            }
             $this->holdOnTotalsMismatch($order, $transaction);
         }
 
         return [$parentQuote, $order];
+    }
+
+    /**
+     * @param $transaction
+     * @param $order
+     * @return bool
+     * @throws \Exception
+     */
+    public function isTotalValidationIgnored($transaction, $order)
+    {
+        $currencyCode = $order->getOrderCurrencyCode();
+        $refundAmount = $transaction->amount->amount;
+        $boltTotal = $transaction->order->cart->total_amount->amount;
+        $magentoTotal = CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode);
+
+        return $boltTotal - $refundAmount == $magentoTotal;
     }
 
     /**

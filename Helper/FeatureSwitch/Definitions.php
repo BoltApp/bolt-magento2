@@ -202,6 +202,11 @@ class Definitions
      */
     const M2_SET_CUSTOMER_NAME_TO_ORDER_FOR_GUESTS = 'M2_SET_CUSTOMER_NAME_TO_ORDER_FOR_GUESTS';
 
+    /**
+     * Ignore total validation when the credit hook is sent to Magento
+     */
+    const M2_IGNORE_TOTAL_VALIDATION_WHEN_CREDIT_HOOK_IS_SENT_TO_MAGENTO = 'M2_IGNORE_TOTAL_VALIDATION_WHEN_CREDIT_HOOK_IS_SENT_TO_MAGENTO';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -235,6 +240,12 @@ class Definitions
         ],
         self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED => [
             self::NAME_KEY        => self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_IGNORE_TOTAL_VALIDATION_WHEN_CREDIT_HOOK_IS_SENT_TO_MAGENTO => [
+            self::NAME_KEY        => self::M2_IGNORE_TOTAL_VALIDATION_WHEN_CREDIT_HOOK_IS_SENT_TO_MAGENTO,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
