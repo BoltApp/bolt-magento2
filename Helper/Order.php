@@ -437,7 +437,7 @@ class Order extends AbstractHelper
         if ($quote->isVirtual()) {
             return;
         }
-        
+
         if (isset($transaction->order->cart->in_store_shipments)) {
             $this->eventsForThirdPartyModules->dispatchEvent("setInStoreShippingMethodForPrepareQuote", $quote, $transaction);
         } else {
@@ -547,19 +547,26 @@ class Order extends AbstractHelper
     /**
      * Set quote customer email and guest checkout parameters
      *
-     * @param Quote $quote
+     * @param Quote  $quote
      * @param string $email
+     * @param \stdClass $transaction
      *
      * @return void
      */
-    private function addCustomerDetails($quote, $email)
+    protected function addCustomerDetails($quote, $email, $transaction)
     {
         $quote->setCustomerEmail($email);
-        if (!$quote->getCustomerId() && $quote->getData('bolt_checkout_type') != CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
-            $quote->setCustomerId(null);
-            $quote->setCheckoutMethod('guest');
-            $quote->setCustomerIsGuest(true);
-            $quote->setCustomerGroupId(GroupInterface::NOT_LOGGED_IN_ID);
+        if (!$quote->getCustomerId()) {
+            if ($this->featureSwitches->isSetCustomerNameToOrderForGuests()) {
+                $quote->setCustomerFirstname($transaction->order->cart->billing_address->first_name);
+                $quote->setCustomerLastname($transaction->order->cart->billing_address->last_name);
+            }
+            if ($quote->getData('bolt_checkout_type') != CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
+                $quote->setCustomerId(null);
+                $quote->setCheckoutMethod('guest');
+                $quote->setCustomerIsGuest(true);
+                $quote->setCustomerGroupId(GroupInterface::NOT_LOGGED_IN_ID);
+            }
         }
     }
 
@@ -1542,8 +1549,8 @@ class Order extends AbstractHelper
             $email = $transaction->order->cart->billing_address->email_address ??
                 $transaction->order->cart->shipments[0]->shipping_address->email_address ?? null;
         }
-        
-        $this->addCustomerDetails($quote, $email);
+
+        $this->addCustomerDetails($quote, $email, $transaction);
 
         $this->cartHelper->quoteResourceSave($quote);
 

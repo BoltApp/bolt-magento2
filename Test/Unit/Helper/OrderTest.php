@@ -118,7 +118,7 @@ class OrderTest extends BoltTestCase
     const ADDRESS_DATA = [
         'region'                     => 'CA',
         'country_code'               => 'US',
-        'email_address'              => 'test@bolt.com',
+        'email_address'              => self::CUSTOMER_EMAIL,
         'street_address1'            => 'Test Street 1',
         'street_address2'            => 'Test Street 2',
         'locality'                   => 'Beverly Hills',
@@ -133,7 +133,6 @@ class OrderTest extends BoltTestCase
     const HOOK_TYPE_AUTH = 'auth';
     const HOOK_PAYLOAD = ['checkboxes' => ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','value'=>true, 'is_custom_field'=>false],
                           'custom_fields' =>  ['label'=>'Gift', 'type'=>'CHECKBOX', 'is_custom_field'=>true,'value'=>true]];
-
     const CUSTOMER_ID = 1111;
 
     /** @var string test cart network */
@@ -141,6 +140,7 @@ class OrderTest extends BoltTestCase
 
     /** @var int test credit card last 4 digits */
     const CREDIT_CARD_LAST_FOUR = 1111;
+    const CUSTOMER_EMAIL = 'test@bolt.com';
 
     /** @var MockObject|ApiHelper mocked instance of the Bolt api helper */
     private $apiHelper;
@@ -456,7 +456,9 @@ class OrderTest extends BoltTestCase
                     'setIsActive',
                     'getIsActive',
                     'getBoltCheckoutType',
-                    'setBoltCheckoutType'
+                    'setBoltCheckoutType',
+                    'setCustomerFirstname',
+                    'setCustomerLastname',
                 ]
             )
             ->getMock();
@@ -529,7 +531,8 @@ class OrderTest extends BoltTestCase
                 'isLogMissingQuoteFailedHooksEnabled',
                 'isCreatingCreditMemoFromWebHookEnabled',
                 'isIgnoreHookForInvoiceCreationEnabled',
-                'isCancelFailedPaymentOrderInsteadOfDeleting'
+                'isCancelFailedPaymentOrderInsteadOfDeleting',
+                'isSetCustomerNameToOrderForGuests',
             ]
         );
         $this->creditmemoFactory = $this->createPartialMock(CreditmemoFactory::class, ['createByOrder']);
@@ -752,7 +755,7 @@ class OrderTest extends BoltTestCase
         self::assertEquals($quote->getShippingAddress()->getCity(), 'Beverly Hills');
         self::assertEquals($quote->getShippingAddress()->getCountryId(), 'US');
         self::assertEquals($quote->getShippingAddress()->getCompany(), 'Bolt');
-        self::assertEquals($quote->getShippingAddress()->getEmail(), 'test@bolt.com');
+        self::assertEquals($quote->getShippingAddress()->getEmail(), self::CUSTOMER_EMAIL);
         self::assertEquals($quote->getShippingAddress()->getTelephone(), '0123456789');
     }
 
@@ -2653,7 +2656,7 @@ class OrderTest extends BoltTestCase
                     'order'            => [
                         'cart' => [
                             'billing_address' => [
-                                'email_address' => 'test@bolt.com'
+                                'email_address' => self::CUSTOMER_EMAIL
                             ],
                             'metadata' => []
                         ]
@@ -4830,7 +4833,7 @@ class OrderTest extends BoltTestCase
         self::assertEquals($quote->getBillingAddress()->getCity(), 'Beverly Hills');
         self::assertEquals($quote->getBillingAddress()->getCountryId(), 'US');
         self::assertEquals($quote->getBillingAddress()->getCompany(), 'Bolt');
-        self::assertEquals($quote->getBillingAddress()->getEmail(), 'test@bolt.com');
+        self::assertEquals($quote->getBillingAddress()->getEmail(), self::CUSTOMER_EMAIL);
         self::assertEquals($quote->getBillingAddress()->getTelephone(), '0123456789');
     }
 
@@ -4864,7 +4867,7 @@ class OrderTest extends BoltTestCase
         self::assertEquals($quote->getShippingAddress()->getCity(), 'Beverly Hills');
         self::assertEquals($quote->getShippingAddress()->getCountryId(), 'US');
         self::assertEquals($quote->getShippingAddress()->getCompany(), 'Bolt');
-        self::assertEquals($quote->getShippingAddress()->getEmail(), 'test@bolt.com');
+        self::assertEquals($quote->getShippingAddress()->getEmail(), self::CUSTOMER_EMAIL);
         self::assertEquals($quote->getShippingAddress()->getTelephone(), '0123456789');
     }
 
@@ -5593,5 +5596,22 @@ class OrderTest extends BoltTestCase
         $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
         $orderHelper->cancelFailedPaymentOrder($incrementId, self::QUOTE_ID);
         TestUtils::cleanupSharedFixtures([$order]);
+    }
+
+    /**
+     * @test
+     * that addCustomerDetails will assign customer name from transaction billing address if quote is guest
+     *
+     * @covers ::addCustomerDetails
+     */
+    public function addCustomerDetails_ifNoCustomerId_assignsFirstAndLastNameFromTransaction()
+    {
+        $transaction = new stdClass();
+        @$transaction->order->cart->billing_address->first_name = 'Bolt';
+        @$transaction->order->cart->billing_address->last_name = 'Team';
+        $this->featureSwitches->expects(static::once())->method('isSetCustomerNameToOrderForGuests')->willReturn(true);
+        $this->quoteMock->expects(static::once())->method('setCustomerFirstname')->with('Bolt');
+        $this->quoteMock->expects(static::once())->method('setCustomerLastname')->with('Team');
+        TestHelper::invokeMethod($this->currentMock, 'addCustomerDetails', [$this->quoteMock, self::CUSTOMER_EMAIL, $transaction]);
     }
 }
