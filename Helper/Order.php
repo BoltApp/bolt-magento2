@@ -767,7 +767,7 @@ class Order extends AbstractHelper
      * @param \stdClass $transaction
      * @return void
      */
-    protected function setOrderPaymentInfoData($payment, $transaction)
+    public function setOrderPaymentInfoData($payment, $transaction)
     {
         if (empty($payment->getCcLast4()) && ! empty($transaction->from_credit_card->last4)) {
             $payment->setCcLast4($transaction->from_credit_card->last4);

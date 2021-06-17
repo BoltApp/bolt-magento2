@@ -2745,4 +2745,12 @@ class Cart extends AbstractHelper
         $quote->setCartFixedRules([]);
         $this->totalsCollector->collectAddressTotals($quote, $address);
     }
+
+    /**
+     * @return DeciderHelper
+     */
+    public function getFeatureSwitchDeciderHelper()
+    {
+        return $this->deciderHelper;
+    }
 }

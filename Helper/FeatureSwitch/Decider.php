@@ -339,4 +339,14 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR);
     }
+
+    /**
+     * Checks whether the feature switch for setting order payment info data on success page is enabled
+     *
+     * @return bool
+     */
+    public function isSetOrderPaymentInfoDataOnSuccessPage()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_SET_ORDER_PAYMENT_INFO_DATA_ON_SUCCESS_PAGE);
+    }
 }

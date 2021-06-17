@@ -187,6 +187,11 @@ class Definitions
      */
     const M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR = 'M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR';
 
+    /**
+     * Set order payment info data on success page
+     */
+    const M2_SET_ORDER_PAYMENT_INFO_DATA_ON_SUCCESS_PAGE = 'M2_SET_ORDER_PAYMENT_INFO_DATA_ON_SUCCESS_PAGE';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -367,6 +372,12 @@ class Definitions
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_SET_ORDER_PAYMENT_INFO_DATA_ON_SUCCESS_PAGE => [
+            self::NAME_KEY        => self::M2_SET_ORDER_PAYMENT_INFO_DATA_ON_SUCCESS_PAGE,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
     ];
 }
