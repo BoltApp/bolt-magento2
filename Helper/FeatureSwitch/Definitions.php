@@ -188,6 +188,11 @@ class Definitions
     const M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR = 'M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR';
 
     /**
+     * Save customer credit card
+     */
+    const M2_SAVE_CUSTOMER_CREDIT_CARD = 'M2_SAVE_CUSTOMER_CREDIT_CARD';
+
+    /**
      * Set order payment info data on success page
      */
     const M2_SET_ORDER_PAYMENT_INFO_DATA_ON_SUCCESS_PAGE = 'M2_SET_ORDER_PAYMENT_INFO_DATA_ON_SUCCESS_PAGE';
@@ -206,6 +211,12 @@ class Definitions
         ],
         self::M2_BOLT_ENABLED => [
             self::NAME_KEY        => self::M2_BOLT_ENABLED,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_SAVE_CUSTOMER_CREDIT_CARD => [
+            self::NAME_KEY        => self::M2_SAVE_CUSTOMER_CREDIT_CARD,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
