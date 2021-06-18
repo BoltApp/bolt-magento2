@@ -1035,6 +1035,10 @@ class Order extends AbstractHelper
     public function saveCustomerCreditCard($reference, $storeId)
     {
         try {
+            if (!$this->featureSwitches->isSaveCustomerCreditCardEnabled()){
+                return false;
+            }
+
             $transaction = $this->fetchTransactionInfo($reference, $storeId);
             $parentQuoteId = $transaction->order->cart->order_reference ?? false;
             $quote = $this->cartHelper->getQuoteById($parentQuoteId);

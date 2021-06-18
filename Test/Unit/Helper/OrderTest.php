@@ -528,7 +528,9 @@ class OrderTest extends BoltTestCase
                 'isLogMissingQuoteFailedHooksEnabled',
                 'isCreatingCreditMemoFromWebHookEnabled',
                 'isIgnoreHookForInvoiceCreationEnabled',
-                'isCancelFailedPaymentOrderInsteadOfDeleting'
+                'isCancelFailedPaymentOrderInsteadOfDeleting',
+                'isSetCustomerNameToOrderForGuests',
+                'isSaveCustomerCreditCardEnabled',
             ]
         );
         $this->creditmemoFactory = $this->createPartialMock(CreditmemoFactory::class, ['createByOrder']);
@@ -5075,7 +5077,7 @@ class OrderTest extends BoltTestCase
 
         $this->customerCreditCardFactory->expects(static::never())->method('create');
         $this->customerCreditCardFactory->expects(static::never())->method('saveCreditCard');
-
+        $this->featureSwitches->method('isSaveCustomerCreditCardEnabled')->willReturn(true);
         $result = $this->currentMock->saveCustomerCreditCard(self::REFERENCE, self::STORE_ID);
         $this->assertFalse($result);
     }
@@ -5139,7 +5141,7 @@ class OrderTest extends BoltTestCase
 
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willReturnSelf();
-
+        $this->featureSwitches->method('isSaveCustomerCreditCardEnabled')->willReturn(true);
         $result = $this->currentMock->saveCustomerCreditCard(self::REFERENCE, self::STORE_ID);
         $this->assertTrue($result);
     }
@@ -5167,7 +5169,7 @@ class OrderTest extends BoltTestCase
 
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willReturnSelf();
-
+        $this->featureSwitches->method('isSaveCustomerCreditCardEnabled')->willReturn(true);
         $result = $this->currentMock->saveCustomerCreditCard(self::REFERENCE, self::STORE_ID);
         $this->assertTrue($result);
     }
@@ -5188,7 +5190,7 @@ class OrderTest extends BoltTestCase
         $this->cartHelper->expects(self::exactly(2))->method('getQuoteById')
             ->withConsecutive([self::QUOTE_ID], [self::IMMUTABLE_QUOTE_ID])
             ->willReturnOnConsecutiveCalls(null, null);
-
+        $this->featureSwitches->method('isSaveCustomerCreditCardEnabled')->willReturn(true);
 
         $result = $this->currentMock->saveCustomerCreditCard(self::REFERENCE, self::STORE_ID);
         $this->assertFalse($result);
@@ -5215,7 +5217,7 @@ class OrderTest extends BoltTestCase
 
         $this->customerCreditCardFactory->expects(static::once())->method('create')->willReturnSelf();
         $this->customerCreditCardFactory->expects(static::once())->method('saveCreditCard')->willThrowException(new \Exception());
-
+        $this->featureSwitches->method('isSaveCustomerCreditCardEnabled')->willReturn(true);
         $result = $this->currentMock->saveCustomerCreditCard(self::REFERENCE, self::STORE_ID);
         $this->assertFalse($result);
     }
@@ -5242,7 +5244,7 @@ class OrderTest extends BoltTestCase
 
         $this->customerCreditCardFactory->expects(static::never())->method('create');
         $this->customerCreditCardFactory->expects(static::never())->method('saveCreditCard');
-
+        $this->featureSwitches->method('isSaveCustomerCreditCardEnabled')->willReturn(true);
         $result = $this->currentMock->saveCustomerCreditCard(self::REFERENCE, self::STORE_ID);
         $this->assertFalse($result);
     }

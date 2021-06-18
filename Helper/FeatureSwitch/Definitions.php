@@ -182,6 +182,11 @@ class Definitions
      */
     const M2_SHOW_ORDER_COMMENT_IN_ADMIN = 'M2_SHOW_ORDER_COMMENT_IN_ADMIN';
 
+    /**
+     * Save customer credit card
+     */
+    const M2_SAVE_CUSTOMER_CREDIT_CARD = 'M2_SAVE_CUSTOMER_CREDIT_CARD';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -191,6 +196,12 @@ class Definitions
         ],
         self::M2_BOLT_ENABLED => [
             self::NAME_KEY        => self::M2_BOLT_ENABLED,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_SAVE_CUSTOMER_CREDIT_CARD => [
+            self::NAME_KEY        => self::M2_SAVE_CUSTOMER_CREDIT_CARD,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100

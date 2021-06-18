@@ -329,4 +329,12 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_SHOW_ORDER_COMMENT_IN_ADMIN);
     }
+
+    /**
+     * Checks whether the feature switch for saving customer credit card is enabled
+     */
+    public function isSaveCustomerCreditCardEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_SAVE_CUSTOMER_CREDIT_CARD);
+    }
 }
