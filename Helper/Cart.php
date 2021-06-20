@@ -1340,9 +1340,9 @@ class Cart extends AbstractHelper
      * @return array
      * @throws \Exception
      */
-    public function getCartItems($quote, $storeId = null, $totalAmount = 0, $diff = 0)
+    public function getCartItems($quote, $storeId = null, $totalAmount = 0, $diff = 0, $ifOnlyVisibleItems = true)
     {
-        $items = $quote->getAllVisibleItems();
+        $items = $ifOnlyVisibleItems ? $quote->getAllVisibleItems() : $quote->getAllItems();
         $currencyCode = $quote->getQuoteCurrencyCode();
 
         list($products, $totalAmount, $diff) = $this->getCartItemsFromItems($items, false, $currencyCode, $storeId, $totalAmount, $diff);
@@ -2765,38 +2765,54 @@ class Cart extends AbstractHelper
      */
     public function checkCartItemStockState($quote, $excCode)
     {
-        list ($cartItems,,) = $this->getCartItems($quote, $quote->getStoreId());        
+        list ($cartItems,,) = $this->getCartItems($quote, $quote->getStoreId(), 0, 0, false);        
         foreach ($cartItems as $item) {
-            if (!$this->stockState->verifyStock($item['reference'])) {
-                $this->bugsnag->registerCallback(function ($report) use ($item) {   
-                    $report->setMetaData([
-                        'CART_ITEM_OUT_OF_STOCK' => $item
-                    ]);
-                });    
-                throw new BoltException(
-                    __('The item [' . $item['name'] . '] is out of stock.'),
-                    null,
-                    $excCode
+            $product = $this->productRepository->getById($item['reference']);
+            if ($product->getTypeId() == \Magento\Bundle\Model\Product\Type::TYPE_CODE) {
+                if (!$product->isAvailable()) {
+                    $this->bugsnag->registerCallback(function ($report) use ($item) {   
+                        $report->setMetaData([
+                            'CART_ITEM_OUT_OF_STOCK' => $item
+                        ]);
+                    });    
+                    throw new BoltException(
+                        __('The item [' . $item['name'] . '] is out of stock.'),
+                        null,
+                        $excCode
+                    );
+                }
+            } else {
+                if (!$this->stockState->verifyStock($item['reference'])) {
+                    $this->bugsnag->registerCallback(function ($report) use ($item) {   
+                        $report->setMetaData([
+                            'CART_ITEM_OUT_OF_STOCK' => $item
+                        ]);
+                    });    
+                    throw new BoltException(
+                        __('The item [' . $item['name'] . '] is out of stock.'),
+                        null,
+                        $excCode
+                    );
+                }
+                $checkQty = $this->stockState->checkQuoteItemQty(
+                    $item['reference'],
+                    $item['quantity'],
+                    $item['quantity'],
+                    $item['quantity'],
+                    $quote->getStore()->getWebsiteId()
                 );
-            }
-            $checkQty = $this->stockState->checkQuoteItemQty(
-                $item['reference'],
-                $item['quantity'],
-                $item['quantity'],
-                $item['quantity'],
-                $quote->getStore()->getWebsiteId()
-            );
-            if ($checkQty->getHasError()) {
-                $this->bugsnag->registerCallback(function ($report) use ($item) {   
-                    $report->setMetaData([
-                        'CART_ITEM_QTY_UNAVAILABLE' => $item
-                    ]);
-                });    
-                throw new BoltException(
-                    __('The requested qty of [' . $item['name'] . '] is not available'),
-                    null,
-                    $excCode
-                );
+                if ($checkQty->getHasError()) {
+                    $this->bugsnag->registerCallback(function ($report) use ($item) {   
+                        $report->setMetaData([
+                            'CART_ITEM_QTY_UNAVAILABLE' => $item
+                        ]);
+                    });    
+                    throw new BoltException(
+                        __('For the item [' . $item['name'] . ']: ' . $checkQty->getMessage()),
+                        null,
+                        $excCode
+                    );
+                }    
             }
         }
     }
