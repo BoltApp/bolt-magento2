@@ -6966,6 +6966,9 @@ ORDER
             ]
         );
         $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
+        $this->productMock->method('getTypeId')->willReturn('simple');
+        $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
+            ->willReturn($this->productMock);
         $this->stockState->method('verifyStock')->willReturn(false);
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(2001005);
@@ -7008,6 +7011,9 @@ ORDER
             ]
         );
         $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
+        $this->productMock->method('getTypeId')->willReturn('simple');
+        $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
+            ->willReturn($this->productMock);
         $this->stockState->method('verifyStock')->willReturn(true);
         $checkQtyResult->expects(static::once())->method('getHasError')->willReturn(true);
         $this->stockState->method('checkQuoteItemQty')->willReturn($checkQtyResult);

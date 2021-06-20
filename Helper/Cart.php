@@ -1337,6 +1337,7 @@ class Cart extends AbstractHelper
      * @param null $storeId
      * @param int $totalAmount
      * @param int $diff
+     * @param bool $ifOnlyVisibleItems
      * @return array
      * @throws \Exception
      */
