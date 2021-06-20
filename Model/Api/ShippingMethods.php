@@ -407,8 +407,8 @@ class ShippingMethods implements ShippingMethodsInterface
     /**
      * Get shipping and tax options
      *
-     * @param $cart
-     * @param $shipping_address
+     * @param array $cart
+     * @param array $shipping_address
      * @return ShippingOptionsInterface
      * @throws BoltException
      */
@@ -426,8 +426,18 @@ class ShippingMethods implements ShippingMethodsInterface
             );
         }
 
+        if (!$immutableQuote->getCustomerId()
+            && $this->cartHelper->getFeatureSwitchDeciderHelper()->isSetCustomerNameToOrderForGuests()) {
+            $immutableQuote->addData(
+                [
+                    \Magento\Sales\Api\Data\OrderInterface::CUSTOMER_FIRSTNAME => $shipping_address['first_name'],
+                    \Magento\Sales\Api\Data\OrderInterface::CUSTOMER_LASTNAME  => $shipping_address['last_name'],
+                ]
+            );
+        }
+
         $this->preprocessHook($immutableQuote->getStoreId());
-        
+
         $parentQuoteId = $cart['order_reference'];
         $parentQuote = $this->getQuoteById($parentQuoteId);
         $this->cartHelper->replicateQuoteData($immutableQuote, $parentQuote);
@@ -700,6 +710,7 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     public function getShippingOptions($quote, $addressData)
     {
+
         if ($quote->isVirtual()) {
             $billingAddress = $quote->getBillingAddress();
             $billingAddress->addData($addressData);

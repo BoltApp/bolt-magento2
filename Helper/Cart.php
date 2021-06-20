@@ -2817,4 +2817,12 @@ class Cart extends AbstractHelper
             }
         }
     }
+
+    /**
+     * @return DeciderHelper
+     */
+    public function getFeatureSwitchDeciderHelper()
+    {
+        return $this->deciderHelper;
+    }
 }
