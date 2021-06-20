@@ -390,7 +390,7 @@ class CartTest extends BoltTestCase
         $this->quoteShippingAddress = $this->createPartialMock(Quote\Address::class, $addressMethods);
         $this->quoteBillingAddress = $this->createPartialMock(Quote\Address::class, $addressMethods);
 
-        $this->productMock = $this->createPartialMock(Product::class, ['getDescription', 'getTypeInstance']);
+        $this->productMock = $this->createPartialMock(Product::class, ['getDescription', 'getTypeInstance', 'getTypeId']);
         $this->productMock->method('getTypeInstance')->willReturnSelf();
         $this->contextHelper = $this->createMock(ContextHelper::class);
         $this->quoteMock = $this->createPartialMock(Quote::class, [
