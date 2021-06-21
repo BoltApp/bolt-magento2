@@ -23,16 +23,19 @@
 if ($block->shouldDisableBoltCheckout()) {
     return;
 }
-
-//check if we need Bolt on this page
-if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled() && !$block->isBoltProductPage()) {
-    return;
-}
-
-$trackJsUrl = $block->getTrackJsUrl();
-$checkoutKey = $block->getCheckoutKey();
 ?>
 <script>console.log("Bolt M2 Version: <?= /* @noEscape */ $block->getModuleVersion()?>");</script>
+<?php
+$checkoutKey = $block->getCheckoutKey();
+$isLoadTrackJsOnlyBoltPages = $block->isLoadTrackJsOnBoltPagesOnly();
+$isLoadConnectJs = $block->isLoadConnectJs();
+$isLoadBoltJs = $block->isOnPageFromWhiteList() || $block->isMinicartEnabled() || $block->isBoltProductPage();
+$isDisableTrackJs = ($block->isDisableTrackJsOnHomePage() && $block->isOnHomePage())
+                    || ($block->isLoadTrackJsOnBoltPagesOnly() && (!$isLoadBoltJs || !$isLoadConnectJs));
+
+if (!$isDisableTrackJs) {
+    $trackJsUrl = $block->getTrackJsUrl();
+?>
 <script
         id="bolt-track"
         type="text/javascript"
@@ -44,9 +47,10 @@ $checkoutKey = $block->getCheckoutKey();
         $checkoutKey; ?>">
 </script>
 <?php
-if ($block->isLoadConnectJs()) {
+}
+if ($isLoadBoltJs && $isLoadConnectJs) {
     $connectJsUrl = $block->getConnectJsUrl();
-    ?>
+?>
 <script
         id="bolt-connect"
         type="text/javascript"

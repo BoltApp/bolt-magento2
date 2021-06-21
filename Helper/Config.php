@@ -395,6 +395,7 @@ class Config extends AbstractHelper
     const SHOPPING_CART_PAGE_ACTION = 'checkout_cart_index';
     const CHECKOUT_PAGE_ACTION = 'checkout_index_index';
     const SUCCESS_PAGE_ACTION = 'checkout_onepage_success';
+    const HOME_PAGE_ACTION = 'cms_index_index';
 
     /**
      * Map of human-readable config names to their XML paths
