@@ -159,7 +159,12 @@ class Tax extends ShippingTax implements TaxInterface
         $shippingOption = $this->shippingOptionFactory->create();
         $shippingOption->setTaxAmount($shipping_option['tax_amount']);
         $shippingOption->setService($shipping_option['service'] ?? null);
-        $shippingOption->setCost($shipping_option['cost']);
+        $shippingAmount = $this->eventsForThirdPartyModules->runFilter(
+            "adjustShippingAmountInTaxEndPoint",
+            $shipping_option['cost'],
+            $this->quote
+        );
+        $shippingOption->setCost($shippingAmount);
         $shippingOption->setReference($shipping_option['reference'] ?? null);
 
         return $shippingOption;

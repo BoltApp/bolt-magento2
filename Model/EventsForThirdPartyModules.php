@@ -848,6 +848,18 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        "adjustShippingAmountInTaxEndPoint" => [
+            'listeners' => [
+                'MW_RewardPoints' => [
+                    'module'      => 'MW_RewardPoints',
+                    "sendClasses" => [
+                        "MW\RewardPoints\Helper\Data",
+                        "MW\RewardPoints\Model\CustomerFactory"
+                    ],
+                    'boltClass'   => MW_RewardPoints::class,
+                ],
+            ],
+        ],
         "getAdditionalInvalidateBoltCartJavascript" => [
             "listeners" => [
                 [

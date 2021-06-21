@@ -293,6 +293,48 @@ class RewardPoints
     }
 
     /**
+     * @param $result
+     * @param $mwRewardPointsHelperData
+     * @param $mwRewardPointsModelCustomerFactory
+     * @param $quote
+     * @return int
+     */
+    public function adjustShippingAmountInTaxEndPoint($result,
+                                         $mwRewardPointsHelperData,
+                                         $mwRewardPointsModelCustomerFactory,
+                                         $quote)
+    {
+        $this->mwRewardPointsHelperData = $mwRewardPointsHelperData;
+        $this->mwRewardPointsModelCustomer = $mwRewardPointsModelCustomerFactory;
+        try {
+            if ($quote->getMwRewardpoint()) {
+                $storeCode = $quote->getStore()->getCode();
+                $currencyCode = $quote->getQuoteCurrencyCode();
+                $discountedAmount = $this->getDiscountedAmount($quote, $currencyCode);
+                if (
+                    CurrencyUtils::toMinor($quote->getMwRewardpointDiscount(), $currencyCode) >= CurrencyUtils::toMinor($quote->getSubtotal(), $currencyCode) - $discountedAmount
+                    && $this->mwRewardPointsHelperData->getRedeemedShippingConfig($storeCode)
+                    && !$this->mwRewardPointsHelperData->getRedeemedTaxConfig($storeCode)
+                ) {
+                    $rewardPoints = $this->mwRewardPointsModelCustomer->create()
+                        ->load($quote->getCustomerId())->getMwRewardPoint();
+                    $maximumAmount = CurrencyUtils::toMinor(abs($this->mwRewardPointsHelperData->exchangePointsToMoneys($rewardPoints, $storeCode)), $currencyCode);
+                    $quoteSubtotal = CurrencyUtils::toMinor($quote->getSubtotal(), $currencyCode);
+
+                    $quoteSubtotalIncludeShippingAndDiscount = $quoteSubtotal - $discountedAmount + $result;
+                    if ($maximumAmount > $quoteSubtotalIncludeShippingAndDiscount) {
+                        $result = $maximumAmount - $quoteSubtotal + $discountedAmount;
+                    }
+                }
+            }
+        } catch (\Exception $exception) {
+            $this->bugsnagHelper->notifyException($exception);
+        }
+
+        return $result;
+    }
+
+    /**
      * @param bool                         $result
      * @param \MW\RewardPoints\Helper\Data $mwRewardPointsHelperData
      * @param \Magento\Quote\Model\Quote   $quote
