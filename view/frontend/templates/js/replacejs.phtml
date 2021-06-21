@@ -33,6 +33,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
 $connectJsUrl = $block->getConnectJsUrl();
 $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
+$isLoadTrackJsDynamic = $block->isLoadTrackJsOnBoltPagesOnly() && $isLoadConnectJsDynamic;
 ?>
 
 <script type="text/javascript">
@@ -430,6 +431,23 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
             scriptTag.setAttribute('async', '');
             scriptTag.setAttribute('id', 'bolt-connect');
             scriptTag.setAttribute('data-publishable-key', publishableKey);
+            document.head.appendChild(scriptTag);
+            return true;
+        };
+        
+        var insertTrackScript = function() {
+            var scriptTag = document.getElementById('bolt-track');
+            var publishableKey = getCheckoutKey();
+            if (scriptTag) {
+                scriptTag.setAttribute('data-publishable-key', publishableKey);
+                return false;
+            }
+            scriptTag = document.createElement('script');
+            scriptTag.setAttribute('type', 'text/javascript');
+            scriptTag.setAttribute('async', '');
+            scriptTag.setAttribute('id', 'bolt-track');
+            scriptTag.setAttribute('data-publishable-key', publishableKey);
+            scriptTag.setAttribute('src', settings.track_url);
             document.head.appendChild(scriptTag);
             return true;
         };
@@ -1446,6 +1464,11 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
             }
             <?php
             if ($isLoadConnectJsDynamic) {
+                if ($isLoadTrackJsDynamic) {
+                ?>
+            insertTrackScript();    
+                <?php
+                }
                 ?>
             if (insertConnectScriptWithoutSrc()) {
                 $.getScript("<?= /* @noEscape */ $connectJsUrl; ?>", function(data, textStatus, jqxhr) {
@@ -1529,6 +1552,7 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
             ?>
         magentoCartDataListenerLoadConnectJs = function(data) {
             if (data.items !== undefined && data.items.length > 0) {
+                insertTrackScript();
                 insertConnectScript();
             }            
         }
