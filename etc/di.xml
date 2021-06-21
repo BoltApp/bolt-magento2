@@ -245,4 +245,9 @@
         <plugin name="bolt_boltpay_extension_attributes_persistence_plugin_plugin"
                 type="Bolt\Boltpay\Plugin\ClassyLlama\AvaTax\Plugin\Model\ResourceModel\ExtensionAttributesPersistencePluginPlugin"/>
     </type>
+    <type name="Magento\Framework\Session\Validator">
+        <plugin name="BoltSessionValidator"
+                type="Bolt\Boltpay\Plugin\Magento\Framework\Session\ValidatorPlugin"
+                sortOrder="1"/>
+    </type>
 </config>
