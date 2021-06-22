@@ -1552,7 +1552,13 @@ $isLoadTrackJsDynamic = $block->isLoadTrackJsOnBoltPagesOnly() && $isLoadConnect
             ?>
         magentoCartDataListenerLoadConnectJs = function(data) {
             if (data.items !== undefined && data.items.length > 0) {
+                <?php
+                if ($isLoadTrackJsDynamic) {
+                ?>
                 insertTrackScript();
+                <?php
+                }
+                ?>                
                 insertConnectScript();
             }            
         }
