@@ -20,12 +20,17 @@ namespace Bolt\Boltpay\Test\Unit\ViewModel;
 
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Model\FeatureSwitch;
 use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Bolt\Boltpay\ViewModel\OrderComment;
 use Magento\Sales\Model\Order;
 use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Store\Model\StoreManagerInterface;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Magento\Store\Model\ScopeInterface;
 
 /**
  * Class OrderCommentTest
@@ -35,40 +40,40 @@ use PHPUnit\Framework\TestCase;
 class OrderCommentTest extends BoltTestCase
 {
     /**
-     * Test store id
+     * @var Config
      */
-    const STORE_ID = 1;
+    protected $configHelper;
 
     /**
-     * @var MockObject|Config
+     * @var Decider
      */
-    protected $configHelperMock;
+    protected $featureSwitches;
 
     /**
-     * @var MockObject|Decider
+     * @var OrderComment
      */
-    protected $featureSwitchesMock;
+    protected $orderComment;
 
     /**
-     * @var MockObject|OrderComment
+     * @var Order
      */
-    protected $currentMock;
+    private $order;
 
-    /**
-     * @var MockObject|Order
-     */
-    private $orderMock;
+    private $objectManager;
 
     /**
      * Setup test dependencies, called before each test
      */
     protected function setUpInternal()
     {
-        $this->configHelperMock = $this->createMock(Config::class);
-        $this->featureSwitchesMock = $this->createMock(Decider::class);
-        $this->paymentMock = $this->createMock(\Magento\Sales\Model\Order\Payment::class);
-        $this->orderMock = $this->createMock(Order::class);
-        $this->initCurrentMock(null);
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->orderComment = $this->objectManager->create(OrderComment::class);
+        $this->order = $this->objectManager->create(Order::class);
+        $this->featureSwitches = $this->objectManager->create(Decider::class);
+        $this->configHelper = $this->objectManager->create(ConfigHelper::class);
     }
 
     /**
@@ -79,9 +84,9 @@ class OrderCommentTest extends BoltTestCase
      */
     public function __construct_always_populatesInternalProperties()
     {
-        $instance = new OrderComment($this->configHelperMock, $this->featureSwitchesMock);
-        static::assertAttributeEquals($this->configHelperMock, 'configHelper', $instance);
-        static::assertAttributeEquals($this->featureSwitchesMock, 'featureSwitches', $instance);
+        $instance = new OrderComment($this->configHelper, $this->featureSwitches);
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
+        static::assertAttributeEquals($this->featureSwitches, 'featureSwitches', $instance);
     }
 
     /**
@@ -91,12 +96,19 @@ class OrderCommentTest extends BoltTestCase
      */
     public function getCommentForOrder_withCommentFieldSet_returnsOrderCommentFromTheConfiguredField()
     {
-        $this->orderMock = $this->createMock(Order::class);
-        $this->orderMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
-        $this->orderMock->expects(static::once())->method('getData')->with('user_note')->willReturn('test note');
-        $this->configHelperMock->expects(static::once())->method('getOrderCommentField')->with(self::STORE_ID)
-            ->willReturn('user_note');
-        static::assertEquals('test note', $this->currentMock->getCommentForOrder($this->orderMock));
+        $storeId = $this->objectManager->get(StoreManagerInterface::class)->getStore()->getId();
+        $this->order->setStoreId($storeId);
+        $this->order->setData('user_note', 'test note');
+        $configData = [
+            [
+                'path' => ConfigHelper::XML_PATH_ORDER_COMMENT_FIELD,
+                'value' => 'user_note',
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $storeId
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        static::assertEquals('test note', $this->orderComment->getCommentForOrder($this->order));
     }
 
     /**
@@ -117,12 +129,28 @@ class OrderCommentTest extends BoltTestCase
         $paymentMethod,
         $shouldDisplay
     ) {
-        $this->initCurrentMock(['getCommentForOrder']);
-        $this->featureSwitchesMock->method('isShowOrderCommentInAdmin')->willReturn($isShowOrderCommentInAdmin);
-        $this->currentMock->method('getCommentForOrder')->with($this->orderMock)->willReturn($orderComment);
-        $this->orderMock->method('getPayment')->willReturn($paymentMethod ? $this->paymentMock : null);
-        $this->paymentMock->method('getMethod')->willReturn($paymentMethod);
-        static::assertEquals($shouldDisplay, $this->currentMock->shouldDisplayForOrder($this->orderMock));
+        TestUtils::saveFeatureSwitch(
+            \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_SHOW_ORDER_COMMENT_IN_ADMIN,
+            $isShowOrderCommentInAdmin
+        );
+        $storeId = $this->objectManager->get(StoreManagerInterface::class)->getStore()->getId();
+        $this->order->setStoreId($storeId);
+        $this->order->setData('user_note', $orderComment);
+        $configData = [
+            [
+                'path' => ConfigHelper::XML_PATH_ORDER_COMMENT_FIELD,
+                'value' => 'user_note',
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $storeId
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $payment = $this->objectManager->create(Order\Payment::class);
+        $payment->setMethod($paymentMethod);
+
+        $this->order->setPayment($payment);
+        static::assertEquals($shouldDisplay, $this->orderComment->shouldDisplayForOrder($this->order));
     }
 
     /**
@@ -164,20 +192,5 @@ class OrderCommentTest extends BoltTestCase
                 'shouldDisplay'             => false
             ],
         ];
-    }
-
-    /**
-     * Initializes {@see $currentMock} with stubbing the specified methods
-     *
-     * @param array|null $methods to be stubbed
-     *
-     * @return void
-     */
-    private function initCurrentMock($methods): void
-    {
-        $this->currentMock = $this->getMockBuilder(OrderComment::class)
-            ->setMethods($methods)
-            ->setConstructorArgs([$this->configHelperMock, $this->featureSwitchesMock])
-            ->getMock();
     }
 }
