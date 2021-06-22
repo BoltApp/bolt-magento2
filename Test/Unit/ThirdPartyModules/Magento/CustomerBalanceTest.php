@@ -18,40 +18,33 @@
 namespace Bolt\Boltpay\Test\Unit\ThirdPartyModules\Magento;
 
 use Bolt\Boltpay\Helper\Config;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Bolt\Boltpay\ThirdPartyModules\Magento\CustomerBalance;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use PHPUnit\Framework\MockObject\MockObject;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\Magento\CustomerBalance
  */
 class CustomerBalanceTest extends BoltTestCase
 {
+    private $configHelper;
 
-    /**
-     * @var Config|MockObject
-     */
-    private $configHelperMock;
+    private $objectManager;
 
-    /**
-     * @var CustomerBalance|MockObject
-     */
-    private $currentMock;
+    private $customerBalance;
 
     /**
      * Setup test dependencies, called before each test
      */
     protected function setUpInternal()
     {
-        $this->configHelperMock = $this->createMock(Config::class);
-        $this->currentMock = $this->getMockBuilder(CustomerBalance::class)
-            ->setConstructorArgs(
-                [
-                    $this->configHelperMock
-                ]
-            )
-            ->setMethods(null)
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->customerBalance = $this->objectManager->create(CustomerBalance::class);
+        $this->configHelper = $this->objectManager->create(Config::class);
     }
 
     /**
@@ -62,8 +55,8 @@ class CustomerBalanceTest extends BoltTestCase
      */
     public function __construct_always_setsInternalProperties()
     {
-        $instance = new CustomerBalance($this->configHelperMock);
-        static::assertAttributeEquals($this->configHelperMock, 'configHelper', $instance);
+        $instance = new CustomerBalance($this->configHelper);
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
     }
 
     /**
@@ -75,8 +68,7 @@ class CustomerBalanceTest extends BoltTestCase
      */
     public function filterProcessLayout_notEnabledInConfig_doesNotAddLayout()
     {
-        $this->configHelperMock->expects(static::once())->method('useStoreCreditConfig')->willReturn(false);
-        static::assertEquals([], $this->currentMock->filterProcessLayout([]));
+        static::assertEquals([], $this->customerBalance->filterProcessLayout([]));
     }
 
     /**
@@ -88,8 +80,18 @@ class CustomerBalanceTest extends BoltTestCase
      */
     public function filterProcessLayout_ifEnabledInConfig_addsModuleSpecificLayout()
     {
-        $this->configHelperMock->expects(static::once())->method('useStoreCreditConfig')->willReturn(true);
-        $result = $this->currentMock->filterProcessLayout([]);
+        $store = $this->objectManager->get(\Magento\Store\Model\StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
+        $configData = [
+            [
+                'path' => Config::XML_PATH_STORE_CREDIT,
+                'value' => true,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $this->customerBalance->filterProcessLayout([]);
         static::assertEquals(
             [
                 'component' => 'Magento_CustomerBalance/js/view/payment/customer-balance'
