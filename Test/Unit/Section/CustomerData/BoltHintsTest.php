@@ -22,8 +22,17 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Section\CustomerData\BoltHints;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
 
+/**
+ * Class BoltHintsTest
+ * @coversDefaultClass \Bolt\Boltpay\Section\CustomerData\BoltHints
+ * @package Bolt\Boltpay\Test\Unit\Section\CustomerData
+ */
 class BoltHintsTest extends BoltTestCase
 {
     /**
@@ -31,54 +40,58 @@ class BoltHintsTest extends BoltTestCase
      */
     private $cartHelper;
 
-    /**
-     * @var ConfigHelper
-     */
-    private $configHelper;
+    private $objectManager;
 
     /**
      * @var BoltHints
      */
     private $boltHints;
 
+    private $storeId;
+
     /**
      * @inheritdoc
      */
     public function setUpInternal()
     {
-        $this->cartHelper = $this->createMock(CartHelper::class);
-        $this->configHelper = $this->createMock(ConfigHelper::class);
-
-        $this->boltHints = (new ObjectManager($this))->getObject(
-            BoltHints::class,
-            [
-                'cartHelper'   => $this->cartHelper,
-                'configHelper' => $this->configHelper,
-            ]
-        );
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->boltHints = $this->objectManager->create(BoltHints::class);
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $this->storeId = $store->getStore()->getId();
+        $this->cartHelper = $this->createPartialMock(CartHelper::class, ['getHints']);
     }
 
     /**
      * @test
+     * @covers ::getSectionData
      */
     public function getSectionData_returnEmptyIfPPCdisabled()
     {
-        $this->configHelper->expects($this->once())->method('getProductPageCheckoutFlag')->willReturn(false);
-        $this->cartHelper->expects($this->never())->method('getHints');
-
         $result = $this->boltHints->getSectionData();
-
         $this->assertEquals($result, []);
     }
 
     /**
      * @test
+     * @covers ::getSectionData
      */
     public function getSectionData_returnHints()
     {
-        $this->configHelper->expects($this->once())->method('getProductPageCheckoutFlag')->willReturn(true);
         $this->cartHelper->expects($this->once())->method('getHints')->with(null, 'product')->willReturn('testHints');
 
+        $configData = [
+            [
+                'path' => ConfigHelper::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+                'value' => true,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        TestHelper::setProperty($this->boltHints, 'cartHelper', $this->cartHelper);
         $result = $this->boltHints->getSectionData();
 
         $this->assertEquals($result, ['data' => 'testHints']);
