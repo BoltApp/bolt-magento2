@@ -27,11 +27,10 @@ if ($block->shouldDisableBoltCheckout()) {
 <script>console.log("Bolt M2 Version: <?= /* @noEscape */ $block->getModuleVersion()?>");</script>
 <?php
 $checkoutKey = $block->getCheckoutKey();
-$isLoadTrackJsOnlyBoltPages = $block->isLoadTrackJsOnBoltPagesOnly();
 $isLoadConnectJs = $block->isLoadConnectJs();
 $isLoadBoltJs = $block->isOnPageFromWhiteList() || $block->isMinicartEnabled() || $block->isBoltProductPage();
 $isDisableTrackJs = ($block->isDisableTrackJsOnHomePage() && $block->isOnHomePage())
-                    || ($block->isLoadTrackJsOnBoltPagesOnly() && (!$isLoadBoltJs || !$isLoadConnectJs));
+                    || ($block->isDisableTrackJsFromNonBoltPage() && (!$isLoadBoltJs || !$isLoadConnectJs));
 
 if (!$isDisableTrackJs) {
     $trackJsUrl = $block->getTrackJsUrl();

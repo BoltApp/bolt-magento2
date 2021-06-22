@@ -500,7 +500,7 @@ class Js extends Template
      * If feature switch M2_DISABLE_TRACK_ON_NON_BOLT_PAGES is enabled,
      * then the Bolt track.js would be loaded only on pages where we have Bolt connect.js.
      */
-    public function isLoadTrackJsOnBoltPagesOnly()
+    public function isDisableTrackJsFromNonBoltPage()
     {
         if ($this->featureSwitches->isDisableTrackJsFromNonBoltPage()) {
             return true;
