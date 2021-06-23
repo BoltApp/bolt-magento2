@@ -49,18 +49,12 @@ class GetProductTest extends BoltTestCase
             'getConfigurableProductOptions',
             [$productRepository->getById($configurableProductId)]
         );
-        static::assertCount(2, $result);
+        static::assertCount(1, $result);
 
         $color = array_shift($result);
-        $size = array_shift($result);
 
         static::assertEquals('color', $color['code']);
-        static::assertEquals('size', $size['code']);
-
         static::assertEquals('Color', $color['label']);
-        static::assertEquals('Size', $size['label']);
-        
         static::assertCount(1, $color['options']);
-        static::assertCount(1, $size['options']);
     }
 }

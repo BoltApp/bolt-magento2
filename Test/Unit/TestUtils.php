@@ -319,12 +319,10 @@ class TestUtils
         $objectManager = Bootstrap::getObjectManager();
         $configurableProduct = $objectManager->create('\Magento\Catalog\Model\Product');
         
-        $attributes = ['color', 'size'];
         $group = 'product details';
         $groupId =  $objectManager->get(\Magento\Catalog\Model\Config::class)->getAttributeGroupId(4, $group);
         $attributeManagement = $objectManager->get(\Magento\Eav\Api\AttributeManagementInterface::class);
         $attributeManagement->assign('catalog_product', 4, $groupId, 'color', 500);
-        $attributeManagement->assign('catalog_product', 4, $groupId, 'size', 500);
 
         $configurableProduct->setSku(md5(uniqid(rand(), true)))
             ->setName('Test Configurable Product')
@@ -337,12 +335,10 @@ class TestUtils
             ->setStockData(['use_config_manage_stock' => 0, 'manage_stock' => 1, 'is_in_stock' => 1,])
             ->setUrlKey(md5(uniqid(rand(), true)));
 
-        /** @var \Magento\Catalog\Model\ResourceModel\Eav\Attribute $sizeAttr */
-        $sizeAttr = $configurableProduct->getResource()->getAttribute('size');
         /** @var \Magento\Catalog\Model\ResourceModel\Eav\Attribute $colorAttr */
         $colorAttr = $configurableProduct->getResource()->getAttribute('color');
         $configurableProduct->getTypeInstance()->setUsedProductAttributeIds(
-            array($colorAttr->getId(), $sizeAttr->getId()),
+            array($colorAttr->getId()),
             $configurableProduct
         );
 
@@ -357,7 +353,7 @@ class TestUtils
         $configurableProductId = $configurableProduct->getId();
         $associatedProductIds = [
             self::createSimpleProduct(
-                ['size' => $sizeAttr->getOptions()[1]->getValue(), 'color' => $colorAttr->getOptions()[1]->getValue()]
+                ['color' => $colorAttr->getOptions()[1]->getValue()]
             )->getId()
         ];
 
