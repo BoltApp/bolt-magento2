@@ -1,28 +1,21 @@
 <?php
 namespace Bolt\Boltpay\Test\Unit;
 
-use Magento\Config\Model\ResourceModel\Config;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Type as ProductType;
-
+use Magento\Config\Model\ResourceModel\Config;
+use Magento\Framework\App\Config\MutableScopeConfigInterface;
+use Magento\Framework\Session\SessionManagerInterface;
+use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Model\Quote;
+use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Model\Order;
+use Magento\Sales\Model\Order\Address as OrderAddress;
+use Magento\Sales\Model\Order\Item as OrderItem;
+use Magento\Sales\Model\Order\Payment;
+use Magento\Store\Model\StoreManagerInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 
-use Magento\Quote\Model\Quote;
-use Magento\Quote\Api\CartRepositoryInterface;
-use Magento\Sales\Model\Order\Item as OrderItem;
-use Magento\Sales\Model\Order\Address as OrderAddress;
-use Magento\Sales\Model\Order;
-use Magento\Sales\Model\Order\Payment;
-use Magento\Store\Model\ScopeInterface;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\Sales\Api\OrderRepositoryInterface;
-
-
-
-
-use Magento\Framework\App\Config\MutableScopeConfigInterface;
-use Magento\Framework\Encryption\EncryptorInterface;
-use Magento\Framework\Session\SessionManagerInterface;
 
 class TestUtils
 {
@@ -199,6 +192,28 @@ class TestUtils
         return $order;
     }
 
+    /**
+     * Returns test configurable product, creates it if not exisiting already
+     * 
+     * @return Product
+     */
+    public static function getConfigurableProduct()
+    {
+        $objectManager = Bootstrap::getObjectManager();
+        $productCollection = $objectManager->create(\Magento\Catalog\Model\ResourceModel\Product\Collection::class);
+
+        if ($productCollection->getSize() > 0) {
+            /** @var \Magento\Catalog\Model\ResourceModel\Product\Collection $productCollection */
+            foreach ($productCollection as $product) {
+                if ($product->getTypeId() === \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE) {
+                    return Bootstrap::getObjectManager()->create(Product::class)->load($product->getId());
+                }
+            }
+        }
+
+        return self::createConfigurableProduct();
+    }
+
     public static function getSimpleProduct()
     {
         $objectManager = Bootstrap::getObjectManager();
@@ -237,10 +252,14 @@ class TestUtils
     }
 
     /**
+     * @param array $additionalData to be assigned to the product
+     *
      * @return mixed
+     * @throws \Exception i unable to save the product
      */
-    public static function createSimpleProduct()
+    public static function createSimpleProduct($additionalData = [])
     {
+        /** @var Product $product */
         $product = Bootstrap::getObjectManager()->create(Product::class);
         $product->setTypeId(ProductType::TYPE_SIMPLE)
             ->setAttributeSetId(4)
@@ -252,12 +271,14 @@ class TestUtils
             ->setMetaTitle('meta title')
             ->setMetaKeyword('meta keyword')
             ->setMetaDescription('meta description')
+            ->setUrlKey(md5(uniqid(rand(), true)))
             ->setVisibility(\Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH)
             ->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED)
             ->setCategoryIds([2])
             ->setStockData(['use_config_manage_stock' => 0])
             ->setCanSaveCustomOptions(true)
             ->setHasOptions(true);
+        $product->addData($additionalData);
         $product->save();
         return $product;
     }
@@ -286,6 +307,66 @@ class TestUtils
             ->setHasOptions(true);
         $product->save();
         return $product;
+    }
+
+    /**
+     * Creates new Configurable product with one assigned child simple product
+     *
+     * @return Product
+     */
+    public static function createConfigurableProduct()
+    {
+        $objectManager = Bootstrap::getObjectManager();
+        $configurableProduct = $objectManager->create('\Magento\Catalog\Model\Product');
+        
+        $attributes = ['color', 'size'];
+        $group = 'product details';
+        $groupId =  $objectManager->get(\Magento\Catalog\Model\Config::class)->getAttributeGroupId(4, $group);
+        $attributeManagement = $objectManager->get(\Magento\Eav\Api\AttributeManagementInterface::class);
+        $attributeManagement->assign('catalog_product', 4, $groupId, 'color', 500);
+        $attributeManagement->assign('catalog_product', 4, $groupId, 'size', 500);
+
+        $configurableProduct->setSku(md5(uniqid(rand(), true)))
+            ->setName('Test Configurable Product')
+            ->setAttributeSetId(4)
+            ->setStatus(1)
+            ->setTypeId('configurable')
+            ->setPrice(0)
+            ->setWebsiteIds(array(1))
+            ->setCategoryIds(array(2))
+            ->setStockData(['use_config_manage_stock' => 0, 'manage_stock' => 1, 'is_in_stock' => 1,])
+            ->setUrlKey(md5(uniqid(rand(), true)));
+
+        /** @var \Magento\Catalog\Model\ResourceModel\Eav\Attribute $sizeAttr */
+        $sizeAttr = $configurableProduct->getResource()->getAttribute('size');
+        /** @var \Magento\Catalog\Model\ResourceModel\Eav\Attribute $colorAttr */
+        $colorAttr = $configurableProduct->getResource()->getAttribute('color');
+        $configurableProduct->getTypeInstance()->setUsedProductAttributeIds(
+            array($colorAttr->getId(), $sizeAttr->getId()),
+            $configurableProduct
+        );
+
+        $configurableAttributesData = $configurableProduct->getTypeInstance()
+            ->getConfigurableAttributesAsArray($configurableProduct);
+        $configurableProduct->setCanSaveConfigurableAttributes(true);
+        $configurableProduct->setConfigurableAttributesData($configurableAttributesData);
+        $configurableProduct->setConfigurableProductsData([]);
+
+        $configurableProduct->save();
+
+        $configurableProductId = $configurableProduct->getId();
+        $associatedProductIds = [
+            self::createSimpleProduct(
+                ['size' => $sizeAttr->getOptions()[1]->getValue(), 'color' => $colorAttr->getOptions()[1]->getValue()]
+            )->getId()
+        ];
+
+        $configurableProduct = $objectManager->create('Magento\Catalog\Model\Product')->load($configurableProductId);
+        $configurableProduct->setAssociatedProductIds($associatedProductIds);
+        $configurableProduct->setCanSaveConfigurableAttributes(true);
+        $configurableProduct->save();
+
+        return $configurableProduct;
     }
 
     public static function setSecureAreaIfNeeded()

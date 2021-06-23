@@ -23,18 +23,15 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Model\Api\Data\ProductInventoryInfo;
 use Exception;
-use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\CatalogInventory\Api\Data\StockItemInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
-use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Webapi\Exception as WebapiException;
-use Magento\Framework\Webapi\Rest\Response;
-use Magento\Store\Model\StoreManagerInterface;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\CatalogInventory\Api\StockConfigurationInterface;
 use Magento\CatalogInventory\Model\Spi\StockRegistryProviderInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
-use Magento\CatalogInventory\Api\StockConfigurationInterface;
 use Magento\Eav\Model\Config;
-
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Webapi\Exception as WebapiException;
+use Magento\Store\Model\StoreManagerInterface;
 
 
 class GetProduct implements GetProductInterface
@@ -96,6 +93,21 @@ class GetProduct implements GetProductInterface
     private $eavConfig;
 
     /**
+     * @var \Magento\ConfigurableProduct\Helper\Data
+     */
+    private $configurableProductHelper;
+
+    /**
+     * @var \Magento\ConfigurableProduct\Model\ConfigurableAttributeData
+     */
+    private $configurableProductConfigurableAttributeDataModel;
+
+    /**
+     * @var \Magento\Catalog\Helper\Product
+     */
+    private $productHelper;
+
+    /**
      * @param ProductRepositoryInterface $productRepositoryInterface
      * @param StockRegistryProviderInterface $stockRegistry
      * @param StockConfigurationInterface $stockConfiguration
@@ -115,7 +127,10 @@ class GetProduct implements GetProductInterface
         Configurable          $configurable,
         Config $eavConfig,
         HookHelper $hookHelper,
-        Bugsnag $bugsnag
+        Bugsnag $bugsnag,
+        \Magento\Catalog\Helper\Product $productHelper,
+        \Magento\ConfigurableProduct\Helper\Data $configurableProductHelper,
+        \Magento\ConfigurableProduct\Model\ConfigurableAttributeData $configurableProductConfigurableAttributeDataModel
     ) {
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockRegistry = $stockRegistry;
@@ -126,6 +141,9 @@ class GetProduct implements GetProductInterface
         $this->bugsnag = $bugsnag;
         $this->configurable = $configurable;
         $this->eavConfig = $eavConfig;
+        $this->productHelper = $productHelper;
+        $this->configurableProductHelper = $configurableProductHelper;
+        $this->configurableProductConfigurableAttributeDataModel = $configurableProductConfigurableAttributeDataModel;
     }
 
     private function getStockStatus($product){
@@ -171,15 +189,14 @@ class GetProduct implements GetProductInterface
                 $childProductInventory = new ProductInventoryInfo();
                 $childProductInventory->setProduct($child);
                 $childProductInventory->setStock($this->getStockStatus($child));
+                if ($child->getTypeId() == Configurable::TYPE_CODE) {
+                    $childProductInventory->setOptions($this->getConfigurableProductOptions($child));
+                }
                 array_push($childrenStockArray, $childProductInventory);
             }
             $this->productData->setChildren($childrenStockArray);
 
             $attributes = $parentProduct->getTypeInstance()->getConfigurableOptions($parentProduct);
-
-            if ($parentProduct->getTypeId() == Configurable::TYPE_CODE) {
-                $this->collectConfigurableProductOptions($parentProduct);
-            }
         } elseif ($product->getTypeId() == Configurable::TYPE_CODE) {
             $children = $product->getTypeInstance()->getUsedProducts($product);
             $childrenStockArray = array();
@@ -191,7 +208,7 @@ class GetProduct implements GetProductInterface
             }
             $this->productData->setChildren($childrenStockArray);
 
-            $this->collectConfigurableProductOptions($product);
+            $this->productData->getProductInventory()->setOptions($this->getConfigurableProductOptions($product));
         }
     }
 
@@ -238,24 +255,44 @@ class GetProduct implements GetProductInterface
      *
      * @param ProductInterface $product for which to collect configurable options
      *
-     * @return void
+     * @return array
      */
-    protected function collectConfigurableProductOptions(ProductInterface $product)
+    protected function getConfigurableProductOptions(ProductInterface $product)
     {
-        foreach ($product->getTypeInstance()->getConfigurableOptions($product) as $attribute) {
-            $i = 0;
-            foreach ($attribute as $option) {
-                $existingOptions = $this->productData->getOptions() ?: [];
-                $optionId = $option['value_index'];
-                if (!in_array($optionId, array_column($existingOptions, 'value'))) {
-                    $existingOptions[] = [
-                        'value' => $optionId,
-                        'label' => $option['option_title'] ?: $option['default_title'],
-                        'position' => $i++
-                    ];
-                    $this->productData->setOptions($existingOptions);
-                }
+        $allowProducts = [];
+        foreach ($product->getTypeInstance()->getUsedProducts($product, null) as $usedProduct) {
+            if ($usedProduct->isSaleable() || $this->productHelper->getSkipSaleableCheck()) {
+                $allowProducts[] = $usedProduct;
             }
         }
+        $config = $this->configurableProductHelper->getOptions($product, $allowProducts);
+        $attributes = [];
+        foreach ($product->getTypeInstance()->getConfigurableAttributes($product) as $attribute) {
+            $attributeOptionsData = [];
+            $position = 0;
+            foreach ($attribute->getOptions() as $attributeOption) {
+                $optionId = $attributeOption['value_index'];
+                $attributeOptionsData[] = [
+                    'id'       => $optionId,
+                    'label'    => $attributeOption['label'],
+                    'position' => $position++,
+                    'products' => isset($config[$attribute->getAttributeId()][$optionId])
+                        ? $config[$attribute->getAttributeId()][$optionId]
+                        : [],
+                ];
+            }
+            if ($attributeOptionsData) {
+                $productAttribute = $attribute->getProductAttribute();
+                $attributeId = $productAttribute->getId();
+                $attributes[$attributeId] = [
+                    'id'       => $attributeId,
+                    'code'     => $productAttribute->getAttributeCode(),
+                    'label'    => $productAttribute->getStoreLabel($product->getStoreId()),
+                    'options'  => $attributeOptionsData,
+                    'position' => $attribute->getPosition(),
+                ];
+            }
+        }
+        return $attributes;
     }
 }
