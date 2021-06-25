@@ -271,6 +271,9 @@ class GetProduct implements GetProductInterface
             $attributeOptionsData = [];
             $position = 0;
             foreach ($attribute->getOptions() as $attributeOption) {
+                if (!$attributeOption['label']) {
+                    continue;
+                }
                 $optionId = $attributeOption['value_index'];
                 $attributeOptionsData[] = [
                     'id'       => $optionId,
