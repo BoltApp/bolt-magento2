@@ -317,12 +317,12 @@ class Decider extends AbstractHelper
         return $this->isSwitchEnabled(Definitions::M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE);
     }
     
-    public function isDisableTrackJsFromHomePage()
+    public function isDisableTrackJsOnHomePage()
     {
         return $this->isSwitchEnabled(Definitions::M2_DISABLE_TRACK_ON_HOME_PAGE);
     }
     
-    public function isDisableTrackJsFromNonBoltPage()
+    public function isDisableTrackJsOnNonBoltPages()
     {
         return $this->isSwitchEnabled(Definitions::M2_DISABLE_TRACK_ON_NON_BOLT_PAGES);
     }

@@ -489,7 +489,7 @@ class Js extends Template
      */
     public function isDisableTrackJsOnHomePage()
     {
-        if ($this->featureSwitches->isDisableTrackJsFromHomePage()) {
+        if ($this->featureSwitches->isDisableTrackJsOnHomePage()) {
             return true;
         }
         
@@ -500,9 +500,9 @@ class Js extends Template
      * If feature switch M2_DISABLE_TRACK_ON_NON_BOLT_PAGES is enabled,
      * then the Bolt track.js would be loaded only on pages where we have Bolt connect.js.
      */
-    public function isDisableTrackJsFromNonBoltPage()
+    public function isDisableTrackJsOnNonBoltPages()
     {
-        if ($this->featureSwitches->isDisableTrackJsFromNonBoltPage()) {
+        if ($this->featureSwitches->isDisableTrackJsOnNonBoltPages()) {
             return true;
         }
         

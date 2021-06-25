@@ -30,7 +30,7 @@ $checkoutKey = $block->getCheckoutKey();
 $isLoadConnectJs = $block->isLoadConnectJs();
 $isLoadBoltJs = $block->isOnPageFromWhiteList() || $block->isMinicartEnabled() || $block->isBoltProductPage();
 $isDisableTrackJs = ($block->isDisableTrackJsOnHomePage() && $block->isOnHomePage())
-                    || ($block->isDisableTrackJsFromNonBoltPage() && (!$isLoadBoltJs || !$isLoadConnectJs));
+                    || ($block->isDisableTrackJsOnNonBoltPages() && (!$isLoadBoltJs || !$isLoadConnectJs));
 
 if (!$isDisableTrackJs) {
     $trackJsUrl = $block->getTrackJsUrl();

@@ -33,7 +33,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 
 $connectJsUrl = $block->getConnectJsUrl();
 $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
-$isLoadTrackJsDynamic = $block->isDisableTrackJsFromNonBoltPage() && $isLoadConnectJsDynamic;
+$isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConnectJsDynamic;
 ?>
 
 <script type="text/javascript">

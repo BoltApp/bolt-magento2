@@ -2452,14 +2452,14 @@ function(arg) {
      *
      * @dataProvider isDisableTrackJsOnHomePage_withVariousConfigsProvider
      *
-     * @param bool $isDisableTrackJsFromHomePage
+     * @param bool $isDisableTrackJsOnHomePage
      * @param bool $expectedResult
      */
-    public function isDisableTrackJsOnHomePage_withVariousConfigs_returnsCorrectResult($isDisableTrackJsFromHomePage, $expectedResult)
+    public function isDisableTrackJsOnHomePage_withVariousConfigs_returnsCorrectResult($isDisableTrackJsOnHomePage, $expectedResult)
     {
         $this->deciderMock->expects(static::once())
-            ->method('isDisableTrackJsFromHomePage')
-            ->willReturn($isDisableTrackJsFromHomePage);
+            ->method('isDisableTrackJsOnHomePage')
+            ->willReturn($isDisableTrackJsOnHomePage);
         static::assertEquals($expectedResult, $this->currentMock->isDisableTrackJsOnHomePage());
     }
     
@@ -2474,11 +2474,11 @@ function(arg) {
     {
         return [
             [
-                'isDisableTrackJsFromHomePage' => true,
+                'isDisableTrackJsOnHomePage' => true,
                 'expectedResult'               => true
             ],
             [
-                'isDisableTrackJsFromHomePage' => false,
+                'isDisableTrackJsOnHomePage' => false,
                 'expectedResult'               => false
             ],
         ];
@@ -2487,35 +2487,35 @@ function(arg) {
     /**
      * @test
      *
-     * @dataProvider isDisableTrackJsFromNonBoltPage_withVariousConfigsProvider
+     * @dataProvider isDisableTrackJsOnNonBoltPages_withVariousConfigsProvider
      *
-     * @param bool $isDisableTrackJsFromNonBoltPage
+     * @param bool $isDisableTrackJsOnNonBoltPages
      * @param bool $expectedResult
      */
-    public function isDisableTrackJsFromNonBoltPage_withVariousConfigs_returnsCorrectResult($isDisableTrackJsFromNonBoltPage, $expectedResult)
+    public function isDisableTrackJsOnNonBoltPages_withVariousConfigs_returnsCorrectResult($isDisableTrackJsOnNonBoltPages, $expectedResult)
     {
         $this->deciderMock->expects(static::once())
-            ->method('isDisableTrackJsFromNonBoltPage')
-            ->willReturn($isDisableTrackJsFromNonBoltPage);
-        static::assertEquals($expectedResult, $this->currentMock->isDisableTrackJsFromNonBoltPage());
+            ->method('isDisableTrackJsOnNonBoltPages')
+            ->willReturn($isDisableTrackJsOnNonBoltPages);
+        static::assertEquals($expectedResult, $this->currentMock->isDisableTrackJsOnNonBoltPages());
     }
     
     /**
      * Data provider for
      *
-     * @see isDisableTrackJsFromNonBoltPage_withVariousConfigs_returnsCorrectResult
+     * @see isDisableTrackJsOnNonBoltPages_withVariousConfigs_returnsCorrectResult
      *
      * @return array
      */
-    public function isDisableTrackJsFromNonBoltPage_withVariousConfigsProvider()
+    public function isDisableTrackJsOnNonBoltPages_withVariousConfigsProvider()
     {
         return [
             [
-                'isDisableTrackJsFromNonBoltPage' => true,
+                'isDisableTrackJsOnNonBoltPages' => true,
                 'expectedResult'                  => true
             ],
             [
-                'isDisableTrackJsFromNonBoltPage' => false,
+                'isDisableTrackJsOnNonBoltPages' => false,
                 'expectedResult'                  => false
             ],
         ];
