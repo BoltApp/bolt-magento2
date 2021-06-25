@@ -61,7 +61,7 @@ class JsTest extends BoltTestCase
     /**
      * @var int expected number of settings returned by {@see \Bolt\Boltpay\Block\Js::getSettings}
      */
-    const SETTINGS_NUMBER = 26;
+    const SETTINGS_NUMBER = 27;
 
     /**
      * @var int expeced number of tracking callback returned by {@see \Bolt\Boltpay\Block\Js::getTrackCallbacks}
@@ -663,6 +663,7 @@ class JsTest extends BoltTestCase
 
         $message = 'Cannot find following key in the Settings: ';
         static::assertArrayHasKey('connect_url', $array, $message . 'connect_url');
+        static::assertArrayHasKey('track_url', $array, $message . 'track_url');
         static::assertArrayHasKey('publishable_key_payment', $array, $message . 'publishable_key_payment');
         static::assertArrayHasKey('publishable_key_checkout', $array, $message . 'publishable_key_checkout');
         static::assertArrayHasKey('publishable_key_back_office', $array, $message . 'publishable_key_back_office');
@@ -2442,6 +2443,80 @@ function(arg) {
                 'productPageCheckoutFlag'                           => false,
                 'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
                 'expectedResult'                                    => false
+            ],
+        ];
+    }
+    
+    /**
+     * @test
+     *
+     * @dataProvider isDisableTrackJsOnHomePage_withVariousConfigsProvider
+     *
+     * @param bool $isDisableTrackJsOnHomePage
+     * @param bool $expectedResult
+     */
+    public function isDisableTrackJsOnHomePage_withVariousConfigs_returnsCorrectResult($isDisableTrackJsOnHomePage, $expectedResult)
+    {
+        $this->deciderMock->expects(static::once())
+            ->method('isDisableTrackJsOnHomePage')
+            ->willReturn($isDisableTrackJsOnHomePage);
+        static::assertEquals($expectedResult, $this->currentMock->isDisableTrackJsOnHomePage());
+    }
+    
+    /**
+     * Data provider for
+     *
+     * @see isDisableTrackJsOnHomePage_withVariousConfigs_returnsCorrectResult
+     *
+     * @return array
+     */
+    public function isDisableTrackJsOnHomePage_withVariousConfigsProvider()
+    {
+        return [
+            [
+                'isDisableTrackJsOnHomePage' => true,
+                'expectedResult'               => true
+            ],
+            [
+                'isDisableTrackJsOnHomePage' => false,
+                'expectedResult'               => false
+            ],
+        ];
+    }
+    
+    /**
+     * @test
+     *
+     * @dataProvider isDisableTrackJsOnNonBoltPages_withVariousConfigsProvider
+     *
+     * @param bool $isDisableTrackJsOnNonBoltPages
+     * @param bool $expectedResult
+     */
+    public function isDisableTrackJsOnNonBoltPages_withVariousConfigs_returnsCorrectResult($isDisableTrackJsOnNonBoltPages, $expectedResult)
+    {
+        $this->deciderMock->expects(static::once())
+            ->method('isDisableTrackJsOnNonBoltPages')
+            ->willReturn($isDisableTrackJsOnNonBoltPages);
+        static::assertEquals($expectedResult, $this->currentMock->isDisableTrackJsOnNonBoltPages());
+    }
+    
+    /**
+     * Data provider for
+     *
+     * @see isDisableTrackJsOnNonBoltPages_withVariousConfigs_returnsCorrectResult
+     *
+     * @return array
+     */
+    public function isDisableTrackJsOnNonBoltPages_withVariousConfigsProvider()
+    {
+        return [
+            [
+                'isDisableTrackJsOnNonBoltPages' => true,
+                'expectedResult'                  => true
+            ],
+            [
+                'isDisableTrackJsOnNonBoltPages' => false,
+                'expectedResult'                  => false
             ],
         ];
     }

@@ -284,6 +284,7 @@ class Js extends Template
     {
         return json_encode([
             'connect_url'                           => $this->getConnectJsUrl(),
+            'track_url'                             => $this->getTrackJsUrl(),
             'publishable_key_payment'               => $this->configHelper->getPublishableKeyPayment(),
             'publishable_key_checkout'              => $this->configHelper->getPublishableKeyCheckout(),
             'publishable_key_back_office'           => $this->configHelper->getPublishableKeyBackOffice(),
@@ -440,6 +441,14 @@ class Js extends Template
     }
     
     /**
+     * Return true if customer is on home page
+     */
+    public function isOnHomePage()
+    {
+        return $this->getRequest()->getFullActionName() == Config::HOME_PAGE_ACTION;
+    }
+    
+    /**
      * If feature switch M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE is enabled,
      * then we only fetch Bolt connect js on page load for the product page (PPC is enabled) and cart page.
      */
@@ -469,6 +478,32 @@ class Js extends Template
             if ($this->isMinicartEnabled() && !$this->isBoltPPCEnabled() && $this->isOnProductPage()) {
                 return true;
             }
+        }
+        
+        return false;
+    }
+    
+    /**
+     * If feature switch M2_DISABLE_TRACK_ON_HOME_PAGE is enabled,
+     * then the Bolt track.js should be disabled on the home page.
+     */
+    public function isDisableTrackJsOnHomePage()
+    {
+        if ($this->featureSwitches->isDisableTrackJsOnHomePage()) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * If feature switch M2_DISABLE_TRACK_ON_NON_BOLT_PAGES is enabled,
+     * then the Bolt track.js would be loaded only on pages where we have Bolt connect.js.
+     */
+    public function isDisableTrackJsOnNonBoltPages()
+    {
+        if ($this->featureSwitches->isDisableTrackJsOnNonBoltPages()) {
+            return true;
         }
         
         return false;

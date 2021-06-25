@@ -171,6 +171,16 @@ class Definitions
      * Enable connect.js on cart page or product page (if PPC enabled) only
      */
     const M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE = 'M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE';
+    
+    /**
+     * Remove track.js from home page of the site
+     */
+    const M2_DISABLE_TRACK_ON_HOME_PAGE = 'M2_DISABLE_TRACK_ON_HOME_PAGE';
+    
+    /**
+     * Include track.js only on pages where we have connect.js
+     */
+    const M2_DISABLE_TRACK_ON_NON_BOLT_PAGES = 'M2_DISABLE_TRACK_ON_NON_BOLT_PAGES';
 
     /**
      * Enable always return error if there is any exception when running filter.
@@ -378,6 +388,18 @@ class Definitions
         ],
         self::M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE => [
             self::NAME_KEY        => self::M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_DISABLE_TRACK_ON_HOME_PAGE => [
+            self::NAME_KEY        => self::M2_DISABLE_TRACK_ON_HOME_PAGE,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_DISABLE_TRACK_ON_NON_BOLT_PAGES => [
+            self::NAME_KEY        => self::M2_DISABLE_TRACK_ON_NON_BOLT_PAGES,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
