@@ -1320,7 +1320,14 @@ class Cart extends AbstractHelper
         $properties = [];
         foreach ($additionalAttributes as $attributeName) {
             if ($product->getData($attributeName)) {
-                $attributeValue = (string) $product->getAttributeText($attributeName);
+                $attributeValue = (string) $this->eventsForThirdPartyModules->runFilter(
+                    'filterCartItemsAdditionalAttributeValue',
+                    $product->getAttributeText($attributeName),
+                    $sku,
+                    $storeId,
+                    $attributeName,
+                    $product
+                );
                 $properties[]   = (object)[
                     'name'  => $attributeName,
                     'value' => $attributeValue,
@@ -1537,7 +1544,7 @@ class Cart extends AbstractHelper
                     }
                 }
 
-                foreach ($this->getAdditionalAttributes($item->getSku(), $storeId, $additionalAttributes) as $attribute) {
+                foreach ($this->getAdditionalAttributes($itemSku, $storeId, $additionalAttributes) as $attribute) {
                     $properties[] = $attribute;
                 }
 

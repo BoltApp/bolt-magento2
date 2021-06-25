@@ -47,6 +47,7 @@ use Bolt\Boltpay\ThirdPartyModules\SomethingDigital\InStorePickupBoltIntegration
 use Bolt\Boltpay\ThirdPartyModules\Route\Route as Route_Route;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMedia_TmwGiftCard;
+use Bolt\Boltpay\ThirdPartyModules\Amasty\Preorder as Amasty_Preorder;
 use Exception;
 
 class EventsForThirdPartyModules
@@ -1020,6 +1021,15 @@ class EventsForThirdPartyModules
                     "module" => "Magento_InventoryInStorePickup",
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+            ],
+        ],
+        'filterCartItemsAdditionalAttributeValue' => [
+            'listeners' => [
+                'Amasty_Preorder' => [
+                    'module' => 'Amasty_Preorder',
+                    'sendClasses' => ['Amasty\Preorder\Helper\Data'],
+                    'boltClass' => Amasty_Preorder::class,
                 ],
             ],
         ],
