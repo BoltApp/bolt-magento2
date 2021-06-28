@@ -318,11 +318,20 @@ class TestUtils
     {
         $objectManager = Bootstrap::getObjectManager();
         $configurableProduct = $objectManager->create('\Magento\Catalog\Model\Product');
-        
+
         $group = 'product details';
-        $groupId =  $objectManager->get(\Magento\Catalog\Model\Config::class)->getAttributeGroupId(4, $group);
+        $groupId = $objectManager->get(\Magento\Catalog\Model\Config::class)->getAttributeGroupId(4, $group);
         $attributeManagement = $objectManager->get(\Magento\Eav\Api\AttributeManagementInterface::class);
         $attributeManagement->assign('catalog_product', 4, $groupId, 'color', 500);
+
+        $attributeOptionManagement = $objectManager->get(\Magento\Eav\Api\AttributeOptionManagementInterface::class);
+
+        $option = $objectManager->create(\Magento\Eav\Api\Data\AttributeOptionInterface::class);
+        $option->setLabel('Magenta');
+        $option->setSortOrder(0);
+        $option->setIsDefault(false);
+        $optionId = $attributeOptionManagement->add(\Magento\Catalog\Model\Product::ENTITY, 'color', $option);
+        $optionId = str_replace('id_', '', $optionId);
 
         $configurableProduct->setSku(md5(uniqid(rand(), true)))
             ->setName('Test Configurable Product')
@@ -353,7 +362,7 @@ class TestUtils
         $configurableProductId = $configurableProduct->getId();
         $associatedProductIds = [
             self::createSimpleProduct(
-                ['color' => $colorAttr->getOptions()[1]->getValue()]
+                ['color' => $optionId]
             )->getId()
         ];
 
