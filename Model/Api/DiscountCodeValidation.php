@@ -377,9 +377,9 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         }
 
         $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
-        $description = $address->getDiscountDescription(); # Try coupon description first
+        $description = $address->getDiscountDescription(); // Try coupon description first
 
-        if ($description == '') { # Try store-specific label
+        if ($description == '') { // Try store-specific label
             try {
                 $discountLabels = $rule->getStoreLabels();
             } catch (\Exception $e) {
@@ -390,11 +390,11 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
             }
         }
 
-        if ($description == '') { # Try default label
+        if ($description == '') { // Try default label
             $description = $rule->getDescription();
         }
 
-        $description = $description !== '' ? $description : 'Discount (' . $couponCode . ')'; # coupon code fallback
+        $description = $description !== '' ? $description : 'Discount (' . $couponCode . ')'; // coupon code fallback
 
         return $result = [
             'status'          => 'success',
