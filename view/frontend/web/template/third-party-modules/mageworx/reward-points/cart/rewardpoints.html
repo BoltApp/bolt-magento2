@@ -1,0 +1,33 @@
+<!--
+/**
+ * Copyright © MageWorx. All rights reserved.
+ * See LICENSE.txt for license details.
+ */
+ -->
+<div class="payment-option opc-payment-additional mageworx-rewardpoints" id="mageworx_rewardpoints_placer" data-bind="visible: isAvailable()">
+    <div class="payment-option-title">
+        <span data-bind="i18n: 'Reward points'"></span>
+    </div>
+    <div class="payment-option-content" data-role="content">
+        <!-- ko foreach: getRegion('messages') -->
+        <!-- ko template: getTemplate() --><!-- /ko -->
+        <!--/ko-->
+        <div class="payment-option-inner">
+            <span data-bind="html: $t(label)"></span>
+        </div>
+        <div class="actions-toolbar" id="mageworx-reward-points-buttons-container">
+            <div class="primary">
+                <!-- ko if: isApplied() -->
+                <button class="action action-cancel" type="submit" data-bind="'value': $t('Cancel'), click: cancel">
+                    <span><!-- ko i18n: 'Cancel Reward Points'--><!-- /ko --></span>
+                </button>
+                <!-- /ko -->
+                <!-- ko ifnot: isApplied() -->
+                <button class="action action-apply" data-bind="click: apply">
+                    <span><!-- ko i18n: 'Apply My Reward Points'--><!-- /ko --></span>
+                </button>
+                <!-- /ko -->
+            </div>
+        </div>
+    </div>
+</div>

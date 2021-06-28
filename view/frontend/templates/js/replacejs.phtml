@@ -1583,7 +1583,8 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
                     if (expectCartRendering) {
                         expectCartRendering = false;
                         try {
-                            if ((totals.base_subtotal+totals.base_discount_amount) * 100 == BoltState.boltCart.total_amount.amount) {
+                            if ((totals.base_subtotal+totals.base_discount_amount) * 100 == BoltState.boltCart.total_amount.amount
+                                <?= /* @noEscape */ $block->getAdditionalQuoteTotalsConditions(); ?>) {
                                 return;
                             }
                         } catch(err) {}

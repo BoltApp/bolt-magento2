@@ -621,6 +621,16 @@ function($argName) {
     {
         return $this->eventsForThirdPartyModules->runFilter('getAdditionalInvalidateBoltCartJavascript', null);
     }
+    
+    /**
+     * Get additional conditions to compare the quote totals.
+     *
+     * @return string
+     */
+    public function getAdditionalQuoteTotalsConditions()
+    {
+        return $this->eventsForThirdPartyModules->runFilter('getAdditionalQuoteTotalsConditions', null);
+    }
 
     /**
      * Is customer logged in
