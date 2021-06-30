@@ -481,6 +481,8 @@ class Payment extends AbstractMethod
 
             $order = $payment->getOrder();
 
+            $this->bugsnag->notifyError('Refunding Order '. $order->getIncrementId(), 'Start Refund: '. $order->getIncrementId());
+
             $orderCurrency = $order->getOrderCurrencyCode();
             // $amount argument of refund method is in store currency,
             // we need to get amount from credit memo to get the value in order's currency.
@@ -541,9 +543,10 @@ class Payment extends AbstractMethod
 
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
             $this->metricsClient->processMetric("order_refund.success", 1, "order_refund.latency", $startTime);
-
+            $this->bugsnag->notifyError('Refunding Order '. $order->getIncrementId(),'Finish Refund:' . $order->getIncrementId());
             return $this;
         } catch (\Exception $e) {
+            $this->bugsnag->notifyError('Refunding Order '. $payment->getOrder()->getIncrementId(),'Exception: '. $e->getMessage());
             $this->bugsnag->notifyException($e);
             $this->metricsClient->processMetric("order_refund.failure", 1, "order_refund.latency", $startTime);
             throw $e;
