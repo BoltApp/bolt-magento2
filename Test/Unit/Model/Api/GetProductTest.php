@@ -37,12 +37,21 @@ class GetProductTest extends BoltTestCase
      */
     public function getConfigurableProductOptions_forConfigurableProduct_returnsConfigurableAttributes()
     {
+        $om = Bootstrap::getObjectManager();
+        if (version_compare(
+            $om->get(\Magento\Framework\App\ProductMetadataInterface::class)->getVersion(),
+            '2.3',
+            '<'
+        )) {
+            $this->markTestSkipped('Version no longer supported');
+        }
+        
         $configurableProductId = \Bolt\Boltpay\Test\Unit\TestUtils::getConfigurableProduct()->getId();
         /** @var \Bolt\Boltpay\Model\Api\GetProduct $getProduct */
-        $getProduct = Bootstrap::getObjectManager()->get(\Bolt\Boltpay\Model\Api\GetProduct::class);
+        $getProduct = $om->get(\Bolt\Boltpay\Model\Api\GetProduct::class);
 
         /** @var \Magento\Catalog\Api\ProductRepositoryInterface $productRepository */
-        $productRepository = Bootstrap::getObjectManager()->get(\Magento\Catalog\Api\ProductRepositoryInterface::class);
+        $productRepository = $om->get(\Magento\Catalog\Api\ProductRepositoryInterface::class);
 
         $result = TestHelper::invokeMethod(
             $getProduct,
