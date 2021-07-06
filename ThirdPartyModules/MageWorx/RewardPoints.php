@@ -170,15 +170,11 @@ class RewardPoints
                     ]
                 ]
             ];
-            if ($mageWorxRewardPointsHelper->isAllowedCustomPointsAmount()) {
-                $jsLayout["mageworx-reward-points"]["config"] = [
-                    'template' => 'Bolt_Boltpay/third-party-modules/mageworx/reward-points/cart/rewardpoints_custom_amount'
-                ];
-            } else {
-                $jsLayout["mageworx-reward-points"]["config"] = [
-                    'template' => 'Bolt_Boltpay/third-party-modules/mageworx/reward-points/cart/rewardpoints'
-                ];
-            }
+            $jsLayout["mageworx-reward-points"]["config"] = [
+                "template" => $mageWorxRewardPointsHelper->isAllowedCustomPointsAmount()
+                            ? 'Bolt_Boltpay/third-party-modules/mageworx/reward-points/cart/rewardpoints_custom_amount',
+                            : 'Bolt_Boltpay/third-party-modules/mageworx/reward-points/cart/rewardpoints'
+            ];
         }
 
         return $jsLayout;
