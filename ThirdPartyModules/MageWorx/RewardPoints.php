@@ -172,7 +172,7 @@ class RewardPoints
             ];
             $jsLayout["mageworx-reward-points"]["config"] = [
                 "template" => $mageWorxRewardPointsHelper->isAllowedCustomPointsAmount()
-                            ? 'Bolt_Boltpay/third-party-modules/mageworx/reward-points/cart/rewardpoints_custom_amount',
+                            ? 'Bolt_Boltpay/third-party-modules/mageworx/reward-points/cart/rewardpoints_custom_amount'
                             : 'Bolt_Boltpay/third-party-modules/mageworx/reward-points/cart/rewardpoints'
             ];
         }
