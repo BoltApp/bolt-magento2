@@ -512,6 +512,7 @@ class OrderTest extends BoltTestCase
                 'setRelationChildId',
                 'setRelationChildRealId',
                 'getEntityId',
+                'getInvoiceCollection',
             ]
         );
         $this->orderConfigMock = $this->createPartialMock(
@@ -4618,6 +4619,87 @@ class OrderTest extends BoltTestCase
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         TestHelper::invokeMethod($boltHelperOrder, 'validateCaptureAmount', [$order, 50]);
         TestUtils::cleanupSharedFixtures([$order]);
+    }
+
+    /**
+     * @test
+     * that validateCaptureAmount will throw an exception if the capture amount is invalid and equal to already invoiced
+     *
+     * @covers ::validateCaptureAmount
+     */
+    public function validateCaptureAmount_whenSameAmountWasAlreadyInvoiced_throwsException()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('The same capture amount was already invoiced');
+        $invoiceData = [
+            [
+                'entity_id'                                    => '26',
+                'store_id'                                     => '1',
+                'base_grand_total'                             => '50.0000',
+                'shipping_tax_amount'                          => '0.0000',
+                'tax_amount'                                   => '0.0000',
+                'base_tax_amount'                              => '0.0000',
+                'store_to_order_rate'                          => '0.0000',
+                'base_shipping_tax_amount'                     => '0.0000',
+                'base_discount_amount'                         => '0.0000',
+                'base_to_order_rate'                           => '1.0000',
+                'grand_total'                                  => '50.0000',
+                'shipping_amount'                              => '0.0000',
+                'subtotal_incl_tax'                            => '50.0000',
+                'base_subtotal_incl_tax'                       => '50.0000',
+                'store_to_base_rate'                           => '0.0000',
+                'base_shipping_amount'                         => '0.0000',
+                'total_qty'                                    => '3.0000',
+                'base_to_global_rate'                          => '1.0000',
+                'subtotal'                                     => '50.0000',
+                'base_subtotal'                                => '50.0000',
+                'discount_amount'                              => '0.0000',
+                'billing_address_id'                           => '223',
+                'order_id'                                     => '111',
+                'can_void_flag'                                => '0',
+                'state'                                        => '2',
+                'shipping_address_id'                          => '222',
+                'store_currency_code'                          => 'USD',
+                'order_currency_code'                          => 'USD',
+                'base_currency_code'                           => 'USD',
+                'global_currency_code'                         => 'USD',
+                'increment_id'                                 => '000000024',
+                'created_at'                                   => '2021-07-06 15:21:52',
+                'updated_at'                                   => '2021-07-06 15:21:52',
+                'discount_tax_compensation_amount'             => '0.0000',
+                'base_discount_tax_compensation_amount'        => '0.0000',
+                'shipping_discount_tax_compensation_amount'    => '0.0000',
+                'base_shipping_discount_tax_compensation_amnt' => '0.0000',
+                'shipping_incl_tax'                            => '0.0000',
+            ]
+        ];
+        $this->bugsnag->expects(static::once())->method('registerCallback')->with(
+            static::callback(
+                function ($callback) use ($invoiceData) {
+                    $reportMock = $this->createMock(Report::class);
+                    $reportMock->expects(static::once())->method('addMetaData')
+                        ->with(
+                            [
+                                'Capture amount validation' => [
+                                    'capture amount'                       => 50,
+                                    'previously captured'                  => 5000,
+                                    'total invoiced after current capture' => 10000,
+                                    'grand total'                          => 5000,
+                                    'invoices data'                        => $invoiceData,
+                                ]
+                            ]
+                        );
+                    $callback($reportMock);
+                    return true;
+                }
+            )
+        );
+
+        $this->orderMock->expects(static::once())->method('getGrandTotal')->willReturn(50);
+        $this->orderMock->expects(static::once())->method('getTotalInvoiced')->willReturn(50);
+        $this->orderMock->expects(static::once())->method('getInvoiceCollection')->willReturnSelf();
+        $this->orderMock->expects(static::once())->method('getData')->willReturn($invoiceData);
+        TestHelper::invokeMethod($this->currentMock, 'validateCaptureAmount', [$this->orderMock, 50]);
     }
 
     /**
