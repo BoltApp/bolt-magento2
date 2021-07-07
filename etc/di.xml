@@ -168,12 +168,6 @@
         <plugin name="BoltBoltPayFreeShippingAdminPlugin" type="Bolt\Boltpay\Plugin\MageVision\FreeShippingAdmin\MethodPlugin" sortOrder="1"/>
     </type>
 
-    <type name="Bolt\Boltpay\Helper\FeatureSwitch\Decider">
-        <arguments>
-            <argument name="coreSession" xsi:type="object">Magento\Framework\Session\SessionManagerInterface\Proxy</argument>
-        </arguments>
-    </type>
-
     <type name="Magento\GiftCardAccount\Observer\TogglePaymentMethods">
         <plugin name="BoltTogglePaymentMethodsPlugin"
                 type="Bolt\Boltpay\Plugin\Magento\TogglePaymentMethodsPlugin"
