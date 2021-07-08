@@ -345,7 +345,8 @@ JSON;
             ['isAlwaysPresentCheckoutEnabled', BoltConfig::XML_PATH_ALWAYS_PRESENT_CHECKOUT, false],
             ['isBoltSSOEnabled', BoltConfig::XML_PATH_BOLT_SSO],
             ['isBoltDebugUniversalEnabled', BoltConfig::XML_PATH_DEBUG_UNIVERSAL],
-            ['getUseAheadworksRewardPointsConfig', BoltConfig::XML_PATH_AHEADWORKS_REWARD_POINTS_ON_CART, false]
+            ['getUseAheadworksRewardPointsConfig', BoltConfig::XML_PATH_AHEADWORKS_REWARD_POINTS_ON_CART, false],
+            ['getUseMageWorxRewardPointsConfig', BoltConfig::XML_PATH_MAGEWORX_REWARD_POINTS_ON_CART, false]
         ];
     }
 
