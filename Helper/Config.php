@@ -18,12 +18,14 @@
 
 namespace Bolt\Boltpay\Helper;
 
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Exception;
 use Magento\Directory\Model\RegionFactory;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Composer\ComposerFactory;
 use Magento\Framework\Encryption\EncryptorInterface;
@@ -58,19 +60,40 @@ class Config extends AbstractHelper
     const XML_PATH_SIGNING_SECRET = 'payment/boltpay/signing_secret';
 
     /**
-     * Path for publishable key payment only
+     * Path for encrypted publishable key payment only
+     *
+     * @deprecated
      */
     const XML_PATH_PUBLISHABLE_KEY_PAYMENT = 'payment/boltpay/publishable_key_payment';
 
     /**
-     * Path for publishable key multi-step
+     * Path for encrypted publishable key multi-step
+     *
+     * @deprecated
      */
     const XML_PATH_PUBLISHABLE_KEY_CHECKOUT = 'payment/boltpay/publishable_key_checkout';
 
     /**
-     * Path for publishable key back office
+     * Path for encrypted publishable key back office
+     *
+     * @deprecated
      */
     const XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE = 'payment/boltpay/publishable_key_back_office';
+
+    /**
+     * Path for publishable key payment only
+     */
+    const XML_PATH_PUBLISHABLE_KEY_PAYMENT_PLAIN = 'payment/boltpay/publishable_key_payment_plain';
+
+    /**
+     * Path for publishable key multi-step
+     */
+    const XML_PATH_PUBLISHABLE_KEY_CHECKOUT_PLAIN = 'payment/boltpay/publishable_key_checkout_plain';
+
+    /**
+     * Path for publishable key back office
+     */
+    const XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE_PLAIN = 'payment/boltpay/publishable_key_back_office_plain';
 
     /**
      * Path for Replace Selectors
@@ -406,7 +429,6 @@ class Config extends AbstractHelper
      * Map of human-readable config names to their XML paths
      */
     const CONFIG_SETTING_PATHS = [
-        'publishable_key_checkout'           => self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
         'active'                             => self::XML_PATH_ACTIVE,
         'title'                              => self::XML_PATH_TITLE,
         'api_key'                            => self::XML_PATH_API_KEY,
@@ -510,6 +532,11 @@ class Config extends AbstractHelper
     private $configWriter;
 
     /**
+     * @var Decider
+     */
+    private $featureSwitches;
+
+    /**
      * @param Context                  $context
      * @param EncryptorInterface       $encryptor
      * @param ResourceInterface        $moduleResource
@@ -518,6 +545,7 @@ class Config extends AbstractHelper
      * @param RegionFactory            $regionFactory
      * @param ComposerFactory          $composerFactory
      * @param WriterInterface          $configWriter
+     * @param Decider                  $featureSwitches
      */
     public function __construct(
         Context $context,
@@ -527,7 +555,8 @@ class Config extends AbstractHelper
         BoltConfigSettingFactory $boltConfigSettingFactory,
         RegionFactory $regionFactory,
         ComposerFactory $composerFactory,
-        WriterInterface $configWriter
+        WriterInterface $configWriter,
+        Decider\Proxy $featureSwitches = null
     ) {
         parent::__construct($context);
         $this->encryptor = $encryptor;
@@ -537,6 +566,7 @@ class Config extends AbstractHelper
         $this->regionFactory = $regionFactory;
         $this->composerFactory = $composerFactory;
         $this->configWriter = $configWriter;
+        $this->featureSwitches = $featureSwitches ?? ObjectManager::getInstance()->get(Decider\Proxy::class);
     }
 
     /**
@@ -724,7 +754,13 @@ class Config extends AbstractHelper
      */
     public function getPublishableKeyCheckout($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, $storeId);
+        return $this->featureSwitches->isStorePublishableKeysUnencrypted()
+            ? $this->getScopeConfig()->getValue(
+                self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT_PLAIN,
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            )
+            : $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, $storeId);
     }
 
     /**
@@ -736,7 +772,13 @@ class Config extends AbstractHelper
      */
     public function getPublishableKeyPayment($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_PAYMENT, $storeId);
+        return $this->featureSwitches->isStorePublishableKeysUnencrypted()
+        ? $this->getScopeConfig()->getValue(
+            self::XML_PATH_PUBLISHABLE_KEY_PAYMENT_PLAIN,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        )
+        : $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_PAYMENT, $storeId);
     }
 
     /**
@@ -748,7 +790,13 @@ class Config extends AbstractHelper
      */
     public function getPublishableKeyBackOffice($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE, $storeId);
+        return $this->featureSwitches->isStorePublishableKeysUnencrypted()
+        ? $this->getScopeConfig()->getValue(
+            self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE_PLAIN,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        )
+        : $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE, $storeId);
     }
 
     /**
