@@ -217,6 +217,11 @@ class Definitions
      */
     const M2_IGNORE_TOTAL_VALIDATION_WHEN_CREDIT_HOOK_IS_SENT_TO_MAGENTO = 'M2_IGNORE_TOTAL_VALIDATION_WHEN_CREDIT_HOOK_IS_SENT_TO_MAGENTO';
 
+    /**
+     * Store publishable keys unencrypted
+     */
+    const M2_STORE_PUBLISHABLE_KEYS_UNENCRYPTED = 'M2_STORE_PUBLISHABLE_KEYS_UNENCRYPTED';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -412,6 +417,12 @@ class Definitions
         ],
         self::M2_SHOW_ORDER_COMMENT_IN_ADMIN => [
             self::NAME_KEY        => self::M2_SHOW_ORDER_COMMENT_IN_ADMIN,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_STORE_PUBLISHABLE_KEYS_UNENCRYPTED => [
+            self::NAME_KEY        => self::M2_STORE_PUBLISHABLE_KEYS_UNENCRYPTED,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100

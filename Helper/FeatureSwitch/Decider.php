@@ -382,4 +382,12 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_IGNORE_TOTAL_VALIDATION_WHEN_CREDIT_HOOK_IS_SENT_TO_MAGENTO);
     }
+
+    /**
+     * Checks whether the feature switch for displaying order comment in admin is enabled
+     */
+    public function isStorePublishableKeysUnencrypted()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_STORE_PUBLISHABLE_KEYS_UNENCRYPTED);
+    }
 }

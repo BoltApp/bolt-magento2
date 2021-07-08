@@ -51,18 +51,51 @@
                         <tooltip>Used by Bolt JavaScript to display the Multistep Experience</tooltip>
                         <config_path>payment/boltpay/publishable_key_checkout</config_path>
                         <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                        <attribute type="feature_switch">M2_STORE_PUBLISHABLE_KEYS_UNENCRYPTED</attribute>
+                        <attribute type="feature_switch_value">0</attribute>
+                        <frontend_model>Bolt\Boltpay\Block\Adminhtml\System\Config\Form\FeatureSwitchAwareField</frontend_model>
                     </field>
                     <field id="publishable_key_payment" translate="label" type="obscure" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Publishable Key - Payment Only</label>
                         <tooltip>Used by Bolt JavaScript to display the Payment Only Experience</tooltip>
                         <config_path>payment/boltpay/publishable_key_payment</config_path>
                         <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                        <attribute type="feature_switch">M2_STORE_PUBLISHABLE_KEYS_UNENCRYPTED</attribute>
+                        <attribute type="feature_switch_value">0</attribute>
+                        <frontend_model>Bolt\Boltpay\Block\Adminhtml\System\Config\Form\FeatureSwitchAwareField</frontend_model>
                     </field>
                     <field id="publishable_key_back_office" translate="label" type="obscure" sortOrder="65" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Publishable Key - Back Office</label>
                         <tooltip>Used by Bolt JavaScript to display the Back Office Experience</tooltip>
                         <config_path>payment/boltpay/publishable_key_back_office</config_path>
                         <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                        <attribute type="feature_switch">M2_STORE_PUBLISHABLE_KEYS_UNENCRYPTED</attribute>
+                        <attribute type="feature_switch_value">0</attribute>
+                        <frontend_model>Bolt\Boltpay\Block\Adminhtml\System\Config\Form\FeatureSwitchAwareField</frontend_model>
+                    </field>
+                    <field id="publishable_key_checkout_plain" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Publishable Key - Multi Step</label>
+                        <tooltip>Used by Bolt JavaScript to display the Multistep Experience</tooltip>
+                        <config_path>payment/boltpay/publishable_key_checkout_plain</config_path>
+                        <attribute type="feature_switch">M2_STORE_PUBLISHABLE_KEYS_UNENCRYPTED</attribute>
+                        <attribute type="feature_switch_value">1</attribute>
+                        <frontend_model>Bolt\Boltpay\Block\Adminhtml\System\Config\Form\FeatureSwitchAwareField</frontend_model>
+                    </field>
+                    <field id="publishable_key_payment_plain" translate="label" type="text" sortOrder="75" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Publishable Key - Payment Only</label>
+                        <tooltip>Used by Bolt JavaScript to display the Payment Only Experience</tooltip>
+                        <config_path>payment/boltpay/publishable_key_payment_plain</config_path>
+                        <attribute type="feature_switch">M2_STORE_PUBLISHABLE_KEYS_UNENCRYPTED</attribute>
+                        <attribute type="feature_switch_value">1</attribute>
+                        <frontend_model>Bolt\Boltpay\Block\Adminhtml\System\Config\Form\FeatureSwitchAwareField</frontend_model>
+                    </field>
+                    <field id="publishable_key_back_office_plain" translate="label" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Publishable Key - Back Office</label>
+                        <tooltip>Used by Bolt JavaScript to display the Back Office Experience</tooltip>
+                        <config_path>payment/boltpay/publishable_key_back_office_plain</config_path>
+                        <attribute type="feature_switch">M2_STORE_PUBLISHABLE_KEYS_UNENCRYPTED</attribute>
+                        <attribute type="feature_switch_value">1</attribute>
+                        <frontend_model>Bolt\Boltpay\Block\Adminhtml\System\Config\Form\FeatureSwitchAwareField</frontend_model>
                     </field>
                 </group>
                 <group id="where" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
