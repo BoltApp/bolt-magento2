@@ -42,6 +42,7 @@ use Bolt\Boltpay\ThirdPartyModules\Magecomp\Extrafee as Magecomp_Extrafee;
 use Bolt\Boltpay\ThirdPartyModules\Webkul\Odoomagentoconnect as Webkul_Odoomagentoconnect;
 use Bolt\Boltpay\ThirdPartyModules\BagRiders\StoreCredit as BagRiders_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\Rossignol\Synolia\MultiStock as Rossignol_Synolia_MultiStock;
+use Bolt\Boltpay\ThirdPartyModules\Rossignol\Synolia\Store as Rossignol_Synolia_Store;
 use Bolt\Boltpay\ThirdPartyModules\Rossignol\Project\Rossignol as Rossignol_Project_Rossignol;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
@@ -910,6 +911,11 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup",
                                        "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
                     "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+                'Rossignol_Synolia_Store' => [
+                    'module'      => 'Synolia_Store',
+                    'checkClasses' => ["Synolia\Store\Model\Carrier"],
+                    'boltClass'   => Rossignol_Synolia_Store::class,
                 ],
             ],
         ],
