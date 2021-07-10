@@ -246,16 +246,19 @@
         <plugin name="bolt_boltpay_extension_attributes_persistence_plugin_plugin"
                 type="Bolt\Boltpay\Plugin\ClassyLlama\AvaTax\Plugin\Model\ResourceModel\ExtensionAttributesPersistencePluginPlugin"/>
     </type>
+
     <type name="Magento\Framework\Session\Validator">
         <plugin name="BoltSessionValidator"
                 type="Bolt\Boltpay\Plugin\Magento\Framework\Session\ValidatorPlugin"
                 sortOrder="1"/>
     </type>
+
     <type name="MageWorx\RewardPoints\Controller\Checkout\Apply">
         <plugin name="MageWorxRewardPointsControllerCheckoutApplyPlugin"
                 type="Bolt\Boltpay\Plugin\MageWorx\RewardPoints\Controller\Checkout\ApplyPlugin"
                 sortOrder="1"/>
     </type>
+
     <type name="ImaginationMedia\TmwGiftCard\Observer\ForceInvoice">
         <plugin name="Bolt_Boltpay_ImaginationMedia_TmwGiftCard_ForceInvoicePlugin"
                 type="Bolt\Boltpay\Plugin\ImaginationMedia\TmwGiftCard\ForceInvoicePlugin" sortOrder="1"/>
