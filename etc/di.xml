@@ -241,4 +241,10 @@
         <plugin name="Bolt_Boltpay_Shineretrofits_CustomshippingPlugin"
                 type="Bolt\Boltpay\Plugin\Shineretrofits\ShippingMethod\Model\Carrier\CustomshippingPlugin" sortOrder="1"/>
     </type>
+    
+    <type name="Magento\Framework\Session\Validator">
+        <plugin name="BoltSessionValidator"
+                type="Bolt\Boltpay\Plugin\Magento\Framework\Session\ValidatorPlugin"
+                sortOrder="1"/>
+    </type>
 </config>
