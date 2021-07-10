@@ -46,6 +46,7 @@ use Bolt\Boltpay\ThirdPartyModules\Teamwork\StoreCredit as Teamwork_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\SomethingDigital\InStorePickupBoltIntegration as SomethingDigital_InStorePickupBoltIntegration;
 use Bolt\Boltpay\ThirdPartyModules\Route\Route as Route_Route;
 use Bolt\Boltpay\ThirdPartyModules\Rossignol\Synolia\MultiStock as Rossignol_Synolia_MultiStock;
+use Bolt\Boltpay\ThirdPartyModules\Rossignol\Synolia\Store as Rossignol_Synolia_Store;
 use Bolt\Boltpay\ThirdPartyModules\Rossignol\Project\Rossignol as Rossignol_Project_Rossignol;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMedia_TmwGiftCard;
@@ -1017,6 +1018,11 @@ class EventsForThirdPartyModules
                         "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"
                     ],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
+                ],
+                'Rossignol_Synolia_Store' => [
+                    'module'      => 'Synolia_Store',
+                    'checkClasses' => ["Synolia\Store\Model\Carrier"],
+                    'boltClass'   => Rossignol_Synolia_Store::class,
                 ],
             ],
         ],
