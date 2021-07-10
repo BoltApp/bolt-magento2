@@ -156,7 +156,9 @@ trait BlockTrait
         if (!$this->featureSwitches->isBoltEnabled()) {
             return true;
         }
-        return !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted() || $this->isKeyMissing();
+        $shouldDisableBoltCheckout = !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted() || $this->isKeyMissing();
+        
+        return $this->eventsForThirdPartyModules->runFilter('filterShouldDisableBoltCheckout', $shouldDisableBoltCheckout, $this, $this->checkoutSession->getQuote());
     }
 
     /**

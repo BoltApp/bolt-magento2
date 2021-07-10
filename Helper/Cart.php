@@ -2449,7 +2449,7 @@ class Cart extends AbstractHelper
     {
         $options = json_decode($request['items'][0]['options'], true);
         $storeId = $options['storeId'];
-
+        $this->eventsForThirdPartyModules->dispatchEvent("beforeHandleCreateCartRequest", $request, $storeId);
         // try returning from cache
         if ($isBoltOrderCachingEnabled = $this->isBoltOrderCachingEnabled($storeId)) {
             // $request contains Magento form_id as an item options property.
@@ -2460,10 +2460,8 @@ class Cart extends AbstractHelper
             if ($cart = $this->loadFromCache($cacheIdentifier)) {
                 return $cart;
             }
-        }
-
-        $cart = $this->createCart($request['items'], $request['metadata']);
-
+        }        
+        $cart = $this->eventsForThirdPartyModules->runFilter('filterCartDataForCreateCartRequest', $this->createCart($request['items'], $request['metadata']), $request, $storeId);
         // cache and return
         if ($isBoltOrderCachingEnabled) {
             $this->saveToCache(
@@ -2498,7 +2496,6 @@ class Cart extends AbstractHelper
         //add item to quote
         foreach ($items as $item) {
             $product = $this->productRepository->getById($item['reference']);
-
             $options = json_decode($item['options'], true);
             if (isset($options['storeId']) && $options['storeId']) {
                 $quote->setStoreId($options['storeId']);
@@ -2618,13 +2615,15 @@ class Cart extends AbstractHelper
             }
 
             $hints = $this->getHints($cartReference, 'cart');
-
+            
             $result = [
                 'status'  => 'success',
                 'cart'    => $cart,
                 'hints'   => $hints,
                 'backUrl' => '',
             ];
+          
+            $result = $this->eventsForThirdPartyModules->runFilter('filterCartAndHints', $result, $this->checkoutSession->getQuote());
         } catch (BoltException $e) {
             $result = [
                 'status'   => 'success',

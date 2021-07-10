@@ -155,6 +155,8 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                      * Magento customerData and authenticationPopup objects are
                      * used.
                      */
+                    <?= /* @noEscape */ $block->getAdditionalCheckJavascriptForPPC(); ?>
+                    
                     // check if login is required
                     if ( !customer().firstname && !isGuestCheckoutAllowed) {
                         // if authentication is required for checkout set a cookie

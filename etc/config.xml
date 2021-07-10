@@ -75,6 +75,7 @@ tr.shipping.totals td.amount span.price,
                 <bolt_sso>0</bolt_sso>
                 <universal_debug>1</universal_debug>
                 <aheadworks_reward_points_on_cart>1</aheadworks_reward_points_on_cart>
+                <rossignol_exclude_ppc_attributes></rossignol_exclude_ppc_attributes>
             </boltpay>
         </payment>
     </default>
