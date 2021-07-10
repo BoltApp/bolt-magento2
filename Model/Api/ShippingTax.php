@@ -362,6 +362,7 @@ abstract class ShippingTax
     public function handleRequest($cart = null, $shipping_address = null, $shipping_option = null, $ship_to_store_option = null)
     {
         $cart = $this->eventsForThirdPartyModules->runFilter('filterCartBeforeSplitShippingAndTax', $cart);
+        $this->eventsForThirdPartyModules->dispatchEvent("beforeHandleShippingTaxRequest", $cart, $shipping_address, $shipping_option, $ship_to_store_option);
         // get immutable quote id stored with transaction
         $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($cart);
         // Load immutable quote from entity id

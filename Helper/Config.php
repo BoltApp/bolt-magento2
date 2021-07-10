@@ -365,6 +365,11 @@ class Config extends AbstractHelper
      * Enable Bolt Universal debug requests
      */
     const XML_PATH_DEBUG_UNIVERSAL = 'payment/boltpay/universal_debug';
+    
+    /**
+     * Exclude item groups from product page checkout configuration path
+     */
+    const XML_PATH_ROSSIGNOL_EXCLUDE_ATTRIBUTES_FROM_PPC = 'payment/boltpay/rossignol_exclude_ppc_attributes';
 
     /**
      * Minify JavaScript configuration path
@@ -457,7 +462,8 @@ class Config extends AbstractHelper
         'api_emulate_session'                => self::XML_PATH_API_EMULATE_SESSION,
         'should_minify_javascript'           => self::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
         'capture_merchant_metrics'           => self::XML_PATH_CAPTURE_MERCHANT_METRICS,
-        'track_checkout_funnel'              => self::XML_PATH_TRACK_CHECKOUT_FUNNEL
+        'track_checkout_funnel'              => self::XML_PATH_TRACK_CHECKOUT_FUNNEL,
+        'rossignol_exclude_ppc_attributes'   => self::XML_PATH_ROSSIGNOL_EXCLUDE_ATTRIBUTES_FROM_PPC
     ];
 
     /**
@@ -1525,6 +1531,26 @@ class Config extends AbstractHelper
             $store
         );
     }
+    
+    /**
+     * Get Exclude item groups from product page checkout configuration
+     *
+     * @param int|string|Store $store scope used for retrieving the configuration value
+     *
+     * @return bool Exclude item groups from product page checkout configuration flag
+     */
+    public function getRossignolExcludeItemAttributesFromPPCConfig($store = null)
+    {
+        $attributeSetsList = $this->getScopeConfig()->getValue(
+            self::XML_PATH_ROSSIGNOL_EXCLUDE_ATTRIBUTES_FROM_PPC,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+        if (!$attributeSetsList) {
+            return [];
+        }
+        return explode(',', $attributeSetsList);
+    }
 
     /**
      * Get Payment Only Checkout Enabled configuration
@@ -1886,6 +1912,10 @@ class Config extends AbstractHelper
         // Order comment field
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('order_comment_field')
+            ->setValue(var_export($this->getOrderCommentField(), true));
+        // Order comment field
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+            ->setName('rossignol_exclude_ppc_attributes')
             ->setValue(var_export($this->getOrderCommentField(), true));
 
         return $boltSettings;

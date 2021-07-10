@@ -45,6 +45,8 @@ use Bolt\Boltpay\ThirdPartyModules\Teamwork\Token as Teamwork_Token;
 use Bolt\Boltpay\ThirdPartyModules\Teamwork\StoreCredit as Teamwork_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\SomethingDigital\InStorePickupBoltIntegration as SomethingDigital_InStorePickupBoltIntegration;
 use Bolt\Boltpay\ThirdPartyModules\Route\Route as Route_Route;
+use Bolt\Boltpay\ThirdPartyModules\Rossignol\Synolia\MultiStock as Rossignol_Synolia_MultiStock;
+use Bolt\Boltpay\ThirdPartyModules\Rossignol\Project\Rossignol as Rossignol_Project_Rossignol;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMedia_TmwGiftCard;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Preorder as Amasty_Preorder;
@@ -138,6 +140,11 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["MW\RewardPoints\Helper\Data",
                                       "MW\RewardPoints\Model\CustomerFactory"],
                     "boltClass" => MW_RewardPoints::class,
+                ],
+                'Rossignol_Synolia_MultiStock' => [
+                    'module'      => 'Synolia_MultiStock',
+                    'checkClasses' => ["Synolia\MultiStock\Plugin\Magento\CatalogInventory\ResourceModel\Stock\StatusPlugin"],
+                    'boltClass'   => Rossignol_Synolia_MultiStock::class,
                 ],
             ]
         ],
@@ -413,6 +420,33 @@ class EventsForThirdPartyModules
                     "module" => "MageWorx_ShippingRules",
                     'checkClasses' => ['MageWorx\ShippingRules\Model\Plugin\Shipping\Rate\Result\Append'],
                     "boltClass" => MageWorx_ShippingRules::class,
+                ],
+            ],
+        ],
+        'beforeHandleShippingTaxRequest' => [
+            "listeners" => [
+                'Rossignol_Synolia_MultiStock' => [
+                    'module'      => 'Synolia_MultiStock',
+                    'checkClasses' => ["Synolia\MultiStock\Plugin\Magento\CatalogInventory\ResourceModel\Stock\StatusPlugin"],
+                    'boltClass'   => Rossignol_Synolia_MultiStock::class,
+                ],
+            ],
+        ],
+        'beforeHandleCreateOrderRequest' => [
+            "listeners" => [
+                'Rossignol_Synolia_MultiStock' => [
+                    'module'      => 'Synolia_MultiStock',
+                    'checkClasses' => ["Synolia\MultiStock\Plugin\Magento\CatalogInventory\ResourceModel\Stock\StatusPlugin"],
+                    'boltClass'   => Rossignol_Synolia_MultiStock::class,
+                ],
+            ],
+        ],
+        'beforeHandleCreateCartRequest' => [
+            "listeners" => [
+                'Rossignol_Synolia_MultiStock' => [
+                    'module'      => 'Synolia_MultiStock',
+                    'checkClasses' => ["Synolia\MultiStock\Plugin\Magento\CatalogInventory\ResourceModel\Stock\StatusPlugin"],
+                    'boltClass'   => Rossignol_Synolia_MultiStock::class,
                 ],
             ],
         ],
@@ -1112,6 +1146,51 @@ class EventsForThirdPartyModules
                     'module'      => 'Route_Route',
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
                     'boltClass'   => Route_Route::class,
+                ],
+            ],
+        ],
+        "filterCartDataForCreateCartRequest" => [
+            'listeners' => [
+                'Rossignol_Synolia_MultiStock' => [
+                    'module'      => 'Synolia_MultiStock',
+                    'checkClasses' => ["Synolia\MultiStock\Plugin\Magento\CatalogInventory\ResourceModel\Stock\StatusPlugin"],
+                    'boltClass'   => Rossignol_Synolia_MultiStock::class,
+                ],
+            ],
+        ],
+        "filterPPCSupportableType" => [
+            'listeners' => [
+                'Rossignol_Project_Rossignol' => [
+                    'module'      => 'Project_Rossignol',
+                    'checkClasses' => ["Project\Rossignol\Helper\Setup"],
+                    'boltClass'   => Rossignol_Project_Rossignol::class,
+                ],
+            ],
+        ],
+        "filterCartAndHints" => [
+            'listeners' => [
+                'Rossignol_Project_Rossignol' => [
+                    'module'      => 'Project_Rossignol',
+                    'checkClasses' => ["Project\Rossignol\Helper\Setup"],
+                    'boltClass'   => Rossignol_Project_Rossignol::class,
+                ],
+            ],
+        ],
+        "filterAdditionalCheckJavascriptForPPC" => [
+            'listeners' => [
+                'Rossignol_Project_Rossignol' => [
+                    'module'      => 'Project_Rossignol',
+                    'checkClasses' => ["Project\Rossignol\Helper\Setup"],
+                    'boltClass'   => Rossignol_Project_Rossignol::class,
+                ],
+            ],
+        ],
+        "filterShouldDisableBoltCheckout" => [
+            'listeners' => [
+                'Rossignol_Project_Rossignol' => [
+                    'module'      => 'Project_Rossignol',
+                    'checkClasses' => ["Project\Rossignol\Helper\Setup"],
+                    'boltClass'   => Rossignol_Project_Rossignol::class,
                 ],
             ],
         ],
