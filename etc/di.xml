@@ -168,6 +168,12 @@
         <plugin name="BoltBoltPayFreeShippingAdminPlugin" type="Bolt\Boltpay\Plugin\MageVision\FreeShippingAdmin\MethodPlugin" sortOrder="1"/>
     </type>
 
+    <type name="Bolt\Boltpay\Helper\FeatureSwitch\Decider">
+        <arguments>
+            <argument name="coreSession" xsi:type="object">Magento\Framework\Session\SessionManagerInterface\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="Magento\GiftCardAccount\Observer\TogglePaymentMethods">
         <plugin name="BoltTogglePaymentMethodsPlugin"
                 type="Bolt\Boltpay\Plugin\Magento\TogglePaymentMethodsPlugin"
@@ -242,11 +248,6 @@
     <type name="Magento\Framework\Session\Validator">
         <plugin name="BoltSessionValidator"
                 type="Bolt\Boltpay\Plugin\Magento\Framework\Session\ValidatorPlugin"
-                sortOrder="1"/>
-    </type>
-    <type name="MageWorx\RewardPoints\Controller\Checkout\Apply">
-        <plugin name="MageWorxRewardPointsControllerCheckoutApplyPlugin"
-                type="Bolt\Boltpay\Plugin\MageWorx\RewardPoints\Controller\Checkout\ApplyPlugin"
                 sortOrder="1"/>
     </type>
 </config>
