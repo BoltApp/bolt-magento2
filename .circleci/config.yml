@@ -237,16 +237,7 @@ workflows:
       - integration-magento-php74-magento24
       - integration-magento-php72-magento23
       - integration-magento-php71-magento22
-      - integration-php72-magento23:
-        context: integration-tests-secrets
   integration-tests:
-    triggers:
-      - schedule:
-          cron: "0 6 * * *"
-          filters:
-            branches:
-              only:
-                - master
     jobs:
       - integration-php72-magento23:
           context: integration-tests-secrets
