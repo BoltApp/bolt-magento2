@@ -4,12 +4,14 @@ set -e
 set -u
 set -x
 
-node -v
-npm -v
+cat /etc/os-release
+
 npm cache clean -f
-sudo npm install -g n
+npm install -g n
 sudo n 14.17.3
 node -v
+
+
 
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
