@@ -209,6 +209,5 @@
 ## [v2.22.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.22.0) 2021-06-25
 - Native Magento BOPIS now supported
 - Adds support for Magecomp Extrafee
-- Adds support for Webkul Oodo Magento Connect
 - Adds product fetching endpoint for future integrations
 - Various minor bugfixes

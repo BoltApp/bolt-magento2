@@ -19,11 +19,11 @@
 namespace Bolt\Boltpay\Test\Unit\Block\Checkout\Cart;
 
 use Bolt\Boltpay\Block\Checkout\Cart\ComponentSwitcherProcessor;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\App\Helper\Context;
-use PHPUnit_Framework_MockObject_MockObject;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\TestFramework\ObjectManager;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Block\Checkout\Cart\ComponentSwitcherProcessor
@@ -31,28 +31,56 @@ use PHPUnit_Framework_MockObject_MockObject;
 class ComponentSwitcherProcessorTest extends BoltTestCase
 {
     /**
-     * Mocked instance of config helper
-     *
-     * @var PHPUnit_Framework_MockObject_MockObject|ConfigHelper
+     * @var ComponentSwitcherProcessor
      */
-    protected $configHelper;
+    protected $componentSwitcherProcessor;
 
     /**
-     * Mocked instance of the eventsForThirdPartyModulesMock
-     *
-     * @var PHPUnit_Framework_MockObject_MockObject|Context
+     * @var ObjectManager
      */
-    protected $eventsForThirdPartyModulesMock;
+    protected $objectManager;
 
     /**
-     * Mocked instance of the class being tested
+     * Setup test dependencies
      *
-     * @var PHPUnit_Framework_MockObject_MockObject|ComponentSwitcherProcessor
+     * @return void
      */
-    protected $currentMock;
+    protected function setUpInternal()
+    {
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->componentSwitcherProcessor = $this->objectManager->create(ComponentSwitcherProcessor::class);
+    }
 
     /**
      * @test
+     * @covers ::process
+     */
+    public function process()
+    {
+        $filteredJsLayout = [
+            'components' => [
+                'block-totals' => [
+                    'children' => [
+                        'storeCredit' => [
+                            'component' => 'Magento_CustomerBalance/js/view/payment/customer-balance',
+                        ],
+                        'rewardPoints' => [
+                            'component' => 'Magento_Reward/js/view/payment/reward',
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        static::assertEquals($filteredJsLayout, $this->componentSwitcherProcessor->process($filteredJsLayout));
+    }
+
+    /**
+     * @test
+     * @covers ::process
      * Test process method filters the provided JS layout using the third party filter "filterProcessLayout"
      */
     public function process_withVariousConfigurationStates_returnsModifiedJsLayout()
@@ -71,31 +99,11 @@ class ComponentSwitcherProcessorTest extends BoltTestCase
                 ]
             ]
         ];
-        $originalJsLayout = [];
-        $this->eventsForThirdPartyModulesMock->expects(static::once())
-            ->method('runFilter')
-            ->with('filterProcessLayout', $originalJsLayout)
-            ->willReturn($filteredJsLayout);
-        static::assertEquals($filteredJsLayout, $this->currentMock->process($originalJsLayout));
-    }
 
-    /**
-     * Setup test dependencies
-     *
-     * @return void
-     */
-    protected function setUpInternal()
-    {
-        $this->configHelper = $this->createMock(ConfigHelper::class);
-        $this->eventsForThirdPartyModulesMock = $this->createMock(EventsForThirdPartyModules::class);
-        $this->currentMock = $this->getMockBuilder(ComponentSwitcherProcessor::class)
-            ->setMethods()
-            ->setConstructorArgs(
-                [
-                    $this->configHelper,
-                    $this->eventsForThirdPartyModulesMock
-                ]
-            )
-            ->getMock();
+        $eventThirdPartyModule = $this->createPartialMock(EventsForThirdPartyModules::class,['runFilter']);
+        $eventThirdPartyModule->method('runFilter')->willReturn($filteredJsLayout);
+
+        TestHelper::setProperty($this->componentSwitcherProcessor, 'eventsForThirdPartyModules', $eventThirdPartyModule);
+        static::assertEquals($filteredJsLayout, $this->componentSwitcherProcessor->process([]));
     }
 }
