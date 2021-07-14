@@ -48,7 +48,6 @@ use Bolt\Boltpay\ThirdPartyModules\Route\Route as Route_Route;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMedia_TmwGiftCard;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Preorder as Amasty_Preorder;
-use Bolt\Boltpay\ThirdPartyModules\MageWorx\RewardPoints as MageWorx_RewardPoints;
 use Exception;
 
 class EventsForThirdPartyModules
@@ -550,15 +549,6 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass" => ImaginationMedia_TmwGiftCard::class,
                 ],
-                "MageWorx_RewardPoints" => [
-                    "module" => "MageWorx_RewardPoints",
-                    "sendClasses" => [
-                        "MageWorx\RewardPoints\Api\CustomerBalanceRepositoryInterface",
-                        "MageWorx\RewardPoints\Model\PointCurrencyConverter",
-                        "MageWorx\RewardPoints\Helper\Data"
-                    ],
-                    "boltClass" => MageWorx_RewardPoints::class,
-                ],
             ],
         ],
         /** @see \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::verifyCouponCode */
@@ -903,11 +893,6 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Aheadworks\RewardPoints\Api\CustomerRewardPointsManagementInterface"],
                     "boltClass"   => Aheadworks_RewardPoints::class,
                 ],
-                "MageWorx_RewardPoints" => [
-                    "module"      => "MageWorx_RewardPoints",
-                    "sendClasses" => ["MageWorx\RewardPoints\Helper\Data"],
-                    "boltClass"   => MageWorx_RewardPoints::class,
-                ],
             ]
         ],
         "saveSessionData" => [
@@ -1045,15 +1030,6 @@ class EventsForThirdPartyModules
                     'module' => 'Amasty_Preorder',
                     'sendClasses' => ['Amasty\Preorder\Helper\Data'],
                     'boltClass' => Amasty_Preorder::class,
-                ],
-            ],
-        ],
-        "getAdditionalQuoteTotalsConditions" => [
-            "listeners" => [
-                "MageWorx_RewardPoints" => [
-                    "module" => "MageWorx_RewardPoints",
-                    "sendClasses" => ["MageWorx\RewardPoints\Helper\Data"],
-                    "boltClass" => MageWorx_RewardPoints::class,
                 ],
             ],
         ],

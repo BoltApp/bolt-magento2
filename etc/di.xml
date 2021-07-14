@@ -244,9 +244,4 @@
                 type="Bolt\Boltpay\Plugin\Magento\Framework\Session\ValidatorPlugin"
                 sortOrder="1"/>
     </type>
-    <type name="MageWorx\RewardPoints\Controller\Checkout\Apply">
-        <plugin name="MageWorxRewardPointsControllerCheckoutApplyPlugin"
-                type="Bolt\Boltpay\Plugin\MageWorx\RewardPoints\Controller\Checkout\ApplyPlugin"
-                sortOrder="1"/>
-    </type>
 </config>
