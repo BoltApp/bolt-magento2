@@ -30,20 +30,17 @@ use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Api\OrderManagement;
 use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Model\Request;
-use Bolt\Boltpay\Model\Response;
 use Bolt\Boltpay\Model\Service\InvoiceService;
 use Bugsnag\Report;
 use Exception;
 use Magento\Customer\Model\Customer;
 use Magento\Framework\App\Config\ScopeConfigInterface;
-use Magento\Framework\DataObject;
 use Magento\Framework\DB\Adapter\Pdo\Mysql;
 use Magento\Framework\Event\Manager;
 use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\SessionException;
-use Magento\Quote\Model\Quote\Address;
 use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Api\Data\TransactionInterface as TransactionInterface;
 use Magento\Sales\Model\AdminOrder\Create;
@@ -51,7 +48,6 @@ use Magento\Sales\Model\Order\Email\Container\InvoiceIdentity as InvoiceEmailIde
 use Magento\Sales\Model\Order\Invoice as Invoice;
 use Magento\Sales\Model\Order as OrderModel;
 use Magento\Directory\Model\Region as RegionModel;
-use Magento\Directory\Model\Currency;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ResourceConnection;
@@ -655,47 +651,19 @@ class OrderTest extends BoltTestCase
      */
     public function fetchTransactionInfo()
     {
-        /** @var MockObject|DataObject $requestObject */
-        $requestObject = $this->createPartialMock(
-            DataObject::class,
-            [
-                'setDynamicApiUrl',
-                'setApiKey',
-                'setRequestMethod'
-            ]
-        );
-        $this->dataObjectFactory->expects(static::once())->method('create')->willReturn($requestObject);
-        $requestObject->expects(static::once())->method('setDynamicApiUrl')
-            ->with(ApiHelper::API_FETCH_TRANSACTION . "/" . static::REFERENCE_ID);
-
-        $this->configHelper->expects(static::once())->method('getApiKey')->with(static::STORE_ID)
-            ->willReturn(static::API_KEY);
-        $requestObject->expects(static::once())->method('setApiKey')->with(static::API_KEY);
-        $requestObject->expects(static::once())->method('setRequestMethod')->with('GET');
-
-        $request = $this->createMock(Request::class);
-
-        $this->apiHelper->expects(static::once())->method('buildRequest')->with($requestObject, self::STORE_ID)
-            ->willReturn($request);
-
-        /** @var MockObject|Response $result */
-        $result = $this->createPartialMock(Response::class, ['getResponse']);
-
-        $this->apiHelper->expects(static::once())->method('sendRequest')->with($request)->willReturn($result);
-
         $response = (object)['display_id' => static::DISPLAY_ID];
-
-        $result->expects(static::once())->method('getResponse')->willReturn($response);
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $this->mockFetchTransactionInfo($orderHelper, $response);
 
         static::assertEquals(
             $response,
-            $this->currentMock->fetchTransactionInfo(static::REFERENCE_ID, static::STORE_ID)
+            $orderHelper->fetchTransactionInfo(static::REFERENCE_ID, static::STORE_ID)
         );
 
         // When we call method second time result should be returned from cache
         static::assertEquals(
             $response,
-            $this->currentMock->fetchTransactionInfo(static::REFERENCE_ID, static::STORE_ID)
+            $orderHelper->fetchTransactionInfo(static::REFERENCE_ID, static::STORE_ID)
         );
     }
 
@@ -769,11 +737,11 @@ class OrderTest extends BoltTestCase
     public function setAddress()
     {
         $addressObject = (object) self::ADDRESS_DATA;
-        $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
+
         $quote = TestUtils::createQuote();
         $quoteAddress = $quote->getShippingAddress();
         TestHelper::invokeMethod(
-            $boltHelperOrder,
+            $this->orderHelper,
             'setAddress',
             [$quoteAddress, $addressObject]
         );
@@ -816,7 +784,7 @@ class OrderTest extends BoltTestCase
         );
 
         TestHelper::invokeMethod(
-            $this->currentMock,
+            $this->orderHelper,
             'adjustTaxMismatch',
             [$transaction, $orderModel, $quote]
         );
@@ -831,7 +799,6 @@ class OrderTest extends BoltTestCase
      */
     public function checkExistingOrder_orderAlreadyExists_notifiesError()
     {
-
         $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
@@ -855,7 +822,6 @@ class OrderTest extends BoltTestCase
      */
     public function checkExistingOrder_orderDoesntExist_returnsFalse()
     {
-
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
         static::assertFalse(
@@ -868,17 +834,6 @@ class OrderTest extends BoltTestCase
     }
 
     /**
-     * @param $quote
-     *
-     * @throws ReflectionException
-     */
-    private function createOrderSetUp($quote)
-    {
-        $this->initCurrentMock(['getExistingOrder', 'prepareQuote', 'orderPostprocess']);
-        $this->currentMock->method('prepareQuote')->willReturn($quote);
-    }
-
-    /**
      * @test
      *
      * @covers ::createOrder
@@ -887,13 +842,26 @@ class OrderTest extends BoltTestCase
      */
     public function createOrder_existingOrder()
     {
-        $this->createOrderSetUp($this->quoteMock);
-        $this->currentMock->method('getExistingOrder')->willReturn($this->orderMock);
+        $orderHelper = $this->getMockBuilder(OrderHelper::class)
+            ->setMethods(['prepareQuote'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $cartHelper = $this->objectManager->create(CartHelper::class);
+        $bugsnag = $this->objectManager->create(Bugsnag::class);
+        TestHelper::setProperty($orderHelper, 'cartHelper', $cartHelper);
+        TestHelper::setProperty($orderHelper, 'bugsnag', $bugsnag);
+
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        $orderHelper->method('prepareQuote')->willReturn($quote);
+        $order = TestUtils::createDumpyOrder(['quote_id'=>$quoteId]);
 
         static::assertSame(
-            $this->orderMock,
-            TestHelper::invokeMethod($this->currentMock, 'createOrder', [$this->quoteMock, []])
+            $order->getId(),
+            TestHelper::invokeMethod($orderHelper, 'createOrder', [$quote, []])->getId()
         );
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -905,15 +873,30 @@ class OrderTest extends BoltTestCase
      */
     public function createOrder_newOrderQuoteSubmitExceptionWithOrderCreated_returnsOrder()
     {
-        $this->createOrderSetUp($this->quoteMock);
-        $this->currentMock->method('getExistingOrder')->willReturnOnConsecutiveCalls(null, $this->orderMock);
-        $this->quoteManagement->expects(self::once())->method('submit')->with($this->quoteMock)
+        $orderHelper = $this->getMockBuilder(OrderHelper::class)
+            ->setMethods(['prepareQuote','getExistingOrder'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quote = TestUtils::createQuote();
+        $order = TestUtils::createDumpyOrder(['quote_id'=> $quote->getId()]);
+        $bugsnag = $this->objectManager->create(Bugsnag::class);
+        TestHelper::setProperty($orderHelper, 'bugsnag', $bugsnag);
+
+        $orderHelper->method('prepareQuote')->willReturn($quote);
+
+        $orderHelper->method('getExistingOrder')->willReturnOnConsecutiveCalls(null, $order);
+
+        $quoteManagement = $this->createPartialMock(QuoteManagement::class, ['submit']);
+        $quoteManagement->expects(self::once())->method('submit')
             ->willThrowException(new Exception(''));
+        TestHelper::setProperty($orderHelper, 'quoteManagement', $quoteManagement);
 
         static::assertSame(
-            $this->orderMock,
-            TestHelper::invokeMethod($this->currentMock, 'createOrder', [$this->quoteMock, []])
+            $order,
+            TestHelper::invokeMethod($orderHelper, 'createOrder', [$quote, []])
         );
+
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -925,15 +908,24 @@ class OrderTest extends BoltTestCase
      */
     public function createOrder_newOrderQuoteSubmitExceptionWithOrderNotCreated_reThrowsException()
     {
-        $this->createOrderSetUp($this->quoteMock);
-        $this->currentMock->method('getExistingOrder')->willReturn(null);
-        $this->quoteManagement->expects(self::once())->method('submit')->with($this->quoteMock)
-            ->willThrowException(new Exception('Quote Submit Exception'));
+        $orderHelper = $this->getMockBuilder(OrderHelper::class)
+            ->setMethods(['prepareQuote'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $cartHelper = $this->objectManager->create(CartHelper::class);
+        $bugsnag = $this->objectManager->create(Bugsnag::class);
+        $quoteManagement = $this->createPartialMock(QuoteManagement::class, ['submit']);
+        TestHelper::setProperty($orderHelper, 'cartHelper', $cartHelper);
+        TestHelper::setProperty($orderHelper, 'bugsnag', $bugsnag);
+        TestHelper::setProperty($orderHelper, 'quoteManagement', $quoteManagement);
+        $quote = TestUtils::createQuote();
+        $orderHelper->method('prepareQuote')->willReturn($quote);
+        $quoteManagement->method('submit')->willThrowException(new Exception('Quote Submit Exception'));
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Quote Submit Exception');
 
-        TestHelper::invokeMethod($this->currentMock, 'createOrder', [$this->quoteMock, []]);
+        TestHelper::invokeMethod($orderHelper, 'createOrder', [$quote, []]);
     }
 
     /**
@@ -945,24 +937,23 @@ class OrderTest extends BoltTestCase
      */
     public function createOrder_newOrderNotCreated_throwsException()
     {
-        $immutableQuoteMock = $this->createPartialMock(Quote::class, ['getId']);
-        $immutableQuoteMock->method('getId')->willReturn(self::IMMUTABLE_QUOTE_ID);
+        $orderHelper = $this->getMockBuilder(OrderHelper::class)
+            ->setMethods(['prepareQuote'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $cartHelper = $this->objectManager->create(CartHelper::class);
+        $bugsnag = $this->objectManager->create(Bugsnag::class);
+        $quoteManagement = $this->createPartialMock(QuoteManagement::class, ['submit']);
+        TestHelper::setProperty($orderHelper, 'cartHelper', $cartHelper);
+        TestHelper::setProperty($orderHelper, 'bugsnag', $bugsnag);
+        TestHelper::setProperty($orderHelper, 'quoteManagement', $quoteManagement);
+        $quote = TestUtils::createQuote();
+        $orderHelper->method('prepareQuote')->willReturn($quote);
 
-        $quoteMock = $this->createPartialMock(Quote::class, ['getId']);
-        $quoteMock->method('getId')->willReturn(self::QUOTE_ID);
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Quote Submit Error. Parent Quote ID: '.$quote->getId().' Immutable Quote ID: ');
 
-        $this->createOrderSetUp($quoteMock);
-        $this->currentMock->method('getExistingOrder')->willReturn(null);
-        $this->quoteManagement->expects(self::once())->method('submit')->with($quoteMock)
-            ->willReturn(null);
-
-        $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage(
-            'Quote Submit Error. Parent Quote ID: '.self::QUOTE_ID.
-            ' Immutable Quote ID: '.self::IMMUTABLE_QUOTE_ID
-        );
-
-        TestHelper::invokeMethod($this->currentMock, 'createOrder', [$immutableQuoteMock, []]);
+        TestHelper::invokeMethod($orderHelper, 'createOrder', [$quote, []]);
     }
 
     /**
@@ -974,24 +965,35 @@ class OrderTest extends BoltTestCase
      */
     public function createOrder_newOrder_returnsOrder()
     {
-        Hook::$fromBolt = true;
-        $this->createOrderSetUp($this->quoteMock);
-        $this->currentMock->method('getExistingOrder')->willReturn(null);
-        $this->quoteManagement->expects(self::once())->method('submit')->with($this->quoteMock)
-            ->willReturn($this->orderMock);
-
         $transaction = [];
-        $this->currentMock
-            ->expects(self::once())
-            ->method('orderPostprocess')->with($this->orderMock, $this->quoteMock, $transaction);
+        $orderHelper = $this->getMockBuilder(OrderHelper::class)
+            ->setMethods(['prepareQuote','orderPostprocess'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $cartHelper = $this->objectManager->create(CartHelper::class);
+        $quoteManagement = $this->createPartialMock(QuoteManagement::class, ['submit']);
+
+        $quote = TestUtils::createQuote();
+        $order = TestUtils::createDumpyOrder();
+
+        $orderHelper->method('prepareQuote')->willReturn($quote);
+        $quoteManagement->method('submit')->with($quote)->willReturn($order);
+        $orderHelper->method('orderPostprocess')->willReturnSelf();
+
+        TestHelper::setProperty($orderHelper, 'cartHelper', $cartHelper);
+        TestHelper::setProperty($orderHelper, 'quoteManagement', $quoteManagement);
+
+
+        TestHelper::invokeMethod($orderHelper, 'createOrder', [$quote, []]);
         static::assertSame(
-            $this->orderMock,
+            $order->getId(),
             TestHelper::invokeMethod(
-                $this->currentMock,
+                $orderHelper,
                 'createOrder',
-                [$this->quoteMock, $transaction]
-            )
+                [$quote, $transaction]
+            )->getId()
         );
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -1005,8 +1007,8 @@ class OrderTest extends BoltTestCase
      */
     public function orderPostprocess_withVariousBoltCheckoutTypes_savesAdditionalOrderData()
     {
-        $this->initCurrentMock(['setOrderUserNote']);
-        $quoteMock = $this->createPartialMock(Quote::class, ['getBoltCheckoutType', 'setBoltCheckoutType']);
+        $order = TestUtils::createDumpyOrder();
+        $quote = TestUtils::createQuote();
         $userNote = 'Test User Note';
         $transaction = json_decode(
             json_encode(
@@ -1014,7 +1016,7 @@ class OrderTest extends BoltTestCase
                     'order'     => [
                         'cart'      => [
                             'tax_amount'   => [
-                                'amount' => 500,
+                                'amount' => 10000,
                             ],
                             'total_amount' => [
                                 'amount' => 500,
@@ -1027,39 +1029,14 @@ class OrderTest extends BoltTestCase
             )
         );
 
-        $quoteMock->expects(static::once())->method('getBoltCheckoutType')
-            ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
-        $quoteMock->expects(static::once())->method('setBoltCheckoutType')
-            ->with(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
-        $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($quoteMock);
-        $this->configHelper->expects(self::once())->method('shouldAdjustTaxMismatch')->willReturn(true);
-        //adjust tax mismatch start
-        $this->orderMock->expects(self::exactly(2))->method('getOrderCurrencyCode')->willReturn(self::CURRENCY_CODE);
-        $this->orderMock->expects(self::once())->method('getTaxAmount')->willReturn(5);
-        //adjust tax mismatch end
-        $this->configHelper->expects(self::exactly(2))->method('getPriceFaultTolerance')
-            ->willReturnOnConsecutiveCalls(1, 1);
-
-        $this->configHelper->expects(self::once())->method('getMerchantDashboardUrl')
-            ->willReturn('https://merchant-sandbox.bolt.com');
-        $this->orderMock->expects(self::once())->method('addStatusHistoryComment')
-            ->with(
-                __(
-                    'Bolt transaction: %1',
-                    sprintf(
-                        '<a href="https://merchant-sandbox.bolt.com/transaction/%1$s">%1$s</a>',
-                        self::REFERENCE_ID
-                    )
-                )
-            );
-
-        $this->currentMock->expects(self::once())->method('setOrderUserNote')->with($this->orderMock, $userNote);
-        $this->orderMock->expects(self::once())->method('save');
         TestHelper::invokeMethod(
-            $this->currentMock,
+            $this->orderHelper,
             'orderPostprocess',
-            [$this->orderMock, $quoteMock, $transaction]
+            [$order, $quote, $transaction]
         );
+
+        self::assertEquals($userNote, $order->getData('customer_note'));
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -1072,19 +1049,31 @@ class OrderTest extends BoltTestCase
      */
     public function orderPostprocess_ifQuoteCheckoutTypeIsPPC_setsQuoteCheckoutTypeToPPCComplete()
     {
-        $this->initCurrentMock([]);
-        $transaction = new stdClass();
-        $this->quoteMock->expects(static::once())->method('getBoltCheckoutType')
-            ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
-        $this->quoteMock->expects(static::once())->method('setBoltCheckoutType')
-            ->willReturn(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE);
-        $this->cartHelper->expects(static::once())->method('quoteResourceSave')->with($this->quoteMock);
+        $order = TestUtils::createDumpyOrder();
+        $quote = TestUtils::createQuote();
+        $quote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
 
-        TestHelper::invokeMethod(
-            $this->currentMock,
-            'orderPostprocess',
-            [$this->orderMock, $this->quoteMock, $transaction]
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'order' => [
+                        'cart' => [
+                            'total_amount' => [
+                                'amount' => 10000
+                            ]
+                        ]
+                    ]
+                ]
+            )
         );
+        TestHelper::invokeMethod(
+            $this->orderHelper,
+            'orderPostprocess',
+            [$order, $quote, $transaction]
+        );
+
+        self::assertEquals(CartHelper::BOLT_CHECKOUT_TYPE_PPC_COMPLETE, $quote->getBoltCheckoutType());
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -1601,10 +1590,12 @@ class OrderTest extends BoltTestCase
      */
     public function applyExternalQuoteData()
     {
-        /** @var MockObject|Quote $quoteMock */
-        $quoteMock = $this->createMock(Quote::class);
-        $this->discountHelper->expects(static::once())->method('applyExternalDiscountData')->with($quoteMock);
-        $this->currentMock->applyExternalQuoteData($quoteMock);
+        /** @var Quote $quote */
+        $quote = $this->objectManager->create(Quote::class);
+        $discountHelper = $this->createPartialMock(DiscountHelper::class,['applyExternalDiscountData']);
+        $discountHelper->expects(static::once())->method('applyExternalDiscountData')->with($quote);
+        TestHelper::setProperty($this->orderHelper, 'discountHelper', $discountHelper);
+        $this->orderHelper->applyExternalQuoteData($quote);
     }
 
     /**
@@ -4173,31 +4164,46 @@ class OrderTest extends BoltTestCase
      */
     public function createOrderInvoice_amountWithDifferentDecimals($amount, $grandTotal, $isSame)
     {
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+
         $totalInvoiced = 0;
         $invoice = $this->createPartialMock(
             Invoice::class,
             [
-                'setRequestedCaptureCase',
-                'setTransactionId',
-                'setBaseGrandTotal',
-                'setGrandTotal',
-                'register',
+                'setRequestedCaptureCase', 'setTransactionId',
+                'setBaseGrandTotal', 'setGrandTotal', 'register','getEmailSent'
             ]
         );
-        $this->orderMock->expects(static::once())->method('getTotalInvoiced')->willReturn($totalInvoiced);
-        $this->orderMock->expects(static::once())->method('getGrandTotal')->willReturn($grandTotal);
-        $this->orderMock->method('addStatusHistoryComment')->willReturn($this->orderMock);
-        $this->orderMock->method('setIsCustomerNotified')->willReturn($this->orderMock);
+
+        $order = $this->createPartialMock(
+            Order::class,
+            [
+                'getOrderCurrencyCode','getTotalInvoiced', 'getGrandTotal',
+                'addStatusHistoryComment', 'setIsCustomerNotified', 'register',
+            ]
+        );
+        $order->method('getOrderCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $order->expects(static::once())->method('getTotalInvoiced')->willReturn($totalInvoiced);
+        $order->expects(static::once())->method('getGrandTotal')->willReturn($grandTotal);
+        $order->method('addStatusHistoryComment')->willReturn($order);
+        $order->method('setIsCustomerNotified')->willReturn($order);
+        $invoice->method('getEmailSent')->willReturn(true);
+        $invoiceService = $this->createPartialMock(
+            InvoiceService::class,
+            ['prepareInvoice', 'prepareInvoiceWithoutItems']
+        );
+
         if ($isSame) {
-            $this->invoiceService->expects(static::once())->method('prepareInvoice')->willReturn($invoice);
+            $invoiceService->method('prepareInvoice')->with($order)->willReturn($invoice);
         } else {
-            $this->invoiceService->expects(static::once())->method('prepareInvoiceWithoutItems')->willReturn($invoice);
+            $invoiceService->method('prepareInvoiceWithoutItems')->with($order, $amount)->willReturn($invoice);
         }
 
+        TestHelper::setInaccessibleProperty($orderHelper, 'invoiceService', $invoiceService);
         TestHelper::invokeMethod(
-            $this->currentMock,
+            $orderHelper ,
             'createOrderInvoice',
-            [$this->orderMock, self::TRANSACTION_ID, $amount]
+            [$order, self::TRANSACTION_ID, $amount]
         );
     }
 
@@ -4284,74 +4290,40 @@ class OrderTest extends BoltTestCase
     }
 
     /**
-     * Setup method for {@see \Bolt\Boltpay\Helper\Order::createCreditMemoForHookRequest}
-     *
-     * @param int $amount to be used as transaction total amount
-     *
-     * @throws ReflectionException from methods getOrderCurrencyCode, getAllItems
-     *
-     * @return array containing transaction and order model mock instance
-     */
-    private function createCreditMemoForHookRequestSetUp($amount)
-    {
-        $this->initCurrentMock(['validateRefundAmount']);
-
-        $transaction = (object)[
-            'order' => (object)[
-                'cart' => (object)[
-                    'total_amount' => (object)[
-                        'amount' => 1000,
-                    ],
-                ]
-            ],
-            'amount' => (object)[
-                'amount' => $amount,
-            ],
-        ];
-
-        $orderMock = $this->createPartialMock(OrderModel::class, ['getOrderCurrencyCode', 'getAllItems']);
-
-        return [$transaction, $orderMock];
-    }
-
-    /**
      * @test
      * that createCreditMemoForHookRequest creates the credit memo without adjustments when the refund is full (refund amount is equal or greater than order total)
      *
      * @covers ::createCreditMemoForHookRequest
      *
-     * @throws ReflectionException from createCreditMemoForHookRequestSetUp method
      * @throws Exception from {@see CurrencyUtils::toMajor} method when unknown currency code is passed
      */
     public function createCreditMemoForHookRequest_ifFullRefund_createsCreditMemoWithAdjustmentPositive()
     {
-        list($transaction, $orderMock) = $this->createCreditMemoForHookRequestSetUp(1200);
+        $transaction = (object)[
+            'order' => (object)[
+                'cart' => (object)[
+                    'total_amount' => (object)[
+                        'amount' => 10000,
+                    ],
+                ]
+            ],
+            'amount' => (object)[
+                'amount' => 10000,
+            ],
+        ];
 
-        $orderMock->expects(self::once())->method('getOrderCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $order = TestUtils::createDumpyOrder();
+        $invoiceService = $this->objectManager->create(InvoiceService::class);
+        $invoice = $invoiceService->prepareInvoice($order);
+        $invoice->setRequestedCaptureCase(Invoice::CAPTURE_OFFLINE);
+        $invoice->setTransactionId('xxxx');
+        $invoice->setBaseGrandTotal(100);
+        $invoice->setGrandTotal(100);
+        $invoice->register();
 
-        $refundAmount = CurrencyUtils::toMajor($transaction->amount->amount, self::CURRENCY_CODE);
-        $this->currentMock->expects(self::once())
-            ->method('validateRefundAmount')
-            ->with($orderMock, $refundAmount)
-            ->willReturnSelf();
-
-        $creditMemoMock = $this->createPartialMock(Creditmemo::class, ['setAutomaticallyCreated','addComment']);
-
-        $this->creditmemoFactory->expects(self::once())->method('createByOrder')
-            ->with($orderMock, [])
-            ->willReturn($creditMemoMock);
-        $creditMemoMock->expects(self::once())->method('setAutomaticallyCreated')->with(true)->willReturnSelf();
-        $creditMemoMock->expects(self::once())
-            ->method('addComment')
-            ->with(__('The credit memo has been created automatically.'))
-            ->willReturnSelf();
-
-        $this->creditmemoManagement->expects(self::once())
-            ->method('refund')
-            ->with($creditMemoMock, true)
-            ->willReturnSelf();
-
-        $this->currentMock->createCreditMemoForHookRequest($orderMock, $transaction);
+        $this->orderHelper->createCreditMemoForHookRequest($order, $transaction);
+        self::assertTrue($order->getCreditmemosCollection()->getSize() > 0);
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -4360,62 +4332,35 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::createCreditMemoForHookRequest
      *
-     * @throws ReflectionException from createCreditMemoForHookRequestSetUp method
      * @throws Exception from {@see CurrencyUtils::toMajor} method when unknown currency code is passed
      */
     public function createCreditMemoForHookRequest_ifPartialRefund_createsCreditMemoWithAdjustmentPositive()
     {
-        list($transaction, $orderMock) = $this->createCreditMemoForHookRequestSetUp(200);
-
-        $orderMock->expects(self::once())->method('getOrderCurrencyCode')->willReturn(self::CURRENCY_CODE);
-
-        $refundAmount = CurrencyUtils::toMajor($transaction->amount->amount, self::CURRENCY_CODE);
-        $this->currentMock->expects(self::once())
-            ->method('validateRefundAmount')
-            ->with($orderMock, $refundAmount)
-            ->willReturnSelf();
-
-        $orderItem = $this->createMock(Item::class);
-
-        $orderMock->expects(self::once())->method('getAllItems')->willReturn([$orderItem, $orderItem]);
-        $orderItemId = 1;
-        $orderItemIdTwo = 2;
-
-        $orderItem->expects(self::exactly(2))
-            ->method('getId')
-            ->willReturnOnConsecutiveCalls($orderItemId, $orderItemIdTwo);
-
-        $expectedAdjustment = [
-            'adjustment_positive' => $refundAmount,
-            'shipping_amount' => 0,
-            'qtys' => [
-                $orderItemId => 0,
-                $orderItemIdTwo => 0,
-            ]
+        $transaction = (object)[
+            'order' => (object)[
+                'cart' => (object)[
+                    'total_amount' => (object)[
+                        'amount' => 10000,
+                    ],
+                ]
+            ],
+            'amount' => (object)[
+                'amount' => 2000,
+            ],
         ];
 
-        $creditMemoMock = $this->createPartialMock(
-            Creditmemo::class,
-            ['setAutomaticallyCreated','addComment']
-        );
+        $order = TestUtils::createDumpyOrder();
+        $invoiceService = $this->objectManager->create(InvoiceService::class);
+        $invoice = $invoiceService->prepareInvoiceWithoutItems($order, 100);
+        $invoice->setRequestedCaptureCase(Invoice::CAPTURE_OFFLINE);
+        $invoice->setTransactionId('xxxx');
+        $invoice->setBaseGrandTotal(100);
+        $invoice->setGrandTotal(100);
+        $invoice->register();
 
-        $this->creditmemoFactory->expects(self::once())
-            ->method('createByOrder')
-            ->with($orderMock, $expectedAdjustment)
-            ->willReturn($creditMemoMock);
-
-        $creditMemoMock->expects(self::once())->method('setAutomaticallyCreated')->with(true)->willReturnSelf();
-        $creditMemoMock->expects(self::once())
-            ->method('addComment')
-            ->with(__('The credit memo has been created automatically.'))
-            ->willReturnSelf();
-
-        $this->creditmemoManagement->expects(self::once())
-            ->method('refund')
-            ->with($creditMemoMock, true)
-            ->willReturnSelf();
-
-        $this->currentMock->createCreditMemoForHookRequest($orderMock, $transaction);
+        $this->orderHelper->createCreditMemoForHookRequest($order, $transaction);
+        self::assertTrue($order->getCreditmemosCollection()->getSize() > 0);
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -4778,7 +4723,6 @@ class OrderTest extends BoltTestCase
      */
     public function setBillingAddress()
     {
-
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $transaction = json_decode(
             json_encode(
@@ -4852,14 +4796,59 @@ class OrderTest extends BoltTestCase
      */
     public function setShippingAddress_forInStorePickups_usesInStorePickupAddress()
     {
-        $this->initCurrentMock(['setAddress']);
-        $quote = $this->createPartialMock(Quote::class, [
-            'getBillingAddress',
-            'getShippingAddress',
-            'addData',
-        ]);
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $configData = [
+            [
+                'path'    => ConfigHelper::XML_PATH_ENABLE_STORE_PICKUP_FEATURE,
+                'value'   => true,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path'    => ConfigHelper::XML_PATH_PICKUP_SHIPPING_METHOD_CODE,
+                'value'   => static::REFERENCE_ID,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => ConfigHelper::XML_PATH_PICKUP_STREET,
+                'value' => ConfigTest::STORE_PICKUP_STREET,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => ConfigHelper::XML_PATH_PICKUP_CITY,
+                'value' => ConfigTest::STORE_PICKUP_CITY,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => ConfigHelper::XML_PATH_PICKUP_ZIP_CODE,
+                'value' => ConfigTest::STORE_PICKUP_ZIP_CODE,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => ConfigHelper::XML_PATH_PICKUP_COUNTRY_ID,
+                'value' => ConfigTest::STORE_PICKUP_COUNTRY_ID,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => ConfigHelper::XML_PATH_PICKUP_REGION_ID,
+                'value' => ConfigTest::STORE_PICKUP_REGION_ID,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => ConfigHelper::XML_PATH_PICKUP_APARTMENT,
+                'value' => ConfigTest::STORE_PICKUP_APARTMENT,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
 
-        $addressMock = $this->createMock(Address::class);
+        TestUtils::setupBoltConfig($configData);
 
         $transaction = (object)[
             'order' => (object)[
@@ -4868,41 +4857,19 @@ class OrderTest extends BoltTestCase
                     'shipments' => [
                         (object)[
                             'shipping_address' => (object)static::ADDRESS_DATA,
-                            'reference' => (object)static::REFERENCE_ID,
+                            'reference' => static::REFERENCE_ID,
                         ]
                     ]
                 ]
             ]
         ];
+        $quote = TestUtils::createQuote();
+        TestHelper::invokeMethod($orderHelper, 'setShippingAddress', [$quote, $transaction]);
 
-        $quote->method('getBillingAddress')->willReturn($addressMock);
-        $quote->expects(static::exactly(2))->method('getShippingAddress')
-            ->willReturnOnConsecutiveCalls($addressMock, $quote);
-
-        $this->currentMock->expects(static::once())
-            ->method('setAddress')
-            ->with($addressMock, (object)static::ADDRESS_DATA)
-            ->willReturnSelf();
-
-        $referenceShipmentMethod = ConfigHelper::XML_PATH_PICKUP_SHIPPING_METHOD_CODE;
-
-        $this->configHelper->expects(static::once())
-            ->method('isPickupInStoreShippingMethodCode')
-            ->with($transaction->order->cart->shipments[0]->reference)
-            ->willReturn($referenceShipmentMethod);
-        $pickupAddressData = [
-            'street' => '123 Candy Cane Way',
-            'city' => 'Santaville',
-            'postcode' => 'H0H 0H0',
-            'country_id' => 2,
-            'region_id' => 32,
-            'region_code' => 'AR',
-        ];
-
-        $this->configHelper->expects(static::once())->method('getPickupAddressData')->willReturn($pickupAddressData);
-
-        $quote->expects(static::once())->method('addData')->with($pickupAddressData)->willReturnSelf();
-        TestHelper::invokeMethod($this->currentMock, 'setShippingAddress', [$quote, $transaction]);
+        self::assertEquals($quote->getShippingAddress()->getCity(), ConfigTest::STORE_PICKUP_CITY);
+        self::assertEquals($quote->getShippingAddress()->getCountryId(), ConfigTest::STORE_PICKUP_COUNTRY_ID);
+        self::assertEquals($quote->getShippingAddress()->getStreet()[0], ConfigTest::STORE_PICKUP_STREET);
+        self::assertEquals($quote->getShippingAddress()->getPostCode(), ConfigTest::STORE_PICKUP_ZIP_CODE);
     }
 
     /**
