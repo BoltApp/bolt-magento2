@@ -57,9 +57,11 @@ commands:
                 command: |
                   Test/scripts/ci-integration.sh
             - store_test_results:
-                path: ./integration-tests/test-results
+                path: /home/circleci/project/integration-tests/test-results
             - store_artifacts:
-                path: ./integration-tests/screenshots
+                path:  /home/circleci/project/integration-tests/screenshots          
+            - store_artifacts:
+              path: /home/circleci/project/integration-tests/test-results
       - unless:
           condition: << parameters.is_integration >>
           steps:
@@ -183,6 +185,10 @@ jobs:
           m2_version: "2.3.0"
           php_version: "php72"
           is_integration: true
+      - store_test_results:
+          path: ./test-results/integration
+      - store_artifacts:
+          path: ./screenshots
 
   unit-php72-magento23-for-merchant-branches:
     docker:
