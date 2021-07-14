@@ -168,7 +168,8 @@ class RewardPoints
                         "component"   => "MageWorx_RewardPoints/js/view/payment/rewardpoints-messages",
                         "displayArea" => "messages",
                     ]
-                ]
+                ],
+                "inputPlaceholder" => $mageWorxRewardPointsHelper->getCustomPointsInputPlaceholder()
             ];
             $jsLayout["mageworx-reward-points"]["config"] = [
                 "template" => $mageWorxRewardPointsHelper->isAllowedCustomPointsAmount()
