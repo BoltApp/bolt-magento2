@@ -2072,15 +2072,6 @@ function(arg) {
         $this->eventsForThirdPartyModules->expects(static::once())->method('runFilter')->with('getAdditionalInvalidateBoltCartJavascript', null)->willReturn('test js');
         $this->assertEquals('test js', $this->currentMock->getAdditionalInvalidateBoltCartJavascript());
     }
-    
-    /**
-     * @test
-     */
-    public function getAdditionalQuoteTotalsConditions_returnsCorrectResult()
-    {
-        $this->eventsForThirdPartyModules->expects(static::once())->method('runFilter')->with('getAdditionalQuoteTotalsConditions', null)->willReturn('test js');
-        $this->assertEquals('test js', $this->currentMock->getAdditionalQuoteTotalsConditions());
-    }
 
     /**
      * Setup test dependencies, called before each test
