@@ -61,7 +61,7 @@ commands:
             - store_artifacts:
                 path:  /home/circleci/project/integration-tests/screenshots          
             - store_artifacts:
-              path: /home/circleci/project/integration-tests/test-results
+                path: /home/circleci/project/integration-tests/test-results
       - unless:
           condition: << parameters.is_integration >>
           steps:
