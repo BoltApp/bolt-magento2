@@ -4,6 +4,11 @@ set -e
 set -u
 set -x
 
+npm cache clean -f
+npm install -g n
+sudo npm install -g n
+sudo n 14.17.3
+
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
 git clone --depth 1 git@github.com:BoltApp/integration-tests.git
