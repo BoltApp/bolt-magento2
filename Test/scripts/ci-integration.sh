@@ -7,8 +7,9 @@ set -x
 node -v
 npm -v
 npm cache clean -f
-npm install -g n
+sudo npm install -g n
 sudo n 14.17.3
+node -v
 
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
