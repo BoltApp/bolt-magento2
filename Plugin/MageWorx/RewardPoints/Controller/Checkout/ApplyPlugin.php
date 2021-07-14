@@ -18,7 +18,6 @@
 namespace Bolt\Boltpay\Plugin\MageWorx\RewardPoints\Controller\Checkout;
 
 use Magento\Customer\Model\Session as CustomerSession;
-use MageWorx\RewardPoints\Helper\Data as MageWorxRewardsHelper;
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\RewardPoints as BoltMageWorxRewards;
 
 class ApplyPlugin
@@ -27,25 +26,17 @@ class ApplyPlugin
      * @var CustomerSession
      */
     private $customerSession;
-    
-    /**
-     * @var MageWorxRewardsHelper
-     */
-    protected $helperData;
 
 
     /**
      * MageWorxRewardPointsControllerCheckoutApplyPlugin constructor.
      *
      * @param \Magento\Customer\Model\Session $customerSession
-     * @param \MageWorx\RewardPoints\Helper\Data $helperData
      */
     public function __construct(
-        CustomerSession $customerSession,
-        MageWorxRewardsHelper $helperData
+        CustomerSession $customerSession
     ) {
         $this->customerSession = $customerSession;
-        $this->helperData      = $helperData;
     }
 
     /**
@@ -54,7 +45,7 @@ class ApplyPlugin
      * @return mixed
      */
     public function beforeExecute(\MageWorx\RewardPoints\Controller\Checkout\Apply $subject) {
-        if ($this->helperData->isEnableForCustomer() && $subject->getRequest()->isXmlHttpRequest()) {
+        if ($subject->getRequest()->isXmlHttpRequest()) {
             $amount = $subject->getRequest()->getParam('amount');
             if (is_null($amount)) {
                 $this->customerSession->setBoltMageWorxRewardsMode(
