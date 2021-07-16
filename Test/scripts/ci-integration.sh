@@ -4,10 +4,9 @@ set -e
 set -u
 set -x
 
-npm cache clean -f
-npm install -g n
+sudo npm cache clean -f
 sudo npm install -g n
-sudo n 14.17.3
+sudo n ${NODE_VERSION} # 14.17.3 from https://app.circleci.com/settings/project/github/BoltApp/bolt-magento2/environment-variables
 
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
