@@ -36,6 +36,11 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
      */
     private $stockStatus;
 
+    /**
+     * @var array
+     */
+    private $options;
+
 
     /**
      * Get product info.
@@ -86,7 +91,30 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
         return $this;
     }
 
+    /**
+     * Get children info.
+     *
+     * @api
+     * @return \Magento\ConfigurableProduct\Api\Data\OptionInterface[]
+     */
+    public function getOptions()
+    {
+        return $this->options;
+    }
 
+    /**
+     * Set children info.
+     *
+     * @api
+     * @param \Magento\ConfigurableProduct\Api\Data\OptionInterface $options
+     *
+     * @return $this
+     */
+    public function setOptions($options)
+    {
+        $this->options = $options;
+        return $this;
+    }
 
     /**
      * @inheritDoc

@@ -41,11 +41,6 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
      * @var ProductInventoryInfoInterface
      */
     private $parent;
-
-    /**
-     * @var array
-     */
-    private $options;
     
     /**
      * @var string
@@ -181,33 +176,6 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
         $this->storeID = $storeID;
         return $this;
     }
-
-
-    /**
-     * Get children info.
-     *
-     * @api
-     * @return \Magento\ConfigurableProduct\Api\Data\OptionInterface[]
-     */
-    public function getOptions()
-    {
-        return $this->options;
-    }
-
-    /**
-     * Set children info.
-     *
-     * @api
-     * @param \Magento\ConfigurableProduct\Api\Data\OptionInterface $options
-     *
-     * @return $this
-     */
-    public function setOptions($options)
-    {
-        $this->options = $options;
-        return $this;
-    }
-
 
     /**
      * @inheritDoc
