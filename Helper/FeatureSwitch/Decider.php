@@ -94,6 +94,9 @@ class Decider extends AbstractHelper
      */
     private function _isInBucket(string $switchName, int $rolloutPercentage)
     {
+        if (!$this->_state->isAreaCodeEmulated()) {
+            $this->_state->setAreaCode(\Magento\Framework\App\Area::AREA_GLOBAL);
+        }
         $this->_session->start();
         $boltFeatureSwitchId = $this->_session->getBoltFeatureSwitchId();
         if (!$boltFeatureSwitchId) {
