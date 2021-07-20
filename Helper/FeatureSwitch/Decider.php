@@ -94,12 +94,12 @@ class Decider extends AbstractHelper
      */
     private function _isInBucket(string $switchName, int $rolloutPercentage)
     {
-        $session = $this->_session->start();
-        $boltFeatureSwitchId = $session->getBoltFeatureSwitchId();
+        $this->_session->start();
+        $boltFeatureSwitchId = $this->_session->getBoltFeatureSwitchId();
 
         if (!$boltFeatureSwitchId) {
             $boltFeatureSwitchId = uniqid("BFS", true);
-            $session->setBoltFeatureSwitchId($boltFeatureSwitchId);
+            $this->_session->setBoltFeatureSwitchId($boltFeatureSwitchId);
         }
         $saltedString = $boltFeatureSwitchId . "-" . $switchName;
         $hash = hash('md5', $saltedString);
