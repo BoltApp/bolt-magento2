@@ -1155,7 +1155,7 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
-        "filterCartDataForCreateCartRequest" => [
+        "filterBoltCartData" => [
             'listeners' => [
                 'Rossignol_Synolia_MultiStock' => [
                     'module'      => 'Synolia_MultiStock',

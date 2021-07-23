@@ -68,12 +68,14 @@ class MultiStock
      * @param null|int $storeId
      * @return array
      */
-    public function filterCartDataForCreateCartRequest(
+    public function filterBoltCartData(
         $result,
-        $request,
-        $storeId
+        $quote,
+        $immutableQuote,
+        $placeOrderPayload,
+        $paymentOnly
     ) {
-        $result['metadata']['store_id'] = $storeId;
+        $result['metadata']['store_id'] = (string)($quote->getStoreId());
         return $result;
     }
     
