@@ -1840,7 +1840,8 @@ class Cart extends AbstractHelper
         if ($this->deciderHelper->isIncludeUserGroupIntoCart()) {
             $cart['metadata']['user_group_id'] = $this->getUserGroupId();
         }
-
+        
+        $cart = $this->eventsForThirdPartyModules->runFilter('filterBoltCartData', $cart, $quote, $immutableQuote, $placeOrderPayload, $paymentOnly);
         $this->sessionHelper->cacheFormKey($immutableQuote);
 
         // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
@@ -2461,7 +2462,7 @@ class Cart extends AbstractHelper
                 return $cart;
             }
         }        
-        $cart = $this->eventsForThirdPartyModules->runFilter('filterCartDataForCreateCartRequest', $this->createCart($request['items'], $request['metadata']), $request, $storeId);
+        $cart = $this->createCart($request['items'], $request['metadata']);
         // cache and return
         if ($isBoltOrderCachingEnabled) {
             $this->saveToCache(
