@@ -33,7 +33,7 @@ Select ***Yes*** to enable it.
 + Enter an appropriate `Title` such as ***Credit & Debit Cards***
 
 > #### API credentials
-> The following four required values, (i.e. `API Key`, `Signing Secret`, `Publishable Key `) can be found in your ***Bolt Merchant Dashboard***  under `Developers` > `API`
+> The following three required values, (i.e. `API Key`, `Signing Secret`, `Publishable Key`) can be found in your ***Bolt Merchant Dashboard***  under `Developers` > `API`
 > The Publishable Key is for the multi-step checkout by default. You can find other publishable keys (Payment Only and Back-Office) in the division dropdown at the top-right corner.
 
 > For production, these will be found at:
