@@ -818,7 +818,7 @@ class UpdateCartCommonTest extends BoltTestCase
             'email_address'   => 'test@bolt.com',
         ];
         
-        $expected_result = '{"billingAddress":{"firstname":"","lastname":"","company":"","telephone":"","street":["",""],"city":"","region":"","postcode":"","countryId":"","email":""}}';
+        $expected_result = '{"billingAddress":{"firstname":"Test","lastname":"Bolt","company":"Bolt","telephone":"0123456789","street":["Test Street 1",""],"city":"Beverly Hills","region":"CA","postcode":"90210","countryId":"US","email":"test@bolt.com"}}';
         
         $result = $this->currentMock->createPayloadForVirtualQuote($quote, $billingAddress);
         
