@@ -803,7 +803,7 @@ class UpdateCartCommonTest extends BoltTestCase
         
         $this->featureSwitches->expects(self::once())->method('handleVirtualProductsAsPhysical')->willReturn(true);
         
-        $quote->expects(static::once())->method('isVirtual')->with(true)->willReturnSelf();
+        $quote->expects(static::once())->method('isVirtual')->willReturn(true);
         
         $billingAddress = [
             'first_name'      => 'Test',
