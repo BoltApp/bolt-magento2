@@ -364,6 +364,36 @@ abstract class UpdateCartCommon
         $this->sessionHelper->loadSession($quote, $metadata ?? []);
         $this->cartHelper->resetCheckoutSession($this->sessionHelper->getCheckoutSession());
     }
+    
+    /**
+     * When the feature switch M2_HANDLE_VIRTUAL_PRODUCTS_AS_PHYSICAL is enabled and the virtual quote has coupon applied,
+     * the billing address is required to get cart data.
+     *
+     * @param Quote $quote
+     * @param array $billingAddress
+     *
+     */
+    public function createPayloadForVirtualQuote($quote, $billingAddress)
+    {
+        if (!$quote->isVirtual() || !$this->featureSwitches->handleVirtualProductsAsPhysical()) {
+            return null;
+        }
+        $payload = [
+            'billingAddress' => [
+                'firstname' => $billingAddress['first_name'] ?? '',
+                'lastname'  => $billingAddress['last_name'] ?? '',
+                'company'   => $billingAddress['company'] ?? '',
+                'telephone' => $billingAddress['phone_number'] ?? '',
+                'street'    => [$billingAddress['street_address1'] ?? '', $billingAddress['street_address2'] ?? ''],
+                'city'      => $billingAddress['locality'] ?? '',
+                'region'    => $billingAddress['region'] ?? '',
+                'postcode'  => $billingAddress['postal_code'] ?? '',
+                'countryId' => $billingAddress['country_code'] ?? '',
+                'email'     => $billingAddress['email_address'] ?? '',
+            ],
+        ];
+        return json_encode((object)$payload);
+    }
 
     /**
      * @param int        $errCode

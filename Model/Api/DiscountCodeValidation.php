@@ -272,25 +272,9 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
     private function getCartTotals($quote)
     {
         $is_has_shipment = !empty($this->requestArray['cart']['shipments'][0]['reference']);
-        if ($quote->isVirtual() && $this->featureSwitches->handleVirtualProductsAsPhysical()) {
-            $payload = [
-                'billingAddress' => [
-                    'firstname' => $this->requestArray['cart']['billing_address']['first_name'] ?? '',
-                    'lastname'  => $this->requestArray['cart']['billing_address']['last_name'] ?? '',
-                    'company'   => $this->requestArray['cart']['billing_address']['company'] ?? '',
-                    'telephone' => $this->requestArray['cart']['billing_address']['phone_number'] ?? '',
-                    'street'    => [$this->requestArray['cart']['billing_address']['street_address1'] ?? '', $this->requestArray['cart']['billing_address']['street_address2'] ?? ''],
-                    'city'      => $this->requestArray['cart']['billing_address']['locality'] ?? '',
-                    'region'    => $this->requestArray['cart']['billing_address']['region'] ?? '',
-                    'postcode'  => $this->requestArray['cart']['billing_address']['postal_code'] ?? '',
-                    'countryId' => $this->requestArray['cart']['billing_address']['country_code'] ?? '',
-                    'email'     => $this->requestArray['cart']['billing_address']['email_address'] ?? '',
-                ],
-            ];
-            $payload = json_encode((object)$payload);
-        } else {
-            $payload = null;
-        }
+        $payload = isset($this->requestArray['cart']['billing_address'])
+                   ? $this->createPayloadForVirtualQuote($quote, $this->requestArray['cart']['billing_address'])
+                   : null;
         $cart = $this->cartHelper->getCartData($is_has_shipment, $payload, $quote);
         if (empty($cart)) {
             throw new \Exception('Something went wrong when getting cart data.');
