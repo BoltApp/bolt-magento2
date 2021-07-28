@@ -783,4 +783,45 @@ class UpdateCartCommonTest extends BoltTestCase
         
         $this->currentMock->updateSession($quote);
     }
+    
+    /**
+     * @test
+     * @covers ::createPayloadForVirtualQuote
+     *
+     */
+    public function createPayloadForVirtualQuote()
+    {
+        $this->initCurrentMock();
+        
+        $quote = $this->getQuoteMock(
+            self::PARENT_QUOTE_ID,
+            self::PARENT_QUOTE_ID,
+            [
+                'isVirtual',
+            ]
+        );
+        
+        $this->featureSwitches->expects(self::once())->method('handleVirtualProductsAsPhysical')->willReturn(true);
+        
+        $quote->expects(static::once())->method('isVirtual')->with(true)->willReturnSelf();
+        
+        $billingAddress = [
+            'first_name'      => 'Test',
+            'last_name'       => 'Bolt',
+            'street_address1' => "Test Street 1",
+            'locality'        => 'Beverly Hills',
+            'country_code'    => 'US',
+            'region'          => 'CA',
+            'postal_code'     => '90210',
+            'phone_number'    => '0123456789',
+            'company'         => 'Bolt',
+            'email_address'   => 'test@bolt.com',
+        ];
+        
+        $expected_result = '{"billingAddress":{"firstname":"","lastname":"","company":"","telephone":"","street":["",""],"city":"","region":"","postcode":"","countryId":"","email":""}}';
+        
+        $result = $this->currentMock->createPayloadForVirtualQuote($quote, $billingAddress);
+        
+        $this->assertEquals($expected_result, $result);
+    }
 }
