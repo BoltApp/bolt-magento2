@@ -139,7 +139,8 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Aheadworks_Giftcard",
-                    "sendClasses" => ["Aheadworks\Giftcard\Model\Service\GiftcardCartService"],
+                    "sendClasses" => ["Aheadworks\Giftcard\Model\Service\GiftcardCartService",
+                                      "Aheadworks\Giftcard\Model\ResourceModel\Giftcard\Quote\CollectionFactory"],
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
                 'Amasty Giftcard V2' => [
