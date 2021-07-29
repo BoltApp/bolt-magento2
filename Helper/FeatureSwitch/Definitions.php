@@ -443,7 +443,7 @@ class Definitions
             self::NAME_KEY        => self::M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
-            self::ROLLOUT_KEY     => 0
+            self::ROLLOUT_KEY     => 100
         ],
     ];
 }
