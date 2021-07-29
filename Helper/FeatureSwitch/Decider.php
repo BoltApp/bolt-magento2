@@ -382,4 +382,12 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_IGNORE_TOTAL_VALIDATION_WHEN_CREDIT_HOOK_IS_SENT_TO_MAGENTO);
     }
+
+    /**
+     * Checks whether the feature switch to prevent setting Bolt IPs as customer IP on quote is enabled
+     */
+    public function isPreventSettingBoltIpsAsCustomerIpOnQuote()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE);
+    }
 }
