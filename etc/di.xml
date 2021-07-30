@@ -255,4 +255,8 @@
                 type="Bolt\Boltpay\Plugin\MageWorx\RewardPoints\Controller\Checkout\ApplyPlugin"
                 sortOrder="1"/>
     </type>
+    <type name="ImaginationMedia\TmwGiftCard\Observer\ForceInvoice">
+        <plugin name="Bolt_Boltpay_ImaginationMedia_TmwGiftCard_ForceInvoicePlugin"
+                type="Bolt\Boltpay\Plugin\ImaginationMedia\TmwGiftCard\ForceInvoicePlugin" sortOrder="1"/>
+    </type>
 </config>
