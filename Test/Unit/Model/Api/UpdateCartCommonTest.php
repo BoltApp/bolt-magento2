@@ -805,22 +805,24 @@ class UpdateCartCommonTest extends BoltTestCase
         
         $quote->expects(static::once())->method('isVirtual')->willReturn(true);
         
-        $billingAddress = [
-            'first_name'      => 'Test',
-            'last_name'       => 'Bolt',
-            'street_address1' => "Test Street 1",
-            'locality'        => 'Beverly Hills',
-            'country_code'    => 'US',
-            'region'          => 'CA',
-            'postal_code'     => '90210',
-            'phone_number'    => '0123456789',
-            'company'         => 'Bolt',
-            'email_address'   => 'test@bolt.com',
+        $requestData = [
+            'billing_address' => [
+                'first_name'      => 'Test',
+                'last_name'       => 'Bolt',
+                'street_address1' => "Test Street 1",
+                'locality'        => 'Beverly Hills',
+                'country_code'    => 'US',
+                'region'          => 'CA',
+                'postal_code'     => '90210',
+                'phone_number'    => '0123456789',
+                'company'         => 'Bolt',
+                'email_address'   => 'test@bolt.com',    
+            ]
         ];
         
         $expected_result = '{"billingAddress":{"firstname":"Test","lastname":"Bolt","company":"Bolt","telephone":"0123456789","street":["Test Street 1",""],"city":"Beverly Hills","region":"CA","postcode":"90210","countryId":"US","email":"test@bolt.com"}}';
         
-        $result = $this->currentMock->createPayloadForVirtualQuote($quote, $billingAddress);
+        $result = $this->currentMock->createPayloadForVirtualQuote($quote, $requestData);
         
         $this->assertEquals($expected_result, $result);
     }
