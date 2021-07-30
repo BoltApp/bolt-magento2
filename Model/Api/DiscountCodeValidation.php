@@ -272,9 +272,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
     private function getCartTotals($quote)
     {
         $is_has_shipment = !empty($this->requestArray['cart']['shipments'][0]['reference']);
-        $payload = isset($this->requestArray['cart']['billing_address'])
-                   ? $this->createPayloadForVirtualQuote($quote, $this->requestArray['cart']['billing_address'])
-                   : null;
+        $payload = $this->createPayloadForVirtualQuote($quote, $this->requestArray);
         $cart = $this->cartHelper->getCartData($is_has_shipment, $payload, $quote);
         if (empty($cart)) {
             throw new \Exception('Something went wrong when getting cart data.');

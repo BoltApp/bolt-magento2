@@ -370,12 +370,18 @@ abstract class UpdateCartCommon
      * the billing address is required to get cart data.
      *
      * @param Quote $quote
-     * @param array $billingAddress
+     * @param array $requestData
      *
      */
-    public function createPayloadForVirtualQuote($quote, $billingAddress)
+    public function createPayloadForVirtualQuote($quote, $requestData)
     {
         if (!$quote->isVirtual() || !$this->featureSwitches->handleVirtualProductsAsPhysical()) {
+            return null;
+        }
+        $billingAddress = $requestData['cart']['billing_address']
+                          ?? $requestData['billing_address']
+                          ?? null;
+        if (!$billingAddress) {
             return null;
         }
         $payload = [
