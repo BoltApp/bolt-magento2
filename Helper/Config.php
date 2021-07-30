@@ -401,6 +401,8 @@ class Config extends AbstractHelper
     const CHECKOUT_PAGE_ACTION = 'checkout_index_index';
     const SUCCESS_PAGE_ACTION = 'checkout_onepage_success';
     const HOME_PAGE_ACTION = 'cms_index_index';
+    const LOGIN_PAGE_ACTION = 'customer_account_login';
+    const CREATE_ACCOUNT_PAGE_ACTION = 'customer_account_create';
 
     /**
      * Map of human-readable config names to their XML paths
