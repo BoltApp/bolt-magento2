@@ -91,7 +91,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
         $this->sessionHelper->expects(self::once())
                             ->method('getCheckoutSession')
                             ->willReturn($this->checkoutSession);
-        $this->plugin->beforeMinFix($this->subject, null, null, $item, null);
+        $this->plugin->beforeMinFix($this->subject, null, $item, null);
     }
 
     /**
