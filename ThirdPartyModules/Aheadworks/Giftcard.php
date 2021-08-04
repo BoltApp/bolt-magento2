@@ -247,22 +247,69 @@ class Giftcard
     }
 
     /**
-     * @param $aheadworksGiftcardOrderServicePlugin
-     * @param $sourceQuote
-     * @param $destinationQuote
+     * @param \Aheadworks\Giftcard\Model\Service\GiftcardCartService $aheadworksGiftcardOrderServicePlugin
+     * @param \Aheadworks\Giftcard\Model\ResourceModel\Giftcard\Quote\CollectionFactory $aheadworksGiftcardQuoteCollectionFactory
+     * @param Quote $sourceQuote
+     * @param Quote $destinationQuote
      */
-    public function replicateQuoteData($aheadworksGiftcardOrderServicePlugin, $sourceQuote, $destinationQuote)
+    public function replicateQuoteData($aheadworksGiftcardOrderServicePlugin, $aheadworksGiftcardQuoteCollectionFactory, $sourceQuote, $destinationQuote)
     {
-        if ($sourceQuote->getExtensionAttributes() && $sourceQuote->getExtensionAttributes()->getAwGiftcardCodes()
-            && (!$destinationQuote->getExtensionAttributes()
-                || empty($destinationQuote->getExtensionAttributes()->getAwGiftcardCodes()))
-        ) {
-            $giftcards = $sourceQuote->getExtensionAttributes()->getAwGiftcardCodes();
-            /** @var GiftcardQuoteInterface $giftcard */
-            foreach ($giftcards as $giftcard) {
-                $giftcardCode = $giftcard->getGiftcardCode();
-                $aheadworksGiftcardOrderServicePlugin->set($destinationQuote->getId(), $giftcardCode, false);
+        try {
+            // Get applied Aw Giftcards from extension attributes
+            $sourceGiftcards = ($sourceQuote->getExtensionAttributes() && $sourceQuote->getExtensionAttributes()->getAwGiftcardCodes())
+                                ? $sourceQuote->getExtensionAttributes()->getAwGiftcardCodes()
+                                : [];
+            $destinationGiftcards = ($destinationQuote->getExtensionAttributes() && $destinationQuote->getExtensionAttributes()->getAwGiftcardCodes())
+                                    ? $destinationQuote->getExtensionAttributes()->getAwGiftcardCodes()
+                                    : [];
+            // Retrieve codes from applied Aw Giftcards
+            $sourceGiftcardCodes = $this->getAppliedAwGiftcardCodes($sourceQuote, $sourceGiftcards, $aheadworksGiftcardQuoteCollectionFactory);            
+            $destinationGiftcardCodes = $this->getAppliedAwGiftcardCodes($destinationQuote, $destinationGiftcards, $aheadworksGiftcardQuoteCollectionFactory);
+            // Get Aw Giftcard codes need to be added
+            $addGiftcardCodes = array_diff($sourceGiftcardCodes, $destinationGiftcardCodes);
+            // Get Aw Giftcard codes need to be removed
+            $removeGiftcardCodes = array_diff($destinationGiftcardCodes, $sourceGiftcardCodes);
+            // Add Aw Giftcard which exists in $sourceQuote but not $destinationQuote
+            foreach ($addGiftcardCodes as $code) {
+                try {
+                    $aheadworksGiftcardOrderServicePlugin->set($destinationQuote->getId(), $code, false);
+                } catch (\Exception $e) {
+                    $this->bugsnag->notifyException($e);
+                }
+            }
+            // Remove Aw Giftcard which exists in $destinationQuote but not $sourceQuote
+            foreach ($removeGiftcardCodes as $code) {
+                try {
+                    $aheadworksGiftcardOrderServicePlugin->remove($destinationQuote->getId(), $code, false);
+                } catch (\Exception $e) {
+                    $this->bugsnag->notifyException($e);
+                }
+            }
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+        }
+    }
+    
+    /**
+     * @param Quote $quote
+     * @param \Aheadworks\Giftcard\Api\Data\Giftcard\QuoteInterface $quoteGiftcards
+     * @param \Aheadworks\Giftcard\Model\ResourceModel\Giftcard\Quote\CollectionFactory $aheadworksGiftcardQuoteCollectionFactory
+     */
+    private function getAppliedAwGiftcardCodes($quote, $quoteGiftcards, $aheadworksGiftcardQuoteCollectionFactory) {
+        $awGiftcardCodes = [];
+        if (!empty($quoteGiftcards)) {
+            foreach ($quoteGiftcards as $giftcard) {
+                $giftcardQuoteItems = $aheadworksGiftcardQuoteCollectionFactory->create()
+                    ->addFieldToFilter('quote_id', $quote->getId())
+                    ->addFieldToFilter('giftcard_id', $giftcard->getId())
+                    ->load()
+                    ->getItems();
+                if ($giftcardQuoteItems) {
+                    $awGiftcardCodes[] = $giftcard->getGiftcardCode();
+                }
             }
         }
+        
+        return $awGiftcardCodes;
     }
 }
