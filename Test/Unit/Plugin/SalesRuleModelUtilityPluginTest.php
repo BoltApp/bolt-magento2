@@ -88,6 +88,9 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
         $item->expects(self::once())
             ->method('getDiscountAmount')
             ->willReturn(20.0);
+        $this->sessionHelper->expects(self::once())
+                            ->method('getCheckoutSession')
+                            ->willReturn($this->checkoutSession);
         $this->plugin->beforeMinFix($this->subject, null, null, $item, null);
     }
 
@@ -143,17 +146,14 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
         $this->checkoutSession->expects(self::once())
                             ->method('getBoltNeedCollectSaleRuleDiscounts')
                             ->willReturn(2);
-        $boltCollectSaleRuleDiscounts = [2 => 106.0,];
-        $this->checkoutSession->expects(self::once())
-                            ->method('getBoltCollectSaleRuleDiscounts')
-                            ->willReturn($boltCollectSaleRuleDiscounts);
         $boltDiscountBreakdown = ['item_discount' => 20.0,'rule_id' => 2,];
         $this->checkoutSession->expects(self::once())
                             ->method('getBoltDiscountBreakdown')
                             ->willReturn($boltDiscountBreakdown);
-        $this->checkoutSession->expects(self::once())
-                            ->method('setBoltCollectSaleRuleDiscounts')
-                            ->with([2 => 106.0,]);
+        $this->checkoutSession->expects(self::never())
+                            ->method('getBoltCollectSaleRuleDiscounts');
+        $this->checkoutSession->expects(self::never())
+                            ->method('setBoltCollectSaleRuleDiscounts');
         $this->checkoutSession->expects(self::once())
                             ->method('setBoltNeedCollectSaleRuleDiscounts')
                             ->with('');
@@ -178,8 +178,9 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
                             ->method('getBoltDiscountBreakdown');
         $this->checkoutSession->expects(self::never())
                             ->method('setBoltCollectSaleRuleDiscounts');
-        $this->checkoutSession->expects(self::never())
-                            ->method('setBoltNeedCollectSaleRuleDiscounts');
+        $this->checkoutSession->expects(self::once())
+                            ->method('setBoltNeedCollectSaleRuleDiscounts')
+                            ->with('');
         $this->sessionHelper->expects(self::once())
                             ->method('getCheckoutSession')
                             ->willReturn($this->checkoutSession);
