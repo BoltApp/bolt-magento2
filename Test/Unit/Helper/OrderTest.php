@@ -4593,8 +4593,9 @@ class OrderTest extends BoltTestCase
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage(sprintf(
-            'Capture amount is invalid: captured [%s], grand total [%s]',
-            30000,
+            'Capture amount is invalid: capture amount [%s], previously captured [%s], grand total [%s]',
+            10000,
+            20000,
             10000
         ));
         TestUtils::cleanupSharedFixtures([$order]);
