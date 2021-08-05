@@ -20,9 +20,19 @@ namespace Bolt\Boltpay\Block;
 class Info extends \Magento\Payment\Block\Info
 {
     protected $_template = 'Bolt_Boltpay::info/default.phtml';
-    
+
     /**
-     * @param null $transport
+     * Render as PDF
+     * @return string
+     */
+    public function toPdf()
+    {
+        $this->setTemplate('Bolt_Boltpay::info/pdf/default.phtml');
+        return $this->toHtml();
+    }
+
+    /**
+     * @param null|\Magento\Framework\DataObject|array $transport
      * @return \Magento\Framework\DataObject|null
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -31,11 +41,11 @@ class Info extends \Magento\Payment\Block\Info
         $transport = parent::_prepareSpecificInformation($transport);
         $info = $this->getInfo();
         $data = [];
-        
+
         if ($ccType = $info->getCcType()) {
             $data[(string)__('Credit Card Type')] = strtoupper($ccType);
         }
-    
+
         if ($ccLast4 = $info->getCcLast4()) {
             $data[(string)__('Credit Card Number')] = sprintf('xxxx-%s', $ccLast4);
         }
@@ -46,7 +56,7 @@ class Info extends \Magento\Payment\Block\Info
 
         return $transport;
     }
-    
+
     public function displayPaymentMethodTitle()
     {
         $info = $this->getInfo();
@@ -64,7 +74,7 @@ class Info extends \Magento\Payment\Block\Info
                 ? 'Bolt-' . \Bolt\Boltpay\Helper\Order::TP_METHOD_DISPLAY[ $boltProcessor ]
                 : 'Bolt-' . ucfirst($boltProcessor);
         }
-        
+
         return $paymentTitle;
     }
 }

@@ -4,6 +4,10 @@ set -e
 set -u
 set -x
 
+sudo npm cache clean -f
+sudo npm install -g n
+sudo n ${NODE_VERSION} # 14.17.3 from https://app.circleci.com/settings/project/github/BoltApp/bolt-magento2/environment-variables
+
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
 git clone --depth 1 git@github.com:BoltApp/integration-tests.git
@@ -11,9 +15,9 @@ git clone --depth 1 git@github.com:BoltApp/integration-tests.git
 sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-networking --protocol=socket
 
 cd integration-tests/operations/docker/m2
-gzip -d create_test_data.sql.gz
+gzip -d m2ci.sql.gz
 ls 
-sudo mysql magento2 < create_test_data.sql
+sudo mysql magento2 < m2ci.sql
 cd /home/circleci/project
 cp Test/scripts/CouponCode.php ../$MAGENTO_DIR
 cp Test/scripts/FreeShipping.php ../$MAGENTO_DIR

@@ -51,6 +51,8 @@ class DataTest extends BoltTestCase
     const HINT = 'hint!';
     const RESPONSE_TOKEN = 'response_token';
     const CUSTOMER_EMAIL = 'test@bolt.com';
+    const CDN_URL_SANDBOX = 'https://connect-sandbox.bolt.com';
+    const CDN_URL_SANDBOX_JS = 'https://connect-sandbox.bolt.com/connect.js';
 
     /**
      * @var Context
@@ -171,7 +173,8 @@ class DataTest extends BoltTestCase
             'storeId'        => self::STORE_ID,
             'isPreAuth'      => self::IS_PREAUTH,
             'backOfficeKey'  => self::PUBLISHABLE_KEY,
-            'paymentOnlyKey' => null
+            'paymentOnlyKey' => null,
+            'connectUrl'     => self::CDN_URL_SANDBOX_JS,
         ];
 
         $this->noTokenCartArray = ['orderToken' => ''];
@@ -184,6 +187,7 @@ class DataTest extends BoltTestCase
             'isPreAuth'      => self::IS_PREAUTH,
             'backOfficeKey'  => self::PUBLISHABLE_KEY,
             'paymentOnlyKey' => '',
+            'connectUrl'     => self::CDN_URL_SANDBOX_JS,
         ];
 
         $this->map = [
@@ -210,9 +214,14 @@ class DataTest extends BoltTestCase
 
         $this->configHelperMock = $this->createMock(Config::class);
         $this->configHelperMock->method('getPublishableKeyBackOffice')
+            ->with(self::STORE_ID)
             ->willReturn(self::PUBLISHABLE_KEY);
         $this->configHelperMock->method('getIsPreAuth')
+            ->with(self::STORE_ID)
             ->willReturn(self::IS_PREAUTH);
+        $this->configHelperMock->method('getCdnUrl')
+            ->with(self::STORE_ID)
+            ->willReturn(self::CDN_URL_SANDBOX);
 
         $this->quoteMock = $this->createPartialMock(
             \Magento\Quote\Model\Quote::class,
@@ -440,6 +449,7 @@ class DataTest extends BoltTestCase
                 'paymentOnlyKey' => '',
                 'storeId'        => '',
                 'isPreAuth'      => '',
+                'connectUrl'     => '',
             ]
         );
 
@@ -477,6 +487,7 @@ class DataTest extends BoltTestCase
                 'paymentOnlyKey' => '',
                 'storeId'        => self::STORE_ID,
                 'isPreAuth'      => self::IS_PREAUTH,
+                'connectUrl'     => self::CDN_URL_SANDBOX_JS,
             ]
         );
 

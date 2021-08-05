@@ -313,7 +313,7 @@ class CreateOrder implements CreateOrderInterface
         $this->eventsForThirdPartyModules->dispatchEvent("beforePrepareQuote", $immutableQuote);
         /** @var Quote $quote */
         $quote = $this->orderHelper->prepareQuote($immutableQuote, $transaction);
-
+        $this->cartHelper->checkCartItemStockState($quote, self::E_BOLT_ITEM_OUT_OF_INVENTORY);
         /** @var \Magento\Sales\Model\Order $createdOrder */
         $createdOrder = $this->orderHelper->processExistingOrder($quote, $transaction);
 
@@ -544,7 +544,7 @@ class CreateOrder implements CreateOrderInterface
         foreach ($quoteItems as $item) {
             /** @var QuoteItem $item */
             $sku = trim($item->getSku());
-            $itemPrice = CurrencyUtils::toMinor($item->getPrice(), $quote->getQuoteCurrencyCode());
+            $itemPrice = CurrencyUtils::toMinor($item->getCalculationPrice(), $quote->getQuoteCurrencyCode());
 
             $this->hasItemErrors($item);
             $this->validateItemPrice($sku, $itemPrice, $transactionItems);
@@ -567,7 +567,10 @@ class CreateOrder implements CreateOrderInterface
         $errorInfos = $quoteItem->getErrorInfos();
         $message = '';
         foreach ($errorInfos as $errorInfo) {
-            $message .= '(' . $errorInfo['origin'] . '): ' . (is_string($errorInfo['message']) ?  $errorInfo['message'] : $errorInfo['message']->render()) . PHP_EOL;
+            // origin, code, message, additionalData keys always set but can equal null
+            if (isset($errorInfo['origin']) || isset($errorInfo['message'])) {
+                $message .= sprintf("(%s): %s%s", (string)$errorInfo['origin'], (string)$errorInfo['message'], PHP_EOL);
+            }
         }
         $errorCode = isset($errorInfos[0]['code']) ? $errorInfos[0]['code'] : 0;
 

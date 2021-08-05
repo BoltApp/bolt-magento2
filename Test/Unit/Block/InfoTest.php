@@ -22,17 +22,36 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\Payment as BoltPayment;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\MockObject\MockObject;
 
+/**
+ * Class InfoTest
+ *
+ * @coversDefaultClass \Bolt\Boltpay\Block\Info
+ */
 class InfoTest extends BoltTestCase
 {
     /**
-     * @var Info
+     * @var Info|MockObject
      */
     protected $mock;
 
     protected function setUpInternal()
     {
-        $this->mock = $this->createPartialMock(Info::class, ['getInfo', 'getMethod', 'getCcType', 'getCcLast4', 'getAdditionalInformation', 'getOrder', 'getAdditionalData']);
+        $this->mock = $this->createPartialMock(
+            Info::class,
+            [
+                'getInfo',
+                'getMethod',
+                'getCcType',
+                'getCcLast4',
+                'getAdditionalInformation',
+                'getOrder',
+                'getAdditionalData',
+                'setTemplate',
+                'toHtml',
+            ]
+        );
     }
 
     /**
@@ -52,7 +71,7 @@ class InfoTest extends BoltTestCase
             $data->getData()
         );
     }
-    
+
     /**
      * @test
      */
@@ -67,7 +86,7 @@ class InfoTest extends BoltTestCase
             $data->getData()
         );
     }
-    
+
     /**
      * @test
      */
@@ -97,7 +116,7 @@ class InfoTest extends BoltTestCase
             $data
         );
     }
-    
+
     /**
      * @test
      */
@@ -111,7 +130,7 @@ class InfoTest extends BoltTestCase
             $data
         );
     }
-    
+
     /**
      * @test
      */
@@ -124,5 +143,26 @@ class InfoTest extends BoltTestCase
             'Bolt-Applepay',
             $data
         );
+    }
+
+    /**
+     * @test
+     * that toPdf will set custom template and call toHtml
+     *
+     * @covers ::toPdf
+     */
+    public function toPdf_always_setsTemplateAndRendersHTML()
+    {
+        $testHTML = <<<'HTML'
+Bolt-Braintree{{pdf_row_separator}}
+
+            Credit Card Type:
+        VISA        {{pdf_row_separator}}
+            Credit Card Number:
+        xxxx-1111        {{pdf_row_separator}}
+HTML;
+        $this->mock->expects(static::once())->method('setTemplate')->with('Bolt_Boltpay::info/pdf/default.phtml');
+        $this->mock->expects(static::once())->method('toHtml')->willReturn($testHTML);
+        static::assertEquals($testHTML, $this->mock->toPdf());
     }
 }

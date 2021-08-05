@@ -20,10 +20,13 @@ namespace Bolt\Boltpay\Test\Unit\Block\Checkout;
 
 use Bolt\Boltpay\Block\Checkout\Success;
 use Bolt\Boltpay\Helper\Config as HelperConfig;
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\App\Config\Storage\WriterInterface;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\TestFramework\ObjectManager;
 
 /**
  * Class SuccessTest
@@ -35,12 +38,41 @@ class SuccessTest extends BoltTestCase
     /**
      * @var HelperConfig
      */
-    protected $configHelper;
+    protected $success;
 
     /**
      * @var Success
      */
     protected $block;
+
+    /**
+     * @var StoreManagerInterface
+     */
+    protected $storeId;
+
+    /**
+     * @var WebsiteRepositoryInterface
+     */
+    protected $websiteId;
+
+    /**
+     * @var ObjectManager
+     */
+    protected $objectManager;
+
+    protected function setUpInternal()
+    {
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->success = $this->objectManager->create(Success::class);
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $this->storeId = $store->getStore()->getId();
+
+        $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
+        $this->websiteId = $websiteRepository->get('base')->getId();
+    }
 
     /**
      * @test
@@ -51,9 +83,17 @@ class SuccessTest extends BoltTestCase
      */
     public function shouldTrackCheckoutFunnel_getValueFromConfig($config, $expected)
     {
-        $this->configHelper->method('shouldTrackCheckoutFunnel')->willReturn($config);
+        $configData = [
+            [
+                'path' => HelperConfig::XML_PATH_TRACK_CHECKOUT_FUNNEL,
+                'value' => $config,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
 
-        $result = $this->block->shouldTrackCheckoutFunnel();
+        $result = $this->success->shouldTrackCheckoutFunnel();
 
         $this->assertEquals($expected, $result);
     }
@@ -66,32 +106,5 @@ class SuccessTest extends BoltTestCase
         ];
     }
 
-    protected function setUpInternal()
-    {
-        $helperContextMock = $this->createMock(\Magento\Framework\App\Helper\Context::class);
-        $contextMock = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);
-        $requestMock = $this->getMockBuilder(Http::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getFullActionName'])
-            ->getMock();
-        $contextMock->method('getRequest')->willReturn($requestMock);
 
-        $this->configHelper = $this->getMockBuilder(HelperConfig::class)
-            ->setMethods(['shouldTrackCheckoutFunnel'])
-            ->setConstructorArgs(
-                [
-                    $helperContextMock,
-                    $this->createMock(\Magento\Framework\Encryption\EncryptorInterface::class),
-                    $this->createMock(\Magento\Framework\Module\ResourceInterface::class),
-                    $this->createMock(\Magento\Framework\App\ProductMetadataInterface::class),
-                    $this->createMock(BoltConfigSettingFactory::class),
-                    $this->createMock(\Magento\Directory\Model\RegionFactory::class),
-                    $this->createMock(\Magento\Framework\Composer\ComposerFactory::class),
-                    $this->createMock(WriterInterface::class)
-                ]
-            )
-            ->getMock();
-        $deciderMock = $this->createMock(Decider::class);
-        $this->block = new Success($this->configHelper, $contextMock, $deciderMock);
-    }
 }

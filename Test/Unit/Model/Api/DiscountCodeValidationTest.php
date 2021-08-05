@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 use Bolt\Boltpay\Model\Api\DiscountCodeValidation as BoltDiscountCodeValidation;
 
 use Magento\Framework\DataObject;
+use Magento\SalesRule\Model\Data\RuleLabel;
 use Magento\SalesRule\Model\Rule;
 use Magento\SalesRule\Model\RuleRepository;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
@@ -866,7 +867,53 @@ class DiscountCodeValidationTest extends BoltTestCase
             [self::COUPON_CODE, $this->couponMock, $this->parentQuoteMock]
         );
     }
-    
+
+    /**
+     * @test
+     * @covers ::getParentQuoteDiscountResult
+     */
+    public function getParentQuoteDiscountResult_storeLabel()
+    {
+        $this->initCurrentMock();
+        $this->configureCouponMockMethods([
+            'getRuleId' => [
+                'expects' => 'once'
+            ]
+        ]);
+
+        $parentQuoteMock = $this->getQuoteMock(
+            self::COUPON_CODE,
+            null,
+            null,
+            true,
+            self::PARENT_QUOTE_ID,
+            self::PARENT_QUOTE_ID
+        );
+
+        $ruleLabelMock = $this->getMockBuilder(RuleLabel::class)
+            ->setMethods(['getStoreLabel'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $ruleLabelMockArray = [$ruleLabelMock];
+
+        $ruleLabelMock->expects(self::once())->method('getStoreLabel')
+            ->willReturn('testLabel');
+        $this->ruleMock->expects(self::once())->method('getStoreLabels')
+            ->willReturn($ruleLabelMockArray);
+        $this->ruleRepositoryMock->expects(self::once())->method('getById')->with(self::RULE_ID)
+            ->willReturn($this->ruleMock);
+        $this->shippingAddressMock->expects(self::once())->method('getDiscountDescription')
+            ->willReturn('');
+
+        $result = $this->invokeNonAccessibleMethod(
+            'getParentQuoteDiscountResult',
+            [self::COUPON_CODE, $this->couponMock, $parentQuoteMock]
+        );
+
+        $this->assertEquals('testLabel', $result['description']);
+    }
+
     /**
      * @test
      * @covers ::getCartTotals
@@ -881,10 +928,10 @@ class DiscountCodeValidationTest extends BoltTestCase
             'discounts'    => [],
         ];
         
+        $this->parentQuoteMock->expects(static::once())->method('isVirtual')->willReturn(false);
         $this->cartHelper->expects(self::once())->method('getCartData')
             ->with(false, null, $this->parentQuoteMock)
             ->willReturn($cartData);
-        
         $result = TestHelper::invokeMethod($this->currentMock, 'getCartTotals', [$this->parentQuoteMock]);
         
         $this->assertEquals($cartData, $result);
@@ -899,7 +946,7 @@ class DiscountCodeValidationTest extends BoltTestCase
         $this->initCurrentMock();
         
         $cartData = [];
-        
+        $this->parentQuoteMock->expects(static::once())->method('isVirtual')->willReturn(false);
         $this->cartHelper->expects(self::once())->method('getCartData')
             ->with(false, null, $this->parentQuoteMock)
             ->willReturn($cartData);
@@ -1119,7 +1166,8 @@ class DiscountCodeValidationTest extends BoltTestCase
                     'getFromDate',
                     'getDescription',
                     'getWebsiteIds',
-                    'getUsesPerCustomer'
+                    'getUsesPerCustomer',
+                    'getStoreLabels'
                 ]
             )
             ->disableOriginalConstructor()
@@ -1169,7 +1217,7 @@ class DiscountCodeValidationTest extends BoltTestCase
             ->getMock();
 
         $this->parentQuoteMock = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getItemsCount', 'getCouponCode', 'getCustomerId'])
+            ->setMethods(['getItemsCount', 'getCouponCode', 'getCustomerId', 'isVirtual'])
             ->disableOriginalConstructor()
             ->getMock();
 

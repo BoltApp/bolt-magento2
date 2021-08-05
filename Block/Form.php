@@ -180,7 +180,7 @@ class Form extends PaymentForm
      */
     public function getPublishableKeyBackOffice()
     {
-        return $this->configHelper->getPublishableKeyBackOffice();
+        return $this->configHelper->getPublishableKeyBackOffice($this->getQuoteData()->getStoreId());
     }
 
     /**
@@ -188,7 +188,7 @@ class Form extends PaymentForm
      */
     public function getPublishableKeyPaymentOnly()
     {
-        return $this->configHelper->getPublishableKeyPayment();
+        return $this->configHelper->getPublishableKeyPayment($this->getQuoteData()->getStoreId());
     }
 
     /**

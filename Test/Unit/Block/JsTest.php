@@ -46,6 +46,8 @@ use Magento\Store\Api\Data\StoreInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use ReflectionException;
+use Magento\Framework\App\State;
+use Magento\Framework\App\Area;
 
 /**
  * Class JsTest
@@ -59,7 +61,7 @@ class JsTest extends BoltTestCase
     /**
      * @var int expected number of settings returned by {@see \Bolt\Boltpay\Block\Js::getSettings}
      */
-    const SETTINGS_NUMBER = 26;
+    const SETTINGS_NUMBER = 27;
 
     /**
      * @var int expeced number of tracking callback returned by {@see \Bolt\Boltpay\Block\Js::getTrackCallbacks}
@@ -145,6 +147,9 @@ class JsTest extends BoltTestCase
      * @var MockObject|EventsForThirdPartyModules
      */
     private $eventsForThirdPartyModules;
+    
+    /** @var State */
+    private $_appState;
 
     /**
      * @test
@@ -565,6 +570,30 @@ class JsTest extends BoltTestCase
 
         static::assertEquals($value, $result, 'getGlobalCSS() method: not working properly');
     }
+    
+    /**
+     * @test
+     * that getGlobalJS returns global javascript from config to be added to any page
+     *
+     * @see \Bolt\Boltpay\Helper\Config::getGlobalJS
+     *
+     * @covers ::getGlobalJS
+     */
+    public function getGlobalJS_always_returnsJSCode()
+    {
+        $value = 'require([
+            "jquery"
+        ], function ($) {       
+        });';
+
+        $this->configHelper->expects(static::once())
+            ->method('getGlobalJS')
+            ->willReturn($value);
+
+        $result = $this->currentMock->getGlobalJS();
+
+        static::assertEquals($value, $result, 'getGlobalJS() method: not working properly');
+    }
 
     /**
      * @test
@@ -634,6 +663,7 @@ class JsTest extends BoltTestCase
 
         $message = 'Cannot find following key in the Settings: ';
         static::assertArrayHasKey('connect_url', $array, $message . 'connect_url');
+        static::assertArrayHasKey('track_url', $array, $message . 'track_url');
         static::assertArrayHasKey('publishable_key_payment', $array, $message . 'publishable_key_payment');
         static::assertArrayHasKey('publishable_key_checkout', $array, $message . 'publishable_key_checkout');
         static::assertArrayHasKey('publishable_key_back_office', $array, $message . 'publishable_key_back_office');
@@ -1372,10 +1402,17 @@ JS;
      */
     public function isEnabled_withVariousConfigActiveStates_returnsBoltPaymentModuleIsActive(
         $isActive,
+        $areaCode,
         $expectedResult
     ) {
+        $this->_appState = $this->createPartialMock(
+            State::class,
+            ['getAreaCode']
+        );
+        TestHelper::setProperty($this->currentMock, '_appState', $this->_appState);
+        $this->_appState->expects(self::once())->method('getAreaCode')->willReturn($areaCode);
         $this->currentMock->expects(static::once())->method('getStoreId')->willReturn(static::STORE_ID);
-        $this->configHelper->expects(static::once())
+        $this->configHelper->expects($areaCode == Area::AREA_ADMINHTML ? static::never() : static::once())
             ->method('isActive')
             ->with(static::STORE_ID)
             ->willReturn($isActive);
@@ -1391,8 +1428,10 @@ JS;
     public function isEnabled_withVariousConfigActiveStatesProvider()
     {
         return [
-            ['isActive' => false, 'expectedResult' => false],
-            ['isActive' => true, 'expectedResult' => true],
+            ['isActive' => false, 'areaCode' => Area::AREA_WEBAPI_SOAP, 'expectedResult' => false],
+            ['isActive' => true, 'areaCode' => Area::AREA_WEBAPI_SOAP, 'expectedResult' => true],
+            ['isActive' => false, 'areaCode' => Area::AREA_ADMINHTML, 'expectedResult' => true],
+            ['isActive' => true, 'areaCode' => Area::AREA_ADMINHTML, 'expectedResult' => true],
         ];
     }
 
@@ -2033,6 +2072,15 @@ function(arg) {
         $this->eventsForThirdPartyModules->expects(static::once())->method('runFilter')->with('getAdditionalInvalidateBoltCartJavascript', null)->willReturn('test js');
         $this->assertEquals('test js', $this->currentMock->getAdditionalInvalidateBoltCartJavascript());
     }
+    
+    /**
+     * @test
+     */
+    public function getAdditionalQuoteTotalsConditions_returnsCorrectResult()
+    {
+        $this->eventsForThirdPartyModules->expects(static::once())->method('runFilter')->with('getAdditionalQuoteTotalsConditions', null)->willReturn('test js');
+        $this->assertEquals('test js', $this->currentMock->getAdditionalQuoteTotalsConditions());
+    }
 
     /**
      * Setup test dependencies, called before each test
@@ -2060,6 +2108,7 @@ function(arg) {
             'getPublishableKeyBackOffice',
             'getReplaceSelectors',
             'getGlobalCSS',
+            'getGlobalJS',
             'getPrefetchShipping',
             'getQuoteIsVirtual',
             'getTotalsChangeSelectors',
@@ -2403,6 +2452,80 @@ function(arg) {
                 'productPageCheckoutFlag'                           => false,
                 'isLoadConnectJsOnSpecificPageFeatureSwitchEnabled' => true,
                 'expectedResult'                                    => false
+            ],
+        ];
+    }
+    
+    /**
+     * @test
+     *
+     * @dataProvider isDisableTrackJsOnHomePage_withVariousConfigsProvider
+     *
+     * @param bool $isDisableTrackJsOnHomePage
+     * @param bool $expectedResult
+     */
+    public function isDisableTrackJsOnHomePage_withVariousConfigs_returnsCorrectResult($isDisableTrackJsOnHomePage, $expectedResult)
+    {
+        $this->deciderMock->expects(static::once())
+            ->method('isDisableTrackJsOnHomePage')
+            ->willReturn($isDisableTrackJsOnHomePage);
+        static::assertEquals($expectedResult, $this->currentMock->isDisableTrackJsOnHomePage());
+    }
+    
+    /**
+     * Data provider for
+     *
+     * @see isDisableTrackJsOnHomePage_withVariousConfigs_returnsCorrectResult
+     *
+     * @return array
+     */
+    public function isDisableTrackJsOnHomePage_withVariousConfigsProvider()
+    {
+        return [
+            [
+                'isDisableTrackJsOnHomePage' => true,
+                'expectedResult'               => true
+            ],
+            [
+                'isDisableTrackJsOnHomePage' => false,
+                'expectedResult'               => false
+            ],
+        ];
+    }
+    
+    /**
+     * @test
+     *
+     * @dataProvider isDisableTrackJsOnNonBoltPages_withVariousConfigsProvider
+     *
+     * @param bool $isDisableTrackJsOnNonBoltPages
+     * @param bool $expectedResult
+     */
+    public function isDisableTrackJsOnNonBoltPages_withVariousConfigs_returnsCorrectResult($isDisableTrackJsOnNonBoltPages, $expectedResult)
+    {
+        $this->deciderMock->expects(static::once())
+            ->method('isDisableTrackJsOnNonBoltPages')
+            ->willReturn($isDisableTrackJsOnNonBoltPages);
+        static::assertEquals($expectedResult, $this->currentMock->isDisableTrackJsOnNonBoltPages());
+    }
+    
+    /**
+     * Data provider for
+     *
+     * @see isDisableTrackJsOnNonBoltPages_withVariousConfigs_returnsCorrectResult
+     *
+     * @return array
+     */
+    public function isDisableTrackJsOnNonBoltPages_withVariousConfigsProvider()
+    {
+        return [
+            [
+                'isDisableTrackJsOnNonBoltPages' => true,
+                'expectedResult'                  => true
+            ],
+            [
+                'isDisableTrackJsOnNonBoltPages' => false,
+                'expectedResult'                  => false
             ],
         ];
     }

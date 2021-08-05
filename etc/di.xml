@@ -203,7 +203,7 @@
                 type="Bolt\Boltpay\Plugin\SalesRuleQuoteDiscountPlugin"
                 sortOrder="1"/>
     </type>
-    
+
     <type name="Magento\SalesRule\Model\Utility">
         <plugin name="Bolt_Boltpay_SalesRule_Model_Utility_Plugin"
                 type="Bolt\Boltpay\Plugin\SalesRuleModelUtilityPlugin"
@@ -235,5 +235,24 @@
     <type name="Webkul\Odoomagentoconnect\Model\ResourceModel\Order">
         <plugin name="bolt_boltpay_webkul_odoomagentoconnect_model_resourcemodel_order_plugin"
                 type="Bolt\Boltpay\Plugin\Webkul\Odoomagentoconnect\Model\ResourceModel\OrderPlugin"/>
+    </type>
+
+    <type name="Shineretrofits\ShippingMethod\Model\Carrier\Customshipping">
+        <plugin name="Bolt_Boltpay_Shineretrofits_CustomshippingPlugin"
+                type="Bolt\Boltpay\Plugin\Shineretrofits\ShippingMethod\Model\Carrier\CustomshippingPlugin" sortOrder="1"/>
+    </type>
+    <type name="ClassyLlama\AvaTax\Plugin\Model\ResourceModel\ExtensionAttributesPersistencePlugin">
+        <plugin name="bolt_boltpay_extension_attributes_persistence_plugin_plugin"
+                type="Bolt\Boltpay\Plugin\ClassyLlama\AvaTax\Plugin\Model\ResourceModel\ExtensionAttributesPersistencePluginPlugin"/>
+    </type>
+    <type name="Magento\Framework\Session\Validator">
+        <plugin name="BoltSessionValidator"
+                type="Bolt\Boltpay\Plugin\Magento\Framework\Session\ValidatorPlugin"
+                sortOrder="1"/>
+    </type>
+    <type name="MageWorx\RewardPoints\Controller\Checkout\Apply">
+        <plugin name="MageWorxRewardPointsControllerCheckoutApplyPlugin"
+                type="Bolt\Boltpay\Plugin\MageWorx\RewardPoints\Controller\Checkout\ApplyPlugin"
+                sortOrder="1"/>
     </type>
 </config>

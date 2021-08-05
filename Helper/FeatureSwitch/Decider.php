@@ -94,11 +94,12 @@ class Decider extends AbstractHelper
      */
     private function _isInBucket(string $switchName, int $rolloutPercentage)
     {
-        $this->_session->start();
-        $boltFeatureSwitchId = $this->_session->getBoltFeatureSwitchId();
+        $session = $this->_session->start();
+        $boltFeatureSwitchId = $session->getBoltFeatureSwitchId();
+
         if (!$boltFeatureSwitchId) {
             $boltFeatureSwitchId = uniqid("BFS", true);
-            $this->_session->setBoltFeatureSwitchId($boltFeatureSwitchId);
+            $session->setBoltFeatureSwitchId($boltFeatureSwitchId);
         }
         $saltedString = $boltFeatureSwitchId . "-" . $switchName;
         $hash = hash('md5', $saltedString);
@@ -316,6 +317,16 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE);
     }
+    
+    public function isDisableTrackJsOnHomePage()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_DISABLE_TRACK_ON_HOME_PAGE);
+    }
+    
+    public function isDisableTrackJsOnNonBoltPages()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_DISABLE_TRACK_ON_NON_BOLT_PAGES);
+    }
 
     public function isReturnErrWhenRunFilter()
     {
@@ -328,5 +339,56 @@ class Decider extends AbstractHelper
     public function isShowOrderCommentInAdmin()
     {
         return $this->isSwitchEnabled(Definitions::M2_SHOW_ORDER_COMMENT_IN_ADMIN);
+    }
+
+    /**
+     * Checks whether the feature switch for preventing bolt cart for quotes with error is enabled
+     *
+     * @return bool
+     */
+    public function isPreventBoltCartForQuotesWithError()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR);
+    }
+
+    /**
+     * Checks whether the feature switch for setting order payment info data on success page is enabled
+     *
+     * @return bool
+     */
+    public function isSetOrderPaymentInfoDataOnSuccessPage()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_SET_ORDER_PAYMENT_INFO_DATA_ON_SUCCESS_PAGE);
+    }
+
+    /**
+     * Checks whether the feature switch for seting customer name to order for guests is enabled
+     *
+     * @return bool
+     */
+    public function isSetCustomerNameToOrderForGuests()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_SET_CUSTOMER_NAME_TO_ORDER_FOR_GUESTS);
+    }
+
+    /**
+     * Checks whether the feature switch for saving customer credit card is enabled
+     */
+    public function isSaveCustomerCreditCardEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_SAVE_CUSTOMER_CREDIT_CARD);
+    }
+
+    public function isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_IGNORE_TOTAL_VALIDATION_WHEN_CREDIT_HOOK_IS_SENT_TO_MAGENTO);
+    }
+
+    /**
+     * Checks whether the feature switch to prevent setting Bolt IPs as customer IP on quote is enabled
+     */
+    public function isPreventSettingBoltIpsAsCustomerIpOnQuote()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE);
     }
 }

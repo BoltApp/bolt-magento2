@@ -370,7 +370,8 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
         $has_shipment = !empty($this->cartRequest['shipments'][0]['reference']);
         //make sure we recollect totals
         $quote->setTotalsCollectedFlag(false);
-        $cart = $this->cartHelper->getCartData($has_shipment, null, $quote);
+        $payload = $this->createPayloadForVirtualQuote($quote, $this->cartRequest);
+        $cart = $this->cartHelper->getCartData($has_shipment, $payload, $quote);
         if (empty($cart)) {
             throw new \Exception('Something went wrong when getting cart data.');
         }

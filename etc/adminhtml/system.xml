@@ -129,6 +129,11 @@
                         <comment>This CSS will be added to any page that displays the Bolt Checkout button.</comment>
                         <config_path>payment/boltpay/global_css</config_path>
                     </field>
+                    <field id="global_js" translate="label" type="textarea" sortOrder="101" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Global Javascript</label>
+                        <comment>This Javascript will be added to any page.</comment>
+                        <config_path>payment/boltpay/global_js</config_path>
+                    </field>
                     <field id="show_cc_type_in_order_grid" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Show card type in the order grid</label>
                         <config_path>payment/boltpay/show_cc_type_in_order_grid</config_path>
@@ -400,6 +405,12 @@
                         <config_path>payment/boltpay/reward_points_minicart</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <if_module_enabled>Magento_Reward</if_module_enabled>
+                    </field>
+                    <field id="mageworx_reward_points" translate="label" type="select" sortOrder="247" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use MageWorx Reward Points on Shopping Cart</label>
+                        <config_path>payment/boltpay/mageworx_reward_points_on_cart</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <if_module_enabled>MageWorx_RewardPoints</if_module_enabled>
                     </field>
                 </group>
             </group>

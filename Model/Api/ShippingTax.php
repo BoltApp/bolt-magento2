@@ -45,6 +45,9 @@ abstract class ShippingTax
     const METRICS_SUCCESS_KEY = 'shippingtax.success';
     const METRICS_FAILURE_KEY = 'shippingtax.failure';
     const METRICS_LATENCY_KEY = 'shippingtax.latency';
+    
+    const E_BOLT_CUSTOM_ERROR = 6103;
+    const E_BOLT_GENERAL_ERROR = 6009;
 
     /**
      * @var HookHelper
@@ -192,7 +195,7 @@ abstract class ShippingTax
      * @param int    $code
      * @param int    $httpStatusCode
      */
-    protected function catchExceptionAndSendError($exception, $msg = '', $code = 6009, $httpStatusCode = 422)
+    protected function catchExceptionAndSendError($exception, $msg = '', $code = self::E_BOLT_GENERAL_ERROR, $httpStatusCode = 422)
     {
         $this->bugsnag->notifyException($exception);
         $this->sendErrorResponse($code, $msg, $httpStatusCode);
@@ -338,7 +341,7 @@ abstract class ShippingTax
         } catch (\Exception $e) {
             $this->metricsClient->processMetric(static::METRICS_FAILURE_KEY, 1, static::METRICS_LATENCY_KEY, $startTime);
             $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
-            $this->catchExceptionAndSendError($e, $msg, 6009, 422);
+            $this->catchExceptionAndSendError($e, $msg, self::E_BOLT_GENERAL_ERROR, 422);
         }
     }
 
@@ -370,7 +373,7 @@ abstract class ShippingTax
 
         $this->quote = $parentQuote;
         $this->quote->getStore()->setCurrentCurrencyCode($this->quote->getQuoteCurrencyCode());
-
+        $this->cartHelper->checkCartItemStockState($this->quote, self::E_BOLT_CUSTOM_ERROR);
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace the quote with $parentQuote in checkout session.
         $this->sessionHelper->loadSession($this->quote, $cart['metadata'] ?? []);

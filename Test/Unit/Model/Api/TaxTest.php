@@ -26,9 +26,11 @@ use Bolt\Boltpay\Api\Data\TaxDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\TaxResultInterfaceFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Tax;
+use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use PHPUnit\Framework\MockObject\MockObject;
 use Magento\TestFramework\ObjectManager;
 use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 
 /**
  * Class TaxTest
@@ -190,6 +192,13 @@ class TaxTest extends BoltTestCase
         $addressInformation = $this->objectManager->create(TotalsInformationInterface::class);
         $addressInformation->setShippingTaxAmount(10);
         $addressInformation->setShippingAmount(10);
+        $addressInformation->setShippingDiscountAmount(5);
+        
+        $priceHelper = $this->objectManager->create(PriceHelper::class);
+        TestHelper::setProperty($this->tax, 'priceHelper', $priceHelper);
+        
+        $quote = TestUtils::createQuote();
+        TestHelper::setProperty($this->tax, 'quote', $quote);
 
         $shipping_option = [
             'service' => 'carrierTitle - methodTitle',
@@ -198,8 +207,8 @@ class TaxTest extends BoltTestCase
 
         $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
         $shippingOptionData
-            ->setService('carrierTitle - methodTitle')
-            ->setCost(1000)
+            ->setService(html_entity_decode('carrierTitle - methodTitle [$5.00&nbsp;discount]'))
+            ->setCost(500)
             ->setReference('carrierCode_methodCode')
             ->setTaxAmount(1000);
 
@@ -224,6 +233,11 @@ class TaxTest extends BoltTestCase
     public function createShippingOption_noShippingOption()
     {
         $addressInformation = $this->objectManager->create(TotalsInformationInterface::class);
+        $addressInformation->setShippingDiscountAmount(0);
+        $addressInformation->setShippingTaxAmount(0);
+        $addressInformation->setShippingAmount(0);
+        $quote = TestUtils::createQuote();
+        TestHelper::setProperty($this->tax, 'quote', $quote);
         $shipping_option = null;
         $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
         $shippingOptionData

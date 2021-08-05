@@ -41,7 +41,15 @@ use Bolt\Boltpay\ThirdPartyModules\Magento\InStorePickupShipping as Magento_InSt
 use Bolt\Boltpay\ThirdPartyModules\Magecomp\Extrafee as Magecomp_Extrafee;
 use Bolt\Boltpay\ThirdPartyModules\Webkul\Odoomagentoconnect as Webkul_Odoomagentoconnect;
 use Bolt\Boltpay\ThirdPartyModules\J2t\Rewardpoints as J2t_Rewardpoints;
+use Bolt\Boltpay\ThirdPartyModules\BagRiders\StoreCredit as BagRiders_StoreCredit;
+use Bolt\Boltpay\ThirdPartyModules\Teamwork\Token as Teamwork_Token;
+use Bolt\Boltpay\ThirdPartyModules\Teamwork\StoreCredit as Teamwork_StoreCredit;
+use Bolt\Boltpay\ThirdPartyModules\SomethingDigital\InStorePickupBoltIntegration as SomethingDigital_InStorePickupBoltIntegration;
+use Bolt\Boltpay\ThirdPartyModules\Route\Route as Route_Route;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMedia_TmwGiftCard;
+use Bolt\Boltpay\ThirdPartyModules\Amasty\Preorder as Amasty_Preorder;
+use Bolt\Boltpay\ThirdPartyModules\MageWorx\RewardPoints as MageWorx_RewardPoints;
 use Exception;
 
 class EventsForThirdPartyModules
@@ -139,7 +147,8 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Aheadworks_Giftcard",
-                    "sendClasses" => ["Aheadworks\Giftcard\Model\Service\GiftcardCartService"],
+                    "sendClasses" => ["Aheadworks\Giftcard\Model\Service\GiftcardCartService",
+                                      "Aheadworks\Giftcard\Model\ResourceModel\Giftcard\Quote\CollectionFactory"],
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
                 'Amasty Giftcard V2' => [
@@ -225,6 +234,12 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass" => J2t_Rewardpoints::class,
                 ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "sendClasses" => ["BagRiders\StoreCredit\Model\StoreCredit\ApplyStoreCreditToQuote"],
+                    "boltClass" => BagRiders_StoreCredit::class,
+                ],
             ]
         ],
         'beforeValidateQuoteDataForProcessNewOrder' => [
@@ -238,6 +253,12 @@ class EventsForThirdPartyModules
                                       "Mirasvit\Rewards\Helper\Checkout",
                                       "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"],
                     "boltClass" => Mirasvit_Rewards::class,
+                ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "sendClasses" => ["BagRiders\StoreCredit\Api\StoreCreditRepositoryInterface"],
+                    "boltClass" => BagRiders_StoreCredit::class,
                 ],
             ]
         ],
@@ -344,6 +365,12 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
                 ],
+                'SomethingDigital_InStorePickupBoltIntegration' => [
+                    "module" => "SomethingDigital_InStorePickupBoltIntegration",
+                    "sendClasses" => ["SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker"],
+                    "checkClasses" => ["Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"],
+                    "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
+                ]
             ],
         ],
         "setInStoreShippingAddressForPrepareQuote" => [
@@ -356,6 +383,17 @@ class EventsForThirdPartyModules
                                        "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
                     "boltClass" => Magento_InStorePickupShipping::class,
                 ],
+                'SomethingDigital_InStorePickupBoltIntegration' => [
+                    "module" => "SomethingDigital_InStorePickupBoltIntegration",
+                    "sendClasses" => [
+                        "SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker",
+                        "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"
+                    ],
+                    "checkClasses" => [
+                        "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver",
+                    ],
+                    "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
+                ]
             ],
         ],
         'afterUpdateOrderPayment' => [
@@ -509,6 +547,40 @@ class EventsForThirdPartyModules
                         "J2t\Rewardpoints\Helper\Data",
                     ],
                     "boltClass" => J2t_Rewardpoints::class,
+                ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "sendClasses" => ["BagRiders\StoreCredit\Api\StoreCreditRepositoryInterface"],
+                    "boltClass" => BagRiders_StoreCredit::class,
+                ],
+                "Teamwork_StoreCredit" => [
+                    "module" => "Teamwork_StoreCredit",
+                    "sendClasses" => [
+                        "Teamwork\StoreCredit\Model\StoreCreditStorage"
+                    ],
+                    "boltClass" => Teamwork_StoreCredit::class,
+                ],
+                "Teamwork_Token" => [
+                    "module" => "Teamwork_Token",
+                    "checkClasses" => ["Teamwork\Token\Model\TokenStorage"],
+                    "boltClass" => Teamwork_Token::class,
+                ],
+                "ImaginationMedia_TmwGiftCard" => [
+                    "module" => "ImaginationMedia_TmwGiftCard",
+                    "sendClasses" => [
+                        "ImaginationMedia\TmwGiftCard\Helper\Data"
+                    ],
+                    "boltClass" => ImaginationMedia_TmwGiftCard::class,
+                ],
+                "MageWorx_RewardPoints" => [
+                    "module" => "MageWorx_RewardPoints",
+                    "sendClasses" => [
+                        "MageWorx\RewardPoints\Api\CustomerBalanceRepositoryInterface",
+                        "MageWorx\RewardPoints\Model\PointCurrencyConverter",
+                        "MageWorx\RewardPoints\Helper\Data"
+                    ],
+                    "boltClass" => MageWorx_RewardPoints::class,
                 ],
             ],
         ],
@@ -727,6 +799,10 @@ class EventsForThirdPartyModules
                     "module" => "Magento_Reward",
                     "boltClass" => \Bolt\Boltpay\ThirdPartyModules\Magento\Reward::class,
                 ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "boltClass" => BagRiders_StoreCredit::class,
+                ],
             ],
         ],
         "filterMinicartAddonsLayout" => [
@@ -785,6 +861,11 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass" => J2t_Rewardpoints::class,
                 ],
+                [
+                    "module" => "BagRiders_StoreCredit",
+                    "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
+                    "boltClass" => BagRiders_StoreCredit::class,
+                ],
             ]
         ],
         'filterSkipValidateShippingForProcessNewOrder' => [
@@ -794,7 +875,38 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["Mirasvit\Rewards\Model\Config"],
                     "boltClass" => Mirasvit_Rewards::class,
                 ],
+                'MW_RewardPoints' => [
+                    'module'      => 'MW_RewardPoints',
+                    "sendClasses" => [
+                        "MW\RewardPoints\Helper\Data",
+                    ],
+                    'boltClass'   => MW_RewardPoints::class,
+                ],
             ]
+        ],
+        "filterShippingAmount" => [
+            'listeners' => [
+                'MW_RewardPoints' => [
+                    'module'      => 'MW_RewardPoints',
+                    "sendClasses" => [
+                        "MW\RewardPoints\Helper\Data",
+                        "MW\RewardPoints\Model\CustomerFactory"
+                    ],
+                    'boltClass'   => MW_RewardPoints::class,
+                ],
+            ],
+        ],
+        "adjustShippingAmountInTaxEndPoint" => [
+            'listeners' => [
+                'MW_RewardPoints' => [
+                    'module'      => 'MW_RewardPoints',
+                    "sendClasses" => [
+                        "MW\RewardPoints\Helper\Data",
+                        "MW\RewardPoints\Model\CustomerFactory"
+                    ],
+                    'boltClass'   => MW_RewardPoints::class,
+                ],
+            ],
         ],
         "getAdditionalInvalidateBoltCartJavascript" => [
             "listeners" => [
@@ -827,6 +939,11 @@ class EventsForThirdPartyModules
                     "module"      => "Aheadworks_RewardPoints",
                     "sendClasses" => ["Aheadworks\RewardPoints\Api\CustomerRewardPointsManagementInterface"],
                     "boltClass"   => Aheadworks_RewardPoints::class,
+                ],
+                "MageWorx_RewardPoints" => [
+                    "module"      => "MageWorx_RewardPoints",
+                    "sendClasses" => ["MageWorx\RewardPoints\Helper\Data"],
+                    "boltClass"   => MageWorx_RewardPoints::class,
                 ],
             ]
         ],
@@ -866,6 +983,17 @@ class EventsForThirdPartyModules
                                        "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
                     "boltClass" => Magento_InStorePickupShipping::class,
                 ],
+                "SomethingDigital_InStorePickupBoltIntegration" => [
+                    "module" => "SomethingDigital_InStorePickupBoltIntegration",
+                    "sendClasses" => [
+                        "SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker",
+                        "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"
+                    ],
+                    "checkClasses" => [
+                        "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"
+                    ],
+                    "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
+                ],
             ],
         ],
         "getShipToStoreCarrierMethodCodes" => [
@@ -874,6 +1002,16 @@ class EventsForThirdPartyModules
                     "module" => "Magento_InventoryInStorePickup",
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+                "SomethingDigital_InStorePickupBoltIntegration" => [
+                    "module" => "SomethingDigital_InStorePickupBoltIntegration",
+                    "sendClasses" => [
+                        "SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker",
+                    ],
+                    "checkClasses" => [
+                        "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"
+                    ],
+                    "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
                 ],
             ],
         ],
@@ -887,6 +1025,12 @@ class EventsForThirdPartyModules
                     'module'      => 'Brainvire_Engraving',
                     'boltClass'   => Magecomp_Extrafee::class,
                 ],
+                'Route_Route' => [
+                    'module'      => 'Route_Route',
+                    'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
+                    'sendClasses' => ['Route\Route\Helper\Data'],
+                    'boltClass'   => Route_Route::class,
+                ],
             ],
         ],
         "filterTransactionBeforeOrderCreateValidation" => [
@@ -899,6 +1043,11 @@ class EventsForThirdPartyModules
                     'module'      => 'Brainvire_Engraving',
                     'boltClass'   => Magecomp_Extrafee::class,
                 ],
+                'Route_Route' => [
+                    'module'      => 'Route_Route',
+                    'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
+                    'boltClass'   => Route_Route::class,
+                ],
             ],
         ],
         "filterCartBeforeLegacyShippingAndTax" => [
@@ -910,6 +1059,38 @@ class EventsForThirdPartyModules
                 'Brainvire_Engraving' => [
                     'module'      => 'Brainvire_Engraving',
                     'boltClass'   => Magecomp_Extrafee::class,
+                ],
+                'Route_Route' => [
+                    'module'      => 'Route_Route',
+                    'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
+                    'boltClass'   => Route_Route::class,
+                ],
+            ],
+        ],
+        "isInStorePickupShipping" => [
+            "listeners" => [
+                [
+                    "module" => "Magento_InventoryInStorePickup",
+                    "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
+                    "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+            ],
+        ],
+        'filterCartItemsAdditionalAttributeValue' => [
+            'listeners' => [
+                'Amasty_Preorder' => [
+                    'module' => 'Amasty_Preorder',
+                    'sendClasses' => ['Amasty\Preorder\Helper\Data'],
+                    'boltClass' => Amasty_Preorder::class,
+                ],
+            ],
+        ],
+        "getAdditionalQuoteTotalsConditions" => [
+            "listeners" => [
+                "MageWorx_RewardPoints" => [
+                    "module" => "MageWorx_RewardPoints",
+                    "sendClasses" => ["MageWorx\RewardPoints\Helper\Data"],
+                    "boltClass" => MageWorx_RewardPoints::class,
                 ],
             ],
         ],

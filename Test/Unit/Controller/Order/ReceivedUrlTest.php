@@ -202,11 +202,16 @@ class ReceivedUrlTest extends BoltTestCase
 
         $url = $this->createUrlMock();
 
+        $featureSwitchDeciderMock = $this->createMocK(\Bolt\Boltpay\Helper\FeatureSwitch\Decider::class);
+
         $cartHelper = $this->createMock(CartHelper::class);
         $cartHelper->expects($this->once())
             ->method('getQuoteById')
             ->with(self::QUOTE_ID)
             ->willReturn($quote);
+        $cartHelper->expects($this->once())
+            ->method('getFeatureSwitchDeciderHelper')
+            ->willReturn($featureSwitchDeciderMock);
 
         $checkoutSession = $this->getMockBuilder(CheckoutSession::class)
             ->disableOriginalConstructor()

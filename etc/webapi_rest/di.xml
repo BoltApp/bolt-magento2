@@ -27,4 +27,9 @@
             </argument>
         </arguments>
     </type>
+    <type name="Magento\Quote\Model\Quote">
+        <plugin name="bolt_boltpay_webapirest_magento_quote_model_quote"
+                type="Bolt\Boltpay\Plugin\WebapiRest\Magento\Quote\Model\QuotePlugin"
+                sortOrder="1"/>
+    </type>
 </config>

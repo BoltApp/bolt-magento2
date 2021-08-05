@@ -31,19 +31,7 @@ if (!$block->isBoltSSOEnabled()) {
 $accountJsUrl = $block->getAccountJsUrl();
 $checkoutKey = $block->getCheckoutKey();
 ?>
-<style>
-    .bolt-account-sso {
-        display: inline-block;
-        margin-left: 20px;
-        --bolt-account-sso-color: white;
-    }
-    .bolt-account-sso button {
-        border: none !important;
-        box-shadow: none !important;
-        background: none !important;
-    }
-</style>
-<div class="bolt-account-sso" data-logged-in="<?= $block->isLoggedIn() ? 'true' : 'false'; ?>"></div>
+
 <script>
     require([
         'jquery',

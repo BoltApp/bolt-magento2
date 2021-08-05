@@ -299,10 +299,9 @@ class InStorePickupShipping
         $transaction
     ) {
         try {
-            $shipment = $transaction->order->cart->in_store_shipments[0]->shipment;
-            $referenceCodes = explode('_', $shipment->reference);
-            if ($this->checkIfMagentoInStorePickupByCode($referenceCodes)) {
-                $shippingAddress = $quote->getShippingAddress();
+            $shippingAddress = $quote->getShippingAddress();
+            if (isset($transaction->order->cart->in_store_shipments[0]->shipment)) {
+                $shipment = $transaction->order->cart->in_store_shipments[0]->shipment;
                 $shippingAddress->setData('firstname', $transaction->order->cart->in_store_shipments[0]->store_name);
                 $shippingAddress->setData('lastname', 'Store');
                 $shippingAddress->save();
@@ -312,17 +311,52 @@ class InStorePickupShipping
                     0,
                     strlen(InStorePickup::DELIVERY_METHOD . '_')
                 );
+            } else {
+                // For payment only
+                $pickupLocationCode = $shippingAddress->getExtensionAttributes()->getPickupLocationCode();
+            }
+            if (!empty($pickupLocationCode)) {
                 $pickupLocation = $getPickupLocation->execute(
                     $pickupLocationCode,
                     SalesChannelInterface::TYPE_WEBSITE,
                     $quote->getStore()->getWebsite()->getCode()
                 );
-                $shippingAddress = $addressConverter->convert($pickupLocation, $shippingAddress);
+                $extraData = ['telephone'=>$pickupLocation->getPhone()];
+                $shippingAddress = $addressConverter->convert($pickupLocation, $shippingAddress, $extraData);
                 $quote->setShippingAddress($shippingAddress)->save();
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
         }
+    }
+    
+    /**
+     * @param Magento\InventoryInStorePickupQuote\Model\ToQuoteAddress $addressConverter
+     * @param Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface $getPickupLocation
+     * @param Magento\Quote\Model\Quote $quote
+     * @param \stdClass                 $transaction
+     * @return array
+     */
+    public function isInStorePickupShipping(
+        $result,
+        $quote,
+        $transaction
+    ) {
+        if (isset($transaction->order->cart->in_store_shipments[0]->shipment->shipping_address)) {
+            $referenceCodes = explode('_', $transaction->order->cart->in_store_shipments[0]->shipment->reference);
+            if ($this->checkIfMagentoInStorePickupByCode($referenceCodes)) {
+                $address = $transaction->order->cart->in_store_shipments[0]->shipment->shipping_address ?? null;
+                return $address;
+            }
+        } elseif (isset($transaction->order->cart->shipments[0]->shipping_address)) {
+            $address = $transaction->order->cart->shipments[0]->shipping_address ?? null;
+            $referenceShipmentMethod = $transaction->order->cart->shipments[0]->reference ?? null;
+            if ($address && InStorePickup::DELIVERY_METHOD === $referenceShipmentMethod) {
+                return $address;
+            }
+        }
+        
+        return $result;
     }
     
     /**

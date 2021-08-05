@@ -171,6 +171,16 @@ class Definitions
      * Enable connect.js on cart page or product page (if PPC enabled) only
      */
     const M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE = 'M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE';
+    
+    /**
+     * Remove track.js from home page of the site
+     */
+    const M2_DISABLE_TRACK_ON_HOME_PAGE = 'M2_DISABLE_TRACK_ON_HOME_PAGE';
+    
+    /**
+     * Include track.js only on pages where we have connect.js
+     */
+    const M2_DISABLE_TRACK_ON_NON_BOLT_PAGES = 'M2_DISABLE_TRACK_ON_NON_BOLT_PAGES';
 
     /**
      * Enable always return error if there is any exception when running filter.
@@ -182,6 +192,36 @@ class Definitions
      */
     const M2_SHOW_ORDER_COMMENT_IN_ADMIN = 'M2_SHOW_ORDER_COMMENT_IN_ADMIN';
 
+    /**
+     * Prevent bolt cart creation for quotes with error
+     */
+    const M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR = 'M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR';
+
+    /**
+     * Save customer credit card
+     */
+    const M2_SAVE_CUSTOMER_CREDIT_CARD = 'M2_SAVE_CUSTOMER_CREDIT_CARD';
+
+    /**
+     * Set order payment info data on success page
+     */
+    const M2_SET_ORDER_PAYMENT_INFO_DATA_ON_SUCCESS_PAGE = 'M2_SET_ORDER_PAYMENT_INFO_DATA_ON_SUCCESS_PAGE';
+
+    /**
+     * Set customer name to order for guests
+     */
+    const M2_SET_CUSTOMER_NAME_TO_ORDER_FOR_GUESTS = 'M2_SET_CUSTOMER_NAME_TO_ORDER_FOR_GUESTS';
+
+    /**
+     * Ignore total validation when the credit hook is sent to Magento
+     */
+    const M2_IGNORE_TOTAL_VALIDATION_WHEN_CREDIT_HOOK_IS_SENT_TO_MAGENTO = 'M2_IGNORE_TOTAL_VALIDATION_WHEN_CREDIT_HOOK_IS_SENT_TO_MAGENTO';
+
+    /**
+     * Prevent Bolt IPs from being saved as customer IP on quote
+     */
+    const M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE = 'M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -191,6 +231,12 @@ class Definitions
         ],
         self::M2_BOLT_ENABLED => [
             self::NAME_KEY        => self::M2_BOLT_ENABLED,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_SAVE_CUSTOMER_CREDIT_CARD => [
+            self::NAME_KEY        => self::M2_SAVE_CUSTOMER_CREDIT_CARD,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
@@ -209,6 +255,12 @@ class Definitions
         ],
         self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED => [
             self::NAME_KEY        => self::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_IGNORE_TOTAL_VALIDATION_WHEN_CREDIT_HOOK_IS_SENT_TO_MAGENTO => [
+            self::NAME_KEY        => self::M2_IGNORE_TOTAL_VALIDATION_WHEN_CREDIT_HOOK_IS_SENT_TO_MAGENTO,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
@@ -345,6 +397,18 @@ class Definitions
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
         ],
+        self::M2_DISABLE_TRACK_ON_HOME_PAGE => [
+            self::NAME_KEY        => self::M2_DISABLE_TRACK_ON_HOME_PAGE,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_DISABLE_TRACK_ON_NON_BOLT_PAGES => [
+            self::NAME_KEY        => self::M2_DISABLE_TRACK_ON_NON_BOLT_PAGES,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
         self::M2_RETURN_ERR_WHEN_RUN_FILTER => [
             self::NAME_KEY        => self::M2_RETURN_ERR_WHEN_RUN_FILTER,
             self::VAL_KEY         => true,
@@ -353,6 +417,30 @@ class Definitions
         ],
         self::M2_SHOW_ORDER_COMMENT_IN_ADMIN => [
             self::NAME_KEY        => self::M2_SHOW_ORDER_COMMENT_IN_ADMIN,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR => [
+            self::NAME_KEY        => self::M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_SET_ORDER_PAYMENT_INFO_DATA_ON_SUCCESS_PAGE => [
+            self::NAME_KEY        => self::M2_SET_ORDER_PAYMENT_INFO_DATA_ON_SUCCESS_PAGE,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_SET_CUSTOMER_NAME_TO_ORDER_FOR_GUESTS => [
+            self::NAME_KEY        => self::M2_SET_CUSTOMER_NAME_TO_ORDER_FOR_GUESTS,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE => [
+            self::NAME_KEY        => self::M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100

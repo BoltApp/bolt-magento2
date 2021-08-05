@@ -272,7 +272,8 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
     private function getCartTotals($quote)
     {
         $is_has_shipment = !empty($this->requestArray['cart']['shipments'][0]['reference']);
-        $cart = $this->cartHelper->getCartData($is_has_shipment, null, $quote);
+        $payload = $this->createPayloadForVirtualQuote($quote, $this->requestArray);
+        $cart = $this->cartHelper->getCartData($is_has_shipment, $payload, $quote);
         if (empty($cart)) {
             throw new \Exception('Something went wrong when getting cart data.');
         }
@@ -377,8 +378,24 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         }
 
         $address = $parentQuote->isVirtual() ? $parentQuote->getBillingAddress() : $parentQuote->getShippingAddress();
-        $description = $address->getDiscountDescription();
-        $description = $description !== '' ? $description : 'Discount (' . $couponCode . ')';
+        $description = $address->getDiscountDescription(); // Try coupon description first
+
+        if ($description == '') { // Try store-specific label
+            try {
+                $discountLabels = $rule->getStoreLabels();
+            } catch (\Exception $e) {
+                // Ignore "resource not set" Exception
+            }
+            if (!empty($discountLabels)) {
+                $description = $discountLabels[0]->getStoreLabel();
+            }
+        }
+
+        if ($description == '') { // Try default label
+            $description = $rule->getDescription();
+        }
+
+        $description = $description !== '' ? $description : 'Discount (' . $couponCode . ')'; // coupon code fallback
 
         return $result = [
             'status'          => 'success',

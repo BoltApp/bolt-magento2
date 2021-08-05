@@ -17,12 +17,15 @@
 
 namespace Bolt\Boltpay\Test\Unit\ViewModel;
 
+use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Bolt\Boltpay\ViewModel\MinicartAddons;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit\Framework\MockObject\MockObject;
-
+use Magento\TestFramework\Helper\Bootstrap;
 /**
  * @coversDefaultClass \Bolt\Boltpay\ViewModel\MinicartAddons
  */
@@ -71,17 +74,27 @@ class MinicartAddonsTest extends BoltTestCase
      */
     private $eventsForThirdPartyModulesMock;
 
+
+    private $minicartAddons;
+
+    private $objectManager;
+
     /**
      * Setup test dependencies, called before each test
      */
     public function setUpInternal()
     {
-        $this->configHelper = $this->createMock(\Bolt\Boltpay\Helper\Config::class);
-        $this->serializer = (new ObjectManager($this))
-            ->getObject(\Magento\Framework\Serialize\Serializer\Json::class);
-        $this->httpContext = $this->createMock(\Magento\Framework\App\Http\Context::class);
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+
+        $this->configHelper = $this->objectManager->create(\Bolt\Boltpay\Helper\Config::class);
+        $this->serializer = $this->objectManager->create(\Magento\Framework\Serialize\Serializer\Json::class);
+        $this->httpContext = $this->objectManager->create(\Magento\Framework\App\Http\Context::class);
         $this->eventsForThirdPartyModulesMock = $this->createMock(EventsForThirdPartyModules::class);
-        $this->currentMock = new \Bolt\Boltpay\ViewModel\MinicartAddons(
+
+        $this->minicartAddons = new MinicartAddons(
             $this->serializer,
             $this->httpContext,
             $this->configHelper,
@@ -106,6 +119,7 @@ class MinicartAddonsTest extends BoltTestCase
         static::assertAttributeEquals($this->serializer, 'serializer', $instance);
         static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
         static::assertAttributeEquals($this->httpContext, 'httpContext', $instance);
+        static::assertAttributeEquals($this->eventsForThirdPartyModulesMock, 'eventsForThirdPartyModules', $instance);
     }
 
     /**
@@ -123,7 +137,24 @@ class MinicartAddonsTest extends BoltTestCase
             ->willReturn(self::DEFAULT_LAYOUT);
         static::assertEquals(
             self::DEFAULT_LAYOUT,
-            \Bolt\Boltpay\Test\Unit\TestHelper::invokeMethod($this->currentMock, 'getLayout')
+            TestHelper::invokeMethod($this->minicartAddons, 'getLayout')
+        );
+    }
+
+    /**
+     * @test
+     * that getLayout
+     *
+     * @covers ::getLayout
+     *
+     * @throws \ReflectionException if getLayout method is not defined
+     */
+    public function getLayout_withLayoutPropertyExist_returnsLayout()
+    {
+        TestHelper::setInaccessibleProperty($this->minicartAddons, '_layout', self::DEFAULT_LAYOUT);
+        static::assertEquals(
+            self::DEFAULT_LAYOUT,
+            TestHelper::invokeMethod($this->minicartAddons, 'getLayout')
         );
     }
 
@@ -135,10 +166,8 @@ class MinicartAddonsTest extends BoltTestCase
      */
     public function getLayoutJSON()
     {
-        $currentMock = $this->createPartialMock(\Bolt\Boltpay\ViewModel\MinicartAddons::class, ['getLayout']);
-        \Bolt\Boltpay\Test\Unit\TestHelper::setProperty($currentMock, 'serializer', $this->serializer);
-        $currentMock->expects(static::once())->method('getLayout')->willReturn(self::DEFAULT_LAYOUT);
-        $result = $currentMock->getLayoutJSON();
+        TestHelper::setInaccessibleProperty($this->minicartAddons, '_layout', self::DEFAULT_LAYOUT);
+        $result = $this->minicartAddons->getLayoutJSON();
         static::assertJson($result);
         static::assertEquals(self::DEFAULT_LAYOUT, $this->serializer->unserialize($result));
     }
@@ -162,12 +191,20 @@ class MinicartAddonsTest extends BoltTestCase
         $layout,
         $expectedResult
     ) {
-        $currentMock = $this->createPartialMock(\Bolt\Boltpay\ViewModel\MinicartAddons::class, ['getLayout']);
-        \Bolt\Boltpay\Test\Unit\TestHelper::setProperty($currentMock, 'configHelper', $this->configHelper);
-        $this->configHelper->expects(static::once())->method('getMinicartSupport')->willReturn($minicartSupport);
-        $currentMock->expects($minicartSupport ? static::once() : static::never())->method('getLayout')
-            ->willReturn($layout);
-        static::assertEquals($expectedResult, $currentMock->shouldShow());
+        $store = $this->objectManager->get(\Magento\Store\Model\StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
+        $configData = [
+            [
+                'path' => Config::XML_PATH_MINICART_SUPPORT,
+                'value' => $minicartSupport,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $storeId
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        TestHelper::setInaccessibleProperty($this->minicartAddons, '_layout', $layout);
+        static::assertEquals($expectedResult, $this->minicartAddons->shouldShow());
     }
 
     /**

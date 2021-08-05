@@ -54,12 +54,20 @@ class RemoveBlocksObserver implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        $layout = $observer->getLayout();
-        // When Bolt SSO is enabled, we replace the default sign in / register buttons with our own.
-        if ($this->configHelper->isBoltSSOEnabled()) {
-            $layout->unsetElement('register-link');
-            $layout->unsetElement('authorization-link');
-            $layout->unsetElement('authorization-link-login');
+        $BoltSSOPages = [ConfigHelper::LOGIN_PAGE_ACTION, ConfigHelper::CREATE_ACCOUNT_PAGE_ACTION];
+        if (in_array($observer->getData('full_action_name'), $BoltSSOPages)) {
+            $layout = $observer->getLayout();
+            if ($this->configHelper->isBoltSSOEnabled()) {
+                // Remove native block on login page
+                $layout->unsetElement('customer_form_login');
+                $layout->unsetElement('customer.new');
+                // Remove native block on register page
+                $layout->unsetElement('customer_form_register');
+            } else {
+                // Remove Bolt SSO elements
+                $layout->unsetElement('bolt_sso_login');
+                $layout->unsetElement('bolt_sso_register');
+            }    
         }
     }
 }

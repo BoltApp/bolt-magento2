@@ -415,7 +415,7 @@ class Order extends AbstractHelper
         $requestData->setApiKey($this->configHelper->getApiKey($storeId));
         $requestData->setRequestMethod('GET');
         //Build Request
-        $request = $this->apiHelper->buildRequest($requestData);
+        $request = $this->apiHelper->buildRequest($requestData, $storeId);
 
         $result = $this->apiHelper->sendRequest($request);
         $response = $result->getResponse();
@@ -437,7 +437,7 @@ class Order extends AbstractHelper
         if ($quote->isVirtual()) {
             return;
         }
-        
+
         if (isset($transaction->order->cart->in_store_shipments)) {
             $this->eventsForThirdPartyModules->dispatchEvent("setInStoreShippingMethodForPrepareQuote", $quote, $transaction);
         } else {
@@ -513,11 +513,7 @@ class Order extends AbstractHelper
      */
     protected function setShippingAddress($quote, $transaction)
     {
-        if (isset($transaction->order->cart->in_store_shipments[0]->shipment->shipping_address)) {
-            $address = $transaction->order->cart->in_store_shipments[0]->shipment->shipping_address ?? null;
-            if ($address) {
-                $this->setAddress($quote->getShippingAddress(), $address);
-            }
+        if ($address = $this->eventsForThirdPartyModules->runFilter('isInStorePickupShipping', null, $quote, $transaction)) {
             $this->eventsForThirdPartyModules->dispatchEvent("setInStoreShippingAddressForPrepareQuote", $quote, $transaction);
         } else {
             $address = $transaction->order->cart->shipments[0]->shipping_address ?? null;
@@ -551,19 +547,26 @@ class Order extends AbstractHelper
     /**
      * Set quote customer email and guest checkout parameters
      *
-     * @param Quote $quote
+     * @param Quote  $quote
      * @param string $email
+     * @param \stdClass $transaction
      *
      * @return void
      */
-    private function addCustomerDetails($quote, $email)
+    protected function addCustomerDetails($quote, $email, $transaction)
     {
         $quote->setCustomerEmail($email);
-        if (!$quote->getCustomerId() && $quote->getData('bolt_checkout_type') != CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
-            $quote->setCustomerId(null);
-            $quote->setCheckoutMethod('guest');
-            $quote->setCustomerIsGuest(true);
-            $quote->setCustomerGroupId(GroupInterface::NOT_LOGGED_IN_ID);
+        if (!$quote->getCustomerId()) {
+            if ($this->featureSwitches->isSetCustomerNameToOrderForGuests()) {
+                $quote->setCustomerFirstname($transaction->order->cart->billing_address->first_name);
+                $quote->setCustomerLastname($transaction->order->cart->billing_address->last_name);
+            }
+            if ($quote->getData('bolt_checkout_type') != CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
+                $quote->setCustomerId(null);
+                $quote->setCheckoutMethod('guest');
+                $quote->setCustomerIsGuest(true);
+                $quote->setCustomerGroupId(GroupInterface::NOT_LOGGED_IN_ID);
+            }
         }
     }
 
@@ -771,7 +774,7 @@ class Order extends AbstractHelper
      * @param \stdClass $transaction
      * @return void
      */
-    protected function setOrderPaymentInfoData($payment, $transaction)
+    public function setOrderPaymentInfoData($payment, $transaction)
     {
         if (empty($payment->getCcLast4()) && ! empty($transaction->from_credit_card->last4)) {
             $payment->setCcLast4($transaction->from_credit_card->last4);
@@ -979,10 +982,33 @@ class Order extends AbstractHelper
             // if called from hook update order payment transactions
             $this->updateOrderPayment($order, $transaction, null, $hookType, $hookPayload);
             // Check for total amount mismatch between magento and bolt order.
+            if (
+                $this->featureSwitches->isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled()
+                && $hookType === Hook::HT_CREDIT
+                && $this->isTotalValidationIgnored($transaction, $order)
+            ) {
+                return [$parentQuote, $order];
+            }
             $this->holdOnTotalsMismatch($order, $transaction);
         }
 
         return [$parentQuote, $order];
+    }
+
+    /**
+     * @param $transaction
+     * @param $order
+     * @return bool
+     * @throws \Exception
+     */
+    public function isTotalValidationIgnored($transaction, $order)
+    {
+        $currencyCode = $order->getOrderCurrencyCode();
+        $refundAmount = $transaction->amount->amount;
+        $boltTotal = $transaction->order->cart->total_amount->amount;
+        $magentoTotal = CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode);
+
+        return $boltTotal - $refundAmount == $magentoTotal;
     }
 
     /**
@@ -1007,7 +1033,7 @@ class Order extends AbstractHelper
         $requestData->setDynamicApiUrl(ApiHelper::API_VOID_TRANSACTION);
         $requestData->setApiKey($apiKey);
         //Build Request
-        $request = $this->apiHelper->buildRequest($requestData);
+        $request = $this->apiHelper->buildRequest($requestData, $storeId);
         $result = $this->apiHelper->sendRequest($request);
         $response = $result->getResponse();
 
@@ -1035,6 +1061,10 @@ class Order extends AbstractHelper
     public function saveCustomerCreditCard($reference, $storeId)
     {
         try {
+            if (!$this->featureSwitches->isSaveCustomerCreditCardEnabled()){
+                return false;
+            }
+
             $transaction = $this->fetchTransactionInfo($reference, $storeId);
             $parentQuoteId = $transaction->order->cart->order_reference ?? false;
             $quote = $this->cartHelper->getQuoteById($parentQuoteId);
@@ -1546,8 +1576,8 @@ class Order extends AbstractHelper
             $email = $transaction->order->cart->billing_address->email_address ??
                 $transaction->order->cart->shipments[0]->shipping_address->email_address ?? null;
         }
-        
-        $this->addCustomerDetails($quote, $email);
+
+        $this->addCustomerDetails($quote, $email, $transaction);
 
         $this->cartHelper->quoteResourceSave($quote);
 
@@ -2161,7 +2191,8 @@ class Order extends AbstractHelper
             'transaction_state' => $transactionState,
             'authorized' => $paymentAuthorized || in_array($transactionState, [self::TS_AUTHORIZED, self::TS_CAPTURED]),
             'refunds' => implode(',', $processedRefunds),
-            'processor' => $transaction->processor
+            'processor' => $transaction->processor,
+            'token_type' => $transaction->from_credit_card->token_type ?? $transaction->processor
         ];
 
         $message = __(

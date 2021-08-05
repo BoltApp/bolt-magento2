@@ -53,6 +53,7 @@ tr.shipping.totals td.amount span.price,
 .cart-container #customerbalance-placer .payment-option-title {display: none;}
 .cart-container #customerbalance-placer #use-customer-balance {width: 284px;}
 .payment-method-boltpay .payment-method-title img.payment-icon {padding: 8px; border: 1px solid #cccccc; width: 200px;}</global_css>
+                <global_js></global_js>
                 <show_cc_type_in_order_grid>0</show_cc_type_in_order_grid>
                 <additional_checkout_button_class>with-cards</additional_checkout_button_class>
                 <success_page>checkout/onepage/success</success_page>
@@ -75,6 +76,7 @@ tr.shipping.totals td.amount span.price,
                 <bolt_sso>0</bolt_sso>
                 <universal_debug>1</universal_debug>
                 <aheadworks_reward_points_on_cart>1</aheadworks_reward_points_on_cart>
+                <mageworx_reward_points_on_cart>1</mageworx_reward_points_on_cart>
             </boltpay>
         </payment>
     </default>

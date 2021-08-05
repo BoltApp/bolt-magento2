@@ -91,6 +91,11 @@ class Config extends AbstractHelper
      * Path for Global CSS
      */
     const XML_PATH_GLOBAL_CSS = 'payment/boltpay/global_css';
+    
+    /**
+     * Path for Global Javascript
+     */
+    const XML_PATH_GLOBAL_JS = 'payment/boltpay/global_js';
 
     /**
      * Path for show card type in the order grid
@@ -310,6 +315,11 @@ class Config extends AbstractHelper
      * Use Aheadworks Reward Points on Shopping Cart configuration path
      */
     const XML_PATH_AHEADWORKS_REWARD_POINTS_ON_CART = 'payment/boltpay/aheadworks_reward_points_on_cart';
+    
+    /**
+     * Use MageWorx Reward Points on Shopping Cart configuration path
+     */
+    const XML_PATH_MAGEWORX_REWARD_POINTS_ON_CART = 'payment/boltpay/mageworx_reward_points_on_cart';
 
     /**
      * Use Reward Points on Shopping Cart configuration path
@@ -390,6 +400,9 @@ class Config extends AbstractHelper
     const SHOPPING_CART_PAGE_ACTION = 'checkout_cart_index';
     const CHECKOUT_PAGE_ACTION = 'checkout_index_index';
     const SUCCESS_PAGE_ACTION = 'checkout_onepage_success';
+    const HOME_PAGE_ACTION = 'cms_index_index';
+    const LOGIN_PAGE_ACTION = 'customer_account_login';
+    const CREATE_ACCOUNT_PAGE_ACTION = 'customer_account_create';
 
     /**
      * Map of human-readable config names to their XML paths
@@ -411,6 +424,7 @@ class Config extends AbstractHelper
         'replace_selectors'                  => self::XML_PATH_REPLACE_SELECTORS,
         'totals_change_selectors'            => self::XML_PATH_TOTALS_CHANGE_SELECTORS,
         'global_css'                         => self::XML_PATH_GLOBAL_CSS,
+        'global_js'                          => self::XML_PATH_GLOBAL_JS,
         'additional_checkout_button_class'   => self::XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS,
         'success_page'                       => self::XML_PATH_SUCCESS_PAGE_REDIRECT,
         'prefetch_shipping'                  => self::XML_PATH_PREFETCH_SHIPPING,
@@ -798,6 +812,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_GLOBAL_CSS,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+    
+    /**
+     * Get Global Javascript from config
+     *
+     * @param int|string $storeId
+     *
+     * @return string
+     */
+    public function getGlobalJS($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_GLOBAL_JS,
             ScopeInterface::SCOPE_STORE,
             $storeId
         );
@@ -1703,6 +1733,10 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('global_css')
             ->setValue($this->getGlobalCSS());
+        // Global CSS
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+            ->setName('global_js')
+            ->setValue($this->getGlobalJS());
         // Additional Checkout Button Class
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('additional_checkout_button_class')
@@ -2141,6 +2175,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_AHEADWORKS_REWARD_POINTS_ON_CART,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+    
+    /**
+     * Get Use MageWorx Reward Points on Shopping Cart configuration
+     *
+     * @param int|string|Store $store
+     *
+     * @return bool
+     */
+    public function getUseMageWorxRewardPointsConfig($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_MAGEWORX_REWARD_POINTS_ON_CART,
             ScopeInterface::SCOPE_STORE,
             $store
         );

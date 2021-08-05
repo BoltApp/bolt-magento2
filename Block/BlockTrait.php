@@ -81,7 +81,7 @@ trait BlockTrait
     public function isEnabled()
     {
         $storeId = $this->getStoreId();
-        return $this->configHelper->isActive($storeId);
+        return ($this->_appState->getAreaCode() == \Magento\Framework\App\Area::AREA_ADMINHTML) || $this->configHelper->isActive($storeId);
     }
 
     /**
