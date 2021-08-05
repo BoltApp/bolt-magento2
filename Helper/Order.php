@@ -2465,8 +2465,9 @@ class Order extends AbstractHelper
             }
             throw new \Exception(
                 __(
-                    'Capture amount is invalid: captured [%1], grand total [%2]',
-                    $totalInvoicedAfterCurrentCapture,
+                    'Capture amount is invalid: capture amount [%1], previously captured [%2], grand total [%3]',
+                    $captureAmountMinor,
+                    $previouslyCaptured,
                     $grandTotal
                 )
             );
