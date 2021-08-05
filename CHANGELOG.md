@@ -211,3 +211,5 @@
 - Adds support for Magecomp Extrafee
 - Adds product fetching endpoint for future integrations
 - Various minor bugfixes
+## [v2.22.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.23.0) 2021-08-11
+- Changelog TBD
