@@ -241,6 +241,10 @@ class SSOHelperTest extends BoltTestCase
                 'expected' => 'aud must be set'
             ],
             [
+                'payload'  => ['iss' => 'https://api.bolt.com'],
+                'expected' => 'aud must be set'
+            ],
+            [
                 'payload'  => ['iss' => 'https://bolt.com', 'aud' => ['blah', 'blah2']],
                 'expected' => 'aud blah,blah2 does not contain audience test audience'
             ],

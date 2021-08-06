@@ -149,7 +149,7 @@ class SSOHelper extends AbstractHelper
         if (!isset($payload['iss'])) {
             return 'iss must be set';
         }
-        if ($payload['iss'] !== 'https://bolt.com') {
+        if ($payload['iss'] !== 'https://bolt.com' && $payload['iss'] !== 'https://api.bolt.com') {
             return 'incorrect iss ' . $payload['iss'];
         }
 
