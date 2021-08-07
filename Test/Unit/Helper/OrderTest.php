@@ -28,6 +28,7 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Api\OrderManagement;
+use Bolt\Boltpay\Model\FeatureSwitch;
 use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Model\Request;
 use Bolt\Boltpay\Model\Service\InvoiceService;
@@ -1194,23 +1195,321 @@ class OrderTest extends BoltTestCase
     }
 
     /**
-     * Setup method for {@see saveUpdateOrder}
+     * @test
      *
-     * @throws ReflectionException
+     * @covers ::saveUpdateOrder
      */
-    private function saveUpdateOrderSetUp()
+    public function saveUpdateOrder()
     {
-        $this->initCurrentMock(
+        $quote = TestUtils::createQuote();
+        $order = TestUtils::createDumpyOrder(['quote_id'=> $quote->getId()]);
+
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'order' => [
+                        'cart' => [
+                            'order_reference' => $quote->getId(),
+                            'display_id'      => $order->getIncrementId(),
+                            'total_amount'    => [
+                                'amount' => 100,
+                            ],
+                            'metadata'        => [
+                                'immutable_quote_id' => $quote->getId(),
+                            ],
+                        ]
+                    ],
+                    'status' => 'cancelled',
+                    'id' => '111'
+                ]
+            )
+        );
+
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $this->mockFetchTransactionInfo($orderHelper, $transaction);
+
+        list($result, $result2) = $orderHelper->saveUpdateOrder(
+            self::REFERENCE_ID,
+            self::STORE_ID,
+            self::BOLT_TRACE_ID,
+            self::HOOK_TYPE_PENDING,
+            self::HOOK_PAYLOAD
+        );
+        static::assertEquals(
+            [$quote->getId(), $order->getId()],
+            [$result->getId(), $result2->getId()]
+        );
+        TestUtils::cleanupSharedFixtures([$order]);
+    }
+
+    /**
+     * @test
+     * that saveUpdateOrder doesn't update order when all the following are true:
+     * 1. Order is not already created
+     * 2. Immutable quote is not found
+     * 3. Request is a hook
+     * 4. Transaction status is Authorized
+     * 5. M2_LOG_MISSING_QUOTE_FAILED_HOOKS feature switch is disabled
+     * This all results in “Unknown quote id” exception only being notified to bugsnag instead of being thrown
+     *
+     * @covers ::saveUpdateOrder
+     *
+     * @throws LocalizedException from the tested method
+     * @throws ReflectionException from the initCurrentMock method
+     * @throws Zend_Http_Client_Exception from the tested method
+     */
+    public function saveUpdateOrder_ifHookDoesntFindOrderAndLogDisabled_willNotifyBugsnagWithoutWebhookLogging()
+    {
+        Hook::$fromBolt = true;
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'order' => [
+                        'cart' => [
+                            'order_reference' => self::QUOTE_ID,
+                            'display_id'      => self::DISPLAY_ID,
+                            'total_amount'    => [
+                                'amount' => 100,
+                            ],
+                            'metadata'        => [
+                                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID
+                            ],
+                        ]
+                    ],
+                    'status' => Payment::TRANSACTION_CANCELLED,
+                    'id' => '111'
+                ]
+
+            )
+        );
+
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $this->mockFetchTransactionInfo($orderHelper, $transaction);
+        TestUtils::saveFeatureSwitch(
+            \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_LOG_MISSING_QUOTE_FAILED_HOOKS, false
+        );
+
+        $bugsnag = $this->createPartialMock(Bugsnag::class,['notifyException','registerCallback']);
+        $bugsnag->expects(self::once())->method('registerCallback')->willReturnSelf();
+        $bugsnag->expects(self::once())->method('notifyException')->with(new LocalizedException(__('Unknown quote id: %1', self::IMMUTABLE_QUOTE_ID)))->willReturnSelf();
+        TestHelper::setInaccessibleProperty($orderHelper,'bugsnag', $bugsnag);
+        $orderHelper->saveUpdateOrder(
+            self::REFERENCE_ID,
+            self::STORE_ID,
+            self::BOLT_TRACE_ID
+        );
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::saveUpdateOrder
+     */
+    public function saveUpdateOrder_noOrderNoQuote()
+    {
+        Hook::$fromBolt = false;
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'order' => [
+                        'cart' => [
+                            'order_reference' => self::QUOTE_ID,
+                            'display_id'      => self::DISPLAY_ID,
+                            'total_amount'    => [
+                                'amount' => 100,
+                            ],
+                            'metadata'        => [
+                                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID
+                            ],
+                        ]
+                    ],
+                    'status' => Payment::TRANSACTION_CANCELLED,
+                    'id' => '111'
+                ]
+
+            )
+        );
+
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $this->mockFetchTransactionInfo($orderHelper, $transaction);
+
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Unknown quote id: ' . self::IMMUTABLE_QUOTE_ID);
+
+        $orderHelper->saveUpdateOrder(
+            self::REFERENCE_ID,
+            self::STORE_ID,
+            self::BOLT_TRACE_ID
+        );
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::saveUpdateOrder
+     */
+    public function saveUpdateOrder_noOrderNoQuote_fromWebhook_recordAttempt_throwException()
+    {
+        Hook::$fromBolt = true;
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'order' => [
+                        'cart' => [
+                            'order_reference' => self::QUOTE_ID,
+                            'display_id'      => self::DISPLAY_ID,
+                            'total_amount'    => [
+                                'amount' => 100,
+                            ],
+                            'metadata'        => [
+                                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID
+                            ],
+                        ]
+                    ],
+                    'status' => Payment::TRANSACTION_CANCELLED,
+                    'id' => '1112'
+                ]
+
+            )
+        );
+
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $this->mockFetchTransactionInfo($orderHelper, $transaction);
+
+        TestUtils::saveFeatureSwitch(
+            \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_LOG_MISSING_QUOTE_FAILED_HOOKS, true
+        );
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Unknown quote id: ' . self::IMMUTABLE_QUOTE_ID);
+        $orderHelper->saveUpdateOrder(
+            self::REFERENCE_ID,
+            self::STORE_ID,
+            self::BOLT_TRACE_ID,
+            self::HOOK_TYPE_AUTH
+        );
+        $webhookLogCollection = $this->objectManager->create(WebhookLogCollectionFactory::class);
+        self::assertNotNull($webhookLogCollection->create()->getWebhookLogByTransactionId($transaction->id, self::HOOK_TYPE_AUTH)->getId());
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::saveUpdateOrder
+     */
+    public function saveUpdateOrder_noOrderNoQuote_fromWebhook_incrementAttemptCount_throwException()
+    {
+        Hook::$fromBolt = true;
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'order' => [
+                        'cart' => [
+                            'order_reference' => self::QUOTE_ID,
+                            'display_id'      => self::DISPLAY_ID,
+                            'total_amount'    => [
+                                'amount' => 100,
+                            ],
+                            'metadata'        => [
+                                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID
+                            ],
+                        ]
+                    ],
+                    'status' => Payment::TRANSACTION_CANCELLED,
+                    'id' => '1113'
+                ]
+
+            )
+        );
+
+        /** @var \Bolt\Boltpay\Model\WebhookLog $webhookLog */
+        $webhookLog = $this->objectManager->create(WebhookLogFactory::class);
+
+        $webhookLog->create()->recordAttempt($transaction->id, self::HOOK_TYPE_AUTH);
+
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $this->mockFetchTransactionInfo($orderHelper, $transaction);
+
+        TestUtils::saveFeatureSwitch(
+            \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_LOG_MISSING_QUOTE_FAILED_HOOKS, true
+        );
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Unknown quote id: ' . self::IMMUTABLE_QUOTE_ID);
+        $orderHelper->saveUpdateOrder(
+            self::REFERENCE_ID,
+            self::STORE_ID,
+            self::BOLT_TRACE_ID,
+            self::HOOK_TYPE_AUTH
+        );
+        $webhookLogCollection = $this->objectManager->create(WebhookLogCollectionFactory::class);
+        self::assertEquals(2, $webhookLogCollection->create()->getWebhookLogByTransactionId($transaction->id, self::HOOK_TYPE_AUTH)->getNumberOfMissingQuoteFailedHooks());
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::saveUpdateOrder
+     */
+    public function saveUpdateOrder_noOrderNoQuote_fromWebhook_returnThis()
+    {
+        Hook::$fromBolt = true;
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'order' => [
+                        'cart' => [
+                            'order_reference' => self::QUOTE_ID,
+                            'display_id'      => self::DISPLAY_ID,
+                            'total_amount'    => [
+                                'amount' => 100,
+                            ],
+                            'metadata'        => [
+                                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID
+                            ],
+                        ]
+                    ],
+                    'status' => Payment::TRANSACTION_CANCELLED,
+                    'id' => '1114'
+                ]
+
+            )
+        );
+
+        /** @var \Bolt\Boltpay\Model\WebhookLog $webhookLog */
+        $webhookLog = $this->objectManager->create(WebhookLogFactory::class);
+
+        $webhookLog->create()->setTransactionId('1114')
+            ->setHookType(self::HOOK_TYPE_AUTH)
+            ->setNumberOfMissingQuoteFailedHooks(11)
+            ->save();
+
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $this->mockFetchTransactionInfo($orderHelper, $transaction);
+
+        TestUtils::saveFeatureSwitch(
+            \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_LOG_MISSING_QUOTE_FAILED_HOOKS, true
+        );
+
+        $orderHelper->saveUpdateOrder(
+            self::REFERENCE_ID,
+            self::STORE_ID,
+            self::BOLT_TRACE_ID,
+            self::HOOK_TYPE_AUTH
+        );
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::saveUpdateOrder
+     * @covers ::holdOnTotalsMismatch
+     */
+    public function saveUpdateOrder_createOrderFromWebhook()
+    {
+        $orderHelper = $this->createPartialMock(OrderHelper::class,
             [
-                'fetchTransactionInfo',
-                'getDataFromDisplayID',
-                'createOrder',
-                'resetOrderState',
-                'dispatchPostCheckoutEvents',
-                'updateOrderPayment',
-                'getExistingOrder'
-            ],
-            false
+                'fetchTransactionInfo', 'getDataFromDisplayID', 'createOrder',
+                'resetOrderState', 'dispatchPostCheckoutEvents', 'getExistingOrder', 'updateOrderPayment',
+            ]
         );
 
         $transaction = json_decode(
@@ -1234,348 +1533,53 @@ class OrderTest extends BoltTestCase
             )
         );
 
-        $this->currentMock->expects(self::once())->method('fetchTransactionInfo')
-            ->with(self::REFERENCE_ID, self::STORE_ID)->willReturn($transaction);
-        return $transaction;
-    }
-
-    /**
-     * @test
-     *
-     * @covers ::saveUpdateOrder
-     */
-    public function saveUpdateOrder()
-    {
-        $this->saveUpdateOrderSetUp();
-
-        $immutablequoteMock = $this->createMock(Quote::class);
-
-        $this->cartHelper->expects(self::exactly(2))->method('getQuoteById')
-            ->willReturnMap([
-                [self::IMMUTABLE_QUOTE_ID, $immutablequoteMock],
-                [self::QUOTE_ID, $this->quoteMock]
-            ]);
-
-        $this->bugsnag->expects(self::never())->method('registerCallback');
-
-        $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn($this->orderMock);
-        $this->orderMock->expects(self::once())->method('getId')->willReturn(self::ORDER_ID);
-
-        static::assertEquals(
-            [$this->quoteMock, $this->orderMock],
-            $this->currentMock->saveUpdateOrder(
-                self::REFERENCE_ID,
-                self::STORE_ID,
-                self::BOLT_TRACE_ID,
-                self::HOOK_TYPE_PENDING,
-                self::HOOK_PAYLOAD
-            )
-        );
-    }
-
-    /**
-     * @test
-     * that saveUpdateOrder doesn't update order when all the following are true:
-     * 1. Order is not already created
-     * 2. Immutable quote is not found
-     * 3. Request is a hook
-     * 4. Transaction status is Authorized
-     * 5. M2_LOG_MISSING_QUOTE_FAILED_HOOKS feature switch is disabled
-     * This all results in “Unknown quote id” exception only being notified to bugsnag instead of being thrown
-     *
-     * @covers ::saveUpdateOrder
-     *
-     * @throws LocalizedException from the tested method
-     * @throws ReflectionException from the initCurrentMock method
-     * @throws Zend_Http_Client_Exception from the tested method
-     */
-    public function saveUpdateOrder_ifHookDoesntFindOrderAndLogDisabled_willNotifyBugsnagWithoutWebhookLogging()
-    {
-        $this->initCurrentMock([
-            'fetchTransactionInfo',
-            'getDataFromDisplayID',
-            'createOrder',
-            'resetOrderState',
-            'dispatchPostCheckoutEvents',
-            'updateOrderPayment',
-            'getExistingOrder',
-            'voidTransactionOnBolt'
-        ]);
-
-        $transaction = json_decode(
-            json_encode(
-                [
-                    'order' => [
-                        'cart' => [
-                            'order_reference' => self::QUOTE_ID,
-                            'display_id'      => self::DISPLAY_ID,
-                            'total_amount'    => [
-                                'amount' => 100,
-                            ],
-                            'metadata'        => [
-                                'immutable_quote_id' => self::IMMUTABLE_QUOTE_ID,
-                            ],
-                        ]
-                    ],
-                    'status' => Payment::TRANSACTION_AUTHORIZED,
-                    'id' => '111'
-                ]
-            )
-        );
-
-        $this->currentMock->expects(self::once())->method('fetchTransactionInfo')
+        $orderHelper->expects(self::once())->method('fetchTransactionInfo')
             ->with(self::REFERENCE_ID, self::STORE_ID)->willReturn($transaction);
 
-        $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)->willReturn(null);
-
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function ($callback) {
-                $report = $this->createMock(Report::class);
-                $report->expects(self::once())->method('setMetaData')->with(
-                    [
-                        'ORDER' => [
-                            'incrementId'     => self::INCREMENT_ID,
-                            'quoteId'         => self::IMMUTABLE_QUOTE_ID,
-                            'Magento StoreId' => self::STORE_ID
-                        ]
-                    ]
-                );
-                $callback($report);
-            }
-        );
-
-        $this->currentMock->expects(self::once())
-            ->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)
-            ->willReturn(null);
-
-        $this->orderMock->expects(self::never())->method('getId');
-        $this->orderMock->expects(self::never())->method('getState');
-
         Hook::$fromBolt = true;
-
-        $this->currentMock->expects(self::once())
-            ->method('voidTransactionOnBolt')
-            ->with($transaction->id, self::STORE_ID)
-            ->willReturnSelf();
-
-        $this->featureSwitches->expects(self::once())->method('isLogMissingQuoteFailedHooksEnabled')->willReturn(false);
-
-        $this->bugsnag->expects(self::once())->method('notifyException')
-            ->with(new LocalizedException(__('Unknown quote id: %1', self::IMMUTABLE_QUOTE_ID)))
-            ->willReturnSelf();
-
-        $this->currentMock->saveUpdateOrder(
-            self::REFERENCE_ID,
-            self::STORE_ID,
-            self::BOLT_TRACE_ID
-        );
-    }
-
-    /**
-     * @test
-     *
-     * @covers ::saveUpdateOrder
-     */
-    public function saveUpdateOrder_noOrderNoQuote()
-    {
-        $this->saveUpdateOrderSetUp();
-
-        $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)->willReturn(null);
-
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function ($callback) {
-                $report = $this->createMock(Report::class);
-                $report->expects(self::once())->method('setMetaData')->with(
-                    [
-                        'ORDER' => [
-                            'incrementId'     => self::INCREMENT_ID,
-                            'quoteId'         => self::IMMUTABLE_QUOTE_ID,
-                            'Magento StoreId' => self::STORE_ID
-                        ]
-                    ]
-                );
-                $callback($report);
-            }
-        );
-
-        $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn(null);
-        $this->orderMock->expects(self::never())->method('getId')->willReturn(self::ORDER_ID);
-        $this->orderMock->expects(self::never())->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
-
-        $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Unknown quote id: ' . self::IMMUTABLE_QUOTE_ID);
-
-        $this->currentMock->saveUpdateOrder(
-            self::REFERENCE_ID,
-            self::STORE_ID,
-            self::BOLT_TRACE_ID
-        );
-    }
-
-    private function saveUpdateOrder_noOrder_noQuote_SetUp()
-    {
-        $this->saveUpdateOrderSetUp();
-
-        $this->cartHelper->expects(self::once())->method('getQuoteById')
-            ->with(self::IMMUTABLE_QUOTE_ID)->willReturn(null);
-
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function ($callback) {
-                $report = $this->createMock(Report::class);
-                $report->expects(self::once())->method('setMetaData')->with(
-                    [
-                        'ORDER' => [
-                            'incrementId'     => self::INCREMENT_ID,
-                            'quoteId'         => self::IMMUTABLE_QUOTE_ID,
-                            'Magento StoreId' => self::STORE_ID
-                        ]
-                    ]
-                );
-                $callback($report);
-            }
-        );
-
-        $this->currentMock->expects(self::once())->method('getExistingOrder')
-            ->with(self::INCREMENT_ID)->willReturn(null);
-        $this->orderMock->expects(self::never())->method('getId')->willReturn(self::ORDER_ID);
-        $this->orderMock->expects(self::never())->method('getState')->willReturn(Order::STATE_PENDING_PAYMENT);
-    }
-
-    /**
-     * @test
-     *
-     * @covers ::saveUpdateOrder
-     */
-    public function saveUpdateOrder_noOrderNoQuote_fromWebhook_recordAttempt_throwException()
-    {
-        Hook::$fromBolt = true;
-        $this->saveUpdateOrder_noOrder_noQuote_SetUp();
-
-        $this->webhookLogFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->webhookLogCollectionFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->webhookLogCollectionFactory->expects(self::once())->method('getWebhookLogByTransactionId')->willReturn(false);
-        $this->webhookLogFactory->expects(self::once())->method('recordAttempt')->willReturnSelf();
-        $this->featureSwitches->expects(self::once())->method('isLogMissingQuoteFailedHooksEnabled')->willReturn(true);
-
-        $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Unknown quote id: ' . self::IMMUTABLE_QUOTE_ID);
-        $this->currentMock->saveUpdateOrder(
-            self::REFERENCE_ID,
-            self::STORE_ID,
-            self::BOLT_TRACE_ID
-        );
-    }
-
-    /**
-     * @test
-     *
-     * @covers ::saveUpdateOrder
-     */
-    public function saveUpdateOrder_noOrderNoQuote_fromWebhook_incrementAttemptCount_throwException()
-    {
-        Hook::$fromBolt = true;
-        $this->saveUpdateOrder_noOrder_noQuote_SetUp();
-
-        $this->webhookLogCollectionFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->webhookLogCollectionFactory->expects(self::once())->method('getWebhookLogByTransactionId')->willReturn($this->webhookLogFactory);
-        $this->webhookLogFactory->expects(self::once())->method('getNumberOfMissingQuoteFailedHooks')->willReturn(4);
-        $this->webhookLogFactory->expects(self::once())->method('incrementAttemptCount')->willReturnSelf();
-        $this->featureSwitches->expects(self::once())->method('isLogMissingQuoteFailedHooksEnabled')->willReturn(true);
-
-        $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Unknown quote id: ' . self::IMMUTABLE_QUOTE_ID);
-        $this->currentMock->saveUpdateOrder(
-            self::REFERENCE_ID,
-            self::STORE_ID,
-            self::BOLT_TRACE_ID
-        );
-    }
-
-    /**
-     * @test
-     *
-     * @covers ::saveUpdateOrder
-     */
-    public function saveUpdateOrder_noOrderNoQuote_fromWebhook_returnThis()
-    {
-        Hook::$fromBolt = true;
-        $this->saveUpdateOrder_noOrder_noQuote_SetUp();
-
-        $this->webhookLogFactory->expects(self::never())->method('create')->willReturnSelf();
-        $this->webhookLogCollectionFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->webhookLogCollectionFactory->expects(self::once())->method('getWebhookLogByTransactionId')->willReturn($this->webhookLogFactory);
-        $this->webhookLogFactory->expects(self::once())->method('getNumberOfMissingQuoteFailedHooks')->willReturn(11);
-        $this->webhookLogFactory->expects(self::never())->method('incrementAttemptCount')->willReturnSelf();
-        $this->featureSwitches->expects(self::once())->method('isLogMissingQuoteFailedHooksEnabled')->willReturn(true);
-
-        $this->webhookLogFactory->expects(self::never())->method('recordAttempt')->willReturnSelf();
-
-        $this->currentMock->saveUpdateOrder(
-            self::REFERENCE_ID,
-            self::STORE_ID,
-            self::BOLT_TRACE_ID
-        );
-    }
-
-    /**
-     * @test
-     *
-     * @covers ::saveUpdateOrder
-     */
-    public function saveUpdateOrder_noOrderNoQuote_fromWebhook_isAllowingLogMissingQuoteFailedHooksDisabled_returnThis()
-    {
-        Hook::$fromBolt = true;
-        $this->saveUpdateOrder_noOrder_noQuote_SetUp();
-        $this->featureSwitches->expects(self::once())->method('isLogMissingQuoteFailedHooksEnabled')->willReturn(false);
-
-        $this->webhookLogFactory->expects(self::never())->method('create')->willReturnSelf();
-
-        $this->currentMock->saveUpdateOrder(
-            self::REFERENCE_ID,
-            self::STORE_ID,
-            self::BOLT_TRACE_ID
-        );
-    }
-
-    /**
-     * @test
-     *
-     * @covers ::saveUpdateOrder
-     * @covers ::holdOnTotalsMismatch
-     */
-    public function saveUpdateOrder_createOrderFromWebhook()
-    {
-        Hook::$fromBolt = true;
-        $transaction = $this->saveUpdateOrderSetUp();
-
         $immutablequoteMock = $this->createMock(Quote::class);
+        $quoteMock = $this->createMock(Quote::class);
 
-        $this->cartHelper->expects(self::exactly(2))->method('getQuoteById')
+        $cartHelper = $this->createPartialMock(CartHelper::class, ['getQuoteById']);
+        $cartHelper->expects(self::exactly(2))->method('getQuoteById')
             ->willReturnMap([
                 [self::IMMUTABLE_QUOTE_ID, $immutablequoteMock],
-                [self::QUOTE_ID, $this->quoteMock]
+                [self::QUOTE_ID, $quoteMock]
             ]);
 
-        $this->bugsnag->expects(self::never())->method('registerCallback');
+        $orderMock = $this->createPartialMock(Order::class, ['getId', 'getGrandTotal', 'getOrderCurrencyCode']);
+        $bugsnag = $this->createPartialMock(Bugsnag::class, ['registerCallback']);
 
-        $this->currentMock->expects(self::once())->method('getExistingOrder')
+        $bugsnag->expects(self::never())->method('registerCallback');
+
+        $orderHelper->expects(self::once())->method('getExistingOrder')
             ->with(self::INCREMENT_ID)->willReturn(null);
 
-        $this->currentMock->expects(self::once())->method('createOrder')
-            ->with($immutablequoteMock, $transaction, self::BOLT_TRACE_ID)->willReturn($this->orderMock);
+        $orderHelper->expects(self::once())->method('createOrder')
+            ->with($immutablequoteMock, $transaction, self::BOLT_TRACE_ID)->willReturn($orderMock);
 
-        $this->orderMock->expects(self::never())->method('getId')->willReturn(self::ORDER_ID);
-        $this->orderMock->expects(self::atLeastOnce())->method('getGrandTotal')->willReturn(1);
-        $this->currentMock->expects(self::once())->method('updateOrderPayment')
-            ->with($this->orderMock, $transaction, null, $type = 'pending')->willReturn($this->orderMock);
-        $this->featureSwitches->expects(self::once())->method('isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled')->willReturn(false);
+        $orderMock->expects(self::never())->method('getId')->willReturn(self::ORDER_ID);
+        $orderMock->expects(self::atLeastOnce())->method('getGrandTotal')->willReturn(1);
+        $orderMock->expects(self::atLeastOnce())->method('getOrderCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $orderHelper->expects(self::once())->method('updateOrderPayment')
+            ->with($orderMock, $transaction, null, $type = 'pending')->willReturn($orderMock);
+        $featureSwitches = $this->createPartialMock(FeatureSwitch::class,['isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled']);
 
-        $this->currentMock->saveUpdateOrder(
+        $featureSwitches->expects(self::once())->method('isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled')->willReturn(false);
+        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['dispatchEvent']);
+        $eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
+        $resourceConnection = $this->createPartialMock(ResourceConnection::class, ['getConnection', 'getTableName','delete']);
+        $resourceConnection->method('getConnection')->willReturnSelf();
+        $resourceConnection->method('getTableName')->willReturnSelf();
+        $resourceConnection->method('delete')->willReturnSelf();
+
+        TestHelper::setInaccessibleProperty($orderHelper,'featureSwitches', $featureSwitches);
+        TestHelper::setInaccessibleProperty($orderHelper,'resourceConnection', $resourceConnection);
+        TestHelper::setInaccessibleProperty($orderHelper,'eventsForThirdPartyModules', $eventsForThirdPartyModules);
+        TestHelper::setInaccessibleProperty($orderHelper,'cartHelper', $cartHelper);
+        TestHelper::setInaccessibleProperty($orderHelper,'bugsnag', $bugsnag);
+
+        $orderHelper->saveUpdateOrder(
             self::REFERENCE_ID,
             self::STORE_ID,
             self::BOLT_TRACE_ID,
@@ -1634,7 +1638,6 @@ class OrderTest extends BoltTestCase
      */
     public function processExistingOrder_noOrder()
     {
-
         $quote = TestUtils::createQuote();
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         self::assertFalse($boltHelperOrder->processExistingOrder($quote, new stdClass()));
@@ -1647,8 +1650,8 @@ class OrderTest extends BoltTestCase
      *
      * @throws Exception
      */
-    public function processExistingOrder_withCanceledOrder_throwsException() {
-
+    public function processExistingOrder_withCanceledOrder_throwsException()
+    {
         $quote = TestUtils::createQuote();
         $quoteId = $quote->getId();
 
@@ -1752,7 +1755,6 @@ class OrderTest extends BoltTestCase
      */
     public function processExistingOrder_deleteOrder()
     {
-
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
 
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -1777,7 +1779,7 @@ class OrderTest extends BoltTestCase
 
         self::assertFalse($boltHelperOrder->processExistingOrder($quote, $transaction));
         self::assertFalse(
-            $boltHelperOrder->processExistingOrder($this->quoteMock, $transaction)
+            $boltHelperOrder->processExistingOrder($quote, $transaction)
         );
         TestUtils::cleanupSharedFixtures([$order]);
     }
@@ -1790,13 +1792,14 @@ class OrderTest extends BoltTestCase
      */
     public function submitQuote_withSuccessfulSubmission_returnsCreatedOrder()
     {
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
         $quoteManagement = $this->createPartialMock(QuoteManagement::class, ['submit']);
         $quote = $this->objectManager->create(Quote::class);
         $order = $this->objectManager->create(Order::class);
         $quoteManagement->expects(static::once())->method('submit')->with($quote, [])
             ->willReturn($order);
-        TestHelper::setInaccessibleProperty($this->orderHelper,'quoteManagement', $quoteManagement);
-        static::assertEquals($order, $this->orderHelper->submitQuote($quote));
+        TestHelper::setInaccessibleProperty($orderHelper,'quoteManagement', $quoteManagement);
+        static::assertEquals($order, $orderHelper->submitQuote($quote));
     }
 
     /**
@@ -1808,35 +1811,23 @@ class OrderTest extends BoltTestCase
      */
     public function submitQuote_withExceptionDuringOrderCreationAndOrderCreated_returnsCreatedOrder()
     {
-        $this->initCurrentMock(['getOrderByQuoteId']);
-        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getMethod'])
-            ->getMockForAbstractClass();
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $quote = TestUtils::createQuote();
+        $product = TestUtils::getSimpleProduct();
+        $quote->addProduct($product, 3);
+        $quote->save();
 
-        $exception = new Exception('Exception after creating the order');
-        $this->quoteManagement->expects(static::once())->method('submit')->with($this->quoteMock)
-            ->willThrowException($exception);
-        $this->currentMock->expects(static::once())->method('getOrderByQuoteId')->willReturn($this->orderMock);
-        $this->orderMock->expects(static::exactly(2))->method('getPayment')->willReturn($this->paymentMock);
-        $this->paymentMock->expects(static::once())->method('getMethod')->willReturn(Payment::METHOD_CODE);
-        $this->orderMock->expects(self::once())->method('getId')->willReturn(self::ORDER_ID);
-        $this->orderMock->expects(self::once())->method('getIncrementId')->willReturn(self::INCREMENT_ID);
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function ($callback) {
-                $report = $this->createMock(Report::class);
-                $report->expects(self::once())->method('setMetaData')->with(
-                    [
-                        'CREATE ORDER' => [
-                            'order_id' => self::ORDER_ID,
-                            'order_increment_id' => self::INCREMENT_ID,
-                        ]
-                    ]
-                );
-                $callback($report);
-            }
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(Payment::METHOD_CODE);
+        $order = TestUtils::createDumpyOrder(
+            [
+                'quote_id'=> $quote->getId(),
+            ], [], [], Order::STATE_PENDING_PAYMENT, Order::STATE_PENDING_PAYMENT,
+            $payment
         );
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
 
-        static::assertEquals($this->orderMock, $this->currentMock->submitQuote($this->quoteMock));
+        static::assertEquals($order->getId(), $orderHelper->submitQuote($quote)->getId());
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -1847,19 +1838,16 @@ class OrderTest extends BoltTestCase
      */
     public function submitQuote_withExceptionDuringOrderCreationAndOrderNotCreated_reThrowsException()
     {
-        $this->initCurrentMock(['getOrderByQuoteId']);
-        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getMethod'])
-            ->getMockForAbstractClass();
-
-        $exception = new Exception('Exception after creating the order');
-        $this->quoteManagement->expects(static::once())->method('submit')->with($this->quoteMock)
-            ->willThrowException($exception);
-        $this->currentMock->expects(static::once())->method('getOrderByQuoteId')->willReturn(false);
+        $quote = TestUtils::createQuote();
+        $product = TestUtils::getSimpleProduct();
+        $quote->addProduct($product, 3);
+        $quote->save();
 
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage($exception->getMessage());
+        $this->expectExceptionMessage('Some addresses can\'t be used due to the configurations for specific countries.');
 
-        $this->currentMock->submitQuote($this->quoteMock);
+        $this->orderHelper->submitQuote($quote);
+        TestUtils::cleanupSharedFixtures([$product]);
     }
 
     /**
@@ -1870,36 +1858,16 @@ class OrderTest extends BoltTestCase
     public function processNewOrder_fail()
     {
         $transaction = new stdClass();
-        $this->quoteManagement->expects(self::once())->method('submit')
-            ->with($this->quoteMock)->willReturn(null);
-        $this->bugsnag->expects(self::once())->method('registerCallback');
-        $this->quoteMock->expects(self::atLeastOnce())->method('getId')
-            ->willReturn(self::QUOTE_ID);
-
-        $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
-            function ($callback) {
-                $report = $this->createMock(Report::class);
-                $report->expects(self::once())->method('setMetaData')->with(
-                    [
-                        'CREATE ORDER' => [
-                            'pre-auth order.create' => true,
-                            'parent quote ID'       => self::QUOTE_ID,
-                        ]
-                    ]
-                );
-                $callback($report);
-            }
-        );
-
+        $quote = TestUtils::createQuote();
         $this->expectException(BoltException::class);
         $this->expectExceptionMessage(
             sprintf(
                 'Quote Submit Error. Parent Quote ID: %s',
-                self::QUOTE_ID
+                $quote->getId()
             )
         );
         $this->expectExceptionCode(CreateOrder::E_BOLT_GENERAL_ERROR);
-        $this->currentMock->processNewOrder($this->quoteMock, $transaction);
+        $this->orderHelper->processNewOrder($quote, $transaction);
     }
 
     /**
@@ -1909,23 +1877,41 @@ class OrderTest extends BoltTestCase
      */
     public function processNewOrder_success()
     {
-        $transaction = new stdClass();
-        $this->quoteManagement->expects(self::once())->method('submit')
-            ->with($this->quoteMock)->willReturn($this->orderMock);
-        $this->orderMock->method('getId')->willReturn(self::ORDER_ID);
-        $paymentMock = $this->createMock(OrderPaymentInterface::class);
-        $paymentMock->expects(self::any())->method('getMethod')->willReturn(Payment::METHOD_CODE);
-        $this->orderMock->expects(self::once())->method('getPayment')->willReturn($paymentMock);
-        $this->cartHelper->expects(self::once())->method('getOrderById')->with(self::ORDER_ID)->willReturn($this->orderMock);
-
-        $this->orderMock->expects(self::once())->method('addStatusHistoryComment')
-            ->with('BOLTPAY INFO :: This order was created via Bolt Pre-Auth Webhook');
-        $this->currentMock->expects(self::once())->method('orderPostprocess')
-            ->with($this->orderMock, $this->quoteMock, $transaction);
-        self::assertEquals(
-            $this->currentMock->processNewOrder($this->quoteMock, $transaction),
-            $this->orderMock
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'order' => [
+                        'cart' => [
+                            'total_amount' => [
+                                'amount' => 10000
+                            ]
+                        ]
+                    ]
+                ]
+            )
         );
+        $quote = TestUtils::createQuote();
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $quoteManagement = $this->createPartialMock(QuoteManagement::class, ['submit']);
+
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(Payment::METHOD_CODE);
+        $order = TestUtils::createDumpyOrder(
+            [
+                'quote_id'=> $quote->getId(),
+            ], [], [], Order::STATE_PENDING_PAYMENT, Order::STATE_PENDING_PAYMENT,
+            $payment
+        );
+
+        $quoteManagement->expects(static::once())->method('submit')->with($quote, [])
+            ->willReturn($order);
+        TestHelper::setInaccessibleProperty($orderHelper, 'quoteManagement', $quoteManagement);
+        $orderHelper->processNewOrder($quote, $transaction);
+        self::assertEquals(
+            $order->getStatusHistoryCollection()->getFirstItem()->getComment(),
+            'BOLTPAY INFO :: This order was created via Bolt Pre-Auth Webhook'
+        );
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -1936,17 +1922,27 @@ class OrderTest extends BoltTestCase
     public function processNewOrder_withNonBoltOrder()
     {
         $transaction = new stdClass();
-        $this->quoteManagement->expects(self::once())->method('submit')
-            ->with($this->quoteMock)->willReturn($this->orderMock);
-        $this->orderMock->method('getId')->willReturn(self::ORDER_ID);
-        $this->orderMock->method('getIncrementId')->willReturn(self::INCREMENT_ID);
-        $paymentMock = $this->createMock(OrderPaymentInterface::class);
-        $paymentMock->expects(self::any())->method('getMethod')->willReturn('paypal');
-        $this->orderMock->expects(self::once())->method('getPayment')->willReturn($paymentMock);
-        $this->cartHelper->expects(self::once())->method('getOrderById')->with(self::ORDER_ID)->willReturn($this->orderMock);
+        $quote = TestUtils::createQuote();
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $quoteManagement = $this->createPartialMock(QuoteManagement::class, ['submit']);
+
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod('paypal');
+        $order = TestUtils::createDumpyOrder(
+            [
+                'quote_id'=> $quote->getId(),
+                'increment_id' => '100000100'
+            ], [], [], Order::STATE_PENDING_PAYMENT, Order::STATE_PENDING_PAYMENT,
+            $payment
+        );
+
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage(sprintf("Payment method assigned to order %s is: paypal", self::INCREMENT_ID));
-        $this->currentMock->processNewOrder($this->quoteMock, $transaction);
+        $this->expectExceptionMessage(sprintf("Payment method assigned to order %s is: paypal", '100000100'));
+        $quoteManagement->expects(static::once())->method('submit')->with($quote, [])
+            ->willReturn($order);
+        TestHelper::setInaccessibleProperty($orderHelper, 'quoteManagement', $quoteManagement);
+        $orderHelper->processNewOrder($quote, $transaction);
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -3694,35 +3690,55 @@ class OrderTest extends BoltTestCase
      */
     public function updateOrderPayment_sameState()
     {
-        $transactionState = OrderHelper::TS_AUTHORIZED;
-        $prevTransactionState = OrderHelper::TS_AUTHORIZED;
-        list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp($transactionState);
-        $prevTransactionReference = self::REFERENCE_ID;
-
-        $this->currentMock->expects(self::once())->method('isAnAllowedUpdateFromAdminPanel')
-            ->with($this->orderMock, $transactionState)->willReturn(true);
-        $paymentMock->expects(self::once())->method('setIsTransactionApproved')->with(true);
-        $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
-            ->withConsecutive(
-                ['transaction_state'],
-                ['transaction_reference'],
-                ['real_transaction_id'],
-                ['authorized'],
-                ['captures'],
-                ['processor'],
-                ['token_type']
+        Hook::$fromBolt = false;
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'id'        => self::TRANSACTION_ID,
+                    'reference' => self::REFERENCE_ID,
+                    'processor' => self::PROCESSOR_VANTIV,
+                    'amount'    => [
+                        'amount' => 10
+                    ],
+                    'date'      => microtime(true) * 1000,
+                    'captures'  => [],
+                    'order' => [
+                        'cart' => [
+                            'total_amount' => [
+                                'amount' => 10
+                            ]
+                        ]
+                    ],
+                    'from_credit_card' => [
+                        'token_type' => self::TOKEN_BOLT
+                    ],
+                    'type'     => OrderHelper::TT_PAYMENT,
+                    'status'   => "authorized",
+                ]
             )
-            ->willReturnOnConsecutiveCalls(
-                $prevTransactionState,
-                $prevTransactionReference,
-                self::TRANSACTION_ID,
-                true,
-                '',
-                self::PROCESSOR_VANTIV,
-                self::TOKEN_BOLT
-            );
+        );
 
-        $this->currentMock->updateOrderPayment($this->orderMock, $transaction);
+        $prevTransactionState = OrderHelper::TS_AUTHORIZED;
+        $prevTransactionReference = self::REFERENCE_ID;
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+
+        $payment = $this->objectManager->create(Order\Payment::class);
+        $payment->setMethod(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
+
+        $paymentData = [
+            'transaction_state' => $prevTransactionState,
+            'transaction_reference' => $prevTransactionReference,
+            'real_transaction_id' => self::TRANSACTION_ID,
+            'authorized' => true,
+            'captures' => '',
+            'processor' => self::PROCESSOR_VANTIV,
+            'token_type' => self::TOKEN_BOLT
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        $order = TestUtils::createDumpyOrder([], [], [], Order::STATE_PAYMENT_REVIEW, Order::STATE_PAYMENT_REVIEW, $payment);
+        $orderHelper->updateOrderPayment($order, $transaction);
+        self::assertTrue($payment->getIsTransactionApproved());
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -4150,6 +4166,25 @@ class OrderTest extends BoltTestCase
     }
 
     /**
+     * @covers ::createOrderInvoice
+     * @throws LocalizedException
+     * @throws ReflectionException
+     */
+    public function createOrderInvoice()
+    {
+        $order = TestUtils::createDumpyOrder();
+
+        TestHelper::invokeMethod(
+            $this->orderHelper,
+            'createOrderInvoice',
+            [$order, self::TRANSACTION_ID, 50]
+        );
+
+        self::assertTrue(count($order->getInvoiceCollection()->getItems()) > 0);
+        TestUtils::cleanupSharedFixtures([$order]);
+    }
+
+    /**
      * @test
      *
      * @covers ::createOrderInvoice
@@ -4234,18 +4269,39 @@ class OrderTest extends BoltTestCase
      */
     public function createOrderInvoice_prepareInvoiceThrowsException_logAndRethrowException()
     {
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
         $message = 'Expected exception message';
         $exception = new Exception($message);
-        $this->orderMock->expects(static::once())->method('getTotalInvoiced')->willReturn(5);
-        $this->orderMock->expects(static::once())->method('getGrandTotal')->willReturn(5);
-        $this->invoiceService->expects(static::once())->method('prepareInvoice')->willThrowException($exception);
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
+        $order = $this->createPartialMock(
+            Order::class,
+            [
+                'getOrderCurrencyCode','getTotalInvoiced', 'getGrandTotal',
+                'addStatusHistoryComment', 'setIsCustomerNotified', 'register',
+            ]
+        );
+        $order->method('getOrderCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $order->expects(static::once())->method('getTotalInvoiced')->willReturn(5);
+        $order->expects(static::once())->method('getGrandTotal')->willReturn(5);
+
+        $invoiceService = $this->createPartialMock(
+            InvoiceService::class,
+            ['prepareInvoice', 'prepareInvoiceWithoutItems']
+        );
+
+        $invoiceService->expects(static::once())->method('prepareInvoice')->willThrowException($exception);
+
+        $bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
+        $bugsnag->expects(self::once())->method('notifyException')->with($exception);
         $this->expectException(Exception::class);
         $this->expectExceptionMessage($message);
+
+        TestHelper::setInaccessibleProperty($orderHelper, 'invoiceService', $invoiceService);
+        TestHelper::setInaccessibleProperty($orderHelper, 'bugsnag', $bugsnag);
+
         TestHelper::invokeMethod(
-            $this->currentMock,
+            $orderHelper,
             'createOrderInvoice',
-            [$this->orderMock, self::TRANSACTION_ID, 0]
+            [$order, self::TRANSACTION_ID, 0]
         );
     }
 
@@ -4259,33 +4315,55 @@ class OrderTest extends BoltTestCase
      */
     public function createOrderInvoice_ifInvoiceSenderThrowsException_notifiesException()
     {
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
         $invoice = $this->createPartialMock(
             Invoice::class,
             [
-                'setRequestedCaptureCase',
-                'setTransactionId',
-                'setBaseGrandTotal',
-                'setGrandTotal',
-                'register',
+                'setRequestedCaptureCase', 'setTransactionId', 'setBaseGrandTotal',
+                'setGrandTotal', 'register',
             ]
+        );
+
+        $order = $this->createPartialMock(
+            Order::class,
+            [
+                'getOrderCurrencyCode','getTotalInvoiced', 'getGrandTotal',
+                'addStatusHistoryComment', 'setIsCustomerNotified', 'register','getStoreId'
+            ]
+        );
+        $order->method('getOrderCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $order->expects(static::once())->method('getTotalInvoiced')->willReturn(5);
+        $order->expects(static::once())->method('getGrandTotal')->willReturn(5);
+        $order->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
+        $order->method('addStatusHistoryComment')->willReturn($order);
+        $order->method('setIsCustomerNotified')->willReturn($order);
+        $invoiceService = $this->createPartialMock(
+            InvoiceService::class,
+            ['prepareInvoice', 'prepareInvoiceWithoutItems']
         );
         $message = 'Expected exception message';
         $exception = new Exception($message);
-        $this->orderMock->expects(static::once())->method('getTotalInvoiced')->willReturn(5);
-        $this->orderMock->expects(static::once())->method('getGrandTotal')->willReturn(5);
-        $this->orderMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
-        $this->orderMock->method('addStatusHistoryComment')->willReturn($this->orderMock);
-        $this->orderMock->method('setIsCustomerNotified')->willReturn($this->orderMock);
-        $this->invoiceService->expects(static::once())->method('prepareInvoice')->willReturn($invoice);
-        $this->scopeConfigMock->expects(static::once())->method('isSetFlag')
+        $invoiceService->expects(static::once())->method('prepareInvoice')->willReturn($invoice);
+        $scopeConfig = $this->createPartialMock(ScopeConfigInterface::class, ['isSetFlag','getValue']);
+        $scopeConfig->expects(static::once())->method('isSetFlag')
             ->with(InvoiceEmailIdentity::XML_PATH_EMAIL_ENABLED, ScopeInterface::SCOPE_STORE, self::STORE_ID)
             ->willReturn(true);
-        $this->invoiceSender->expects(static::once())->method('send')->willThrowException($exception);
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
+        $invoiceSender= $this->createPartialMock(
+            InvoiceSender::class,
+            ['send']
+        );
+        $invoiceSender->expects(static::once())->method('send')->willThrowException($exception);
+        $bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
+        $bugsnag->expects(self::once())->method('notifyException')->with($exception);
+
+        TestHelper::setInaccessibleProperty($orderHelper, 'invoiceService', $invoiceService);
+        TestHelper::setInaccessibleProperty($orderHelper, 'bugsnag', $bugsnag);
+        TestHelper::setInaccessibleProperty($orderHelper, 'invoiceSender', $invoiceSender);
+        TestHelper::setInaccessibleProperty($orderHelper, 'scopeConfig', $scopeConfig);
         TestHelper::invokeMethod(
-            $this->currentMock,
+            $orderHelper,
             'createOrderInvoice',
-            [$this->orderMock, self::TRANSACTION_ID, 0]
+            [$order, self::TRANSACTION_ID, 0]
         );
     }
 
@@ -4373,35 +4451,56 @@ class OrderTest extends BoltTestCase
      */
     public function createOrderInvoice_ifInvoiceEmailSendingIsDisabled_doesNotSendInvoiceEmail()
     {
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
         $invoice = $this->createPartialMock(
             Invoice::class,
             [
-                'setRequestedCaptureCase',
-                'setTransactionId',
-                'setBaseGrandTotal',
-                'setGrandTotal',
-                'register',
+                'setRequestedCaptureCase', 'setTransactionId', 'setBaseGrandTotal',
+                'setGrandTotal', 'register',
             ]
         );
-        $message = 'Expected exception message';
-        $exception = new Exception($message);
-        $this->orderMock->expects(static::once())->method('getTotalInvoiced')->willReturn(5);
-        $this->orderMock->expects(static::once())->method('getGrandTotal')->willReturn(5);
-        $this->orderMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
-        $this->orderMock->method('addStatusHistoryComment')->willReturn($this->orderMock);
-        $this->orderMock->method('setIsCustomerNotified')->willReturn($this->orderMock);
-        $this->invoiceService->expects(static::once())->method('prepareInvoice')->willReturn($invoice);
 
-        $this->scopeConfigMock->expects(static::once())->method('isSetFlag')
+        $order = $this->createPartialMock(
+            Order::class,
+            [
+                'getOrderCurrencyCode','getTotalInvoiced', 'getGrandTotal',
+                'addStatusHistoryComment', 'setIsCustomerNotified', 'register','getStoreId'
+            ]
+        );
+        $order->method('getOrderCurrencyCode')->willReturn(self::CURRENCY_CODE);
+        $order->expects(static::once())->method('getTotalInvoiced')->willReturn(5);
+        $order->expects(static::once())->method('getGrandTotal')->willReturn(5);
+        $order->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
+        $order->method('addStatusHistoryComment')->willReturn($order);
+        $order->method('setIsCustomerNotified')->willReturn($order);
+
+        $invoiceService = $this->createPartialMock(
+            InvoiceService::class,
+            ['prepareInvoice','prepareInvoiceWithoutItems']
+        );
+        $invoiceService->expects(static::once())->method('prepareInvoice')->willReturn($invoice);
+
+        $scopeConfig = $this->createPartialMock(ScopeConfigInterface::class, ['isSetFlag','getValue']);
+        $scopeConfig->expects(static::once())->method('isSetFlag')
             ->with(InvoiceEmailIdentity::XML_PATH_EMAIL_ENABLED, ScopeInterface::SCOPE_STORE, self::STORE_ID)
             ->willReturn(false);
-        $this->invoiceSender->expects(static::never())->method('send')->willThrowException($exception);
 
-        $this->bugsnag->expects(self::never())->method('notifyException')->with($exception);
+        $invoiceSender= $this->createPartialMock(
+            InvoiceSender::class,
+            ['send']
+        );
+        $invoiceSender->expects(static::never())->method('send');
+        $bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
+        $bugsnag->expects(self::never())->method('notifyException');
+
+        TestHelper::setInaccessibleProperty($orderHelper, 'invoiceService', $invoiceService);
+        TestHelper::setInaccessibleProperty($orderHelper, 'bugsnag', $bugsnag);
+        TestHelper::setInaccessibleProperty($orderHelper, 'invoiceSender', $invoiceSender);
+        TestHelper::setInaccessibleProperty($orderHelper, 'scopeConfig', $scopeConfig);
         TestHelper::invokeMethod(
-            $this->currentMock,
+            $orderHelper,
             'createOrderInvoice',
-            [$this->orderMock, self::TRANSACTION_ID, 0]
+            [$order, self::TRANSACTION_ID, 0]
         );
     }
 
