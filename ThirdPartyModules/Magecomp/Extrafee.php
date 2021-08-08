@@ -45,11 +45,12 @@ class Extrafee
      * @param array|array[]|int[] $result containing collected cart items, total amount and diff
      * @param Quote               $quote
      * @param int                 $storeId
+     * @param bool                $ifOnlyVisibleItems
      *
      * @return array|array[]|int[] changed or unchanged $result
      * @throws \Exception
      */
-    public function filterCartItems($result, $quote, $storeId)
+    public function filterCartItems($result, $quote, $storeId, $ifOnlyVisibleItems)
     {
         list($products, $totalAmount, $diff) = $result;
 

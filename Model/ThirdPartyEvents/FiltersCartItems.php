@@ -34,8 +34,9 @@ trait FiltersCartItems
      * @param array|array[]|int[] $result containing collected cart items, total amount and diff
      * @param Quote $quote immutable quote from which the cart items were collected
      * @param int $storeId quote store id
+     * @param bool $ifOnlyVisibleItems if only collect visible items
      *
      * @return array|array[]|int[] changed or unchanged $result
      */
-    abstract public function filterCartItems($result, $quote, $storeId);
+    abstract public function filterCartItems($result, $quote, $storeId, $ifOnlyVisibleItems);
 }

@@ -1377,7 +1377,8 @@ class Cart extends AbstractHelper
             'filterCartItems',
             [$products, $totalAmount, $diff],
             $quote,
-            $storeId
+            $storeId,
+            $ifOnlyVisibleItems
         );
     }
 
@@ -2773,7 +2774,7 @@ class Cart extends AbstractHelper
      */
     public function checkCartItemStockState($quote, $excCode)
     {
-        list ($cartItems,,) = $this->getCartItems($quote, $quote->getStoreId(), 0, 0, false);        
+        list ($cartItems,,) = $this->getCartItems($quote, $quote->getStoreId(), 0, 0, false);
         foreach ($cartItems as $item) {
             $product = $this->productRepository->getById($item['reference']);
             if ($product->getTypeId() == \Magento\Bundle\Model\Product\Type::TYPE_CODE) {
