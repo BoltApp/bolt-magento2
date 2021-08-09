@@ -108,7 +108,7 @@ class Route
         }
         // Save status of Route fee (enable/disable) if the request comes from admin or frontend
         if ($this->appState->getAreaCode() !== Area::AREA_WEBAPI_REST) {
-            $this->saveRouteFeeEnabled(self::ROUTE_PRODUCT_ID, $parentQuoteId, $routeFeeEnabled);
+            $this->saveRouteFeeEnabled(self::ROUTE_PRODUCT_ID, $quote->getBoltParentQuoteId(), $routeFeeEnabled);
         }
             
         return [$products, $totalAmount, $diff];
