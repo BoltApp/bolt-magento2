@@ -19,7 +19,6 @@ namespace Bolt\Boltpay\ThirdPartyModules\Route;
 
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Helper\Session as BoltSession;
-use Route\Route\Helper\Data as RouteDataHelper;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\State;
@@ -39,6 +38,7 @@ class Route
     use \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersItemsForUpdateCartApi;
     
     const ROUTE_PRODUCT_ID = 'ROUTEINS';
+    const ROUTE_FEE = 'route_fee';
     
     /**
      * @var CacheInterface
@@ -87,8 +87,8 @@ class Route
         list($products, $totalAmount, $diff) = $result;
         $totals = $quote->getTotals();
         $routeFeeEnabled = '0';
-        if ($totals && key_exists(RouteDataHelper::ROUTE_FEE, $totals)
-            && $fee = $quote->getData(RouteDataHelper::ROUTE_FEE)) {
+        if ($totals && key_exists(self::ROUTE_FEE, $totals)
+            && $fee = $quote->getData(self::ROUTE_FEE)) {
             $currencyCode = $quote->getQuoteCurrencyCode();
             $unitPrice = $fee;
             $itemTotalAmount = $unitPrice * 1;

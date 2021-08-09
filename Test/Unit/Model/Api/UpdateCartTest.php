@@ -42,6 +42,7 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class UpdateCartTest
@@ -124,6 +125,11 @@ class UpdateCartTest extends BoltTestCase
      * @var \Magento\Framework\App\Cache|MockObject
      */
     private $cacheMock;
+    
+    /**
+     * @var EventsForThirdPartyModules|MockObject
+     */
+    private $eventsForThirdPartyModules;
 
     protected function setUpInternal()
     {
@@ -138,7 +144,9 @@ class UpdateCartTest extends BoltTestCase
         $this->errorResponse = $this->createMock(BoltErrorResponse::class);
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->cacheMock = $this->createMock(\Magento\Framework\App\Cache::class);
+        $this->eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
         $this->updateCartContext->method('getCache')->willReturn($this->cacheMock);
+        $this->updateCartContext->method('getEventsForThirdPartyModules')->willReturn($this->eventsForThirdPartyModules);
     }
 
     /**
