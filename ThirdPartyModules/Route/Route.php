@@ -34,6 +34,8 @@ class Route
 {
     use \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartItems;
     use \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartBeforeLegacyShippingAndTax;
+    use \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartBeforeSplitShippingAndTax;
+    use \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartBeforeCreateOrder;
     use \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersItemsForUpdateCartApi;
     
     const ROUTE_PRODUCT_ID = 'ROUTEINS';
@@ -78,6 +80,7 @@ class Route
      */
     public function filterCartItems($result, $routeDataHelper, $quote, $storeId, $ifOnlyVisibleItems)
     {
+        // Do not create Route fee item when checking stock status of quote items
         if (!$ifOnlyVisibleItems) {
             return $result;
         }
@@ -103,10 +106,9 @@ class Route
             $products[] = $product;
             $routeFeeEnabled = '1';
         }
-        
+        // Save status of Route fee (enable/disable) if the request comes from admin or frontend
         if ($this->appState->getAreaCode() !== Area::AREA_WEBAPI_REST) {
-            $cacheIdentifier = self::ROUTE_PRODUCT_ID . $quote->getBoltParentQuoteId();
-            $this->cache->save($routeFeeEnabled, $cacheIdentifier, [], 86400);
+            $this->saveRouteFeeEnabled(self::ROUTE_PRODUCT_ID, $parentQuoteId, $routeFeeEnabled);
         }
             
         return [$products, $totalAmount, $diff];
@@ -114,7 +116,7 @@ class Route
 
     /**
      * Filter the Cart portion of the transaction before Legacy Shipping and Tax functionality is executed
-     * Remove a dummy product representing the Route Fee additional total
+     * Remove a dummy product representing the Route Fee additional total, also update cache if Route fee is enabled
      *
      * @see \Bolt\Boltpay\Model\Api\ShippingMethods::getShippingAndTax
      *
@@ -128,7 +130,7 @@ class Route
         $cart['items'] = array_filter(
             $cart['items'],
             function ($item) {
-                $this->saveCacheInsured($item['reference'], $parentQuoteId);
+                $this->saveRouteFeeEnabled($item['reference'], $parentQuoteId, '1');
                 return $item['reference'] !== self::ROUTE_PRODUCT_ID;
             }
         );
@@ -136,13 +138,23 @@ class Route
         return $cart;
     }
     
+    /**
+     * Filter the Cart portion of the transaction before Split Shipping and Tax functionality is executed
+     * Remove a dummy product representing the Route Fee additional total, also update cache if Route fee is enabled
+     *
+     * @see \Bolt\Boltpay\Model\Api\ShippingTax::handleRequest
+     *
+     * @param array $cart portion of the transaction object from Bolt
+     *
+     * @return array either changed or unchanged cart array
+     */
     public function filterCartBeforeSplitShippingAndTax($cart)
     {
         $parentQuoteId = $cart['order_reference'];
         $cart['items'] = array_filter(
             $cart['items'],
             function ($item) use($parentQuoteId) {
-                $this->saveCacheInsured($item['reference'], $parentQuoteId);
+                $this->saveRouteFeeEnabled($item['reference'], $parentQuoteId, '1');
                 return $item['reference'] !== self::ROUTE_PRODUCT_ID;
             }
         );
@@ -150,13 +162,23 @@ class Route
         return $cart;
     }
     
+    /**
+     * Filter the transaction before Create Order functionality is executed
+     * Remove a dummy product representing the Route Fee additional total, also update cache if Route fee is enabled
+     *
+     * @see \Bolt\Boltpay\Model\Api\CreateOrder::createOrder
+     *
+     * @param array $cart the transaction object from Bolt
+     *
+     * @return array either changed or unchanged $transaction object
+     */
     public function filterCartBeforeCreateOrder($transaction)
     {
         $parentQuoteId = $transaction->order->cart->order_reference;
         $transaction->order->cart->items = array_filter(
             $transaction->order->cart->items,
             function ($item) use($parentQuoteId) {
-                $this->saveCacheInsured($item->reference, $parentQuoteId);
+                $this->saveRouteFeeEnabled($item->reference, $parentQuoteId, '1');
                 return $item->reference !== self::ROUTE_PRODUCT_ID;
             }
         );
@@ -179,8 +201,7 @@ class Route
     {
         if ($addItem['product_id'] == self::ROUTE_PRODUCT_ID) {
             $checkoutSession->setInsured(true);
-            $cacheIdentifier = self::ROUTE_PRODUCT_ID . $checkoutSession->getQuote()->getBoltParentQuoteId();
-            $this->cache->save('1', $cacheIdentifier, [], 86400);
+            $this->saveRouteFeeEnabled(self::ROUTE_PRODUCT_ID, $checkoutSession->getQuote()->getBoltParentQuoteId(), '1');
             return true;
         }
         
@@ -202,8 +223,7 @@ class Route
     {
         if ($removeItem['product_id'] == self::ROUTE_PRODUCT_ID) {
             $checkoutSession->setInsured(false);
-            $cacheIdentifier = self::ROUTE_PRODUCT_ID . $checkoutSession->getQuote()->getBoltParentQuoteId();
-            $this->cache->save('0', $cacheIdentifier, [], 86400);
+            $this->saveRouteFeeEnabled(self::ROUTE_PRODUCT_ID, $checkoutSession->getQuote()->getBoltParentQuoteId(), '0');
             return true;
         }
         
@@ -211,7 +231,7 @@ class Route
     }
     
     /**
-     * .
+     * Get insured value of Route from cache and set to checkout session.
      *
      * @param Quote $quote
      */
@@ -225,10 +245,17 @@ class Route
         }
     }
     
-    private function saveCacheInsured($itemReference, $parentQuoteId)
+    /**
+     * If Route fee is enabled, save '1' into cache; if disabled, then save '0'.
+     *
+     * @param string $itemReference
+     * @param int|string $parentQuoteId
+     * @param string $routeFeeEnabled
+     */
+    private function saveRouteFeeEnabled($itemReference, $parentQuoteId, $routeFeeEnabled)
     {
         if($itemReference == self::ROUTE_PRODUCT_ID){
-            $this->cache->save('1', self::ROUTE_PRODUCT_ID . $parentQuoteId, [], 86400);
+            $this->cache->save($routeFeeEnabled, self::ROUTE_PRODUCT_ID . $parentQuoteId, [], 86400);
         }
     }
 }
