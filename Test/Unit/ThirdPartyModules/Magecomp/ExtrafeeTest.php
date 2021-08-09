@@ -69,7 +69,7 @@ class ExtrafeeTest extends BoltTestCase
         $this->quoteMock->expects(static::once())->method('getQuoteCurrencyCode')->willReturn('USD');
         $this->totalMock->expects(static::once())->method('getTitle')->willReturn('Extra Fee');
 
-        list($products, $totalAmount, $diff) = $this->currentMock->filterCartItems([[], 0, 0, true], $this->quoteMock, 1);
+        list($products, $totalAmount, $diff) = $this->currentMock->filterCartItems([[], 0, 0], $this->quoteMock, 1, true);
         self::assertEquals(
             [
                 [

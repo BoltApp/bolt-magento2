@@ -134,7 +134,7 @@ class UpdateCartTest extends BoltTestCase
     protected function setUpInternal()
     {
         $this->updateCartContext = $this->getMockBuilder(UpdateCartContext::class)
-            ->setMethods(['getCache'])
+            ->setMethods(['getCache', 'getEventsForThirdPartyModules'])
             ->disableOriginalConstructor()
             ->getMock();
 
