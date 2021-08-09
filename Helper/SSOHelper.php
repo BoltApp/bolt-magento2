@@ -137,9 +137,11 @@ class SSOHelper extends AbstractHelper
      *
      * @return mixed|string object in JWT token body, return error message if validation fails
      */
-    public function parseAndValidateJWT($token, $audience, $pubkey)
+    public function parseAndValidateJWT($token, $audience, $pubkey, $apiUrl)
     {
         try {
+            $storeId = $this->storeManager->getStore()->getId();
+            $apiUrl = $this->configHelper->getApiUrl($storeId);
             $payload = $this->getPayload($token, $pubkey);
         } catch (Exception $e) {
             return $e->getMessage();
@@ -149,7 +151,7 @@ class SSOHelper extends AbstractHelper
         if (!isset($payload['iss'])) {
             return 'iss must be set';
         }
-        if ($payload['iss'] !== 'https://bolt.com' && $payload['iss'] !== $this->configHelper->getApiUrl()) {
+        if ($payload['iss'] !== 'https://bolt.com' && $payload['iss'] !== $apiUrl) {
             return 'incorrect iss ' . $payload['iss'];
         }
 

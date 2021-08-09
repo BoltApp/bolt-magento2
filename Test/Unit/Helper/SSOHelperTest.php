@@ -157,7 +157,6 @@ class SSOHelperTest extends BoltTestCase
         $store->expects(static::once())->method('getId')->willReturn(1);
         $this->storeManager->expects(static::once())->method('getStore')->willReturn($store);
         $this->configHelper->expects(static::once())->method('getApiKey')->with(1)->willReturn('test api key');
-        $this->configHelper->expects(static::once())->method('getApiUrl')->with(1)->willReturn('https://api.bolt.com');
         $dataObject = $this->createPartialMock(DataObject::class, ['setDynamicApiUrl', 'setApiKey', 'setApiData', 'setContentType']);
         $dataObject->expects(static::once())->method('setDynamicApiUrl')->with('oauth/token');
         $dataObject->expects(static::once())->method('setApiKey')->with('test api key');
@@ -201,6 +200,7 @@ class SSOHelperTest extends BoltTestCase
             TestHelper::invokeMethod($this->currentMock, 'parseAndValidateJWT', ['', '', ''])
         );
     }
+    
 
     /**
      * @test
@@ -214,6 +214,9 @@ class SSOHelperTest extends BoltTestCase
      */
     public function parseAndValidateJWT_returnsCorrectValue_forAllCases($payload, $expected)
     {
+        $store = $this->createMock(Store::class);
+        $store->expects(static::once())->method('getId')->willReturn(1);
+        $this->configHelper->expects(static::once())->method('getApiUrl')->with(1)->willReturn('https://api.bolt.com');
         $this->currentMock->expects(static::once())->method('getPayload')->willReturn($payload);
         $this->assertEquals(
             $expected,
