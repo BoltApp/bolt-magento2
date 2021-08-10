@@ -137,7 +137,7 @@ class SSOHelper extends AbstractHelper
      *
      * @return mixed|string object in JWT token body, return error message if validation fails
      */
-    public function parseAndValidateJWT($token, $audience, $pubkey, $apiUrl)
+    public function parseAndValidateJWT($token, $audience, $pubkey)
     {
         try {
             $storeId = $this->storeManager->getStore()->getId();
