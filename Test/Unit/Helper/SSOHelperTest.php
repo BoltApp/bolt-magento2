@@ -216,6 +216,7 @@ class SSOHelperTest extends BoltTestCase
     {
         $store = $this->createMock(Store::class);
         $store->expects(static::once())->method('getId')->willReturn(1);
+        $this->storeManager->expects(static::once())->method('getStore')->willReturn($store);
         $this->configHelper->expects(static::once())->method('getApiUrl')->with(1)->willReturn('https://api.bolt.com');
         $this->currentMock->expects(static::once())->method('getPayload')->willReturn($payload);
         $this->assertEquals(
