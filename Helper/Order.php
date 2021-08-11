@@ -2434,13 +2434,42 @@ class Order extends AbstractHelper
         // Due to grand total sent to Bolt is rounded, the same operation should be used when validating captured amount.
         // Rounding operations are applied to each operand in order to avoid cases when the grand total
         // is formally less (before it has been rounded) than the sum of the captured amount and the total invoiced.
-        $captured = CurrencyUtils::toMinor($order->getTotalInvoiced(), $currencyCode)
-            + CurrencyUtils::toMinor($captureAmount, $currencyCode);
+        $previouslyCaptured = CurrencyUtils::toMinor($order->getTotalInvoiced(), $currencyCode);
+        $captureAmountMinor = CurrencyUtils::toMinor($captureAmount, $currencyCode);
+        $totalInvoicedAfterCurrentCapture = $previouslyCaptured + $captureAmountMinor;
         $grandTotal = CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode);
 
-        if ($captured > $grandTotal) {
+        if ($totalInvoicedAfterCurrentCapture > $grandTotal) {
+            $this->bugsnag->registerCallback(
+                function (\Bugsnag\Report $report) use ($order, $grandTotal, $totalInvoicedAfterCurrentCapture, $previouslyCaptured, $captureAmount) {
+                    /** @var \Magento\Sales\Model\Order $order */
+                    $report->addMetaData(
+                        [
+                            'Capture amount validation' => [
+                                'capture amount'                       => $captureAmount,
+                                'previously captured'                  => $previouslyCaptured,
+                                'total invoiced after current capture' => $totalInvoicedAfterCurrentCapture,
+                                'grand total'                          => $grandTotal,
+                                'invoices data'                        => $order->getInvoiceCollection()->getData()
+                            ]
+                        ]
+                    );
+                }
+            );
+            if ($previouslyCaptured == $captureAmountMinor) {
+                throw new \Exception(
+                    __(
+                        'The same capture amount was already invoiced'
+                    )
+                );
+            }
             throw new \Exception(
-                __('Capture amount is invalid: captured [%1], grand total [%2]', $captured, $grandTotal)
+                __(
+                    'Capture amount is invalid: capture amount [%1], previously captured [%2], grand total [%3]',
+                    $captureAmountMinor,
+                    $previouslyCaptured,
+                    $grandTotal
+                )
             );
         }
     }
