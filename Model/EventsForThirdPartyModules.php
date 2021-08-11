@@ -82,6 +82,11 @@ class EventsForThirdPartyModules
                     "module" => "MW_Affiliate",
                     "checkClasses" => ["MW\Affiliate\Helper\Data"],
                     "boltClass" => MW_Affiliate::class,
+                ],                
+                'Route_Route' => [
+                    'module'      => 'Route_Route',
+                    'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
+                    'boltClass'   => Route_Route::class,
                 ],
             ],
         ],
@@ -1007,11 +1012,6 @@ class EventsForThirdPartyModules
                     'module'      => 'Brainvire_Engraving',
                     'boltClass'   => Magecomp_Extrafee::class,
                 ],
-                'Route_Route' => [
-                    'module'      => 'Route_Route',
-                    'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
-                    'boltClass'   => Route_Route::class,
-                ],
             ],
         ],
         "filterCartBeforeLegacyShippingAndTax" => [
@@ -1024,6 +1024,24 @@ class EventsForThirdPartyModules
                     'module'      => 'Brainvire_Engraving',
                     'boltClass'   => Magecomp_Extrafee::class,
                 ],
+                'Route_Route' => [
+                    'module'      => 'Route_Route',
+                    'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
+                    'boltClass'   => Route_Route::class,
+                ],
+            ],
+        ],
+        "filterCartBeforeSplitShippingAndTax" => [
+            'listeners' => [
+                'Route_Route' => [
+                    'module'      => 'Route_Route',
+                    'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
+                    'boltClass'   => Route_Route::class,
+                ],
+            ],
+        ],
+        "filterCartBeforeCreateOrder" => [
+            'listeners' => [
                 'Route_Route' => [
                     'module'      => 'Route_Route',
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
@@ -1055,6 +1073,24 @@ class EventsForThirdPartyModules
                     "module" => "MageWorx_RewardPoints",
                     "sendClasses" => ["MageWorx\RewardPoints\Helper\Data"],
                     "boltClass" => MageWorx_RewardPoints::class,
+                ],
+            ],
+        ],
+        'filterAddItemBeforeUpdateCart' => [
+            "listeners" => [
+                'Route_Route' => [
+                    'module'      => 'Route_Route',
+                    'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
+                    'boltClass'   => Route_Route::class,
+                ],
+            ],
+        ],
+        'filterRemoveItemBeforeUpdateCart' => [
+            "listeners" => [
+                'Route_Route' => [
+                    'module'      => 'Route_Route',
+                    'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
+                    'boltClass'   => Route_Route::class,
                 ],
             ],
         ],

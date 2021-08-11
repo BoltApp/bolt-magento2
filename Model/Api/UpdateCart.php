@@ -174,6 +174,10 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 $cartItems = $this->getCartItems($parentQuote);
 
                 foreach ($add_items as $addItem) {
+                    if ($this->eventsForThirdPartyModules->runFilter('filterAddItemBeforeUpdateCart', false, $addItem, $this->checkoutSession)) {
+                        continue;
+                    }
+                    
                     $product = $this->getProduct($addItem['product_id'], $storeId);
                     if (!$product) {
                         // Already sent a response with error, so just return.
@@ -207,6 +211,10 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 $cartItems = $this->getCartItems($parentQuote);
 
                 foreach ($remove_items as $removeItem) {
+                    if ($this->eventsForThirdPartyModules->runFilter('filterRemoveItemBeforeUpdateCart', false, $removeItem, $this->checkoutSession)) {
+                        continue;
+                    }
+                    
                     $quoteItem = $this->getQuoteItemByProduct($removeItem, $cartItems);
                     if (!$quoteItem) {
                         $this->sendErrorResponse(

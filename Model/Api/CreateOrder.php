@@ -309,6 +309,7 @@ class CreateOrder implements CreateOrderInterface
      */
     public function createOrder($transaction, $immutableQuote)
     {
+        $transaction = $this->eventsForThirdPartyModules->runFilter('filterCartBeforeCreateOrder', $transaction);
         $immutableQuote->getStore()->setCurrentCurrencyCode($immutableQuote->getQuoteCurrencyCode());
         $this->eventsForThirdPartyModules->dispatchEvent("beforePrepareQuote", $immutableQuote);
         /** @var Quote $quote */

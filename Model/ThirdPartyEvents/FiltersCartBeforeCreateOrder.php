@@ -17,26 +17,21 @@
 
 namespace Bolt\Boltpay\Model\ThirdPartyEvents;
 
-use Magento\Quote\Model\Quote;
-
 /**
- * Trait FiltersCartItems
+ * Trait FiltersCartBeforeCreateOrder
  *
  * @package Bolt\Boltpay\Model\ThirdPartyEvents
  */
-trait FiltersCartItems
+trait FiltersCartBeforeCreateOrder
 {
     /**
-     * Filter cart item array after it is collected
+     * Filter the transaction before Create Order functionality is executed
      *
-     * @see \Bolt\Boltpay\Helper\Cart::getCartItems
+     * @see \Bolt\Boltpay\Model\Api\CreateOrder::createOrder
      *
-     * @param array|array[]|int[] $result containing collected cart items, total amount and diff
-     * @param Quote $quote immutable quote from which the cart items were collected
-     * @param int $storeId quote store id
-     * @param bool $ifOnlyVisibleItems if only collect visible items
+     * @param array $cart the transaction object from Bolt
      *
-     * @return array|array[]|int[] changed or unchanged $result
+     * @return array either changed or unchanged $transaction object
      */
-    abstract public function filterCartItems($result, $quote, $storeId, $ifOnlyVisibleItems);
+    abstract public function filterCartBeforeCreateOrder($transaction);
 }
