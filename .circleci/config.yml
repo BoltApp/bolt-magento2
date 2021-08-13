@@ -11,6 +11,9 @@ parameters:
   run_rebase_and_magento_integration_test:
     type: boolean
     default: false
+  run_integration_test:
+    type: boolean
+    default: false
   rebase_and_magento_integration_test_branch_name:
     type: string
     default: ""
@@ -244,13 +247,7 @@ workflows:
       - integration-magento-php72-magento23
       - integration-magento-php71-magento22
   integration-tests:
-    triggers:
-      - schedule:
-          cron: "0 6 * * *"
-          filters:
-            branches:
-              only:
-                - master
+    when: << pipeline.parameters.run_integration_test >>
     jobs:
       - integration-php72-magento23:
           context: integration-tests-secrets
