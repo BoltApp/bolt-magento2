@@ -6,11 +6,12 @@ set -x
 
 sudo npm cache clean -f
 sudo npm install -g n
+sudo npm install -g npm
 sudo n ${NODE_VERSION} # 14.17.3 from https://app.circleci.com/settings/project/github/BoltApp/bolt-magento2/environment-variables
 
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
-git clone -b m2-debug --depth 1 git@github.com:BoltApp/integration-tests.git
+git clone --depth 1 git@github.com:BoltApp/integration-tests.git
 
 sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-networking --protocol=socket
 
@@ -81,8 +82,6 @@ echo "restarted apache2"
 cd project/integration-tests
 mkdir test-results
 node -v
-npm -v
-sudo npm install -g npm
 npm -v
 npm install
 npm run build
