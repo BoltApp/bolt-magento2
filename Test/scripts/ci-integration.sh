@@ -10,7 +10,7 @@ sudo n ${NODE_VERSION} # 14.17.3 from https://app.circleci.com/settings/project/
 
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
-git clone -b m2ci/fix_path --depth 1 git@github.com:BoltApp/integration-tests.git
+git clone -b master --depth 1 git@github.com:BoltApp/integration-tests.git
 
 sudo service mysql start -- --initialize-insecure --skip-grant-tables --skip-networking --protocol=socket
 
