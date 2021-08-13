@@ -6,8 +6,7 @@ set -x
 
 sudo npm cache clean -f
 sudo npm install -g n
-sudo npm install -g npm
-sudo n ${NODE_VERSION} # 14.17.3 from https://app.circleci.com/settings/project/github/BoltApp/bolt-magento2/environment-variables
+sudo n latest #${NODE_VERSION} # 14.17.3 from https://app.circleci.com/settings/project/github/BoltApp/bolt-magento2/environment-variables
 
 trap '>&2 echo Error: Command \`$BASH_COMMAND\` on line $LINENO failed with exit code $?' ERR
 
@@ -81,8 +80,6 @@ echo "restarted apache2"
 
 cd project/integration-tests
 mkdir test-results
-node -v
-npm -v
 npm install
 npm run build
 export JUNIT_REPORT_DIR=./test-results
