@@ -80,7 +80,7 @@ echo "restarted apache2"
 
 cd project/integration-tests
 mkdir test-results
-sudo chmod -R 777 /test-results/
+sudo chmod -R 777 /home/circleci/project/integration-tests/test-results/
 npm install
 npm run build
 export JUNIT_REPORT_DIR=./test-results
