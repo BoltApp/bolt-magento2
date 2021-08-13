@@ -82,6 +82,8 @@ cd project/integration-tests
 mkdir test-results
 node -v
 npm -v
+npm install -g npm
+npm -v
 npm install
 npm run build
 export JUNIT_REPORT_DIR=./test-results
