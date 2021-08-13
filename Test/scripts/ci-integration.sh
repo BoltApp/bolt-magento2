@@ -82,7 +82,7 @@ cd project/integration-tests
 mkdir test-results
 node -v
 npm -v
-npm install -g npm
+sudo npm install -g npm
 npm -v
 npm install
 npm run build
