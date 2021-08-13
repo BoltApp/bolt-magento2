@@ -80,6 +80,7 @@ echo "restarted apache2"
 
 cd project/integration-tests
 mkdir test-results
+mkdir test-results/logs
 npm install
 npm run build
 export JUNIT_REPORT_DIR=./test-results
