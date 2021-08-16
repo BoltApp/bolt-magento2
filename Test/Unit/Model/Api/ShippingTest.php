@@ -150,7 +150,7 @@ class ShippingTest extends BoltTestCase
             ->setService('No Shipping Required')
             ->setCost(0)
             ->setReference('noshipping');
-        $quote = TestUtils::createQuote(['store_id' => $this->storeId]);
+        $quote = TestUtils::createQuote();
         $product = TestUtils::createVirtualProduct();
         $this->objectsToClean[] = $product;
         $quote->addProduct($product, 1);
