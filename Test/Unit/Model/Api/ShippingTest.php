@@ -118,6 +118,37 @@ class ShippingTest extends BoltTestCase
             $result->getShippingOptions()
         );
     }
+    
+    /**
+     * @test
+     * that generateResult for virtual quote returns shipping data
+     *
+     * @covers ::generateResult
+     */
+    public function generateResult_virtualQuote()
+    {
+        $addressData = [
+            'region' => 'California',
+            'country_code' => 'US',
+            'postal_code' => '90210',
+            'locality' => 'San Franciso',
+            'street_address1' => '123 Sesame St.',
+            'email' => 'integration@bolt.com',
+            'company' => 'Bolt'
+        ];
+        $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
+        $shippingOptionData
+            ->setService('No Shipping Required')
+            ->setCost(0)
+            ->setReference('noshipping');
+        $quote = TestUtils::createQuote(['store_id' => $this->storeId, 'is_virtual' => '1']);
+        TestHelper::setProperty($this->shipping, 'quote', $quote);
+        $result = $this->shipping->generateResult($addressData, [], null);
+        $this->assertEquals(
+            [$shippingOptionData],
+            $result->getShippingOptions()
+        );
+    }
 
     /**
      * @test
