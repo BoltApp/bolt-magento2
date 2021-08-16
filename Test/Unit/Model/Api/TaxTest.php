@@ -79,6 +79,9 @@ class TaxTest extends BoltTestCase
      * @var Tax
      */
     private $tax;
+    
+    /** array of objects we need to delete after test */
+    private $objectsToClean;
 
     protected function setUpInternal()
     {
@@ -87,6 +90,12 @@ class TaxTest extends BoltTestCase
         }
         $this->objectManager = Bootstrap::getObjectManager();
         $this->tax = $this->objectManager->create(Tax::class);
+        $this->objectsToClean = [];
+    }
+    
+    protected function tearDownInternal()
+    {
+        TestUtils::cleanupSharedFixtures($this->objectsToClean);
     }
 
     /**
@@ -375,7 +384,12 @@ class TaxTest extends BoltTestCase
             ->setTaxResult($taxResult)
             ->setShippingOption($shippingOptionData);
 
-        $quote = TestUtils::createQuote(['is_virtual' => 1]);
+        $quote = TestUtils::createQuote();
+        $product = TestUtils::createVirtualProduct();
+        $this->objectsToClean[] = $product;
+        $quote->addProduct($product, 1);
+        $quote->setIsVirtual(true);
+        $quote->save();
         TestHelper::setProperty($this->tax, 'quote', $quote);
         TestHelper::setProperty($this->tax, 'addressInformation', $addressInformation);
 

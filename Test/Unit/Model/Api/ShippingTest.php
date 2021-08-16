@@ -58,6 +58,9 @@ class ShippingTest extends BoltTestCase
      * @var Shipping
      */
     private $shipping;
+    
+    /** array of objects we need to delete after test */
+    private $objectsToClean;
 
     protected function setUpInternal()
     {
@@ -66,6 +69,12 @@ class ShippingTest extends BoltTestCase
         }
         $this->objectManager = Bootstrap::getObjectManager();
         $this->shipping = $this->objectManager->create(Shipping::class);
+        $this->objectsToClean = [];
+    }
+    
+    protected function tearDownInternal()
+    {
+        TestUtils::cleanupSharedFixtures($this->objectsToClean);
     }
 
     /**
@@ -141,7 +150,12 @@ class ShippingTest extends BoltTestCase
             ->setService('No Shipping Required')
             ->setCost(0)
             ->setReference('noshipping');
-        $quote = TestUtils::createQuote(['store_id' => $this->storeId, 'is_virtual' => 1]);
+        $quote = TestUtils::createQuote(['store_id' => $this->storeId]);
+        $product = TestUtils::createVirtualProduct();
+        $this->objectsToClean[] = $product;
+        $quote->addProduct($product, 1);
+        $quote->setIsVirtual(true);
+        $quote->save();
         TestHelper::setProperty($this->shipping, 'quote', $quote);
         $result = $this->shipping->generateResult($addressData, [], null);
         $this->assertEquals(
