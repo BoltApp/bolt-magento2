@@ -141,7 +141,7 @@ class ShippingTest extends BoltTestCase
             ->setService('No Shipping Required')
             ->setCost(0)
             ->setReference('noshipping');
-        $quote = TestUtils::createQuote(['store_id' => $this->storeId, 'is_virtual' => '1']);
+        $quote = TestUtils::createQuote(['store_id' => $this->storeId, 'is_virtual' => 1]);
         TestHelper::setProperty($this->shipping, 'quote', $quote);
         $result = $this->shipping->generateResult($addressData, [], null);
         $this->assertEquals(

@@ -375,7 +375,7 @@ class TaxTest extends BoltTestCase
             ->setTaxResult($taxResult)
             ->setShippingOption($shippingOptionData);
 
-        $quote = TestUtils::createQuote(['is_virtual' => '1']);
+        $quote = TestUtils::createQuote(['is_virtual' => 1]);
         TestHelper::setProperty($this->tax, 'quote', $quote);
         TestHelper::setProperty($this->tax, 'addressInformation', $addressInformation);
 
