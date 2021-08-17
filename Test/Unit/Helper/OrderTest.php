@@ -22,6 +22,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Bolt\Boltpay\Helper\Hook;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
@@ -3749,30 +3750,70 @@ class OrderTest extends BoltTestCase
      */
     public function updateOrderPayment_handleCheckboxes()
     {
-        list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp(OrderHelper::TS_AUTHORIZED);
-        $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
-            ->withConsecutive(['transaction_state'])
-            ->willReturnOnConsecutiveCalls('');
 
-        $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setOrder')->with($this->orderMock)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setTransactionId')->with(self::TRANSACTION_ID . '-auth')
-            ->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setAdditionalInformation')->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setFailSafe')->with(true)->willReturnSelf();
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'id'        => self::TRANSACTION_ID,
+                    'reference' => '11112',
+                    'processor' => self::PROCESSOR_VANTIV,
+                    'amount'    => [
+                        'amount' => 10
+                    ],
+                    'date'      => microtime(true) * 1000,
+                    'captures'  => [
+                        [
+                            'id'     => 123123123,
+                            'status' => 'succeeded',
+                            'amount' => [
+                                'amount' => 10
+                            ]
+                        ]
+                    ],
+                    'order' => [
+                        'cart' => [
+                            'total_amount' => [
+                                'amount' => 10
+                            ]
+                        ]
+                    ],
+                    'from_credit_card' => [
+                        'token_type' => self::TOKEN_BOLT
+                    ],
+                    'type'     => OrderHelper::TT_PAYMENT,
+                    'status'   => "captured",
+                ]
+            )
+        );
 
-        $this->transactionBuilder->expects(self::once())->method('build')
-            ->with(TransactionInterface::TYPE_AUTH)->willThrowException(new Exception(''));
+        $payment = $this->objectManager->create(Order\Payment::class);
+        $payment->setMethod(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
 
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('');
+        $paymentData = [
+            'transaction_state' => "",
+            'transaction_reference' => null,
+            'real_transaction_id' => $transaction->id,
+            'authorized' => false,
+            'captures' => '',
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
 
-        $this->orderMock->expects(self::any())->method('getState')
-            ->willReturn('pending_payment');
-        $this->checkboxesHandler->expects(self::once())->method('handle')
-            ->with($this->orderMock, self::HOOK_PAYLOAD['checkboxes']);
+        $order = TestUtils::createDumpyOrder([], [], [], Order::STATE_PENDING_PAYMENT, Order::STATE_PENDING_PAYMENT, $payment);
+        $hookLoad = [
+            'checkboxes' => [
+                [
+                    'text' => 'Subscribe for our newsletter',
+                    'category' => 'NEWSLETTER',
+                    'value' => true,
+                    'is_custom_field' => false,
+                    'features' => false
+                ]
+            ]
+        ];
 
-        $this->currentMock->updateOrderPayment($this->orderMock, $transaction, null, null, self::HOOK_PAYLOAD);
+        $this->orderHelper->updateOrderPayment($order, $transaction, null, Hook::HT_CAPTURE, $hookLoad);
+        self::assertEquals('BOLTPAY INFO :: checkboxes<br>Subscribe for our newsletter: Yes',$order->getStatusHistories()[0]->getComment());
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
         /**
@@ -3814,43 +3855,58 @@ class OrderTest extends BoltTestCase
      */
     public function updateOrderPayment_sameState_withAuthHookAndOrderStatusIsPaymentReview()
     {
-        $transactionState = OrderHelper::TS_AUTHORIZED;
+        Hook::$fromBolt = true;
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'id'        => self::TRANSACTION_ID,
+                    'reference' => self::REFERENCE_ID,
+                    'processor' => self::PROCESSOR_VANTIV,
+                    'amount'    => [
+                        'amount' => 10
+                    ],
+                    'date'      => microtime(true) * 1000,
+                    'captures'  => [],
+                    'order' => [
+                        'cart' => [
+                            'total_amount' => [
+                                'amount' => 10
+                            ]
+                        ]
+                    ],
+                    'from_credit_card' => [
+                        'token_type' => self::TOKEN_BOLT
+                    ],
+                    'type'     => OrderHelper::TT_PAYMENT,
+                    'status'   => "authorized",
+                ]
+            )
+        );
+
         $prevTransactionState = OrderHelper::TS_AUTHORIZED;
-        list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp($transactionState);
         $prevTransactionReference = self::REFERENCE_ID;
-        $this->orderMock->expects(self::any())->method('getState')
-            ->willReturn(OrderModel::STATE_PAYMENT_REVIEW);
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
 
-        $this->currentMock->expects(self::never())->method('isAnAllowedUpdateFromAdminPanel')
-            ->with($this->orderMock, $transactionState)->willReturn(true);
-        $paymentMock->expects(self::never())->method('setIsTransactionApproved')->with(true);
-        $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
-            ->withConsecutive(
-                ['transaction_state'],
-                ['transaction_reference'],
-                ['real_transaction_id'],
-                ['authorized'],
-                ['captures'],
-                ['refunds'],
-                [null]
-            )->willReturnOnConsecutiveCalls(
-                $prevTransactionState,
-                $prevTransactionReference,
-                self::TRANSACTION_ID,
-                true,
-                '',
-                0,
-                ''
-            );
+        $payment = $this->objectManager->create(Order\Payment::class);
+        $payment->setMethod(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
 
-        $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setOrder')->with($this->orderMock)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setTransactionId')->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setAdditionalInformation')->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setFailSafe')->with(true)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('build')->willReturn($paymentMock);
-
-        $this->currentMock->updateOrderPayment($this->orderMock, $transaction, self::REFERENCE_ID, self::HOOK_TYPE_AUTH);
+        $paymentData = [
+            'transaction_state' => $prevTransactionState,
+            'transaction_reference' => $prevTransactionReference,
+            'real_transaction_id' => self::TRANSACTION_ID,
+            'authorized' => true,
+            'captures' => '',
+            'processor' => self::PROCESSOR_VANTIV,
+            'token_type' => self::TOKEN_BOLT
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        $order = TestUtils::createDumpyOrder([], [], [], Order::STATE_PAYMENT_REVIEW, Order::STATE_PAYMENT_REVIEW, $payment);
+        $orderHelper->updateOrderPayment($order, $transaction, self::REFERENCE_ID, self::HOOK_TYPE_AUTH);
+        self::assertEquals(
+            'BOLTPAY INFO :: PAYMENT Status: AUTHORIZED Amount: $0.10<br>Bolt transaction: <a href="https://merchant-sandbox.bolt.com/transaction/1123123123">1123123123</a> Transaction ID: "ABCD-1234-XXXX-auth"',
+            $order->getStatusHistories()[0]->getComment());
+        self::assertNull($payment->getIsTransactionApproved());
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -3859,43 +3915,58 @@ class OrderTest extends BoltTestCase
      */
     public function updateOrderPayment_sameState_withPendingHookAndOrderStatusIsPendingPayment()
     {
-        $transactionState = OrderHelper::TS_AUTHORIZED;
+        Hook::$fromBolt = true;
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'id'        => self::TRANSACTION_ID,
+                    'reference' => self::REFERENCE_ID,
+                    'processor' => self::PROCESSOR_VANTIV,
+                    'amount'    => [
+                        'amount' => 10
+                    ],
+                    'date'      => microtime(true) * 1000,
+                    'captures'  => [],
+                    'order' => [
+                        'cart' => [
+                            'total_amount' => [
+                                'amount' => 10
+                            ]
+                        ]
+                    ],
+                    'from_credit_card' => [
+                        'token_type' => self::TOKEN_BOLT
+                    ],
+                    'type'     => OrderHelper::TT_PAYMENT,
+                    'status'   => "authorized",
+                ]
+            )
+        );
+
         $prevTransactionState = OrderHelper::TS_AUTHORIZED;
-        list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp($transactionState);
         $prevTransactionReference = self::REFERENCE_ID;
-        $this->orderMock->expects(self::any())->method('getState')
-            ->willReturn(OrderModel::STATE_PENDING_PAYMENT);
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
 
-        $this->currentMock->expects(self::never())->method('isAnAllowedUpdateFromAdminPanel')
-            ->with($this->orderMock, $transactionState)->willReturn(true);
-        $paymentMock->expects(self::never())->method('setIsTransactionApproved')->with(true);
-        $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
-            ->withConsecutive(
-                ['transaction_state'],
-                ['transaction_reference'],
-                ['real_transaction_id'],
-                ['authorized'],
-                ['captures'],
-                ['refunds'],
-                [null]
-            )->willReturnOnConsecutiveCalls(
-                $prevTransactionState,
-                $prevTransactionReference,
-                self::TRANSACTION_ID,
-                true,
-                '',
-                0,
-                ''
-            );
+        $payment = $this->objectManager->create(Order\Payment::class);
+        $payment->setMethod(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
 
-        $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setOrder')->with($this->orderMock)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setTransactionId')->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setAdditionalInformation')->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setFailSafe')->with(true)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('build')->willReturn($paymentMock);
-
-        $this->currentMock->updateOrderPayment($this->orderMock, $transaction, self::REFERENCE_ID, self::HOOK_TYPE_PENDING);
+        $paymentData = [
+            'transaction_state' => $prevTransactionState,
+            'transaction_reference' => $prevTransactionReference,
+            'real_transaction_id' => self::TRANSACTION_ID,
+            'authorized' => true,
+            'captures' => '',
+            'processor' => self::PROCESSOR_VANTIV,
+            'token_type' => self::TOKEN_BOLT
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        $order = TestUtils::createDumpyOrder([], [], [], Order::STATE_PENDING_PAYMENT, Order::STATE_PENDING_PAYMENT, $payment);
+        $orderHelper->updateOrderPayment($order, $transaction, self::REFERENCE_ID, self::HOOK_TYPE_PENDING);
+        self::assertEquals(
+            'BOLTPAY INFO :: PAYMENT Status: AUTHORIZED Amount: $0.10<br>Bolt transaction: <a href="https://merchant-sandbox.bolt.com/transaction/1123123123">1123123123</a> Transaction ID: "ABCD-1234-XXXX-auth"',
+            $order->getStatusHistories()[2]->getComment());
+        self::assertNull($payment->getIsTransactionApproved());
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -3905,12 +3976,55 @@ class OrderTest extends BoltTestCase
      */
     public function updateOrderPayment_rejectedIrreversible()
     {
-        list($transaction, $paymentMock) =
-            $this->updateOrderPaymentSetUp(OrderHelper::TS_REJECTED_IRREVERSIBLE);
-        $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
-            ->withConsecutive(['transaction_state'])
-            ->willReturnOnConsecutiveCalls(OrderHelper::TS_REJECTED_IRREVERSIBLE);
-        $this->currentMock->updateOrderPayment($this->orderMock, $transaction);
+        Hook::$fromBolt = false;
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'id'        => self::TRANSACTION_ID,
+                    'reference' => '11112',
+                    'processor' => self::PROCESSOR_VANTIV,
+                    'amount'    => [
+                        'amount' => 10
+                    ],
+                    'date'      => microtime(true) * 1000,
+                    'captures'  => [],
+                    'order' => [
+                        'cart' => [
+                            'total_amount' => [
+                                'amount' => 10
+                            ]
+                        ]
+                    ],
+                    'from_credit_card' => [
+                        'token_type' => self::TOKEN_BOLT
+                    ],
+                    'type'     => OrderHelper::TT_PAYMENT,
+                    'status'   => "rejected_irreversible",
+                ]
+            )
+        );
+
+        $prevTransactionState = OrderHelper::TS_REJECTED_IRREVERSIBLE;
+        $prevTransactionReference = self::REFERENCE_ID;
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+
+        $payment = $this->objectManager->create(Order\Payment::class);
+        $payment->setMethod(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
+
+        $paymentData = [
+            'transaction_state' => $prevTransactionState,
+            'transaction_reference' => $prevTransactionReference,
+            'real_transaction_id' => self::TRANSACTION_ID,
+            'authorized' => true,
+            'captures' => '',
+            'processor' => self::PROCESSOR_VANTIV,
+            'token_type' => self::TOKEN_BOLT
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        $order = TestUtils::createDumpyOrder([], [], [], Order::STATE_PAYMENT_REVIEW, Order::STATE_PAYMENT_REVIEW, $payment);
+        $orderHelper->updateOrderPayment($order, $transaction);
+
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -3920,13 +4034,57 @@ class OrderTest extends BoltTestCase
      */
     public function updateOrderPayment_withUnhandledState_throwsException()
     {
-        list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp('Unhandled state');
-        $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
-            ->withConsecutive(['transaction_state'])
-            ->willReturnOnConsecutiveCalls(OrderHelper::TS_AUTHORIZED);
+        Hook::$fromBolt = false;
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'id'        => self::TRANSACTION_ID,
+                    'reference' => '11112',
+                    'processor' => self::PROCESSOR_VANTIV,
+                    'amount'    => [
+                        'amount' => 10
+                    ],
+                    'date'      => microtime(true) * 1000,
+                    'captures'  => [],
+                    'order' => [
+                        'cart' => [
+                            'total_amount' => [
+                                'amount' => 10
+                            ]
+                        ]
+                    ],
+                    'from_credit_card' => [
+                        'token_type' => self::TOKEN_BOLT
+                    ],
+                    'type'     => OrderHelper::TT_PAYMENT,
+                    'status'   => "Unhandled_State",
+                ]
+            )
+        );
+
+        $prevTransactionState = OrderHelper::TS_REJECTED_IRREVERSIBLE;
+        $prevTransactionReference = self::REFERENCE_ID;
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+
+        $payment = $this->objectManager->create(Order\Payment::class);
+        $payment->setMethod(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
+
+        $paymentData = [
+            'transaction_state' => $prevTransactionState,
+            'transaction_reference' => $prevTransactionReference,
+            'real_transaction_id' => self::TRANSACTION_ID,
+            'authorized' => true,
+            'captures' => '',
+            'processor' => self::PROCESSOR_VANTIV,
+            'token_type' => self::TOKEN_BOLT
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        $order = TestUtils::createDumpyOrder(['increment_id' => '100000101'], [], [], Order::STATE_PAYMENT_REVIEW, Order::STATE_PAYMENT_REVIEW, $payment);
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Unhandled transaction state : Unhandled state');
-        $this->currentMock->updateOrderPayment($this->orderMock, $transaction);
+        $this->expectExceptionMessage('Unhandled transaction state : cc_payment:Unhandled_State');
+        $orderHelper->updateOrderPayment($order, $transaction);
+
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -4056,50 +4214,53 @@ class OrderTest extends BoltTestCase
      */
     public function updateOrderPayment_whenTransactionStateIsCreditCompleted_()
     {
-        list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp(OrderHelper::TS_CREDIT_COMPLETED);
-        $paymentMock->expects(static::exactly(6))->method('getAdditionalInformation')
-            ->withConsecutive(
-                ['transaction_state'],
-                ['transaction_reference'],
-                ['real_transaction_id'],
-                ['authorized'],
-                ['captures'],
-                ['refunds']
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'id'        => self::TRANSACTION_ID,
+                    'reference' => '11112',
+                    'processor' => self::PROCESSOR_VANTIV,
+                    'amount'    => [
+                        'amount' => 10
+                    ],
+                    'date'      => microtime(true) * 1000,
+                    'captures'  => [],
+                    'order' => [
+                        'cart' => [
+                            'total_amount' => [
+                                'amount' => 10
+                            ]
+                        ]
+                    ],
+                    'from_credit_card' => [
+                        'token_type' => self::TOKEN_BOLT
+                    ],
+                    'type'     => OrderHelper::TT_CREDIT,
+                    'status'   => "completed",
+                ]
             )
-            ->willReturnOnConsecutiveCalls(
-                "",
-                null,
-                $transaction->id,
-                false,
-                null,
-                "$transaction->id,example-232-axs,example-dada-3232"
-            );
+        );
+
+        $payment = $this->objectManager->create(Order\Payment::class);
+        $payment->setMethod(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
+
+        $paymentData = [
+            'transaction_state' => "",
+            'transaction_reference' => null,
+            'real_transaction_id' => $transaction->id,
+            'authorized' => false,
+            'captures' => '',
+            'refunds' => "$transaction->id,example-232-axs,example-dada-3232"
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+
+        $order = TestUtils::createDumpyOrder([], [], [], Order::STATE_PAYMENT_REVIEW, Order::STATE_PAYMENT_REVIEW, $payment);
 
         $this->assertNull(
-            $this->currentMock->updateOrderPayment($this->orderMock, $transaction, null, null, self::HOOK_PAYLOAD)
+            $this->orderHelper->updateOrderPayment($order, $transaction, null, null, self::HOOK_PAYLOAD)
         );
-    }
 
-    /**
-     * @test
-     *
-     * @covers ::updateOrderPayment
-     */
-    public function updateOrderPayment_partialVoid()
-    {
-        /**
-         * @var MockObject|OrderPayment $paymentMock
-         */
-        list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp(OrderHelper::TS_PARTIAL_VOIDED);
-        $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
-            ->withConsecutive(['transaction_state'])
-            ->willReturnOnConsecutiveCalls('');
-        $paymentMock->expects(self::once())->method('getAuthorizationTransaction')->willReturnSelf();
-        $paymentMock->expects(self::once())->method('closeAuthorization')->willReturnSelf();
-        $this->currentMock->expects(self::once())->method('getVoidMessage')->with($paymentMock)->willReturn('test');
-        $this->orderMock->expects(self::once())->method('addCommentToStatusHistory')->with('test');
-        $this->orderMock->expects(self::once())->method('save');
-        $this->currentMock->updateOrderPayment($this->orderMock, $transaction);
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     /**
@@ -4109,33 +4270,61 @@ class OrderTest extends BoltTestCase
      */
     public function updateOrderPayment_createInvoice()
     {
-        /**
-         * @var MockObject|OrderPayment $paymentMock
-         */
-        list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp(OrderHelper::TS_COMPLETED);
-        $invoiceMock = $this->createMock(Invoice::class);
-        $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
-            ->willReturnMap([['authorized', true]]);
-        $this->currentMock->expects(self::once())->method('fetchTransactionInfo')->willReturn($transaction);
-        $this->currentMock->expects(self::once())->method('isCaptureHookRequest')->willReturn(true);
+        Hook::$fromBolt = true;
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'id'        => self::TRANSACTION_ID,
+                    'reference' => '11112',
+                    'processor' => self::PROCESSOR_VANTIV,
+                    'amount'    => [
+                        'amount' => 10
+                    ],
+                    'date'      => microtime(true) * 1000,
+                    'captures'  => [
+                        [
+                            'id'     => 123123123,
+                            'status' => 'succeeded',
+                            'amount' => [
+                                'amount' => 10
+                            ]
+                        ]
+                    ],
+                    'order' => [
+                        'cart' => [
+                            'total_amount' => [
+                                'amount' => 10
+                            ]
+                        ]
+                    ],
+                    'from_credit_card' => [
+                        'token_type' => self::TOKEN_BOLT
+                    ],
+                    'type'     => OrderHelper::TT_PAYMENT,
+                    'status'   => "captured",
+                ]
+            )
+        );
 
-        $this->currentMock->expects(self::once())->method('createOrderInvoice')->willReturn($invoiceMock);
-        $this->currentMock->expects(self::once())->method('createOrderInvoice')->willReturn($invoiceMock);
+        $payment = $this->objectManager->create(Order\Payment::class);
+        $payment->setMethod(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
 
-        $exception = new Exception('');
-        $this->emailSender->expects(self::once())->method('send')->with($this->orderMock)
-            ->willThrowException($exception);
-        $this->bugsnag->expects(self::once())->method('notifyException')->with($exception);
+        $paymentData = [
+            'transaction_state' => "",
+            'transaction_reference' => null,
+            'real_transaction_id' => $transaction->id,
+            'authorized' => false,
+            'captures' => '',
+        ];
+        $featureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_IGNORE_HOOK_FOR_INVOICE_CREATION,false);
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
 
-        $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setOrder')->with($this->orderMock)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setTransactionId')
-            ->with(self::TRANSACTION_ID . '-capture-' . 123123123)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setAdditionalInformation')->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setFailSafe')->with(true)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('build')->willReturn($paymentMock);
+        $order = TestUtils::createDumpyOrder([], [], [], Order::STATE_PENDING_PAYMENT, Order::STATE_PENDING_PAYMENT, $payment);
+        $this->orderHelper->updateOrderPayment($order, $transaction, null, Hook::HT_CAPTURE,null);
 
-        $this->currentMock->updateOrderPayment($this->orderMock, null, self::REFERENCE_ID);
+        self::assertEquals(1, $order->getInvoiceCollection()->getSize());
+        TestUtils::cleanupSharedFixtures([$order]);
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
     /**
@@ -4145,25 +4334,60 @@ class OrderTest extends BoltTestCase
      */
     public function updateOrderPayment_withIgnoreInvoiceCreationEnabled_DoesNotCreateInvoice()
     {
-        /**
-         * @var MockObject|OrderPayment $paymentMock
-         */
-        list($transaction, $paymentMock) = $this->updateOrderPaymentSetUp(OrderHelper::TS_ZERO_AMOUNT);
-        $this->featureSwitches->method('isIgnoreHookForInvoiceCreationEnabled')->willReturn(true);
-        $invoiceMock = $this->createMock(Invoice::class);
-        $paymentMock->expects(self::atLeastOnce())->method('getAdditionalInformation')
-            ->willReturnMap([['authorized', true]]);
-        $this->currentMock->expects(self::once())->method('fetchTransactionInfo')->willReturn($transaction);
+        Hook::$fromBolt = true;
+        $transaction = json_decode(
+            json_encode(
+                [
+                    'id'        => self::TRANSACTION_ID,
+                    'reference' => '11112',
+                    'processor' => self::PROCESSOR_VANTIV,
+                    'amount'    => [
+                        'amount' => 10
+                    ],
+                    'date'      => microtime(true) * 1000,
+                    'captures'  => [
+                        [
+                            'id'     => 123123123,
+                            'status' => 'succeeded',
+                            'amount' => [
+                                'amount' => 10
+                            ]
+                        ]
+                    ],
+                    'order' => [
+                        'cart' => [
+                            'total_amount' => [
+                                'amount' => 10
+                            ]
+                        ]
+                    ],
+                    'from_credit_card' => [
+                        'token_type' => self::TOKEN_BOLT
+                    ],
+                    'type'     => OrderHelper::TT_PAYMENT,
+                    'status'   => "captured",
+                ]
+            )
+        );
 
-        $this->currentMock->expects(self::never())->method('createOrderInvoice')->willReturn($invoiceMock);
+        $payment = $this->objectManager->create(Order\Payment::class);
+        $payment->setMethod(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
 
-        $this->transactionBuilder->expects(self::once())->method('setPayment')->with($paymentMock)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setOrder')->with($this->orderMock)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setTransactionId')->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setAdditionalInformation')->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('setFailSafe')->with(true)->willReturnSelf();
-        $this->transactionBuilder->expects(self::once())->method('build')->willReturn($paymentMock);
-        $this->currentMock->updateOrderPayment($this->orderMock, null, self::REFERENCE_ID);
+        $paymentData = [
+            'transaction_state' => "",
+            'transaction_reference' => null,
+            'real_transaction_id' => $transaction->id,
+            'authorized' => false,
+            'captures' => '',
+        ];
+        $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        $featureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_IGNORE_HOOK_FOR_INVOICE_CREATION,true);
+        $order = TestUtils::createDumpyOrder([], [], [], Order::STATE_PENDING_PAYMENT, Order::STATE_PENDING_PAYMENT, $payment);
+        $this->orderHelper->updateOrderPayment($order, $transaction, null, Hook::HT_CAPTURE,null);
+
+        self::assertEquals(0, $order->getInvoiceCollection()->getSize());
+        TestUtils::cleanupSharedFixtures([$order]);
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
     /**
