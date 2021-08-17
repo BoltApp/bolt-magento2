@@ -27,7 +27,7 @@ class UniversalWebhookResult implements UniversalWebhookResultInterface
     private $status;
 
     /**
-     * @var array
+     * @var []
      */
     private $error;
 
@@ -48,7 +48,7 @@ class UniversalWebhookResult implements UniversalWebhookResultInterface
      *
      * @api
      * @param string $status
-     * @return $this
+     * @return \Bolt\Boltpay\Api\Data\UniversalWebhookResultInterface
      */
 
     public function setStatus($status)
@@ -61,7 +61,7 @@ class UniversalWebhookResult implements UniversalWebhookResultInterface
      * Get error object
      *
      * @api
-     * @return array
+     * @return []
      */
 
     public function getError()
@@ -73,8 +73,8 @@ class UniversalWebhookResult implements UniversalWebhookResultInterface
      * Set error object
      *
      * @api
-     * @param array $error
-     * @return $this
+     * @param [] $error
+     * @return \Bolt\Boltpay\Api\Data\UniversalWebhookResultInterface
      */
     public function setError($error)
     {
