@@ -31,7 +31,7 @@ interface UniversalWebhookInterface
      * @param string $object
      * @param mixed $data
      *
-     * @return Bolt\Boltpay\Api\Data\UniversalWebhookResultInterface
+     * @return boolean
      */
     public function execute(
         $type = null,

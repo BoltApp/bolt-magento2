@@ -33,7 +33,7 @@ interface UniversalWebhookResultInterface
      *
      * @api
      * @param string $status
-     * @return $this
+     * @return \Bolt\Boltpay\Api\Data\UniversalWebhookResultInterface
      */
 
     public function setStatus($status);
@@ -42,7 +42,7 @@ interface UniversalWebhookResultInterface
      * Get error object
      *
      * @api
-     * @return array
+     * @return []
      */
 
     public function getError();
@@ -51,8 +51,8 @@ interface UniversalWebhookResultInterface
      * Set error object
      *
      * @api
-     * @param array $error
-     * @return $this
+     * @param [] $error
+     * @return \Bolt\Boltpay\Api\Data\UniversalWebhookResultInterface
      */
 
     public function setError($error);
