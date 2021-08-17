@@ -30,7 +30,7 @@ use Magento\Framework\App\Area;
 use Magento\Framework\Data\Form\FormKey;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
-use Zend\Serializer\Adapter\PhpSerialize as Serialize;
+use Magento\Framework\Serialize\Serializer\Serialize as Serialize;
 
 /**
  * Boltpay Session helper

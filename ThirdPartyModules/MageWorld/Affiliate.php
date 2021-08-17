@@ -19,7 +19,7 @@ namespace Bolt\Boltpay\ThirdPartyModules\MageWorld;
 
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\App\CacheInterface;
-use Zend\Serializer\Adapter\PhpSerialize as Serialize;
+use Magento\Framework\Serialize\Serializer\Serialize as Serialize;
 use Bolt\Boltpay\Helper\Session as BoltSession;
 use Bolt\Boltpay\Helper\Cart as BoltCart;
 use Magento\Quote\Model\Quote;

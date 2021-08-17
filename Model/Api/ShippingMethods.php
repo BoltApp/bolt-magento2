@@ -43,7 +43,7 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\SalesRule\Model\RuleFactory;
-use Zend\Serializer\Adapter\PhpSerialize as Serialize;
+use Magento\Framework\Serialize\Serializer\Serialize as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**

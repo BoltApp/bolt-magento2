@@ -87,7 +87,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\TestFramework\Helper\Bootstrap;
-use Zend\Serializer\Adapter\PhpSerialize as Serialize;
+use Magento\Framework\Serialize\Serializer\Serialize as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\SalesRule\Model\RuleRepository;
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
@@ -450,7 +450,7 @@ class CartTest extends BoltTestCase
         $this->customerMock = $this->createPartialMock(Customer::class, ['getEmail']);
         $this->coreRegistry = $this->createMock(Registry::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
-        $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(Serialize::class);
+        $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(\Magento\Framework\Serialize\Serializer\Serialize::class);
         $this->deciderHelper = $this->createPartialMock(
             DeciderHelper::class,
             ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical',

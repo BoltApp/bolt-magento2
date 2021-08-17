@@ -62,7 +62,7 @@ use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
-use Zend\Serializer\Adapter\PhpSerialize as Serialize;
+use Magento\Framework\Serialize\Serializer\Serialize as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\SalesRule\Model\RuleRepository;
 use Magento\SalesRule\Api\Data\RuleInterface;
