@@ -106,8 +106,9 @@ class SessionTest extends BoltTestCase
                 'sessionType' => 'frontend',
                 'sessionID' => $this->checkoutSession->getSessionId()
             ],
-            unserialize(
-                TestHelper::getProperty($this->session, 'cache')->load(Session::BOLT_SESSION_PREFIX . self::QUOTE_ID)
+            json_decode(
+                TestHelper::getProperty($this->session, 'cache')->load(Session::BOLT_SESSION_PREFIX . self::QUOTE_ID),
+                true
             )
         );
     }

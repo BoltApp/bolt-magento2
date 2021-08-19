@@ -17,34 +17,34 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
-use Bolt\Boltpay\Api\Data\ShippingOptionsInterface;
-use Bolt\Boltpay\Api\ShippingMethodsInterface;
-use Bolt\Boltpay\Helper\Hook as HookHelper;
-use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Magento\Directory\Model\Region as RegionModel;
-use Magento\Framework\Exception\LocalizedException;
-use Bolt\Boltpay\Api\Data\ShippingOptionsInterfaceFactory;
-use Bolt\Boltpay\Api\Data\ShippingTaxInterfaceFactory;
-use Magento\Quote\Model\Quote;
-use Magento\Quote\Model\Cart\ShippingMethodConverter;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
-use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\MetricsClient;
-use Bolt\Boltpay\Helper\Log as LogHelper;
-use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
-use Magento\Framework\Webapi\Rest\Response;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Magento\Framework\Webapi\Rest\Request;
-use Magento\Framework\App\CacheInterface;
-use Magento\Framework\Pricing\Helper\Data as PriceHelper;
-use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
-use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Api\Data\ShippingOptionsInterface;
+use Bolt\Boltpay\Api\Data\ShippingOptionsInterfaceFactory;
+use Bolt\Boltpay\Api\Data\ShippingTaxInterfaceFactory;
+use Bolt\Boltpay\Api\ShippingMethodsInterface;
 use Bolt\Boltpay\Exception\BoltException;
+use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
-use Magento\SalesRule\Model\RuleFactory;
-use Magento\Framework\Serialize\Serializer\Serialize as Serialize;
+use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\MetricsClient;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Directory\Model\Region as RegionModel;
+use Magento\Framework\App\CacheInterface;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Pricing\Helper\Data as PriceHelper;
+use Magento\Framework\Serialize\SerializerInterface as Serialize;
+use Magento\Framework\Webapi\Rest\Request;
+use Magento\Framework\Webapi\Rest\Response;
+use Magento\Quote\Model\Cart\ShippingMethodConverter;
+use Magento\Quote\Model\Quote;
+use Magento\SalesRule\Model\RuleFactory;
 
 /**
  * Class ShippingMethods
@@ -595,7 +595,27 @@ class ShippingMethods implements ShippingMethodsInterface
             if ($serialized = $this->cache->load($cacheIdentifier)) {
                 $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
                 $address->setShippingMethod(null)->save();
-                return $this->serialize->unserialize($serialized);
+                try {
+                    $shippingOptionsData = $this->serialize->unserialize($serialized);
+                    return $this->shippingOptionsInterfaceFactory->create()
+                        ->setShippingOptions(
+                            array_map(
+                                function ($shippingOptionData) {
+                                    return $this->shippingOptionInterfaceFactory->create()
+                                        ->setService($shippingOptionData['service'])
+                                        ->setCost($shippingOptionData['cost'])
+                                        ->setReference($shippingOptionData['reference'])
+                                        ->setTaxAmount($shippingOptionData['tax_amount']);;
+                                },
+                                $shippingOptionsData['shipping_options']
+                            )
+                        )->setTaxResult(
+                            $this->shippingTaxInterfaceFactory->create()
+                                ->setAmount($shippingOptionsData['tax_result']['amount'])
+                        );
+                } catch (\InvalidArgumentException $e) {
+                    $this->bugsnag->notifyException($e);
+                }
             }
         }
         ////////////////////////////////////////////////////////////////////////////////////////

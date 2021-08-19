@@ -22,7 +22,7 @@ use Bolt\Boltpay\Helper\Session as BoltSession;
 use Magento\Backend\Model\Auth\Session as AuthSession;
 use Magento\User\Model\UserFactory;
 use Magento\Framework\App\CacheInterface;
-use Magento\Framework\Serialize\Serializer\Serialize as Serialize;
+use Magento\Framework\Serialize\SerializerInterface as Serialize;
 
 class CustomShippingPrice
 {

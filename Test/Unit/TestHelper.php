@@ -143,7 +143,7 @@ class TestHelper extends TestCase
     public static function serialize($class, $data)
     {
         return (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($class))
-            ->getObject(\Magento\Framework\Serialize\Serializer\Serialize::class)->serialize($data);
+            ->getObject(\Magento\Framework\Serialize\Serializer\Json::class)->serialize($data);
     }
     
     /**

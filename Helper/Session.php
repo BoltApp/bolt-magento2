@@ -30,7 +30,7 @@ use Magento\Framework\App\Area;
 use Magento\Framework\Data\Form\FormKey;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
-use Magento\Framework\Serialize\Serializer\Serialize as Serialize;
+use Magento\Framework\Serialize\SerializerInterface as Serialize;
 
 /**
  * Boltpay Session helper
@@ -207,7 +207,13 @@ class Session extends AbstractHelper
         }
         // @todo remove when update.cart hook starts supporting metadata
         elseif ($serialized = $this->cache->load($cacheIdentifier)) {
-            $sessionData = $this->serialize->unserialize($serialized);
+            try {
+                $sessionData = $this->serialize->unserialize($serialized);
+            } catch (\InvalidArgumentException $e) {
+                # temporary to ensure smooth transition to JSON
+                // phpcs:ignore Magento2.Security.InsecureFunction
+                $sessionData = unserialize($serialized);
+            }
             $sessionID = $sessionData["sessionID"];
             $storeId = $quote->getStoreId();
 
