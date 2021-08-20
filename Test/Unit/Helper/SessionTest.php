@@ -184,7 +184,7 @@ class SessionTest extends BoltTestCase
             ['save', 'load']
         );
 
-        $cache->expects(self::once())->method('load')->willReturn('a:2:{s:11:"sessionType";s:8:"frontend";s:9:"sessionID";s:4:"1111";}');
+        $cache->expects(self::once())->method('load')->willReturn('{"sessionType":"frontend","sessionID":"1111"}');
         TestHelper::setProperty($this->session, 'appState', $appState);
         TestHelper::setInaccessibleProperty($this->session, 'cache', $cache);
         $result = $this->session->loadSession($quote);
