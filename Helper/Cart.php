@@ -2579,6 +2579,7 @@ class Cart extends AbstractHelper
         $this->sessionHelper->loadSession($quote, $metadata);
         //make sure we recollect totals
         $quote->setTotalsCollectedFlag(false);
+        $this->eventsForThirdPartyModules->dispatchEvent("beforeGetCartDataForCreateCart", $quote, $this->sessionHelper->getCheckoutSession());
         $cart_data = $this->getCartData(false, '', $quote);
         $cart_data['order_reference'] = $quoteId;
         $this->quoteResourceSave($quote);
