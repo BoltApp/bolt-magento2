@@ -2451,6 +2451,7 @@ ORDER
         );
         $boltOrderResponse = new Response();
         $boltOrderResponse->setResponse($order);
+        $boltOrderResponse->setStoreId(1);
         return [$currentMock, $cart, $boltOrderResponse];
     }
 
@@ -2669,7 +2670,7 @@ ORDER
         ->with(self::STORE_ID)->willReturn(true);
         $currentMock->expects(static::once())->method('getCartCacheIdentifier')->willReturn(self::CACHE_IDENTIFIER);
         $currentMock->expects(static::once())->method('loadFromCache')->with(self::CACHE_IDENTIFIER)
-        ->willReturn($boltOrder);
+        ->willReturn($boltOrder->toArray());
         $currentMock->expects(static::once())->method('getImmutableQuoteIdFromBoltOrder')->with($boltOrder->getResponse())
         ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $currentMock->expects(static::once())->method('isQuoteAvailable')->with(self::IMMUTABLE_QUOTE_ID)

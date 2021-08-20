@@ -17,34 +17,34 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
-use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
-use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Bolt\Boltpay\Api\Data\ShippingOptionsInterface;
+use Bolt\Boltpay\Api\ShippingMethodsInterface;
+use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Magento\Directory\Model\Region as RegionModel;
+use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Api\Data\ShippingOptionsInterfaceFactory;
 use Bolt\Boltpay\Api\Data\ShippingTaxInterfaceFactory;
-use Bolt\Boltpay\Api\ShippingMethodsInterface;
-use Bolt\Boltpay\Exception\BoltException;
-use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Bolt\Boltpay\Helper\Discount as DiscountHelper;
-use Bolt\Boltpay\Helper\Hook as HookHelper;
-use Bolt\Boltpay\Helper\Log as LogHelper;
-use Bolt\Boltpay\Helper\MetricsClient;
-use Bolt\Boltpay\Helper\Session as SessionHelper;
-use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
-use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
-use Bolt\Boltpay\Model\EventsForThirdPartyModules;
-use Magento\Directory\Model\Region as RegionModel;
-use Magento\Framework\App\CacheInterface;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Pricing\Helper\Data as PriceHelper;
-use Magento\Framework\Serialize\SerializerInterface as Serialize;
-use Magento\Framework\Webapi\Rest\Request;
-use Magento\Framework\Webapi\Rest\Response;
-use Magento\Quote\Model\Cart\ShippingMethodConverter;
 use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\Cart\ShippingMethodConverter;
+use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
+use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
+use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\MetricsClient;
+use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+use Magento\Framework\Webapi\Rest\Response;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Magento\Framework\Webapi\Rest\Request;
+use Magento\Framework\App\CacheInterface;
+use Magento\Framework\Pricing\Helper\Data as PriceHelper;
+use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Exception\BoltException;
+use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\SalesRule\Model\RuleFactory;
+use Magento\Framework\Serialize\SerializerInterface as Serialize;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class ShippingMethods
@@ -597,6 +597,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 $address->setShippingMethod(null)->save();
                 try {
                     $shippingOptionsData = $this->serialize->unserialize($serialized);
+                    //re-create the object expected as the return
                     return $this->shippingOptionsInterfaceFactory->create()
                         ->setShippingOptions(
                             array_map(

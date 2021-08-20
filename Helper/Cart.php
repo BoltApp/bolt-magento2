@@ -884,7 +884,14 @@ class Cart extends AbstractHelper
             $cacheIdentifier = $this->getCartCacheIdentifier($cart);
 
             if ($boltOrderData = $this->loadFromCache($cacheIdentifier)) {
-                $boltOrder = new Response(['store_id' => $boltOrderData['store_id'], 'response'=>ArrayHelper::arrayToObject($boltOrderData['response'])]);
+                // re-create response object from the cached response
+                $boltOrder = new Response(
+                    [
+                        'store_id' => $boltOrderData['store_id'],
+                        // further in the code we expect the reponse as an object
+                        'response' => ArrayHelper::arrayToObject($boltOrderData['response'])
+                    ]
+                );
                 $immutableQuoteId = $this->getImmutableQuoteIdFromBoltOrder($boltOrder->getResponse());
 
                 // found in cache, check if the old immutable quote is still there

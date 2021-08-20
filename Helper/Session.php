@@ -207,17 +207,11 @@ class Session extends AbstractHelper
         }
         // @todo remove when update.cart hook starts supporting metadata
         elseif ($serialized = $this->cache->load($cacheIdentifier)) {
-            try {
-                $sessionData = $this->serialize->unserialize($serialized);
-            } catch (\InvalidArgumentException $e) {
-                # temporary to ensure smooth transition to JSON
-                // phpcs:ignore Magento2.Security.InsecureFunction
-                $sessionData = unserialize($serialized);
-            }
-            $sessionID = $sessionData["sessionID"];
+            $sessionData = $this->serialize->unserialize($serialized);
+            $sessionID = $sessionData['sessionID'];
             $storeId = $quote->getStoreId();
 
-            if ($sessionData["sessionType"] == "frontend") {
+            if ($sessionData['sessionType'] == 'frontend') {
                 // shipping and tax, orphaned transaction
                 // cart belongs to logged in customer?
                 $this->setSession($this->checkoutSession, $sessionID, $storeId);
