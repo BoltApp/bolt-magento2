@@ -87,7 +87,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\TestFramework\Helper\Bootstrap;
-use Zend\Serializer\Adapter\PhpSerialize as Serialize;
+use Magento\Framework\Serialize\SerializerInterface as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\SalesRule\Model\RuleRepository;
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
@@ -450,7 +450,7 @@ class CartTest extends BoltTestCase
         $this->customerMock = $this->createPartialMock(Customer::class, ['getEmail']);
         $this->coreRegistry = $this->createMock(Registry::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
-        $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(Serialize::class);
+        $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(\Magento\Framework\Serialize\Serializer\Json::class);
         $this->deciderHelper = $this->createPartialMock(
             DeciderHelper::class,
             ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical',
@@ -2451,6 +2451,7 @@ ORDER
         );
         $boltOrderResponse = new Response();
         $boltOrderResponse->setResponse($order);
+        $boltOrderResponse->setStoreId(1);
         return [$currentMock, $cart, $boltOrderResponse];
     }
 
@@ -2669,7 +2670,7 @@ ORDER
         ->with(self::STORE_ID)->willReturn(true);
         $currentMock->expects(static::once())->method('getCartCacheIdentifier')->willReturn(self::CACHE_IDENTIFIER);
         $currentMock->expects(static::once())->method('loadFromCache')->with(self::CACHE_IDENTIFIER)
-        ->willReturn($boltOrder);
+        ->willReturn($boltOrder->toArray());
         $currentMock->expects(static::once())->method('getImmutableQuoteIdFromBoltOrder')->with($boltOrder->getResponse())
         ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $currentMock->expects(static::once())->method('isQuoteAvailable')->with(self::IMMUTABLE_QUOTE_ID)

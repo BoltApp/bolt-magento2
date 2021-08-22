@@ -17,56 +17,55 @@
 
 namespace Bolt\Boltpay\Helper;
 
-use Bolt\Boltpay\Model\Response;
-use Magento\Framework\Registry;
-use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
-use Magento\Catalog\Model\ProductRepository;
+use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
+use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Model\Response;
+use Magento\Catalog\Helper\ImageFactory;
+use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
+use Magento\Catalog\Model\ProductRepository;
+use Magento\CatalogInventory\Api\StockStateInterface as StockState;
+use Magento\Checkout\Helper\Data as CheckoutHelper;
+use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
+use Magento\Customer\Model\Address;
 use Magento\Customer\Model\Session as CustomerSession;
+use Magento\Framework\Api\SearchCriteriaBuilder;
+use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Quote\Model\Quote;
-use Magento\Quote\Model\Quote\Address\Total as AddressTotal;
-use Magento\Sales\Api\Data\OrderInterface;
-use Zend_Http_Client_Exception;
-use Bolt\Boltpay\Helper\Log as LogHelper;
-use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
-use Magento\Framework\DataObjectFactory;
-use Magento\Catalog\Helper\ImageFactory;
-use Magento\Store\Model\App\Emulation;
-use Magento\Customer\Model\Address;
-use Magento\Quote\Model\QuoteFactory;
-use Magento\Quote\Model\Quote\TotalsCollector;
-use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
-use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
-use Magento\Framework\Api\SearchCriteriaBuilder;
-use Magento\Quote\Model\ResourceModel\Quote as QuoteResource;
-use Magento\Framework\Exception\NoSuchEntityException;
-use Bolt\Boltpay\Helper\Session as SessionHelper;
-use Magento\Checkout\Helper\Data as CheckoutHelper;
-use Magento\Quote\Model\Quote\Address as QuoteAddress;
-use Bolt\Boltpay\Helper\Discount as DiscountHelper;
-use Magento\Framework\App\CacheInterface;
-use Magento\Quote\Api\Data\CartInterface;
 use Magento\Framework\App\ResourceConnection;
-use Magento\Sales\Model\Order;
-use Magento\Store\Model\ScopeInterface;
-use Magento\Quote\Api\CartManagementInterface;
-use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Magento\Framework\DataObjectFactory;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Registry;
+use Magento\Framework\Serialize\SerializerInterface as Serialize;
+use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
 use Magento\Framework\Webapi\Exception as WebapiException;
-use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
-use Bolt\Boltpay\Exception\BoltException;
-use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
-use Bolt\Boltpay\Helper\MetricsClient;
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
-use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
-use Zend\Serializer\Adapter\PhpSerialize as Serialize;
-use Bolt\Boltpay\Model\EventsForThirdPartyModules;
-use Magento\SalesRule\Model\RuleRepository;
+use Magento\Quote\Api\CartManagementInterface;
+use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
+use Magento\Quote\Api\Data\CartInterface;
+use Magento\Quote\Model\Quote;
+use Magento\Quote\Model\Quote\Address as QuoteAddress;
+use Magento\Quote\Model\Quote\Address\Total as AddressTotal;
+use Magento\Quote\Model\Quote\TotalsCollector;
+use Magento\Quote\Model\QuoteFactory;
+use Magento\Quote\Model\ResourceModel\Quote as QuoteResource;
+use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
+use Magento\Sales\Model\Order;
 use Magento\SalesRule\Api\Data\RuleInterface;
-use Magento\CatalogInventory\Api\StockStateInterface as StockState;
+use Magento\SalesRule\Model\RuleRepository;
+use Magento\Store\Model\App\Emulation;
+use Magento\Store\Model\ScopeInterface;
+use Zend_Http_Client_Exception;
 
 /**
  * Boltpay Cart helper
@@ -541,13 +540,18 @@ class Cart extends AbstractHelper
             return false;
         }
 
-        return $unserialize ? $this->serialize->unserialize($cached) : $cached;
+        try {
+            return $unserialize ? $this->serialize->unserialize($cached) : $cached;
+        } catch (\InvalidArgumentException $e) {
+            $this->bugsnag->notifyException($e);
+            return false;
+        }
     }
 
     /**
      * Save data to Magento cache
      *
-     * @param mixed $data
+     * @param array|object $data
      * @param string $identifier
      * @param int $lifeTime
      * @param bool $serialize
@@ -555,7 +559,9 @@ class Cart extends AbstractHelper
      */
     protected function saveToCache($data, $identifier, $tags = [], $lifeTime = null, $serialize = true)
     {
-        $data = $serialize ? $this->serialize->serialize($data) : $data;
+        if ($serialize) {
+            $data = $data instanceof \Magento\Framework\DataObject ? $data->toJson() : $this->serialize->serialize($data);
+        }
         $this->cache->save($data, $identifier, $tags, $lifeTime);
     }
 
@@ -877,8 +883,15 @@ class Cart extends AbstractHelper
 
             $cacheIdentifier = $this->getCartCacheIdentifier($cart);
 
-            if ($boltOrder = $this->loadFromCache($cacheIdentifier)) {
-
+            if ($boltOrderData = $this->loadFromCache($cacheIdentifier)) {
+                // re-create response object from the cached response
+                $boltOrder = new Response(
+                    [
+                        'store_id' => $boltOrderData['store_id'],
+                        // further in the code we expect the reponse as an object
+                        'response' => ArrayHelper::arrayToObject($boltOrderData['response'])
+                    ]
+                );
                 $immutableQuoteId = $this->getImmutableQuoteIdFromBoltOrder($boltOrder->getResponse());
 
                 // found in cache, check if the old immutable quote is still there
