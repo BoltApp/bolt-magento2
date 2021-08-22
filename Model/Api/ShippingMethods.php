@@ -43,7 +43,7 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Magento\SalesRule\Model\RuleFactory;
-use Zend\Serializer\Adapter\PhpSerialize as Serialize;
+use Magento\Framework\Serialize\SerializerInterface as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
@@ -595,7 +595,16 @@ class ShippingMethods implements ShippingMethodsInterface
             if ($serialized = $this->cache->load($cacheIdentifier)) {
                 $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
                 $address->setShippingMethod(null)->save();
-                return $this->serialize->unserialize($serialized);
+                try {
+                    $shippingOptionsData = $this->serialize->unserialize($serialized);
+                    //re-create the object expected as the return
+                    return $this->createShippingOptionsModelFromArray(
+                        $shippingOptionsData['shipping_options'],
+                        $shippingOptionsData['tax_result']['amount']
+                    );
+                } catch (\InvalidArgumentException $e) {
+                    $this->bugsnag->notifyException($e);
+                }
             }
         }
         ////////////////////////////////////////////////////////////////////////////////////////
@@ -953,5 +962,30 @@ class ShippingMethods implements ShippingMethodsInterface
         return $parentQuoteCoupon &&
                 in_array(strtolower($parentQuoteCoupon), $ignoredShippingAddressCoupons) &&
                 !$this->quote->setTotalsCollectedFlag(false)->collectTotals()->getCouponCode();
+    }
+
+    /**
+     * (Re)Creates shipping options model from arrays containing shipping options and tax result amount
+     *
+     * @param array[] $shippingOptions
+     * @param float $amount
+     *
+     * @return ShippingOptionsInterface
+     */
+    protected function createShippingOptionsModelFromArray($shippingOptions, $amount = 0)
+    {
+        return $this->shippingOptionsInterfaceFactory->create()
+            ->setShippingOptions(
+                array_map(
+                    function ($shippingOptionData) {
+                        return $this->shippingOptionInterfaceFactory->create()
+                            ->setService($shippingOptionData['service'])
+                            ->setCost($shippingOptionData['cost'])
+                            ->setReference($shippingOptionData['reference'])
+                            ->setTaxAmount($shippingOptionData['tax_amount']);;
+                    },
+                    $shippingOptions
+                )
+            )->setTaxResult($this->shippingTaxInterfaceFactory->create()->setAmount($amount));
     }
 }

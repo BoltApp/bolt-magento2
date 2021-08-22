@@ -30,7 +30,7 @@ use Magento\Framework\App\Area;
 use Magento\Framework\Data\Form\FormKey;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
-use Zend\Serializer\Adapter\PhpSerialize as Serialize;
+use Magento\Framework\Serialize\SerializerInterface as Serialize;
 
 /**
  * Boltpay Session helper
@@ -208,10 +208,10 @@ class Session extends AbstractHelper
         // @todo remove when update.cart hook starts supporting metadata
         elseif ($serialized = $this->cache->load($cacheIdentifier)) {
             $sessionData = $this->serialize->unserialize($serialized);
-            $sessionID = $sessionData["sessionID"];
+            $sessionID = $sessionData['sessionID'];
             $storeId = $quote->getStoreId();
 
-            if ($sessionData["sessionType"] == "frontend") {
+            if ($sessionData['sessionType'] == 'frontend') {
                 // shipping and tax, orphaned transaction
                 // cart belongs to logged in customer?
                 $this->setSession($this->checkoutSession, $sessionID, $storeId);
