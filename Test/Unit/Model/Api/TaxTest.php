@@ -79,6 +79,9 @@ class TaxTest extends BoltTestCase
      * @var Tax
      */
     private $tax;
+    
+    /** array of objects we need to delete after test */
+    private $objectsToClean;
 
     protected function setUpInternal()
     {
@@ -87,6 +90,12 @@ class TaxTest extends BoltTestCase
         }
         $this->objectManager = Bootstrap::getObjectManager();
         $this->tax = $this->objectManager->create(Tax::class);
+        $this->objectsToClean = [];
+    }
+    
+    protected function tearDownInternal()
+    {
+        TestUtils::cleanupSharedFixtures($this->objectsToClean);
     }
 
     /**
@@ -313,6 +322,74 @@ class TaxTest extends BoltTestCase
             ->setShippingOption($shippingOptionData);
 
         $quote = TestUtils::createQuote();
+        TestHelper::setProperty($this->tax, 'quote', $quote);
+        TestHelper::setProperty($this->tax, 'addressInformation', $addressInformation);
+
+        $this->assertEquals($taxData, $this->tax->generateResult($addressData, $shipping_option, null));
+    }
+    
+    /**
+     * @test
+     * that generateResult for virtual quote would return tax data interface instance
+     *
+     * @covers ::generateResult
+     */
+    public function generateResult_virtualQuote()
+    {
+        $addressData = [
+            'region' => 'California',
+            'country_code' => 'US',
+            'postal_code' => '90210',
+            'locality' => 'San Franciso',
+            'street_address1' => '123 Sesame St.',
+            'email' => 'integration@bolt.com',
+            'company' => 'Bolt'
+        ];
+
+        $shipping_option = [
+            'service' => 'No Shipping Required',
+            'reference' => 'noshipping'
+        ];
+
+        $addressInformation = $this->objectManager->create(TotalsInformationInterface::class);
+        $addressInformation->setShippingTaxAmount(10);
+        $addressInformation->setShippingAmount(0);
+        $addressInformation->setTaxAmount(10);
+
+        $totalsInformationManagementInterface = $this->getMockBuilder(\Magento\Checkout\Api\TotalsInformationManagementInterface::class)
+            ->disableOriginalConstructor()
+            ->setMethods(['calculate'])
+            ->getMock();
+        $totalsInformationManagementInterface->method('calculate')->willReturn($addressInformation);
+
+        $apiHelperProperty = new \ReflectionProperty(
+            Tax::class,
+            'totalsInformationManagement'
+        );
+        $apiHelperProperty->setAccessible(true);
+        $apiHelperProperty->setValue($this->tax, $totalsInformationManagementInterface);
+
+        $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
+        $shippingOptionData
+            ->setService('No Shipping Required')
+            ->setCost(0)
+            ->setReference('noshipping')
+            ->setTaxAmount(1000);
+
+        $taxResult = new \Bolt\Boltpay\Model\Api\Data\TaxResult();
+        $taxResult->setSubtotalAmount(0);
+
+        $taxData = new \Bolt\Boltpay\Model\Api\Data\TaxData();
+        $taxData
+            ->setTaxResult($taxResult)
+            ->setShippingOption($shippingOptionData);
+
+        $quote = TestUtils::createQuote();
+        $product = TestUtils::createVirtualProduct();
+        $this->objectsToClean[] = $product;
+        $quote->addProduct($product, 1);
+        $quote->setIsVirtual(true);
+        $quote->save();
         TestHelper::setProperty($this->tax, 'quote', $quote);
         TestHelper::setProperty($this->tax, 'addressInformation', $addressInformation);
 

@@ -150,36 +150,45 @@ class Shipping extends ShippingTax implements ShippingInterface
      */
     public function getShippingOptions($addressData)
     {
-        list(,$addressData) = $this->populateAddress($addressData);
-
-        $address = $this->addressFactory->create();
-
-        $address->setRegionId($addressData['region_id'] ?? null);
-        $address->setRegion($addressData['region'] ?? null);
-        $address->setCountryId($addressData['country_id'] ?? null);
-        $address->setPostcode($addressData['postcode'] ?? null);
-        $address->setCity($addressData['city'] ?? null);
-        $address->setStreet($addressData['street'] ?? null);
-
-        /**
-         * @var ShippingMethodInterface[] $shippingOptionsArray
-         */
-        $shippingOptionsArray = $this->shippingMethodManagement
-            ->estimateByExtendedAddress($this->quote->getId(), $address);
-        $currencyCode = $this->quote->getQuoteCurrencyCode();
-
-        list($shippingOptions, $errors) = $this->formatResult($shippingOptionsArray, $currencyCode);
-
-        if ($errors) {
-            $this->bugsnag->registerCallback(function ($report) use ($errors, $addressData) {
-                $report->setMetaData([
-                    'SHIPPING ERRORS' => [
-                        'address' => $addressData,
-                        'errors'  => $errors
-                    ]
-                ]);
-            });
-            $this->bugsnag->notifyError('SHIPPING ERRORS', 'Shipping Method Errors');
+        if ($this->quote->isVirtual()) {
+            $shippingOptions = [];
+            $shippingOptions[] = $this->shippingOptionFactory
+                ->create()
+                ->setService(self::NO_SHIPPING_SERVICE)
+                ->setCost(0)
+                ->setReference(self::NO_SHIPPING_REFERENCE);
+        } else {
+            list(,$addressData) = $this->populateAddress($addressData);
+    
+            $address = $this->addressFactory->create();
+    
+            $address->setRegionId($addressData['region_id'] ?? null);
+            $address->setRegion($addressData['region'] ?? null);
+            $address->setCountryId($addressData['country_id'] ?? null);
+            $address->setPostcode($addressData['postcode'] ?? null);
+            $address->setCity($addressData['city'] ?? null);
+            $address->setStreet($addressData['street'] ?? null);
+    
+            /**
+             * @var ShippingMethodInterface[] $shippingOptionsArray
+             */
+            $shippingOptionsArray = $this->shippingMethodManagement
+                ->estimateByExtendedAddress($this->quote->getId(), $address);
+            $currencyCode = $this->quote->getQuoteCurrencyCode();
+    
+            list($shippingOptions, $errors) = $this->formatResult($shippingOptionsArray, $currencyCode);
+    
+            if ($errors) {
+                $this->bugsnag->registerCallback(function ($report) use ($errors, $addressData) {
+                    $report->setMetaData([
+                        'SHIPPING ERRORS' => [
+                            'address' => $addressData,
+                            'errors'  => $errors
+                        ]
+                    ]);
+                });
+                $this->bugsnag->notifyError('SHIPPING ERRORS', 'Shipping Method Errors');
+            }    
         }
 
         if (!$shippingOptions) {

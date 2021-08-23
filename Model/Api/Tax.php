@@ -109,7 +109,7 @@ class Tax extends ShippingTax implements TaxInterface
         list($address,) = $this->populateAddress($addressData);
         $this->addressInformation->setAddress($address);
 
-        if (!$shipping_option && !$ship_to_store_option) {
+        if ($this->quote->isVirtual() || (!$shipping_option && !$ship_to_store_option)) {
             return ;
         }
 

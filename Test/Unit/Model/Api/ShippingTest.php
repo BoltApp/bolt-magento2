@@ -58,6 +58,9 @@ class ShippingTest extends BoltTestCase
      * @var Shipping
      */
     private $shipping;
+    
+    /** array of objects we need to delete after test */
+    private $objectsToClean;
 
     protected function setUpInternal()
     {
@@ -66,6 +69,12 @@ class ShippingTest extends BoltTestCase
         }
         $this->objectManager = Bootstrap::getObjectManager();
         $this->shipping = $this->objectManager->create(Shipping::class);
+        $this->objectsToClean = [];
+    }
+    
+    protected function tearDownInternal()
+    {
+        TestUtils::cleanupSharedFixtures($this->objectsToClean);
     }
 
     /**
@@ -111,6 +120,42 @@ class ShippingTest extends BoltTestCase
             ->setReference('carrier_code_method_code')
             ->setTaxAmount(0);
         $quote = TestUtils::createQuote(['store_id' => $this->storeId]);
+        TestHelper::setProperty($this->shipping, 'quote', $quote);
+        $result = $this->shipping->generateResult($addressData, [], null);
+        $this->assertEquals(
+            [$shippingOptionData],
+            $result->getShippingOptions()
+        );
+    }
+    
+    /**
+     * @test
+     * that generateResult for virtual quote returns shipping data
+     *
+     * @covers ::generateResult
+     */
+    public function generateResult_virtualQuote()
+    {
+        $addressData = [
+            'region' => 'California',
+            'country_code' => 'US',
+            'postal_code' => '90210',
+            'locality' => 'San Franciso',
+            'street_address1' => '123 Sesame St.',
+            'email' => 'integration@bolt.com',
+            'company' => 'Bolt'
+        ];
+        $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
+        $shippingOptionData
+            ->setService('No Shipping Required')
+            ->setCost(0)
+            ->setReference('noshipping');
+        $quote = TestUtils::createQuote();
+        $product = TestUtils::createVirtualProduct();
+        $this->objectsToClean[] = $product;
+        $quote->addProduct($product, 1);
+        $quote->setIsVirtual(true);
+        $quote->save();
         TestHelper::setProperty($this->shipping, 'quote', $quote);
         $result = $this->shipping->generateResult($addressData, [], null);
         $this->assertEquals(

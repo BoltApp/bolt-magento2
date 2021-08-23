@@ -48,6 +48,9 @@ abstract class ShippingTax
     
     const E_BOLT_CUSTOM_ERROR = 6103;
     const E_BOLT_GENERAL_ERROR = 6009;
+    
+    const NO_SHIPPING_SERVICE = 'No Shipping Required';
+    const NO_SHIPPING_REFERENCE = 'noshipping';
 
     /**
      * @var HookHelper

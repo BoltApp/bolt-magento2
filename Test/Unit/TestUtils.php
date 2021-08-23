@@ -257,7 +257,8 @@ class TestUtils
             ->setCategoryIds([2])
             ->setStockData(['use_config_manage_stock' => 0])
             ->setCanSaveCustomOptions(true)
-            ->setHasOptions(true);
+            ->setHasOptions(true)
+            ->setUrlKey('test-simple-product-'.round(microtime(true) * 1000));
         $product->save();
         return $product;
     }
@@ -283,7 +284,8 @@ class TestUtils
             ->setCategoryIds([2])
             ->setStockData(['use_config_manage_stock' => 0])
             ->setCanSaveCustomOptions(true)
-            ->setHasOptions(true);
+            ->setHasOptions(true)
+            ->setUrlKey('test-virtual-product-'.round(microtime(true) * 1000));
         $product->save();
         return $product;
     }
