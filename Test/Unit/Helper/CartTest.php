@@ -45,7 +45,6 @@ use Magento\Framework\ObjectManagerInterface;
 use Magento\Framework\Session\Generic as GenericSession;
 use Magento\Framework\Session\SessionManagerInterface;
 use Magento\Customer\Model\Address;
-use Magento\Framework\Registry;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Sales\Model\Order;
@@ -289,11 +288,6 @@ class CartTest extends BoltTestCase
     private $giftwrapping;
 
     /**
-     * @var Registry|\PHPUnit\Framework\MockObject\MockObject
-     */
-    private $coreRegistry;
-
-    /**
      * @var MetricsClient
      */
     private $metricsClient;
@@ -448,7 +442,6 @@ class CartTest extends BoltTestCase
         $this->objectManagerMock = $this->getMockBuilder(ObjectManagerInterface::class)
             ->getMockForAbstractClass();
         $this->customerMock = $this->createPartialMock(Customer::class, ['getEmail']);
-        $this->coreRegistry = $this->createMock(Registry::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
         $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(\Magento\Framework\Serialize\Serializer\Json::class);
         $this->deciderHelper = $this->createPartialMock(
@@ -513,7 +506,6 @@ class CartTest extends BoltTestCase
                     $this->quoteManagement,
                     $this->hookHelper,
                     $this->customerRepository,
-                    $this->coreRegistry,
                     $this->metricsClient,
                     $this->deciderHelper,
                     $this->serialize,
@@ -719,7 +711,6 @@ class CartTest extends BoltTestCase
             $this->quoteManagement,
             $this->hookHelper,
             $this->customerRepository,
-            $this->coreRegistry,
             $this->metricsClient,
             $this->deciderHelper,
             $this->serialize,
@@ -791,7 +782,6 @@ class CartTest extends BoltTestCase
         static::assertAttributeInstanceOf(CartManagementInterface::class, 'quoteManagement', $instance);
         static::assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
         static::assertAttributeInstanceOf(CustomerRepository::class, 'customerRepository', $instance);
-        static::assertAttributeInstanceOf(Registry::class, 'coreRegistry', $instance);
         static::assertAttributeInstanceOf(StockState::class, 'stockState', $instance);
     }
 
@@ -3199,17 +3189,6 @@ ORDER
         $this->checkoutSession->method('getStore')->willReturn($storeMock);
         $this->checkoutSession->method('getCustomerGroupId')
         ->willReturn(\Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID);
-        $this->coreRegistry->expects(static::once())->method('unregister')->with('rule_data');
-        $this->coreRegistry->expects(static::once())->method('register')->with(
-            'rule_data',
-            new DataObject(
-                [
-                'store_id'          => self::STORE_ID,
-                'website_id'        => 1,
-                'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID
-                ]
-            )
-        );
         $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $currentMock->getCartData(
             true,
@@ -3393,17 +3372,6 @@ ORDER
 
         $this->checkoutSession->method('getStore')->willReturn($storeMock);
         $this->checkoutSession->expects(static::never())->method('getCustomerGroupId');
-        $this->coreRegistry->expects(static::once())->method('unregister')->with('rule_data');
-        $this->coreRegistry->expects(static::once())->method('register')->with(
-            'rule_data',
-            new DataObject(
-                [
-                'store_id'          => self::STORE_ID,
-                'website_id'        => 1,
-                'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::CUST_GROUP_ALL
-                ]
-            )
-        );
         $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $currentMock->getCartData(
             true,

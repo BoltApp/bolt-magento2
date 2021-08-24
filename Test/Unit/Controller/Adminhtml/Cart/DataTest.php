@@ -33,6 +33,7 @@ use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Framework\Escaper;
+use Magento\Framework\Registry;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Store\Model\StoreManagerInterface;
 
@@ -155,6 +156,11 @@ class DataTest extends BoltTestCase
      * @var Json|\PHPUnit\Framework\MockObject\MockObject
      */
     private $resultJsonMock;
+    
+    /**
+     * @var Registry|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $coreRegistryMock;
 
     protected function setUpInternal()
     {
@@ -253,7 +259,11 @@ class DataTest extends BoltTestCase
         $this->resultPageFactoryMock = $this->createMock(PageFactory::class);
         $this->resultForwardFactoryMock = $this->createMock(ForwardFactory::class);
         $this->storeManagerMock = $this->createMock(StoreManagerInterface::class);
-
+        $this->coreRegistryMock = $this->createMock(Registry::class);
+        $this->coreRegistryMock = $this->createPartialMock(
+            Registry::class,
+            ['unregister', 'register']
+        );
         $this->currentMock = $this->getMockBuilder(Data::class)
             ->setConstructorArgs(
                 [
@@ -264,6 +274,7 @@ class DataTest extends BoltTestCase
                     $this->bugsnagHelperMock,
                     $this->metricsClientMock,
                     $this->dataObjectFactoryMock,
+                    $this->coreRegistryMock,
                 ]
             )
             ->setMethods(['_getSession', '_initSession', '_getOrderCreateModel'])
@@ -303,7 +314,8 @@ class DataTest extends BoltTestCase
             $this->configHelperMock,
             $this->bugsnagHelperMock,
             $this->metricsClientMock,
-            $this->dataObjectFactoryMock
+            $this->dataObjectFactoryMock,
+            $this->coreRegistryMock
         );
 
         static::assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
@@ -312,6 +324,7 @@ class DataTest extends BoltTestCase
         static::assertAttributeEquals($this->bugsnagHelperMock, 'bugsnag', $instance);
         static::assertAttributeEquals($this->metricsClientMock, 'metricsClient', $instance);
         static::assertAttributeEquals($this->dataObjectFactoryMock, 'dataObjectFactory', $instance);
+        static::assertAttributeEquals($this->coreRegistryMock, 'Registry', $instance);
     }
 
     /**
@@ -325,7 +338,17 @@ class DataTest extends BoltTestCase
         $this->cartHelperMock->method('getBoltpayOrder')->willReturn(null);
 
         $resultJsonFactory = $this->buildJsonMocks($this->noTokenCartData);
-
+        $this->coreRegistryMock->expects(static::once())->method('unregister')->with('rule_data');
+        $this->coreRegistryMock->expects(static::once())->method('register')->with(
+            'rule_data',
+            new DataObject(
+                [
+                'store_id'          => self::STORE_ID,
+                'website_id'        => 1,
+                'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::CUST_GROUP_ALL
+                ]
+            )
+        );
         $currentMock = $this->getMockBuilder(Data::class)
             ->setMethods(['getRequest', '_getSession', '_initSession', '_getOrderCreateModel'])
             ->setConstructorArgs(
@@ -336,7 +359,8 @@ class DataTest extends BoltTestCase
                     $this->configHelperMock,
                     $this->bugsnagHelperMock,
                     $this->metricsClientMock,
-                    $this->dataObjectFactoryMock
+                    $this->dataObjectFactoryMock,
+                    $this->coreRegistryMock
                 ]
             )
             ->getMock();
@@ -368,7 +392,17 @@ class DataTest extends BoltTestCase
             ->willReturn($boltpayOrder);
 
         $resultJsonFactory = $this->buildJsonMocks($this->happyCartData);
-
+        $this->coreRegistryMock->expects(static::once())->method('unregister')->with('rule_data');
+        $this->coreRegistryMock->expects(static::once())->method('register')->with(
+            'rule_data',
+            new DataObject(
+                [
+                'store_id'          => self::STORE_ID,
+                'website_id'        => 1,
+                'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::CUST_GROUP_ALL
+                ]
+            )
+        );
         $currentMock = $this->getMockBuilder(Data::class)
             ->setMethods(['getRequest', '_getSession', '_initSession', '_getOrderCreateModel'])
             ->setConstructorArgs(
@@ -379,7 +413,8 @@ class DataTest extends BoltTestCase
                     $this->configHelperMock,
                     $this->bugsnagHelperMock,
                     $this->metricsClientMock,
-                    $this->dataObjectFactoryMock
+                    $this->dataObjectFactoryMock,
+                    $this->coreRegistryMock
                 ]
             )
             ->getMock();
@@ -403,7 +438,17 @@ class DataTest extends BoltTestCase
 
         $bugsnag = $this->createMock(Bugsnag::class);
         $bugsnag->expects(static::once())->method('notifyException')->with($exception);
-
+        $this->coreRegistryMock->expects(static::once())->method('unregister')->with('rule_data');
+        $this->coreRegistryMock->expects(static::once())->method('register')->with(
+            'rule_data',
+            new DataObject(
+                [
+                'store_id'          => self::STORE_ID,
+                'website_id'        => 1,
+                'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::CUST_GROUP_ALL
+                ]
+            )
+        );
         $currentMock = $this->getMockBuilder(Data::class)
             ->setMethods(['getRequest', '_getSession', '_initSession', '_getOrderCreateModel'])
             ->setConstructorArgs(
@@ -414,7 +459,8 @@ class DataTest extends BoltTestCase
                     $this->configHelperMock,
                     $bugsnag,
                     $this->metricsClientMock,
-                    $this->dataObjectFactoryMock
+                    $this->dataObjectFactoryMock,
+                    $this->coreRegistryMock
                 ]
             )
             ->getMock();
