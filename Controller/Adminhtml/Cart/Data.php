@@ -29,6 +29,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Escaper;
+use Magento\Framework\Registry;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Store\Model\StoreManagerInterface;
@@ -78,6 +79,13 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
      * @var StoreManagerInterface|null
      */
     private $storeManager;
+    
+    /**
+     * Core registry
+     *
+     * @var Registry
+     */
+    private $coreRegistry;
 
     /**
      * @param Context                    $context
@@ -87,6 +95,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
      * @param Bugsnag                    $bugsnag
      * @param MetricsClient              $metricsClient
      * @param DataObjectFactory          $dataObjectFactory
+     * @param Registry                   $coreRegistry
      * @param Product|null               $productHelper
      * @param Escaper|null               $escaper
      * @param PageFactory|null           $resultPageFactory
@@ -101,6 +110,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
         Bugsnag $bugsnag,
         MetricsClient $metricsClient,
         DataObjectFactory $dataObjectFactory,
+        Registry $coreRegistry,
         Product $productHelper = null,
         Escaper $escaper = null,
         PageFactory $resultPageFactory = null,
@@ -120,6 +130,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
         $this->bugsnag = $bugsnag;
         $this->metricsClient = $metricsClient;
         $this->dataObjectFactory = $dataObjectFactory;
+        $this->coreRegistry = $coreRegistry;
         $this->storeManager = $storeManager ?: ObjectManager::getInstance()->get(StoreManagerInterface::class);
     }
 
@@ -147,15 +158,33 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
             $isPreAuth = $this->configHelper->getIsPreAuth($storeId);
             $connectUrl = $this->configHelper->getCdnUrl($storeId) . '/connect.js';
 
+            /**
+             * initialize rule data for backend orders, consumed by
+             * @see \Magento\CatalogRule\Observer\ProcessAdminFinalPriceObserver::execute
+             */
+            $this->coreRegistry->unregister('rule_data');
+            $this->coreRegistry->register(
+                'rule_data',
+                new \Magento\Framework\DataObject(
+                    [
+                        'store_id' => $storeId,
+                        'website_id' => $this->_getSession()->getStore()->getWebsiteId(),
+                        'customer_group_id' => $quote->getCustomerGroupId()
+                    ]
+               )
+            );
+                
             $customerEmail = $quote->getCustomerEmail();
-            if (!$quote->getCustomerId() && $this->cartHelper->getCustomerByEmail($customerEmail)) {
-                throw new LocalizedException(
-                    __('A customer with the same email address already exists in an associated website.')
-                );
+            if (!$quote->getCustomerId()) {
+                if ($this->cartHelper->getCustomerByEmail($customerEmail)) {
+                    throw new LocalizedException(
+                        __('A customer with the same email address already exists in an associated website.')
+                    );
+                }
+                $this->_getOrderCreateModel()->getBillingAddress()->setEmail($customerEmail);
+                $quote->setCustomerEmail($customerEmail);
+                $this->_getOrderCreateModel()->saveQuote();
             }
-            $this->_getOrderCreateModel()->getBillingAddress()->setEmail($customerEmail);
-            $quote->setCustomerEmail($customerEmail);
-            $this->_getOrderCreateModel()->saveQuote();
 
             // call the Bolt API
             $boltpayOrder = $this->cartHelper->getBoltpayOrder(true);
