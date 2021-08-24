@@ -435,7 +435,7 @@ trait UpdateDiscountTrait
      *
      * @return boolean
      */
-    protected function removeDiscount($couponCode, $discounts, $quote, $websiteId, $storeId)
+    public function removeDiscount($couponCode, $discounts, $quote, $websiteId, $storeId)
     {
         try {
             if (array_key_exists($couponCode, $discounts)) {
@@ -444,8 +444,7 @@ trait UpdateDiscountTrait
                     $this->removeCouponCode($quote);
                 } elseif ($discounts[$couponCode] == DiscountHelper::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT) {
                     //handles exceptions already, no return value
-                    $this->eventsForThirdPartyModules->dispatchEvent(
-                        "removeAppliedStoreCredit",
+                    $this->discountHelper->removeAppliedStoreCredit(
                         $couponCode,
                         $quote,
                         $websiteId,
@@ -544,7 +543,7 @@ trait UpdateDiscountTrait
      *
      * @return array|false
      */
-    protected function getAppliedStoreCredit($couponCode, $quote)
+    public function getAppliedStoreCredit($couponCode, $quote)
     {
         try {
             $availableStoreCredits = $this->eventsForThirdPartyModules->runFilter("filterVerifyAppliedStoreCredit", [], $couponCode, $quote);

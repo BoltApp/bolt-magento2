@@ -371,4 +371,21 @@ class Discount extends AbstractHelper
         $quote->setCouponCode($couponCode);
         $this->updateTotals($quote);
     }
+
+    /**
+     * @param string     $couponCode
+     * @param Quote      $quote
+     * @param string|int $websiteId
+     * @param string|int $storeId
+     */
+    public function removeAppliedStoreCredit($couponCode, $quote, $websiteId, $storeId)
+    {
+        $this->eventsForThirdPartyModules->dispatchEvent(
+            'removeAppliedStoreCredit',
+            $couponCode,
+            $quote,
+            $websiteId,
+            $storeId
+        );
+    }
 }
