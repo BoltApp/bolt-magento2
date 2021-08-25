@@ -395,6 +395,17 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        'beforeGetCartDataForCreateCart' => [
+            "listeners" => [
+                'Route_Route' => [
+                    'module'      => 'Route_Route',
+                    'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
+                    'sendClasses' => ['Route\Route\Model\Route\Merchant',
+                                      'Route\Route\Helper\Data'],
+                    'boltClass'   => Route_Route::class,
+                ],
+            ],
+        ],
     ];
 
     const filterListeners = [

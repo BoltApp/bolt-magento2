@@ -263,6 +263,26 @@ class Route
         return $cartItems;
     }
     
+    /**
+     * Add Route fee for Bolt PPC
+     *
+     * @see \Bolt\Boltpay\Model\Api\UpdateCart::execute
+     *
+     * @param \Route\Route\Model\Route\Merchant $merchantClient
+     * @param \Route\Route\Helper\Data $routeDataHelper
+     * @param Quote $quote
+     * @param \Magento\Checkout\Model\Session $checkoutSession
+     *
+     */
+    public function beforeGetCartDataForCreateCart($merchantClient, $routeDataHelper, $quote, $checkoutSession)
+    {
+        if (!$routeDataHelper->isRouteModuleEnable() || (!$routeDataHelper->isFullCoverage() && !$merchantClient->isOptOut())) {
+            return false;
+        }
+        
+        $checkoutSession->setInsured(true);
+    }
+    
     private function saveRouteFeeEnabledBeforeUpdateCart($flag, $item, $checkoutSession, $routeFeeEnabled)
     {
         if ($item['product_id'] == self::ROUTE_PRODUCT_ID) {
