@@ -246,7 +246,7 @@ class DataTest extends BoltTestCase
         $this->dataObjectFactoryMock = $this->createMock(DataObjectFactory::class);
         $this->sessionMock = $this->createPartialMock(
             \Magento\Backend\Model\Session\Quote::class,
-            ['getStoreId']
+            ['getStoreId', 'getStore']
         );
         $this->orderCreateModel = $this->getMockBuilder(
             \Magento\Sales\Model\AdminOrder\Create::class
@@ -472,10 +472,13 @@ class DataTest extends BoltTestCase
             ->getMock();
         $this->cartHelperMock->method('getBoltpayOrder')->willThrowException($exception);
         $currentMock->method('getRequest')->willReturn($this->request);
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getWebsiteId')->willReturn(1);
+        $this->sessionMock->method('getStore')->willReturn($storeMock);
+        $this->sessionMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
         $currentMock->method('_getSession')->willReturn($this->sessionMock);
         $currentMock->method('_getOrderCreateModel')->willReturn($this->orderCreateModel);
         $this->orderCreateModel->method('getQuote')->willReturn($this->quoteMock);
-        $this->sessionMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
         $this->orderCreateModel->expects(static::once())->method('getBillingAddress')
             ->willReturn($this->quoteBillingAddressMock);
         $currentMock->execute();
@@ -518,6 +521,9 @@ class DataTest extends BoltTestCase
     {
         $this->sessionMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
         $this->currentMock->expects(static::once())->method('_initSession');
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getWebsiteId')->willReturn(1);
+        $this->sessionMock->method('getStore')->willReturn($storeMock);
         $this->currentMock->expects(static::exactly(2))->method('_getSession')->willReturn($this->sessionMock);
         $this->cartHelperMock->expects(static::never())->method('getBoltpayOrder');
 
