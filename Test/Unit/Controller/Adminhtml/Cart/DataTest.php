@@ -334,6 +334,9 @@ class DataTest extends BoltTestCase
      */
     public function execute_NoBoltpayOrder()
     {
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getWebsiteId')->willReturn(1);
+        $this->sessionMock->method('getStore')->willReturn($storeMock);
         $this->sessionMock->method('getStoreId')->willReturn(self::STORE_ID);
         $this->cartHelperMock->method('getBoltpayOrder')->willReturn(null);
 
@@ -379,6 +382,9 @@ class DataTest extends BoltTestCase
      */
     public function execute_HappyPath()
     {
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getWebsiteId')->willReturn(1);
+        $this->sessionMock->method('getStore')->willReturn($storeMock);
         $this->sessionMock->method('getStoreId')->willReturn(self::STORE_ID);
 
         $boltpayOrder = $this->getMockBuilder(Response::class)
@@ -512,7 +518,7 @@ class DataTest extends BoltTestCase
     {
         $this->sessionMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
         $this->currentMock->expects(static::once())->method('_initSession');
-        $this->currentMock->expects(static::once())->method('_getSession')->willReturn($this->sessionMock);
+        $this->currentMock->expects(static::exactly(2))->method('_getSession')->willReturn($this->sessionMock);
         $this->cartHelperMock->expects(static::never())->method('getBoltpayOrder');
 
         $this->orderCreateModel->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
