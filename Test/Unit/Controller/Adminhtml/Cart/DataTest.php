@@ -236,6 +236,7 @@ class DataTest extends BoltTestCase
                 'getCustomerEmail',
                 'getCustomerId',
                 'setCustomerEmail',
+                'getCustomerGroupId',
             ]
         );
 
@@ -348,7 +349,7 @@ class DataTest extends BoltTestCase
                 [
                 'store_id'          => self::STORE_ID,
                 'website_id'        => 1,
-                'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::CUST_GROUP_ALL
+                'customer_group_id' => 1
                 ]
             )
         );
@@ -371,6 +372,7 @@ class DataTest extends BoltTestCase
         $currentMock->method('getRequest')->willReturn($this->request);
         $currentMock->method('_getSession')->willReturn($this->sessionMock);
         $currentMock->method('_getOrderCreateModel')->willReturn($this->orderCreateModel);
+        $this->quoteMock->expects(static::once())->method('getCustomerGroupId')->willReturn(1);
         $this->orderCreateModel->method('getQuote')->willReturn($this->quoteMock);
         $this->orderCreateModel->expects(static::once())->method('getBillingAddress')
             ->willReturn($this->quoteBillingAddressMock);
@@ -405,7 +407,7 @@ class DataTest extends BoltTestCase
                 [
                 'store_id'          => self::STORE_ID,
                 'website_id'        => 1,
-                'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::CUST_GROUP_ALL
+                'customer_group_id' => 1
                 ]
             )
         );
@@ -427,6 +429,7 @@ class DataTest extends BoltTestCase
         $currentMock->method('getRequest')->willReturn($this->request);
         $currentMock->method('_getSession')->willReturn($this->sessionMock);
         $currentMock->method('_getOrderCreateModel')->willReturn($this->orderCreateModel);
+        $this->quoteMock->expects(static::once())->method('getCustomerGroupId')->willReturn(1);
         $this->orderCreateModel->method('getQuote')->willReturn($this->quoteMock);
         $this->orderCreateModel->expects(static::once())->method('getBillingAddress')
             ->willReturn($this->quoteBillingAddressMock);
@@ -451,7 +454,7 @@ class DataTest extends BoltTestCase
                 [
                 'store_id'          => self::STORE_ID,
                 'website_id'        => 1,
-                'customer_group_id' => \Magento\Customer\Api\Data\GroupInterface::CUST_GROUP_ALL
+                'customer_group_id' => 1
                 ]
             )
         );
@@ -478,6 +481,7 @@ class DataTest extends BoltTestCase
         $this->sessionMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
         $currentMock->method('_getSession')->willReturn($this->sessionMock);
         $currentMock->method('_getOrderCreateModel')->willReturn($this->orderCreateModel);
+        $this->quoteMock->expects(static::once())->method('getCustomerGroupId')->willReturn(1);
         $this->orderCreateModel->method('getQuote')->willReturn($this->quoteMock);
         $this->orderCreateModel->expects(static::once())->method('getBillingAddress')
             ->willReturn($this->quoteBillingAddressMock);
@@ -525,6 +529,17 @@ class DataTest extends BoltTestCase
         $storeMock->method('getWebsiteId')->willReturn(1);
         $this->sessionMock->method('getStore')->willReturn($storeMock);
         $this->currentMock->expects(static::exactly(2))->method('_getSession')->willReturn($this->sessionMock);
+        $this->coreRegistryMock->expects(static::once())->method('unregister')->with('rule_data');
+        $this->coreRegistryMock->expects(static::once())->method('register')->with(
+            'rule_data',
+            new \Magento\Framework\DataObject(
+                [
+                'store_id'          => self::STORE_ID,
+                'website_id'        => 1,
+                'customer_group_id' => 1
+                ]
+            )
+        );
         $this->cartHelperMock->expects(static::never())->method('getBoltpayOrder');
 
         $this->orderCreateModel->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
