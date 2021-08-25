@@ -324,7 +324,7 @@ class DataTest extends BoltTestCase
         static::assertAttributeEquals($this->bugsnagHelperMock, 'bugsnag', $instance);
         static::assertAttributeEquals($this->metricsClientMock, 'metricsClient', $instance);
         static::assertAttributeEquals($this->dataObjectFactoryMock, 'dataObjectFactory', $instance);
-        static::assertAttributeEquals($this->coreRegistryMock, 'Registry', $instance);
+        static::assertAttributeEquals($this->coreRegistryMock, 'coreRegistry', $instance);
     }
 
     /**
@@ -341,7 +341,7 @@ class DataTest extends BoltTestCase
         $this->coreRegistryMock->expects(static::once())->method('unregister')->with('rule_data');
         $this->coreRegistryMock->expects(static::once())->method('register')->with(
             'rule_data',
-            new DataObject(
+            new \Magento\Framework\DataObject(
                 [
                 'store_id'          => self::STORE_ID,
                 'website_id'        => 1,
@@ -395,7 +395,7 @@ class DataTest extends BoltTestCase
         $this->coreRegistryMock->expects(static::once())->method('unregister')->with('rule_data');
         $this->coreRegistryMock->expects(static::once())->method('register')->with(
             'rule_data',
-            new DataObject(
+            new \Magento\Framework\DataObject(
                 [
                 'store_id'          => self::STORE_ID,
                 'website_id'        => 1,
@@ -441,7 +441,7 @@ class DataTest extends BoltTestCase
         $this->coreRegistryMock->expects(static::once())->method('unregister')->with('rule_data');
         $this->coreRegistryMock->expects(static::once())->method('register')->with(
             'rule_data',
-            new DataObject(
+            new \Magento\Framework\DataObject(
                 [
                 'store_id'          => self::STORE_ID,
                 'website_id'        => 1,
@@ -512,6 +512,7 @@ class DataTest extends BoltTestCase
     {
         $this->sessionMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
         $this->currentMock->expects(static::once())->method('_initSession');
+        $this->currentMock->expects(static::once())->method('_getSession')->willReturn($this->sessionMock);
         $this->cartHelperMock->expects(static::never())->method('getBoltpayOrder');
 
         $this->orderCreateModel->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);

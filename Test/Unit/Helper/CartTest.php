@@ -3132,7 +3132,7 @@ ORDER
     {
         $this->checkoutSession = $this->createPartialMock(
             \Magento\Backend\Model\Session\Quote::class,
-            ['getStore', 'getCustomerGroupId', 'getQuote', 'getOrderId']
+            ['getStore', 'getQuote', 'getOrderId']
         );
         $testItem = [
         'reference'    => self::PRODUCT_ID,
@@ -3179,16 +3179,12 @@ ORDER
         ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
         ->willReturn(self::CURRENCY_CODE);
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getCustomerGroupId')
-        ->willReturn(null);
 
         $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
         $storeMock->method('getId')->willReturn(self::STORE_ID);
         $storeMock->method('getWebsiteId')->willReturn(1);
 
         $this->checkoutSession->method('getStore')->willReturn($storeMock);
-        $this->checkoutSession->method('getCustomerGroupId')
-        ->willReturn(\Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID);
         $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $currentMock->getCartData(
             true,
@@ -3223,7 +3219,7 @@ ORDER
     {
         $this->checkoutSession = $this->createPartialMock(
             \Magento\Backend\Model\Session\Quote::class,
-            ['getStore', 'getCustomerGroupId', 'getQuote', 'getOrderId']
+            ['getStore', 'getQuote', 'getOrderId']
         );
         $testItem = [
             'reference'    => self::PRODUCT_ID,
@@ -3270,17 +3266,12 @@ ORDER
             ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
             ->willReturn(self::CURRENCY_CODE);
-        $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getCustomerGroupId')
-            ->willReturn(null);
 
         $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
         $storeMock->method('getId')->willReturn(self::STORE_ID);
         $storeMock->method('getWebsiteId')->willReturn(1);
 
         $this->checkoutSession->method('getStore')->willReturn($storeMock);
-        $this->checkoutSession->method('getCustomerGroupId')
-            ->willReturn(\Magento\Customer\Api\Data\GroupInterface::NOT_LOGGED_IN_ID);
-
         $this->checkoutSession->method('getOrderId')->willReturn(self::ORIGINAL_ORDER_ENTITY_ID);
         $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $result = $currentMock->getCartData(
@@ -3316,7 +3307,7 @@ ORDER
     {
         $this->checkoutSession = $this->createPartialMock(
             \Magento\Backend\Model\Session\Quote::class,
-            ['getStore', 'getCustomerGroupId', 'getQuote', 'getOrderId']
+            ['getStore', 'getQuote', 'getOrderId']
         );
         $testItem = [
         'reference'    => self::PRODUCT_ID,
@@ -3363,15 +3354,12 @@ ORDER
         ->willReturn(self::IMMUTABLE_QUOTE_ID);
         $this->immutableQuoteMock->expects(static::atLeastOnce())->method('getQuoteCurrencyCode')
         ->willReturn(self::CURRENCY_CODE);
-        $this->immutableQuoteMock->expects(static::exactly(2))->method('getCustomerGroupId')
-        ->willReturn(\Magento\Customer\Api\Data\GroupInterface::CUST_GROUP_ALL);
 
         $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
         $storeMock->method('getId')->willReturn(self::STORE_ID);
         $storeMock->method('getWebsiteId')->willReturn(1);
 
         $this->checkoutSession->method('getStore')->willReturn($storeMock);
-        $this->checkoutSession->expects(static::never())->method('getCustomerGroupId');
         $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
         $currentMock->getCartData(
             true,
