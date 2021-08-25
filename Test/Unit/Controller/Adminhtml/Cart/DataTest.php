@@ -545,7 +545,7 @@ class DataTest extends BoltTestCase
         $this->orderCreateModel->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
         $this->orderCreateModel->expects(static::never())->method('getBillingAddress')
             ->willReturn($this->quoteBillingAddressMock);
-
+        $this->quoteMock->expects(static::once())->method('getCustomerGroupId')->willReturn(1);
         $this->quoteMock->expects(static::once())->method('getCustomerId')->willReturn(null);
         $this->quoteMock->expects(static::once())->method('getCustomerEmail')->willReturn(self::CUSTOMER_EMAIL);
         $this->cartHelperMock->expects(static::once())->method('getCustomerByEmail')->with(self::CUSTOMER_EMAIL)
