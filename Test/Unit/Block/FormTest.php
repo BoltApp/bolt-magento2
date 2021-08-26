@@ -19,13 +19,13 @@ namespace Bolt\Boltpay\Test\Unit\Block;
 
 use Bolt\Boltpay\Block\Form as BlockForm;
 use Bolt\Boltpay\Helper\Config;
-use Magento\Framework\Session\SessionManager as SessionManager;
-use Magento\Backend\Model\Session\Quote as BackendQuote;
-use Magento\Framework\View\Element\Template\Context;
-use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
-use Magento\Quote\Model\Quote\Address;
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Model\CustomerCreditCardFactory;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Class FormTest
@@ -34,142 +34,165 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
  */
 class FormTest extends BoltTestCase
 {
-    /**
-     * @var Context
-     */
-    private $contextMock;
+    const CONSUMER_ID = '1132';
+    const CREDIT_CARD_ID = '1143';
+    const CARD_INFO = '{"id":"CAfe9tP97CMXs","last4":"1111","display_network":"Visa"}';
+
+
+    /** @var ObjectManager */
+    private $objectManager;
 
     /**
      * @var BlockForm
      */
-    private $block;
+    private $blockForm;
+    private $testAddressData;
+    private $quote;
+    private $customerCreditCardFactory;
 
-    /**
-     * @var Config
-     */
-    private $configHelperMock;
-
-    /**
-     * @var SessionManager
-     */
-    private $sessionManager;
-
-    /**
-     * @var BackendQuote
-     */
-    private $quoteMock;
-
-    /**
-     * @var CustomerCreditCardCollectionFactory
-     */
-    private $customerCreditCardCollectionFactoryMock;
-
-    /**
-     * @var Address
-     */
-    private $addressMock;
-
-    /**
-     * @var \Bolt\Boltpay\Model\CustomerCreditCard
-     */
-    private $mockCustomerCreditCard;
-
-    /**
-     * @var Decider
-     */
-    private $featureSwitch;
+    const EMAIL_ADDRESS = 'integration@bolt.com';
 
     /**
      * @inheritdoc
      */
     protected function setUpInternal()
     {
-        $this->initRequiredMocks();
-        $this->initCurrentMock();
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->blockForm = $this->objectManager->create(BlockForm::class);
+
+
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
+
+        $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
+        $websiteId = $websiteRepository->get('base')->getId();
+        $customer = TestUtils::createCustomer($websiteId, $storeId, [
+            "street_address1" => "street",
+            "street_address2" => "",
+            "locality" => "Los Angeles",
+            "region" => "California",
+            'region_code' => 'CA',
+            'region_id' => '12',
+            "postal_code" => "11111",
+            "country_code" => "US",
+            "country" => "United States",
+            "name" => "lastname firstname",
+            "first_name" => "firstname",
+            "last_name" => "lastname",
+            "phone_number" => "11111111",
+            "email_address" => "johntest122@bolt.com",
+        ]);
+        $this->customerCreditCardFactory = $this->objectManager->create(CustomerCreditCardFactory::class)->create()
+            ->setCustomerId($customer->getId())->setConsumerId(self::CONSUMER_ID)
+            ->setCreditCardId(self::CREDIT_CARD_ID)->setCardInfo(self::CARD_INFO)
+            ->save();
+
+        $this->testAddressData = [
+            'company'         => "",
+            'country'         => "United States",
+            'country_code'    => "US",
+            'email'           => "johntest122@bolt.com",
+            'first_name'      => "IntegrationBolt",
+            'last_name'       => "BoltTest",
+            'locality'        => "New York",
+            'phone'           => "132 231 1234",
+            'postal_code'     => "10011",
+            'region'          => "New York",
+            'street_address1' => "228 7th Avenue",
+            'street_address2' => "228 7th Avenue 2",
+        ];
+        $this->quote = TestUtils::createQuote(['customer_id' => $customer->getId()]);
+        TestUtils::setAddressToQuote($this->testAddressData, $this->quote, 'billing');
+        $this->quote->getBillingAddress()->setCustomerId($customer->getId());
+        TestHelper::setInaccessibleProperty($this->blockForm,'_quote', $this->quote);
     }
 
-    private function initRequiredMocks()
+    protected function tearDownInternal()
     {
-        $this->configHelperMock = $this->createMock(Config::class);
-        $this->contextMock = $this->createMock(Context::class);
-
-        $this->quoteMock = $this->getMockBuilder(BackendQuote::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getBillingAddress','getStoreId'])
-            ->getMock();
-
-        $this->addressMock = $this->getMockBuilder(Address::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getCustomerId'])
-            ->getMock();
-
-        $this->sessionManager = $this->getMockBuilder(SessionManager::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getQuote'])
-            ->getMock();
-
-        $this->sessionManager->method('getQuote')->willReturn($this->quoteMock);
-        $this->customerCreditCardCollectionFactoryMock = $this->getMockBuilder(CustomerCreditCardCollectionFactory::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['create', 'getCreditCardInfosByCustomerId','addFilter'])
-            ->getMock();
-
-        $this->featureSwitch = $this->getMockBuilder(Decider::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['isAdminReorderForLoggedInCustomerFeatureEnabled'])
-            ->getMock();
-    }
-
-    private function initCurrentMock()
-    {
-        $this->block = $this->getMockBuilder(BlockForm::class)
-            ->setMethods(['getQuoteData'])
-            ->setConstructorArgs(
-                [
-                    $this->contextMock,
-                    $this->configHelperMock,
-                    $this->sessionManager,
-                    $this->customerCreditCardCollectionFactoryMock,
-                    $this->featureSwitch
-                ]
-            )
-            ->getMock();
+        TestUtils::cleanupSharedFixtures([$this->customerCreditCardFactory]);
     }
 
     /**
      * @test
      * @param $data
-     * @dataProvider providerGetCustomerCreditCardInfo
      */
-    public function getCustomerCreditCardInfo($data)
+    public function getCustomerCreditCardInfo()
     {
-        $this->addressMock->expects(self::once())->method('getCustomerId')->willReturn($data['customer_id']);
-        $this->quoteMock->expects(self::once())->method('getBillingAddress')->willReturn($this->addressMock);
-        $this->block->expects(self::once())->method('getQuoteData')->willReturn($this->quoteMock);
-
-        $this->customerCreditCardCollectionFactoryMock->expects(static::any())->method('create')->willReturnSelf();
-        ;
-        $this->customerCreditCardCollectionFactoryMock->expects(static::any())
-                ->method('getCreditCardInfosByCustomerId')
-                ->with($data['customer_id'])
-                ->willReturn([new \Magento\Framework\DataObject()]);
-
-        $result = $this->block->getCustomerCreditCardInfo();
-        $this->assertEquals($data['expected'], $result);
+        $result = $this->blockForm->getCustomerCreditCardInfo();
+        $this->assertEquals(1, $result->getSize());
     }
 
-    public function providerGetCustomerCreditCardInfo()
+    /**
+     * @test
+     * that getAdditionalCheckoutButtonAttributes returns additional checkout button attributes
+     * stored in additional config field under 'checkoutButtonAttributes' field
+     *
+     *
+     * @dataProvider getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider
+     *
+     * @param string $additionalConfig string from config property
+     * @param mixed $expectedResult from the tested method
+     */
+    public function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigs_returnsButtonAttributes(
+        $additionalConfig,
+        $expectedResult
+    )
+    {
+        $configData = [
+            [
+                'path' => Config::XML_PATH_ADDITIONAL_CONFIG,
+                'value' => $additionalConfig,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->quote->getStoreId(),
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $this->blockForm->getAdditionalCheckoutButtonAttributes();
+        static::assertEquals($expectedResult, $result);
+    }
+
+    /**
+     * Data provider for
+     *
+     * @see getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigs_returnsButtonAttributes
+     *
+     * @return array[] containing additional config values and expected result of the tested method
+     */
+    public function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider()
     {
         return [
-            ['data' => [
-                'customer_id' => '1111',
-                'expected' => [new \Magento\Framework\DataObject()],
-                ]
+            'Only attributes in initial config' => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {
+                        "data-btn-txt": "Pay now"
+                    }
+                }',
+                'expectedResult' => (object)['data-btn-txt' => 'Pay now'],
             ],
-            ['data' => [
-                'customer_id' => '',
-                'expected' => false,
-                ]
+            'Multiple attributes' => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {
+                        "data-btn-txt": "Pay now",
+                        "data-btn-text": "Data"
+                    }
+                }',
+                'expectedResult' => (object)['data-btn-txt' => 'Pay now', 'data-btn-text' => 'Data'],
+            ],
+            'Empty checkout button attributes property' => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {}
+                }',
+                'expectedResult' => (object)[],
+            ],
+            'Missing checkout button attributes property' => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {}
+                }',
+                'expectedResult' => (object)[],
+            ],
+            'Invalid additional config JSON' => [
+                'additionalConfig' => 'invalid JSON',
+                'expectedResult' => (object)[],
             ],
         ];
     }
@@ -179,8 +202,9 @@ class FormTest extends BoltTestCase
      */
     public function isAdminReorderForLoggedInCustomerFeatureEnabled()
     {
-        $this->featureSwitch->expects(static::once())->method('isAdminReorderForLoggedInCustomerFeatureEnabled')->willReturn(true);
-        $this->assertTrue($this->block->isAdminReorderForLoggedInCustomerFeatureEnabled());
+        $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER, true);
+        $this->assertTrue($this->blockForm->isAdminReorderForLoggedInCustomerFeatureEnabled());
+        TestUtils::cleanupSharedFixtures($featureSwitch);
     }
 
     /**
@@ -188,14 +212,13 @@ class FormTest extends BoltTestCase
      */
     public function getPublishableKeyBackOfficeShouldReturnConfigValue()
     {
-        $this->quoteMock->expects(self::once())->method('getStoreId')->willReturn(1);
-        $this->block->expects(self::once())->method('getQuoteData')->willReturn($this->quoteMock);        
-        $this->configHelperMock
+        $configHelperMock = $this->createPartialMock(Config::class,['getPublishableKeyBackOffice']);
+        $configHelperMock
             ->method('getPublishableKeyBackOffice')
-            ->with(1)
+            ->with($this->quote->getStoreId())
             ->willReturn("backoffice-key");
-
-        $this->assertEquals("backoffice-key", $this->block->getPublishableKeyBackOffice());
+        TestHelper::setInaccessibleProperty($this->blockForm,'configHelper', $configHelperMock);
+        $this->assertEquals("backoffice-key", $this->blockForm->getPublishableKeyBackOffice());
     }
     
     /**
@@ -203,30 +226,12 @@ class FormTest extends BoltTestCase
      */
     public function getPublishableKeyPaymentOnlyShouldReturnConfigValue()
     {
-        $this->quoteMock->expects(self::once())->method('getStoreId')->willReturn(1);
-        $this->block->expects(self::once())->method('getQuoteData')->willReturn($this->quoteMock);        
-        $this->configHelperMock
+        $configHelperMock = $this->createPartialMock(Config::class,['getPublishableKeyPayment']);
+        $configHelperMock
             ->method('getPublishableKeyPayment')
-            ->with(1)
+            ->with($this->quote->getStoreId())
             ->willReturn("payment-key");
-
-        $this->assertEquals("payment-key", $this->block->getPublishableKeyPaymentOnly());
-    }
-
-    /**
-     * @test
-     * that getAdditionalCheckoutButtonAttributes returns additional checkout button attributes from
-     */
-    public function getAdditionalCheckoutButtonAttributes_always_returnsAdditionalCheckoutButtonAttributesFromConfig()
-    {
-        $additionalCheckoutButtonAttributes = (object)["data-btn-txt" => "Pay now"];
-        $this->configHelperMock->expects(static::once())
-            ->method('getAdditionalCheckoutButtonAttributes')
-            ->willReturn($additionalCheckoutButtonAttributes);
-
-        static::assertEquals(
-            $additionalCheckoutButtonAttributes,
-            $this->configHelperMock->getAdditionalCheckoutButtonAttributes()
-        );
+        TestHelper::setInaccessibleProperty($this->blockForm,'configHelper', $configHelperMock);
+        $this->assertEquals("payment-key", $this->blockForm->getPublishableKeyPaymentOnly());
     }
 }
