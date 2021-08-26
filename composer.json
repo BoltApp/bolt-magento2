@@ -8,7 +8,7 @@
         "magento/module-tax": "100.*|101.*|102.*|103.*",
         "magento/framework": "100.*|101.*|102.*|103.*",
         "bugsnag/bugsnag": "^3.4",
-	"boltpay/magento2-third-party-modules-support": "dev-master"
+	    "boltpay/magento2-third-party-modules-support": "0.0.*"
     },
     "require-dev": {
         "phpunit/phpunit": "~6.2.0",
