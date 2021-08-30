@@ -18,10 +18,12 @@
 namespace Bolt\Boltpay\Test\Unit\Block\Adminhtml\Customer\CreditCard\Tab;
 
 use Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\CreditCard;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Customer\Controller\RegistryConstants;
-use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Registry;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class CreditCardTest
@@ -33,51 +35,27 @@ class CreditCardTest extends BoltTestCase
     const CUSTOMER_ID = '11111';
     const URL = 'https://www.bolt.com/boltpay/customer/creditcard';
 
+    /** @var ObjectManager */
+    private $objectManager;
+
     /**
      * @var CreditCard
      */
     private $block;
 
     /**
-     * @var Context
-     */
-    private $contextMock;
-
-    /**
      * @var Registry
      */
-    private $registryMock;
+    private $registry;
 
     /**
      * @inheritdoc
      */
     protected function setUpInternal()
     {
-        $this->initRequiredMocks();
-        $this->initCurrentMock();
-    }
-
-    private function initRequiredMocks()
-    {
-        $this->contextMock = $this->createMock(Context::class);
-        $this->registryMock = $this->getMockBuilder(Registry::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['registry'])
-            ->getMock();
-    }
-
-    private function initCurrentMock()
-    {
-        $this->block = $this->getMockBuilder(CreditCard::class)
-            ->setMethods(['getUrl'])
-            ->setConstructorArgs(
-                [
-                    $this->contextMock,
-                    $this->registryMock,
-                    []
-                ]
-            )
-            ->getMock();
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->block = $this->objectManager->create(CreditCard::class);
+        $this->registry = $this->objectManager->create(Registry::class);
     }
 
     /**
@@ -85,11 +63,8 @@ class CreditCardTest extends BoltTestCase
      */
     public function getCustomerId()
     {
-        $this->registryMock->expects(self::once())
-            ->method('registry')
-            ->with(RegistryConstants::CURRENT_CUSTOMER_ID)
-            ->willReturn(self::CUSTOMER_ID);
-
+        $this->registry->register(RegistryConstants::CURRENT_CUSTOMER_ID, self::CUSTOMER_ID);
+        TestHelper::setInaccessibleProperty($this->block, '_coreRegistry', $this->registry);
         $result = $this->block->getCustomerId();
         $this->assertEquals(self::CUSTOMER_ID, $result);
     }
@@ -119,11 +94,8 @@ class CreditCardTest extends BoltTestCase
      */
     public function canShowTab_withLoggedInCustomer()
     {
-        $this->registryMock->expects(self::once())
-            ->method('registry')
-            ->with(RegistryConstants::CURRENT_CUSTOMER_ID)
-            ->willReturn(self::CUSTOMER_ID);
-
+        $this->registry->register(RegistryConstants::CURRENT_CUSTOMER_ID, self::CUSTOMER_ID);
+        TestHelper::setInaccessibleProperty($this->block, '_coreRegistry', $this->registry);
         $result = $this->block->canShowTab();
         $this->assertTrue($result);
     }
@@ -133,11 +105,8 @@ class CreditCardTest extends BoltTestCase
      */
     public function canShowTab_withGuestCustomer()
     {
-        $this->registryMock->expects(self::once())
-            ->method('registry')
-            ->with(RegistryConstants::CURRENT_CUSTOMER_ID)
-            ->willReturn(null);
-
+        $this->registry->register(RegistryConstants::CURRENT_CUSTOMER_ID, null);
+        TestHelper::setInaccessibleProperty($this->block, '_coreRegistry', $this->registry);
         $result = $this->block->canShowTab();
         $this->assertFalse($result);
     }
@@ -147,11 +116,8 @@ class CreditCardTest extends BoltTestCase
      */
     public function isHidden_withLoggedInCustomer()
     {
-        $this->registryMock->expects(self::once())
-            ->method('registry')
-            ->with(RegistryConstants::CURRENT_CUSTOMER_ID)
-            ->willReturn(self::CUSTOMER_ID);
-
+        $this->registry->register(RegistryConstants::CURRENT_CUSTOMER_ID, self::CUSTOMER_ID);
+        TestHelper::setInaccessibleProperty($this->block, '_coreRegistry', $this->registry);
         $result = $this->block->isHidden();
         $this->assertFalse($result);
     }
@@ -161,11 +127,8 @@ class CreditCardTest extends BoltTestCase
      */
     public function isHidden_withGuestCustomer()
     {
-        $this->registryMock->expects(self::once())
-            ->method('registry')
-            ->with(RegistryConstants::CURRENT_CUSTOMER_ID)
-            ->willReturn(null);
-
+        $this->registry->register(RegistryConstants::CURRENT_CUSTOMER_ID, null);
+        TestHelper::setInaccessibleProperty($this->block, '_coreRegistry', $this->registry);
         $result = $this->block->isHidden();
         $this->assertTrue($result);
     }
@@ -184,12 +147,9 @@ class CreditCardTest extends BoltTestCase
      */
     public function getTabUrl()
     {
-        $this->block->expects(self::once())
-            ->method('getUrl')
-            ->with('boltpay/customer/creditcard', ['_current' => true])
-            ->willReturn(self::URL);
+        $url = $this->block->getUrl('boltpay/customer/creditcard', ['_current' => true]);
         $result = $this->block->getTabUrl();
-        $this->assertEquals(self::URL, $result);
+        $this->assertEquals($url, $result);
     }
 
     /**
