@@ -19,12 +19,17 @@
 namespace Bolt\Boltpay\Test\Unit\Block;
 
 use Bolt\Boltpay\Block\JsProductPage as BlockJsProductPage;
+use Bolt\Boltpay\Block\JsProductPage;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as HelperConfig;
+use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Catalog\Block\Product\View as ProductView;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\ProductRepository;
@@ -32,6 +37,7 @@ use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Http\Context as HttpContext;
 use Magento\Framework\App\Request\Http;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class JsTest
@@ -45,99 +51,46 @@ class JsProductPageTest extends BoltTestCase
     const PRODUCT_ID = '1';
 
     /**
-     * @var HelperConfig
-     */
-    protected $configHelper;
-
-    /**
-     * @var \Magento\Framework\App\Helper\Context
-     */
-    protected $helperContextMock;
-
-    /**
-     * @var \Magento\Framework\View\Element\Template\Context
-     */
-    protected $contextMock;
-
-    /**
-     * @var \Magento\Checkout\Model\Session
-     */
-    protected $checkoutSessionMock;
-
-    /**
      * @var BlockJsProductPage
      */
     protected $block;
 
-    /**
-     * @var HttpContext|MockObject
-     */
-    protected $httpContextMock;
+    private $objectManager;
 
     /**
-     * @var Http
+     * @inheritdoc
      */
-    private $requestMock;
+    protected function setUpInternal()
+    {
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->block = $this->objectManager->create(JsProductPage::class);
 
-    /**
-     * @var CartHelper
-     */
-    private $cartHelperMock;
-
-    /**
-     * @var Bugsnag
-     */
-    private $bugsnagHelperMock;
-
-    /**
-     * @var ProductView
-     */
-    private $productViewMock;
-
-    /**
-     * @var Product
-     */
-    private $product;
-
-    /**
-     * @var Decider
-     */
-    private $featureSwitches;
-
-    /**
-     * @var ProductRepository
-     */
-    private $productRepository;
-
-    /**
-     * @var SearchCriteriaBuilder
-     */
-    private $searchCriteriaBuilder;
-
-    /**
-     * @var MockObject|EventsForThirdPartyModules
-     */
-    private $eventsForThirdPartyModules;
+    }
 
     /**
      * @test
      */
     public function getProduct()
     {
-        $result = $this->block->getProduct();
-        $this->assertSame($this->product, $result);
+        $simpleProduct = TestUtils::getSimpleProduct();
+        TestHelper::setInaccessibleProperty($this->block, '_product', $simpleProduct);
+        $this->assertSame($simpleProduct, $this->block->getProduct());
+        TestUtils::cleanupSharedFixtures([$simpleProduct]);
     }
 
     /**
      * @test
      * @dataProvider providerIsSupportableType
-     *
-     * @param mixed $typeId
-     * @param mixed $expected_result
+     * @param $typeId
+     * @param $expected_result
+     * @throws \ReflectionException
      */
     public function isSupportableType($typeId, $expected_result)
     {
-        $this->product->method('getTypeId')->willReturn($typeId);
+        /** @var Product $product */
+        $product = $this->objectManager->create(Product::class);
+        $product->setTypeId($typeId);
+        TestHelper::setInaccessibleProperty($this->block, '_product', $product);
         $result = $this->block->isSupportableType();
         $this->assertEquals($expected_result, $result);
     }
@@ -156,68 +109,36 @@ class JsProductPageTest extends BoltTestCase
 
     /**
      * @test
-     * @dataProvider providerIsConfigurable
-     *
-     * @param mixed $typeId
-     * @param mixed $expected_result
      */
-    public function isConfigurable($typeId, $expected_result)
+    public function isConfigurable()
     {
-        $this->product->method('getTypeId')->willReturn($typeId);
+        $product = TestUtils::createConfigurableProduct();
+        TestHelper::setInaccessibleProperty($this->block, '_product', $product);
         $result = $this->block->isConfigurable();
-        $this->assertEquals($expected_result, $result);
-    }
-
-    public function providerIsConfigurable()
-    {
-        return [
-            ['simple', false],
-            ['grouped', false],
-            ['configurable', true],
-            ['virtual', false],
-            ['bundle', false],
-            ['downloadable', false]
-        ];
+        $this->assertTrue($result);
+        TestUtils::cleanupSharedFixtures([$product]);
     }
 
     /**
      * @test
-     * @dataProvider providerIsDownloadable
-     *
-     * @param $typeId
-     * @param $expectedResult
      */
-    public function isDownloadable($typeId, $expectedResult)
+    public function isDownloadable()
     {
-        $this->product->method('getTypeId')->willReturn($typeId);
-        $result = $this->block->isDownloadable();
-        $this->assertEquals($expectedResult, $result);
-    }
-
-    public function providerIsDownloadable()
-    {
-        return [
-            ['simple', false],
-            ['grouped', false],
-            ['configurable', false],
-            ['virtual', false],
-            ['bundle', false],
-            ['downloadable', true]
-        ];
+        $product = TestUtils::createDownloadableProduct();
+        TestHelper::setInaccessibleProperty($this->block, '_product', $product);
+        $this->assertTrue($this->block->isDownloadable());
+        TestUtils::cleanupSharedFixtures([$product]);
     }
 
     /**
      * @test
-     * @dataProvider providerIsGrouped
-     *
-     * @param $typeId
-     * @param $expectedResult
      */
-    public function isGrouped($typeId, $expectedResult)
+    public function isGrouped()
     {
-        $this->product->method('getTypeId')->willReturn($typeId);
-        $result = $this->block->isGrouped();
-        $this->assertEquals($expectedResult, $result);
+        $product = TestUtils::createGroupProduct();
+        TestHelper::setInaccessibleProperty($this->block, '_product', $product);
+        $this->assertTrue($this->block->isGrouped());
+        TestUtils::cleanupSharedFixtures([$product]);
     }
 
     public function providerIsGrouped()
@@ -233,26 +154,6 @@ class JsProductPageTest extends BoltTestCase
     }
 
     /**
-     * @covers ::getGroupedProductChildren
-     * @test
-     */
-    public function getGroupedProductChildren()
-    {
-        $this->product->expects(self::once())->method('getTypeInstance')->willReturnSelf();
-        $this->product->expects(self::once())->method('getId')->willReturn(self::PRODUCT_ID);
-        $this->product->expects(self::once())->method('getChildrenIds')->with(self::PRODUCT_ID)->willReturn([2, 3]);
-
-        $this->searchCriteriaBuilder->expects(self::once())->method('addFilter')->with('entity_id', [2, 3], 'in')->willReturnSelf();
-        $searchCriteriaBuilderInterFace = $this->createMock(\Magento\Framework\Api\SearchCriteriaInterface::class);
-        $this->searchCriteriaBuilder->expects(self::once())->method('create')->willReturn($searchCriteriaBuilderInterFace);
-
-        $this->productRepository->expects(self::once())->method('getList')->with($searchCriteriaBuilderInterFace)->willReturnSelf();
-        $this->productRepository->expects(self::once())->method('getItems')->willReturn([$this->product]);
-
-        $this->assertEquals([$this->product], $this->block->getGroupedProductChildren());
-    }
-
-    /**
      * @test
      * @dataProvider providerIsGuestCheckoutAllowed
      *
@@ -263,13 +164,39 @@ class JsProductPageTest extends BoltTestCase
      */
     public function isGuestCheckoutAllowed($isGuestCheckoutAllowed, $isGuestCheckoutForDownloadableProductDisabled, $expectedResult, $productType = 'simple')
     {
-        $this->configHelper->method('isGuestCheckoutAllowed')
-            ->willReturn($isGuestCheckoutAllowed);
-        $this->configHelper->method('isGuestCheckoutForDownloadableProductDisabled')
-            ->willReturn($isGuestCheckoutForDownloadableProductDisabled);
-        $this->product->method('getTypeId')->willReturn($productType);
+        $store = $this->objectManager->get(\Magento\Store\Model\StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
+
+        $configData = [
+            [
+                'path'    => \Magento\Checkout\Helper\Data::XML_PATH_GUEST_CHECKOUT,
+                'value'   => $isGuestCheckoutAllowed,
+                'scope'   => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $storeId,
+            ],
+            [
+                'path'    => Config::XML_PATH_DISABLE_GUEST_CHECKOUT,
+                'value'   => $isGuestCheckoutForDownloadableProductDisabled,
+                'scope'   => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $storeId,
+            ],
+
+        ];
+
+        TestUtils::setupBoltConfig($configData);
+
+        if ($productType == 'downloadable') {
+            $product = TestUtils::createDownloadableProduct();
+        }else if($productType == 'configurable') {
+            $product = TestUtils::createConfigurableProduct();
+        }else {
+            $product = TestUtils::createSimpleProduct();
+        }
+        TestHelper::setInaccessibleProperty($this->block, '_product', $product);
+
         $result = $this->block->isGuestCheckoutAllowed();
         $this->assertEquals($expectedResult, $result);
+        TestUtils::cleanupSharedFixtures([$product]);
     }
 
     public function providerIsGuestCheckoutAllowed()
@@ -298,9 +225,10 @@ class JsProductPageTest extends BoltTestCase
      */
     public function isSaveHintsInSections($flag)
     {
-        $this->featureSwitches->method('isSaveHintsInSections')->willReturn($flag);
+        $featureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_SAVE_HINTS_IN_SECTIONS, $flag);
         $result = $this->block->isSaveHintsInSections();
         $this->assertEquals($flag, $result);
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
     public function providerIsSaveHintsInSections()
@@ -313,138 +241,67 @@ class JsProductPageTest extends BoltTestCase
 
     /**
      * @test
+     * @throws \ReflectionException
      */
-    public function isBoltProductPage_returnsFalse_ifFlagNotEnabledAndParentReturnsFalse()
+    public function isBoltProductPage_returnsFalse()
     {
-        $this->configHelper->expects(static::once())->method('getSelectProductPageCheckoutFlag')->willReturn(false);
-        $this->configHelper->expects(static::once())->method('getProductPageCheckoutFlag')->willReturn(false);
-        $this->requestMock->expects(static::once())->method('getFullActionName')->willReturn('catalog_product_view');
         $this->assertEquals(false, $this->block->isBoltProductPage());
     }
 
     /**
-     * @test
-     */
-    public function isBoltProductPage_returnsTrue_ifFlagNotEnabledAndParentReturnsTrue()
-    {
-        $this->configHelper->expects(static::once())->method('getSelectProductPageCheckoutFlag')->willReturn(false);
-        $this->configHelper->expects(static::once())->method('getProductPageCheckoutFlag')->willReturn(true);
-        $this->requestMock->expects(static::once())->method('getFullActionName')->willReturn('catalog_product_view');
-        $this->assertEquals(true, $this->block->isBoltProductPage());
-    }
-
-    /**
-     * @test
-     */
-    public function isBoltProductPage_returnsFalse_ifFlagEnabledButParentReturnsFalse()
-    {
-        $this->configHelper->expects(static::once())->method('getSelectProductPageCheckoutFlag')->willReturn(true);
-        $this->configHelper->expects(static::once())->method('getProductPageCheckoutFlag')->willReturn(false);
-        $this->requestMock->expects(static::once())->method('getFullActionName')->willReturn('catalog_product_view');
-        $this->assertEquals(false, $this->block->isBoltProductPage());
-    }
-
-    /**
+     * @covers ::isBoltProductPage
      * @test
      */
     public function isBoltProductPage_returnsTrue_ifFlagEnabledParentReturnsTrueAndAttributeFound()
     {
-        $this->configHelper->expects(static::once())->method('getSelectProductPageCheckoutFlag')->willReturn(true);
-        $this->configHelper->expects(static::once())->method('getProductPageCheckoutFlag')->willReturn(true);
-        $this->requestMock->expects(static::once())->method('getFullActionName')->willReturn('catalog_product_view');
-        $attr1 = $this->createMock(AbstractAttribute::class);
-        $attr1->expects(static::once())->method('getName')->willReturn('attr1');
-        $attr2 = $this->createMock(AbstractAttribute::class);
-        $attr2->expects(static::once())->method('getName')->willReturn('bolt_ppc');
-        $this->product->expects(static::once())->method('getAttributes')->willReturn([$attr1, $attr2]);
-        $this->assertEquals(true, $this->block->isBoltProductPage());
-    }
+        $contextMock = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);
+        $configHelper = $this->createMock(HelperConfig::class);
 
-    /**
-     * @test
-     */
-    public function isBoltProductPage_returnsFalse_ifFlagEnabledParentReturnsTrueButAttributeNotFound()
-    {
-        $this->configHelper->expects(static::once())->method('getSelectProductPageCheckoutFlag')->willReturn(true);
-        $this->configHelper->expects(static::once())->method('getProductPageCheckoutFlag')->willReturn(true);
-        $this->requestMock->expects(static::once())->method('getFullActionName')->willReturn('catalog_product_view');
-        $attr1 = $this->createMock(AbstractAttribute::class);
-        $attr1->expects(static::once())->method('getName')->willReturn('attr1');
-        $attr2 = $this->createMock(AbstractAttribute::class);
-        $attr2->expects(static::once())->method('getName')->willReturn('attr2');
-        $this->product->expects(static::once())->method('getAttributes')->willReturn([$attr1, $attr2]);
-        $this->assertEquals(false, $this->block->isBoltProductPage());
-    }
-
-    /**
-     * @inheritdoc
-     */
-    protected function setUpInternal()
-    {
-        $this->helperContextMock = $this->createMock(\Magento\Framework\App\Helper\Context::class);
-        $this->contextMock = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);
-
-        $this->checkoutSessionMock = $this->getMockBuilder(\Magento\Checkout\Model\Session::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getQuote', 'getBoltInitiateCheckout', 'unsBoltInitiateCheckout'])
-            ->getMock();
-
-        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
-        $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
-
-        $this->httpContextMock = $this->createMock(HttpContext::class);
-
-        $this->configHelper = $this->createMock(HelperConfig::class);
-        $this->cartHelperMock = $this->createMock(CartHelper::class);
-        $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
-        $this->requestMock = $this->getMockBuilder(Http::class)
+        $requestMock = $this->getMockBuilder(Http::class)
             ->disableOriginalConstructor()
             ->setMethods(['getFullActionName'])
             ->getMock();
 
-        $this->contextMock->method('getRequest')->willReturn($this->requestMock);
+        $contextMock->method('getRequest')->willReturn($requestMock);
 
-        $store = $this->createMock(\Magento\Store\Model\Store::class);
-        $store->method('getCurrentCurrencyCode')->willReturn(self::CURRENCY_CODE);
-        $storeManager = $this->getMockForAbstractClass(\Magento\Store\Model\StoreManagerInterface::class);
-        $storeManager->method('getStore')->willReturn($store);
-        $this->contextMock->method('getStoreManager')->willReturn($storeManager);
-
-        $this->product = $this->getMockBuilder(Product::class)
+        $product = $this->getMockBuilder(Product::class)
             ->disableOriginalConstructor()
             ->setMethods(['getExtensionAttributes', 'getStockItem', 'getTypeId', 'getId', 'getTypeInstance', 'getChildrenIds', 'getAttributes'])
             ->getMock();
 
-        $this->productViewMock = $this->getMockBuilder(ProductView::class)
+        $productViewMock = $this->getMockBuilder(ProductView::class)
             ->disableOriginalConstructor()
             ->setMethods(['getProduct'])
             ->getMock();
-        $this->productViewMock->method('getProduct')
-            ->willReturn($this->product);
-        $this->featureSwitches = $this->createMock(Decider::class);
-        $this->productRepository = $this->createPartialMock(ProductRepository::class, [
-            'getList',
-            'getItems'
-        ]);
-        $this->searchCriteriaBuilder = $this->createPartialMock(SearchCriteriaBuilder::class, ['addFilter', 'create']);
+        $productViewMock->method('getProduct')->willReturn($product);
 
-        $this->block = $this->getMockBuilder(BlockJsProductPage::class)
+        $block = $this->getMockBuilder(BlockJsProductPage::class)
             ->setMethods(['configHelper', 'getUrl', 'getBoltPopupErrorMessage'])
             ->setConstructorArgs(
                 [
-                    $this->contextMock,
-                    $this->configHelper,
-                    $this->checkoutSessionMock,
-                    $this->cartHelperMock,
-                    $this->bugsnagHelperMock,
-                    $this->productViewMock,
-                    $this->featureSwitches,
-                    $this->productRepository,
-                    $this->searchCriteriaBuilder,
-                    $this->eventsForThirdPartyModules,
-                    $this->httpContextMock,
+                    $contextMock,
+                    $configHelper,
+                    $this->createMock(\Magento\Checkout\Model\Session::class),
+                    $this->createMock(CartHelper::class),
+                    $this->createMock(Bugsnag::class),
+                    $productViewMock,
+                    $this->createMock(Decider::class),
+                    $this->createMock(ProductRepository::class),
+                    $this->createMock(SearchCriteriaBuilder::class),
+                    $this->createMock(EventsForThirdPartyModules::class),
+                    $this->createMock(HttpContext::class),
                 ]
             )
             ->getMock();
+
+        $configHelper->expects(static::once())->method('getSelectProductPageCheckoutFlag')->willReturn(true);
+        $configHelper->expects(static::once())->method('getProductPageCheckoutFlag')->willReturn(true);
+        $requestMock->expects(static::once())->method('getFullActionName')->willReturn('catalog_product_view');
+        $attr1 = $this->createMock(AbstractAttribute::class);
+        $attr1->expects(static::once())->method('getName')->willReturn('attr1');
+        $attr2 = $this->createMock(AbstractAttribute::class);
+        $attr2->expects(static::once())->method('getName')->willReturn('bolt_ppc');
+        $product->expects(static::once())->method('getAttributes')->willReturn([$attr1, $attr2]);
+        $this->assertEquals(true, $block->isBoltProductPage());
     }
 }
