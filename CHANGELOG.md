@@ -211,5 +211,7 @@
 - Adds support for Magecomp Extrafee
 - Adds product fetching endpoint for future integrations
 - Various minor bugfixes
-## [v2.22.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.23.0) 2021-08-11
-- Changelog TBD
+## [v2.23.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.23.0) 2021-08-31
+- Updates to simplify SSO Commerce enablement
+- Adds support for Magento version 2.4.3
+- Adds support for Route Shipping
