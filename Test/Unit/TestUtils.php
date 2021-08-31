@@ -290,6 +290,88 @@ class TestUtils
         return $product;
     }
 
+
+    /**
+     * @return mixed
+     */
+    public static function createConfigurableProduct()
+    {
+        $product = Bootstrap::getObjectManager()->create(Product::class);
+        $product->setTypeId(\Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE)
+            ->setAttributeSetId(4)
+            ->setWebsiteIds([1])
+            ->setName('Test Configurable Product')
+            ->setSku(md5(uniqid(rand(), true)))
+            ->setPrice(100)
+            ->setDescription('Product Description')
+            ->setMetaTitle('meta title')
+            ->setMetaKeyword('meta keyword')
+            ->setMetaDescription('meta description')
+            ->setVisibility(\Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH)
+            ->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED)
+            ->setCategoryIds([2])
+            ->setStockData(['use_config_manage_stock' => 0])
+            ->setCanSaveCustomOptions(true)
+            ->setHasOptions(true)
+            ->setUrlKey('test-virtual-product-'.round(microtime(true) * 1000));
+        $product->save();
+        return $product;
+    }
+
+    /**
+     * @return mixed
+     */
+    public static function createDownloadableProduct()
+    {
+        $product = Bootstrap::getObjectManager()->create(Product::class);
+        $product->setTypeId(\Magento\Downloadable\Model\Product\Type::TYPE_DOWNLOADABLE)
+            ->setAttributeSetId(4)
+            ->setWebsiteIds([1])
+            ->setName('Test Downloadable Product')
+            ->setSku(md5(uniqid(rand(), true)))
+            ->setPrice(100)
+            ->setDescription('Product Description')
+            ->setMetaTitle('meta title')
+            ->setMetaKeyword('meta keyword')
+            ->setMetaDescription('meta description')
+            ->setVisibility(\Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH)
+            ->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED)
+            ->setCategoryIds([2])
+            ->setStockData(['use_config_manage_stock' => 0])
+            ->setCanSaveCustomOptions(true)
+            ->setHasOptions(true)
+            ->setUrlKey('test-downloadable-product-'.round(microtime(true) * 1000));
+        $product->save();
+        return $product;
+    }
+
+    /**
+     * @return mixed
+     */
+    public static function createGroupProduct()
+    {
+        $product = Bootstrap::getObjectManager()->create(Product::class);
+        $product->setTypeId(\Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE)
+            ->setAttributeSetId(4)
+            ->setWebsiteIds([1])
+            ->setName('Test Group Product')
+            ->setSku(md5(uniqid(rand(), true)))
+            ->setPrice(100)
+            ->setDescription('Product Description')
+            ->setMetaTitle('meta title')
+            ->setMetaKeyword('meta keyword')
+            ->setMetaDescription('meta description')
+            ->setVisibility(\Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH)
+            ->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED)
+            ->setCategoryIds([2])
+            ->setStockData(['use_config_manage_stock' => 0])
+            ->setCanSaveCustomOptions(true)
+            ->setHasOptions(true)
+            ->setUrlKey('test-group-product-'.round(microtime(true) * 1000));
+        $product->save();
+        return $product;
+    }
+
     public static function setSecureAreaIfNeeded()
     {
         $registry = Bootstrap::getObjectManager()->get("\Magento\Framework\Registry");
