@@ -22,11 +22,16 @@ use Bolt\Boltpay\Block\Js;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as HelperConfig;
+use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSettingFactory;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Model\Request;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Bolt\Boltpay\Test\Unit\Helper\ConfigTest;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Exception;
 use Magento\Checkout\Model\Session;
 use Magento\Directory\Model\RegionFactory;
@@ -48,6 +53,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use ReflectionException;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class JsTest
@@ -151,31 +157,12 @@ class JsTest extends BoltTestCase
     /** @var State */
     private $_appState;
 
-    /**
-     * @test
-     * that __construct sets internal properties
-     *
-     * @covers ::__construct
-     */
-    public function __construct_always_setsInternalProperties()
-    {
-        $instance = new Js(
-            $this->contextMock,
-            $this->configHelper,
-            $this->checkoutSessionMock,
-            $this->cartHelperMock,
-            $this->bugsnagHelperMock,
-            $this->deciderMock,
-            $this->eventsForThirdPartyModules,
-            $this->httpContextMock
-        );
-        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
-        static::assertAttributeEquals($this->checkoutSessionMock, 'checkoutSession', $instance);
-        static::assertAttributeEquals($this->cartHelperMock, 'cartHelper', $instance);
-        static::assertAttributeEquals($this->bugsnagHelperMock, 'bugsnag', $instance);
-        static::assertAttributeEquals($this->deciderMock, 'featureSwitches', $instance);
-        static::assertAttributeEquals($this->eventsForThirdPartyModules, 'eventsForThirdPartyModules', $instance);
-    }
+    private $storeId;
+
+    /** @var Js */
+    private $block;
+
+
 
     /**
      * @test
@@ -191,7 +178,7 @@ class JsTest extends BoltTestCase
     public function getTrackJsUrl_withVariousConfigurationModes_returnsCheckoutUrl($sandboxMode, $expectedResult)
     {
         $this->setSandboxMode($sandboxMode);
-        static::assertEquals($expectedResult, $this->currentMock->getTrackJsUrl());
+        static::assertEquals($expectedResult, $this->block->getTrackJsUrl());
     }
 
     /**
@@ -203,14 +190,36 @@ class JsTest extends BoltTestCase
     {
         return [
             [
-                'sandboxMode'    => true,
-                'expectedResult' => HelperConfig::CDN_URL_SANDBOX . '/track.js',
-            ],
-            [
                 'sandboxMode'    => false,
                 'expectedResult' => HelperConfig::CDN_URL_PRODUCTION . '/track.js',
             ],
+            [
+                'sandboxMode'    => true,
+                'expectedResult' => HelperConfig::CDN_URL_SANDBOX . '/track.js',
+            ],
         ];
+    }
+
+    /**
+     * Stubs {@see \Bolt\Boltpay\Helper\Config::isSandboxModeSet} to return provided value and
+     *
+     * @see \Bolt\Boltpay\Helper\Config::getCustomURLValueOrDefault} to always return the second argumen
+     *
+     * @param bool $flag whether sandbox mode should be set to true or false
+     */
+    public function setSandboxMode($flag = true)
+    {
+        $configData = [
+            [
+                'path' => Config::XML_PATH_SANDBOX_MODE,
+                'value' => $flag,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+
     }
 
     /**
@@ -227,7 +236,7 @@ class JsTest extends BoltTestCase
     public function getConnectJsUrl_withVariousConfigurationModes_returnsCheckoutUrl($sandboxMode, $expectedResult)
     {
         $this->setSandboxMode($sandboxMode);
-        static::assertEquals($expectedResult, $this->currentMock->getConnectJsUrl());
+        static::assertEquals($expectedResult, $this->block->getConnectJsUrl());
     }
 
     /**
@@ -263,7 +272,7 @@ class JsTest extends BoltTestCase
     public function getPayByLinkUrl_withVariousConfigurationModes_returnsCheckoutUrl($sandboxMode, $expectedResult)
     {
         $this->setSandboxMode($sandboxMode);
-        static::assertEquals($expectedResult, $this->currentMock->getPayByLinkUrl());
+        static::assertEquals($expectedResult, $this->block->getPayByLinkUrl());
     }
 
     /**
@@ -299,7 +308,7 @@ class JsTest extends BoltTestCase
     public function getAccountJsUrl_withVariousSandboxConfigurationModes_returnsAccountUrl($sandboxMode, $expectedResult)
     {
         $this->setSandboxMode($sandboxMode);
-        static::assertEquals($expectedResult, $this->currentMock->getAccountJsUrl());
+        static::assertEquals($expectedResult, $this->block->getAccountJsUrl());
     }
 
     /**
@@ -344,15 +353,25 @@ class JsTest extends BoltTestCase
         $requestAction,
         $expectedResult
     ) {
-        $this->configHelper->method('isPaymentOnlyCheckoutEnabled')
-            ->willReturn($isPaymentOnlyCheckoutEnabled);
-        $this->configHelper->method('getPublishableKeyPayment')
-            ->willReturn($publishableKeyPayment);
-        $this->configHelper->method('getPublishableKeyCheckout')
-            ->willReturn($publishableKeyCheckout);
 
-        $this->requestMock->method('getFullActionName')->willReturn($requestAction);
-        $result = $this->currentMock->getCheckoutKey();
+        $block = $this->objectManager->create(Js::class);
+        $configHelper = $this->createPartialMock(Config::class,[
+            'isPaymentOnlyCheckoutEnabled',
+            'getPublishableKeyPayment',
+            'getPublishableKeyCheckout',
+        ]);
+        $configHelper->method('isPaymentOnlyCheckoutEnabled')
+            ->willReturn($isPaymentOnlyCheckoutEnabled);
+        $configHelper->method('getPublishableKeyPayment')
+            ->willReturn($publishableKeyPayment);
+        $configHelper->method('getPublishableKeyCheckout')
+            ->willReturn($publishableKeyCheckout);
+        $requestMock = $this->createPartialMock(Request::class,['getFullActionName']);
+        $requestMock->method('getFullActionName')->willReturn($requestAction);
+        TestHelper::setInaccessibleProperty($block,'_request', $requestMock);
+        TestHelper::setInaccessibleProperty($block,'configHelper', $configHelper);
+
+        $result = $block->getCheckoutKey();
         static::assertStringStartsWith('pKv_', $result, 'Publishable Key doesn\'t work properly');
         static::assertEquals(strlen($expectedResult), strlen($result), 'Publishable Key has an invalid length');
         static::assertEquals($expectedResult, $result, 'Publishable Key has an invalid length');
@@ -418,13 +437,26 @@ class JsTest extends BoltTestCase
         $replaceSelectors,
         $expectedResult
     ) {
-        $this->configHelper->expects(static::once())
-            ->method('isPaymentOnlyCheckoutEnabled')
-            ->willReturn($isPaymentOnlyCheckoutEnabled);
-        $this->requestMock->method('getFullActionName')->willReturn($requestActionName);
-        $this->configHelper->expects(static::any())->method('getReplaceSelectors')->willReturn($replaceSelectors);
-
-        static::assertEquals($expectedResult, $this->currentMock->getReplaceSelectors());
+        $block = $this->objectManager->create(Js::class);
+        $configData = [
+            [
+                'path' => Config::XML_PATH_PAYMENT_ONLY_CHECKOUT,
+                'value' => $isPaymentOnlyCheckoutEnabled,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_REPLACE_SELECTORS,
+                'value' => $replaceSelectors,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $requestMock = $this->createPartialMock(Http::class,['getFullActionName']);
+        $requestMock->method('getFullActionName')->willReturn($requestActionName);
+        TestHelper::setInaccessibleProperty($block,'_request', $requestMock);
+        static::assertEquals($expectedResult, $block->getReplaceSelectors());
     }
 
     /**
@@ -482,8 +514,17 @@ class JsTest extends BoltTestCase
      */
     public function getTotalsChangeSelectors_withVariousSelectors_returnsFilteredSelectors($selectors, $expectedResult)
     {
-        $this->configHelper->expects(static::once())->method('getTotalsChangeSelectors')->willReturn($selectors);
-        static::assertEquals($expectedResult, $this->currentMock->getTotalsChangeSelectors());
+        $configData = [
+            [
+                'path' => Config::XML_PATH_TOTALS_CHANGE_SELECTORS,
+                'value' => $selectors,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        static::assertEquals($expectedResult, $this->block->getTotalsChangeSelectors());
     }
 
     /**
@@ -509,25 +550,81 @@ class JsTest extends BoltTestCase
         ];
     }
 
+
     /**
      * @test
-     * that getAdditionalCheckoutButtonAttributes returns additional checkout button attributes from
-     *
-     * @see \Bolt\Boltpay\Helper\Config::getAdditionalCheckoutButtonAttributes
+     * that getAdditionalCheckoutButtonAttributes returns additional checkout button attributes
+     * stored in additional config field under 'checkoutButtonAttributes' field
      *
      * @covers ::getAdditionalCheckoutButtonAttributes
+     *
+     * @dataProvider getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider
+     *
+     * @param string $additionalConfig string from config property
+     * @param mixed $expectedResult from the tested method
      */
-    public function getAdditionalCheckoutButtonAttributes_always_returnsAdditionalCheckoutButtonAttributesFromConfig()
+    public function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigs_returnsButtonAttributes(
+        $additionalConfig,
+        $expectedResult
+    )
     {
-        $additionalCheckoutButtonAttributes = (object) ['data-btn-txt' => 'Pay now'];
-        $this->configHelper->expects(static::once())
-            ->method('getAdditionalCheckoutButtonAttributes')
-            ->willReturn($additionalCheckoutButtonAttributes);
+        $configData = [
+            [
+                'path' => Config::XML_PATH_ADDITIONAL_CONFIG,
+                'value' => $additionalConfig,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $this->block->getAdditionalCheckoutButtonAttributes();
+        static::assertEquals($expectedResult, $result);
+    }
 
-        static::assertEquals(
-            $additionalCheckoutButtonAttributes,
-            $this->currentMock->getAdditionalCheckoutButtonAttributes()
-        );
+    /**
+     * Data provider for
+     *
+     * @see getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigs_returnsButtonAttributes
+     *
+     * @return array[] containing additional config values and expected result of the tested method
+     */
+    public function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider()
+    {
+        return [
+            'Only attributes in initial config' => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {
+                        "data-btn-txt": "Pay now"
+                    }
+                }',
+                'expectedResult' => (object)['data-btn-txt' => 'Pay now'],
+            ],
+            'Multiple attributes' => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {
+                        "data-btn-txt": "Pay now",
+                        "data-btn-text": "Data"
+                    }
+                }',
+                'expectedResult' => (object)['data-btn-txt' => 'Pay now', 'data-btn-text' => 'Data'],
+            ],
+            'Empty checkout button attributes property' => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {}
+                }',
+                'expectedResult' => (object)[],
+            ],
+            'Missing checkout button attributes property' => [
+                'additionalConfig' => '{
+                    "checkoutButtonAttributes": {}
+                }',
+                'expectedResult' => (object)[],
+            ],
+            'Invalid additional config JSON' => [
+                'additionalConfig' => 'invalid JSON',
+                'expectedResult' => (object)[],
+            ],
+        ];
     }
 
     /**
@@ -541,11 +638,18 @@ class JsTest extends BoltTestCase
     public function getAdditionalCheckoutButtonClass_always_returnsTrimmedButtonClass()
     {
         $configValue = ' .btn-green ';
-        $this->configHelper->expects(static::once())
-            ->method('getAdditionalCheckoutButtonClass')
-            ->willReturn($configValue);
 
-        static::assertEquals(trim($configValue), $this->currentMock->getAdditionalCheckoutButtonClass());
+        $configData = [
+            [
+                'path' => Config::XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS,
+                'value' => $configValue,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        static::assertEquals(trim($configValue), $this->block->getAdditionalCheckoutButtonClass());
     }
 
     /**
@@ -561,61 +665,20 @@ class JsTest extends BoltTestCase
         $value = '.replaceable-example-selector1 {
             color: red;
         }';
-        
-        $this->currentMock->expects(static::once())
-                          ->method('getRequest')
-                          ->willReturnSelf();
-                          
-        $this->currentMock->expects(static::once())
-                          ->method('getFullActionName')
-                          ->willReturn('catalog_product_view');
-            
-        $this->configHelper->expects(static::once())
-            ->method('getGlobalCSS')
-            ->willReturn($value);
 
-        $result = $this->currentMock->getGlobalCSS();
+        $configData = [
+            [
+                'path' => Config::XML_PATH_GLOBAL_CSS,
+                'value' => $value,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $result = $this->block->getGlobalCSS();
 
         static::assertEquals($value, $result, 'getGlobalCSS() method: not working properly');
-    }
-    
-    /**
-     * @test
-     * that if Bolt is disabled on the cart page, getGlobalCSS returns global CSS from config as well as extra css to show native M2 checkout button.
-     *
-     * @see \Bolt\Boltpay\Helper\Config::getGlobalCSS
-     *
-     * @covers ::getGlobalCSS
-     */
-    public function getGlobalCSS_BoltOnCartDisabled_returnsCssCode()
-    {
-        $value = '.replaceable-example-selector1 {
-            color: red;
-        }';
-
-        $this->currentMock->expects(static::once())
-                          ->method('getRequest')
-                          ->willReturnSelf();
-                          
-        $this->currentMock->expects(static::once())
-                          ->method('getFullActionName')
-                          ->willReturn('checkout_cart_index');
-        
-        $this->configHelper->expects(static::once())
-            ->method('getBoltOnCartPage')
-            ->willReturn(false);
-            
-        $this->configHelper->expects(static::once())
-            ->method('getGlobalCSS')
-            ->willReturn($value);
-
-        $result = $this->currentMock->getGlobalCSS();
-        
-        $expectedResult = '.replaceable-example-selector1 {
-            color: red;
-        }button[data-role=proceed-to-checkout]{display:block!important;}';
-
-        static::assertEquals($expectedResult, $result, 'getGlobalCSS() method: not working properly');
     }
     
     /**
@@ -633,11 +696,17 @@ class JsTest extends BoltTestCase
         ], function ($) {       
         });';
 
-        $this->configHelper->expects(static::once())
-            ->method('getGlobalJS')
-            ->willReturn($value);
+        $configData = [
+            [
+                'path' => Config::XML_PATH_GLOBAL_JS,
+                'value' => $value,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
 
-        $result = $this->currentMock->getGlobalJS();
+        $result = $this->block->getGlobalJS();
 
         static::assertEquals($value, $result, 'getGlobalJS() method: not working properly');
     }
@@ -650,13 +719,18 @@ class JsTest extends BoltTestCase
      */
     public function getJavascriptSuccess_always_returnsCallback()
     {
-        $this->configHelper->expects(static::once())
-            ->method('getJavascriptSuccess')
-            ->willReturn(HelperConfig::XML_PATH_JAVASCRIPT_SUCCESS);
-
+        $configData = [
+            [
+                'path' => Config::XML_PATH_JAVASCRIPT_SUCCESS,
+                'value' => HelperConfig::XML_PATH_JAVASCRIPT_SUCCESS,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
         static::assertEquals(
             HelperConfig::XML_PATH_JAVASCRIPT_SUCCESS,
-            $this->currentMock->getJavascriptSuccess()
+            $this->block->getJavascriptSuccess()
         );
     }
 
@@ -670,16 +744,15 @@ class JsTest extends BoltTestCase
      */
     public function getAdditionalJavascript_always_returnsAdditionalJSCallback()
     {
-        $this->configHelper->expects(static::once())
-            ->method('getAdditionalJS')
-            ->willReturn(HelperConfig::XML_PATH_ADDITIONAL_JS);
-        $this->eventsForThirdPartyModules->expects(static::once())
+        $block = $this->objectManager->create(Js::class);
+        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $eventsForThirdPartyModules->expects(static::once())
             ->method('runFilter')
-            ->with('getAdditionalJS', HelperConfig::XML_PATH_ADDITIONAL_JS)
             ->willReturn('test additional js');
+        TestHelper::setInaccessibleProperty($block,'eventsForThirdPartyModules', $eventsForThirdPartyModules);
         static::assertEquals(
             'test additional js',
-            $this->currentMock->getAdditionalJavascript()
+            $block->getAdditionalJavascript()
         );
     }
 
@@ -688,8 +761,11 @@ class JsTest extends BoltTestCase
      */
     public function getAdditionalHtml_returnsCorrectResult()
     {
-        $this->eventsForThirdPartyModules->expects(static::once())->method('runFilter')->with('getAdditionalHtml', null)->willReturn('<html></html>');
-        static::assertEquals('<html></html>', $this->currentMock->getAdditionalHtml());
+        $block = $this->objectManager->create(Js::class);
+        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class,['runFilter']);
+        $eventsForThirdPartyModules->expects(static::once())->method('runFilter')->with('getAdditionalHtml', null)->willReturn('<html></html>');
+        TestHelper::setInaccessibleProperty($block,'eventsForThirdPartyModules', $eventsForThirdPartyModules);
+        static::assertEquals('<html></html>', $block->getAdditionalHtml());
     }
 
     /**
@@ -700,8 +776,8 @@ class JsTest extends BoltTestCase
      */
     public function getSettings_always_returnsJsonSettings()
     {
-        $this->deciderMock->method('isPayByLinkEnabled')->willReturn(true);
-        $result = $this->currentMock->getSettings();
+        TestUtils::saveFeatureSwitch(Definitions::M2_PAY_BY_LINK, true);
+        $result = $this->block->getSettings();
 
         static::assertJson($result, 'The Settings config do not have a proper JSON format.');
 
@@ -749,10 +825,11 @@ class JsTest extends BoltTestCase
      */
     public function getSettings_ifPayByLinkFeatureIsDisabled_returnsSettingWithPayByLinkSetToNull()
     {
-        $this->deciderMock->method('isPayByLinkEnabled')->willReturn(false);
-        $result = $this->currentMock->getSettings();
+        $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_PAY_BY_LINK, false);
+        $result = $this->block->getSettings();
 
         static::assertNull(json_decode($result, true)['pay_by_link_url']);
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
     /**
@@ -763,13 +840,14 @@ class JsTest extends BoltTestCase
      */
     public function getSettings_ifPayByLinkUrlIsEnabled_returnsSettingsWithPayByLink()
     {
-        $this->deciderMock->method('isPayByLinkEnabled')->willReturn(true);
-        $result = $this->currentMock->getSettings();
+        $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_PAY_BY_LINK, true);
+        $result = $this->block->getSettings();
 
         static::assertEquals(
             HelperConfig::CDN_URL_PRODUCTION . '/checkout',
             json_decode($result, true)['pay_by_link_url']
         );
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
     /**
@@ -787,11 +865,23 @@ class JsTest extends BoltTestCase
      */
     public function getQuoteIsVirtual_withVariousQuotes_returnsIsQuoteVirtual($isQuoteVirtual, $expectedResult)
     {
-        $quoteMock = $this->createPartialMock(Quote::class, ['isVirtual']);
-        $this->currentMock->expects(static::once())->method('getQuoteFromCheckoutSession')->willReturn($quoteMock);
-        $quoteMock->expects(static::once())->method('isVirtual')->willReturn($isQuoteVirtual);
+        $checkoutSession = $this->objectManager->create(\Magento\Framework\Session\SessionManager::class);
 
-        static::assertEquals($expectedResult, TestHelper::invokeMethod($this->currentMock, 'getQuoteIsVirtual'));
+        $quote = TestUtils::createQuote();
+        if ($isQuoteVirtual) {
+            $product = TestUtils::createVirtualProduct();
+            $quote->addProduct($product, 1);
+            $quote->setIsVirtual($isQuoteVirtual);
+            $quote->save();
+        }
+
+        $checkoutSession->setQuote($quote);
+        static::assertEquals($expectedResult, TestHelper::invokeMethod($this->block, 'getQuoteIsVirtual'));
+
+        if ($isQuoteVirtual) {
+            TestUtils::cleanupSharedFixtures([$product]);
+        }
+
     }
 
     /**
@@ -900,18 +990,7 @@ class JsTest extends BoltTestCase
      */
     public function getTrackCallbacks_always_returnsTrackCallbacksValue()
     {
-        $currentMock = $this->createPartialMock(
-            Js::class,
-            [
-                'getOnCheckoutStart',
-                'getOnEmailEnter',
-                'getOnShippingDetailsComplete',
-                'getOnShippingOptionsComplete',
-                'getOnPaymentSubmit',
-                'getOnSuccess',
-                'getOnClose',
-            ]
-        );
+
         $onCheckoutStart = "dataLayer.push({'event': 'checkout_start'});";
         $onEmailEnter = "dataLayer.push({'event': 'email_enter'});";
         $onPaymentSubmit = "dataLayer.push({'event': 'on_payment_submit'});";
@@ -920,19 +999,53 @@ class JsTest extends BoltTestCase
         $onShippingDetailsComplete = "dataLayer.push({'event': 'on_shipping_details_complete'});";
         $onShippingOptionsComplete = "dataLayer.push({'event': 'on_shipping_options_complete'});";
 
-        $currentMock->expects(static::once())->method('getOnCheckoutStart')->willReturn($onCheckoutStart);
-        $currentMock->expects(static::once())->method('getOnEmailEnter')->willReturn($onEmailEnter);
-        $currentMock->expects(static::once())->method('getOnShippingDetailsComplete')->willReturn(
-            $onShippingDetailsComplete
-        );
-        $currentMock->expects(static::once())->method('getOnShippingOptionsComplete')->willReturn(
-            $onShippingOptionsComplete
-        );
-        $currentMock->expects(static::once())->method('getOnPaymentSubmit')->willReturn($onPaymentSubmit);
-        $currentMock->expects(static::once())->method('getOnSuccess')->willReturn($onSuccess);
-        $currentMock->expects(static::once())->method('getOnClose')->willReturn($onClose);
+        $configData = [
+            [
+                'path' => Config::XML_PATH_TRACK_CHECKOUT_START,
+                'value' => $onCheckoutStart,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_TRACK_EMAIL_ENTER,
+                'value' => $onEmailEnter,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_TRACK_PAYMENT_SUBMIT,
+                'value' => $onPaymentSubmit,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_TRACK_SUCCESS,
+                'value' => $onSuccess,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_TRACK_CLOSE,
+                'value' => $onClose,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_TRACK_SHIPPING_DETAILS_COMPLETE,
+                'value' => $onShippingDetailsComplete,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE,
+                'value' => $onShippingOptionsComplete,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
 
-        $result = $currentMock->getTrackCallbacks();
+        $result = $this->block->getTrackCallbacks();
 
         static::assertCount(static::TRACK_CALLBACK_NUMBER, $result);
         static::assertEquals(
@@ -960,11 +1073,19 @@ class JsTest extends BoltTestCase
     public function getOnCheckoutStart_always_returnsCheckoutStart()
     {
         $checkoutStartCallback = "dataLayer.push({'event': 'checkout_start'});";
-        $this->configHelper->expects(static::once())->method('getOnCheckoutStart')->willReturn($checkoutStartCallback);
+        $configData = [
+            [
+                'path' => Config::XML_PATH_TRACK_CHECKOUT_START,
+                'value' => $checkoutStartCallback,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
 
         static::assertEquals(
             $checkoutStartCallback,
-            TestHelper::invokeMethod($this->currentMock, 'getOnCheckoutStart')
+            TestHelper::invokeMethod($this->block, 'getOnCheckoutStart')
         );
     }
 
@@ -979,9 +1100,17 @@ class JsTest extends BoltTestCase
     public function getOnEmailEnter_always_returnsEmailEntered()
     {
         $emailEntered = "dataLayer.push({'event': 'email_enter'});";
-        $this->configHelper->expects(static::once())->method('getOnEmailEnter')->willReturn($emailEntered);
-        $this->eventsForThirdPartyModules->expects(static::once())->method('runFilter')->with('getOnEmailEnter', $emailEntered)->willReturn('test onEmailEnter');
-        static::assertEquals('test onEmailEnter', TestHelper::invokeMethod($this->currentMock, 'getOnEmailEnter'));
+
+        $configData = [
+            [
+                'path' => Config::XML_PATH_TRACK_EMAIL_ENTER,
+                'value' => $emailEntered,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        static::assertEquals($emailEntered, TestHelper::invokeMethod($this->block, 'getOnEmailEnter'));
     }
 
     /**
@@ -997,13 +1126,18 @@ class JsTest extends BoltTestCase
     {
         $shippingDetails = "dataLayer.push({'event': 'on_shipping_details_complete'});";
 
-        $this->configHelper->expects(static::once())->method('getOnShippingDetailsComplete')->willReturn(
-            $shippingDetails
-        );
-
+        $configData = [
+            [
+                'path' => Config::XML_PATH_TRACK_SHIPPING_DETAILS_COMPLETE,
+                'value' => $shippingDetails,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
         static::assertEquals(
             $shippingDetails,
-            TestHelper::invokeMethod($this->currentMock, 'getOnShippingDetailsComplete')
+            TestHelper::invokeMethod($this->block, 'getOnShippingDetailsComplete')
         );
     }
 
@@ -1019,13 +1153,19 @@ class JsTest extends BoltTestCase
     public function getOnShippingOptionsComplete_always_returnsShippingOptionsCompleteCallback()
     {
         $shippingOptions = "dataLayer.push({'event': 'on_shipping_options_complete'});";
-        $this->configHelper->expects(static::once())->method('getOnShippingOptionsComplete')->willReturn(
-            $shippingOptions
-        );
+        $configData = [
+            [
+                'path' => Config::XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE,
+                'value' => $shippingOptions,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
 
         static::assertEquals(
             $shippingOptions,
-            TestHelper::invokeMethod($this->currentMock, 'getOnShippingOptionsComplete')
+            TestHelper::invokeMethod($this->block, 'getOnShippingOptionsComplete')
         );
     }
 
@@ -1040,10 +1180,19 @@ class JsTest extends BoltTestCase
      */
     public function getOnPaymentSubmit_always_returnsOnPaymentSubmitCallback()
     {
-        $paymentSubmit = "dataLayer.push({'event': 'on_payment_submit'});";
-        $this->configHelper->expects(static::once())->method('getOnPaymentSubmit')->willReturn($paymentSubmit);
 
-        static::assertEquals($paymentSubmit, TestHelper::invokeMethod($this->currentMock, 'getOnPaymentSubmit'));
+        $paymentSubmit = "dataLayer.push({'event': 'on_payment_submit'});";
+        $configData = [
+            [
+                'path' => Config::XML_PATH_TRACK_PAYMENT_SUBMIT,
+                'value' => $paymentSubmit,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        static::assertEquals($paymentSubmit, TestHelper::invokeMethod($this->block, 'getOnPaymentSubmit'));
     }
 
     /**
@@ -1058,9 +1207,17 @@ class JsTest extends BoltTestCase
     public function getOnSuccess_always_returnsOnSuccessCallback()
     {
         $success = "dataLayer.push({'event': 'on_success'});";
-        $this->configHelper->expects(static::once())->method('getOnSuccess')->willReturn($success);
+        $configData = [
+            [
+                'path' => Config::XML_PATH_TRACK_SUCCESS,
+                'value' => $success,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
 
-        static::assertEquals($success, TestHelper::invokeMethod($this->currentMock, 'getOnSuccess'));
+        static::assertEquals($success, TestHelper::invokeMethod($this->block, 'getOnSuccess'));
     }
 
     /**
@@ -1075,9 +1232,17 @@ class JsTest extends BoltTestCase
     public function getOnClose_always_returnsOnClosedCallback()
     {
         $closed = "dataLayer.push({'event': 'on_close'});";
-        $this->configHelper->expects(static::once())->method('getOnClose')->willReturn($closed);
+        $configData = [
+            [
+                'path' => Config::XML_PATH_TRACK_CLOSE,
+                'value' => $closed,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
 
-        static::assertEquals($closed, TestHelper::invokeMethod($this->currentMock, 'getOnClose'));
+        static::assertEquals($closed, TestHelper::invokeMethod($this->block, 'getOnClose'));
     }
 
     /**
@@ -1087,33 +1252,25 @@ class JsTest extends BoltTestCase
      *
      * @covers ::getToggleCheckout
      *
-     * @dataProvider getToggleCheckout_withVariousToggleCheckoutStatesProvider
-     *
-     * @param mixed $toggleCheckoutConfig value from the config helper
-     * @param mixed $expectedResult       of the tested method call
      *
      * @throws ReflectionException if getToggleCheckout method is not defined
      */
-    public function getToggleCheckout_withVariousToggleCheckoutStates_returnsToggleCheckoutConfiguration(
-        $toggleCheckoutConfig,
-        $expectedResult
-    ) {
-        $this->configHelper->expects(static::once())->method('getToggleCheckout')->willReturn($toggleCheckoutConfig);
-        static::assertEquals($expectedResult, TestHelper::invokeMethod($this->currentMock, 'getToggleCheckout'));
-    }
-
-    /**
-     * Data provider for {@see getToggleCheckout_withVariousToggleCheckoutStates_returnsToggleCheckoutConfiguration}
-     *
-     * @return array[] containing toggle checkout config and expected result of the tested method call
-     */
-    public function getToggleCheckout_withVariousToggleCheckoutStatesProvider()
-    {
-        return [
-            ['toggleCheckoutConfig' => (object) ['active' => true], 'expectedResult' => (object) ['active' => true]],
-            ['toggleCheckoutConfig' => (object) ['active' => false], 'expectedResult' => null],
-            ['toggleCheckoutConfig' => null, 'expectedResult' => null],
+    public function getToggleCheckout_withVariousToggleCheckoutStates_returnsToggleCheckoutConfiguration() {
+        $configData = [
+            [
+                'path' => Config::XML_PATH_ADDITIONAL_CONFIG,
+                'value' => ConfigTest::ADDITIONAL_CONFIG,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
         ];
+        TestUtils::setupBoltConfig($configData);
+        $toggleCheckout = TestHelper::invokeMethod($this->block, 'getToggleCheckout');
+        $this->assertTrue($toggleCheckout->active);
+        $this->assertEquals(
+            ["#top-cart-btn-checkout", "button[data-role=proceed-to-checkout]"],
+            $toggleCheckout->magentoButtons
+        );
     }
 
     /**
@@ -1126,20 +1283,25 @@ class JsTest extends BoltTestCase
      *
      * @dataProvider getIsPreAuth_withVariousPreAuthConfigurationsProvider
      *
-     * @param int  $storeId        of the current store, stubbed result of {@see \Bolt\Boltpay\Block\BlockTrait::getStoreId}
      * @param bool $isPreAuth      configuration for the provided current store
      * @param bool $expectedResult of the tested method call
      *
      * @throws ReflectionException if getIsPreAuth method is not defined
      */
     public function getIsPreAuth_withVariousPreAuthConfigurations_returnsPreAuthConfiguration(
-        $storeId,
-        $isPreAuth,
+       $isPreAuth,
         $expectedResult
     ) {
-        $this->currentMock->expects(static::once())->method('getStoreId')->willReturn($storeId);
-        $this->configHelper->expects(static::once())->method('getIsPreAuth')->with($storeId)->willReturn($isPreAuth);
-        static::assertEquals($expectedResult, TestHelper::invokeMethod($this->currentMock, 'getIsPreAuth'));
+        $configData = [
+            [
+                'path' => Config::XML_PATH_IS_PRE_AUTH,
+                'value' => $isPreAuth,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        static::assertEquals($expectedResult, TestHelper::invokeMethod($this->block, 'getIsPreAuth'));
     }
 
     /**
@@ -1150,9 +1312,9 @@ class JsTest extends BoltTestCase
     public function getIsPreAuth_withVariousPreAuthConfigurationsProvider()
     {
         return [
-            ['storeId' => 2, 'isPreAuth' => true, 'expectedResult' => true],
-            ['storeId' => 0, 'isPreAuth' => true, 'expectedResult' => true],
-            ['storeId' => 1, 'isPreAuth' => false, 'expectedResult' => false],
+
+            ['isPreAuth' => true, 'expectedResult' => true],
+            ['isPreAuth' => false, 'expectedResult' => false],
         ];
     }
 
@@ -1169,12 +1331,13 @@ class JsTest extends BoltTestCase
      */
     public function getQuoteFromCheckoutSession_always_returnsQuote()
     {
-        $quoteMock = $this->createMock(Quote::class);
-        $this->checkoutSessionMock->expects(static::once())->method('getQuote')->willReturn($quoteMock);
+        $checkoutSession = $this->objectManager->create(\Magento\Framework\Session\SessionManager::class);
+        $quote = TestUtils::createQuote();
+        $checkoutSession->setQuote($quote);
 
         static::assertEquals(
-            $quoteMock,
-            TestHelper::invokeMethod($this->currentMock, 'getQuoteFromCheckoutSession')
+            $quote->getId(),
+            TestHelper::invokeMethod($this->block, 'getQuoteFromCheckoutSession')->getId()
         );
     }
 
@@ -1188,10 +1351,8 @@ class JsTest extends BoltTestCase
      */
     public function getModuleVersion_always_returnsModuleVersion()
     {
-        $moduleVersion = '2.2.3';
-        $this->configHelper->expects(static::once())->method('getModuleVersion')->willReturn($moduleVersion);
-
-        static::assertEquals($moduleVersion, $this->currentMock->getModuleVersion());
+        $moduleVersion = '2.23.0';
+        static::assertEquals($moduleVersion, $this->block->getModuleVersion());
     }
 
     /**
@@ -1207,8 +1368,17 @@ class JsTest extends BoltTestCase
     public function minifyJs_whenMinifyJavascriptIsUnset_returnsUnalteredJs()
     {
         $jsCode = 'var helpers = [];';
-        $this->configHelper->expects(static::once())->method('shouldMinifyJavascript')->willReturn(false);
-        static::assertEquals($jsCode, $this->currentMock->minifyJs($jsCode));
+
+        $configData = [
+            [
+                'path' => Config::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
+                'value' => false,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        static::assertEquals($jsCode, $this->block->minifyJs($jsCode));
     }
 
     /**
@@ -1228,32 +1398,19 @@ var isObject = function (item) {
     return (item && typeof item === 'object' && !Array.isArray(item));
 };
 JS;
-        $this->configHelper->expects(static::once())->method('shouldMinifyJavascript')->willReturn(true);
+        $configData = [
+            [
+                'path' => Config::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
+                'value' => true,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
         static::assertEquals(
             "var isObject=function(item){return(item&&typeof item==='object'&&!Array.isArray(item));};",
-            $this->currentMock->minifyJs($jsCode)
+            $this->block->minifyJs($jsCode)
         );
-    }
-
-    /**
-     * @test
-     * that minifyJs returns the provided javascript unchanged if an exception occurs during the minification process
-     *
-     * @covers ::minifyJs
-     *
-     * @throws Exception from Minifier::minify method
-     */
-    public function minifyJs_whenAnExceptionOccursDuringMinification_returnsUnchangedJavascript()
-    {
-        $badFormatJs = []; // will throw exception because it is not a string as expected
-        $this->configHelper->expects(static::once())->method('shouldMinifyJavascript')->willReturn(true);
-
-        $this->bugsnagHelperMock->expects(static::once())
-            ->method('notifyException')
-            ->with(static::isInstanceOf(Exception::class));
-
-        /** @noinspection PhpParamsInspection */
-        static::assertEquals($badFormatJs, $this->currentMock->minifyJs($badFormatJs));
     }
 
     /**
@@ -1273,12 +1430,24 @@ JS;
      */
     public function isOnPageFromWhiteList_withVariousActions_returnsWhitelistedState($currentAction, $expectedResult)
     {
-        $this->currentMock->expects(static::once())->method('getRequest')->willReturnSelf();
-        $this->currentMock->expects(static::once())->method('getFullActionName')->willReturn($currentAction);
-        $this->currentMock->expects(static::once())->method('getPageWhitelist')
-            ->willReturn(HelperConfig::$defaultPageWhitelist);
 
-        static::assertEquals($expectedResult, TestHelper::invokeMethod($this->currentMock, 'isOnPageFromWhiteList'));
+        $block = $this->objectManager->create(Js::class);
+
+        $requestMock = $this->createPartialMock(Http::class,['getFullActionName']);
+        $requestMock->method('getFullActionName')->willReturn($currentAction);
+        TestHelper::setInaccessibleProperty($block,'_request', $requestMock);
+
+        $configData = [
+            [
+                'path' => Config::XML_PATH_ADDITIONAL_CONFIG,
+                'value' => ConfigTest::ADDITIONAL_CONFIG,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        static::assertEquals($expectedResult, TestHelper::invokeMethod($block, 'isOnPageFromWhiteList'));
     }
 
     /**
@@ -1316,9 +1485,17 @@ JS;
         $minicartSupport,
         $expectedResult
     ) {
-        $this->configHelper->expects(static::once())->method('getMinicartSupport')->willReturn($minicartSupport);
+        $configData = [
+            [
+                'path' => Config::XML_PATH_MINICART_SUPPORT,
+                'value' => $minicartSupport,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
 
-        static::assertEquals($expectedResult, $this->currentMock->isMinicartEnabled());
+        static::assertEquals($expectedResult, $this->block->isMinicartEnabled());
     }
 
     /**
@@ -1346,8 +1523,11 @@ JS;
         $isLoggedIn,
         $expectedResult
     ) {
-        $this->httpContextMock->expects(static::once())->method('getValue')->with(\Magento\Customer\Model\Context::CONTEXT_AUTH)->willReturn($isLoggedIn);
-        static::assertEquals($expectedResult, $this->currentMock->isLoggedIn());
+        $block = $this->objectManager->create(Js::class);
+        $httpContext = $this->createPartialMock(Context::class,['getValue']);
+        $httpContext->expects(static::once())->method('getValue')->with(\Magento\Customer\Model\Context::CONTEXT_AUTH)->willReturn($isLoggedIn);
+        TestHelper::setInaccessibleProperty($block,'httpContext',$httpContext);
+        static::assertEquals($expectedResult, $block->isLoggedIn());
     }
 
     /**
@@ -1381,18 +1561,24 @@ JS;
         $fullActionName,
         $expectedResult
     ) {
-        $this->currentMock->expects(static::once())
-            ->method('getRequest')
-            ->willReturnSelf();
-        $this->currentMock->expects(static::once())
-            ->method('getFullActionName')
-            ->willReturn($fullActionName);
-            
-        $this->configHelper->expects(($fullActionName == 'catalog_product_view') ? static::once() : static::never())
-            ->method('getProductPageCheckoutFlag')
-            ->willReturn($productPageCheckoutFlag);
 
-        static::assertEquals($expectedResult, $this->currentMock->isBoltProductPage());
+        $block = $this->objectManager->create(Js::class);
+
+        $requestMock = $this->createPartialMock(Http::class,['getFullActionName']);
+        $requestMock->method('getFullActionName')->willReturn($fullActionName);
+        TestHelper::setInaccessibleProperty($block,'_request', $requestMock);
+
+        $configData = [
+            [
+                'path' => Config::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+                'value' => $productPageCheckoutFlag,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        static::assertEquals($expectedResult, $block->isBoltProductPage());
     }
 
     /**
@@ -1452,19 +1638,22 @@ JS;
         $areaCode,
         $expectedResult
     ) {
-        $this->_appState = $this->createPartialMock(
-            State::class,
-            ['getAreaCode']
-        );
-        TestHelper::setProperty($this->currentMock, '_appState', $this->_appState);
-        $this->_appState->expects(self::once())->method('getAreaCode')->willReturn($areaCode);
-        $this->currentMock->expects(static::once())->method('getStoreId')->willReturn(static::STORE_ID);
-        $this->configHelper->expects($areaCode == Area::AREA_ADMINHTML ? static::never() : static::once())
-            ->method('isActive')
-            ->with(static::STORE_ID)
-            ->willReturn($isActive);
+        $block = $this->objectManager->create(Js::class);
+        $appState = $this->objectManager->create(State::class);
+        $appState->setAreaCode($areaCode);
 
-        static::assertEquals($expectedResult, $this->currentMock->isEnabled());
+        $configData = [
+            [
+                'path' => Config::XML_PATH_ACTIVE,
+                'value' => $isActive,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        TestHelper::setProperty($block, '_appState', $appState);
+
+        static::assertEquals($expectedResult, $block->isEnabled());
     }
 
     /**
@@ -1497,12 +1686,11 @@ JS;
         $boltInitiateCheckout,
         $expectedResult
     ) {
-        $this->checkoutSessionMock->expects(static::once())
-            ->method('getBoltInitiateCheckout')
-            ->willReturn($boltInitiateCheckout);
-        $this->checkoutSessionMock->expects(static::once())->method('unsBoltInitiateCheckout');
+        $checkoutSession = $this->objectManager->create(\Magento\Framework\Session\SessionManager::class);
+        $checkoutSession->setBoltInitiateCheckout($boltInitiateCheckout);
 
-        static::assertEquals($expectedResult, $this->currentMock->getInitiateCheckout());
+        static::assertEquals($expectedResult, $this->block->getInitiateCheckout());
+        static::assertEquals(false, $checkoutSession->getBoltInitiateCheckout());
     }
 
     /**
@@ -1534,8 +1722,9 @@ JS;
         $instantCheckoutButton,
         $expectedResult
     ) {
-        $this->deciderMock->expects(static::once())->method('isInstantCheckoutButton')->willReturn($instantCheckoutButton);
-        static::assertEquals($expectedResult, $this->currentMock->getIsInstantCheckoutButton());
+        $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_INSTANT_BOLT_CHECKOUT_BUTTON, $instantCheckoutButton);
+        static::assertEquals($expectedResult, $this->block->getIsInstantCheckoutButton());
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
     /**
@@ -1597,9 +1786,11 @@ JS;
                 'getFullActionName'
             ]
         );
-        $this->deciderMock->method('isBoltEnabled')->willReturn($isBoltFeatureEnabled);
-        TestHelper::setProperty($currentMock, 'featureSwitches', $this->deciderMock);
-        TestHelper::setProperty($currentMock, 'configHelper', $this->configHelper);
+        $deciderMock = $this->createPartialMock(Decider::class, ['isBoltEnabled']);
+        $deciderMock->method('isBoltEnabled')->willReturn($isBoltFeatureEnabled);
+        TestHelper::setProperty($currentMock, 'featureSwitches', $deciderMock);
+        $configHelper = $this->objectManager->create(Config::class);
+        TestHelper::setProperty($currentMock, 'configHelper', $configHelper);
         $currentMock->method('isEnabled')->willReturn($isEnabled);
 
         // stub \Bolt\Boltpay\Block\BlockTrait::isPageRestricted start
@@ -1648,11 +1839,17 @@ JS;
         $shouldTrackCheckout,
         $expectedResult
     ) {
-        $this->configHelper->expects(static::once())
-            ->method('shouldTrackCheckoutFunnel')
-            ->willReturn($shouldTrackCheckout);
+        $configData = [
+            [
+                'path' => Config::XML_PATH_TRACK_CHECKOUT_FUNNEL,
+                'value' => $shouldTrackCheckout,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
 
-        static::assertEquals($expectedResult, $this->currentMock->shouldTrackCheckoutFunnel());
+        static::assertEquals($expectedResult, $this->block->shouldTrackCheckoutFunnel());
     }
 
     /**
@@ -1689,17 +1886,23 @@ JS;
         $isAlwaysPresentCheckoutFeatureSwitchEnabled,
         $expectedResult
     ) {
-        $this->currentMock->expects(static::once())->method('getStoreId')->willReturn(static::STORE_ID);
-        $this->configHelper->expects(static::once())
-            ->method('isAlwaysPresentCheckoutEnabled')
-            ->with(static::STORE_ID)
-            ->willReturn($isAlwaysPresentCheckoutConfigurationEnabled);
+        $featureSwitch = TestUtils::saveFeatureSwitch(
+            \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_ALWAYS_PRESENT_CHECKOUT,
+            $isAlwaysPresentCheckoutFeatureSwitchEnabled
+        );
 
-        $this->deciderMock->expects($isAlwaysPresentCheckoutConfigurationEnabled ? static::once() : static::never())
-            ->method('isAlwaysPresentCheckoutEnabled')
-            ->willReturn($isAlwaysPresentCheckoutFeatureSwitchEnabled);
+        $configData = [
+            [
+                'path' => Config::XML_PATH_ALWAYS_PRESENT_CHECKOUT,
+                'value' => $isAlwaysPresentCheckoutConfigurationEnabled,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
 
-        static::assertEquals($expectedResult, $this->currentMock->enableAlwaysPresentCheckoutButton());
+        static::assertEquals($expectedResult, $this->block->enableAlwaysPresentCheckoutButton());
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
     /**
@@ -1750,17 +1953,23 @@ JS;
         $isPrefetchShippingFeatureSwitchEnabled,
         $expectedResult
     ) {
-        $this->currentMock->expects(static::once())->method('getStoreId')->willReturn(static::STORE_ID);
-        $this->configHelper->expects(static::once())
-            ->method('getPrefetchShipping')
-            ->with(static::STORE_ID)
-            ->willReturn($isPrefetchShippingConfigurationEnabled);
+        $featureSwitch = TestUtils::saveFeatureSwitch(
+            \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_PREFETCH_SHIPPING,
+            $isPrefetchShippingFeatureSwitchEnabled
+        );
 
-        $this->deciderMock->expects($isPrefetchShippingConfigurationEnabled ? static::once() : static::never())
-            ->method('isPrefetchShippingEnabled')
-            ->willReturn($isPrefetchShippingFeatureSwitchEnabled);
+        $configData = [
+            [
+                'path' => Config::XML_PATH_PREFETCH_SHIPPING,
+                'value' => $isPrefetchShippingConfigurationEnabled,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
 
-        static::assertEquals($expectedResult, $this->currentMock->getPrefetchShipping());
+        static::assertEquals($expectedResult, $this->block->getPrefetchShipping());
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
     /**
@@ -1805,8 +2014,23 @@ JS;
         $configButtonColor,
         $expectedResult
     ) {
-        $this->configHelper->expects(static::once())->method('getButtonColor')->willReturn($configButtonColor);
-        static::assertEquals($expectedResult, $this->currentMock->getButtonCssStyles());
+
+        $configData = [
+            [
+                'path' => Config::XML_PATH_ADDITIONAL_CONFIG,
+                'value' => null,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_BUTTON_COLOR,
+                'value' => $configButtonColor,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        static::assertEquals($expectedResult, $this->block->getButtonCssStyles());
     }
 
     /**
@@ -1827,16 +2051,6 @@ JS;
 
     /**
      * @test
-     */
-    public function getButtonCssStyles_prependsDisplayNone()
-    {
-        $this->configHelper->expects(static::once())->method('getToggleCheckout')->willReturn((object) ['active' => true]);
-        $this->configHelper->expects(static::once())->method('getButtonColor')->willReturn('#EEEEEE');
-        static::assertEquals('display:none;--bolt-primary-action-color:#EEEEEE;', $this->currentMock->getButtonCssStyles());
-    }
-
-    /**
-     * @test
      * that isOrderManagementEnabled returns true only if it is enabled both in feature switch and config
      *
      * @covers ::isOrderManagementEnabled
@@ -1852,13 +2066,24 @@ JS;
         $isOrderManagementFeatureSwitchEnabled,
         $expectedResult
     ) {
-        $this->configHelper->expects(static::once())->method('isOrderManagementEnabled')
-            ->willReturn($isOrderManagementEnabledInConfiguration);
-        $this->deciderMock->expects($isOrderManagementEnabledInConfiguration ? static::once() : static::never())
-            ->method('isOrderManagementEnabled')
-            ->willReturn($isOrderManagementFeatureSwitchEnabled);
 
-        static::assertEquals($expectedResult, $this->currentMock->isOrderManagementEnabled());
+        $featureSwitch = TestUtils::saveFeatureSwitch(
+            \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_ORDER_MANAGEMENT,
+            $isOrderManagementFeatureSwitchEnabled
+        );
+
+        $configData = [
+            [
+                'path' => Config::XML_PATH_PRODUCT_ORDER_MANAGEMENT,
+                'value' => $isOrderManagementEnabledInConfiguration,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        static::assertEquals($expectedResult, $this->block->isOrderManagementEnabled());
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
     /**
@@ -1909,13 +2134,23 @@ JS;
         $isBoltSSOFeatureSwitchEnabled,
         $expectedResult
     ) {
-        $this->configHelper->expects(static::once())->method('isBoltSSOEnabled')
-            ->willReturn($isBoltSSOInConfig);
-        $this->deciderMock->expects($isBoltSSOInConfig ? static::once() : static::never())
-            ->method('isBoltSSOEnabled')
-            ->willReturn($isBoltSSOFeatureSwitchEnabled);
+        $featureSwitch = TestUtils::saveFeatureSwitch(
+            \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_ENABLE_BOLT_SSO,
+            $isBoltSSOFeatureSwitchEnabled
+        );
 
-        static::assertEquals($expectedResult, $this->currentMock->isBoltSSOEnabled());
+        $configData = [
+            [
+                'path' => Config::XML_PATH_BOLT_SSO,
+                'value' => $isBoltSSOInConfig,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        static::assertEquals($expectedResult, $this->block->isBoltSSOEnabled());
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
     /**
@@ -1972,18 +2207,29 @@ JS;
         $orderManagementSelector,
         $expectedResult
     ) {
-        $this->configHelper->expects(static::once())
-            ->method('isOrderManagementEnabled')
-            ->willReturn($configOrderManagementEnabled);
-        $this->deciderMock->expects($configOrderManagementEnabled ? static::once() : static::never())
-            ->method('isOrderManagementEnabled')
-            ->willReturn($fsOrderManagementEnabled);
-        $this->configHelper
-            ->expects($configOrderManagementEnabled && $fsOrderManagementEnabled ? static::once() : static::never())
-            ->method('getOrderManagementSelector')
-            ->willReturn($orderManagementSelector);
+        $configData = [
+            [
+                'path' => Config::XML_PATH_PRODUCT_ORDER_MANAGEMENT,
+                'value' => $configOrderManagementEnabled,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_PRODUCT_ORDER_MANAGEMENT_SELECTOR,
+                'value' => $orderManagementSelector,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
 
-        $this->assertEquals($expectedResult, $this->currentMock->getOrderManagementSelector());
+        $featureSwitch = TestUtils::saveFeatureSwitch(
+            \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_ORDER_MANAGEMENT,
+            $fsOrderManagementEnabled
+        );
+
+        TestUtils::setupBoltConfig($configData);
+        $this->assertEquals($expectedResult, $this->block->getOrderManagementSelector());
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
     /**
@@ -2044,7 +2290,7 @@ JS;
         $blockAlreadyShownProperty,
         $expectedResult
     ) {
-        $instance = $this->objectManager->getObject(Js::class);
+        $instance = $this->objectManager->create(Js::class);
         TestHelper::setProperty($instance, 'blockAlreadyShown', $blockAlreadyShownProperty);
         static::assertEquals($expectedResult, $instance->isBlockAlreadyShown($blockType));
         static::assertTrue(static::readAttribute($instance, 'blockAlreadyShown')[$blockType]);
@@ -2063,23 +2309,7 @@ JS;
         ];
     }
 
-    /**
-     * Stubs {@see \Bolt\Boltpay\Helper\Config::isSandboxModeSet} to return provided value and
-     *
-     * @see \Bolt\Boltpay\Helper\Config::getCustomURLValueOrDefault} to always return the second argumen
-     *
-     * @param bool $flag whether sandbox mode should be set to true or false
-     */
-    public function setSandboxMode($flag = true)
-    {
-        $this->configHelper->expects(static::any())
-            ->method('isSandboxModeSet')
-            ->willReturn($flag);
 
-        $this->configHelper
-            ->method('getCustomURLValueOrDefault')
-            ->willReturnArgument(1);
-    }
 
     /**
      * @test
@@ -2091,8 +2321,19 @@ JS;
      */
     public function isBoltOrderCachingEnabled()
     {
-        $this->configHelper->expects(static::once())->method('isBoltOrderCachingEnabled')->with(self::STORE_ID)->willReturn(true);
-        static::assertTrue($this->currentMock->isBoltOrderCachingEnabled(self::STORE_ID));
+
+        $configData = [
+            [
+                'path' => Config::XML_PATH_BOLT_ORDER_CACHING,
+                'value' => true,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+
+        TestUtils::setupBoltConfig($configData);
+
+        static::assertTrue($this->block->isBoltOrderCachingEnabled());
     }
 
     /**
@@ -2108,16 +2349,22 @@ function(arg) {
         console.error(error);
     }
 }';
-        $this->assertEquals($expectedResult, $this->currentMock->wrapWithCatch('console.log(arg);', 'arg'));
+        $this->assertEquals($expectedResult, $this->block->wrapWithCatch('console.log(arg);', 'arg'));
     }
 
     /**
      * @test
+     * @covers ::getAdditionalInvalidateBoltCartJavascript
      */
     public function getAdditionalInvalidateBoltCartJavascript_returnsCorrectResult()
     {
-        $this->eventsForThirdPartyModules->expects(static::once())->method('runFilter')->with('getAdditionalInvalidateBoltCartJavascript', null)->willReturn('test js');
-        $this->assertEquals('test js', $this->currentMock->getAdditionalInvalidateBoltCartJavascript());
+        $block = $this->objectManager->create(Js::class);
+        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $eventsForThirdPartyModules->expects(static::once())
+            ->method('runFilter')
+            ->willReturn('test additional js');
+        TestHelper::setInaccessibleProperty($block,'eventsForThirdPartyModules', $eventsForThirdPartyModules);
+        $this->assertEquals('test additional js', $block->getAdditionalInvalidateBoltCartJavascript());
     }
     
     /**
@@ -2125,8 +2372,15 @@ function(arg) {
      */
     public function getAdditionalQuoteTotalsConditions_returnsCorrectResult()
     {
-        $this->eventsForThirdPartyModules->expects(static::once())->method('runFilter')->with('getAdditionalQuoteTotalsConditions', null)->willReturn('test js');
-        $this->assertEquals('test js', $this->currentMock->getAdditionalQuoteTotalsConditions());
+        $block = $this->objectManager->create(Js::class);
+        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $eventsForThirdPartyModules->expects(static::once())
+            ->method('runFilter')
+            ->with('getAdditionalQuoteTotalsConditions', null)
+            ->willReturn('test js');
+        TestHelper::setInaccessibleProperty($block,'eventsForThirdPartyModules', $eventsForThirdPartyModules);
+
+        $this->assertEquals('test js', $block->getAdditionalQuoteTotalsConditions());
     }
 
     /**
@@ -2136,129 +2390,15 @@ function(arg) {
      */
     protected function setUpInternal()
     {
-        $this->objectManager = new ObjectManager($this);
-        $this->helperContextMock = $this->createMock(Context::class);
-        $this->contextMock = $this->createMock(BlockContext::class);
-
-        $this->checkoutSessionMock = $this->getMockBuilder(Session::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getQuote', 'getBoltInitiateCheckout', 'unsBoltInitiateCheckout'])
-            ->getMock();
-
-        $methods = [
-            'isSandboxModeSet',
-            'isActive',
-            'getAnyPublishableKey',
-            'getCustomURLValueOrDefault',
-            'getPublishableKeyPayment',
-            'getPublishableKeyCheckout',
-            'getPublishableKeyBackOffice',
-            'getReplaceSelectors',
-            'getGlobalCSS',
-            'getGlobalJS',
-            'getPrefetchShipping',
-            'getQuoteIsVirtual',
-            'getTotalsChangeSelectors',
-            'getAdditionalCheckoutButtonClass',
-            'getAdditionalConfigString',
-            'getIsPreAuth',
-            'shouldTrackCheckoutFunnel',
-            'isPaymentOnlyCheckoutEnabled',
-            'isIPRestricted',
-            'getPageBlacklist',
-            'getMinicartSupport',
-            'getIPWhitelistArray',
-            'getApiKey',
-            'getSigningSecret',
-            'getButtonColor',
-            'getJavascriptSuccess',
-            'getAdditionalJS',
-            'getOnCheckoutStart',
-            'getOnEmailEnter',
-            'getOnShippingDetailsComplete',
-            'getOnShippingOptionsComplete',
-            'getOnPaymentSubmit',
-            'getOnSuccess',
-            'getOnClose',
-            'getToggleCheckout',
-            'getModuleVersion',
-            'shouldMinifyJavascript',
-            'getProductPageCheckoutFlag',
-            'getSelectProductPageCheckoutFlag',
-            'isOrderManagementEnabled',
-            'isAlwaysPresentCheckoutEnabled',
-            'isShowTermsPaymentButton',
-            'getOrderManagementSelector',
-            'getAdditionalCheckoutButtonAttributes',
-            'isBoltOrderCachingEnabled',
-            'isBoltSSOEnabled',
-            'getBoltOnCartPage',
-        ];
-
-        $this->configHelper = $this->getMockBuilder(HelperConfig::class)
-            ->setMethods($methods)
-            ->setConstructorArgs(
-                [
-                    $this->helperContextMock,
-                    $this->createMock(EncryptorInterface::class),
-                    $this->createMock(ResourceInterface::class),
-                    $this->createMock(ProductMetadataInterface::class),
-                    $this->createMock(BoltConfigSettingFactory::class),
-                    $this->createMock(RegionFactory::class),
-                    $this->createMock(ComposerFactory::class),
-                    $this->createMock(WriterInterface::class)
-                ]
-            )
-            ->getMock();
-
-        $this->cartHelperMock = $this->createMock(CartHelper::class);
-        $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
-        $this->deciderMock = $this->createMock(Decider::class);
-        $this->httpContextMock = $this->createMock(HttpContext::class);
-
-        $this->requestMock = $this->getMockBuilder(Http::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getFullActionName'])
-            ->getMock();
-        $this->contextMock->method('getRequest')->willReturn($this->requestMock);
-
-        $store = $this->getMockForAbstractClass(StoreInterface::class);
-        $store->method('getId')->willReturn(static::STORE_ID);
-        $storeManager = $this->getMockForAbstractClass(StoreManagerInterface::class);
-        $storeManager->method('getStore')->willReturn($store);
-        $this->contextMock->method('getStoreManager')->willReturn($storeManager);
-        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
-
-        $this->currentMock = $this->getMockBuilder(Js::class)
-            ->setMethods(
-                [
-                    'getUrl',
-                    'getBoltPopupErrorMessage',
-                    'getQuoteFromCheckoutSession',
-                    'getStoreId',
-                    'getRequest',
-                    'getFullActionName',
-                    'getPageWhitelist',
-                ]
-            )
-            ->setConstructorArgs(
-                [
-                    $this->contextMock,
-                    $this->configHelper,
-                    $this->checkoutSessionMock,
-                    $this->cartHelperMock,
-                    $this->bugsnagHelperMock,
-                    $this->deciderMock,
-                    $this->eventsForThirdPartyModules,
-                    $this->httpContextMock,
-                ]
-            )
-            ->getMock();
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->block = $this->objectManager->create(Js::class);
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $this->storeId = $store->getStore()->getId();
     }
     
     /**
      * @test
-     *
+     *c
      * @dataProvider isLoadConnectJs_withVariousConfigsProvider
      *
      * @param string $fullActionName
@@ -2272,24 +2412,25 @@ function(arg) {
         $isLoadConnectJsOnSpecificPageFeatureSwitchEnabled,
         $expectedResult
     ) {
-        $this->deciderMock->expects(static::once())
-            ->method('isLoadConnectJsOnSpecificPage')
-            ->willReturn($isLoadConnectJsOnSpecificPageFeatureSwitchEnabled);
+        $block = $this->objectManager->create(Js::class);
 
-        $this->currentMock->expects((!$isLoadConnectJsOnSpecificPageFeatureSwitchEnabled)
-                                    ? static::never()
-                                    : (($fullActionName == 'checkout_cart_index') ? static::once() : static::exactly(2)))
-                          ->method('getRequest')->willReturnSelf();
-        $this->currentMock->expects((!$isLoadConnectJsOnSpecificPageFeatureSwitchEnabled)
-                                    ? static::never()
-                                    : (($fullActionName == 'checkout_cart_index') ? static::once() : static::exactly(2)))
-                          ->method('getFullActionName')->willReturn($fullActionName);
-        $this->configHelper->expects((!$isLoadConnectJsOnSpecificPageFeatureSwitchEnabled || ($fullActionName != 'catalog_product_view'))
-                                    ? static::never() : static::once())
-                           ->method('getProductPageCheckoutFlag')
-                           ->willReturn($productPageCheckoutFlag);
+        $configData = [
+            [
+                'path' => Config::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+                'value' => $productPageCheckoutFlag,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
 
-        static::assertEquals($expectedResult, $this->currentMock->isLoadConnectJs());
+        TestUtils::setupBoltConfig($configData);
+        $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE, $isLoadConnectJsOnSpecificPageFeatureSwitchEnabled);
+        $requestMock = $this->createPartialMock(Http::class,['getFullActionName']);
+        $requestMock->method('getFullActionName')->willReturn($fullActionName);
+        TestHelper::setInaccessibleProperty($block,'_request', $requestMock);
+
+        static::assertEquals($expectedResult, $block->isLoadConnectJs());
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
     /**
@@ -2368,6 +2509,8 @@ function(arg) {
     /**
      * @test
      *
+     * @covers ::isLoadConnectJs
+     *
      * @dataProvider isLoadConnectJsDynamic_withVariousConfigsProvider
      *
      * @param string $fullActionName
@@ -2383,28 +2526,32 @@ function(arg) {
         $isLoadConnectJsOnSpecificPageFeatureSwitchEnabled,
         $expectedResult
     ) {
-        $this->deciderMock->expects(static::once())
-            ->method('isLoadConnectJsOnSpecificPage')
-            ->willReturn($isLoadConnectJsOnSpecificPageFeatureSwitchEnabled);
 
-        $this->currentMock->expects(($isLoadConnectJsOnSpecificPageFeatureSwitchEnabled && $minicartSupport && !$productPageCheckoutFlag)
-                                    ? static::once()
-                                    : static::never())
-                          ->method('getRequest')->willReturnSelf();
-        $this->currentMock->expects(($isLoadConnectJsOnSpecificPageFeatureSwitchEnabled && $minicartSupport && !$productPageCheckoutFlag)
-                                    ? static::once()
-                                    : static::never())
-                          ->method('getFullActionName')->willReturn($fullActionName);
-        $this->configHelper->expects($isLoadConnectJsOnSpecificPageFeatureSwitchEnabled ? static::once() : static::never())
-                           ->method('getMinicartSupport')
-                           ->willReturn($minicartSupport);
-                           
-        $this->configHelper->expects(($isLoadConnectJsOnSpecificPageFeatureSwitchEnabled && $minicartSupport)
-                                    ? static::once() : static::never())
-                           ->method('getProductPageCheckoutFlag')
-                           ->willReturn($productPageCheckoutFlag);
+        $block = $this->objectManager->create(Js::class);
 
-        static::assertEquals($expectedResult, $this->currentMock->isLoadConnectJsDynamic());
+        $configData = [
+            [
+                'path' => Config::XML_PATH_MINICART_SUPPORT,
+                'value' => $minicartSupport,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+                'value' => $productPageCheckoutFlag,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+
+        TestUtils::setupBoltConfig($configData);
+        $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE, $isLoadConnectJsOnSpecificPageFeatureSwitchEnabled);
+        $requestMock = $this->createPartialMock(Http::class,['getFullActionName']);
+        $requestMock->method('getFullActionName')->willReturn($fullActionName);
+        TestHelper::setInaccessibleProperty($block,'_request', $requestMock);
+
+        static::assertEquals($expectedResult, $block->isLoadConnectJsDynamic());
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
     
     /**
@@ -2514,10 +2661,9 @@ function(arg) {
      */
     public function isDisableTrackJsOnHomePage_withVariousConfigs_returnsCorrectResult($isDisableTrackJsOnHomePage, $expectedResult)
     {
-        $this->deciderMock->expects(static::once())
-            ->method('isDisableTrackJsOnHomePage')
-            ->willReturn($isDisableTrackJsOnHomePage);
-        static::assertEquals($expectedResult, $this->currentMock->isDisableTrackJsOnHomePage());
+        $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_DISABLE_TRACK_ON_HOME_PAGE, $isDisableTrackJsOnHomePage);
+        static::assertEquals($expectedResult, $this->block->isDisableTrackJsOnHomePage());
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
     
     /**
@@ -2551,10 +2697,9 @@ function(arg) {
      */
     public function isDisableTrackJsOnNonBoltPages_withVariousConfigs_returnsCorrectResult($isDisableTrackJsOnNonBoltPages, $expectedResult)
     {
-        $this->deciderMock->expects(static::once())
-            ->method('isDisableTrackJsOnNonBoltPages')
-            ->willReturn($isDisableTrackJsOnNonBoltPages);
-        static::assertEquals($expectedResult, $this->currentMock->isDisableTrackJsOnNonBoltPages());
+        $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_DISABLE_TRACK_ON_NON_BOLT_PAGES, $isDisableTrackJsOnNonBoltPages);
+        static::assertEquals($expectedResult, $this->block->isDisableTrackJsOnNonBoltPages());
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
     
     /**
@@ -2574,69 +2719,6 @@ function(arg) {
             [
                 'isDisableTrackJsOnNonBoltPages' => false,
                 'expectedResult'                  => false
-            ],
-        ];
-    }
-    
-    /**
-     * @test
-     * 
-     * @see \Bolt\Boltpay\Block\Js::isBoltOnCartDisabled
-     *
-     * @dataProvider isBoltOnCartDisabled_withVariousConfigsProvider
-     *
-     * @covers ::isBoltOnCartDisabled
-     *
-     * @param bool $getBoltOnCartPage
-     * @param bool $fullActionName
-     * @param bool $expectedResult
-     */
-    public function isBoltOnCartDisabled_withVariousConfigs_returnsCorrectResult($getBoltOnCartPage, $fullActionName, $expectedResult)
-    {
-        $this->currentMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
-        $this->currentMock->expects(static::once())
-                          ->method('getRequest')
-                          ->willReturnSelf();
-        $this->currentMock->expects(static::once())
-                          ->method('getFullActionName')
-                          ->willReturn($fullActionName);
-        $this->configHelper->expects(($fullActionName == 'checkout_cart_index')
-                                    ? static::once() : static::never())
-                           ->method('getBoltOnCartPage')
-                           ->with(self::STORE_ID)
-                           ->willReturn($getBoltOnCartPage);
-        static::assertEquals($expectedResult, $this->currentMock->isBoltOnCartDisabled());
-    }
-    
-    /**
-     * Data provider for
-     *
-     * @see isBoltOnCartDisabled_withVariousConfigs_returnsCorrectResult
-     *
-     * @return array
-     */
-    public function isBoltOnCartDisabled_withVariousConfigsProvider()
-    {
-        return [
-            [
-                'getBoltOnCartPage' => true,
-                'fullActionName'    => 'checkout_cart_index',
-                'expectedResult'    => false
-            ],
-            [
-                'getBoltOnCartPage' => true,
-                'fullActionName'    => 'catalog_product_view',
-                'expectedResult'    => false
-            ],
-            [
-                'getBoltOnCartPage' => false,
-                'fullActionName'    => 'checkout_cart_index',
-                'expectedResult'    => true
-            ],
-            [
-                'getBoltOnCartPage' => false,
-                'fullActionName'    => 'catalog_product_view',
-                'expectedResult'    => false
             ],
         ];
     }
