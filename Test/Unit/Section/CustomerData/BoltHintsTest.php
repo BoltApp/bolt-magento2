@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Section\CustomerData;
 
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Bolt\Boltpay\Section\CustomerData\BoltHints;
+use Bolt\Boltpay\Model\Section\CustomerData\BoltHints;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Test\Unit\TestUtils;
@@ -30,7 +30,7 @@ use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Class BoltHintsTest
- * @coversDefaultClass \Bolt\Boltpay\Section\CustomerData\BoltHints
+ * @coversDefaultClass \Bolt\Boltpay\Model\Section\CustomerData\BoltHints
  * @package Bolt\Boltpay\Test\Unit\Section\CustomerData
  */
 class BoltHintsTest extends BoltTestCase
