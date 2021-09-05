@@ -19,54 +19,55 @@ namespace Bolt\Boltpay\Helper;
 
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\Api\CreateOrder;
+use Bolt\Boltpay\Model\CustomerCreditCardFactory;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Model\Payment;
+use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
+use Bolt\Boltpay\Model\ResourceModel\WebhookLog\CollectionFactory as WebhookLogCollectionFactory;
 use Bolt\Boltpay\Model\Response;
+use Bolt\Boltpay\Model\Service\InvoiceService;
+use Bolt\Boltpay\Model\WebhookLogFactory;
 use Magento\Customer\Api\Data\GroupInterface;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Model\AbstractExtensibleModel;
+use Magento\Framework\Stdlib\DateTime\DateTime;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Model\QuoteManagement;
+use Magento\Sales\Api\CreditmemoManagementInterface;
 use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Sales\Api\Data\OrderPaymentInterface;
 use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\AdminOrder\Create;
 use Magento\Sales\Model\Order as OrderModel;
+use Magento\Sales\Model\Order\CreditmemoFactory;
 use Magento\Sales\Model\Order\Email\Container\InvoiceIdentity as InvoiceEmailIdentity;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
+use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
-use Bolt\Boltpay\Model\Service\InvoiceService;
 use Magento\Sales\Model\OrderIncrementIdChecker;
 use Magento\Store\Model\ScopeInterface;
 use Zend_Http_Client_Exception;
-use Magento\Sales\Model\Order\Invoice;
-use Magento\Framework\DataObjectFactory;
-use Bolt\Boltpay\Helper\Log as LogHelper;
-use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\Exception\NoSuchEntityException;
-use Bolt\Boltpay\Helper\Session as SessionHelper;
-use Magento\Sales\Api\Data\OrderPaymentInterface;
-use Bolt\Boltpay\Helper\Discount as DiscountHelper;
-use \Magento\Framework\Stdlib\DateTime\DateTime;
-use Magento\Sales\Model\Order\CreditmemoFactory;
-use Magento\Sales\Api\CreditmemoManagementInterface;
-use Bolt\Boltpay\Model\ResourceModel\WebhookLog\CollectionFactory as WebhookLogCollectionFactory;
-use Bolt\Boltpay\Model\WebhookLogFactory;
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-use Bolt\Boltpay\Model\CustomerCreditCardFactory;
-use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
-use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class Order
@@ -385,11 +386,11 @@ class Order extends AbstractHelper
         $this->creditmemoManagement = $creditmemoManagement;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         $this->orderManagement = $orderManagement
-            ?: \Magento\Framework\App\ObjectManager::getInstance()->get(OrderManagementInterface::class);
+            ?: ObjectManager::getInstance()->get(OrderManagementInterface::class);
         $this->orderIncrementIdChecker = $orderIncrementIdChecker
-            ?: \Magento\Framework\App\ObjectManager::getInstance()->get(OrderIncrementIdChecker::class);
+            ?: ObjectManager::getInstance()->get(OrderIncrementIdChecker::class);
         $this->adminOrderCreateModel = $adminOrderCreateModel
-            ?: \Magento\Framework\App\ObjectManager::getInstance()->get(Create::class);
+            ?: ObjectManager::getInstance()->get(Create::class);
     }
 
     /**
@@ -608,7 +609,6 @@ class Order extends AbstractHelper
             $order->setGrandTotal($boltTotalAmount);
 
             $this->bugsnag->registerCallback(function ($report) use ($quote, $boltTaxAmount, $orderTaxAmount) {
-
                 $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
 
                 $report->setMetaData([
@@ -752,7 +752,6 @@ class Order extends AbstractHelper
             $order->setBaseGrandTotal($boltGrandTotal)->setGrandTotal($boltGrandTotal);
 
             $this->bugsnag->registerCallback(function ($report) use ($quote, $boltTotalAmount, $magentoTotalAmount) {
-
                 $report->setMetaData([
                     'TOTAL MISMATCH' => [
                         'Bolt Total Amount' => $boltTotalAmount,
@@ -837,7 +836,7 @@ class Order extends AbstractHelper
      */
     public function verifyOrderCreationHookType($hookType)
     {
-        if (( Hook::$fromBolt || isset($hookType) )
+        if ((Hook::$fromBolt || isset($hookType))
             && ! in_array($hookType, static::VALID_HOOKS_FOR_ORDER_CREATION)
         ) {
             throw new BoltException(
@@ -958,7 +957,7 @@ class Order extends AbstractHelper
                         $webhookLog = $this->webhookLogFactory->create();
 
                         $webhookLog->recordAttempt($transaction->id, $hookType);
-                    };
+                    }
                 }
 
                 throw $exception;
@@ -1061,7 +1060,7 @@ class Order extends AbstractHelper
     public function saveCustomerCreditCard($reference, $storeId)
     {
         try {
-            if (!$this->featureSwitches->isSaveCustomerCreditCardEnabled()){
+            if (!$this->featureSwitches->isSaveCustomerCreditCardEnabled()) {
                 return false;
             }
 
@@ -1128,7 +1127,6 @@ class Order extends AbstractHelper
 
         $this->applyExternalQuoteData($quote);
 
-
         $quote->setInventoryProcessed(true);
 
         if ($order->getAppliedRuleIds() === null) {
@@ -1182,7 +1180,6 @@ class Order extends AbstractHelper
     {
         // check if the order has been created in the meanwhile
         if ($order = $this->getExistingOrder(null, $quote->getId())) {
-
             if ($order->isCanceled()) {
                 throw new BoltException(
                     __(
@@ -1548,7 +1545,6 @@ class Order extends AbstractHelper
                 // if the parent quote is removed then we create order by the immutable quote
                 $quote = $immutableQuote;
             }
-
         } else {
             // In Product page checkout case we created quote ourselves so we can change it and no need to work with quote copy
             $quote = $immutableQuote;
@@ -1626,8 +1622,8 @@ class Order extends AbstractHelper
      */
     public function formatReferenceUrl($reference)
     {
-        $url = $this->configHelper->getMerchantDashboardUrl().'/transaction/'.$reference;
-        return '<a href="'.$url.'">'.$reference.'</a>';
+        $url = $this->configHelper->getMerchantDashboardUrl() . '/transaction/' . $reference;
+        return '<a href="' . $url . '">' . $reference . '</a>';
     }
 
     /**
@@ -1684,7 +1680,7 @@ class Order extends AbstractHelper
         if (in_array($transactionType, [self::TT_PAYPAL_REFUND, self::TT_APM_REFUND])) {
             $transactionType = self::TT_CREDIT;
         }
-        $transactionState = $transactionType.":".$transaction->status;
+        $transactionState = $transactionType . ":" . $transaction->status;
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');
         $transactionReference = $payment->getAdditionalInformation('transaction_reference');
         $transactionId = $payment->getAdditionalInformation('real_transaction_id');
@@ -2106,7 +2102,7 @@ class Order extends AbstractHelper
 
             case self::TS_AUTHORIZED:
                 $transactionType = Transaction::TYPE_AUTH;
-                $transactionId = $transaction->id.'-auth';
+                $transactionId = $transaction->id . '-auth';
                 break;
 
             case self::TS_CAPTURED:
@@ -2114,8 +2110,8 @@ class Order extends AbstractHelper
                     return;
                 }
                 $transactionType = Transaction::TYPE_CAPTURE;
-                $transactionId = $transaction->id.'-capture-'.$newCapture->id;
-                $parentTransactionId = $transaction->id.'-auth';
+                $transactionId = $transaction->id . '-capture-' . $newCapture->id;
+                $parentTransactionId = $transaction->id . '-auth';
                 break;
 
             case self::TS_PARTIAL_VOIDED:
@@ -2131,27 +2127,27 @@ class Order extends AbstractHelper
                 }
                 $transactionType = Transaction::TYPE_CAPTURE;
                 if ($paymentAuthorized) {
-                    $transactionId = $transaction->id.'-capture-'.$newCapture->id;
-                    $parentTransactionId = $transaction->id.'-auth';
+                    $transactionId = $transaction->id . '-capture-' . $newCapture->id;
+                    $parentTransactionId = $transaction->id . '-auth';
                 } else {
-                    $transactionId = $transaction->id.'-payment';
+                    $transactionId = $transaction->id . '-payment';
                 }
                 break;
 
             case self::TS_CANCELED:
                 $transactionType = Transaction::TYPE_VOID;
-                $transactionId = $transaction->id.'-void';
-                $parentTransactionId = $paymentAuthorized ? $transaction->id.'-auth' : $transaction->id;
+                $transactionId = $transaction->id . '-void';
+                $parentTransactionId = $paymentAuthorized ? $transaction->id . '-auth' : $transaction->id;
                 break;
 
             case self::TS_REJECTED_REVERSIBLE:
                 $transactionType = Transaction::TYPE_ORDER;
-                $transactionId = $transaction->id.'-rejected_reversible';
+                $transactionId = $transaction->id . '-rejected_reversible';
                 break;
 
             case self::TS_REJECTED_IRREVERSIBLE:
                 $transactionType = Transaction::TYPE_ORDER;
-                $transactionId = $transaction->id.'-rejected_irreversible';
+                $transactionId = $transaction->id . '-rejected_irreversible';
                 break;
 
             case self::TS_CREDIT_IN_PROGRESS:
@@ -2499,8 +2495,8 @@ class Order extends AbstractHelper
         $voidAmount = $order->getGrandTotal() - $order->getTotalPaid();
 
         $message = __('BOLT notification: Transaction authorization has been voided.');
-        $message .= ' ' .__('Amount: %1.', $this->formatAmountForDisplay($order, $voidAmount));
-        $message .= ' ' .__('Transaction ID: %1.', $authorizationTransaction->getHtmlTxnId());
+        $message .= ' ' . __('Amount: %1.', $this->formatAmountForDisplay($order, $voidAmount));
+        $message .= ' ' . __('Transaction ID: %1.', $authorizationTransaction->getHtmlTxnId());
 
         return $message;
     }
