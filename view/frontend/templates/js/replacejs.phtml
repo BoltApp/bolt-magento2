@@ -1231,6 +1231,9 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             onElementReady(bolt_button_selector, function(element) {
                 checkout_buttons = true;
                 processButtons();
+                if (boltConfig.always_present_checkout) {
+                    callConfigureWithPromises();
+                }
             });
             if (boltConfig.always_present_checkout) {
                 processButtons();
