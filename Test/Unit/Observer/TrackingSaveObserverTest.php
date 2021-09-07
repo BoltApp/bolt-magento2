@@ -31,6 +31,8 @@ use Exception;
 use Magento\Framework\DataObject;
 use Magento\Framework\DataObjectFactory;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Magento\Catalog\Model\ProductRepository;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 
 /**
  * Class TrackingSaveObserverTest
@@ -82,6 +84,11 @@ class TrackingSaveObserverTest extends BoltTestCase
     private $decider;
 
     /**
+     * @var ProductRepository
+     */
+    private $productRepository;
+
+    /**
      * @test
      */
     public function testExecute()
@@ -96,7 +103,15 @@ class TrackingSaveObserverTest extends BoltTestCase
         $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
-
+        $orderItem1->expects($this->once())
+            ->method('getProductType')
+            ->willReturn('simple');
+        $orderItem2->expects($this->once())
+            ->method('getProductType')
+            ->willReturn('simple');
+        $orderItem3->expects($this->once())
+            ->method('getProductType')
+            ->willReturn('simple');
         $map = [
             ['transaction_reference', '000123'],
         ];
@@ -231,7 +246,9 @@ class TrackingSaveObserverTest extends BoltTestCase
         $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
-
+        $orderItem1->expects($this->once())
+            ->method('getProductType')
+            ->willReturn('simple');
         $map = [
             ['transaction_reference', '000123'],
         ];
@@ -340,7 +357,9 @@ class TrackingSaveObserverTest extends BoltTestCase
         $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
-
+        $orderItem1->expects($this->once())
+            ->method('getProductType')
+            ->willReturn('simple');
         $map = [
             ['transaction_reference', '000123'],
         ];
@@ -422,7 +441,9 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->setMethods(['getPayment', 'getStoreId', 'getBoltTransactionReference'])
             ->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
-
+        $orderItem->expects($this->once())
+            ->method('getProductType')
+            ->willReturn('simple');
         $payment->expects($this->once())
             ->method('getMethod')
             ->willReturn('otherpay');
@@ -721,7 +742,12 @@ class TrackingSaveObserverTest extends BoltTestCase
         $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
-
+        $orderItem1->expects($this->once())
+            ->method('getProductType')
+            ->willReturn('simple');
+        $orderItem1->expects($this->once())
+            ->method('getProductType')
+            ->willReturn('simple');
         $map = [
             ['transaction_reference', '000123'],
         ];
@@ -833,7 +859,12 @@ class TrackingSaveObserverTest extends BoltTestCase
         $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
-
+        $orderItem1->expects($this->once())
+            ->method('getProductType')
+            ->willReturn('simple');
+        $orderItem1->expects($this->once())
+            ->method('getProductType')
+            ->willReturn('simple');
         $map = [
             ['transaction_reference', '000123'],
         ];
@@ -926,13 +957,15 @@ class TrackingSaveObserverTest extends BoltTestCase
         $this->apiHelper = $this->createMock(ApiHelper::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
         $this->decider = $this->createMock(Decider::class);
+        $this->productRepository = $this->createMock(ProductRepository::class);
         $this->observer = new Observer(
             $this->configHelper,
             $this->dataObjectFactory,
             $this->apiHelper,
             $this->bugsnag,
             $this->metricsClient,
-            $this->decider
+            $this->decider,
+            $this->productRepository
         );
     }
 }

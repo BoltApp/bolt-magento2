@@ -24,9 +24,11 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Exception;
+use Magento\Catalog\Model\ProductRepository;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 
 class TrackingSaveObserver implements ObserverInterface
 {
@@ -60,6 +62,8 @@ class TrackingSaveObserver implements ObserverInterface
      */
     private $decider;
 
+    private $productRepository;
+
     /**
      * @param ConfigHelper      $configHelper
      * @param DataObjectFactory $dataObjectFactory
@@ -67,6 +71,7 @@ class TrackingSaveObserver implements ObserverInterface
      * @param Bugsnag           $bugsnag
      * @param MetricsClient     $metricsClient
      * @param Decider           $decider
+     * @param ProductRepository $productRepository
      */
     public function __construct(
         ConfigHelper $configHelper,
@@ -74,7 +79,8 @@ class TrackingSaveObserver implements ObserverInterface
         ApiHelper $apiHelper,
         Bugsnag $bugsnag,
         MetricsClient $metricsClient,
-        Decider $decider
+        Decider $decider,
+        ProductRepository $productRepository
     ) {
         $this->configHelper = $configHelper;
         $this->dataObjectFactory = $dataObjectFactory;
@@ -82,6 +88,7 @@ class TrackingSaveObserver implements ObserverInterface
         $this->bugsnag = $bugsnag;
         $this->metricsClient = $metricsClient;
         $this->decider = $decider;
+        $this->productRepository = $productRepository;
     }
 
     /**
@@ -134,13 +141,14 @@ class TrackingSaveObserver implements ObserverInterface
             $items = [];
             foreach ($shipment->getItemsCollection() as $item) {
                 $orderItem = $item->getOrderItem();
+                $productType = $orderItem->getProductType();
                 if ($orderItem->getParentItem()) {
                     continue;
                 }
 
                 $items[] = (object) [
-                    'reference' => $orderItem->getProductId(),
-                    'options'   => $this->getPropertiesByProductOptions($orderItem->getProductOptions()),
+                    'reference' => $productType == Configurable::TYPE_CODE ? $this->productRepository->get($orderItem->getSku())->getId() : $orderItem->getProductId(),
+                    'options'   => $productType == Configurable::TYPE_CODE ? [] : $this->getPropertiesByProductOptions($orderItem->getProductOptions()),
                 ];
             }
 
