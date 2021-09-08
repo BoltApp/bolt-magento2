@@ -90,7 +90,7 @@ class ReceivedUrlTest extends BoltTestCase
     public function setUpInternal()
     {
         $this->context = $this->createMock(Context::class, ['getBackendUrl']);
-        $this->backendUrl = $this->createMock(UrlInterface::class, ['getUrl']);
+        $this->backendUrl = $this->createMock(UrlInterface::class, ['getUrl','setScope']);
         $this->context->method('getBackendUrl')->willReturn($this->backendUrl);
         $this->configHelper = $this->createMock(ConfigHelper::class);
         $this->cartHelper = $this->createMock(CartHelper::class);
@@ -98,7 +98,7 @@ class ReceivedUrlTest extends BoltTestCase
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->checkoutSession = $this->createMock(CheckoutSession::class);
         $this->orderHelper = $this->createMock(OrderHelper::class);
-        $this->order = $this->createPartialMock(Order::class, ['getStoreId','getId']);
+        $this->order = $this->createPartialMock(Order::class, ['getStoreId','getId','getStore']);
         $this->currentMock = $this->getMockBuilder(ReceivedUrl::class)
             ->setConstructorArgs([
                 $this->context,
@@ -126,15 +126,39 @@ class ReceivedUrlTest extends BoltTestCase
     /**
      * @test
      */
-    public function getRedirectUrl()
+    public function getRedirectUrl_isUseStoreInUrlDisabled()
     {
         $this->backendUrl->expects(self::once())->method('getUrl')->with('sales/order/view', [
             '_secure' => true,
             'order_id' => self::ORDER_ID,
             'store_id' => self::STORE_ID
         ]);
+        $this->backendUrl->expects(self::once())->method('setScope')->with(0);
         $this->order->expects(self::once())->method('getId')->willReturn(self::ORDER_ID);
         $this->order->expects(self::once())->method('getStoreId')->willReturn(self::STORE_ID);
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('isUseStoreInUrl')->willReturn(false);
+        $this->order->expects(self::once())->method('getStore')->willReturn($storeMock);
+
+        TestHelper::invokeMethod($this->currentMock, 'getRedirectUrl', [$this->order]);
+    }
+    
+    /**
+     * @test
+     */
+    public function getRedirectUrl_isUseStoreInUrlEnabled()
+    {
+        $this->backendUrl->expects(self::once())->method('getUrl')->with('sales/order/view', [
+            '_secure' => true,
+            'order_id' => self::ORDER_ID,
+            'store_id' => self::STORE_ID
+        ]);
+        $this->backendUrl->expects(self::never())->method('setScope');
+        $this->order->expects(self::once())->method('getId')->willReturn(self::ORDER_ID);
+        $this->order->expects(self::once())->method('getStoreId')->willReturn(self::STORE_ID);
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('isUseStoreInUrl')->willReturn(true);
+        $this->order->expects(self::once())->method('getStore')->willReturn($storeMock);
 
         TestHelper::invokeMethod($this->currentMock, 'getRedirectUrl', [$this->order]);
     }
