@@ -19,7 +19,7 @@
 namespace Bolt\Boltpay\Test\Unit\Section\CustomerData;
 
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Bolt\Boltpay\Section\CustomerData\BoltCart;
+use Bolt\Boltpay\Model\Section\CustomerData\BoltCart;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 
@@ -27,7 +27,7 @@ use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
  * Class BoltCartTest
  *
  * @package Bolt\Boltpay\Test\Unit\Section\CustomerData
- * @coversDefaultClass \Bolt\Boltpay\Section\CustomerData\BoltCart
+ * @coversDefaultClass \Bolt\Boltpay\Model\Section\CustomerData\BoltCart
  */
 class BoltCartTest extends BoltTestCase
 {

@@ -16,7 +16,7 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\Section\CustomerData;
+namespace Bolt\Boltpay\Model\Section\CustomerData;
 
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
