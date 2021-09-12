@@ -22,13 +22,15 @@
  *
  * @var $block \Bolt\Boltpay\Block\MinifiedJs
  */
-if ($block->shouldDisableBoltCheckout()) { return;
+if ($block->shouldDisableBoltCheckout()) {
+    return;
 }
 
 //we need this script only for cart page, checkout page and other pages from white list
 //and for minicart is enabled
 //product page checkout has its own JS script
-if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
+if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) {
+    return;
 }
 
 $connectJsUrl = $block->getConnectJsUrl();
@@ -418,7 +420,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
                 scriptTag.setAttribute('src', settings.connect_url);
             }
         };
-        
+
         var insertConnectScriptWithoutSrc = function() {
             var scriptTag = document.getElementById('bolt-connect');
             var publishableKey = getCheckoutKey();
@@ -434,7 +436,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             document.head.appendChild(scriptTag);
             return true;
         };
-        
+
         var insertTrackScript = function() {
             var scriptTag = document.getElementById('bolt-track');
             var publishableKey = getCheckoutKey();
@@ -843,7 +845,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
                     invalidateBoltCart();
                 }
             }
-            
+
             <?= /* @noEscape */ $block->getAdditionalInvalidateBoltCartJavascript(); ?>
         }
 
@@ -1146,12 +1148,12 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
                         // We haven't seen magento cart yet. If Magento cart isn't set it means that bolt cart is wrong
                         return;
                     }
-                    
+
                     if (data.hints === undefined) {
                         // In some contexts, the data only has data_id.
                         return;
                     }
-                    
+
                     boltCartDataID = data.data_id;
                     if (BoltState.magentoCart.data_id > boltCartDataID) {
                         // bolt cart is unactual
@@ -1226,6 +1228,9 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             onElementReady(bolt_button_selector, function(element) {
                 checkout_buttons = true;
                 processButtons();
+                if (boltConfig.always_present_checkout) {
+                    callConfigureWithPromises();
+                }
             });
             if (boltConfig.always_present_checkout) {
                 processButtons();
@@ -1409,9 +1414,9 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             var state_selectors = ['div[name="billingAddressboltpay.region_id"] select[name=region_id]','div[name="shippingAddress.region_id"] select[name=region_id]','.payment-method-boltpay select[name=region_id]'];
         } else {
             var country_selectors = ['select[name=country_id]'];
-            var state_selectors = ['select[name=region_id]'];                
+            var state_selectors = ['select[name=region_id]'];
         }
-        
+
         ///////////////////////////////////////////////////////////
         // Monitor Country DOM element change and update hints
         ///////////////////////////////////////////////////////////
@@ -1427,7 +1432,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             configureHints();
         }, true);
         ///////////////////////////////////////////////////////////
-            
+
         ///////////////////////////////////////////////////////////
         // Monitor State DOM element change and update hints
         ///////////////////////////////////////////////////////////
@@ -1465,11 +1470,10 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             <?php
             if ($isLoadConnectJsDynamic) {
                 if ($isLoadTrackJsDynamic) {
-                ?>
-            insertTrackScript();    
+                    ?>
+            insertTrackScript();
                 <?php
-                }
-                ?>
+                } ?>
             if (insertConnectScriptWithoutSrc()) {
                 $.getScript("<?= /* @noEscape */ $connectJsUrl; ?>", function(data, textStatus, jqxhr) {
                     callBoltAfterAddToCart();
@@ -1546,7 +1550,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
         ////////////////////////////////////////////////////
         boltCheckoutSetup();
         ////////////////////////////////////////////////////
-        
+
         <?php
         if ($isLoadConnectJsDynamic) {
             ?>
@@ -1554,13 +1558,12 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             if (data.items !== undefined && data.items.length > 0) {
                 <?php
                 if ($isLoadTrackJsDynamic) {
-                ?>
+                    ?>
                 insertTrackScript();
                 <?php
-                }
-                ?>                
+                } ?>
                 insertConnectScript();
-            }            
+            }
         }
         customerData.get('cart').subscribe(magentoCartDataListenerLoadConnectJs);
             <?php
