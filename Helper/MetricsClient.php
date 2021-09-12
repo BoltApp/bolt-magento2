@@ -17,15 +17,16 @@
 
 namespace Bolt\Boltpay\Helper;
 
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Helper\Log as LogHelper;
 use http\Encoding\Stream;
+use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
-use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Filesystem\DirectoryList;
 use Magento\Store\Model\StoreManagerInterface;
-use Bolt\Boltpay\Helper\Log as LogHelper;
-use Magento\Framework\App\CacheInterface;
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Boltpay Metric Client Helper
@@ -62,9 +63,9 @@ class MetricsClient extends AbstractHelper
      */
     private $logHelper;
 
-     /**
-      * @var array
-      */
+    /**
+     * @var array
+     */
     private $headers;
 
     /**
@@ -140,7 +141,6 @@ class MetricsClient extends AbstractHelper
         flock($workingFile, LOCK_UN);    // release the lock
     }
 
-
     /**
      * Retrieves current time for when metrics are uploaded
      *
@@ -196,7 +196,7 @@ class MetricsClient extends AbstractHelper
     protected function getFilePath()
     {
         // determine root directory and add create a metrics file there
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $objectManager = ObjectManager::getInstance();
         $directory = $objectManager->get('\Magento\Framework\Filesystem\DirectoryList');
         $rootPath  =  $directory->getRoot();
         return $rootPath . '/var/log/bolt_metrics.json';
@@ -248,14 +248,14 @@ class MetricsClient extends AbstractHelper
         return new Metric($key, $data);
     }
 
-     /**
-      * Add a latency metric to the array of metrics being stored
-      *
-      * @param string        $key     name of latency metric
-      * @param int           $value  the total time of the metric
-      *
-      * @return Metric
-      */
+    /**
+     * Add a latency metric to the array of metrics being stored
+     *
+     * @param string        $key     name of latency metric
+     * @param int           $value  the total time of the metric
+     *
+     * @return Metric
+     */
     public function formatLatencyMetric($key, $value)
     {
         $data = [

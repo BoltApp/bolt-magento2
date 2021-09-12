@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Observer;
 
 use Bolt\Boltpay\Model\Api\ShippingMethods;
 use Magento\Framework\App\CacheInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 
@@ -37,7 +38,7 @@ class ClearBoltShippingTaxCacheObserver implements ObserverInterface
      */
     public function __construct(CacheInterface $cache = null)
     {
-        $this->cache = $cache ?: \Magento\Framework\App\ObjectManager::getInstance()->get(CacheInterface::class);
+        $this->cache = $cache ?: ObjectManager::getInstance()->get(CacheInterface::class);
     }
 
     /**

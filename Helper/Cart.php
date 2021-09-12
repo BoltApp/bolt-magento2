@@ -41,6 +41,7 @@ use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
@@ -267,7 +268,7 @@ class Cart extends AbstractHelper
      * @var Serialize
      */
     private $serialize;
-    
+
     /**
      * @var StockState
      */
@@ -732,10 +733,10 @@ class Cart extends AbstractHelper
 
         // get the value of each valid field and include it in the cache identifier
         foreach ($customAddressFields as $key) {
-            $hasField = 'has'.$key;
-            $getValue = 'get'.$key;
+            $hasField = 'has' . $key;
+            $getValue = 'get' . $key;
             if ($address->$hasField()) {
-                $cacheIdentifier .= '_'.$address->$getValue();
+                $cacheIdentifier .= '_' . $address->$getValue();
             }
         }
 
@@ -872,7 +873,6 @@ class Cart extends AbstractHelper
             return;
         }
 
-
         // If storeId was missed through request, then try to get it from the session quote.
         if ($storeId === null) {
             $storeId = $this->getSessionQuoteStoreId();
@@ -880,7 +880,6 @@ class Cart extends AbstractHelper
 
         // Try fetching data from cache
         if ($isBoltOrderCachingEnabled = $this->isBoltOrderCachingEnabled($storeId)) {
-
             $cacheIdentifier = $this->getCartCacheIdentifier($cart);
 
             if ($boltOrderData = $this->loadFromCache($cacheIdentifier)) {
@@ -932,8 +931,7 @@ class Cart extends AbstractHelper
                 $quoteId = $quote->getId();
                 $quote->setIsActive(false)->save();
                 $this->bugsnag->notifyError('Deactivate quote that associates with an existing order', "Quote Id: {$quoteId}");
-            };
-
+            }
         } catch (\Exception $exception) {
             $this->bugsnag->notifyException($exception);
         }
@@ -1012,7 +1010,6 @@ class Cart extends AbstractHelper
          * @param Address $address
          */
         $prefillHints = function ($address) use (&$hints, $quote) {
-
             if (!$address) {
                 return;
             }
@@ -1663,7 +1660,7 @@ class Cart extends AbstractHelper
     {
         foreach ($customizableOptions as $customizableOption) {
             if ($customizableOption['sku']) {
-                $sku = str_replace(self::MAGENTO_SKU_DELIMITER.$customizableOption['sku'], '', $sku);
+                $sku = str_replace(self::MAGENTO_SKU_DELIMITER . $customizableOption['sku'], '', $sku);
             }
         }
 
@@ -1956,7 +1953,7 @@ class Cart extends AbstractHelper
         $currencyCode = $immutableQuote->getQuoteCurrencyCode();
         $cart['currency'] = $currencyCode;
 
-        list ($cart['items'], $totalAmount, $diff) = $this->getCartItems($immutableQuote, $immutableQuote->getStoreId());
+        list($cart['items'], $totalAmount, $diff) = $this->getCartItems($immutableQuote, $immutableQuote->getStoreId());
 
         // Email field is mandatory for saving the address.
         // For back-office orders (payment only) we need to get it from the store.
@@ -2102,7 +2099,7 @@ class Cart extends AbstractHelper
         }
 
         // add discount data
-        list ($discounts, $totalAmount, $diff) = $this->collectDiscounts(
+        list($discounts, $totalAmount, $diff) = $this->collectDiscounts(
             $totalAmount,
             $diff,
             $paymentOnly,
@@ -2268,7 +2265,7 @@ class Cart extends AbstractHelper
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
                 $totalAmount -= $roundedAmount;
             } else {
-                $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+                $objectManager = ObjectManager::getInstance();
                 $balanceModel = $objectManager->create('Magento\CustomerBalance\Model\Balance');
 
                 $balanceModel->setCustomer(
@@ -2315,7 +2312,7 @@ class Cart extends AbstractHelper
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
                 $totalAmount -= $roundedAmount;
             } else {
-                $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+                $objectManager = ObjectManager::getInstance();
                 $rewardModel = $objectManager->create('Magento\Reward\Model\Reward');
 
                 $rewardModel->setCustomer(
@@ -2584,7 +2581,7 @@ class Cart extends AbstractHelper
                         BoltErrorResponse::ERR_PPC_INVALID_QUANTITY
                     );
                 }
-            };
+            }
         }
 
         $quote->setIsActive(false);
@@ -2777,7 +2774,7 @@ class Cart extends AbstractHelper
         $quote->setCartFixedRules([]);
         $this->totalsCollector->collectAddressTotals($quote, $address);
     }
-    
+
     /**
      * Check stock status of quote items.
      *
@@ -2788,16 +2785,16 @@ class Cart extends AbstractHelper
      */
     public function checkCartItemStockState($quote, $excCode)
     {
-        list ($cartItems,,) = $this->getCartItems($quote, $quote->getStoreId(), 0, 0, false);
+        list($cartItems, , ) = $this->getCartItems($quote, $quote->getStoreId(), 0, 0, false);
         foreach ($cartItems as $item) {
             $product = $this->productRepository->getById($item['reference']);
             if ($product->getTypeId() == \Magento\Bundle\Model\Product\Type::TYPE_CODE) {
                 if (!$product->isAvailable()) {
-                    $this->bugsnag->registerCallback(function ($report) use ($item) {   
+                    $this->bugsnag->registerCallback(function ($report) use ($item) {
                         $report->setMetaData([
                             'CART_ITEM_OUT_OF_STOCK' => $item
                         ]);
-                    });    
+                    });
                     throw new BoltException(
                         __('The item [' . $item['name'] . '] is out of stock.'),
                         null,
@@ -2806,11 +2803,11 @@ class Cart extends AbstractHelper
                 }
             } else {
                 if (!$this->stockState->verifyStock($item['reference'])) {
-                    $this->bugsnag->registerCallback(function ($report) use ($item) {   
+                    $this->bugsnag->registerCallback(function ($report) use ($item) {
                         $report->setMetaData([
                             'CART_ITEM_OUT_OF_STOCK' => $item
                         ]);
-                    });    
+                    });
                     throw new BoltException(
                         __('The item [' . $item['name'] . '] is out of stock.'),
                         null,
@@ -2825,17 +2822,17 @@ class Cart extends AbstractHelper
                     $quote->getStore()->getWebsiteId()
                 );
                 if ($checkQty->getHasError()) {
-                    $this->bugsnag->registerCallback(function ($report) use ($item) {   
+                    $this->bugsnag->registerCallback(function ($report) use ($item) {
                         $report->setMetaData([
                             'CART_ITEM_QTY_UNAVAILABLE' => $item
                         ]);
-                    });    
+                    });
                     throw new BoltException(
                         __('For the item [' . $item['name'] . ']: ' . $checkQty->getMessage()),
                         null,
                         $excCode
                     );
-                }    
+                }
             }
         }
     }

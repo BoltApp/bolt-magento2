@@ -17,6 +17,9 @@
 
 namespace Bolt\Boltpay\Plugin\WebapiRest\Magento\Quote\Model;
 
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Magento\Framework\App\ObjectManager;
+
 /**
  * Plugin for {@see \Magento\Quote\Model\Quote}
  */
@@ -39,8 +42,8 @@ class QuotePlugin
      */
     public function __construct(\Bolt\Boltpay\Helper\FeatureSwitch\Decider $featureSwitches = null)
     {
-        $this->featureSwitches = $featureSwitches ?? \Magento\Framework\App\ObjectManager::getInstance()
-                ->get(\Bolt\Boltpay\Helper\FeatureSwitch\Decider::class);
+        $this->featureSwitches = $featureSwitches ?? ObjectManager::getInstance()
+                ->get(Decider::class);
         $this->isPreventSettingBoltIpsAsCustomerIpOnQuote = $this->featureSwitches->isPreventSettingBoltIpsAsCustomerIpOnQuote();
     }
 
@@ -48,7 +51,7 @@ class QuotePlugin
      * Prevent IP from being set when requests are coming from Bolt, except initially
      *
      * @param \Magento\Quote\Model\Quote $subject intercepted quote object
-     * @param array|string               $key 
+     * @param array|string               $key
      * @param mixed                      $value
      *
      * @return array|void

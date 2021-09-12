@@ -17,31 +17,32 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
-use Magento\Framework\Webapi\Rest\Request;
-use Magento\Framework\Webapi\Rest\Response;
-use Magento\Directory\Model\Region as RegionModel;
-use Magento\SalesRule\Model\RuleRepository;
-use Magento\SalesRule\Model\ResourceModel\Coupon\UsageFactory;
-use Magento\Framework\DataObjectFactory;
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
-use Magento\SalesRule\Model\Rule\CustomerFactory;
-use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Quote\Model\Quote\TotalsCollector;
-use Magento\Framework\App\CacheInterface;
-use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\CatalogInventory\Api\StockStateInterface;
-use Magento\Quote\Api\CartRepositoryInterface;
-use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Bolt\Boltpay\Helper\Hook as HookHelper;
-use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
-use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
-use Bolt\Boltpay\Helper\Session as SessionHelper;
-use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Helper\Hook as HookHelper;
+use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Order as OrderHelper;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\CatalogInventory\Api\StockStateInterface;
+use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Directory\Model\Region as RegionModel;
+use Magento\Framework\App\CacheInterface;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\DataObjectFactory;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Framework\Webapi\Rest\Request;
+use Magento\Framework\Webapi\Rest\Response;
+use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Model\Quote\TotalsCollector;
+use Magento\SalesRule\Model\ResourceModel\Coupon\UsageFactory;
+use Magento\SalesRule\Model\Rule\CustomerFactory;
+use Magento\SalesRule\Model\RuleRepository;
 
 /**
  * Class UpdateCartContext
@@ -139,37 +140,37 @@ class UpdateCartContext
      * @var TotalsCollector
      */
     protected $totalsCollector;
-    
+
     /**
      * @var SessionHelper
      */
     protected $sessionHelper;
-    
+
     /**
      * @var CacheInterface
      */
     protected $cache;
-    
+
     /**
      * @var EventsForThirdPartyModules
      */
     protected $eventsForThirdPartyModules;
-    
+
     /**
      * @var ProductRepositoryInterface
      */
     protected $productRepositoryInterface;
-    
+
     /**
      * @var StockStateInterface
      */
     protected $stockStateInterface;
-    
+
     /**
      * @var CartRepositoryInterface
      */
     protected $cartRepositoryInterface;
-    
+
     /**
      * @var Decider
      */
@@ -252,8 +253,8 @@ class UpdateCartContext
         $this->discountHelper = $discountHelper;
         $this->totalsCollector = $totalsCollector;
         $this->sessionHelper = $sessionHelper;
-        $this->cache = $cache ?: \Magento\Framework\App\ObjectManager::getInstance()
-                ->get(\Magento\Framework\App\CacheInterface::class);
+        $this->cache = $cache ?: ObjectManager::getInstance()
+                ->get(CacheInterface::class);
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockStateInterface = $stockStateInterface;
@@ -276,7 +277,7 @@ class UpdateCartContext
     {
         return $this->response;
     }
-    
+
     /**
      * @return HookHelper
      */
@@ -284,7 +285,7 @@ class UpdateCartContext
     {
         return $this->hookHelper;
     }
-    
+
     /**
      * @return BoltErrorResponse
      */
@@ -300,7 +301,7 @@ class UpdateCartContext
     {
         return $this->logHelper;
     }
-    
+
     /**
      * @return Bugsnag
      */
@@ -308,7 +309,7 @@ class UpdateCartContext
     {
         return $this->bugsnag;
     }
-    
+
     /**
      * @return RegionModel
      */
@@ -324,7 +325,7 @@ class UpdateCartContext
     {
         return $this->orderHelper;
     }
-    
+
     /**
      * @return CartHelper
      */
@@ -404,7 +405,7 @@ class UpdateCartContext
     {
         return $this->totalsCollector;
     }
-    
+
     /**
      * @return SessionHelper
      */
@@ -412,7 +413,7 @@ class UpdateCartContext
     {
         return $this->sessionHelper;
     }
-    
+
     /**
      * @return Cache
      */
@@ -420,7 +421,7 @@ class UpdateCartContext
     {
         return $this->cache;
     }
-    
+
     /**
      * @return EventsForThirdPartyModules
      */
@@ -428,7 +429,7 @@ class UpdateCartContext
     {
         return $this->eventsForThirdPartyModules;
     }
-    
+
     /**
      * @return ProductRepositoryInterface
      */
@@ -436,7 +437,7 @@ class UpdateCartContext
     {
         return $this->productRepositoryInterface;
     }
-    
+
     /**
      * @return StockStateInterface
      */
@@ -444,7 +445,7 @@ class UpdateCartContext
     {
         return $this->stockStateInterface;
     }
-    
+
     /**
      * @return CartRepositoryInterface
      */
@@ -452,7 +453,7 @@ class UpdateCartContext
     {
         return $this->cartRepositoryInterface;
     }
-    
+
     /**
      * @return Decider
      */
