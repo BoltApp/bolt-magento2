@@ -225,13 +225,15 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 $giftAmount = $giftCard->getBalance();
             } else {
                 // TODO: move all cases above into filter
-                $result = $this->eventsForThirdPartyModules->runFilter(
-                    "applyGiftcard",
+                $result = $this->eventsForThirdPartyModules->filter(
+                    "apply_giftcard",
                     null,
-                    $code,
-                    $giftCard,
-                    $immutableQuote,
-                    $parentQuote
+                    [
+                        'code' => $code,
+                        'gift_card' => $giftCard,
+                        'immutable_quote' => $immutableQuote,
+                        'parent_quote' => $parentQuote,
+                    ]
                 );
                 if (empty($result)) {
                     throw new \Exception('Unknown giftCard class');

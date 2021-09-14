@@ -152,7 +152,14 @@ trait UpdateDiscountTrait
         }
 
         if (empty($giftCard)) {
-            $giftCard = $this->eventsForThirdPartyModules->runFilter("loadGiftcard", null, $couponCode, $quote);
+            $giftCard = $this->eventsForThirdPartyModules->filter(
+                "load_giftcard",
+                null,
+                [
+                    'coupon_code' => $couponCode,
+                    'quote' => $quote,
+                ]
+            );
             if ($giftCard instanceof \Exception) {
                 throw new BoltException(
                     __($giftCard->getMessage()),
@@ -402,12 +409,14 @@ trait UpdateDiscountTrait
     private function applyingGiftCardCode($couponCode, $giftCard, $quote)
     {
         try {
-            $result = $this->eventsForThirdPartyModules->runFilter(
-                "filterApplyingGiftCardCode",
+            $result = $this->eventsForThirdPartyModules->filter(
+                "filter_applying_giftcard_code",
                 false,
-                $couponCode,
-                $giftCard,
-                $quote
+                [
+                    'coupon_code' => $couponCode,
+                    'gift_card' => $giftCard,
+                    'quote' => $quote,
+                ]
             );
 
             if ($result) {
@@ -512,11 +521,13 @@ trait UpdateDiscountTrait
     protected function removeGiftCardCode($couponCode, $giftCard, $quote)
     {
         try {
-            $filterRemoveGiftCardCode = $this->eventsForThirdPartyModules->runFilter(
-                "filterRemovingGiftCardCode",
+            $filterRemoveGiftCardCode = $this->eventsForThirdPartyModules->filter(
+                "filter_removing_giftcard_code",
                 false,
-                $giftCard,
-                $quote
+                [
+                    'gift_card' => $giftCard,
+                    'quote' => $quote,
+                ]
             );
             if ($filterRemoveGiftCardCode) {
                 return true;

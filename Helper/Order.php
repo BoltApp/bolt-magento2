@@ -972,7 +972,12 @@ class Order extends AbstractHelper
         if ($parentQuote) {
             $this->dispatchPostCheckoutEvents($order, $parentQuote);
 
-            $this->eventsForThirdPartyModules->dispatchEvent("deleteRedundantDiscounts", $parentQuote);
+            $this->eventsForThirdPartyModules->dispatch(
+                "delete_redundant_discounts",
+                [
+                    'parent_quote' => $parentQuote,
+                ]
+            );
 
             // Delete redundant cloned quotes
             $this->deleteRedundantQuotes($parentQuote);
@@ -1388,7 +1393,12 @@ class Order extends AbstractHelper
      */
     protected function deleteOrder($order)
     {
-        $this->eventsForThirdPartyModules->dispatchEvent("beforeFailedPaymentOrderSave", $order);
+        $this->eventsForThirdPartyModules->dispatch(
+            "before_failed_payment_order_save",
+            [
+                'order' => $order,
+            ]
+        );
         try {
             $order->cancel()->save()->delete();
         } catch (\Exception $e) {
@@ -2607,8 +2617,12 @@ class Order extends AbstractHelper
             $parentQuote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
             $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(false));
         }
-        $this->eventsForThirdPartyModules->dispatchEvent("beforeFailedPaymentOrderSave", $order);
-
+        $this->eventsForThirdPartyModules->dispatch(
+            "before_failed_payment_order_save",
+            [
+                'order' => $order,
+            ]
+        );
         $order->addData(['quote_id' => null]);
         $order->addCommentToStatusHistory(__('BOLTPAY INFO :: Order was canceled due to Processor rejection'));
         $this->orderRepository->save($order);

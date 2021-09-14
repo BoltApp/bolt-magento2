@@ -832,7 +832,12 @@ class Cart extends AbstractHelper
      */
     protected function clearExternalData($quote)
     {
-        $this->eventsForThirdPartyModules->dispatchEvent("clearExternalData", $quote);
+        $this->eventsForThirdPartyModules->dispatch(
+            "clear_external_data",
+            [
+                'quote' => $quote,
+            ]
+        );
     }
 
     /**
@@ -1200,7 +1205,13 @@ class Cart extends AbstractHelper
         $this->quoteResourceSave($destination);
 
         // Third-party plugins can replicate required data.
-        $this->eventsForThirdPartyModules->dispatchEvent("replicateQuoteData", $source, $destination);
+        $this->eventsForThirdPartyModules->dispatch(
+            "replicate_quote_data",
+            [
+                'source' => $source,
+                'destination' => $destination,
+            ]
+        );
     }
 
     /**
@@ -2372,12 +2383,14 @@ class Cart extends AbstractHelper
             }
         }
         // TODO: move all third party plugins support into filter
-        return $this->eventsForThirdPartyModules->runFilter(
-            "collectDiscounts",
+        return $this->eventsForThirdPartyModules->filter(
+            "collect_discounts",
             [$discounts, $totalAmount, $diff],
-            $quote,
-            $parentQuote,
-            $paymentOnly
+            [
+                'quote' => $quote,
+                'parent_quote' => $parentQuote,
+                'payment_only' => $paymentOnly,
+            ]
         );
     }
 
