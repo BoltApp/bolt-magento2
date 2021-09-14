@@ -33,6 +33,7 @@ use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Framework\Escaper;
+use Magento\Framework\Registry;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Store\Model\StoreManagerInterface;
 
@@ -155,6 +156,11 @@ class DataTest extends BoltTestCase
      * @var Json|\PHPUnit\Framework\MockObject\MockObject
      */
     private $resultJsonMock;
+    
+    /**
+     * @var Registry|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $coreRegistryMock;
 
     protected function setUpInternal()
     {
@@ -230,6 +236,7 @@ class DataTest extends BoltTestCase
                 'getCustomerEmail',
                 'getCustomerId',
                 'setCustomerEmail',
+                'getCustomerGroupId',
             ]
         );
 
@@ -240,7 +247,7 @@ class DataTest extends BoltTestCase
         $this->dataObjectFactoryMock = $this->createMock(DataObjectFactory::class);
         $this->sessionMock = $this->createPartialMock(
             \Magento\Backend\Model\Session\Quote::class,
-            ['getStoreId']
+            ['getStoreId', 'getStore']
         );
         $this->orderCreateModel = $this->getMockBuilder(
             \Magento\Sales\Model\AdminOrder\Create::class
@@ -253,7 +260,11 @@ class DataTest extends BoltTestCase
         $this->resultPageFactoryMock = $this->createMock(PageFactory::class);
         $this->resultForwardFactoryMock = $this->createMock(ForwardFactory::class);
         $this->storeManagerMock = $this->createMock(StoreManagerInterface::class);
-
+        $this->coreRegistryMock = $this->createMock(Registry::class);
+        $this->coreRegistryMock = $this->createPartialMock(
+            Registry::class,
+            ['unregister', 'register']
+        );
         $this->currentMock = $this->getMockBuilder(Data::class)
             ->setConstructorArgs(
                 [
@@ -264,6 +275,7 @@ class DataTest extends BoltTestCase
                     $this->bugsnagHelperMock,
                     $this->metricsClientMock,
                     $this->dataObjectFactoryMock,
+                    $this->coreRegistryMock,
                 ]
             )
             ->setMethods(['_getSession', '_initSession', '_getOrderCreateModel'])
@@ -303,7 +315,8 @@ class DataTest extends BoltTestCase
             $this->configHelperMock,
             $this->bugsnagHelperMock,
             $this->metricsClientMock,
-            $this->dataObjectFactoryMock
+            $this->dataObjectFactoryMock,
+            $this->coreRegistryMock
         );
 
         static::assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
@@ -312,6 +325,7 @@ class DataTest extends BoltTestCase
         static::assertAttributeEquals($this->bugsnagHelperMock, 'bugsnag', $instance);
         static::assertAttributeEquals($this->metricsClientMock, 'metricsClient', $instance);
         static::assertAttributeEquals($this->dataObjectFactoryMock, 'dataObjectFactory', $instance);
+        static::assertAttributeEquals($this->coreRegistryMock, 'coreRegistry', $instance);
     }
 
     /**
@@ -321,11 +335,24 @@ class DataTest extends BoltTestCase
      */
     public function execute_NoBoltpayOrder()
     {
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getWebsiteId')->willReturn(1);
+        $this->sessionMock->method('getStore')->willReturn($storeMock);
         $this->sessionMock->method('getStoreId')->willReturn(self::STORE_ID);
         $this->cartHelperMock->method('getBoltpayOrder')->willReturn(null);
 
         $resultJsonFactory = $this->buildJsonMocks($this->noTokenCartData);
-
+        $this->coreRegistryMock->expects(static::once())->method('unregister')->with('rule_data');
+        $this->coreRegistryMock->expects(static::once())->method('register')->with(
+            'rule_data',
+            new \Magento\Framework\DataObject(
+                [
+                'store_id'          => self::STORE_ID,
+                'website_id'        => 1,
+                'customer_group_id' => 1
+                ]
+            )
+        );
         $currentMock = $this->getMockBuilder(Data::class)
             ->setMethods(['getRequest', '_getSession', '_initSession', '_getOrderCreateModel'])
             ->setConstructorArgs(
@@ -336,7 +363,8 @@ class DataTest extends BoltTestCase
                     $this->configHelperMock,
                     $this->bugsnagHelperMock,
                     $this->metricsClientMock,
-                    $this->dataObjectFactoryMock
+                    $this->dataObjectFactoryMock,
+                    $this->coreRegistryMock
                 ]
             )
             ->getMock();
@@ -344,6 +372,7 @@ class DataTest extends BoltTestCase
         $currentMock->method('getRequest')->willReturn($this->request);
         $currentMock->method('_getSession')->willReturn($this->sessionMock);
         $currentMock->method('_getOrderCreateModel')->willReturn($this->orderCreateModel);
+        $this->quoteMock->expects(static::once())->method('getCustomerGroupId')->willReturn(1);
         $this->orderCreateModel->method('getQuote')->willReturn($this->quoteMock);
         $this->orderCreateModel->expects(static::once())->method('getBillingAddress')
             ->willReturn($this->quoteBillingAddressMock);
@@ -355,6 +384,9 @@ class DataTest extends BoltTestCase
      */
     public function execute_HappyPath()
     {
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getWebsiteId')->willReturn(1);
+        $this->sessionMock->method('getStore')->willReturn($storeMock);
         $this->sessionMock->method('getStoreId')->willReturn(self::STORE_ID);
 
         $boltpayOrder = $this->getMockBuilder(Response::class)
@@ -368,7 +400,17 @@ class DataTest extends BoltTestCase
             ->willReturn($boltpayOrder);
 
         $resultJsonFactory = $this->buildJsonMocks($this->happyCartData);
-
+        $this->coreRegistryMock->expects(static::once())->method('unregister')->with('rule_data');
+        $this->coreRegistryMock->expects(static::once())->method('register')->with(
+            'rule_data',
+            new \Magento\Framework\DataObject(
+                [
+                'store_id'          => self::STORE_ID,
+                'website_id'        => 1,
+                'customer_group_id' => 1
+                ]
+            )
+        );
         $currentMock = $this->getMockBuilder(Data::class)
             ->setMethods(['getRequest', '_getSession', '_initSession', '_getOrderCreateModel'])
             ->setConstructorArgs(
@@ -379,13 +421,15 @@ class DataTest extends BoltTestCase
                     $this->configHelperMock,
                     $this->bugsnagHelperMock,
                     $this->metricsClientMock,
-                    $this->dataObjectFactoryMock
+                    $this->dataObjectFactoryMock,
+                    $this->coreRegistryMock
                 ]
             )
             ->getMock();
         $currentMock->method('getRequest')->willReturn($this->request);
         $currentMock->method('_getSession')->willReturn($this->sessionMock);
         $currentMock->method('_getOrderCreateModel')->willReturn($this->orderCreateModel);
+        $this->quoteMock->expects(static::once())->method('getCustomerGroupId')->willReturn(1);
         $this->orderCreateModel->method('getQuote')->willReturn($this->quoteMock);
         $this->orderCreateModel->expects(static::once())->method('getBillingAddress')
             ->willReturn($this->quoteBillingAddressMock);
@@ -403,7 +447,17 @@ class DataTest extends BoltTestCase
 
         $bugsnag = $this->createMock(Bugsnag::class);
         $bugsnag->expects(static::once())->method('notifyException')->with($exception);
-
+        $this->coreRegistryMock->expects(static::once())->method('unregister')->with('rule_data');
+        $this->coreRegistryMock->expects(static::once())->method('register')->with(
+            'rule_data',
+            new \Magento\Framework\DataObject(
+                [
+                'store_id'          => self::STORE_ID,
+                'website_id'        => 1,
+                'customer_group_id' => 1
+                ]
+            )
+        );
         $currentMock = $this->getMockBuilder(Data::class)
             ->setMethods(['getRequest', '_getSession', '_initSession', '_getOrderCreateModel'])
             ->setConstructorArgs(
@@ -414,16 +468,21 @@ class DataTest extends BoltTestCase
                     $this->configHelperMock,
                     $bugsnag,
                     $this->metricsClientMock,
-                    $this->dataObjectFactoryMock
+                    $this->dataObjectFactoryMock,
+                    $this->coreRegistryMock
                 ]
             )
             ->getMock();
         $this->cartHelperMock->method('getBoltpayOrder')->willThrowException($exception);
         $currentMock->method('getRequest')->willReturn($this->request);
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getWebsiteId')->willReturn(1);
+        $this->sessionMock->method('getStore')->willReturn($storeMock);
+        $this->sessionMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
         $currentMock->method('_getSession')->willReturn($this->sessionMock);
         $currentMock->method('_getOrderCreateModel')->willReturn($this->orderCreateModel);
+        $this->quoteMock->expects(static::once())->method('getCustomerGroupId')->willReturn(1);
         $this->orderCreateModel->method('getQuote')->willReturn($this->quoteMock);
-        $this->sessionMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
         $this->orderCreateModel->expects(static::once())->method('getBillingAddress')
             ->willReturn($this->quoteBillingAddressMock);
         $currentMock->execute();
@@ -466,12 +525,27 @@ class DataTest extends BoltTestCase
     {
         $this->sessionMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
         $this->currentMock->expects(static::once())->method('_initSession');
+        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
+        $storeMock->method('getWebsiteId')->willReturn(1);
+        $this->sessionMock->method('getStore')->willReturn($storeMock);
+        $this->currentMock->expects(static::exactly(2))->method('_getSession')->willReturn($this->sessionMock);
+        $this->coreRegistryMock->expects(static::once())->method('unregister')->with('rule_data');
+        $this->coreRegistryMock->expects(static::once())->method('register')->with(
+            'rule_data',
+            new \Magento\Framework\DataObject(
+                [
+                'store_id'          => self::STORE_ID,
+                'website_id'        => 1,
+                'customer_group_id' => 1
+                ]
+            )
+        );
         $this->cartHelperMock->expects(static::never())->method('getBoltpayOrder');
 
         $this->orderCreateModel->expects(static::once())->method('getQuote')->willReturn($this->quoteMock);
         $this->orderCreateModel->expects(static::never())->method('getBillingAddress')
             ->willReturn($this->quoteBillingAddressMock);
-
+        $this->quoteMock->expects(static::once())->method('getCustomerGroupId')->willReturn(1);
         $this->quoteMock->expects(static::once())->method('getCustomerId')->willReturn(null);
         $this->quoteMock->expects(static::once())->method('getCustomerEmail')->willReturn(self::CUSTOMER_EMAIL);
         $this->cartHelperMock->expects(static::once())->method('getCustomerByEmail')->with(self::CUSTOMER_EMAIL)

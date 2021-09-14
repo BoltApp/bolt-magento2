@@ -45,7 +45,6 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Registry;
 use Magento\Framework\Serialize\SerializerInterface as Serialize;
 use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
 use Magento\Framework\Webapi\Exception as WebapiException;
@@ -249,11 +248,6 @@ class Cart extends AbstractHelper
     private $quoteManagement;
 
     /**
-     * @var Registry
-     */
-    private $coreRegistry;
-
-    /**
      * @var MetricsClient
      */
     private $metricsClient;
@@ -299,7 +293,6 @@ class Cart extends AbstractHelper
      * @param CartManagementInterface    $quoteManagement
      * @param HookHelper                 $hookHelper
      * @param CustomerRepository         $customerRepository
-     * @param Registry                   $coreRegistry
      * @param MetricsClient              $metricsClient
      * @param DeciderHelper              $deciderHelper
      * @param Serialize                  $serialize
@@ -333,7 +326,6 @@ class Cart extends AbstractHelper
         CartManagementInterface $quoteManagement,
         HookHelper $hookHelper,
         CustomerRepository $customerRepository,
-        Registry $coreRegistry,
         MetricsClient $metricsClient,
         DeciderHelper $deciderHelper,
         Serialize $serialize,
@@ -366,7 +358,6 @@ class Cart extends AbstractHelper
         $this->quoteManagement = $quoteManagement;
         $this->hookHelper = $hookHelper;
         $this->customerRepository = $customerRepository;
-        $this->coreRegistry = $coreRegistry;
         $this->metricsClient = $metricsClient;
         $this->deciderHelper = $deciderHelper;
         $this->serialize = $serialize;
@@ -1863,25 +1854,6 @@ class Cart extends AbstractHelper
         }
 
         $this->setLastImmutableQuote($immutableQuote);
-        if ($this->isBackendSession()) {
-            /**
-             * initialize rule data for backend orders, consumed by
-             * @see \Magento\CatalogRule\Observer\ProcessAdminFinalPriceObserver::execute
-             */
-            $this->coreRegistry->unregister('rule_data');
-            $this->coreRegistry->register(
-                'rule_data',
-                new \Magento\Framework\DataObject(
-                    [
-                        'store_id'          => $this->checkoutSession->getStore()->getId(),
-                        'website_id'        => $this->checkoutSession->getStore()->getWebsiteId(),
-                        'customer_group_id' => $immutableQuote->getCustomerGroupId()
-                            ? $immutableQuote->getCustomerGroupId()
-                            : $this->checkoutSession->getCustomerGroupId()
-                    ]
-                )
-            );
-        }
 
         $immutableQuote->collectTotals();
 
