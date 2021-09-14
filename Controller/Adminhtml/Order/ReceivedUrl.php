@@ -89,8 +89,12 @@ class ReceivedUrl extends Action
             'order_id' => $order->getId(),
             'store_id' => $storeId
         ];
-        // Set admin scope
-        $this->_backendUrl->setScope(0);
+        // If "Add Store Code to Urls" is disabled in configuration,
+        // force to set scope entity for retrieving redirect Url.
+        if (!$order->getStore()->isUseStoreInUrl()) {
+            // Set admin scope
+            $this->_backendUrl->setScope(0);
+        }
 
         return $this->_backendUrl->getUrl('sales/order/view', $params);
     }
