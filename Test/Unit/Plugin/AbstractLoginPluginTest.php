@@ -17,15 +17,17 @@
 
 namespace Bolt\Boltpay\Test\Unit\Plugin;
 
+use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Bolt\Boltpay\Test\Unit\TestHelper;
-use Magento\Quote\Model\Quote;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Plugin\AbstractLoginPlugin;
-use Magento\Framework\Controller\ResultFactory;
-use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Customer\Model\Session;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\AbstractLoginPlugin
@@ -38,145 +40,88 @@ class AbstractLoginPluginTest extends BoltTestCase
     private $abstractLoginPlugin;
 
     /**
-     * @var CustomerSession
-     */
-    private $customerSession;
-    /**
      * @var CheckoutSession
      */
     private $checkoutSession;
 
-    /**
-     * @var ResultFactory
-     */
-    private $resultFactory;
-
-    /**
-     * @var Bugsnag
-     */
-    private $bugsnag;
-
-    /**
-     * @var Quote
-     */
-    private $quote;
-
-    /**
-     * @var Quote\Item
-     */
-    private $quoteItem;
-
-    /**
-     * @var Decider
-     */
-    private $decider;
+    private $objectManager;
 
     public function setUpInternal()
     {
-        $this->customerSession = $this->createPartialMock(
-            CustomerSession::class,
-            ['isLoggedIn']
-        );
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->checkoutSession = $this->objectManager->create(CheckoutSession::class);
+        $this->abstractLoginPlugin = $this->objectManager->create(\Bolt\Boltpay\Plugin\LoginPlugin::class);
+    }
 
-        $this->checkoutSession = $this->createPartialMock(
-            CheckoutSession::class,
-            ['hasQuote', 'getQuote', 'setBoltInitiateCheckout']
-        );
+    private function setCustomerAsLoggedIn($email = 'johntest1xx@bolt.com')
+    {
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
 
-        $this->quote = $this->createPartialMock(
-            Quote::class,
-            ['getAllVisibleItems']
-        );
+        $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
+        $websiteId = $websiteRepository->get('base')->getId();
+        $customer = TestUtils::createCustomer($websiteId, $storeId, [
+            "street_address1" => "street",
+            "street_address2" => "",
+            "locality" => "Los Angeles",
+            "region" => "California",
+            'region_code' => 'CA',
+            'region_id' => '12',
+            "postal_code" => "11111",
+            "country_code" => "US",
+            "country" => "United States",
+            "name" => "lastname firstname",
+            "first_name" => "firstname",
+            "last_name" => "lastname",
+            "phone_number" => "11111111",
+            "email_address" => $email,
+        ]);
 
-        $this->quoteItem = $this->createMock(Quote\Item::class);
-
-        $this->resultFactory = $this->createMock(ResultFactory::class);
-
-        $this->bugsnag = $this->createPartialMock(
-            Bugsnag::class,
-            ['notifyException']
-        );
-
-        $this->decider = $this->createPartialMock(
-            Decider::class,
-            ['ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn']
-        );
-
-        $this->abstractLoginPlugin = $this->getMockBuilder(AbstractLoginPlugin::class)
-            ->setConstructorArgs([
-                    $this->customerSession,
-                    $this->checkoutSession,
-                    $this->resultFactory,
-                    $this->bugsnag,
-                    $this->decider
-                ])
-            ->setMethods([])
-            ->getMockForAbstractClass();
+        $customerSession = $this->objectManager->create(Session::class);
+        $customerSession->setCustomerId($customer->getId());
     }
 
     /**
      * @test
      * @dataProvider dataProvider_isCustomerLoggedIn
      *
-     * @param $expected
+     * @param $isLoggedIn
      * @throws \ReflectionException
      */
-    public function isCustomerLoggedIn($expected)
+    public function isCustomerLoggedIn($isLoggedIn)
     {
-        $this->customerSession->method('isLoggedIn')->willReturn($expected);
-        $this->assertEquals($expected, TestHelper::invokeMethod($this->abstractLoginPlugin, 'isCustomerLoggedIn'));
+        if ($isLoggedIn) {
+            $this->setCustomerAsLoggedIn();
+        }
+        $this->assertEquals($isLoggedIn, TestHelper::invokeMethod($this->abstractLoginPlugin, 'isCustomerLoggedIn'));
     }
 
     public function dataProvider_isCustomerLoggedIn()
     {
         return [
-            [true], [false]
+            [false], [true]
         ];
     }
 
     /**
      * @test
-     * @dataProvider dataProvider_hasCart_withoutQuoteItems
-     * @param $hasQuote
      * @throws \ReflectionException
      */
-    public function hasCart_withoutQuoteItems($hasQuote)
+    public function hasCart_withQuoteItems()
     {
-        $this->checkoutSession->method('hasQuote')->willReturn($hasQuote);
-        $this->checkoutSession->method('getQuote')->willReturn($this->quote);
-        $this->quote->method('getAllVisibleItems')->willReturn([]);
+        $quote = TestUtils::createQuote();
+        $product = TestUtils::getSimpleProduct();
+        $quote->addProduct($product, 1);
+        $quote->save();
+        $this->checkoutSession->replaceQuote($quote);
 
-        $this->assertFalse(TestHelper::invokeMethod($this->abstractLoginPlugin, 'hasCart'));
-    }
+        $reflection = TestHelper::getReflectedClass(get_parent_class($this->abstractLoginPlugin));
+        $reflectionProperty = $reflection->getProperty('checkoutSession');
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($this->abstractLoginPlugin, $this->checkoutSession);
 
-    public function dataProvider_hasCart_withoutQuoteItems()
-    {
-        return [
-            [true], [false]
-        ];
-    }
-
-    /**
-     * @test
-     * @dataProvider dataProvider_hasCart_withQuoteItems
-     * @param $hasQuote
-     * @param $expected
-     * @throws \ReflectionException
-     */
-    public function hasCart_withQuoteItems($hasQuote, $expected)
-    {
-        $this->checkoutSession->method('hasQuote')->willReturn($hasQuote);
-        $this->checkoutSession->method('getQuote')->willReturn($this->quote);
-        $this->quote->method('getAllVisibleItems')->willReturn([$this->quoteItem]);
-
-        $this->assertEquals($expected, TestHelper::invokeMethod($this->abstractLoginPlugin, 'hasCart'));
-    }
-
-    public function dataProvider_hasCart_withQuoteItems()
-    {
-        return [
-            [true, true], [false, false]
-        ];
+        $result = TestHelper::invokeMethod($this->abstractLoginPlugin, 'hasCart');
+        $this->assertTrue($result);
     }
 
     /**
@@ -184,8 +129,8 @@ class AbstractLoginPluginTest extends BoltTestCase
      */
     public function setBoltInitiateCheckout()
     {
-        $this->checkoutSession->expects(self::once())->method('setBoltInitiateCheckout')->with(true)->willReturnSelf();
         TestHelper::invokeMethod($this->abstractLoginPlugin, 'setBoltInitiateCheckout');
+        $this->assertTrue($this->checkoutSession->getBoltInitiateCheckout());
     }
 
     /**
@@ -194,7 +139,15 @@ class AbstractLoginPluginTest extends BoltTestCase
      */
     public function notifyException()
     {
-        $this->bugsnag->expects(self::once())->method('notifyException')->with(new \Exception('test'))->willReturnSelf();
+        $bugsnag = $this->createPartialMock(
+            Bugsnag::class,
+            ['notifyException']
+        );
+        $bugsnag->expects(self::once())->method('notifyException')->with(new \Exception('test'))->willReturnSelf();
+        $reflection = TestHelper::getReflectedClass(get_parent_class($this->abstractLoginPlugin));
+        $reflectionProperty = $reflection->getProperty('bugsnag');
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($this->abstractLoginPlugin, $bugsnag);
         TestHelper::invokeMethod($this->abstractLoginPlugin, 'notifyException', [new \Exception('test')]);
     }
 
@@ -203,8 +156,9 @@ class AbstractLoginPluginTest extends BoltTestCase
      */
     public function shouldRedirectToCartPage_ifShouldDisableRedirectCustomerToCartPageAfterTheyLogInIsFalse_willReturnFalse()
     {
-        $this->decider->method('ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn')->willReturn(true);
+        $featureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN, true);
         $this->assertFalse(TestHelper::invokeMethod($this->abstractLoginPlugin, 'shouldRedirectToCartPage'));
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
     /**
@@ -212,13 +166,21 @@ class AbstractLoginPluginTest extends BoltTestCase
      */
     public function shouldRedirectToCartPage_willReturnTrue()
     {
-        $this->decider->method('ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn')->willReturn(false);
-        $this->customerSession->method('isLoggedIn')->willReturn(true);
+        $featureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN, false);
+        $this->setCustomerAsLoggedIn('johnmc@bolt.com');
 
-        $this->checkoutSession->method('hasQuote')->willReturn(true);
-        $this->checkoutSession->method('getQuote')->willReturn($this->quote);
-        $this->quote->method('getAllVisibleItems')->willReturn([$this->quoteItem]);
+        $quote = TestUtils::createQuote();
+        $product = TestUtils::getSimpleProduct();
+        $quote->addProduct($product, 1);
+        $quote->save();
+        $this->checkoutSession->replaceQuote($quote);
 
+        $reflection = TestHelper::getReflectedClass(get_parent_class($this->abstractLoginPlugin));
+        $reflectionProperty = $reflection->getProperty('checkoutSession');
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($this->abstractLoginPlugin, $this->checkoutSession);
         $this->assertTrue(TestHelper::invokeMethod($this->abstractLoginPlugin, 'shouldRedirectToCartPage'));
+
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 }
