@@ -49,6 +49,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMedia_TmwGiftCard;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Preorder as Amasty_Preorder;
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\RewardPoints as MageWorx_RewardPoints;
+use Bolt\Boltpay\ThirdPartyModules\MageWorx\ShippingRules as MageWorx_ShippingRules;
 use Exception;
 
 class EventsForThirdPartyModules
@@ -403,6 +404,15 @@ class EventsForThirdPartyModules
                     'sendClasses' => ['Route\Route\Model\Route\Merchant',
                                       'Route\Route\Helper\Data'],
                     'boltClass'   => Route_Route::class,
+                ],
+            ],
+        ],
+        'beforeGetBoltpayOrderForBackofficeOrder' => [
+            "listeners" => [
+                'MageWorx_ShippingRules' => [
+                    "module" => "MageWorx_ShippingRules",
+                    'checkClasses' => ['MageWorx\ShippingRules\Model\Plugin\Shipping\Rate\Result\Append'],
+                    "boltClass" => MageWorx_ShippingRules::class,
                 ],
             ],
         ],

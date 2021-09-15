@@ -33,6 +33,7 @@ use Magento\Framework\Registry;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Store\Model\StoreManagerInterface;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class Data.
@@ -81,6 +82,11 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
     private $storeManager;
     
     /**
+     * @var EventsForThirdPartyModules
+     */
+    private $eventsForThirdPartyModules;
+    
+    /**
      * Core registry
      *
      * @var Registry
@@ -96,6 +102,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
      * @param MetricsClient              $metricsClient
      * @param DataObjectFactory          $dataObjectFactory
      * @param Registry                   $coreRegistry
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      * @param Product|null               $productHelper
      * @param Escaper|null               $escaper
      * @param PageFactory|null           $resultPageFactory
@@ -111,6 +118,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
         MetricsClient $metricsClient,
         DataObjectFactory $dataObjectFactory,
         Registry $coreRegistry,
+        EventsForThirdPartyModules $eventsForThirdPartyModules,
         Product $productHelper = null,
         Escaper $escaper = null,
         PageFactory $resultPageFactory = null,
@@ -132,6 +140,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
         $this->dataObjectFactory = $dataObjectFactory;
         $this->coreRegistry = $coreRegistry;
         $this->storeManager = $storeManager ?: ObjectManager::getInstance()->get(StoreManagerInterface::class);
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
 
     /**
@@ -186,6 +195,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
                 $this->_getOrderCreateModel()->saveQuote();
             }
 
+            $this->eventsForThirdPartyModules->dispatchEvent("beforeGetBoltpayOrderForBackofficeOrder", $this);
             // call the Bolt API
             $boltpayOrder = $this->cartHelper->getBoltpayOrder(true);
             // If empty cart - order_token not fetched because doesn't exist. Not a failure.
