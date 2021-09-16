@@ -18,27 +18,16 @@
 namespace Bolt\Boltpay\Test\Unit\Plugin;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Plugin\OrderSenderPlugin;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
-use Bolt\Boltpay\Model\Payment;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\OrderSenderPlugin
  */
 class OrderSenderPluginTest extends BoltTestCase
 {
-    /**
-     * @var OrderSender
-     */
-    private $subject;
-
-    /**
-     * @var Order
-     */
-    private $order;
-
     /**
      * @var OrderSenderPlugin
      */
@@ -52,21 +41,21 @@ class OrderSenderPluginTest extends BoltTestCase
     /** @var callable */
     private $callback;
 
+    private $objectManager;
+
+    private $orderSender;
+
     public function setUpInternal()
     {
-        $this->order = $this->createPartialMock(Order::class, ['getPayment', 'getMethod', 'getState']);
-        $this->subject = $this->createPartialMock(OrderSender::class, ['getPayment', 'getMethod']);
-        $objectManager = new ObjectManager($this);
-        $this->plugin = $objectManager->getObject(
-            OrderSenderPlugin::class
-        );
-
         /** @var callable $callback */
         $this->callback = $callback = $this->getMockBuilder(\stdClass::class)
             ->setMethods(['__invoke'])->getMock();
         $this->proceed = function ($order, $forceSyncMode) use ($callback) {
             return $callback($order, $forceSyncMode);
         };
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->plugin = $this->objectManager->create(OrderSenderPlugin::class);
+        $this->orderSender = $this->objectManager->create(OrderSender::class);
     }
 
     /**
@@ -75,10 +64,12 @@ class OrderSenderPluginTest extends BoltTestCase
      */
     public function aroundSend_withPaymentMethodIsNotBoltPay()
     {
-        $this->order->expects(self::once())->method('getPayment')->willReturnSelf();
-        $this->order->expects(self::once())->method('getMethod')->willReturn(false);
-        $this->callback->expects(self::once())->method('__invoke')->with($this->order, false)->willReturnSelf();
-        $this->plugin->aroundSend($this->subject, $this->proceed, $this->order, false);
+        $order = $this->objectManager->create(Order::class);
+        $payment = $this->objectManager->create(Order\Payment::class);
+        $payment->setMethod('boltpay');
+        $order->setPayment($payment);
+        $this->callback->expects(self::once())->method('__invoke')->with($order, false)->willReturnSelf();
+        $this->plugin->aroundSend($this->orderSender, $this->proceed, $order, false);
     }
 
     /**
@@ -89,10 +80,12 @@ class OrderSenderPluginTest extends BoltTestCase
      */
     public function aroundSend_withPaymentMethodIsBoltPay($orderState)
     {
-        $this->order->expects(self::once())->method('getPayment')->willReturnSelf();
-        $this->order->expects(self::once())->method('getMethod')->willReturn(Payment::METHOD_CODE);
-        $this->order->expects(self::once())->method('getState')->willReturn($orderState);
-        $result = $this->plugin->aroundSend($this->subject, $this->proceed, $this->order, false);
+        $order = $this->objectManager->create(Order::class);
+        $payment = $this->objectManager->create(Order\Payment::class);
+        $payment->setMethod('boltpay');
+        $order->setPayment($payment);
+        $order->setState($orderState);
+        $result = $this->plugin->aroundSend($this->orderSender, $this->proceed, $order, false);
         $this->assertFalse($result);
     }
 
