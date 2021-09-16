@@ -17,11 +17,12 @@
 
 namespace Bolt\Boltpay\Test\Unit\Plugin;
 
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Plugin\QuotePlugin;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class QuotePluginTest
@@ -48,23 +49,12 @@ class QuotePluginTest extends BoltTestCase
     /** @var callable|MockObject */
     protected $callback;
 
+    private $objectManager;
+
     public function setUpInternal()
     {
-        $this->subject = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getBoltParentQuoteId', 'getId', 'getIsActive', 'getBoltCheckoutType', 'getPayment', 'getMethod'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        /** @var callable $callback */
-        $this->callback = $callback = $this->getMockBuilder(\stdClass::class)
-            ->setMethods(['__invoke'])->getMock();
-        $this->proceed = function () use ($callback) {
-            return $callback();
-        };
-
-        $this->plugin = (new ObjectManager($this))->getObject(
-            QuotePlugin::class
-        );
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->plugin = $this->objectManager->create(QuotePlugin::class);
     }
 
     /**
@@ -74,33 +64,31 @@ class QuotePluginTest extends BoltTestCase
      *
      * @covers ::aroundAfterSave
      * @dataProvider dataProviderAroundAfterSave
-     * @param $boltParentQuoteId
-     * @param $id
-     * @param $numCallsParentId
-     * @param $numCallsId
+     *
+     * @param $isSameId
      * @param $expectedCall
      */
-    public function aroundAfterSave($boltParentQuoteId, $id, $numCallsParentId, $numCallsId, $expectedCall)
+    public function aroundAfterSave($isSameId, $expectedCall)
     {
-        $this->subject
-            ->expects(self::exactly($numCallsParentId))
-            ->method('getBoltParentQuoteId')
-            ->willReturn($boltParentQuoteId);
-        $this->subject
-            ->expects(self::exactly($numCallsId))
-            ->method('getId')
-            ->willReturn($id);
-        $this->callback->expects($expectedCall)->method('__invoke');
-        $this->plugin->aroundAfterSave($this->subject, $this->proceed);
+        /** @var callable $callback */
+        $callback = $callback = $this->getMockBuilder(\stdClass::class)
+            ->setMethods(['__invoke'])->getMock();
+        $proceed = function () use ($callback) {
+            return $callback();
+        };
+        $subject = TestUtils::createQuote();
+        $subject->setBoltParentQuoteId(($isSameId) ? $subject->getId() : 100);
+        $callback->expects($expectedCall)->method('__invoke');
+        $this->plugin->aroundAfterSave($subject, $proceed);
+
     }
 
     public function dataProviderAroundAfterSave()
     {
         return [
-            [1111, 1111, 2, 1, self::once()],
-            [1111, 2222, 2, 1, self::never()],
-            [0, 2222, 1, 0, self::once()],
-            [null, null, 1, 0, self::once()]
+            [true, self::once()],
+            [false, self::never()],
+
         ];
     }
 
@@ -122,13 +110,15 @@ class QuotePluginTest extends BoltTestCase
         $paymentMethod,
         $originalResult,
         $expectedResult
-    ) {
-        $this->subject->method('getBoltCheckoutType')->willReturn($boltCheckoutType);
-        $this->subject->method('getPayment')->willReturnSelf();
-        $this->subject->method('getMethod')->willReturn($paymentMethod);
+    )
+    {
+        $subject = TestUtils::createQuote();
+        $subject->setBoltCheckoutType($boltCheckoutType);
+        $subject->getPayment()->setMethod($paymentMethod);
+
         static::assertEquals(
             $expectedResult,
-            $this->plugin->afterValidateMinimumAmount($this->subject, $originalResult)
+            $this->plugin->afterValidateMinimumAmount($subject, $originalResult)
         );
     }
 
@@ -142,22 +132,42 @@ class QuotePluginTest extends BoltTestCase
         return [
             'Bolt backoffice quote with invalid minimum amount returns true' => [
                 'boltCheckoutType' => \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_BACKOFFICE,
-                'paymentMethod'    => \Bolt\Boltpay\Model\Payment::METHOD_CODE,
-                'originalResult'   => false,
-                'expectedResult'   => true,
+                'paymentMethod' => \Bolt\Boltpay\Model\Payment::METHOD_CODE,
+                'originalResult' => false,
+                'expectedResult' => true,
             ],
-            'Checkmo quote with invalid minimum amount returns true'         => [
+            'Checkmo quote with invalid minimum amount returns true' => [
                 'boltCheckoutType' => \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_BACKOFFICE,
-                'paymentMethod'    => \Magento\OfflinePayments\Model\Checkmo::PAYMENT_METHOD_CHECKMO_CODE,
-                'originalResult'   => false,
-                'expectedResult'   => false,
+                'paymentMethod' => \Magento\OfflinePayments\Model\Checkmo::PAYMENT_METHOD_CHECKMO_CODE,
+                'originalResult' => false,
+                'expectedResult' => false,
             ],
             'Bolt multistep quote with invalid minimum amount returns false' => [
                 'boltCheckoutType' => \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_MULTISTEP,
-                'paymentMethod'    => \Bolt\Boltpay\Model\Payment::METHOD_CODE,
-                'originalResult'   => false,
-                'expectedResult'   => false,
+                'paymentMethod' => \Bolt\Boltpay\Model\Payment::METHOD_CODE,
+                'originalResult' => false,
+                'expectedResult' => false,
             ],
         ];
+    }
+
+    /**
+     * @test
+     */
+    public function afterGetIsActive_returnTrue()
+    {
+        $subject = TestUtils::createQuote();
+        $subject->setBoltCheckoutType(\Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_PPC);
+        self::assertTrue($this->plugin->afterGetIsActive($subject, false));
+    }
+
+    /**
+     * @test
+     */
+    public function afterGetIsActive_returnFalse()
+    {
+        $subject = TestUtils::createQuote();
+        $subject->setBoltCheckoutType(\Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_MULTISTEP);
+        self::assertFalse($this->plugin->afterGetIsActive($subject, false));
     }
 }
