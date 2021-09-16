@@ -18,14 +18,16 @@
 namespace Bolt\Boltpay\Test\Unit\Block\Customer;
 
 use Bolt\Boltpay\Block\Customer\CreditCard;
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-use Magento\Framework\View\Element\Template\Context;
-use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory;
-use Magento\Framework\App\Request\Http;
+use Bolt\Boltpay\Model\CustomerCreditCardFactory;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Customer\Model\Session;
-use Magento\Framework\Data\Form\FormKey;
-use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Magento\Framework\App\ObjectManager;
+use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Framework\Data\Form\FormKey;
 
 /**
  * Class CreditCardTest
@@ -38,6 +40,9 @@ class CreditCardTest extends BoltTestCase
     const PAGE_SIZE = '1';
     const CURRENT_PAGE = '1';
     const FORM_KEY = 'KSQ27m2S1oBVJecR';
+    const CONSUMER_ID = '11321';
+    const CREDIT_CARD_ID = '11431';
+    const CARD_INFO = '{"id":"CAfe9tP97CMXs1","last4":"1114","display_network":"Visa"}';
 
     /**
      * @var CreditCard
@@ -45,89 +50,54 @@ class CreditCardTest extends BoltTestCase
     private $block;
 
     /**
-     * @var Context
+     * @var ObjectManager
      */
-    private $contextMock;
+    private $objectManager;
 
     /**
-     * @var CollectionFactory;
+     * @var CustomerCreditCardFactory
      */
-    private $collectionFactoryMock;
-
-    /**
-     * @var Session
-     */
-    private $customerSessionMock;
-
-    /**
-     * @var Http
-     */
-    private $requestMock;
-
-    private $formKeyMock;
-
-    /**
-     * @var Decider
-     */
-    protected $deciderMock;
+    private $customerCreditCardFactory;
 
     /**
      * @inheritdoc
      */
     protected function setUpInternal()
     {
-        $this->initRequiredMocks();
-        $this->initCurrentMock();
+        $this->objectManager = Bootstrap::getObjectManager();
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
+
+        $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
+        $websiteId = $websiteRepository->get('base')->getId();
+        $customer = TestUtils::createCustomer($websiteId, $storeId, [
+            "street_address1" => "street",
+            "street_address2" => "",
+            "locality" => "Los Angeles",
+            "region" => "California",
+            'region_code' => 'CA',
+            'region_id' => '12',
+            "postal_code" => "11111",
+            "country_code" => "US",
+            "country" => "United States",
+            "name" => "lastname firstname",
+            "first_name" => "firstname",
+            "last_name" => "lastname",
+            "phone_number" => "11111111",
+            "email_address" => "johntest12222@bolt.com",
+        ]);
+        $this->customerCreditCardFactory = $this->objectManager->create(CustomerCreditCardFactory::class)->create()
+            ->setCustomerId($customer->getId())->setConsumerId(self::CONSUMER_ID)
+            ->setCreditCardId(self::CREDIT_CARD_ID)->setCardInfo(self::CARD_INFO)
+            ->save();
+        $customerSession = $this->objectManager->create(Session::class);
+        $customerSession->setCustomerId($customer->getId());
+        $this->block = $this->objectManager->create(CreditCard::class);
     }
 
-    private function initRequiredMocks()
+    protected function tearDownInternal()
     {
-        $this->contextMock = $this->createMock(Context::class);
-        $this->formKeyMock = $this->getMockBuilder(FormKey::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getFormKey'])
-            ->getMock();
-        $this->requestMock = $this->getMockBuilder(Http::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['getParam'])
-            ->getMock();
-
-        $this->contextMock->method('getRequest')->willReturn($this->requestMock);
-
-        $this->collectionFactoryMock = $this->getMockBuilder(CollectionFactory::class)
-            ->disableOriginalConstructor()
-            ->setMethods(['add', 'create', 'getCreditCardInfosByCustomerId', 'setPageSize', 'setCurPage'])
-            ->getMock();
-        ;
-        $this->customerSessionMock = $this->createMock(Session::class);
-        $this->customerSessionMock->method('getCustomerId')->willReturn(self::CUSTOMER_ID);
-        $this->deciderMock = $this->createMock(Decider::class);
-        $this->configHelperMock = $this->createMock(Config::class);
-    }
-
-    private function initCurrentMock()
-    {
-        $this->block = $this->getMockBuilder(CreditCard::class)
-            ->setMethods(['getChildHtml'])
-            ->setConstructorArgs(
-                [
-                    $this->contextMock,
-                    $this->collectionFactoryMock,
-                    $this->customerSessionMock,
-                    $this->formKeyMock,
-                    $this->configHelperMock,
-                    $this->deciderMock
-                ]
-            )->getMock();
-    }
-
-    /**
-     * @test
-     */
-    public function getPagerHtml()
-    {
-        $this->block->expects(self::once())->method('getChildHtml')->with('pager')->willReturnSelf();
-        return $this->block->getPagerHtml();
+        TestUtils::cleanupSharedFixtures([$this->customerCreditCardFactory]);
     }
 
     /**
@@ -135,12 +105,7 @@ class CreditCardTest extends BoltTestCase
      */
     public function getCreditCardCollection()
     {
-        $this->requestMock->expects(self::any())->method('getParam')->withAnyParameters()->willReturn(self::CURRENT_PAGE);
-        $this->collectionFactoryMock->expects(self::once())->method('create')->willReturnSelf();
-        $this->collectionFactoryMock->expects(self::once())->method('getCreditCardInfosByCustomerId')->with(self::CUSTOMER_ID)->willReturnSelf();
-        $this->collectionFactoryMock->expects(self::once())->method('setPageSize')->with(self::PAGE_SIZE)->willReturnSelf();
-        $this->collectionFactoryMock->expects(self::once())->method('setCurPage')->with(self::CURRENT_PAGE)->willReturnSelf();
-        $this->assertSame($this->collectionFactoryMock, $this->block->getCreditCardCollection());
+        $this->assertSame(1, $this->block->getCreditCardCollection()->getSize());
     }
 
     /**
@@ -148,7 +113,11 @@ class CreditCardTest extends BoltTestCase
      */
     public function getFormKey()
     {
-        $this->formKeyMock->expects(self::once())->method('getFormKey')->willReturn(self::FORM_KEY);
-        $this->assertEquals(self::FORM_KEY, $this->block->getFormKey());
+        $formKey = $this->createPartialMock(FormKey::class, ['getFormKey']);
+        $formKey->method('getFormKey')->willReturn('form_key');
+
+        TestHelper::setInaccessibleProperty($this->block, 'formKey', $formKey);
+        self::assertEquals('form_key', $this->block->getFormKey());
+
     }
 }
