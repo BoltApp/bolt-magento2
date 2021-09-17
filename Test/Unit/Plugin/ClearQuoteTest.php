@@ -19,9 +19,10 @@ namespace Bolt\Boltpay\Test\Unit\Plugin;
 
 use Bolt\Boltpay\Plugin\ClearQuote;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Checkout\Model\Session as CheckoutSession;
-use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class QuotePluginTest
@@ -31,37 +32,16 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 class ClearQuoteTest extends BoltTestCase
 {
     /**
-     * @var CartHelper
-     */
-    protected $cartHelper;
-
-    /**
-     * @var CheckoutSession
-     */
-    protected $checkoutSession;
-
-    /**
      * @var ClearQuote
      */
     protected $plugin;
 
+    protected $objectManager;
+
     public function setUpInternal()
     {
-        $this->cartHelper = $this->getMockBuilder(CartHelper::class)
-            ->setMethods(['getIsActive', 'getQuoteById'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $this->checkoutSession = $this->getMockBuilder(CheckoutSession::class)
-            ->setMethods(['replaceQuote', 'setLoadInactive', 'getQuote', 'save', 'getId', 'getLastSuccessQuoteId'])
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->plugin = (new ObjectManager($this))->getObject(
-            ClearQuote::class,
-            [
-                'cartHelper' => $this->cartHelper,
-            ]
-        );
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->plugin = $this->objectManager->create(ClearQuote::class);
     }
 
     /**
@@ -71,11 +51,11 @@ class ClearQuoteTest extends BoltTestCase
      */
     public function afterClearQuote()
     {
-        $this->checkoutSession->expects(self::once())->method('setLoadInactive')->with(false)->willReturnSelf();
-        $this->checkoutSession->expects(self::once())->method('getQuote')->willReturnSelf();
-        $this->checkoutSession->expects(self::once())->method('save')->willReturnSelf();
-        $this->checkoutSession->expects(self::once())->method('replaceQuote')->willReturnSelf();
-        $this->plugin->afterClearQuote($this->checkoutSession);
+        $checkoutSession = $this->objectManager->create(CheckoutSession::class);
+        $quote = TestUtils::createQuote();
+        TestHelper::setInaccessibleProperty($this->plugin,'quoteToRestore', $quote);
+        $this->plugin->afterClearQuote($checkoutSession);
+        self::assertEquals($quote->getId(), $checkoutSession->getQuoteId());
     }
 
     /**
@@ -88,10 +68,12 @@ class ClearQuoteTest extends BoltTestCase
      */
     public function beforeClearQuote_withGetQuoteByIdIsNotCalled_returnNull($currentQuoteId, $orderQuoteId)
     {
-        $this->checkoutSession->expects(self::once())->method('getQuote')->willReturnSelf();
-        $this->checkoutSession->expects(self::once())->method('getId')->willReturn($currentQuoteId);
-        $this->checkoutSession->expects(self::once())->method('getLastSuccessQuoteId')->willReturn($orderQuoteId);
-        $this->assertNull($this->plugin->beforeClearQuote($this->checkoutSession));
+        $checkoutSession = $this->objectManager->create(CheckoutSession::class);
+        $checkoutSession->getQuote()->setId($currentQuoteId);
+        $checkoutSession->setLastSuccessQuoteId($orderQuoteId);
+
+        $this->assertNull($this->plugin->beforeClearQuote($checkoutSession));
+        $this->assertNull( TestHelper::getProperty($this->plugin,'quoteToRestore'));
     }
 
     public function provider_beforeClearQuote_returnNull()
@@ -110,10 +92,16 @@ class ClearQuoteTest extends BoltTestCase
      */
     public function beforeClearQuote_withGetQuoteByIdIsCalled_returnNull()
     {
-        $this->checkoutSession->expects(self::once())->method('getQuote')->willReturnSelf();
-        $this->checkoutSession->expects(self::once())->method('getId')->willReturn(1);
-        $this->checkoutSession->expects(self::once())->method('getLastSuccessQuoteId')->willReturn(2);
-        $this->cartHelper->expects(self::once())->method('getQuoteById')->with(2)->willReturn(null);
-        $this->assertNull($this->plugin->beforeClearQuote($this->checkoutSession));
+        $sessionQuote = TestUtils::createQuote();
+        /** @var CheckoutSession $checkoutSession */
+        $checkoutSession = $this->objectManager->create(CheckoutSession::class);
+        $checkoutSession->replaceQuote($sessionQuote);
+
+        $quoteSuccess = TestUtils::createQuote();
+        $quoteSuccess->setBoltParentQuoteId($quoteSuccess->getId());
+        $quoteSuccess->save();
+        $checkoutSession->setLastSuccessQuoteId($quoteSuccess->getId());
+        $this->assertNull($this->plugin->beforeClearQuote($checkoutSession));
+        $this->assertEquals($sessionQuote->getId(), TestHelper::getProperty($this->plugin,'quoteToRestore')->getId());
     }
 }
