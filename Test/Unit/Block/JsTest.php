@@ -2176,7 +2176,7 @@ function(arg) {
             'getAdditionalCheckoutButtonAttributes',
             'isBoltOrderCachingEnabled',
             'isBoltSSOEnabled',
-            'isBoltOnCartDisabled',
+            'getBoltOnCartPage',
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
