@@ -561,10 +561,8 @@ class JsTest extends BoltTestCase
         $value = '.replaceable-example-selector1 {
             color: red;
         }';
-
-        $this->configHelper->expects(static::once())
-            ->method('isBoltOnCartDisabled')
-            ->willReturn(false);
+        
+        $this->requestMock->method('getFullActionName')->willReturn('catalog_product_view');
             
         $this->configHelper->expects(static::once())
             ->method('getGlobalCSS')
@@ -589,9 +587,11 @@ class JsTest extends BoltTestCase
             color: red;
         }button[data-role=proceed-to-checkout]{display:block!important;}';
 
+        $this->requestMock->method('getFullActionName')->willReturn('checkout_cart_index');
+        
         $this->configHelper->expects(static::once())
-            ->method('isBoltOnCartDisabled')
-            ->willReturn(true);
+            ->method('getBoltOnCartPage')
+            ->willReturn(false);
             
         $this->configHelper->expects(static::once())
             ->method('getGlobalCSS')
