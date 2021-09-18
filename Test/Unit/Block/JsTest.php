@@ -615,7 +615,7 @@ class JsTest extends BoltTestCase
             color: red;
         }button[data-role=proceed-to-checkout]{display:block!important;}';
 
-        static::assertEquals($value, $result, 'getGlobalCSS() method: not working properly');
+        static::assertEquals($expectedResult, $result, 'getGlobalCSS() method: not working properly');
     }
     
     /**
