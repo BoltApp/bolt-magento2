@@ -1827,6 +1827,10 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('minicart_support')
             ->setValue(var_export($this->getMinicartSupport(), true));
+        // Display Bolt Checkout on the Cart Page configuration path
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+            ->setName('enable_bolt_on_cart_page')
+            ->setValue(var_export($this->getBoltOnCartPage(), true));    
         // Client IP Restriction
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('ip_whitelist')

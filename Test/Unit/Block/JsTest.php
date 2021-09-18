@@ -563,6 +563,37 @@ class JsTest extends BoltTestCase
         }';
 
         $this->configHelper->expects(static::once())
+            ->method('isBoltOnCartDisabled')
+            ->willReturn(false);
+            
+        $this->configHelper->expects(static::once())
+            ->method('getGlobalCSS')
+            ->willReturn($value);
+
+        $result = $this->currentMock->getGlobalCSS();
+
+        static::assertEquals($value, $result, 'getGlobalCSS() method: not working properly');
+    }
+    
+    /**
+     * @test
+     * that if Bolt is disabled on the cart page, getGlobalCSS returns global CSS from config as well as extra css to show native M2 checkout button.
+     *
+     * @see \Bolt\Boltpay\Helper\Config::getGlobalCSS
+     *
+     * @covers ::getGlobalCSS
+     */
+    public function getGlobalCSS_BoltOnCartDisabled_returnsCssCode()
+    {
+        $value = '.replaceable-example-selector1 {
+            color: red;
+        }button[data-role=proceed-to-checkout]{display:block!important;}';
+
+        $this->configHelper->expects(static::once())
+            ->method('isBoltOnCartDisabled')
+            ->willReturn(true);
+            
+        $this->configHelper->expects(static::once())
             ->method('getGlobalCSS')
             ->willReturn($value);
 
@@ -2144,7 +2175,8 @@ function(arg) {
             'getOrderManagementSelector',
             'getAdditionalCheckoutButtonAttributes',
             'isBoltOrderCachingEnabled',
-            'isBoltSSOEnabled'
+            'isBoltSSOEnabled',
+            'isBoltOnCartDisabled',
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -2526,6 +2558,58 @@ function(arg) {
             [
                 'isDisableTrackJsOnNonBoltPages' => false,
                 'expectedResult'                  => false
+            ],
+        ];
+    }
+    
+    /**
+     * @test
+     * 
+     * @see \Bolt\Boltpay\Block\Js::isBoltOnCartDisabled
+     *
+     * @dataProvider isBoltOnCartDisabled_withVariousConfigsProvider
+     *
+     * @covers ::isBoltOnCartDisabled
+     *
+     * @param bool $isBoltOnCartEnabled
+     * @param bool $isOnCartPage
+     * @param bool $expectedResult
+     */
+    public function isBoltOnCartDisabled_withVariousConfigs_returnsCorrectResult($isBoltOnCartEnabled, $isOnCartPage, $expectedResult)
+    {
+        $this->configHelper->expects(static::once())->method('getBoltOnCartPage')->with(self::STORE_ID)->willReturn(true);
+        static::assertTrue($this->currentMock->isBoltOrderCachingEnabled(self::STORE_ID));
+    }
+    
+    /**
+     * Data provider for
+     *
+     * @see isBoltOnCartDisabled_withVariousConfigs_returnsCorrectResult
+     *
+     * @return array
+     */
+    public function isBoltOnCartDisabled_withVariousConfigsProvider()
+    {
+        return [
+            [
+                'isBoltOnCartEnabled' => true,
+                'isOnCartPage'        => true,
+                'expectedResult'      => false
+            ],
+            [
+                'isBoltOnCartEnabled' => true,
+                'isOnCartPage'        => false,
+                'expectedResult'      => false
+            ],
+            [
+                'isBoltOnCartEnabled' => false,
+                'isOnCartPage'        => true,
+                'expectedResult'      => true
+            ],
+            [
+                'isBoltOnCartEnabled' => false,
+                'isOnCartPage'        => false,
+                'expectedResult'      => false
             ],
         ];
     }
