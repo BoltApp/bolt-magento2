@@ -80,6 +80,12 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Display Bolt Checkout in the Native Checkout Page</comment>
                     </field>
+                    <field id="enable_bolt_on_cart_page" translate="label" type="select" sortOrder="260" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Cart Page</label>
+                        <config_path>payment/boltpay/enable_bolt_on_cart_page</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>Display Bolt Checkout on the Cart Page</comment>
+                    </field>
                 </group>
                 <group id="additional" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Additional options</label>

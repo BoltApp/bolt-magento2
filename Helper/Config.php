@@ -295,6 +295,11 @@ class Config extends AbstractHelper
      * MiniCart Support configuration path
      */
     const XML_PATH_MINICART_SUPPORT = 'payment/boltpay/minicart_support';
+    
+    /**
+     * Display Bolt Checkout on the Cart Page configuration path
+     */
+    const XML_PATH_BOLT_ON_CART_PAGE = 'payment/boltpay/enable_bolt_on_cart_page';
 
     /**
      * Client IP Whitelist configuration path
@@ -442,6 +447,7 @@ class Config extends AbstractHelper
         'track_on_close'                     => self::XML_PATH_TRACK_CLOSE,
         'additional_config'                  => self::XML_PATH_ADDITIONAL_CONFIG,
         'minicart_support'                   => self::XML_PATH_MINICART_SUPPORT,
+        'enable_bolt_on_cart_page'           => self::XML_PATH_BOLT_ON_CART_PAGE,
         'ip_whitelist'                       => self::XML_PATH_IP_WHITELIST,
         'store_credit'                       => self::XML_PATH_STORE_CREDIT,
         'reward_points'                      => self::XML_PATH_REWARD_POINTS,
@@ -1317,6 +1323,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_MINICART_SUPPORT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+    
+    /**
+     * Get Display Bolt Checkout on the Cart Page config
+     *
+     * @param int|string|Store $store
+     *
+     * @return boolean
+     */
+    public function getBoltOnCartPage($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_BOLT_ON_CART_PAGE,
             ScopeInterface::SCOPE_STORE,
             $store
         );

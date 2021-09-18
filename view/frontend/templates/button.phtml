@@ -20,7 +20,7 @@
  *
  * @var $block \Bolt\Boltpay\Block\Js
  */
-if ($block->shouldDisableBoltCheckout()) { return;
+if ($block->shouldDisableBoltCheckout() || $block->isBoltOnCartDisabled()) { return;
 }
 $checkoutButtonUrl = $block->getCheckoutCdnUrl(). '/v1/checkout_button?publishable_key='. $block->getCheckoutKey();
 $additionalCheckoutButtonClass = $block->getAdditionalCheckoutButtonClass();
