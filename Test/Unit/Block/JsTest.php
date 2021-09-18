@@ -562,7 +562,13 @@ class JsTest extends BoltTestCase
             color: red;
         }';
         
-        $this->requestMock->method('getFullActionName')->willReturn('catalog_product_view');
+        $this->currentMock->expects(static::once())
+                          ->method('getRequest')
+                          ->willReturnSelf();
+                          
+        $this->currentMock->expects(static::once())
+                          ->method('getFullActionName')
+                          ->willReturn('catalog_product_view');
             
         $this->configHelper->expects(static::once())
             ->method('getGlobalCSS')
@@ -587,7 +593,13 @@ class JsTest extends BoltTestCase
             color: red;
         }button[data-role=proceed-to-checkout]{display:block!important;}';
 
-        $this->requestMock->method('getFullActionName')->willReturn('checkout_cart_index');
+        $this->currentMock->expects(static::once())
+                          ->method('getRequest')
+                          ->willReturnSelf();
+                          
+        $this->currentMock->expects(static::once())
+                          ->method('getFullActionName')
+                          ->willReturn('checkout_cart_index');
         
         $this->configHelper->expects(static::once())
             ->method('getBoltOnCartPage')
@@ -2571,14 +2583,24 @@ function(arg) {
      *
      * @covers ::isBoltOnCartDisabled
      *
-     * @param bool $isBoltOnCartEnabled
-     * @param bool $isOnCartPage
+     * @param bool $getBoltOnCartPage
+     * @param bool $fullActionName
      * @param bool $expectedResult
      */
-    public function isBoltOnCartDisabled_withVariousConfigs_returnsCorrectResult($isBoltOnCartEnabled, $isOnCartPage, $expectedResult)
+    public function isBoltOnCartDisabled_withVariousConfigs_returnsCorrectResult($getBoltOnCartPage, $fullActionName, $expectedResult)
     {
-        $this->configHelper->expects(static::once())->method('getBoltOnCartPage')->with(self::STORE_ID)->willReturn(true);
-        static::assertTrue($this->currentMock->isBoltOrderCachingEnabled(self::STORE_ID));
+        $this->currentMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
+        $this->currentMock->expects(static::once())
+                          ->method('getRequest')
+                          ->willReturnSelf();
+        $this->currentMock->expects(static::once())
+                          ->method('getFullActionName')
+                          ->willReturn($fullActionName);
+        $this->configHelper->expects(static::once())
+                           ->method('getBoltOnCartPage')
+                           ->with(self::STORE_ID)
+                           ->willReturn($getBoltOnCartPage);
+        static::assertEquals($expectedResult, $this->currentMock->isBoltOnCartDisabled());
     }
     
     /**
@@ -2592,24 +2614,24 @@ function(arg) {
     {
         return [
             [
-                'isBoltOnCartEnabled' => true,
-                'isOnCartPage'        => true,
-                'expectedResult'      => false
+                'getBoltOnCartPage' => true,
+                'fullActionName'    => 'checkout_cart_index',
+                'expectedResult'    => false
             ],
             [
-                'isBoltOnCartEnabled' => true,
-                'isOnCartPage'        => false,
-                'expectedResult'      => false
+                'getBoltOnCartPage' => true,
+                'fullActionName'    => 'catalog_product_view',
+                'expectedResult'    => false
             ],
             [
-                'isBoltOnCartEnabled' => false,
-                'isOnCartPage'        => true,
-                'expectedResult'      => true
+                'getBoltOnCartPage' => false,
+                'fullActionName'    => 'checkout_cart_index',
+                'expectedResult'    => true
             ],
             [
-                'isBoltOnCartEnabled' => false,
-                'isOnCartPage'        => false,
-                'expectedResult'      => false
+                'getBoltOnCartPage' => false,
+                'fullActionName'    => 'catalog_product_view',
+                'expectedResult'    => false
             ],
         ];
     }
