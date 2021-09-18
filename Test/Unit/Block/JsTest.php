@@ -591,7 +591,7 @@ class JsTest extends BoltTestCase
     {
         $value = '.replaceable-example-selector1 {
             color: red;
-        }button[data-role=proceed-to-checkout]{display:block!important;}';
+        }';
 
         $this->currentMock->expects(static::once())
                           ->method('getRequest')
@@ -610,6 +610,10 @@ class JsTest extends BoltTestCase
             ->willReturn($value);
 
         $result = $this->currentMock->getGlobalCSS();
+        
+        $expectedResult = '.replaceable-example-selector1 {
+            color: red;
+        }button[data-role=proceed-to-checkout]{display:block!important;}';
 
         static::assertEquals($value, $result, 'getGlobalCSS() method: not working properly');
     }
@@ -2596,7 +2600,8 @@ function(arg) {
         $this->currentMock->expects(static::once())
                           ->method('getFullActionName')
                           ->willReturn($fullActionName);
-        $this->configHelper->expects(static::once())
+        $this->configHelper->expects(($fullActionName == 'checkout_cart_index')
+                                    ? static::once() : static::never())
                            ->method('getBoltOnCartPage')
                            ->with(self::STORE_ID)
                            ->willReturn($getBoltOnCartPage);
