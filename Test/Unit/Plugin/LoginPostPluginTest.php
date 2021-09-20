@@ -17,14 +17,21 @@
 
 namespace Bolt\Boltpay\Test\Unit\Plugin;
 
+use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Plugin\LoginPostPlugin;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Customer\Controller\Account\LoginPost;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Customer\Model\Session;
 
 /**
  * Class LoginPostPluginTest
@@ -38,55 +45,20 @@ class LoginPostPluginTest extends BoltTestCase
      */
     protected $plugin;
 
-    /** @var CustomerSession */
-    protected $customerSession;
+    protected $objectManager;
 
-    /** @var CheckoutSession */
-    protected $checkoutSession;
-
-    /** @var ResultFactory */
-    protected $resultFactory;
-
-    /** @var LoginPost */
+    /**
+     * @var LoginPost
+     */
     protected $loginPost;
-
-    /** @var Bugsnag */
-    protected $bugsnag;
-
-    /** @var @var Decider */
-    private $decider;
+    protected $checkoutSession;
 
     public function setUpInternal()
     {
-        $this->customerSession = $this->createMock(CustomerSession::class);
-        $this->checkoutSession = $this->createMock(CheckoutSession::class);
-        $this->decider = $this->createMock(CheckoutSession::class);
-        $this->resultFactory = $this->createPartialMock(
-            ResultFactory::class,
-            [
-                'create',
-                'setPath'
-            ]
-        );
-        $this->bugsnag = $this->createMock(Bugsnag::class);
-        $this->loginPost = $this->createMock(LoginPost::class);
-        $this->decider = $this->createPartialMock(
-            Decider::class,
-            ['ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn']
-        );
-        $this->plugin = $this->getMockBuilder(LoginPostPlugin::class)
-            ->setMethods([
-                'shouldRedirectToCartPage',
-                'setBoltInitiateCheckout',
-                'notifyException'
-            ])->setConstructorArgs([
-                $this->customerSession,
-                $this->checkoutSession,
-                $this->resultFactory,
-                $this->bugsnag,
-                $this->decider
-            ])
-            ->getMock();
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->plugin = $this->objectManager->create(LoginPostPlugin::class);
+        $this->loginPost = $this->objectManager->create(LoginPost::class);
+        $this->checkoutSession = $this->objectManager->create(CheckoutSession::class);
     }
 
     /**
@@ -95,9 +67,7 @@ class LoginPostPluginTest extends BoltTestCase
      */
     public function afterExecute_ifShouldRedirectToCartPageIsFalse()
     {
-        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->willReturn(false);
-        $this->plugin->expects(self::never())->method('setBoltInitiateCheckout');
-        $this->plugin->afterExecute($this->loginPost, null);
+        self::assertNull($this->plugin->afterExecute($this->loginPost, null));
     }
 
     /**
@@ -106,18 +76,51 @@ class LoginPostPluginTest extends BoltTestCase
      */
     public function afterExecute_ifShouldRedirectToCartPageIsTrue()
     {
-        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->willReturn(true);
-        $this->plugin->expects(self::once())->method('setBoltInitiateCheckout');
-        $this->resultFactory->expects(self::once())
-            ->method('create')
-            ->with(ResultFactory::TYPE_REDIRECT)
-            ->willReturnSelf();
-        $this->resultFactory->expects(self::once())
-            ->method('setPath')
-            ->with(\Bolt\Boltpay\Plugin\AbstractLoginPlugin::SHOPPING_CART_PATH)
-            ->willReturnSelf();
+        $featureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN, false);
+        $this->setCustomerAsLoggedIn('johnmc@bolt.com');
+
+        $quote = TestUtils::createQuote();
+        $product = TestUtils::getSimpleProduct();
+        $quote->addProduct($product, 1);
+        $quote->save();
+        $this->checkoutSession->replaceQuote($quote);
+
+        $reflection = TestHelper::getReflectedClass(get_parent_class($this->plugin));
+        $reflectionProperty = $reflection->getProperty('checkoutSession');
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($this->plugin, $this->checkoutSession);
 
         $this->plugin->afterExecute($this->loginPost, null);
+        self::assertTrue($this->checkoutSession->getBoltInitiateCheckout());
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
+    }
+
+    private function setCustomerAsLoggedIn($email = 'johntest1xx@bolt.com')
+    {
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
+
+        $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
+        $websiteId = $websiteRepository->get('base')->getId();
+        $customer = TestUtils::createCustomer($websiteId, $storeId, [
+            "street_address1" => "street",
+            "street_address2" => "",
+            "locality" => "Los Angeles",
+            "region" => "California",
+            'region_code' => 'CA',
+            'region_id' => '12',
+            "postal_code" => "11111",
+            "country_code" => "US",
+            "country" => "United States",
+            "name" => "lastname firstname",
+            "first_name" => "firstname",
+            "last_name" => "lastname",
+            "phone_number" => "11111111",
+            "email_address" => $email,
+        ]);
+
+        $customerSession = $this->objectManager->create(Session::class);
+        $customerSession->setCustomerId($customer->getId());
     }
 
     /**
@@ -126,12 +129,15 @@ class LoginPostPluginTest extends BoltTestCase
      */
     public function afterExecute_throwException()
     {
-        $expected = new \Exception('General Exception');
-        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->willThrowException($expected);
+        $plugin = $this->createPartialMock(LoginPostPlugin::class,[ 'shouldRedirectToCartPage',
+            'notifyException']);
 
-        $this->plugin->expects(self::once())->method('notifyException')
+        $expected = new \Exception('General Exception');
+        $plugin->expects(self::once())->method('shouldRedirectToCartPage')->willThrowException($expected);
+
+        $plugin->expects(self::once())->method('notifyException')
             ->with($expected)->willReturnSelf();
 
-        $this->plugin->afterExecute($this->loginPost, null);
+        $plugin->afterExecute($this->loginPost, null);
     }
 }
