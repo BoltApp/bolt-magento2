@@ -21,7 +21,13 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Block\BlockTrait;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Helper\Config;
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\Framework\App\ObjectManager;
+use Magento\TestFramework\Helper\Bootstrap;
+use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\Store\Model\ScopeInterface;
 
 /**
  * Class BlockTraitTest
@@ -29,49 +35,65 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
  */
 class BlockTraitTest extends BoltTestCase
 {
-    const CDN_URL = 'https://bolt-cdn.com';
+    const CDN_URL = 'https://connect-sandbox.bolt.com';
     const STORE_ID = '1';
     const PAGE_BLACK_LIST = 'catalog_product_view';
     const PAGE_WHITE_LIST = 'catalog_product_view';
+    const ADDITIONAL_CONFIG = <<<JSON
+{
+    "amastyGiftCard": {
+        "payForEverything": true
+    },
+    "adjustTaxMismatch": false,
+    "toggleCheckout": {
+        "active": true,
+        "magentoButtons": [
+            "#top-cart-btn-checkout",
+            "button[data-role=proceed-to-checkout]"
+        ],
+        "showElementsOnLoad": [
+            ".checkout-methods-items",
+            ".block-minicart .block-content > .actions > .primary"
+        ],
+        "productRestrictionMethods": [
+            "getSubscriptionActive"
+        ],
+        "itemRestrictionMethods": [
+            "getIsSubscription"
+        ]
+    },
+    "pageFilters": {
+        "whitelist": ["checkout_cart_index", "checkout_index_index", "checkout_onepage_success"],
+        "blacklist": ["cms_index_index"]
+    },
+    "ignoredShippingAddressCoupons": [
+        "IGNORED_SHIPPING_ADDRESS_COUPON"
+    ],
+     "priceFaultTolerance": "10"
+}
+JSON;
+
+    /** @var ObjectManager */
+    private $objectManager;
 
     /**
      * @var BlockTrait
      */
-    private $currentMock;
+    private $block;
 
-    /**
-     * @var Config
-     */
-    private $configHelper;
+    private $storeId;
 
-    /** @var Decider */
-    private $featureSwitches;
+    private $websiteId;
 
     public function setUpInternal()
     {
-        $this->currentMock = $this->getMockBuilder(BlockTrait::class)
-            ->enableOriginalConstructor()
-            ->setMethods([
-                'getCheckoutKey',
-                'getStoreId'
-            ])
-            ->getMockForTrait();
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->block = $this->objectManager->create(\Bolt\Boltpay\Block\Js::class);
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $this->storeId = $store->getStore()->getId();
 
-        $this->configHelper = $this->createPartialMock(Config::class, [
-            'shouldTrackCheckoutFunnel',
-            'isPaymentOnlyCheckoutEnabled',
-            'getPublishableKeyCheckout',
-            'getCdnUrl',
-            'getApiKey',
-            'getSigningSecret',
-            'isActive',
-            'getPageBlacklist',
-            'getPageWhitelist',
-            'isIPRestricted'
-        ]);
-        $this->featureSwitches = $this->createPartialMock(Decider::class, ['isInstantCheckoutButton', 'isBoltEnabled']);
-        TestHelper::setProperty($this->currentMock, 'configHelper', $this->configHelper);
-        TestHelper::setProperty($this->currentMock, 'featureSwitches', $this->featureSwitches);
+        $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
+        $this->websiteId = $websiteRepository->get('base')->getId();
     }
 
     /**
@@ -82,8 +104,10 @@ class BlockTraitTest extends BoltTestCase
      */
     public function isInstantCheckoutButton($isInstantCheckoutButton, $expected)
     {
-        $this->featureSwitches->expects(self::once())->method('isInstantCheckoutButton')->willReturn($isInstantCheckoutButton);
-        $this->assertEquals($expected, $this->currentMock->isInstantCheckoutButton());
+        $featureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_INSTANT_BOLT_CHECKOUT_BUTTON, $isInstantCheckoutButton);
+        $this->assertEquals($expected, $this->block->isInstantCheckoutButton());
+        TestUtils::cleanupSharedFixtures($featureSwitch);
+
     }
 
     public function dataProvider_isInstantCheckoutButton()
@@ -99,8 +123,7 @@ class BlockTraitTest extends BoltTestCase
      */
     public function getCheckoutCdnUrl()
     {
-        $this->configHelper->expects(self::once())->method('getCdnUrl')->willReturn(self::CDN_URL);
-        $this->assertEquals(self::CDN_URL, $this->currentMock->getCheckoutCdnUrl());
+        $this->assertEquals(self::CDN_URL, $this->block->getCheckoutCdnUrl());
     }
 
     /**
@@ -112,8 +135,17 @@ class BlockTraitTest extends BoltTestCase
      */
     public function shouldTrackCheckoutFunnel($shouldTrackCheckoutFunnel, $expected)
     {
-        $this->configHelper->expects(self::once())->method('shouldTrackCheckoutFunnel')->willReturn($shouldTrackCheckoutFunnel);
-        $this->assertEquals($expected, $this->currentMock->shouldTrackCheckoutFunnel());
+        $configData = [
+            [
+                'path'    => Config::XML_PATH_TRACK_CHECKOUT_FUNNEL,
+                'value'   => $shouldTrackCheckoutFunnel,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+
+        TestUtils::setupBoltConfig($configData);
+        $this->assertEquals($expected, $this->block->shouldTrackCheckoutFunnel());
     }
 
     public function dataProvider_shouldTrackCheckoutFunnel()
@@ -135,10 +167,29 @@ class BlockTraitTest extends BoltTestCase
      */
     public function isKeyMissing($checkoutKey, $apiKey, $signingSecretKey, $expected)
     {
-        $this->currentMock->expects(self::any())->method('getCheckoutKey')->willReturn($checkoutKey);
-        $this->configHelper->expects(self::any())->method('getApiKey')->willReturn($apiKey);
-        $this->configHelper->expects(self::any())->method('getSigningSecret')->willReturn($signingSecretKey);
-        $this->assertEquals($expected, $this->currentMock->isKeyMissing());
+        $configData = [
+            [
+                'path'    => Config::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
+                'value'   => $checkoutKey,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path'    => Config::XML_PATH_API_KEY,
+                'value'   => $apiKey,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+            ,[
+                'path'    => Config::XML_PATH_SIGNING_SECRET,
+                'value'   => $signingSecretKey,
+                'scope'   => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+
+        TestUtils::setupBoltConfig($configData);
+        $this->assertEquals($expected, $this->block->isKeyMissing());
     }
 
     public function dataProvider_isKeyMissing()
@@ -156,8 +207,22 @@ class BlockTraitTest extends BoltTestCase
      */
     public function getPageBlacklist()
     {
-        $this->configHelper->expects(self::once())->method('getPageBlacklist')->willReturn(self::PAGE_BLACK_LIST);
-        $this->assertEquals(self::PAGE_BLACK_LIST, TestHelper::invokeMethod($this->currentMock, 'getPageBlacklist'));
+        $this->getPageFilters();
+        $this->assertEquals(["cms_index_index"], TestHelper::invokeMethod($this->block, 'getPageBlacklist'));
+    }
+
+    private function getPageFilters($aditionalConfig = null)
+    {
+        $aditionalConfig = $aditionalConfig ?: self::ADDITIONAL_CONFIG;
+        $configData = [
+            [
+                'path' => Config::XML_PATH_ADDITIONAL_CONFIG,
+                'value' => $aditionalConfig,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
     }
 
     /**
@@ -165,33 +230,10 @@ class BlockTraitTest extends BoltTestCase
      */
     public function getPageWhitelist()
     {
-        $this->configHelper->expects(self::once())->method('getPageWhitelist')->willReturn([self::PAGE_WHITE_LIST]);
-        $this->assertEquals([
-            Config::SHOPPING_CART_PAGE_ACTION,
-            Config::CHECKOUT_PAGE_ACTION,
-            Config::SUCCESS_PAGE_ACTION,
-            self::PAGE_WHITE_LIST
-        ], TestHelper::invokeMethod($this->currentMock, 'getPageWhitelist'));
-    }
-
-    /**
-     * @test
-     * @dataProvider dataProvider_isIPRestricted
-     * @param $expected
-     * @param $isIPRestricted
-     * @throws \ReflectionException
-     */
-    public function isIPRestricted($expected, $isIPRestricted)
-    {
-        $this->configHelper->expects(self::once())->method('isIPRestricted')->willReturn($isIPRestricted);
-        $this->assertEquals($expected, TestHelper::invokeMethod($this->currentMock, 'isIPRestricted'));
-    }
-
-    public function dataProvider_isIPRestricted()
-    {
-        return [
-            [true, true],
-            [false, false]
-        ];
+        $this->getPageFilters();
+        $this->assertEquals(
+            ["checkout_cart_index", "checkout_index_index", "checkout_onepage_success"],
+            TestHelper::invokeMethod($this->block, 'getPageWhitelist')
+        );
     }
 }
