@@ -641,6 +641,17 @@ function($argName) {
     {
         return $this->httpContext->getValue(\Magento\Customer\Model\Context::CONTEXT_AUTH);
     }
+    
+    /**
+     * Is quote empty
+     *
+     * @return bool
+     */
+    public function isQuoteEmpty()
+    {
+        $quote = $this->getQuoteFromCheckoutSession();
+        return $quote ? !$quote->getItemsCount() : true;
+    }
 
     /**
      * @return string

@@ -1568,6 +1568,9 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
         ?>
     });
 
+    <?php
+    if (!$block->isQuoteEmpty()) {
+    ?>
     if ((trim(location.pathname, '/') === 'checkout/cart') || (trim(location.pathname, '/') === 'checkout')) {
         require(['domReady!'], function() {
             require([
@@ -1596,4 +1599,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             })
        })
     }
+    <?php
+    }
+    ?>
 </script>
