@@ -2555,7 +2555,7 @@ function(arg) {
      *
      * @return array[] containing flags for virtual quote and expected result
      */
-    public function getQuoteIsVirtual_withVariousQuotesProvider()
+    public function isQuoteEmpty_withVariousQuotesProvider()
     {
         return [
             ['quoteItemsCount' => 0, 'expectedResult' => true],
