@@ -2529,4 +2529,37 @@ function(arg) {
             ],
         ];
     }
+    
+    /**
+     * @test
+     *
+     * @covers ::isQuoteEmpty
+     *
+     * @dataProvider isQuoteEmpty_withVariousQuotesProvider
+     *
+     * @param bool $quoteItemsCount
+     * @param bool $expectedResult
+     *
+     */
+    public function isQuoteEmpty_withVariousQuotes_returnsIsQuoteEmpty($quoteItemsCount, $expectedResult)
+    {
+        $quoteMock = $this->createPartialMock(Quote::class, ['getItemsCount']);
+        $this->currentMock->expects(static::once())->method('getQuoteFromCheckoutSession')->willReturn($quoteMock);
+        $quoteMock->expects(static::once())->method('getItemsCount')->willReturn($quoteItemsCount);
+
+        static::assertEquals($expectedResult, TestHelper::invokeMethod($this->currentMock, 'isQuoteEmpty'));
+    }
+
+    /**
+     * Data provider for {@see isQuoteEmpty_withVariousQuotes_returnsIsQuoteEmpty}
+     *
+     * @return array[] containing flags for virtual quote and expected result
+     */
+    public function getQuoteIsVirtual_withVariousQuotesProvider()
+    {
+        return [
+            ['quoteItemsCount' => 0, 'expectedResult' => true],
+            ['quoteItemsCount' => 1, 'expectedResult' => false],
+        ];
+    }
 }
