@@ -344,6 +344,10 @@ class OrderManagement implements OrderManagementInterface
         $this->logHelper->addInfoLog('StoreId: ' . $storeId);
         $this->hookHelper->preProcessWebhook($storeId);
 
+        $storeId = isset($request['items'][0]['options']) ? (json_decode($request['items'][0]['options'], true))['storeId'] : null;
+        $this->logHelper->addInfoLog('StoreId: ' . $storeId);
+        $this->hookHelper->preProcessWebhook($storeId);
+
         $cart = $this->cartHelper->createCartByRequest($request);
         $this->response->setHttpResponseCode(200);
         if ($isUniversal) {
