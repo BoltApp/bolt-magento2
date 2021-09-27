@@ -48,6 +48,7 @@ use Bolt\Boltpay\ThirdPartyModules\Route\Route as Route_Route;
 use Bolt\Boltpay\ThirdPartyModules\Rossignol\Synolia\MultiStock as Rossignol_Synolia_MultiStock;
 use Bolt\Boltpay\ThirdPartyModules\Rossignol\Synolia\Store as Rossignol_Synolia_Store;
 use Bolt\Boltpay\ThirdPartyModules\Rossignol\Project\Rossignol as Rossignol_Project_Rossignol;
+use Bolt\Boltpay\ThirdPartyModules\Rossignol\Project\Core as Rossignol_Project_Core;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMedia_TmwGiftCard;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Preorder as Amasty_Preorder;
@@ -1197,6 +1198,11 @@ class EventsForThirdPartyModules
                     'module'      => 'Project_Rossignol',
                     'checkClasses' => ["Project\Rossignol\Helper\Setup"],
                     'boltClass'   => Rossignol_Project_Rossignol::class,
+                ],
+                'Rossignol_Project_Core' => [
+                    'module'      => 'Project_Core',
+                    'sendClasses' => ["Project\Core\Helper\Sales"],
+                    'boltClass'   => Rossignol_Project_Core::class,
                 ],
             ],
         ],
