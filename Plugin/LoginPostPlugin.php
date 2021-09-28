@@ -40,7 +40,7 @@ class LoginPostPlugin extends AbstractLoginPlugin
 
         try {
             // Pass through the original result if the customer is not logged in or the cart is empty
-            if (!$this->shouldRedirectToCartPage()) {
+            if (!$this->shouldRedirectToCartPage($subject)) {
                 return $result;
             }
 
