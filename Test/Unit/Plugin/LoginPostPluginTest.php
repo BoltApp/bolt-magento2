@@ -95,7 +95,7 @@ class LoginPostPluginTest extends BoltTestCase
      */
     public function afterExecute_ifShouldRedirectToCartPageIsFalse()
     {
-        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->willReturn(false);
+        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->with($this->loginPost)->willReturn(false);
         $this->plugin->expects(self::never())->method('setBoltInitiateCheckout');
         $this->plugin->afterExecute($this->loginPost, null);
     }
@@ -106,7 +106,7 @@ class LoginPostPluginTest extends BoltTestCase
      */
     public function afterExecute_ifShouldRedirectToCartPageIsTrue()
     {
-        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->willReturn(true);
+        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->with($this->loginPost)->willReturn(true);
         $this->plugin->expects(self::once())->method('setBoltInitiateCheckout');
         $this->resultFactory->expects(self::once())
             ->method('create')
@@ -127,7 +127,7 @@ class LoginPostPluginTest extends BoltTestCase
     public function afterExecute_throwException()
     {
         $expected = new \Exception('General Exception');
-        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->willThrowException($expected);
+        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->with($this->loginPost)->willThrowException($expected);
 
         $this->plugin->expects(self::once())->method('notifyException')
             ->with($expected)->willReturnSelf();
