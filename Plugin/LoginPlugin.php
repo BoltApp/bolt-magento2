@@ -40,7 +40,7 @@ class LoginPlugin extends AbstractLoginPlugin
 
         try {
             // Pass through the original result if the customer is not logged in or the cart is empty
-            if (!$this->shouldRedirectToCartPage()) {
+            if (!$this->shouldRedirectToCartPage($subject)) {
                 return $result;
             }
 
@@ -58,7 +58,7 @@ class LoginPlugin extends AbstractLoginPlugin
 
             // No errors, user was successfully logged in
             // Generate new result by adding redirect url to the original data
-            $response['redirectUrl'] = '/' . self::SHOPPING_CART_PATH;
+            $response['redirectUrl'] = $this->getStore()->getUrl(self::SHOPPING_CART_PATH, ['_secure' => true]);
 
             // Set the flag in session to auto-open Bolt checkout on redirected (shopping cart) page
             $this->setBoltInitiateCheckout();

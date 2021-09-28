@@ -17,12 +17,14 @@
 
 namespace Bolt\Boltpay\Plugin;
 
+use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\Controller\ResultInterface;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Store\Model\StoreManagerInterface as StoreManager;
 use Bolt\Boltpay\Helper\Bugsnag;
 
 abstract class AbstractLoginPlugin
@@ -53,6 +55,16 @@ abstract class AbstractLoginPlugin
      * @var Decider
      */
     private $decider;
+    
+    /**
+     * @var StoreManager
+     */
+    private $storeManager;
+    
+    /**
+     * @var Config
+     */
+    private $configHelper;
 
     /**
      * AbstractLoginPlugin constructor.
@@ -61,19 +73,25 @@ abstract class AbstractLoginPlugin
      * @param ResultFactory $resultFactory
      * @param Bugsnag $bugsnag
      * @param Decider $decider
+     * @param StoreManager $storeManager
+     * @param Config $configHelper
      */
     public function __construct(
         CustomerSession $customerSession,
         CheckoutSession $checkoutSession,
         ResultFactory $resultFactory,
         Bugsnag $bugsnag,
-        Decider $decider
+        Decider $decider,
+        StoreManager $storeManager,
+        Config $configHelper
     ) {
         $this->customerSession = $customerSession;
         $this->checkoutSession = $checkoutSession;
         $this->resultFactory = $resultFactory;
         $this->bugsnag = $bugsnag;
         $this->decider = $decider;
+        $this->storeManager = $storeManager;
+        $this->configHelper = $configHelper;
     }
 
     /**
@@ -106,9 +124,12 @@ abstract class AbstractLoginPlugin
     /**
      * @return bool
      */
-    protected function shouldRedirectToCartPage()
+    protected function shouldRedirectToCartPage($subject)
     {
-        return $this->isCustomerLoggedIn()
+        
+        return $this->configHelper->isActive($this->getStore()->getId())
+            && $this->isRequestFromNonCheckoutPage($subject)
+            && $this->isCustomerLoggedIn()
             && !$this->decider->ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn()
             && $this->hasCart();
     }
@@ -128,5 +149,26 @@ abstract class AbstractLoginPlugin
     protected function notifyException($e)
     {
         $this->bugsnag->notifyException($e);
+    }
+    
+    /**
+     * @return \Magento\Store\Api\Data\StoreInterface
+     */
+    protected function getStore()
+    {
+        return $this->storeManager->getStore();
+    }
+    
+    /**
+     * @return bool
+     */
+    protected function isRequestFromNonCheckoutPage($subject)
+    {
+        $checkoutUrl = $this->getStore()->getUrl('checkout', ['_secure' => true]);
+        $checkoutUrlPath = trim(parse_url($checkoutUrl, PHP_URL_PATH), '/');
+        $requestRefererUrl = (string)$subject->getRequest()->getServer('HTTP_REFERER');
+        $requestRefererUrlPath = trim(parse_url($requestRefererUrl, PHP_URL_PATH), '/');
+
+        return $checkoutUrlPath !== $requestRefererUrlPath;
     }
 }
