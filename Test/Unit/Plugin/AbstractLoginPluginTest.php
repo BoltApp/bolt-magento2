@@ -30,6 +30,7 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Customer\Model\Session;
 use Bolt\Boltpay\Helper\Config;
 use Magento\Customer\Controller\Ajax\Login;
+use Laminas\Stdlib\Parameters;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\AbstractLoginPlugin
@@ -203,6 +204,10 @@ class AbstractLoginPluginTest extends BoltTestCase
             ]
         ];
         TestUtils::setupBoltConfig($configData);
+        
+        $parameters = $this->objectManager->create(Parameters::class);
+        $parameters->set('HTTP_REFERER', $this->storeManager->getStore()->getUrl('test'));
+        $login->getRequest()->setServer($parameters);
 
         $reflection = TestHelper::getReflectedClass(get_parent_class($this->abstractLoginPlugin));
         $reflectionProperty = $reflection->getProperty('checkoutSession');
