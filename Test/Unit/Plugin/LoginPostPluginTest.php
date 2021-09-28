@@ -25,6 +25,8 @@ use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Customer\Controller\Account\LoginPost;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Magento\Store\Model\StoreManagerInterface as StoreManager;
+use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
  * Class LoginPostPluginTest
@@ -55,6 +57,12 @@ class LoginPostPluginTest extends BoltTestCase
 
     /** @var @var Decider */
     private $decider;
+    
+    /** @var StoreManager */
+    private $storeManager;
+    
+    /** @var Config */
+    private $configHelper;
 
     public function setUpInternal()
     {
@@ -70,6 +78,8 @@ class LoginPostPluginTest extends BoltTestCase
         );
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->loginPost = $this->createMock(LoginPost::class);
+        $this->storeManager = $this->createMock(StoreManager::class);
+        $this->configHelper = $this->createMock(Config::class);
         $this->decider = $this->createPartialMock(
             Decider::class,
             ['ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn']

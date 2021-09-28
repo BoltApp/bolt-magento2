@@ -52,12 +52,21 @@ class AbstractLoginPluginTest extends BoltTestCase
      * @var Config
      */
     private $configHelper;
+    
+    /**
+     * @var StoreManager
+     */
+    private $storeManager;
+    
+    private $storeId;
 
     public function setUpInternal()
     {
         $this->objectManager = Bootstrap::getObjectManager();
         $this->checkoutSession = $this->objectManager->create(CheckoutSession::class);
         $this->configHelper = $this->objectManager->create(Config::class);
+        $this->storeManager = $this->objectManager->get(StoreManagerInterface::class);
+        $this->storeId = $this->storeManager->getStore()->getId();
         $this->abstractLoginPlugin = $this->objectManager->create(\Bolt\Boltpay\Plugin\LoginPlugin::class);
     }
 
@@ -184,6 +193,16 @@ class AbstractLoginPluginTest extends BoltTestCase
         $quote->addProduct($product, 1);
         $quote->save();
         $this->checkoutSession->replaceQuote($quote);
+        
+        $configData = [
+            [
+                'path' => Config::XML_PATH_ACTIVE,
+                'value' => true,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
 
         $reflection = TestHelper::getReflectedClass(get_parent_class($this->abstractLoginPlugin));
         $reflectionProperty = $reflection->getProperty('checkoutSession');
