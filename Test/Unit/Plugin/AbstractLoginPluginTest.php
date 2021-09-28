@@ -28,6 +28,8 @@ use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Customer\Model\Session;
+use Bolt\Boltpay\Helper\Config;
+use Magento\Customer\Controller\Ajax\Login;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\AbstractLoginPlugin
@@ -45,11 +47,17 @@ class AbstractLoginPluginTest extends BoltTestCase
     private $checkoutSession;
 
     private $objectManager;
+    
+    /**
+     * @var Config
+     */
+    private $configHelper;
 
     public function setUpInternal()
     {
         $this->objectManager = Bootstrap::getObjectManager();
         $this->checkoutSession = $this->objectManager->create(CheckoutSession::class);
+        $this->configHelper = $this->objectManager->create(Config::class);
         $this->abstractLoginPlugin = $this->objectManager->create(\Bolt\Boltpay\Plugin\LoginPlugin::class);
     }
 
@@ -156,8 +164,9 @@ class AbstractLoginPluginTest extends BoltTestCase
      */
     public function shouldRedirectToCartPage_ifShouldDisableRedirectCustomerToCartPageAfterTheyLogInIsFalse_willReturnFalse()
     {
+        $login = $this->objectManager->create(Login::class);
         $featureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN, true);
-        $this->assertFalse(TestHelper::invokeMethod($this->abstractLoginPlugin, 'shouldRedirectToCartPage'));
+        $this->assertFalse(TestHelper::invokeMethod($this->abstractLoginPlugin, 'shouldRedirectToCartPage', [$login]));
         TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
@@ -166,6 +175,7 @@ class AbstractLoginPluginTest extends BoltTestCase
      */
     public function shouldRedirectToCartPage_willReturnTrue()
     {
+        $login = $this->objectManager->create(Login::class);
         $featureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_IF_SHOULD_DISABLE_REDIRECT_CUSTOMER_TO_CART_PAGE_AFTER_THEY_LOG_IN, false);
         $this->setCustomerAsLoggedIn('johnmc@bolt.com');
 
@@ -179,7 +189,7 @@ class AbstractLoginPluginTest extends BoltTestCase
         $reflectionProperty = $reflection->getProperty('checkoutSession');
         $reflectionProperty->setAccessible(true);
         $reflectionProperty->setValue($this->abstractLoginPlugin, $this->checkoutSession);
-        $this->assertTrue(TestHelper::invokeMethod($this->abstractLoginPlugin, 'shouldRedirectToCartPage'));
+        $this->assertTrue(TestHelper::invokeMethod($this->abstractLoginPlugin, 'shouldRedirectToCartPage', [$login]));
 
         TestUtils::cleanupFeatureSwitch($featureSwitch);
     }

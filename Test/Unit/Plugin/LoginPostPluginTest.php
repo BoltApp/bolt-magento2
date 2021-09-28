@@ -84,7 +84,9 @@ class LoginPostPluginTest extends BoltTestCase
                 $this->checkoutSession,
                 $this->resultFactory,
                 $this->bugsnag,
-                $this->decider
+                $this->decider,
+                $this->storeManager,
+                $this->configHelper
             ])
             ->getMock();
     }
