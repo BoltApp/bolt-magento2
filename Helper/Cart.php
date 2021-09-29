@@ -2790,7 +2790,13 @@ class Cart extends AbstractHelper
     {
         list ($cartItems,,) = $this->getCartItems($quote, $quote->getStoreId(), 0, 0, false);
         foreach ($cartItems as $item) {
-            $product = $this->productRepository->getById($item['reference']);
+            try {
+                // To support some 3p plugins, we may add fee/gift wrapping as cart item,
+                // but those items are not actual products in store.
+                $product = $this->productRepository->getById($item['reference']);
+            } catch (NoSuchEntityException $e) {
+                continue;
+            }
             if ($product->getTypeId() == \Magento\Bundle\Model\Product\Type::TYPE_CODE) {
                 if (!$product->isAvailable()) {
                     $this->bugsnag->registerCallback(function ($report) use ($item) {   
