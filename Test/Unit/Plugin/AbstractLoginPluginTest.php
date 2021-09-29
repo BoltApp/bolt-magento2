@@ -30,7 +30,7 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Customer\Model\Session;
 use Bolt\Boltpay\Helper\Config;
 use Magento\Customer\Controller\Ajax\Login;
-use Bolt\Boltpay\Test\Unit\Parameters;
+use Zend\Stdlib\Parameters;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\AbstractLoginPlugin
