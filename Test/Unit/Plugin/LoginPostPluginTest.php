@@ -26,6 +26,8 @@ use Magento\Framework\Controller\ResultFactory;
 use Magento\Customer\Controller\Account\LoginPost;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Store\Model\StoreManagerInterface as StoreManager;
+use Bolt\Boltpay\Helper\Config;
+use Zend\Stdlib\Parameters;
 /**
  * Class LoginPostPluginTest
  * @package Bolt\Boltpay\Test\Unit\Plugin\Magento\GiftCard
