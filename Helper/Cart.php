@@ -2489,7 +2489,9 @@ class Cart extends AbstractHelper
             // Therefore, we can rely on it in generating the cache identifier.
             $cacheIdentifier = $this->getCartCacheIdentifier($request);
             if ($cart = $this->loadFromCache($cacheIdentifier)) {
-                return $cart;
+                if (!$this->getOrderByQuoteId($cart['order_reference'])) {
+                    return $cart;
+                }
             }
         }
 
