@@ -209,6 +209,11 @@ class Js extends Template
      */
     public function getGlobalCSS()
     {
+        if ($this->isBoltOnCartDisabled()) {
+            // If Bolt is disabled on the cart page,
+            // we need to override the global css style to show M2 native checkout button
+            return $this->configHelper->getGlobalCSS() . 'button[data-role=proceed-to-checkout]{display:block!important;}';
+        }
         return $this->configHelper->getGlobalCSS();
     }
     
@@ -651,6 +656,21 @@ function($argName) {
     {
         $quote = $this->getQuoteFromCheckoutSession();
         return $quote ? !$quote->getItemsCount() : true;
+    }
+  
+    /**
+     * Returns configuration value for Bolt Order Caching
+     *
+     * @see \Bolt\Boltpay\Helper\Config::isBoltOrderCachingEnabled
+     *
+     * @param null $storeId
+     *
+     * @return bool
+     */
+    public function isBoltOnCartDisabled()
+    {
+        $storeId = $this->getStoreId();
+        return $this->isOnCartPage() && !$this->configHelper->getBoltOnCartPage($storeId);
     }
 
     /**

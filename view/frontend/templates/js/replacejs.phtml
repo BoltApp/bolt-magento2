@@ -25,6 +25,10 @@
 if ($block->shouldDisableBoltCheckout()) { return;
 }
 
+// If Bolt checkout is disabled on the cart page
+if ($block->isBoltOnCartDisabled()) { return;
+}
+
 //we need this script only for cart page, checkout page and other pages from white list
 //and for minicart is enabled
 //product page checkout has its own JS script

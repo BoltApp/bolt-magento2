@@ -332,6 +332,7 @@ JSON;
             ['shouldTrackCheckoutFunnel', BoltConfig::XML_PATH_TRACK_CHECKOUT_FUNNEL, false],
             ['getIsPreAuth', BoltConfig::XML_PATH_IS_PRE_AUTH],
             ['getMinicartSupport', BoltConfig::XML_PATH_MINICART_SUPPORT, false],
+            ['getBoltOnCartPage', BoltConfig::XML_PATH_BOLT_ON_CART_PAGE, false],
             ['useStoreCreditConfig', BoltConfig::XML_PATH_STORE_CREDIT],
             ['useAmastyStoreCreditConfig', BoltConfig::XML_PATH_AMASTY_STORE_CREDIT],
             ['useRewardPointsConfig', BoltConfig::XML_PATH_REWARD_POINTS, false],

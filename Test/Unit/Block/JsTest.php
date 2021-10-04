@@ -561,7 +561,15 @@ class JsTest extends BoltTestCase
         $value = '.replaceable-example-selector1 {
             color: red;
         }';
-
+        
+        $this->currentMock->expects(static::once())
+                          ->method('getRequest')
+                          ->willReturnSelf();
+                          
+        $this->currentMock->expects(static::once())
+                          ->method('getFullActionName')
+                          ->willReturn('catalog_product_view');
+            
         $this->configHelper->expects(static::once())
             ->method('getGlobalCSS')
             ->willReturn($value);
@@ -569,6 +577,45 @@ class JsTest extends BoltTestCase
         $result = $this->currentMock->getGlobalCSS();
 
         static::assertEquals($value, $result, 'getGlobalCSS() method: not working properly');
+    }
+    
+    /**
+     * @test
+     * that if Bolt is disabled on the cart page, getGlobalCSS returns global CSS from config as well as extra css to show native M2 checkout button.
+     *
+     * @see \Bolt\Boltpay\Helper\Config::getGlobalCSS
+     *
+     * @covers ::getGlobalCSS
+     */
+    public function getGlobalCSS_BoltOnCartDisabled_returnsCssCode()
+    {
+        $value = '.replaceable-example-selector1 {
+            color: red;
+        }';
+
+        $this->currentMock->expects(static::once())
+                          ->method('getRequest')
+                          ->willReturnSelf();
+                          
+        $this->currentMock->expects(static::once())
+                          ->method('getFullActionName')
+                          ->willReturn('checkout_cart_index');
+        
+        $this->configHelper->expects(static::once())
+            ->method('getBoltOnCartPage')
+            ->willReturn(false);
+            
+        $this->configHelper->expects(static::once())
+            ->method('getGlobalCSS')
+            ->willReturn($value);
+
+        $result = $this->currentMock->getGlobalCSS();
+        
+        $expectedResult = '.replaceable-example-selector1 {
+            color: red;
+        }button[data-role=proceed-to-checkout]{display:block!important;}';
+
+        static::assertEquals($expectedResult, $result, 'getGlobalCSS() method: not working properly');
     }
     
     /**
@@ -2144,7 +2191,8 @@ function(arg) {
             'getOrderManagementSelector',
             'getAdditionalCheckoutButtonAttributes',
             'isBoltOrderCachingEnabled',
-            'isBoltSSOEnabled'
+            'isBoltSSOEnabled',
+            'getBoltOnCartPage',
         ];
 
         $this->configHelper = $this->getMockBuilder(HelperConfig::class)
@@ -2560,6 +2608,67 @@ function(arg) {
         return [
             ['quoteItemsCount' => 0, 'expectedResult' => true],
             ['quoteItemsCount' => 1, 'expectedResult' => false],
+    }
+
+    /**
+     * 
+     * @see \Bolt\Boltpay\Block\Js::isBoltOnCartDisabled
+     *
+     * @dataProvider isBoltOnCartDisabled_withVariousConfigsProvider
+     *
+     * @covers ::isBoltOnCartDisabled
+     *
+     * @param bool $getBoltOnCartPage
+     * @param bool $fullActionName
+     * @param bool $expectedResult
+     */
+    public function isBoltOnCartDisabled_withVariousConfigs_returnsCorrectResult($getBoltOnCartPage, $fullActionName, $expectedResult)
+    {
+        $this->currentMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
+        $this->currentMock->expects(static::once())
+                          ->method('getRequest')
+                          ->willReturnSelf();
+        $this->currentMock->expects(static::once())
+                          ->method('getFullActionName')
+                          ->willReturn($fullActionName);
+        $this->configHelper->expects(($fullActionName == 'checkout_cart_index')
+                                    ? static::once() : static::never())
+                           ->method('getBoltOnCartPage')
+                           ->with(self::STORE_ID)
+                           ->willReturn($getBoltOnCartPage);
+        static::assertEquals($expectedResult, $this->currentMock->isBoltOnCartDisabled());
+    }
+    
+    /**
+     * Data provider for
+     *
+     * @see isBoltOnCartDisabled_withVariousConfigs_returnsCorrectResult
+     *
+     * @return array
+     */
+    public function isBoltOnCartDisabled_withVariousConfigsProvider()
+    {
+        return [
+            [
+                'getBoltOnCartPage' => true,
+                'fullActionName'    => 'checkout_cart_index',
+                'expectedResult'    => false
+            ],
+            [
+                'getBoltOnCartPage' => true,
+                'fullActionName'    => 'catalog_product_view',
+                'expectedResult'    => false
+            ],
+            [
+                'getBoltOnCartPage' => false,
+                'fullActionName'    => 'checkout_cart_index',
+                'expectedResult'    => true
+            ],
+            [
+                'getBoltOnCartPage' => false,
+                'fullActionName'    => 'catalog_product_view',
+                'expectedResult'    => false
+            ],
         ];
     }
 }

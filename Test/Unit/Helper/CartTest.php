@@ -5548,10 +5548,12 @@ ORDER
             ],
         ];
         $currentMock = $this->getCurrentMock(
-            ['createCart', 'isBoltOrderCachingEnabled', 'getCartCacheIdentifier', 'loadFromCache']
+            ['createCart', 'isBoltOrderCachingEnabled', 'getCartCacheIdentifier', 'loadFromCache','getOrderByQuoteId']
         );
         $currentMock->expects(static::once())->method('isBoltOrderCachingEnabled')->with(self::STORE_ID)
             ->willReturn(true);
+        $currentMock->expects(static::once())->method('getOrderByQuoteId')
+            ->willReturn(false);
         $currentMock->expects(static::once())->method('getCartCacheIdentifier')->with($request)
             ->willReturn(self::CACHE_IDENTIFIER);
         $currentMock->expects(static::once())->method('loadFromCache')->with(self::CACHE_IDENTIFIER)
