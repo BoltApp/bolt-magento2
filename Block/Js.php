@@ -648,17 +648,6 @@ function($argName) {
     }
     
     /**
-     * Is quote empty
-     *
-     * @return bool
-     */
-    public function isQuoteEmpty()
-    {
-        $quote = $this->getQuoteFromCheckoutSession();
-        return $quote ? !$quote->getItemsCount() : true;
-    }
-  
-    /**
      * Returns configuration value for Bolt Order Caching
      *
      * @see \Bolt\Boltpay\Helper\Config::isBoltOrderCachingEnabled

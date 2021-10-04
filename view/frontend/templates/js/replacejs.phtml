@@ -1572,9 +1572,6 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
         ?>
     });
 
-    <?php
-    if (!$block->isQuoteEmpty()) {
-    ?>
     if ((trim(location.pathname, '/') === 'checkout/cart') || (trim(location.pathname, '/') === 'checkout')) {
         require(['domReady!'], function() {
             require([
@@ -1600,10 +1597,20 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
                     expectCartRendering = false;
                     $(document).trigger('bolt:createOrder');
                 });
+            }, function (err) {
+                //The errback, error callback
+                var errLog = 'Error details: ' + err.message;
+                if (err.requireModules) {
+                    var failedIds = '';
+                    for (var key in err.requireModules) {
+                        if (err.requireModules.hasOwnProperty(key) && err.requireModules[key]) {
+                            failedIds = failedIds ? failedIds + ', ' + err.requireModules[key] : err.requireModules[key];
+                        }
+                    }
+                    errLog = 'Fails to load module(s): ' + failedIds + '. ' + errLog;
+                }
+                console.log(errLog);
             })
        })
     }
-    <?php
-    }
-    ?>
 </script>
