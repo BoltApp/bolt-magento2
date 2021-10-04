@@ -36,6 +36,7 @@ use Magento\Framework\Escaper;
 use Magento\Framework\Registry;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Store\Model\StoreManagerInterface;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 /**
  * Class DataTest
@@ -161,6 +162,11 @@ class DataTest extends BoltTestCase
      * @var Registry|\PHPUnit\Framework\MockObject\MockObject
      */
     private $coreRegistryMock;
+    
+    /**
+     * @var EventsForThirdPartyModules|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $eventsForThirdPartyModulesMock;
 
     protected function setUpInternal()
     {
@@ -265,6 +271,8 @@ class DataTest extends BoltTestCase
             Registry::class,
             ['unregister', 'register']
         );
+        $this->eventsForThirdPartyModulesMock = $this->createPartialMock(EventsForThirdPartyModules::class, ['dispatchEvent']);
+        $this->eventsForThirdPartyModulesMock->method('dispatchEvent')->willReturnSelf();
         $this->currentMock = $this->getMockBuilder(Data::class)
             ->setConstructorArgs(
                 [
@@ -276,6 +284,7 @@ class DataTest extends BoltTestCase
                     $this->metricsClientMock,
                     $this->dataObjectFactoryMock,
                     $this->coreRegistryMock,
+                    $this->eventsForThirdPartyModulesMock
                 ]
             )
             ->setMethods(['_getSession', '_initSession', '_getOrderCreateModel'])
@@ -316,7 +325,8 @@ class DataTest extends BoltTestCase
             $this->bugsnagHelperMock,
             $this->metricsClientMock,
             $this->dataObjectFactoryMock,
-            $this->coreRegistryMock
+            $this->coreRegistryMock,
+            $this->eventsForThirdPartyModulesMock
         );
 
         static::assertAttributeEquals($this->resultJsonFactory, 'resultJsonFactory', $instance);
@@ -326,6 +336,7 @@ class DataTest extends BoltTestCase
         static::assertAttributeEquals($this->metricsClientMock, 'metricsClient', $instance);
         static::assertAttributeEquals($this->dataObjectFactoryMock, 'dataObjectFactory', $instance);
         static::assertAttributeEquals($this->coreRegistryMock, 'coreRegistry', $instance);
+        static::assertAttributeEquals($this->eventsForThirdPartyModulesMock, 'eventsForThirdPartyModules', $instance);
     }
 
     /**
@@ -364,7 +375,8 @@ class DataTest extends BoltTestCase
                     $this->bugsnagHelperMock,
                     $this->metricsClientMock,
                     $this->dataObjectFactoryMock,
-                    $this->coreRegistryMock
+                    $this->coreRegistryMock,
+                    $this->eventsForThirdPartyModulesMock
                 ]
             )
             ->getMock();
@@ -422,7 +434,8 @@ class DataTest extends BoltTestCase
                     $this->bugsnagHelperMock,
                     $this->metricsClientMock,
                     $this->dataObjectFactoryMock,
-                    $this->coreRegistryMock
+                    $this->coreRegistryMock,
+                    $this->eventsForThirdPartyModulesMock
                 ]
             )
             ->getMock();
@@ -469,7 +482,8 @@ class DataTest extends BoltTestCase
                     $bugsnag,
                     $this->metricsClientMock,
                     $this->dataObjectFactoryMock,
-                    $this->coreRegistryMock
+                    $this->coreRegistryMock,
+                    $this->eventsForThirdPartyModulesMock
                 ]
             )
             ->getMock();
