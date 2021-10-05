@@ -404,7 +404,7 @@
                     <field id="rossignol_exclude_ppc_attributes" translate="label" type="text" sortOrder="251" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Exclude item groups from product page checkout</label>
                         <config_path>payment/boltpay/rossignol_exclude_ppc_attributes</config_path>
-                        <if_module_enabled>Project_RossignolNoram</if_module_enabled>
+                        <if_module_enabled>Project_Rossignol</if_module_enabled>
                     </field>
                 </group>
             </group>
