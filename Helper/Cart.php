@@ -1790,7 +1790,7 @@ class Cart extends AbstractHelper
         // If the immutable quote is passed (i.e. discount code validation, bugsnag report generation)
         // load the parent quote, otherwise load the session quote
         /** @var Quote $quote */
-        $quote = $immutableQuote ?
+        $quote = ($immutableQuote && $immutableQuote->getBoltParentQuoteId() != $immutableQuote->getId()) ?
             $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
             $this->checkoutSession->getQuote();
 
@@ -2564,6 +2564,7 @@ class Cart extends AbstractHelper
         $quote->setIsActive(false);
         $this->saveQuote($quote);
         $this->sessionHelper->loadSession($quote, $metadata);
+        $this->checkoutSession = $this->sessionHelper->getCheckoutSession();
         //make sure we recollect totals
         $quote->setTotalsCollectedFlag(false);
         $this->eventsForThirdPartyModules->dispatchEvent("beforeGetCartDataForCreateCart", $quote, $this->sessionHelper->getCheckoutSession());
