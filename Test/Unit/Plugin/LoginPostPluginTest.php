@@ -25,7 +25,9 @@ use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\Controller\ResultFactory;
 use Magento\Customer\Controller\Account\LoginPost;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-
+use Magento\Store\Model\StoreManagerInterface as StoreManager;
+use Bolt\Boltpay\Helper\Config;
+use Zend\Stdlib\Parameters;
 /**
  * Class LoginPostPluginTest
  * @package Bolt\Boltpay\Test\Unit\Plugin\Magento\GiftCard
@@ -55,6 +57,12 @@ class LoginPostPluginTest extends BoltTestCase
 
     /** @var @var Decider */
     private $decider;
+    
+    /** @var StoreManager */
+    private $storeManager;
+    
+    /** @var Config */
+    private $configHelper;
 
     public function setUpInternal()
     {
@@ -70,6 +78,8 @@ class LoginPostPluginTest extends BoltTestCase
         );
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->loginPost = $this->createMock(LoginPost::class);
+        $this->storeManager = $this->createMock(StoreManager::class);
+        $this->configHelper = $this->createMock(Config::class);
         $this->decider = $this->createPartialMock(
             Decider::class,
             ['ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn']
@@ -84,7 +94,9 @@ class LoginPostPluginTest extends BoltTestCase
                 $this->checkoutSession,
                 $this->resultFactory,
                 $this->bugsnag,
-                $this->decider
+                $this->decider,
+                $this->storeManager,
+                $this->configHelper
             ])
             ->getMock();
     }
@@ -95,7 +107,7 @@ class LoginPostPluginTest extends BoltTestCase
      */
     public function afterExecute_ifShouldRedirectToCartPageIsFalse()
     {
-        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->willReturn(false);
+        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->with($this->loginPost)->willReturn(false);
         $this->plugin->expects(self::never())->method('setBoltInitiateCheckout');
         $this->plugin->afterExecute($this->loginPost, null);
     }
@@ -106,7 +118,7 @@ class LoginPostPluginTest extends BoltTestCase
      */
     public function afterExecute_ifShouldRedirectToCartPageIsTrue()
     {
-        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->willReturn(true);
+        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->with($this->loginPost)->willReturn(true);
         $this->plugin->expects(self::once())->method('setBoltInitiateCheckout');
         $this->resultFactory->expects(self::once())
             ->method('create')
@@ -127,7 +139,7 @@ class LoginPostPluginTest extends BoltTestCase
     public function afterExecute_throwException()
     {
         $expected = new \Exception('General Exception');
-        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->willThrowException($expected);
+        $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->with($this->loginPost)->willThrowException($expected);
 
         $this->plugin->expects(self::once())->method('notifyException')
             ->with($expected)->willReturnSelf();
