@@ -26,10 +26,9 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\ShippingAssignment;
 use Magento\Quote\Observer\Frontend\Quote\Address\CollectTotalsObserver;
 use Magento\Quote\Observer\Frontend\Quote\Address\VatValidator;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 use ReflectionException;
-use Bolt\Boltpay\Test\Unit\TestUtils;
-use Magento\Framework\App\ObjectManager;
-use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Magento\Quote\Observer\Frontend\Quote\Address\AddressCollectTotalsObserverPlugin
@@ -47,37 +46,59 @@ class AddressCollectTotalsObserverPluginTest extends BoltTestCase
     const STORE_ID = 1;
 
     /**
-     * @var VatValidator
+     * @var VatValidator|MockObject
      */
-    private $vatValidator;
+    private $vatValidatorMock;
 
     /**
-     * @var AddressCollectTotalsObserverPlugin
+     * @var AddressCollectTotalsObserverPlugin|MockObject
      */
-    private $addressCollectTotalsObserverPlugin;
+    private $currentMock;
 
     /**
-     * @var CollectTotalsObserver
+     * @var Quote|MockObject
      */
-    private $subject;
+    private $quoteMock;
 
     /**
-     * @var Observer
+     * @var CollectTotalsObserver|MockObject
      */
-    private $observer;
+    private $subjectMock;
 
-    private $objectManager;
+    /**
+     * @var Observer|MockObject
+     */
+    private $observerMock;
+
+    /**
+     * @var Customer|MockObject
+     */
+    private $customerMock;
 
     /**
      * Configure common test dependencies
      */
     protected function setUpInternal()
     {
-        $this->objectManager = Bootstrap::getObjectManager();
-        $this->vatValidator = $this->objectManager->create(VatValidator::class);
-        $this->subject = $this->objectManager->create(CollectTotalsObserver::class);
-        $this->addressCollectTotalsObserverPlugin = $this->objectManager->create(AddressCollectTotalsObserverPlugin::class);
-        $this->observer = $this->objectManager->create(Observer::class);
+        $this->vatValidatorMock = $this->createMock(VatValidator::class);
+        $this->currentMock = $this->getMockBuilder(AddressCollectTotalsObserverPlugin::class)
+            ->enableOriginalConstructor()
+            ->setConstructorArgs([$this->vatValidatorMock])
+            ->setMethods(['isEnabled'])
+            ->getMock();
+        $this->quoteMock = $this->createPartialMock(
+            Quote::class,
+            [
+                'getCustomer',
+                'setCustomerEmail',
+                'getCustomerEmail',
+            ]
+        );
+        $this->customerMock = $this->createMock(\Magento\Customer\Model\Data\Customer::class);
+        $this->quoteMock->method('getCustomer')->willReturn($this->customerMock);
+        $this->subjectMock = $this->createMock(CollectTotalsObserver::class);
+        $this->observerMock = $this->createPartialMock(Observer::class, ['getQuote', 'getShippingAssignment']);
+        $this->observerMock->method('getQuote')->willReturn($this->quoteMock);
     }
 
     /**
@@ -87,8 +108,8 @@ class AddressCollectTotalsObserverPluginTest extends BoltTestCase
      */
     public function __construct_always_setsProperty()
     {
-        $instance = new AddressCollectTotalsObserverPlugin($this->vatValidator);
-        static::assertAttributeEquals($this->vatValidator, 'vatValidator', $instance);
+        $instance = new AddressCollectTotalsObserverPlugin($this->vatValidatorMock);
+        static::assertAttributeEquals($this->vatValidatorMock, 'vatValidator', $instance);
     }
 
     /**
@@ -99,11 +120,12 @@ class AddressCollectTotalsObserverPluginTest extends BoltTestCase
      */
     public function beforeExecute_ifEmailIsNotCollected_collectsCustomerEmail()
     {
-        $quote = TestUtils::createQuote();
-        $quote->setCustomerEmail(self::EMAIL);
-        $this->observer->setData('quote', $quote);
-        $this->addressCollectTotalsObserverPlugin->beforeExecute($this->subject, $this->observer);
-        static::assertAttributeEquals(self::EMAIL, 'emailBefore', $this->addressCollectTotalsObserverPlugin);
+        $this->observerMock->method('getQuote')->willReturn($this->quoteMock);
+        $this->quoteMock->expects(static::once())->method('getCustomerEmail')->willReturn(self::EMAIL);
+        $this->currentMock->beforeExecute($this->subjectMock, $this->observerMock);
+        static::assertAttributeEquals(self::EMAIL, 'emailBefore', $this->currentMock);
+        $this->currentMock->beforeExecute($this->subjectMock, $this->observerMock);
+        static::assertAttributeEquals(self::EMAIL, 'emailBefore', $this->currentMock);
     }
 
     /**
@@ -128,23 +150,7 @@ class AddressCollectTotalsObserverPluginTest extends BoltTestCase
         $customerId,
         $expectRestore
     ) {
-
-        $quoteMock = $this->createPartialMock(
-            Quote::class,
-            [
-                'getCustomer',
-                'setCustomerEmail',
-            ]
-        );
-        $customerMock = $this->createMock(\Magento\Customer\Model\Data\Customer::class);
-        $vatValidatorMock = $this->createMock(VatValidator::class);
-        $subjectMock = $this->createMock(CollectTotalsObserver::class);
-        $observerMock = $this->createPartialMock(Observer::class, ['getQuote', 'getShippingAssignment']);
-        $observerMock->method('getQuote')->willReturn($quoteMock);
-        $quoteMock->method('getCustomer')->willReturn($customerMock);
-
-        TestHelper::setProperty($this->addressCollectTotalsObserverPlugin, 'emailBefore', self::EMAIL);
-        TestHelper::setProperty($this->addressCollectTotalsObserverPlugin, 'vatValidator', $vatValidatorMock);
+        TestHelper::setProperty($this->currentMock, 'emailBefore', self::EMAIL);
         $shippingAssignmentMock = $this->createPartialMock(
             ShippingAssignment::class,
             ['getShipping', 'getAddress']
@@ -152,19 +158,19 @@ class AddressCollectTotalsObserverPluginTest extends BoltTestCase
         $shippingAssignmentMock->method('getShipping')->willReturnSelf();
         $quoteAddressMock = $this->createMock(Quote\Address::class);
         $shippingAssignmentMock->method('getAddress')->willReturn($quoteAddressMock);
-        $customerMock->method('getStoreId')->willReturn(self::STORE_ID);
-        $observerMock->method('getShippingAssignment')->willReturn($shippingAssignmentMock);
-        $customerMock->method('getDisableAutoGroupChange')->willReturn($customerDisableAutoGroupChange);
-        $vatValidatorMock->method('isEnabled')->with($quoteAddressMock, self::STORE_ID)
+        $this->customerMock->method('getStoreId')->willReturn(self::STORE_ID);
+        $this->observerMock->method('getShippingAssignment')->willReturn($shippingAssignmentMock);
+        $this->customerMock->method('getDisableAutoGroupChange')->willReturn($customerDisableAutoGroupChange);
+        $this->vatValidatorMock->method('isEnabled')->with($quoteAddressMock, self::STORE_ID)
             ->willReturn($vatValidatorIsEnabledForAddress);
-        $customerMock->method('getId')->willReturn($customerId);
+        $this->customerMock->method('getId')->willReturn($customerId);
 
-        $quoteMock->expects($expectRestore ? static::once() : static::never())->method('setCustomerEmail')
+        $this->quoteMock->expects($expectRestore ? static::once() : static::never())->method('setCustomerEmail')
             ->with(self::EMAIL);
-        $customerMock->expects($expectRestore ? static::once() : static::never())->method('setEmail')
+        $this->customerMock->expects($expectRestore ? static::once() : static::never())->method('setEmail')
             ->with(self::EMAIL);
         $result = null;
-        static::assertSame($result, $this->addressCollectTotalsObserverPlugin->afterExecute($subjectMock, $result, $observerMock));
+        static::assertSame($result, $this->currentMock->afterExecute($this->subjectMock, $result, $this->observerMock));
     }
 
     /**
