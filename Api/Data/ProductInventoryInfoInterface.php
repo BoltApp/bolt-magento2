@@ -29,7 +29,7 @@ interface ProductInventoryInfoInterface
      * Get product info.
      *
      * @api
-     * @return \Magento\Catalog\Api\Data\ProductInterface
+     * @return Bolt\Boltpay\Api\Data\ProductInterface
      */
     public function getProduct();
 
@@ -37,7 +37,7 @@ interface ProductInventoryInfoInterface
      * Set product info.
      *
      * @api
-     * @param \Magento\Catalog\Api\Data\ProductInterface $product
+     * @param Bolt\Boltpay\Api\Data\ProductInterface $product
      * @return $this
      */
     public function setProduct($product);
