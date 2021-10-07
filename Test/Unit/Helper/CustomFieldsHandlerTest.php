@@ -19,167 +19,139 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\CustomFieldsHandler;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use Magento\Framework\App\Helper\Context;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\Framework\ObjectManager\ObjectManager;
 use Magento\Newsletter\Model\SubscriberFactory;
-use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Sales\Model\Order;
 use Magento\Quote\Model\Quote\Address;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\CustomFieldsHandler
  */
 class CustomFieldsHandlerTest extends BoltTestCase
 {
-
     const EMAIL = 'test@bolt.com';
     const USER_ID = 1;
-    /**
-     * @var Context
-     */
-    private $context;
 
     /**
-     * @var SubscriberFactory
+     * @var CustomFieldsHandler
      */
-    private $subscriberFactory;
+    private $customFieldsHandler;
 
     /**
-     * @var Bugsnag
+     * @var ObjectManager
      */
-    private $bugsnag;
+    private $objectManager;
 
-    private $orderMock;
-    private $subscriber;
-
+    private $customerId;
 
     public function setUpInternal()
     {
-        $this->context = $this->getMockBuilder(Context::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->customFieldsHandler = $this->objectManager->create(CustomFieldsHandler::class);
 
-        $this->subscriberFactory = $this->createMock(SubscriberFactory::class);
-        $this->bugsnag = $this->createMock(Bugsnag::class);
+        $store = Bootstrap::getObjectManager()->get(\Magento\Store\Model\StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
 
-        $this->initCurrentMock([]);
-    }
-
-    /**
-     * @param array $methods
-     * @param bool  $enableOriginalConstructor
-     * @param bool  $enableProxyingToOriginalMethods
-     */
-    private function initCurrentMock(
-        $methods = [],
-        $enableOriginalConstructor = true,
-        $enableProxyingToOriginalMethods = false
-    ) {
-        $builder = $this->getMockBuilder(CustomFieldsHandler::class)
-            ->setConstructorArgs(
-                [
-                    $this->context,
-                    $this->bugsnag,
-                    $this->subscriberFactory
-                ]
-            )
-            ->setMethods($methods);
-
-        if ($enableOriginalConstructor) {
-            $builder->enableOriginalConstructor();
-        } else {
-            $builder->disableOriginalConstructor();
-        }
-
-        if ($enableProxyingToOriginalMethods) {
-            $builder->enableProxyingToOriginalMethods();
-        } else {
-            $builder->disableProxyingToOriginalMethods();
-        }
-
-        $this->currentMock = $builder->getMock();
-    }
-
-    private function subscribeToNewsletter_setup()
-    {
-        $this->initCurrentMock([], true, true);
-        $this->orderMock = $this->createMock(Order::class);
-        $this->subscriber = $this->createMock(\Magento\Newsletter\Model\Subscriber::class);
-        $this->subscriberFactory->method('create')->willReturn($this->subscriber);
+        $websiteRepository = Bootstrap::getObjectManager()->get(\Magento\Store\Api\WebsiteRepositoryInterface::class);
+        $websiteId = $websiteRepository->get('base')->getId();
+        $customer = TestUtils::createCustomer(
+            $websiteId,
+            $storeId,
+            [
+                "street_address1" => "street",
+                "street_address2" => "",
+                "locality"        => "Los Angeles",
+                "region"          => "California",
+                'region_code'     => 'CA',
+                'region_id'       => '12',
+                "postal_code"     => "11111",
+                "country_code"    => "US",
+                "country"         => "United States",
+                "name"            => "lastname firstname",
+                "first_name"      => "firstname",
+                "last_name"       => "lastname",
+                "phone_number"    => "11111111",
+                "email_address"   => self::EMAIL,
+            ]
+        );
+        $this->customerId = $customer->getId();
     }
 
     /**
      * @test
-     * @covers ::subscribeToNewsletter
      */
     public function subscribeToNewsletter_guestUser()
     {
-        $this->subscribeToNewsletter_setup();
-        $this->orderMock->expects(self::once())->method('getCustomerId')->willReturn(null);
+        $orderMock = $this->createMock(Order::class);
+        $orderMock->expects(self::once())->method('getCustomerId')->willReturn(null);
 
         $addressMock = $this->createMock(Address::class);
         $addressMock->method('getEmail')->willReturn(self::EMAIL);
-        $this->orderMock->method('getBillingAddress')->willReturn($addressMock);
-
-        $this->subscriber->expects($this->once())->method('subscribe')->with(self::EMAIL);
-
-        $this->currentMock->subscribeToNewsletter($this->orderMock);
+        $orderMock->method('getBillingAddress')->willReturn($addressMock);
+        $subscriber = $this->createMock(\Magento\Newsletter\Model\Subscriber::class);
+        $subscriberFactory = $this->createMock(SubscriberFactory::class);
+        $subscriberFactory->method('create')->willReturn($subscriber);
+        $subscriber->expects($this->once())->method('subscribe')->with(self::EMAIL);
+        TestHelper::setInaccessibleProperty($this->customFieldsHandler,'subscriberFactory', $subscriberFactory);
+        $this->customFieldsHandler->subscribeToNewsletter($orderMock);
     }
 
     /**
      * @test
-     *
-     * @covers ::subscribeToNewsletter
      */
     public function subscribeToNewsletter_loggedInUser()
     {
-        $this->subscribeToNewsletter_setup();
-        $this->orderMock->method('getCustomerId')->willReturn(self::USER_ID);
-
-        $this->subscriber->expects($this->once())->method('subscribeCustomerById')->with(self::USER_ID);
-
-        $this->currentMock->subscribeToNewsletter($this->orderMock);
+        $orderMock = $this->createMock(Order::class);
+        $orderMock->method('getCustomerId')->willReturn(self::USER_ID);
+        $subscriber = $this->createMock(\Magento\Newsletter\Model\Subscriber::class);
+        $subscriberFactory = $this->createMock(SubscriberFactory::class);
+        $subscriberFactory->method('create')->willReturn($subscriber);
+        $subscriber->expects($this->once())->method('subscribeCustomerById')->with(self::USER_ID);
+        TestHelper::setInaccessibleProperty($this->customFieldsHandler,'subscriberFactory', $subscriberFactory);
+        $this->customFieldsHandler->subscribeToNewsletter($orderMock);
     }
-
 
     /**
      * @test
      * @dataProvider handleCustomFieldsDataProvider
-     * @covers ::handle
+     *
+     * @param $customFields
+     * @param $comment
+     * @param $needSubscribe
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \ReflectionException
      */
     public function handle($customFields, $comment, $needSubscribe)
     {
-        $this->initCurrentMock(['subscribeToNewsletter']);
-        $this->orderMock = $this->createPartialMock(
-            Order::class,
-            [
-                'save',
-                'addCommentToStatusHistory'
-            ]
-        );
+        $subscriberFactory = $this->createPartialMock(SubscriberFactory::class,['create','subscribeCustomerById']);
+        if ($needSubscribe) {
+            $subscriber = $this->createMock(\Magento\Newsletter\Model\Subscriber::class);
+            $subscriberFactory->method('create')->willReturn($subscriber);
+            $subscriber->expects($this->once())->method('subscribeCustomerById')->with($this->customerId);
 
+        } else {
+            $subscriberFactory->expects($this->never())->method('create');
+        }
+        $order = TestUtils::createDumpyOrder(['customer_id' => $this->customerId]);
+
+        TestHelper::setInaccessibleProperty($this->customFieldsHandler, 'subscriberFactory', $subscriberFactory);
+
+        $this->customFieldsHandler->handle($order, $customFields);
         if ($comment) {
             $commentPrefix = 'BOLTPAY INFO :: customfields';
-            $this->orderMock->expects($this->once())->method('addCommentToStatusHistory')
-                ->with($commentPrefix.$comment);
-            $this->orderMock->expects($this->once())->method('save');
-        } else {
-            $this->orderMock->expects($this->never())->method('addCommentToStatusHistory');
-            $this->orderMock->expects($this->never())->method('save');
+            self::assertEquals($commentPrefix.$comment, $order->getAllStatusHistory()[0]->getComment());
         }
-        if ($needSubscribe) {
-            $this->currentMock->expects($this->once())->method('subscribeToNewsletter')
-                ->with($this->orderMock);
-        } else {
-            $this->currentMock->expects($this->never())->method('subscribeToNewsletter');
-        }
-        $this->currentMock->handle($this->orderMock, $customFields);
+        TestUtils::cleanupSharedFixtures([$order]);
     }
 
     public function handleCustomFieldsDataProvider()
     {
         $customField1 = ['label' => 'Gift', 'type' => 'CHECKBOX', 'is_custom_field' => true, 'value' => false];
         $comment1 = '<br>Gift: No';
-      
+
         $customField2 = ['label' => 'Question', 'type' => 'DROPDOWN', 'is_custom_field' => true, 'value' => 'Answer'];
         $comment2 = '<br>Question: Answer';
 
