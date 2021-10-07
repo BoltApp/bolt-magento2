@@ -36,7 +36,6 @@ use Magento\CatalogInventory\Api\StockConfigurationInterface;
 use Magento\Eav\Model\Config;
 
 
-
 class GetProduct implements GetProductInterface
 {
     /**
@@ -139,18 +138,14 @@ class GetProduct implements GetProductInterface
     private function getProduct($productID, $sku){
         $this->websiteId = $this->storeManager->getStore()->getWebsiteId();
         $productInventory = new ProductInventoryInfo();
-
         if ($productID != "") {
-            $product = $this->productRepositoryInterface->getById($productID, false, $this->websiteId, false);
-            $productInventory->setProduct($product);
-            $productInventory->setStock($this->getStockStatus($product));
-            $this->productData->setProductInventory($productInventory);
+            $product = $this->productRepositoryInterface->getById($productID, false, $this->websiteId, false);    
         } elseif ($sku != "") {
-            $product = $this->productRepositoryInterface->get($sku, false, $this->storeID, false);
-            $productInventory->setProduct($product);
-            $productInventory->setStock($this->getStockStatus($product));
-            $this->productData->setProductInventory($productInventory);
+            $product = $this->productRepositoryInterface->get($sku, false, $this->storeID, false);    
         }
+        $productInventory->setProduct($product);
+        $productInventory->setStock($this->getStockStatus($product));
+        $this->productData->setProductInventory($productInventory);
     }
 
 
@@ -163,7 +158,6 @@ class GetProduct implements GetProductInterface
             $parentProductInventory->setProduct($parentProduct);
             $parentProductInventory->setStock($this->getStockStatus($parentProduct));
             $this->productData->setParent($parentProductInventory);
-
 
             $children = $parentProduct->getTypeInstance()->getUsedProducts($parentProduct);
             $childrenStockArray = array();
@@ -221,7 +215,6 @@ class GetProduct implements GetProductInterface
             $this->productData->setStoreID($this->storeID);
             $baseImageUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
             $this->productData->setBaseImageUrl($baseImageUrl);
-
             $this->getProduct($productID, $sku);
             $this->getProductFamily();
             return $this->productData;

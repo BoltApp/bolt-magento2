@@ -27,7 +27,7 @@ use Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface;
 class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerializable
 {
     /**
-     * @var \Magento\Catalog\Api\Data\ProductInterface
+     * @var Bolt\Boltpay\Api\Data\ProductInterface
      */
     private $product;
 
@@ -41,7 +41,7 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
      * Get product info.
      *
      * @api
-     * @return \Magento\Catalog\Api\Data\ProductInterface
+     * @return Bolt\Boltpay\Api\Data\ProductInterface
      */
     public function getProduct()
     {
@@ -52,7 +52,7 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
      * Set product info.
      *
      * @api
-     * @param \Magento\Catalog\Api\Data\ProductInterface $product
+     * @param Bolt\Boltpay\Api\Data\ProductInterface $product
      *
      * @return $this
      */
