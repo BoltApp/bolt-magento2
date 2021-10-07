@@ -90,10 +90,12 @@ class GetAccount implements GetAccountInterface
     public function execute($email = '')
     {
         if (!$this->hookHelper->verifyRequest()) {
+            $this->bugsnag->notifyError('Get Account Error', 'Request is not authenticated.');
             throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
         }
 
         if ($email === '') {
+            $this->bugsnag->notifyError('Get Account Error', 'Missing email in the request body.');
             throw new WebapiException(__('Missing email in the request body.'), 0, WebapiException::HTTP_BAD_REQUEST);
         }
 
@@ -105,6 +107,7 @@ class GetAccount implements GetAccountInterface
             $this->response->setBody(json_encode(['id' => $customer->getId()]));
             $this->response->sendResponse();
         } catch (NoSuchEntityException $nsee) {
+            $this->bugsnag->notifyException($nsee);
             throw new NoSuchEntityException(__('Customer not found with given email.'));
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
