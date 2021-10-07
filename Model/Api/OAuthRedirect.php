@@ -195,10 +195,12 @@ class OAuthRedirect implements OAuthRedirectInterface
     public function login($code = '', $scope = '', $state = '', $reference = '')
     {
         if (!$this->deciderHelper->isBoltSSOEnabled()) {
+            $this->bugsnag->notifyError('OAuthRedirect', 'BoltSSO feature is disabled');
             throw new NoSuchEntityException(__('Request does not match any route.'));
         }
 
         if ($code === '' || $scope === '' || $state === '') {
+            $this->bugsnag->notifyError('OAuthRedirect', 'Bad Request');
             throw new WebapiException(__('Bad Request'), 0, WebapiException::HTTP_BAD_REQUEST);
         }
 
