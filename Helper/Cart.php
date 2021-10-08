@@ -2770,7 +2770,7 @@ class Cart extends AbstractHelper
                 foreach($errorInfos as $errorInfo){
                     // origin, code, message, additionalData keys always set but can equal null
                     if (!empty($errorInfo['origin']) || !empty($errorInfo['message'])) {
-                        $message .= sprintf("(%s): %s", (string)$item->getName(), !empty($errorInfo['message']) ? (string)$errorInfo['message'] : (string)$errorInfo['origin'], PHP_EOL);
+                        $message .= sprintf("(%s): %s%s", (string)$item->getName(), !empty($errorInfo['message']) ? (string)$errorInfo['message'] : (string)$errorInfo['origin'], PHP_EOL);
                     }
                 }
                 $this->bugsnag->registerCallback(function ($report) use ($errorInfos, $item) {
@@ -2794,9 +2794,7 @@ class Cart extends AbstractHelper
             $message = '';
             $errors = $quote->getErrors();
             foreach($errors as $error){
-                if (!empty($error)) {
-                    $message .= sprintf("%s", (string)$error, PHP_EOL);
-                }
+                $message .= sprintf("%s%s", (string)$error, PHP_EOL);
             }
             $this->bugsnag->registerCallback(function ($report) use ($errors, $quote) {
                 $report->setMetaData([
