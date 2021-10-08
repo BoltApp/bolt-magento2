@@ -242,6 +242,10 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                     var matchResult;
                     for (var index in compositeAttributes) {
                         var compositeAttribute = compositeAttributes[index];
+                        // Only build regular expression with string
+                        if (typeof compositeAttribute !== 'string' && !(compositeAttribute instanceof String)) {
+                            continue;
+                        }
                         if (matchResult = name.match(compositeAttribute+'\\[(\\d+)\\]')) {
                             if (!(compositeAttribute in options)) {
                                 options[compositeAttribute] = {};
