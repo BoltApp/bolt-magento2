@@ -56,6 +56,11 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
      * @var integer
      */
     private $storeID;
+    
+    /**
+     * @var array
+     */
+    private $bundleOptions;
 
 
     /**
@@ -207,6 +212,31 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
         $this->options = $options;
         return $this;
     }
+    
+    /**
+     * Get bundle options of bundle product.
+     *
+     * @api
+     * @return \Magento\Bundle\Api\Data\OptionInterface[]
+     */
+    public function getBundleOptions()
+    {
+        return $this->bundleOptions;
+    }
+
+    /**
+     * set bundle options of bundle product.
+     *
+     * @api
+     * @param \Magento\Bundle\Api\Data\OptionInterface[] $options
+     *
+     * @return $this
+     */
+    public function setBundleOptions($options)
+    {
+        $this->bundleOptions = $options;
+        return $this;
+    }
 
 
     /**
@@ -220,7 +250,8 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
             'parent' => $this->parent,
             'options' => $this->options,
             'baseImageUrl' => $this->baseImageUrl,
-            'storeID' => $this->storeID
+            'storeID' => $this->storeID,
+            'bundleOptions' => $this->bundleOptions
         ];
     }
 }
