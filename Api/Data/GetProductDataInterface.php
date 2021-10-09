@@ -131,4 +131,22 @@ interface GetProductDataInterface
      * @return $this
      */
     public function setStoreID($storeID);
+    
+    /**
+     * Get bundle options of bundle product.
+     *
+     * @api
+     * @return \Magento\Bundle\Api\Data\OptionInterface[]
+     */
+    public function getBundleOptions();
+
+    /**
+     * set bundle options of bundle product.
+     *
+     * @api
+     * @param \Magento\Bundle\Api\Data\OptionInterface[] $options
+     *
+     * @return $this
+     */
+    public function setBundleOptions($options);
 }

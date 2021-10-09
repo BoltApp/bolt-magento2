@@ -34,6 +34,9 @@ use Magento\CatalogInventory\Model\Spi\StockRegistryProviderInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\CatalogInventory\Api\StockConfigurationInterface;
 use Magento\Eav\Model\Config;
+use Magento\Bundle\Model\Product\Type as Bundle;
+use Magento\Bundle\Api\ProductOptionRepositoryInterface as BundleOptionRepository;
+use Magento\Bundle\Model\ResourceModel\Selection as BundleSelection;
 
 
 class GetProduct implements GetProductInterface
@@ -93,6 +96,16 @@ class GetProduct implements GetProductInterface
      * @var \Magento\Eav\Model\Config
      */
     private $eavConfig;
+    
+    /**
+     * @var BundleOptionRepository
+     */
+    private $bundleOptionRepository;
+    
+    /**
+     * @var BundleSelection
+     */
+    private $bundleSelection;
 
     /**
      * @param ProductRepositoryInterface $productRepositoryInterface
@@ -104,6 +117,8 @@ class GetProduct implements GetProductInterface
      * @param Config $eavConfig
      * @param HookHelper $hookHelper
      * @param Bugsnag $bugsnag
+     * @param BundleOptionRepository $bundleOptionRepository
+     * @param BundleSelection $bundleSelection
      */
     public function __construct(
         ProductRepositoryInterface  $productRepositoryInterface,
@@ -114,7 +129,9 @@ class GetProduct implements GetProductInterface
         Configurable          $configurable,
         Config $eavConfig,
         HookHelper $hookHelper,
-        Bugsnag $bugsnag
+        Bugsnag $bugsnag,
+        BundleOptionRepository $bundleOptionRepository,
+        BundleSelection $bundleSelection
     ) {
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockRegistry = $stockRegistry;
@@ -125,6 +142,8 @@ class GetProduct implements GetProductInterface
         $this->bugsnag = $bugsnag;
         $this->configurable = $configurable;
         $this->eavConfig = $eavConfig;
+        $this->bundleOptionRepository = $bundleOptionRepository;
+        $this->bundleSelection = $bundleSelection;
     }
 
     private function getStockStatus($product){
@@ -151,10 +170,11 @@ class GetProduct implements GetProductInterface
 
     private function getProductFamily(){
         $product = $this->productData->getProductInventory()->getProduct();
-        $parent = $this->configurable->getParentIdsByChild($product->getId());
-        if(isset($parent[0])){
+        $configurableParent = $this->configurable->getParentIdsByChild($product->getId());
+        $bundleParents = $this->bundleSelection->getParentIdsByChild($product->getId());
+        if (isset($configurableParent[0])){
             $parentProductInventory = new ProductInventoryInfo();
-            $parentProduct = $this->productRepositoryInterface->getById($parent[0], false, $this->storeID, false);
+            $parentProduct = $this->productRepositoryInterface->getById($configurableParent[0], false, $this->storeID, false);
             $parentProductInventory->setProduct($parentProduct);
             $parentProductInventory->setStock($this->getStockStatus($parentProduct));
             $this->productData->setParent($parentProductInventory);
@@ -174,6 +194,15 @@ class GetProduct implements GetProductInterface
             if ($parentProduct->getTypeId() == Configurable::TYPE_CODE) {
                 $this->collectConfigurableProductOptions($parentProduct);
             }
+        } elseif (isset($bundleParents[0])){
+            $parentProductInventory = new ProductInventoryInfo();
+            $parentProduct = $this->productRepositoryInterface->getById($bundleParents[0], false, $this->storeID, false);
+            $parentProductInventory->setProduct($parentProduct);
+            $parentProductInventory->setStock($this->getStockStatus($parentProduct));
+            $this->productData->setParent($parentProductInventory);
+            
+            $bundleOptions = $this->bundleOptionRepository->getList($parentProduct->getSku());
+            $this->productData->setBundleOptions($bundleOptions);
         } elseif ($product->getTypeId() == Configurable::TYPE_CODE) {
             $children = $product->getTypeInstance()->getUsedProducts($product);
             $childrenStockArray = array();
@@ -186,6 +215,9 @@ class GetProduct implements GetProductInterface
             $this->productData->setChildren($childrenStockArray);
 
             $this->collectConfigurableProductOptions($product);
+        } elseif ($product->getTypeId() == Bundle::TYPE_CODE) {
+            $bundleOptions = $this->bundleOptionRepository->getList($product->getSku());
+            $this->productData->setBundleOptions($bundleOptions);   
         }
     }
 
