@@ -162,6 +162,12 @@ class OrderManagement implements OrderManagementInterface
             HookHelper::$fromBolt = true;
 
             $this->logHelper->addInfoLog($this->request->getContent());
+            
+            if ($type == 'cart.create') {
+                $this->handleCartCreateApiCall();
+                $this->metricsClient->processMetric("webhooks.success", 1, "webhooks.latency", $startTime);
+                return;
+            }
 
             // get the store id. try fetching from quote first,
             // otherwise load it from order if there's one created
@@ -171,12 +177,6 @@ class OrderManagement implements OrderManagementInterface
             $this->logHelper->addInfoLog('StoreId: ' . $storeId);
 
             $this->hookHelper->preProcessWebhook($storeId);
-
-            if ($type == 'cart.create') {
-                $this->handleCartCreateApiCall();
-                $this->metricsClient->processMetric("webhooks.success", 1, "webhooks.latency", $startTime);
-                return;
-            }
 
             if ($type === 'pending') {
                 $this->orderHelper->saveCustomerCreditCard($reference, $storeId);
@@ -339,6 +339,10 @@ class OrderManagement implements OrderManagementInterface
                 __('Missing required parameters.')
             );
         }
+        
+        $storeId = isset($request['items'][0]['options']) ? (json_decode($request['items'][0]['options'], true))['storeId'] : null;
+        $this->logHelper->addInfoLog('StoreId: ' . $storeId);
+        $this->hookHelper->preProcessWebhook($storeId);
 
         $cart = $this->cartHelper->createCartByRequest($request);
         $this->response->setHttpResponseCode(200);
