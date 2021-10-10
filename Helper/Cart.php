@@ -2480,7 +2480,7 @@ class Cart extends AbstractHelper
     {
         $options = json_decode($request['items'][0]['options'], true);
         $storeId = $options['storeId'];
-
+        $this->eventsForThirdPartyModules->dispatchEvent("beforeHandleCreateCartRequest", $request, $storeId);
         // try returning from cache
         if ($isBoltOrderCachingEnabled = $this->isBoltOrderCachingEnabled($storeId)) {
             // $request contains Magento form_id as an item options property.

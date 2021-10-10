@@ -67,7 +67,7 @@ class Js extends Template
     /**
      * @var EventsForThirdPartyModules
      */
-    private $eventsForThirdPartyModules;
+    protected $eventsForThirdPartyModules;
 
     /**
      * @param Context                    $context

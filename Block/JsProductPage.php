@@ -99,7 +99,8 @@ class JsProductPage extends Js
      */
     public function isSupportableType()
     {
-        return in_array($this->_product->getTypeId(), Config::$supportableProductTypesForProductPageCheckout);
+        $isSupportableType = in_array($this->_product->getTypeId(), Config::$supportableProductTypesForProductPageCheckout);
+        return $this->eventsForThirdPartyModules->runFilter('filterPPCSupportableType', $isSupportableType, $this->_product, $this->getStoreId());
     }
 
     /**
@@ -186,5 +187,15 @@ class JsProductPage extends Js
             }
         }
         return false;
+    }
+    
+    /**
+     * Add additional javascript to check: function of callbacks for PPC
+     *
+     * @return string
+     */
+    public function getAdditionalCheckJavascriptForPPC()
+    {
+        return $this->eventsForThirdPartyModules->runFilter('filterAdditionalCheckJavascriptForPPC', '', $this->_product, $this->getStoreId());
     }
 }

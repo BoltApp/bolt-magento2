@@ -50,6 +50,8 @@ use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMe
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Preorder as Amasty_Preorder;
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\RewardPoints as MageWorx_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\ShippingRules as MageWorx_ShippingRules;
+use Bolt\Boltpay\ThirdPartyModules\Rossignol\Project\Rossignol as Rossignol_Project_Rossignol;
+use Bolt\Boltpay\ThirdPartyModules\Rossignol\Project\Core as Rossignol_Project_Core;
 use Exception;
 
 class EventsForThirdPartyModules
@@ -1112,6 +1114,20 @@ class EventsForThirdPartyModules
                     'module'      => 'Route_Route',
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
                     'boltClass'   => Route_Route::class,
+                ],
+            ],
+        ],
+        'filterShouldDisableBoltCheckout' => [
+            'listeners' => [
+                'Rossignol_Project_Rossignol' => [
+                    'module'      => 'Project_Rossignol',
+                    'checkClasses' => ["Project\Rossignol\Helper\Setup"],
+                    'boltClass'   => Rossignol_Project_Rossignol::class,
+                ],
+                'Rossignol_Project_Core' => [
+                    'module'      => 'Project_Core',
+                    'sendClasses' => ["Project\Core\Helper\Sales"],
+                    'boltClass'   => Rossignol_Project_Core::class,
                 ],
             ],
         ],
