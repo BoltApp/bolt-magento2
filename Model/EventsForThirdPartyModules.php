@@ -51,6 +51,7 @@ use Bolt\Boltpay\ThirdPartyModules\Amasty\Preorder as Amasty_Preorder;
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\RewardPoints as MageWorx_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\ShippingRules as MageWorx_ShippingRules;
 use Bolt\Boltpay\ThirdPartyModules\Rossignol\Synolia\MultiStock as Rossignol_Synolia_MultiStock;
+use Bolt\Boltpay\ThirdPartyModules\Rossignol\Synolia\Store as Rossignol_Synolia_Store;
 use Bolt\Boltpay\ThirdPartyModules\Rossignol\Project\Rossignol as Rossignol_Project_Rossignol;
 use Bolt\Boltpay\ThirdPartyModules\Rossignol\Project\Core as Rossignol_Project_Core;
 use Exception;
@@ -1018,6 +1019,11 @@ class EventsForThirdPartyModules
                         "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"
                     ],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
+                ],
+                'Rossignol_Synolia_Store' => [
+                    'module'      => 'Synolia_Store',
+                    'checkClasses' => ["Synolia\Store\Model\Carrier"],
+                    'boltClass'   => Rossignol_Synolia_Store::class,
                 ],
             ],
         ],
