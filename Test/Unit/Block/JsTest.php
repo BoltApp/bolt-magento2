@@ -1609,7 +1609,7 @@ JS;
 
         $currentMock->method('isIPRestricted')->willReturn($isIPRestricted);
         $currentMock->method('isKeyMissing')->willReturn($isKeyMissing);
-
+        $this->deciderMock->method('filterShouldDisableBoltCheckout')->willReturn(true);
         static::assertEquals(
             !$isBoltFeatureEnabled || !$isEnabled || $isPageRestricted || $isIPRestricted || $isKeyMissing,
             $currentMock->shouldDisableBoltCheckout()
