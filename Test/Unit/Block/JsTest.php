@@ -1609,9 +1609,11 @@ JS;
 
         $currentMock->method('isIPRestricted')->willReturn($isIPRestricted);
         $currentMock->method('isKeyMissing')->willReturn($isKeyMissing);
-        $this->deciderMock->method('filterShouldDisableBoltCheckout')->willReturn(true);
+        $expected_value = !$isBoltFeatureEnabled || !$isEnabled || $isPageRestricted || $isIPRestricted || $isKeyMissing;
+        $this->eventsForThirdPartyModules->expects(static::once())->method('runFilter')->with('filterShouldDisableBoltCheckout', $expected_value, $currentMock)->willReturn($expected_value);
+
         static::assertEquals(
-            !$isBoltFeatureEnabled || !$isEnabled || $isPageRestricted || $isIPRestricted || $isKeyMissing,
+            $expected_value,
             $currentMock->shouldDisableBoltCheckout()
         );
     }
