@@ -17,6 +17,8 @@
 
 namespace Bolt\Boltpay\ThirdPartyModules\Rossignol\Project;
 
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Bugsnag as BugsnagHelper;
 use Magento\Eav\Api\AttributeSetRepositoryInterface;
 use Magento\Catalog\Model\ProductRepository;
@@ -62,23 +64,35 @@ class Core
     public function filterShouldDisableBoltCheckout(
         $result,
         $projectSalesHelper,
+        $synoliaConfigHelper,
         $block,
         $quote
     ) {
         try {
+            $storeCode = $quote->getStore()->getCode();
+            $rev = $synoliaConfigHelper->getHandlesByEntityType('catalog_product', $storeCode);
+            $apparelItemGroups = [];
+            $skiItemGroups = [];
+            if (isset($rev['catalog_product_view_apparel'])) {
+                $catalogProductViewApparelReverse = array_reverse($rev['catalog_product_view_apparel']);
+                $catalogProductViewApparel = array_pop($catalogProductViewApparelReverse);
+                $apparelItemGroups = $catalogProductViewApparel['attribute_set_id']['value'];
+            }
+            if (isset($rev['catalog_product_view_ski'])) {
+                $catalogProductViewSkiReverse = array_reverse($rev['catalog_product_view_ski']);
+                $catalogProductViewSki = array_pop($catalogProductViewSkiReverse);
+                $skiItemGroups = $catalogProductViewSki['attribute_set_id']['value'];
+            }
             $disableTemplateList = ['Bolt_Boltpay::button_product_page.phtml'];
-            $skiItemGroups = 'A1,B1,F1,H1,H2,A9,B9,F9';
-            $apparelItemGroups = 'A2,A3,A5,B2,B3,F2,F3,H3,H4,H5,H6,H7,H8,H9,HA,N2,PS,S1,S8,TA,TB,TC,TD,TE,TF,TG,TH,TI,TJ,TK,TL,TM,TN,TO,TP,TQ,TR,TS,TT,TU,TW,TX,TY,TZ,L1,N5,R1,S7,TV';
             if (!$result
                 && 'catalog_product_view' === $block->getRequest()->getFullActionName()
                 && in_array($block->getTemplate(), $disableTemplateList)) {
                 $product = $block->getProduct();
-                $attributeSet = $this->attributeSetRepository->get($product->getAttributeSetId());
-                $attributeSetName = $attributeSet->getAttributeSetName();
-                if (in_array($attributeSetName, explode(',', $skiItemGroups))) {
+                $attributeSetId = $product->getAttributeSetId();
+                if (in_array($attributeSetId, explode(',', $skiItemGroups))) {
                     $isKit = $projectSalesHelper->isProductWithKit($product);
                     $canSell = $projectSalesHelper->isEcommFeaturesEnabled() && ($isKit || $projectSalesHelper->canSell($product));
-                } elseif (in_array($attributeSetName, explode(',', $apparelItemGroups))) {
+                } elseif (in_array($attributeSetId, explode(',', $apparelItemGroups))) {
                     $canSell = $projectSalesHelper->canSell($product);
                 } else {
                     $canSell = $product->isSaleable();

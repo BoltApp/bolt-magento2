@@ -399,9 +399,9 @@ class Config extends AbstractHelper
     const XML_PATH_ORDER_COMMENT_FIELD = 'payment/boltpay/order_comment_field';
     
     /**
-     * Exclude item groups from product page checkout configuration path. Customization for merchant Rossignol
+     * Item attributes which would be excluded from Bolt checkout. Customization for merchant Rossignol
      */
-    const XML_PATH_ROSSIGNOL_EXCLUDE_ATTRIBUTES_FROM_PPC = 'payment/boltpay/rossignol_exclude_ppc_attributes';
+    const XML_PATH_ROSSIGNOL_EXCLUDE_ATTRIBUTES = 'payment/boltpay/rossignol_exclude_attributes';
 
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
@@ -463,7 +463,7 @@ class Config extends AbstractHelper
         'should_minify_javascript'           => self::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
         'capture_merchant_metrics'           => self::XML_PATH_CAPTURE_MERCHANT_METRICS,
         'track_checkout_funnel'              => self::XML_PATH_TRACK_CHECKOUT_FUNNEL,
-        'rossignol_exclude_ppc_attributes'   => self::XML_PATH_ROSSIGNOL_EXCLUDE_ATTRIBUTES_FROM_PPC
+        'rossignol_exclude_attributes'       => self::XML_PATH_ROSSIGNOL_EXCLUDE_ATTRIBUTES
     ];
 
     /**
@@ -1895,8 +1895,8 @@ class Config extends AbstractHelper
             ->setValue(var_export($this->getOrderCommentField(), true));
         // Get Exclude item groups from product page checkout configuration. Customization for merchant Rossignol
         $boltSettings[] = $this->boltConfigSettingFactory->create()
-            ->setName('rossignol_exclude_ppc_attributes')
-            ->setValue(var_export($this->getRossignolExcludeItemAttributesFromPPCConfig(), true));
+            ->setName('rossignol_exclude_attributes')
+            ->setValue(var_export($this->getRossignolExcludeItemAttributesConfig(), true));
 
         return $boltSettings;
     }
@@ -2344,16 +2344,16 @@ class Config extends AbstractHelper
     }
     
     /**
-     * Get Exclude item groups from product page checkout configuration. Customization for merchant Rossignol
+     * Get item attributes which would be excluded from Bolt checkout. Customization for merchant Rossignol
      *
      * @param int|string|Store $store scope used for retrieving the configuration value
      *
      * @return bool Exclude item groups from product page checkout configuration flag
      */
-    public function getRossignolExcludeItemAttributesFromPPCConfig($store = null)
+    public function getRossignolExcludeItemAttributesConfig($store = null)
     {
         $attributeSetsList = $this->getScopeConfig()->getValue(
-            self::XML_PATH_ROSSIGNOL_EXCLUDE_ATTRIBUTES_FROM_PPC,
+            self::XML_PATH_ROSSIGNOL_EXCLUDE_ATTRIBUTES,
             ScopeInterface::SCOPE_STORE,
             $store
         );

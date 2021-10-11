@@ -418,6 +418,11 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <if_module_enabled>MageWorx_RewardPoints</if_module_enabled>
                     </field>
+                    <field id="rossignol_exclude_attributes" translate="label" type="text" sortOrder="251" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Exclude item groups from product page checkout</label>
+                        <config_path>payment/boltpay/rossignol_exclude_attributes</config_path>
+                        <if_module_enabled>Project_Rossignol</if_module_enabled>
+                    </field>
                 </group>
             </group>
         </section>

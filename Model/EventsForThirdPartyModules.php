@@ -1117,6 +1117,24 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        'filterPPCSupportableType' => [
+            'listeners' => [
+                'Rossignol_Project_Rossignol' => [
+                    'module'      => 'Project_Rossignol',
+                    'checkClasses' => ["Project\Rossignol\Helper\Setup"],
+                    'boltClass'   => Rossignol_Project_Rossignol::class,
+                ],
+            ],
+        ],
+        'filterAdditionalCheckJavascriptForPPC' => [
+            'listeners' => [
+                'Rossignol_Project_Rossignol' => [
+                    'module'      => 'Project_Rossignol',
+                    'checkClasses' => ["Project\Rossignol\Helper\Setup"],
+                    'boltClass'   => Rossignol_Project_Rossignol::class,
+                ],
+            ],
+        ],
         'filterShouldDisableBoltCheckout' => [
             'listeners' => [
                 'Rossignol_Project_Rossignol' => [
@@ -1126,7 +1144,8 @@ class EventsForThirdPartyModules
                 ],
                 'Rossignol_Project_Core' => [
                     'module'      => 'Project_Core',
-                    'sendClasses' => ["Project\Core\Helper\Sales"],
+                    'sendClasses' => ["Project\Core\Helper\Sales",
+                                      "Synolia\HandleManager\Helper\Config"],
                     'boltClass'   => Rossignol_Project_Core::class,
                 ],
             ],

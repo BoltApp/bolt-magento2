@@ -80,6 +80,8 @@ class Rossignol
     }
 
     /**
+     * Disable Bolt on the hard good product page.
+     * 
      * @param bool $result
      * @param \Magento\Catalog\Model\Product $product
      * @param int $storeId
@@ -91,7 +93,7 @@ class Rossignol
         $storeId
     ) {
         try {
-            $itemGroups = $this->configHelper->getRossignolExcludeItemAttributesFromPPCConfig($storeId);
+            $itemGroups = $this->configHelper->getRossignolExcludeItemAttributesConfig($storeId);
             if (!empty($itemGroups)) {
                 $attributeSet = $this->attributeSetRepository->get($product->getAttributeSetId());
                 if (in_array($attributeSet->getAttributeSetName(), $itemGroups)) {
@@ -106,6 +108,9 @@ class Rossignol
     }
     
     /**
+     * Build logic which routes the customer back to the legacy checkout or cart page
+     * if there is a hard good in the cart already when clicking the product page checkout button.
+     * 
      * @param string $result
      * @param \Magento\Catalog\Model\Product $product
      * @param int $storeId
@@ -124,40 +129,5 @@ class Rossignol
                         });
                         return false;
                     }';
-    }
-    
-    /**
-     * @param string $result
-     * @param \Magento\Catalog\Model\Product $product
-     * @param int $storeId
-     * @return string
-     */
-    public function filterShouldDisableBoltCheckout(
-        $result,
-        $block,
-        $quote
-    ) {
-        try {
-            $disableTemplateList = ['Bolt_Boltpay::button.phtml', 'Bolt_Boltpay::js/replacejs.phtml', 'Bolt_Boltpay::css/boltcss.phtml', 'Bolt_Boltpay::js/boltglobaljs.phtml'];
-            if (!$result
-                && 'checkout_cart_index' === $block->getRequest()->getFullActionName()
-                && in_array($block->getTemplate(), $disableTemplateList)) {
-                $storeId = $block->getStoreId();
-                $itemGroups = $this->configHelper->getRossignolExcludeItemAttributesFromPPCConfig($storeId);           
-                list ($quoteItems, ,) = $this->cartHelper->getCartItems($quote, $storeId);    
-                foreach ($quoteItems as $item) {
-                    $product = $this->productRepository->get($item['sku']);
-                    $attributeSet = $this->attributeSetRepository->get($product->getAttributeSetId());
-                    if (in_array($attributeSet->getAttributeSetName(), $itemGroups)) {
-                        $result = true;
-                        break;
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            $this->bugsnagHelper->notifyException($e);
-        } finally {
-            return $result;
-        }
     }
 }
