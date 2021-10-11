@@ -2754,7 +2754,7 @@ class Cart extends AbstractHelper
     }
     
     /**
-     * Check whether quote has some error associated with it.
+     * Check whether quote has any error associated with it, not only inventory error but also other types of error.
      *
      * @param \Magento\Quote\Model\Quote $quote
      * @param string $excCode
