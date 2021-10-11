@@ -451,7 +451,7 @@ class CartTest extends BoltTestCase
             DeciderHelper::class,
             ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical',
              'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata', 'isCustomizableOptionsSupport',
-             'isPreventBoltCartForQuotesWithError']
+             'isPreventBoltCartForQuotesWithError', 'isCheckQuoteErrBeforeProcess']
         );
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
@@ -6942,7 +6942,7 @@ ORDER
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(2001005);
         $this->expectExceptionMessage('(Test Product): This product is out of stock.');
-        
+        $this->deciderHelper->expects(self::once())->method('isCheckQuoteErrBeforeProcess')->willReturn(true);
         $currentMock = $this->getCurrentMock([]);
         TestHelper::invokeMethod(
             $currentMock,
@@ -6992,7 +6992,7 @@ ORDER
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(2001005);
         $this->expectExceptionMessage('(Test Product): The requested qty is not available');
-        
+        $this->deciderHelper->expects(self::once())->method('isCheckQuoteErrBeforeProcess')->willReturn(true);
         $currentMock = $this->getCurrentMock([]);
         TestHelper::invokeMethod(
             $currentMock,
@@ -7031,7 +7031,7 @@ ORDER
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(2001005);
         $this->expectExceptionMessage('Some of the products are out of stock.');
-        
+        $this->deciderHelper->expects(self::once())->method('isCheckQuoteErrBeforeProcess')->willReturn(true);
         $currentMock = $this->getCurrentMock([]);
         TestHelper::invokeMethod(
             $currentMock,
