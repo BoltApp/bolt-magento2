@@ -165,21 +165,18 @@ class Rossignol
     /**
      * Disable Bolt on the cart page if the cart contaisn any item has specific attribute (hard good).
      * 
-     * @param string $result
-     * @param \Magento\Catalog\Model\Product $product
-     * @param int $storeId
-     * @return string
+     * @param bool $result
+     * @param \Magento\Framework\View\Element\Template $block
+     * @return bool
      */
-    public function filterShouldDisableBoltCheckout(
-        $result,
-        $block,
-        $quote
-    ) {
+    public function filterShouldDisableBoltCheckout($result, $block) {
         try {
             $disableTemplateList = ['Bolt_Boltpay::button.phtml', 'Bolt_Boltpay::js/replacejs.phtml', 'Bolt_Boltpay::css/boltcss.phtml', 'Bolt_Boltpay::js/boltglobaljs.phtml'];
-            if (!$result
+            if (method_exists($block,'getCheckoutSession')
+                && !$result
                 && 'checkout_cart_index' === $block->getRequest()->getFullActionName()
                 && in_array($block->getTemplate(), $disableTemplateList)) {
+                $quote = $block->getCheckoutSession()->getQuote();
                 $storeId = $block->getStoreId();
                 $itemGroups = $this->configHelper->getRossignolExcludeItemAttributesConfig($storeId);           
                 list ($quoteItems, ,) = $this->cartHelper->getCartItems($quote, $storeId);    

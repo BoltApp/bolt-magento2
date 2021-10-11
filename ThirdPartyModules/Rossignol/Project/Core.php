@@ -65,40 +65,42 @@ class Core
         $result,
         $projectSalesHelper,
         $synoliaConfigHelper,
-        $block,
-        $quote
+        $block
     ) {
         try {
-            $storeCode = $quote->getStore()->getCode();
-            $rev = $synoliaConfigHelper->getHandlesByEntityType('catalog_product', $storeCode);
-            $apparelItemGroups = [];
-            $skiItemGroups = [];
-            if (isset($rev['catalog_product_view_apparel'])) {
-                $catalogProductViewApparelReverse = array_reverse($rev['catalog_product_view_apparel']);
-                $catalogProductViewApparel = array_pop($catalogProductViewApparelReverse);
-                $apparelItemGroups = $catalogProductViewApparel['attribute_set_id']['value'];
-            }
-            if (isset($rev['catalog_product_view_ski'])) {
-                $catalogProductViewSkiReverse = array_reverse($rev['catalog_product_view_ski']);
-                $catalogProductViewSki = array_pop($catalogProductViewSkiReverse);
-                $skiItemGroups = $catalogProductViewSki['attribute_set_id']['value'];
-            }
-            $disableTemplateList = ['Bolt_Boltpay::button_product_page.phtml'];
-            if (!$result
-                && 'catalog_product_view' === $block->getRequest()->getFullActionName()
-                && in_array($block->getTemplate(), $disableTemplateList)) {
-                $product = $block->getProduct();
-                $attributeSetId = $product->getAttributeSetId();
-                if (in_array($attributeSetId, explode(',', $skiItemGroups))) {
-                    $isKit = $projectSalesHelper->isProductWithKit($product);
-                    $canSell = $projectSalesHelper->isEcommFeaturesEnabled() && ($isKit || $projectSalesHelper->canSell($product));
-                } elseif (in_array($attributeSetId, explode(',', $apparelItemGroups))) {
-                    $canSell = $projectSalesHelper->canSell($product);
-                } else {
-                    $canSell = $product->isSaleable();
+            if (method_exists($block,'getCheckoutSession')) {
+                $quote = $block->getCheckoutSession()->getQuote();
+                $storeCode = $quote->getStore()->getCode();
+                $rev = $synoliaConfigHelper->getHandlesByEntityType('catalog_product', $storeCode);
+                $apparelItemGroups = [];
+                $skiItemGroups = [];
+                if (isset($rev['catalog_product_view_apparel'])) {
+                    $catalogProductViewApparelReverse = array_reverse($rev['catalog_product_view_apparel']);
+                    $catalogProductViewApparel = array_pop($catalogProductViewApparelReverse);
+                    $apparelItemGroups = $catalogProductViewApparel['attribute_set_id']['value'];
                 }
-
-                $result = !$canSell;
+                if (isset($rev['catalog_product_view_ski'])) {
+                    $catalogProductViewSkiReverse = array_reverse($rev['catalog_product_view_ski']);
+                    $catalogProductViewSki = array_pop($catalogProductViewSkiReverse);
+                    $skiItemGroups = $catalogProductViewSki['attribute_set_id']['value'];
+                }
+                $disableTemplateList = ['Bolt_Boltpay::button_product_page.phtml'];
+                if (!$result
+                    && 'catalog_product_view' === $block->getRequest()->getFullActionName()
+                    && in_array($block->getTemplate(), $disableTemplateList)) {
+                    $product = $block->getProduct();
+                    $attributeSetId = $product->getAttributeSetId();
+                    if (in_array($attributeSetId, explode(',', $skiItemGroups))) {
+                        $isKit = $projectSalesHelper->isProductWithKit($product);
+                        $canSell = $projectSalesHelper->isEcommFeaturesEnabled() && ($isKit || $projectSalesHelper->canSell($product));
+                    } elseif (in_array($attributeSetId, explode(',', $apparelItemGroups))) {
+                        $canSell = $projectSalesHelper->canSell($product);
+                    } else {
+                        $canSell = $product->isSaleable();
+                    }
+    
+                    $result = !$canSell;
+                }
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);

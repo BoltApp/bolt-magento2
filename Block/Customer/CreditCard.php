@@ -25,6 +25,7 @@ use Magento\Theme\Block\Html\Pager;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory;
 use Magento\Customer\Model\Session;
 use Magento\Framework\Data\Form\FormKey;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 class CreditCard extends Template
 {
@@ -57,6 +58,7 @@ class CreditCard extends Template
      * @param FormKey $formKey
      * @param Config $configHelper
      * @param Decider $featureSwitches
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      * @param array $data
      */
     public function __construct(
@@ -66,6 +68,7 @@ class CreditCard extends Template
         FormKey $formKey,
         Config $configHelper,
         Decider $featureSwitches,
+        EventsForThirdPartyModules $eventsForThirdPartyModules,
         array $data = []
     ) {
         $this->formKey = $formKey;
@@ -73,6 +76,7 @@ class CreditCard extends Template
         $this->customerSession = $customerSession;
         $this->configHelper = $configHelper;
         $this->featureSwitches = $featureSwitches;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         parent::__construct($context, $data);
     }
 

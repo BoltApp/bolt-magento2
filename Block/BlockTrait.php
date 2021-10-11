@@ -18,6 +18,7 @@ namespace Bolt\Boltpay\Block;
 
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 
 trait BlockTrait
 {
@@ -29,6 +30,11 @@ trait BlockTrait
 
     /** @var Decider */
     protected $featureSwitches;
+    
+    /**
+     * @var EventsForThirdPartyModules
+     */
+    protected $eventsForThirdPartyModules;
 
     /**
      * @return mixed
@@ -157,7 +163,7 @@ trait BlockTrait
             return true;
         }
         $shouldDisableBoltCheckout = !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted() || $this->isKeyMissing();     
-        return $this->eventsForThirdPartyModules->runFilter('filterShouldDisableBoltCheckout', $shouldDisableBoltCheckout, $this, $this->checkoutSession->getQuote());
+        return $this->eventsForThirdPartyModules->runFilter('filterShouldDisableBoltCheckout', $shouldDisableBoltCheckout, $this);
     }
 
     /**

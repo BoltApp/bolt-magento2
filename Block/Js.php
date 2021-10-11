@@ -65,11 +65,6 @@ class Js extends Template
     private $bugsnag;
 
     /**
-     * @var EventsForThirdPartyModules
-     */
-    protected $eventsForThirdPartyModules;
-
-    /**
      * @param Context                    $context
      * @param Config                     $configHelper
      * @param CheckoutSession            $checkoutSession
@@ -757,5 +752,13 @@ function($argName) {
     {
         $storeId = $this->getStoreId();
         return $this->configHelper->getIsPreAuth($storeId);
+    }
+    
+    /**
+     * @return CheckoutSession
+     */
+    public function getCheckoutSession()
+    {
+        return $this->checkoutSession;
     }
 }
