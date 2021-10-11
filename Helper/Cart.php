@@ -2763,6 +2763,9 @@ class Cart extends AbstractHelper
      */
     public function checkQuoteErrorInfo($quote, $excCode)
     {
+        if (!$this->deciderHelper->isCheckQuoteErrBeforeProcess()) {
+            return;
+        }
         foreach ($quote->getAllVisibleItems() as $item) {
             if ($item->getHasError()) {
                 $message = '';
