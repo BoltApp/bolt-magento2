@@ -108,6 +108,37 @@ class Rossignol
     }
     
     /**
+     * Restrict Bolt checkout if the cart contains any hard good item.
+     * 
+     * @param array $result
+     * @param \Magento\Quote\Model\Quote $quote
+     * @return array
+     */
+    public function filterCartAndHints(
+        $result,
+        $quote
+    ) {
+        try {
+            $storeId = $quote->getStoreId();
+            $itemGroups = $this->configHelper->getRossignolExcludeItemAttributesConfig($storeId);
+            if (!empty($itemGroups) && !empty($result['cart']['items'])) {
+                foreach ($result['cart']['items'] as $item) {
+                    $product = $this->productRepository->get($item['sku']);
+                    $attributeSet = $this->attributeSetRepository->get($product->getAttributeSetId());
+                    if (in_array($attributeSet->getAttributeSetName(), $itemGroups)) {
+                        $result['restrict'] = true;
+                        break;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        } finally {
+            return $result;
+        } 
+    }
+    
+    /**
      * Build logic which routes the customer back to the legacy checkout or cart page
      * if there is a hard good in the cart already when clicking the product page checkout button.
      * 
@@ -129,5 +160,42 @@ class Rossignol
                         });
                         return false;
                     }';
+    }
+    
+    /**
+     * Disable Bolt on the cart page if the cart contaisn any item has specific attribute (hard good).
+     * 
+     * @param string $result
+     * @param \Magento\Catalog\Model\Product $product
+     * @param int $storeId
+     * @return string
+     */
+    public function filterShouldDisableBoltCheckout(
+        $result,
+        $block,
+        $quote
+    ) {
+        try {
+            $disableTemplateList = ['Bolt_Boltpay::button.phtml', 'Bolt_Boltpay::js/replacejs.phtml', 'Bolt_Boltpay::css/boltcss.phtml', 'Bolt_Boltpay::js/boltglobaljs.phtml'];
+            if (!$result
+                && 'checkout_cart_index' === $block->getRequest()->getFullActionName()
+                && in_array($block->getTemplate(), $disableTemplateList)) {
+                $storeId = $block->getStoreId();
+                $itemGroups = $this->configHelper->getRossignolExcludeItemAttributesConfig($storeId);           
+                list ($quoteItems, ,) = $this->cartHelper->getCartItems($quote, $storeId);    
+                foreach ($quoteItems as $item) {
+                    $product = $this->productRepository->get($item['sku']);
+                    $attributeSet = $this->attributeSetRepository->get($product->getAttributeSetId());
+                    if (in_array($attributeSet->getAttributeSetName(), $itemGroups)) {
+                        $result = true;
+                        break;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        } finally {
+            return $result;
+        }
     }
 }

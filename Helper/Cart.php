@@ -1871,7 +1871,8 @@ class Cart extends AbstractHelper
         if ($this->deciderHelper->isIncludeUserGroupIntoCart()) {
             $cart['metadata']['user_group_id'] = $this->getUserGroupId();
         }
-
+        
+        $cart = $this->eventsForThirdPartyModules->runFilter('filterBoltCartData', $cart, $quote, $immutableQuote, $placeOrderPayload, $paymentOnly);
         $this->sessionHelper->cacheFormKey($immutableQuote);
 
         // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
@@ -2663,6 +2664,8 @@ class Cart extends AbstractHelper
                 'hints'   => $hints,
                 'backUrl' => '',
             ];
+            
+            $result = $this->eventsForThirdPartyModules->runFilter('filterCartAndHints', $result, $this->checkoutSession->getQuote());
         } catch (BoltException $e) {
             $result = [
                 'status'   => 'success',

@@ -211,7 +211,7 @@ class CreateOrder implements CreateOrderInterface
                     self::E_BOLT_GENERAL_ERROR
                 );
             }
-
+            $this->eventsForThirdPartyModules->dispatchEvent("beforeHandleCreateOrderRequest", $order);
             $immutableQuoteId = $this->getQuoteIdFromPayloadOrder($order);
             /** @var Quote $immutableQuote */
             $immutableQuote = $this->loadQuoteData($immutableQuoteId);
