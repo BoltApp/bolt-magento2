@@ -1597,23 +1597,11 @@ JS;
                 'getRequest',
                 'getFullActionName'
             ]
-        )
-        ->setConstructorArgs(
-            [
-                $this->createMock(BlockContext::class),
-                $this->createMock(HelperConfig::class),
-                $this->createMock(Session::class),
-                $this->createMock(CartHelper::class),
-                $this->createMock(Bugsnag::class),
-                $this->createMock(Decider::class),
-                $eventsForThirdPartyModules,
-                $this->createMock(HttpContext::class),
-            ]
-        )
-        ->getMock();
+        );
         $this->deciderMock->method('isBoltEnabled')->willReturn($isBoltFeatureEnabled);
         TestHelper::setProperty($currentMock, 'featureSwitches', $this->deciderMock);
         TestHelper::setProperty($currentMock, 'configHelper', $this->configHelper);
+        TestHelper::setProperty($currentMock, 'eventsForThirdPartyModules', $this->eventsForThirdPartyModules);
         $currentMock->method('isEnabled')->willReturn($isEnabled);
 
         // stub \Bolt\Boltpay\Block\BlockTrait::isPageRestricted start
@@ -1624,7 +1612,7 @@ JS;
         $currentMock->method('isIPRestricted')->willReturn($isIPRestricted);
         $currentMock->method('isKeyMissing')->willReturn($isKeyMissing);
         $expected_value = !$isBoltFeatureEnabled || !$isEnabled || $isPageRestricted || $isIPRestricted || $isKeyMissing;
-        $eventsForThirdPartyModules->expects($isBoltFeatureEnabled ? static::once() : static::never())->method('runFilter')->with('filterShouldDisableBoltCheckout', $expected_value, $currentMock)->willReturn($expected_value);
+        $this->eventsForThirdPartyModules->expects($isBoltFeatureEnabled ? static::once() : static::never())->method('runFilter')->with('filterShouldDisableBoltCheckout', $expected_value, $currentMock)->willReturn($expected_value);
 
         static::assertEquals(
             $expected_value,
