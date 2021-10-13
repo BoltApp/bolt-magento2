@@ -391,4 +391,12 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE);
     }
+    
+    /**
+     * Checks whether the feature switch to check quote errors before processing
+     */
+    public function isCheckQuoteErrBeforeProcess()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_CHECK_QUOTE_ERROR_BEFORE_PROCESS);
+    }
 }
