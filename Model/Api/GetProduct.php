@@ -237,13 +237,15 @@ class GetProduct implements GetProductInterface
      */
     public function execute($productID = '', $sku = '')
     {
+        $store = $this->storeManager->getStore();
+        $this->storeID = $store->getId();
+        $this->hookHelper->preProcessWebhook($this->storeID);
+
         if ($productID === '' && $sku ==='') {
             throw new WebapiException(__('Missing a product ID or a sku in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
         }
 
         try {
-            $store = $this->storeManager->getStore();
-            $this->storeID = $store->getId();
             $this->productData->setStoreID($this->storeID);
             $baseImageUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_MEDIA) . 'catalog/product';
             $this->productData->setBaseImageUrl($baseImageUrl);
