@@ -204,7 +204,7 @@ class Hook extends AbstractHelper
     public function verifyWebhook()
     {
         if ($this->request->getHttpMethod() == "GET") {
-            $url = $this->getRequestUri();
+            $url = $this->request->getRequestUri();
             $payload = parse_url($url, PHP_URL_QUERY);
         } else {
             $payload = $this->request->getContent();
