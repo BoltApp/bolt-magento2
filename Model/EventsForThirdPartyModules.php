@@ -48,6 +48,7 @@ use Bolt\Boltpay\ThirdPartyModules\Route\Route as Route_Route;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMedia_TmwGiftCard;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Preorder as Amasty_Preorder;
+use Bolt\Boltpay\ThirdPartyModules\Amasty\Promo as Amasty_Promo;
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\RewardPoints as MageWorx_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\ShippingRules as MageWorx_ShippingRules;
 use Exception;
@@ -455,6 +456,15 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        "filterGetBoltCollectSaleRuleDiscounts" => [
+            "listeners" => [
+                [
+                    "module" => "Amasty_Promo",
+                    "checkClasses" => ["Amasty\Promo\Api\Data\GiftRuleInterface"],
+                    "boltClass" => Amasty_Promo::class,
+                ],
+            ],
+        ],
         "collectDiscounts" => [
             "listeners" => [
                 [
@@ -469,6 +479,11 @@ class EventsForThirdPartyModules
                         "Aheadworks\RewardPoints\Model\Config"
                     ],
                     "boltClass" => Aheadworks_RewardPoints::class,
+                ],
+                [
+                    "module" => "Amasty_Promo",
+                    "checkClasses" => ["Amasty\Promo\Api\Data\GiftRuleInterface"],
+                    "boltClass" => Amasty_Promo::class,
                 ],
                 [
                     "module" => "Mirasvit_Rewards",
