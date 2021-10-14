@@ -181,8 +181,8 @@ class ShippingMethodsTest extends BoltTestCase
         $this->request->getHeaders()->addHeaderLine('Content-Type', 'application/json');
 
         $this->request->setParams($bodyParams);
-
         $this->request->setContent($requestContent);
+        $this->request->setMethod("POST");
 
         return $this->request;
     }

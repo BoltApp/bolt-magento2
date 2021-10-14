@@ -233,8 +233,8 @@ class OrderManagementTest extends BoltTestCase
         $this->request->getHeaders()->addHeaderLine('Content-Type', 'application/json');
 
         $this->request->setParams($bodyParams);
-        
         $this->request->setContent($requestContent);
+        $this->request->setMethod("POST");
       
         return $this->request;
     }
@@ -1795,8 +1795,8 @@ class OrderManagementTest extends BoltTestCase
         $this->request->getHeaders()->addHeaderLine('Content-Type', 'application/json');
 
         $this->request->setParams($requestbodyParams);
-        
         $this->request->setContent($requestContent);
+        $this->request->setMethod("POST");
         
         $hookHelper = $this->objectManager->create(HookHelper::class);
         

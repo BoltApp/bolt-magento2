@@ -203,7 +203,12 @@ class Hook extends AbstractHelper
      */
     public function verifyWebhook()
     {
-        $payload = $this->request->getContent();
+        if ($this->request->getHttpMethod() == "GET") {
+            $url = $this->request->getRequestUri();
+            $payload = parse_url($url, PHP_URL_QUERY);
+        } else {
+            $payload = $this->request->getContent();
+        }
         $hmac_header = $this->request->getHeader(self::HMAC_HEADER);
 
         if (!$this->verifySignature($payload, $hmac_header) && !$this->verifyWebhookApi($payload, $hmac_header)) {
