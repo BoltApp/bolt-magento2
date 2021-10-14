@@ -227,6 +227,11 @@ class Definitions
      */
     const M2_CHECK_QUOTE_ERROR_BEFORE_PROCESS = 'M2_CHECK_QUOTE_ERROR_BEFORE_PROCESS';
 
+    /**
+     * Enable product endpoint
+     */
+    const M2_ENABLE_PRODUCT_ENDPOINT = 'M2_ENABLE_PRODUCT_ENDPOINT';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -452,6 +457,12 @@ class Definitions
         ],
         self::M2_CHECK_QUOTE_ERROR_BEFORE_PROCESS => [
             self::NAME_KEY        => self::M2_CHECK_QUOTE_ERROR_BEFORE_PROCESS,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_ENABLE_PRODUCT_ENDPOINT => [
+            self::NAME_KEY        => self::M2_ENABLE_PRODUCT_ENDPOINT,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
