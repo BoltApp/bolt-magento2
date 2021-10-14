@@ -7,13 +7,24 @@
 
 namespace Bolt\Boltpay\Plugin\Amasty\Promo\Quote\Model\Quote;
 
+use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Hook;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Amasty\Promo\Plugin\Quote\Model\Quote\TotalsCollectorPlugin as AmastyTotalsCollectorPlugin;
 
-
 class TotalsCollectorPlugin
 {
+    protected $bugsnag;
+
+    /**
+     * TotalsCollectorPlugin constructor.
+     * @param Bugsnag $bugsnag
+     */
+    public function __construct(Bugsnag $bugsnag)
+    {
+        $this->bugsnag = $bugsnag;
+    }
+
     /**
      * @param AmastyTotalsCollectorPlugin $subject
      * @param \Magento\Quote\Model\Quote\TotalsCollector $nextSubject
@@ -31,7 +42,7 @@ class TotalsCollectorPlugin
     )
     {
         if (Hook::$fromBolt) {
-            TestHelper::setInaccessibleProperty($subject, 'proceedFlag', false);
+            TestHelper::setProperty($subject, 'proceedFlag', false);
         }
     }
 }
