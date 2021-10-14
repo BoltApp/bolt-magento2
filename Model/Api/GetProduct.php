@@ -237,6 +237,10 @@ class GetProduct implements GetProductInterface
      */
     public function execute($productID = '', $sku = '')
     {
+        if (!$this->featureSwitches->isProductEndpointEnabled()) {
+            throw new WebapiException(__('Produce endpoint disabled'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+        }
+
         $store = $this->storeManager->getStore();
         $this->storeID = $store->getId();
         $this->hookHelper->preProcessWebhook($this->storeID);

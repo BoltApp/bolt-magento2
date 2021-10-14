@@ -399,4 +399,9 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_CHECK_QUOTE_ERROR_BEFORE_PROCESS);
     }
+
+    public function isProductEndpointEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_ENABLE_PRODUCT_ENDPOINT);
+    }
 }
