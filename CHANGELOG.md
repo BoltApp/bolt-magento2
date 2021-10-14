@@ -215,3 +215,5 @@
 - Updates to simplify SSO Commerce enablement
 - Adds support for Magento version 2.4.3
 - Adds support for Route Shipping
+## [v2.24.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.24.0) 2021-10-20
+- Changelog TBD
