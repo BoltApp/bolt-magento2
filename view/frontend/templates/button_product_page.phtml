@@ -243,6 +243,9 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                     var name = input.name, value = input.value;
                     var matchResult;
                     for (var index in compositeAttributes) {
+                        if (!compositeAttributes.hasOwnProperty(index)) {
+                            continue;
+                        }
                         var compositeAttribute = compositeAttributes[index];
                         if (matchResult = name.match(compositeAttribute+'\\[(\\d+)\\]')) {
                             if (!(compositeAttribute in options)) {
@@ -253,6 +256,9 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                         }
                     }
                     for (var index in checkboxAttributes) {
+                        if (!checkboxAttributes.hasOwnProperty(index)) {
+                            continue;
+                        }
                         var checkboxAttribute = checkboxAttributes[index];
                         if (name === checkboxAttribute+'[]') {
                             if (!(checkboxAttribute in options)) {
