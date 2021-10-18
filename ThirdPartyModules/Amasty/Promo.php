@@ -91,8 +91,11 @@ class Promo
                 foreach ($salesruleIds as $salesruleId) {
                     $rule = $this->ruleRepository->getById($salesruleId);
 
-                    if (in_array($rule->getSimpleAction(), self::PROMO_RULES)) {
-                        $amount = $rule->getDiscountAmount();
+                    if (
+                        in_array($rule->getSimpleAction(), self::PROMO_RULES)
+                        && !$rule->getExtensionAttributes()->getAmpromoRule()->getItemsDiscount()
+                    ) {
+                        $amount = 0;
                         $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                         $discountItem = [
                             'description' => $rule->getDescription(),
@@ -125,10 +128,12 @@ class Promo
      */
     public function filterGetBoltCollectSaleRuleDiscounts($result, $rule)
     {
-        if (in_array($rule->getSimpleAction(), self::PROMO_RULES)) {
+        if (
+            in_array($rule->getSimpleAction(), self::PROMO_RULES)
+            && !$rule->getExtensionAttributes()->getAmpromoRule()->getItemsDiscount()
+        ) {
             $ruleId = $rule->getRuleId();
-            $discountAmount = $rule->getDiscountAmount();
-            $result[$ruleId] = $discountAmount;
+            $result[$ruleId] = 0;
         }
         return $result;
     }
