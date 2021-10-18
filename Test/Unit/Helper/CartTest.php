@@ -90,7 +90,6 @@ use Magento\Framework\Serialize\SerializerInterface as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\SalesRule\Model\RuleRepository;
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
-use Magento\CatalogInventory\Api\StockStateInterface as StockState;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
@@ -309,9 +308,6 @@ class CartTest extends BoltTestCase
 
     /** @var MockObject|ObjectManager */
     private $originalObjectManager;
-    
-    /** @var StockState */
-    private $stockState;
 
     /**
      * Setup test dependencies, called before each test
@@ -384,7 +380,7 @@ class CartTest extends BoltTestCase
         $this->quoteShippingAddress = $this->createPartialMock(Quote\Address::class, $addressMethods);
         $this->quoteBillingAddress = $this->createPartialMock(Quote\Address::class, $addressMethods);
 
-        $this->productMock = $this->createPartialMock(Product::class, ['getDescription', 'getTypeInstance', 'getTypeId', 'isAvailable']);
+        $this->productMock = $this->createPartialMock(Product::class, ['getDescription', 'getTypeInstance']);
         $this->productMock->method('getTypeInstance')->willReturnSelf();
         $this->contextHelper = $this->createMock(ContextHelper::class);
         $this->quoteMock = $this->createPartialMock(Quote::class, [
@@ -457,8 +453,8 @@ class CartTest extends BoltTestCase
             RuleRepository::class,
             ['getById']
         );
-        $this->stockState = $this->createMock(StockState::class);
         $this->currentMock = $this->getCurrentMock(null);
+
         $this->objectsToClean = [];
     }
 
@@ -510,8 +506,7 @@ class CartTest extends BoltTestCase
                     $this->deciderHelper,
                     $this->serialize,
                     $this->eventsForThirdPartyModules,
-                    $this->ruleRepository,
-                    $this->stockState
+                    $this->ruleRepository
                 ]
             )
             ->getMock();
@@ -715,8 +710,7 @@ class CartTest extends BoltTestCase
             $this->deciderHelper,
             $this->serialize,
             $this->eventsForThirdPartyModules,
-            $this->ruleRepository,
-            $this->stockState
+            $this->ruleRepository
         );
         static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
         static::assertAttributeEquals($this->productRepository, 'productRepository', $instance);
@@ -745,7 +739,6 @@ class CartTest extends BoltTestCase
         static::assertAttributeEquals($this->metricsClient, 'metricsClient', $instance);
         static::assertAttributeEquals($this->serialize, 'serialize', $instance);
         static::assertAttributeEquals($this->ruleRepository, 'ruleRepository', $instance);
-        static::assertAttributeEquals($this->stockState, 'stockState', $instance);
     }
 
     /**
@@ -782,7 +775,6 @@ class CartTest extends BoltTestCase
         static::assertAttributeInstanceOf(CartManagementInterface::class, 'quoteManagement', $instance);
         static::assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
         static::assertAttributeInstanceOf(CustomerRepository::class, 'customerRepository', $instance);
-        static::assertAttributeInstanceOf(StockState::class, 'stockState', $instance);
     }
 
     /**
@@ -6896,138 +6888,5 @@ ORDER
             [$this->immutableQuoteMock]
         );
         static::assertStringContainsString((string)$customerId, $result);
-    }
-    
-    /**
-     * @test
-     * that checkCartItemStockState throws BoltException with if a out-of-stock exception occurs
-     *
-     * @covers ::checkCartItemStockState
-     *
-     * @throws Exception from tested method
-     */
-    public function checkCartItemStockState_withExceptionIfCartItemOutOfStock_throwsBoltException()
-    {
-        $testItem = [
-            'reference'    => self::PRODUCT_ID,
-            'name'         => 'Test Product',
-            'total_amount' => 12345,
-            'unit_price'   => 12345,
-            'quantity'     => 1.0,
-            'sku'          => self::PRODUCT_SKU,
-            'type'         => 'physical',
-            'description'  => '',
-        ];
-        $getCartItemsResult = [[$testItem], 12345, 0];
-        $currentMock = $this->getCurrentMock(
-            [
-                'getCartItems',
-            ]
-        );
-        $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
-        $this->productMock->method('getTypeId')->willReturn('simple');
-        $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
-            ->willReturn($this->productMock);
-        $this->stockState->method('verifyStock')->willReturn(false);
-        $this->expectException(BoltException::class);
-        $this->expectExceptionCode(2001005);
-        $this->expectExceptionMessage('The item [Test Product] is out of stock.');
-        TestHelper::invokeMethod(
-            $currentMock,
-            'checkCartItemStockState',
-            [$this->quoteMock, 2001005]
-        );
-    }
-    
-    /**
-     * @test
-     * that checkCartItemStockState throws BoltException if requested qty is not available
-     *
-     * @covers ::checkCartItemStockState
-     *
-     * @throws Exception from tested method
-     */
-    public function checkCartItemStockState_withExceptionIfCartItemNotEnoughQty_throwsBoltException()
-    {
-        $testItem = [
-            'reference'    => self::PRODUCT_ID,
-            'name'         => 'Test Product',
-            'total_amount' => 12345,
-            'unit_price'   => 12345,
-            'quantity'     => 1.0,
-            'sku'          => self::PRODUCT_SKU,
-            'type'         => 'physical',
-            'description'  => '',
-        ];
-        $getCartItemsResult = [[$testItem], 12345, 0];
-        $checkQtyResult = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['getHasError', 'getMessage'])
-            ->disableOriginalConstructor()
-            ->getMock();
-        $currentMock = $this->getCurrentMock(
-            [
-                'getCartItems',
-            ]
-        );
-        $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
-        $this->productMock->method('getTypeId')->willReturn('simple');
-        $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
-            ->willReturn($this->productMock);
-        $this->stockState->method('verifyStock')->willReturn(true);
-        $checkQtyResult->expects(static::once())->method('getHasError')->willReturn(true);
-        $checkQtyResult->expects(static::once())->method('getMessage')->willReturn('The requested qty is not available');
-        $this->stockState->method('checkQuoteItemQty')->willReturn($checkQtyResult);
-        $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
-        $storeMock->method('getWebsiteId')->willReturn(self::WEBSITE_ID);
-        $this->quoteMock->method('getStore')->willReturn($storeMock);
-        $this->expectException(BoltException::class);
-        $this->expectExceptionCode(2001005);
-        $this->expectExceptionMessage('For the item [Test Product]: The requested qty is not available');
-        TestHelper::invokeMethod(
-            $currentMock,
-            'checkCartItemStockState',
-            [$this->quoteMock, 2001005]
-        );
-    }
-    
-    /**
-     * @test
-     * that checkCartItemStockState throws BoltException with if a bundle item is out of stock
-     *
-     * @covers ::checkCartItemStockState
-     *
-     * @throws Exception from tested method
-     */
-    public function checkCartItemStockState_withExceptionIfBundleItemOutOfStock_throwsBoltException()
-    {
-        $testItem = [
-            'reference'    => self::PRODUCT_ID,
-            'name'         => 'Test Product',
-            'total_amount' => 12345,
-            'unit_price'   => 12345,
-            'quantity'     => 1.0,
-            'sku'          => self::PRODUCT_SKU,
-            'type'         => 'physical',
-            'description'  => '',
-        ];
-        $getCartItemsResult = [[$testItem], 12345, 0];
-        $currentMock = $this->getCurrentMock(
-            [
-                'getCartItems',
-            ]
-        );
-        $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
-        $this->productMock->method('getTypeId')->willReturn(\Magento\Bundle\Model\Product\Type::TYPE_CODE);
-        $this->productMock->method('isAvailable')->willReturn(false);
-        $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
-            ->willReturn($this->productMock);
-        $this->expectException(BoltException::class);
-        $this->expectExceptionCode(2001005);
-        $this->expectExceptionMessage('The item [Test Product] is out of stock.');
-        TestHelper::invokeMethod(
-            $currentMock,
-            'checkCartItemStockState',
-            [$this->quoteMock, 2001005]
-        );
     }
 }
