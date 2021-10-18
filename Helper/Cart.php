@@ -2754,64 +2754,70 @@ class Cart extends AbstractHelper
     }
     
     /**
-     * Check whether quote has any error associated with it, not only inventory error but also other types of error.
+     * Check stock status of quote items.
      *
      * @param \Magento\Quote\Model\Quote $quote
      * @param string $excCode
      *
      * @throws BoltException
      */
-    public function checkQuoteErrorInfo($quote, $excCode)
+    public function checkCartItemStockState($quote, $excCode)
     {
-        if (!$this->deciderHelper->isCheckQuoteErrBeforeProcess()) {
-            return;
-        }
-        foreach ($quote->getAllVisibleItems() as $item) {
-            if ($item->getHasError()) {
-                $message = '';
-                $errorInfos = $item->getErrorInfos();
-                foreach($errorInfos as $errorInfo){
-                    // origin, code, message, additionalData keys always set but can equal null
-                    if (!empty($errorInfo['origin']) || !empty($errorInfo['message'])) {
-                        $message .= sprintf("(%s): %s%s", (string)$item->getName(), !empty($errorInfo['message']) ? (string)$errorInfo['message'] : (string)$errorInfo['origin'], PHP_EOL);
-                    }
+        list ($cartItems,,) = $this->getCartItems($quote, $quote->getStoreId(), 0, 0, false);
+        foreach ($cartItems as $item) {
+            try {
+                // To support some 3p plugins, we may add fee/gift wrapping as cart item,
+                // but those items are not actual products in store.
+                $product = $this->productRepository->getById($item['reference']);
+            } catch (NoSuchEntityException $e) {
+                continue;
+            }
+            if ($product->getTypeId() == \Magento\Bundle\Model\Product\Type::TYPE_CODE) {
+                if (!$product->isAvailable()) {
+                    $this->bugsnag->registerCallback(function ($report) use ($item) {   
+                        $report->setMetaData([
+                            'CART_ITEM_OUT_OF_STOCK' => $item
+                        ]);
+                    });    
+                    throw new BoltException(
+                        __('The item [' . $item['name'] . '] is out of stock.'),
+                        null,
+                        $excCode
+                    );
                 }
-                $this->bugsnag->registerCallback(function ($report) use ($errorInfos, $item) {
-                    $report->setMetaData([
-                        'Quote Item' => [
-                            'name' => $item->getName(),
-                            'sku'  => $item->getSku(),
-                            'id'   => $item->getProductId()
-                        ],
-                        'Quote Item Errors' => $errorInfos
-                    ]);
-                });
-                throw new BoltException(
-                    __($message),
-                    null,
-                    $excCode
+            } else {
+                if (!$this->stockState->verifyStock($item['reference'])) {
+                    $this->bugsnag->registerCallback(function ($report) use ($item) {   
+                        $report->setMetaData([
+                            'CART_ITEM_OUT_OF_STOCK' => $item
+                        ]);
+                    });    
+                    throw new BoltException(
+                        __('The item [' . $item['name'] . '] is out of stock.'),
+                        null,
+                        $excCode
+                    );
+                }
+                $checkQty = $this->stockState->checkQuoteItemQty(
+                    $item['reference'],
+                    $item['quantity'],
+                    $item['quantity'],
+                    $item['quantity'],
+                    $quote->getStore()->getWebsiteId()
                 );
+                if ($checkQty->getHasError()) {
+                    $this->bugsnag->registerCallback(function ($report) use ($item) {   
+                        $report->setMetaData([
+                            'CART_ITEM_QTY_UNAVAILABLE' => $item
+                        ]);
+                    });    
+                    throw new BoltException(
+                        __('For the item [' . $item['name'] . ']: ' . $checkQty->getMessage()),
+                        null,
+                        $excCode
+                    );
+                }    
             }
-        }
-        if ($quote->getHasError()) {
-            $message = '';
-            $errors = $quote->getErrors();
-            foreach($errors as $error){
-                $message .= sprintf("%s%s", (string)$error, PHP_EOL);
-            }
-            $this->bugsnag->registerCallback(function ($report) use ($errors, $quote) {
-                $report->setMetaData([
-                    'Quote' => [
-                        'id'   => $quote->getId()
-                    ],
-                    'Quote Errors' => $errors
-                ]);
-            });
-            throw new BoltException(
-                __($message),
-                null,
-                $excCode
-            );
         }
     }
 

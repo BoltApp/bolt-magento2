@@ -314,6 +314,7 @@ class CreateOrder implements CreateOrderInterface
         $this->eventsForThirdPartyModules->dispatchEvent("beforePrepareQuote", $immutableQuote);
         /** @var Quote $quote */
         $quote = $this->orderHelper->prepareQuote($immutableQuote, $transaction);
+        $this->cartHelper->checkCartItemStockState($quote, self::E_BOLT_ITEM_OUT_OF_INVENTORY);
         /** @var \Magento\Sales\Model\Order $createdOrder */
         $createdOrder = $this->orderHelper->processExistingOrder($quote, $transaction);
 

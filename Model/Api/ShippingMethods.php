@@ -444,7 +444,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $this->quote = $parentQuote;
         $this->quote->getStore()->setCurrentCurrencyCode($this->quote->getQuoteCurrencyCode());
         $this->checkCartItems($cart);
-        $this->cartHelper->checkQuoteErrorInfo($this->quote, self::E_BOLT_CUSTOM_ERROR);
+        $this->cartHelper->checkCartItemStockState($this->quote, self::E_BOLT_CUSTOM_ERROR);
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace parent quote with immutable quote in checkout session.
         $this->sessionHelper->loadSession($this->quote, $cart['metadata'] ?? []);
