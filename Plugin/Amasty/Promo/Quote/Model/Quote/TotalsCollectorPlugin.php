@@ -31,7 +31,7 @@ class TotalsCollectorPlugin
     )
     {
         if (Hook::$fromBolt) {
-            TestHelper::setProperty($subject, 'proceedFlag', false);
+            TestHelper::setInaccessibleProperty($subject, 'proceedFlag', false);
         }
     }
 }
