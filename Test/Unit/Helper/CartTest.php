@@ -361,9 +361,7 @@ class CartTest extends BoltTestCase
             'getData',
             'getStore',
             'save',
-            'getCouponCode',
-            'getHasError',
-            'getErrors'
+            'getCouponCode'
         ];
         $this->immutableQuoteMock = $this->createPartialMock(Quote::class, $quoteMethods);
 
@@ -395,8 +393,7 @@ class CartTest extends BoltTestCase
             'getData','isVirtual','getId','getShippingAddress',
             'getBillingAddress','reserveOrderId','addProduct',
             'assignCustomer','setIsActive','getGiftMessageId',
-            'getGwId', 'getCustomerGroupId','getHasError',
-            'getErrors'
+            'getGwId', 'getCustomerGroupId'
         ]);
         $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote', 'getBoltCollectSaleRuleDiscounts', 'getOrderId']);
         $this->productRepository = $this->createPartialMock(ProductRepository::class, ['get', 'getbyId']);
@@ -451,7 +448,7 @@ class CartTest extends BoltTestCase
             DeciderHelper::class,
             ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical',
              'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata', 'isCustomizableOptionsSupport',
-             'isPreventBoltCartForQuotesWithError', 'isCheckQuoteErrBeforeProcess']
+             'isPreventBoltCartForQuotesWithError']
         );
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
@@ -6899,144 +6896,5 @@ ORDER
             [$this->immutableQuoteMock]
         );
         static::assertStringContainsString((string)$customerId, $result);
-    }
-    
-    /**
-     * @test
-     * that checkQuoteErrorInfo throws BoltException with if a out-of-stock exception occurs
-     *
-     * @covers ::checkQuoteErrorInfo
-     *
-     * @throws Exception from tested method
-     */
-    public function checkQuoteErrorInfo_withExceptionIfCartItemOutOfStock_throwsBoltException()
-    {
-        $quoteItem = $this->getMockBuilder(Item::class)
-          ->setMethods(
-              [
-                  'getHasError',
-                  'getErrorInfos',
-                  'getName',
-                  'getSku',
-                  'getProductId'
-              ]
-          )
-          ->disableOriginalConstructor()
-          ->getMock();
-        $errorItems = [
-            [
-                'origin' => 'cataloginventory',
-                'code' => 1,
-                'message' => 'This product is out of stock.',
-                'additionalData' => null,
-            ]
-        ];
-        $quoteItem->method('getHasError')->willReturn(true);
-        $quoteItem->method('getErrorInfos')->willReturn($errorItems);
-        $quoteItem->method('getName')->willReturn('Test Product');
-        $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
-        $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
-        
-        $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItem]);
-        
-        $this->expectException(BoltException::class);
-        $this->expectExceptionCode(2001005);
-        $this->expectExceptionMessage('(Test Product): This product is out of stock.');
-        $this->deciderHelper->expects(self::once())->method('isCheckQuoteErrBeforeProcess')->willReturn(true);
-        $currentMock = $this->getCurrentMock([]);
-        TestHelper::invokeMethod(
-            $currentMock,
-            'checkQuoteErrorInfo',
-            [$this->quoteMock, 2001005]
-        );
-    }
-    
-    /**
-     * @test
-     * that checkQuoteErrorInfo throws BoltException if requested qty is not available
-     *
-     * @covers ::checkQuoteErrorInfo
-     *
-     * @throws Exception from tested method
-     */
-    public function checkQuoteErrorInfo_withExceptionIfCartItemNotEnoughQty_throwsBoltException()
-    {
-        $quoteItem = $this->getMockBuilder(Item::class)
-          ->setMethods(
-              [
-                  'getHasError',
-                  'getErrorInfos',
-                  'getName',
-                  'getSku',
-                  'getProductId'
-              ]
-          )
-          ->disableOriginalConstructor()
-          ->getMock();
-        $errorItems = [
-            [
-                'origin' => 'cataloginventory',
-                'code' => 1,
-                'message' => 'The requested qty is not available',
-                'additionalData' => null,
-            ]
-        ];
-        $quoteItem->method('getHasError')->willReturn(true);
-        $quoteItem->method('getErrorInfos')->willReturn($errorItems);
-        $quoteItem->method('getName')->willReturn('Test Product');
-        $quoteItem->method('getSku')->willReturn(self::PRODUCT_SKU);
-        $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
-        
-        $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItem]);
-        
-        $this->expectException(BoltException::class);
-        $this->expectExceptionCode(2001005);
-        $this->expectExceptionMessage('(Test Product): The requested qty is not available');
-        $this->deciderHelper->expects(self::once())->method('isCheckQuoteErrBeforeProcess')->willReturn(true);
-        $currentMock = $this->getCurrentMock([]);
-        TestHelper::invokeMethod(
-            $currentMock,
-            'checkQuoteErrorInfo',
-            [$this->quoteMock, 2001005]
-        );
-    }
-    
-    /**
-     * @test
-     * that checkQuoteErrorInfo throws BoltException with if a bundle item is out of stock
-     *
-     * @covers ::checkQuoteErrorInfo
-     *
-     * @throws Exception from tested method
-     */
-    public function checkQuoteErrorInfo_withExceptionIfQuoteHasError_throwsBoltException()
-    {
-        $quoteItem = $this->getMockBuilder(Item::class)
-          ->setMethods(
-              [
-                  'getHasError'
-              ]
-          )
-          ->disableOriginalConstructor()
-          ->getMock();
-        $quoteItem->method('getHasError')->willReturn(false);
-        
-        $errors = [
-            'Some of the products are out of stock.'
-        ];
-        $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItem]);
-        $this->quoteMock->method('getHasError')->willReturn(true);
-        $this->quoteMock->method('getErrors')->willReturn($errors);
-        
-        $this->expectException(BoltException::class);
-        $this->expectExceptionCode(2001005);
-        $this->expectExceptionMessage('Some of the products are out of stock.');
-        $this->deciderHelper->expects(self::once())->method('isCheckQuoteErrBeforeProcess')->willReturn(true);
-        $currentMock = $this->getCurrentMock([]);
-        TestHelper::invokeMethod(
-            $currentMock,
-            'checkQuoteErrorInfo',
-            [$this->quoteMock, 2001005]
-        );
     }
 }

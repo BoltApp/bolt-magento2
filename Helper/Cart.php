@@ -2752,68 +2752,6 @@ class Cart extends AbstractHelper
         $quote->setCartFixedRules([]);
         $this->totalsCollector->collectAddressTotals($quote, $address);
     }
-    
-    /**
-     * Check whether quote has any error associated with it, not only inventory error but also other types of error.
-     *
-     * @param \Magento\Quote\Model\Quote $quote
-     * @param string $excCode
-     *
-     * @throws BoltException
-     */
-    public function checkQuoteErrorInfo($quote, $excCode)
-    {
-        if (!$this->deciderHelper->isCheckQuoteErrBeforeProcess()) {
-            return;
-        }
-        foreach ($quote->getAllVisibleItems() as $item) {
-            if ($item->getHasError()) {
-                $message = '';
-                $errorInfos = $item->getErrorInfos();
-                foreach($errorInfos as $errorInfo){
-                    // origin, code, message, additionalData keys always set but can equal null
-                    if (!empty($errorInfo['origin']) || !empty($errorInfo['message'])) {
-                        $message .= sprintf("(%s): %s%s", (string)$item->getName(), !empty($errorInfo['message']) ? (string)$errorInfo['message'] : (string)$errorInfo['origin'], PHP_EOL);
-                    }
-                }
-                $this->bugsnag->registerCallback(function ($report) use ($errorInfos, $item) {
-                    $report->setMetaData([
-                        'Quote Item' => [
-                            'name' => $item->getName(),
-                            'sku'  => $item->getSku(),
-                            'id'   => $item->getProductId()
-                        ],
-                        'Quote Item Errors' => $errorInfos
-                    ]);
-                });
-                throw new BoltException(
-                    __($message),
-                    null,
-                    $excCode
-                );
-            }
-        }
-        if ($quote->getHasError()) {
-            $message = '';
-            $errors = $quote->getErrors();
-            foreach($errors as $error){
-                $message .= sprintf("%s%s", (string)$error, PHP_EOL);
-            }
-            $this->bugsnag->registerCallback(function ($report) use ($errors, $quote) {
-                $report->setMetaData([
-                    'Quote' => [
-                        'id'   => $quote->getId()
-                    ],
-                    'Quote Errors' => $errors
-                ]);
-            });
-            throw new BoltException(
-                __($message),
-                null,
-                $excCode
-            );
-        }
-    }
 
     /**
      * @return DeciderHelper
