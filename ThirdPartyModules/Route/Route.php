@@ -89,12 +89,8 @@ class Route
      * @return array|array[]|int[] changed or unchanged $result
      * @throws \Exception
      */
-    public function filterCartItems($result, $routeDataHelper, $quote, $storeId, $ifOnlyVisibleItems)
+    public function filterCartItems($result, $routeDataHelper, $quote, $storeId)
     {
-        // Do not create Route fee item when checking stock status of quote items
-        if (!$ifOnlyVisibleItems) {
-            return $result;
-        }
         list($products, $totalAmount, $diff) = $result;
         $totals = $quote->getTotals();
         $routeFeeEnabled = '0';

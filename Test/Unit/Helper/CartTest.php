@@ -90,7 +90,6 @@ use Magento\Framework\Serialize\SerializerInterface as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\SalesRule\Model\RuleRepository;
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
-use Magento\CatalogInventory\Api\StockStateInterface as StockState;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
@@ -309,9 +308,6 @@ class CartTest extends BoltTestCase
 
     /** @var MockObject|ObjectManager */
     private $originalObjectManager;
-    
-    /** @var StockState */
-    private $stockState;
 
     /**
      * Setup test dependencies, called before each test
@@ -457,7 +453,6 @@ class CartTest extends BoltTestCase
             RuleRepository::class,
             ['getById']
         );
-        $this->stockState = $this->createMock(StockState::class);
         $this->currentMock = $this->getCurrentMock(null);
         $this->objectsToClean = [];
     }
@@ -510,8 +505,7 @@ class CartTest extends BoltTestCase
                     $this->deciderHelper,
                     $this->serialize,
                     $this->eventsForThirdPartyModules,
-                    $this->ruleRepository,
-                    $this->stockState
+                    $this->ruleRepository
                 ]
             )
             ->getMock();
@@ -715,8 +709,7 @@ class CartTest extends BoltTestCase
             $this->deciderHelper,
             $this->serialize,
             $this->eventsForThirdPartyModules,
-            $this->ruleRepository,
-            $this->stockState
+            $this->ruleRepository
         );
         static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
         static::assertAttributeEquals($this->productRepository, 'productRepository', $instance);
@@ -745,7 +738,6 @@ class CartTest extends BoltTestCase
         static::assertAttributeEquals($this->metricsClient, 'metricsClient', $instance);
         static::assertAttributeEquals($this->serialize, 'serialize', $instance);
         static::assertAttributeEquals($this->ruleRepository, 'ruleRepository', $instance);
-        static::assertAttributeEquals($this->stockState, 'stockState', $instance);
     }
 
     /**
@@ -782,7 +774,6 @@ class CartTest extends BoltTestCase
         static::assertAttributeInstanceOf(CartManagementInterface::class, 'quoteManagement', $instance);
         static::assertAttributeInstanceOf(HookHelper::class, 'hookHelper', $instance);
         static::assertAttributeInstanceOf(CustomerRepository::class, 'customerRepository', $instance);
-        static::assertAttributeInstanceOf(StockState::class, 'stockState', $instance);
     }
 
     /**
