@@ -37,6 +37,7 @@ use Magento\Eav\Model\Config;
 use Magento\Bundle\Model\Product\Type as Bundle;
 use Magento\Bundle\Api\ProductOptionRepositoryInterface as BundleOptionRepository;
 use Magento\Bundle\Model\ResourceModel\Selection as BundleSelection;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 
 class GetProduct implements GetProductInterface
@@ -108,6 +109,11 @@ class GetProduct implements GetProductInterface
     private $bundleSelection;
 
     /**
+     * @var Decider
+     */
+    protected $featureSwitches;
+
+    /**
      * @param ProductRepositoryInterface $productRepositoryInterface
      * @param StockRegistryProviderInterface $stockRegistry
      * @param StockConfigurationInterface $stockConfiguration
@@ -119,6 +125,7 @@ class GetProduct implements GetProductInterface
      * @param Bugsnag $bugsnag
      * @param BundleOptionRepository $bundleOptionRepository
      * @param BundleSelection $bundleSelection
+     * @param Decider $featureSwitches
      */
     public function __construct(
         ProductRepositoryInterface  $productRepositoryInterface,
@@ -131,7 +138,8 @@ class GetProduct implements GetProductInterface
         HookHelper $hookHelper,
         Bugsnag $bugsnag,
         BundleOptionRepository $bundleOptionRepository,
-        BundleSelection $bundleSelection
+        BundleSelection $bundleSelection,
+        Decider $featureSwitches
     ) {
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockRegistry = $stockRegistry;
@@ -144,6 +152,7 @@ class GetProduct implements GetProductInterface
         $this->eavConfig = $eavConfig;
         $this->bundleOptionRepository = $bundleOptionRepository;
         $this->bundleSelection = $bundleSelection;
+        $this->featureSwitches = $featureSwitches;
     }
 
     private function getStockStatus($product){
