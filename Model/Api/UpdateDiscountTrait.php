@@ -367,12 +367,7 @@ trait UpdateDiscountTrait
             $quote->getBillingAddress() :
             $quote->getShippingAddress();
 
-        $boltCollectSaleRuleDiscounts = $this->eventsForThirdPartyModules->runFilter(
-                "filterGetBoltCollectSaleRuleDiscounts",
-                $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]),
-                $rule
-            );
-
+        $boltCollectSaleRuleDiscounts = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
         if (!isset($boltCollectSaleRuleDiscounts[$ruleId])) {
             throw new BoltException(
                 __('Failed to apply the coupon code %1', $couponCode),

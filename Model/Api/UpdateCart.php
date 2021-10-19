@@ -17,7 +17,6 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
-use Bolt\Boltpay\Helper\Hook;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebApiException;
@@ -94,7 +93,6 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
     public function execute($cart, $add_items = null, $remove_items = null, $discount_codes_to_add = null, $discount_codes_to_remove = null)
     {
         try {
-            Hook::$fromBolt = true;
             $this->cartRequest = $cart;
 
             // Bolt server sends immutableQuoteId as order reference
