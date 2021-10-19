@@ -32,7 +32,6 @@ use Bolt\Boltpay\Model\Response;
 use Magento\Catalog\Helper\ImageFactory;
 use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
 use Magento\Catalog\Model\ProductRepository;
-use Magento\CatalogInventory\Api\StockStateInterface as StockState;
 use Magento\Checkout\Helper\Data as CheckoutHelper;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Customer\Model\Address;
@@ -261,11 +260,6 @@ class Cart extends AbstractHelper
      * @var Serialize
      */
     private $serialize;
-    
-    /**
-     * @var StockState
-     */
-    private $stockState;
 
     /**
      * @param Context                    $context
@@ -298,7 +292,6 @@ class Cart extends AbstractHelper
      * @param Serialize                  $serialize
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      * @param RuleRepository             $ruleRepository
-     * @param StockState                 $stockState
      */
     public function __construct(
         Context $context,
@@ -330,8 +323,7 @@ class Cart extends AbstractHelper
         DeciderHelper $deciderHelper,
         Serialize $serialize,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
-        RuleRepository $ruleRepository,
-        StockState $stockState
+        RuleRepository $ruleRepository
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -363,7 +355,6 @@ class Cart extends AbstractHelper
         $this->serialize = $serialize;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         $this->ruleRepository = $ruleRepository;
-        $this->stockState = $stockState;
     }
 
     /**
@@ -1348,13 +1339,12 @@ class Cart extends AbstractHelper
      * @param null $storeId
      * @param int $totalAmount
      * @param int $diff
-     * @param bool $ifOnlyVisibleItems
      * @return array
      * @throws \Exception
      */
-    public function getCartItems($quote, $storeId = null, $totalAmount = 0, $diff = 0, $ifOnlyVisibleItems = true)
+    public function getCartItems($quote, $storeId = null, $totalAmount = 0, $diff = 0)
     {
-        $items = $ifOnlyVisibleItems ? $quote->getAllVisibleItems() : $quote->getAllItems();
+        $items = $quote->getAllVisibleItems();
         $currencyCode = $quote->getQuoteCurrencyCode();
 
         list($products, $totalAmount, $diff) = $this->getCartItemsFromItems($items, false, $currencyCode, $storeId, $totalAmount, $diff);
@@ -1381,8 +1371,7 @@ class Cart extends AbstractHelper
             'filterCartItems',
             [$products, $totalAmount, $diff],
             $quote,
-            $storeId,
-            $ifOnlyVisibleItems
+            $storeId
         );
     }
 
@@ -2751,68 +2740,6 @@ class Cart extends AbstractHelper
          */
         $quote->setCartFixedRules([]);
         $this->totalsCollector->collectAddressTotals($quote, $address);
-    }
-    
-    /**
-     * Check whether quote has any error associated with it, not only inventory error but also other types of error.
-     *
-     * @param \Magento\Quote\Model\Quote $quote
-     * @param string $excCode
-     *
-     * @throws BoltException
-     */
-    public function checkQuoteErrorInfo($quote, $excCode)
-    {
-        if (!$this->deciderHelper->isCheckQuoteErrBeforeProcess()) {
-            return;
-        }
-        foreach ($quote->getAllVisibleItems() as $item) {
-            if ($item->getHasError()) {
-                $message = '';
-                $errorInfos = $item->getErrorInfos();
-                foreach($errorInfos as $errorInfo){
-                    // origin, code, message, additionalData keys always set but can equal null
-                    if (!empty($errorInfo['origin']) || !empty($errorInfo['message'])) {
-                        $message .= sprintf("(%s): %s%s", (string)$item->getName(), !empty($errorInfo['message']) ? (string)$errorInfo['message'] : (string)$errorInfo['origin'], PHP_EOL);
-                    }
-                }
-                $this->bugsnag->registerCallback(function ($report) use ($errorInfos, $item) {
-                    $report->setMetaData([
-                        'Quote Item' => [
-                            'name' => $item->getName(),
-                            'sku'  => $item->getSku(),
-                            'id'   => $item->getProductId()
-                        ],
-                        'Quote Item Errors' => $errorInfos
-                    ]);
-                });
-                throw new BoltException(
-                    __($message),
-                    null,
-                    $excCode
-                );
-            }
-        }
-        if ($quote->getHasError()) {
-            $message = '';
-            $errors = $quote->getErrors();
-            foreach($errors as $error){
-                $message .= sprintf("%s%s", (string)$error, PHP_EOL);
-            }
-            $this->bugsnag->registerCallback(function ($report) use ($errors, $quote) {
-                $report->setMetaData([
-                    'Quote' => [
-                        'id'   => $quote->getId()
-                    ],
-                    'Quote Errors' => $errors
-                ]);
-            });
-            throw new BoltException(
-                __($message),
-                null,
-                $excCode
-            );
-        }
     }
 
     /**

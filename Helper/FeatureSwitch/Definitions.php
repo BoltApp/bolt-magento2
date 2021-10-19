@@ -221,11 +221,6 @@ class Definitions
      * Prevent Bolt IPs from being saved as customer IP on quote
      */
     const M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE = 'M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE';
-    
-    /**
-     * Check quote errors before processing
-     */
-    const M2_CHECK_QUOTE_ERROR_BEFORE_PROCESS = 'M2_CHECK_QUOTE_ERROR_BEFORE_PROCESS';
 
     /**
      * Enable product endpoint
@@ -451,12 +446,6 @@ class Definitions
         ],
         self::M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE => [
             self::NAME_KEY        => self::M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE,
-            self::VAL_KEY         => true,
-            self::DEFAULT_VAL_KEY => false,
-            self::ROLLOUT_KEY     => 100
-        ],
-        self::M2_CHECK_QUOTE_ERROR_BEFORE_PROCESS => [
-            self::NAME_KEY        => self::M2_CHECK_QUOTE_ERROR_BEFORE_PROCESS,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
