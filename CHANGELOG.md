@@ -216,4 +216,6 @@
 - Adds support for Magento version 2.4.3
 - Adds support for Route Shipping
 ## [v2.24.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.24.0) 2021-10-20
-- Changelog TBD
+- Updates to order tracking logic to handle product identification for configurable products
+- Updates to M2's product info endpoint to return catalog rule pricing
+- Related Bolt `cart.create` endpoint bug fix preventing carts with a `qty` of `1`
