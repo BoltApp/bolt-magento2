@@ -259,4 +259,7 @@
         <plugin name="Bolt_Boltpay_ImaginationMedia_TmwGiftCard_ForceInvoicePlugin"
                 type="Bolt\Boltpay\Plugin\ImaginationMedia\TmwGiftCard\ForceInvoicePlugin" sortOrder="1"/>
     </type>
+    <type name="Amasty\Promo\Plugin\Quote\Model\Quote\TotalsCollectorPlugin">
+        <plugin name="TotalsCollectorPlugin" type="Bolt\Boltpay\Plugin\Amasty\Promo\Quote\Model\Quote\TotalsCollectorPlugin"/>
+    </type>
 </config>

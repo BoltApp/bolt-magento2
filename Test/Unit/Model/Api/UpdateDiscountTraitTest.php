@@ -820,9 +820,11 @@ class UpdateDiscountTraitTest extends BoltTestCase
             ->willReturn($checkoutSession);
 
         $eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
-        $eventsForThirdPartyModules->expects(static::once())->method('runFilter')
-            ->with("verifyRuleTimeFrame", true)
-            ->willReturn(false);
+        $eventsForThirdPartyModules->method('runFilter')
+            ->withConsecutive(
+                ["verifyRuleTimeFrame", true],
+                ["filterGetBoltCollectSaleRuleDiscounts", [self::RULE_ID => 10], $this->ruleMock]
+            )->willReturnOnConsecutiveCalls(false, [self::RULE_ID => 10]);
 
         TestHelper::setProperty($this->currentMock, 'eventsForThirdPartyModules', $eventsForThirdPartyModules);
 
