@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
+use Bolt\Boltpay\Helper\Hook;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebApiException;
@@ -135,6 +136,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
             // Remove discounts
             if (!empty($discount_codes_to_remove)) {
+                Hook::$is_from_remove_discount_hook = true;
                 $discount_code = $discount_codes_to_remove[0];
                 $couponCode = trim($discount_code);
 
