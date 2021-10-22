@@ -20,54 +20,51 @@ namespace Bolt\Boltpay\Test\Unit\ThirdPartyModules\Amasty;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\Discount;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\StoreCredit;
-use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\Amasty\StoreCredit
  */
 class StoreCreditTest extends BoltTestCase
 {
+    private $objectManager;
 
     /**
-     * @var Discount|MockObject
+     * @var StoreCredit
      */
-    private $discountHelperMock;
+    private $storeCredit;
 
     /**
-     * @var Bugsnag|MockObject
+     * @var Discount
      */
-    private $bugsnagHelperMock;
+    private $discountHelper;
 
     /**
-     * @var Config|MockObject
+     * @var Bugsnag
      */
-    private $configHelperMock;
+    private $bugsnagHelper;
 
     /**
-     * @var StoreCredit|MockObject
+     * @var Config
      */
-    private $currentMock;
+    private $configHelper;
 
     /**
      * Setup test dependencies, called before each test
      */
     protected function setUpInternal()
     {
-        $this->discountHelperMock = $this->createPartialMock(Discount::class, []);
-        $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
-        $this->configHelperMock = $this->createMock(Config::class);
-        $this->currentMock = $this->getMockBuilder(StoreCredit::class)
-            ->setConstructorArgs(
-                [
-                    $this->discountHelperMock,
-                    $this->bugsnagHelperMock,
-                    $this->configHelperMock
-                ]
-            )
-            ->setMethods(null)
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->storeCredit = $this->objectManager->create(StoreCredit::class);
+        $this->discountHelper = $this->objectManager->create(Discount::class);
+        $this->bugsnagHelper = $this->objectManager->create(Bugsnag::class);
+        $this->configHelper = $this->objectManager->create(Config::class);
     }
 
     /**
@@ -78,10 +75,10 @@ class StoreCreditTest extends BoltTestCase
      */
     public function __construct_always_setsInternalProperties()
     {
-        $instance = new StoreCredit($this->discountHelperMock, $this->bugsnagHelperMock, $this->configHelperMock);
-        static::assertAttributeEquals($this->discountHelperMock, 'discountHelper', $instance);
-        static::assertAttributeEquals($this->bugsnagHelperMock, 'bugsnagHelper', $instance);
-        static::assertAttributeEquals($this->configHelperMock, 'configHelper', $instance);
+        $instance = new StoreCredit($this->discountHelper, $this->bugsnagHelper, $this->configHelper);
+        static::assertAttributeEquals($this->discountHelper, 'discountHelper', $instance);
+        static::assertAttributeEquals($this->bugsnagHelper, 'bugsnagHelper', $instance);
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
     }
 
     /**
@@ -93,8 +90,7 @@ class StoreCreditTest extends BoltTestCase
      */
     public function filterProcessLayout_notEnabledInConfig_doesNotAddLayout()
     {
-        $this->configHelperMock->expects(static::once())->method('useAmastyStoreCreditConfig')->willReturn(false);
-        static::assertEquals([], $this->currentMock->filterProcessLayout([]));
+        static::assertEquals([], $this->storeCredit->filterProcessLayout([]));
     }
 
     /**
@@ -105,8 +101,19 @@ class StoreCreditTest extends BoltTestCase
      */
     public function filterProcessLayout_ifEnabledInConfig_addsModuleSpecificLayout()
     {
-        $this->configHelperMock->expects(static::once())->method('useAmastyStoreCreditConfig')->willReturn(true);
-        $result = $this->currentMock->filterProcessLayout([]);
+        $store = $this->objectManager->get(\Magento\Store\Model\StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
+        $configData = [
+            [
+                'path' => Config::XML_PATH_AMASTY_STORE_CREDIT,
+                'value' => true,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $result = $this->storeCredit->filterProcessLayout([]);
         static::assertEquals(
             [
                 'component' => 'Amasty_StoreCredit/js/view/checkout/totals/store-credit',
