@@ -17,15 +17,18 @@
 
 namespace Bolt\Boltpay\Test\Unit\Plugin\Magento\Rewards\Controller\Cart;
 
+use Bolt\Boltpay\Helper\Config;
+use Bolt\Boltpay\Plugin\Magento\Rewards\Controller\Cart\RemoveActionPlugin;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\TestFramework\Helper\Bootstrap;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Magento\Rewards\Controller\Cart\RemoveActionPlugin
  */
 class RemoveActionPluginTest extends BoltTestCase
 {
     /**
-     * @var \Bolt\Boltpay\Helper\Config|\PHPUnit\Framework\MockObject\MockObject
+     * @var \Bolt\Boltpay\Helper\Config
      */
     private $configHelper;
 
@@ -37,35 +40,31 @@ class RemoveActionPluginTest extends BoltTestCase
     /**
      * @var \Bolt\Boltpay\Plugin\Magento\Rewards\Controller\Cart\RemoveActionPlugin
      */
-    private $currentMock;
+    private $removeActionPlugin;
 
     /**
-     * @var \Magento\Framework\App\Request\Http|\PHPUnit\Framework\MockObject\MockObject
+     * @var \Magento\Framework\HTTP\PhpEnvironment\Response
      */
-    private $requestMock;
-
-    /**
-     * @var \Magento\Framework\HTTP\PhpEnvironment\Response|\PHPUnit\Framework\MockObject\MockObject
-     */
-    private $responseMock;
+    private $response;
+    private $objectManager;
 
     /**
      * Setup method, called before each test
      */
     protected function setUpInternal()
     {
-        $this->configHelper = $this->createMock(\Bolt\Boltpay\Helper\Config::class);
         $this->subject = $this->getMockBuilder('\Magento\Reward\Controller\Cart\Remove')
-            ->setMethods(['getRequest', 'getResponse'])
+            ->setMethods(['getRequest', 'getResponse','isAjax','clearHeader','setStatusHeader'])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->currentMock = new \Bolt\Boltpay\Plugin\Magento\Rewards\Controller\Cart\RemoveActionPlugin(
-            $this->configHelper
-        );
-        $this->requestMock = $this->createMock(\Magento\Framework\App\Request\Http::class);
-        $this->responseMock = $this->createMock(\Magento\Framework\HTTP\PhpEnvironment\Response::class);
-        $this->subject->method('getRequest')->willReturn($this->requestMock);
-        $this->subject->method('getResponse')->willReturn($this->responseMock);
+
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->removeActionPlugin = $this->objectManager->create(RemoveActionPlugin::class);
+        $this->response = $this->objectManager->create(\Magento\Framework\HTTP\PhpEnvironment\Response::class);
+        $this->configHelper = $this->objectManager->create(Config::class);
     }
 
     /**
@@ -86,17 +85,29 @@ class RemoveActionPluginTest extends BoltTestCase
         $isAjax,
         $expectRemoveRedirect
     ) {
-        $this->configHelper->expects(static::once())->method('displayRewardPointsInMinicartConfig')
-            ->willReturn($displayRewardPointsInMinicartConfig);
-        $this->requestMock->expects($displayRewardPointsInMinicartConfig ? static::once() : static::never())
+        $store = $this->objectManager->get(\Magento\Store\Model\StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
+        $configData = [
+            [
+                'path' => Config::XML_PATH_REWARD_POINTS_MINICART,
+                'value' => $displayRewardPointsInMinicartConfig,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $this->subject->method('getRequest')->willReturnSelf();
+        $this->subject->method('getResponse')->willReturnSelf();
+        $this->subject->expects($displayRewardPointsInMinicartConfig ? static::once() : static::never())
             ->method('isAjax')->willReturn($isAjax);
-        $this->responseMock->expects($expectRemoveRedirect ? static::once() : static::never())
+        $this->subject->expects($expectRemoveRedirect ? static::once() : static::never())
             ->method('clearHeader')->with('Location');
-        $this->responseMock->expects($expectRemoveRedirect ? static::once() : static::never())
+        $this->subject->expects($expectRemoveRedirect ? static::once() : static::never())
             ->method('setStatusHeader')->with(200);
         static::assertEquals(
-            $this->responseMock,
-            $this->currentMock->afterExecute($this->subject, $this->responseMock)
+            $this->response,
+            $this->removeActionPlugin->afterExecute($this->subject, $this->response)
         );
     }
 
