@@ -19,5 +19,24 @@ namespace Bolt\Boltpay\ThirdPartyModules\Mexbs;
 
 class Tieredcoupon
 {
-    
+    /**
+     * @param Observer $observer
+     *
+     * @return bool
+     */
+    public function loadCouponCodeData($result, $mexbsTieredcouponHelperData, $couponCode)
+    {
+        try {
+            if (!$result) {
+                $tieredcoupon = $mexbsTieredcouponHelperData->getTieredCouponByCouponCode($couponCode);
+                if($tieredcoupon && $tieredcoupon->getId() && $tieredcoupon->getIsActive()){
+                    return $tieredcoupon;
+                }
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+
+        return $result;
+    }
 }
