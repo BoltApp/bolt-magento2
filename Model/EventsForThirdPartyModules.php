@@ -51,6 +51,7 @@ use Bolt\Boltpay\ThirdPartyModules\Amasty\Preorder as Amasty_Preorder;
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\RewardPoints as MageWorx_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\ShippingRules as MageWorx_ShippingRules;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Promo as Amasty_Promo;
+use Bolt\Boltpay\ThirdPartyModules\Mexbs\Tieredcoupon as Mexbs_Tieredcoupon;
 use Exception;
 
 class EventsForThirdPartyModules
@@ -1127,6 +1128,15 @@ class EventsForThirdPartyModules
                     'module'      => 'Route_Route',
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
                     'boltClass'   => Route_Route::class,
+                ],
+            ],
+        ],
+        'loadCouponCodeData' => [
+            "listeners" => [
+                'Mexbs_Tieredcoupon' => [
+                    'module'      => 'Mexbs_Tieredcoupon',
+                    'sendClasses' => ['Mexbs\Tieredcoupon\Helper\Data'],
+                    'boltClass'   => Mexbs_Tieredcoupon::class,
                 ],
             ],
         ],

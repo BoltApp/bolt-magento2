@@ -309,7 +309,8 @@ class Discount extends AbstractHelper
      */
     public function loadCouponCodeData($couponCode)
     {
-        return $this->couponFactory->create()->loadByCode($couponCode);
+        $coupon = $this->eventsForThirdPartyModules->runFilter("loadCouponCodeData", null, $couponCode);
+        return $coupon ?: $this->couponFactory->create()->loadByCode($couponCode);
     }
     
     /**
