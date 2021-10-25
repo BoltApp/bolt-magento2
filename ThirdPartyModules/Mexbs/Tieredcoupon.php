@@ -87,9 +87,9 @@ class Tieredcoupon
     {
         try {
             if (!$result) {
-                $tieredcoupon = $mexbsTieredcouponHelperData->getTieredCouponByCouponCode($couponCode);
-                if($tieredcoupon && $tieredcoupon->getId() && $tieredcoupon->getIsActive()){
-                    return $tieredcoupon;
+                $tieredCoupon = $mexbsTieredcouponHelperData->getTieredCouponByCouponCode($couponCode);
+                if($tieredCoupon && $tieredCoupon->getId() && $tieredCoupon->getIsActive()){
+                    return $tieredCoupon;
                 }
             }
         } catch (\Exception $e) {
@@ -104,7 +104,7 @@ class Tieredcoupon
         try {
             if (!$result) {
                 $tieredCoupon = $mexbsTieredcouponCouponFactory->create()->load($couponCode, 'code');
-                if ($tieredCoupon->getId() === $coupon->getId()) {
+                if ($tieredCoupon && $tieredCoupon->getId() && $tieredCoupon->getId() === $coupon->getId()) {
                     return true;
                 }
             }
@@ -118,9 +118,9 @@ class Tieredcoupon
     public function getCouponRelatedRule($result, $mexbsTieredcouponCouponFactory, $coupon)
     {
         try {
-            if (!$result && !$coupon) {
+            if (!$result && $coupon) {
                 $tieredCoupon = $mexbsTieredcouponCouponFactory->create()->load($coupon->getCode(), 'code');
-                if ($tieredCoupon->getId() === $coupon->getId()) {
+                if ($tieredCoupon && $tieredCoupon->getId() && $tieredCoupon->getId() === $coupon->getId()) {
                     $subCouponCodes = $tieredCoupon->getSubCouponCodes();
                     $boltCollectSaleRuleDiscounts = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
                     $appliedRule = null;
@@ -135,7 +135,7 @@ class Tieredcoupon
                             // continue;
                         }
                     }
-                    if (!$appliedRule) {
+                    if ($appliedRule) {
                         return $appliedRule;
                     }
                 }
@@ -176,21 +176,18 @@ class Tieredcoupon
                 }
                 $subCouponCodes = $tieredCoupon->getSubCouponCodes();
                 $boltCollectSaleRuleDiscounts = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
-                $appliedRule = null;
-                $appliedSubCouponCode = null;
+                $appliedSubCoupon = null;
                 foreach ($subCouponCodes as $subCouponCode) {
                     try {
                         $coupon = $this->couponFactory->create()->loadByCode($subCouponCode);
-                        $rule = $this->ruleRepository->getById($coupon->getRuleId());
-                        if (isset($boltCollectSaleRuleDiscounts[$rule->getRuleId()])) {
-                            $appliedRule = $rule;
-                            $appliedSubCouponCode = $subCouponCode;
+                        if (isset($boltCollectSaleRuleDiscounts[$coupon->getRuleId()])) {
+                            $appliedSubCoupon = $coupon;
                         }
                     } catch (NoSuchEntityException $e) {
                         // continue;
                     }
                 }
-                if (!$appliedRule) {
+                if (!$appliedSubCoupon) {
                     throw new BoltException(
                         __('Failed to apply the coupon code %1', $couponCode),
                         null,
@@ -203,9 +200,9 @@ class Tieredcoupon
                 $result = [
                     'status'          => 'success',
                     'discount_code'   => $couponCode,
-                    'discount_amount' => abs(CurrencyUtils::toMinor($boltCollectSaleRuleDiscounts[$appliedRule->getRuleId()], $quote->getQuoteCurrencyCode())),
+                    'discount_amount' => abs(CurrencyUtils::toMinor($boltCollectSaleRuleDiscounts[$appliedSubCoupon->getRuleId()], $quote->getQuoteCurrencyCode())),
                     'description'     => $display,
-                    'discount_type'   => $this->discountHelper->convertToBoltDiscountType($appliedSubCouponCode),
+                    'discount_type'   => $this->discountHelper->convertToBoltDiscountType($appliedSubCoupon->getCode()),
                 ];
             }
         }

@@ -192,7 +192,7 @@ trait UpdateDiscountTrait
      */
     protected function applyDiscount($couponCode, $coupon, $giftCard, $quote)
     {
-        if ($coupon && $coupon->getCouponId()) {
+        if ($coupon && ($coupon->getCouponId() || $this->eventsForThirdPartyModules->runFilter("isValidCouponObj", false, $coupon, $couponCode))) {
             $result = $this->applyingCouponCode($couponCode, $coupon, $quote);
         } elseif ($giftCard && $giftCard->getId()) {
             $result = $this->applyingGiftCardCode($couponCode, $giftCard, $quote);
