@@ -60,7 +60,12 @@ class Tieredcoupon
     private $couponFactory;
 
     /**
-     * @param Bugsnag            $bugsnagHelper Bugsnag helper instance
+     * @param Bugsnag         $bugsnagHelper
+     * @param QuoteRepository $quoteRepository
+     * @param SessionHelper   $sessionHelper
+     * @param RuleRepository  $ruleRepository
+     * @param Discount        $discountHelper
+     * @param CouponFactory   $couponFactory
      */
     public function __construct(
         Bugsnag $bugsnagHelper,
@@ -79,9 +84,12 @@ class Tieredcoupon
     }
     
     /**
-     * @param Observer $observer
+     * Get tiered coupon if exists
      *
-     * @return bool
+     * @param mixed|null                        $result
+     * @param \Mexbs\Tieredcoupon\Helper\Data   $mexbsTieredcouponHelperData
+     * @param string                            $couponCode
+     * @return mixed|null     
      */
     public function loadCouponCodeData($result, $mexbsTieredcouponHelperData, $couponCode)
     {
@@ -99,6 +107,15 @@ class Tieredcoupon
         return $result;
     }
     
+    /**
+     * Check if the coupon is a valid tiered coupon
+     *
+     * @param bool                                            $result
+     * @param \Mexbs\Tieredcoupon\Model\TieredcouponFactory   $mexbsTieredcouponCouponFactory
+     * @param mixed                                           $coupon
+     * @param string                                          $couponCode
+     * @return bool
+     */
     public function isValidCouponObj($result, $mexbsTieredcouponCouponFactory, $coupon, $couponCode)
     {
         try {
@@ -115,6 +132,14 @@ class Tieredcoupon
         return $result;
     }
     
+    /**
+     * Return the sale rule of applied subcoupon
+     *
+     * @param mixed|null                                      $result
+     * @param \Mexbs\Tieredcoupon\Model\TieredcouponFactory   $mexbsTieredcouponCouponFactory
+     * @param mixed                                           $coupon
+     * @return mixed|null
+     */
     public function getCouponRelatedRule($result, $mexbsTieredcouponCouponFactory, $coupon)
     {
         try {
@@ -147,6 +172,17 @@ class Tieredcoupon
         return $result;
     }
     
+    /**
+     * Apply tiered coupon to quote
+     *
+     * @param bool                                            $result
+     * @param \Mexbs\Tieredcoupon\Model\TieredcouponFactory   $mexbsTieredcouponCouponFactory
+     * @param string                                          $couponCode
+     * @param mixed                                           $coupon
+     * @param \Magento\Quote\Model\Quote                      $quote
+     * @param \Magento\Quote\Model\Quote                      $addQuote
+     * @return bool
+     */
     public function filterApplyingCouponCode(
         $result,
         $mexbsTieredcouponCouponFactory,
