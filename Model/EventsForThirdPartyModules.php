@@ -1140,6 +1140,33 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        'isValidCouponObj' => [
+            "listeners" => [
+                'Mexbs_Tieredcoupon' => [
+                    'module'      => 'Mexbs_Tieredcoupon',
+                    'sendClasses' => ['Mexbs\Tieredcoupon\Model\TieredcouponFactory'],
+                    'boltClass'   => Mexbs_Tieredcoupon::class,
+                ],
+            ],
+        ],
+        'filterApplyingCouponCode' => [
+            "listeners" => [
+                'Mexbs_Tieredcoupon' => [
+                    'module'      => 'Mexbs_Tieredcoupon',
+                    'sendClasses' => ['Mexbs\Tieredcoupon\Model\TieredcouponFactory'],
+                    'boltClass'   => Mexbs_Tieredcoupon::class,
+                ],
+            ],
+        ],
+        'getCouponRelatedRule' => [
+            "listeners" => [
+                'Mexbs_Tieredcoupon' => [
+                    'module'      => 'Mexbs_Tieredcoupon',
+                    'sendClasses' => ['Mexbs\Tieredcoupon\Model\TieredcouponFactory'],
+                    'boltClass'   => Mexbs_Tieredcoupon::class,
+                ],
+            ],
+        ],
     ];
 
     /**

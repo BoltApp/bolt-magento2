@@ -216,6 +216,19 @@ trait UpdateDiscountTrait
      */
     protected function applyingCouponCode($couponCode, $coupon, $quote, $addQuote = null)
     {
+        $result = $this->eventsForThirdPartyModules->runFilter(
+            "filterApplyingCouponCode",
+            false,
+            $couponCode,
+            $coupon,
+            $quote,
+            $addQuote
+        );
+        
+        if ($result) {
+            return $result;
+        }
+        
         // get coupon entity id and load the coupon discount rule
         $couponId = $coupon->getId();
         try {
