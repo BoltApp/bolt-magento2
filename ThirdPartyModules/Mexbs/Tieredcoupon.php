@@ -148,20 +148,17 @@ class Tieredcoupon
                 if ($tieredCoupon && $tieredCoupon->getId() && $tieredCoupon->getId() === $coupon->getId()) {
                     $subCouponCodes = $tieredCoupon->getSubCouponCodes();
                     $boltCollectSaleRuleDiscounts = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
-                    $appliedRule = null;
                     foreach ($subCouponCodes as $subCouponCode) {
                         try {
                             $coupon = $this->couponFactory->create()->loadByCode($subCouponCode);
                             $rule = $this->ruleRepository->getById($coupon->getRuleId());
                             if (isset($boltCollectSaleRuleDiscounts[$rule->getRuleId()])) {
-                                $appliedRule = $rule;
+                                return $rule;
                             }
                         } catch (NoSuchEntityException $e) {
-                            // continue;
+                            // the subcoupon or its rule does not exist,
+                            // but we can ignore such an exception and continue to search subcoupon for a match.
                         }
-                    }
-                    if ($appliedRule) {
-                        return $appliedRule;
                     }
                 }
             }
@@ -220,7 +217,8 @@ class Tieredcoupon
                             $appliedSubCoupon = $coupon;
                         }
                     } catch (NoSuchEntityException $e) {
-                        // continue;
+                        // the subcoupon does not exist,
+                        // but we can ignore such an exception and continue to search subcoupon for a match.
                     }
                 }
                 if (!$appliedSubCoupon) {
