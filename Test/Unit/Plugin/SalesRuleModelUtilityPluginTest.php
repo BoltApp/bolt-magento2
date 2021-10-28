@@ -26,6 +26,7 @@ use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\SalesRule\Model\Rule\Action\Discount\Data as DiscountData;
 use Magento\Quote\Model\Quote\Item;
+use Magento\SalesRule\Model\RuleRepository;
 
 /**
  * Class SalesRuleModelUtilityPluginTest
@@ -47,10 +48,21 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
     
     /** @var AbstractDiscount */
     protected $subject;
+    
+    /** @var RuleRepository */
+    protected $ruleRepository;
 
     public function setUpInternal()
     {
         $this->subject = $this->createMock(Utility::class);
+        $this->sessionHelper = $this->createPartialMock(
+            SessionHelper::class,
+            ['getCheckoutSession']
+        );
+        $this->ruleRepository = $this->createPartialMock(
+            RuleRepository::class,
+            ['getById']
+        );
         $this->sessionHelper = $this->createPartialMock(
             SessionHelper::class,
             ['getCheckoutSession']
@@ -185,5 +197,47 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
                             ->method('getCheckoutSession')
                             ->willReturn($this->checkoutSession);
         $this->plugin->afterMinFix($this->subject, null, null, null, null);
+    }
+    
+    /**
+     * @test
+     * @covers ::afterMinFix
+     */
+    public function afterMinFix_FreeShippingRule_saveDiscountBreakdownToCheckoutSession()
+    {
+        $discountData = $this->getMockBuilder(DiscountData::class)
+            ->setMethods(['getAmount'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $discountData->expects(self::once())
+            ->method('getAmount')
+            ->willReturn(0.0);
+        $this->checkoutSession->expects(self::once())
+                            ->method('getBoltNeedCollectSaleRuleDiscounts')
+                            ->willReturn(2);
+        $boltCollectSaleRuleDiscounts = [2 => 0.0,];
+        $this->checkoutSession->expects(self::once())
+                            ->method('getBoltCollectSaleRuleDiscounts')
+                            ->willReturn($boltCollectSaleRuleDiscounts);
+        $boltDiscountBreakdown = ['item_discount' => 0.0,'rule_id' => 2,];
+        $rule = $this->getMockBuilder(DataObject::class)
+                    ->setMethods(['getSimpleFreeShipping'])
+                    ->disableOriginalConstructor()
+                    ->getMock();
+        $rule->expects(static::once())->method('getSimpleFreeShipping')
+                ->willReturn(true);
+        $this->checkoutSession->expects(self::once())
+                            ->method('getBoltDiscountBreakdown')
+                            ->willReturn($boltDiscountBreakdown);
+        $this->checkoutSession->expects(self::once())
+                            ->method('setBoltCollectSaleRuleDiscounts')
+                            ->with([2 => 0.0,]);
+        $this->checkoutSession->expects(self::once())
+                            ->method('setBoltNeedCollectSaleRuleDiscounts')
+                            ->with('');
+        $this->sessionHelper->expects(self::once())
+                            ->method('getCheckoutSession')
+                            ->willReturn($this->checkoutSession);
+        $this->plugin->afterMinFix($this->subject, null, $discountData, null, null);
     }
 }

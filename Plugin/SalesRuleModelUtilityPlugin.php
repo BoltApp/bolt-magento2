@@ -68,9 +68,8 @@ class SalesRuleModelUtilityPlugin
             // so we store the discount amount in the checkout session with the rule id as key.
             $boltDiscountBreakdown = $checkoutSession->getBoltDiscountBreakdown([]);
             if (!empty($boltDiscountBreakdown) && $boltDiscountBreakdown['rule_id'] == $savedRuleId) {
-                $rule = $this->ruleRepository->getById($savedRuleId);
                 $discountAmount = $discountData->getAmount() - $boltDiscountBreakdown['item_discount'];
-                if ($discountAmount >= DiscountHelper::MIN_NONZERO_VALUE || $rule->getSimpleFreeShipping()) {
+                if ($discountAmount >= DiscountHelper::MIN_NONZERO_VALUE || $this->ruleRepository->getById($savedRuleId)->getSimpleFreeShipping()) {
                     $boltCollectSaleRuleDiscounts = $checkoutSession->getBoltCollectSaleRuleDiscounts([]);
                     if (!isset($boltCollectSaleRuleDiscounts[$savedRuleId])) {
                         $boltCollectSaleRuleDiscounts[$savedRuleId] = $discountAmount;            
