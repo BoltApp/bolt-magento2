@@ -18,16 +18,24 @@ namespace Bolt\Boltpay\Plugin;
 
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Magento\SalesRule\Model\RuleRepository;
 
 class SalesRuleModelUtilityPlugin
 {    
     /** @var SessionHelper */
     private $sessionHelper;
     
+    /**
+     * @var RuleRepository
+     */
+    private $ruleRepository;
+    
     public function __construct(
-        SessionHelper $sessionHelper
+        SessionHelper $sessionHelper,
+        RuleRepository $ruleRepository
     ) {
         $this->sessionHelper = $sessionHelper;
+        $this->ruleRepository = $ruleRepository;
     }
     
     /**
@@ -60,8 +68,9 @@ class SalesRuleModelUtilityPlugin
             // so we store the discount amount in the checkout session with the rule id as key.
             $boltDiscountBreakdown = $checkoutSession->getBoltDiscountBreakdown([]);
             if (!empty($boltDiscountBreakdown) && $boltDiscountBreakdown['rule_id'] == $savedRuleId) {
+                $rule = $this->ruleRepository->getById($savedRuleId);
                 $discountAmount = $discountData->getAmount() - $boltDiscountBreakdown['item_discount'];
-                if ($discountAmount >= DiscountHelper::MIN_NONZERO_VALUE) {
+                if ($discountAmount >= DiscountHelper::MIN_NONZERO_VALUE || $rule->getSimpleFreeShipping()) {
                     $boltCollectSaleRuleDiscounts = $checkoutSession->getBoltCollectSaleRuleDiscounts([]);
                     if (!isset($boltCollectSaleRuleDiscounts[$savedRuleId])) {
                         $boltCollectSaleRuleDiscounts[$savedRuleId] = $discountAmount;            
