@@ -226,6 +226,10 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
                     ->getMock();
         $rule->expects(static::once())->method('getSimpleFreeShipping')
                 ->willReturn(true);
+        $this->ruleRepository->expects(static::once())
+                ->method('getById')
+                ->with(2)
+                ->willReturn($rule);
         $this->checkoutSession->expects(self::once())
                             ->method('getBoltDiscountBreakdown')
                             ->willReturn($boltDiscountBreakdown);
