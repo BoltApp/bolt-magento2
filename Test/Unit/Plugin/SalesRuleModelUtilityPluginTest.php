@@ -79,7 +79,8 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
         $this->plugin = (new ObjectManager($this))->getObject(
             SalesRuleModelUtilityPlugin::class,
             [
-                'sessionHelper' => $this->sessionHelper
+                'sessionHelper' => $this->sessionHelper,
+                'ruleRepository' => $this->ruleRepository
             ]
         );
     }
@@ -159,6 +160,16 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
                             ->method('getBoltNeedCollectSaleRuleDiscounts')
                             ->willReturn(2);
         $boltDiscountBreakdown = ['item_discount' => 20.0,'rule_id' => 2,];
+        $rule = $this->getMockBuilder(DataObject::class)
+                    ->setMethods(['getSimpleFreeShipping'])
+                    ->disableOriginalConstructor()
+                    ->getMock();
+        $rule->expects(static::once())->method('getSimpleFreeShipping')
+                ->willReturn(false);
+        $this->ruleRepository->expects(static::once())
+                ->method('getById')
+                ->with(2)
+                ->willReturn($rule);
         $this->checkoutSession->expects(self::once())
                             ->method('getBoltDiscountBreakdown')
                             ->willReturn($boltDiscountBreakdown);
