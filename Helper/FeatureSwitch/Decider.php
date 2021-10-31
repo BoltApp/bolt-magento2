@@ -396,4 +396,14 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_ENABLE_PRODUCT_ENDPOINT);
     }
+
+    public function isAPIDrivenIntegrationEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_ENABLE_API_DRIVEN_INTEGRAION);
+    }
+
+    public function isRecalculateTotalForAPIDrivenIntegration()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_RECALCULATE_TOTAL_FOR_API_DRIVEN_INTEGRAION);
+    }
 }
