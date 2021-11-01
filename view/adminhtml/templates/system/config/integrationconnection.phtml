@@ -1,0 +1,118 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+/**
+ * @var Bolt\Boltpay\Block\System\Config\Button $block
+ * @see Bolt\Boltpay\Block\System\Config\Button
+ */
+
+$isKeyEmpty = empty($block->getKeyValue());
+$isTokenLinked = !empty($block->getTokenLinked());
+?>
+
+<script>
+    require([
+        'jquery',
+        'prototype'
+    ], function(jQuery){
+        var collectSpan = jQuery('#bolt_integration_keys_span');
+        var keysValueId = jQuery('#<?= trim($block->getInputId()) ?>');
+        jQuery('#bolt_integration_token_button').click(function () {                      
+            new Ajax.Request('<?= $block->escapeUrl($block->getGenerateIntegrationTokenAjaxUrl()) ?>', {
+                parameters:     {},
+                loaderArea:     false,
+                asynchronous:   true,
+                onCreate: function() {
+                    collectSpan.find('.created').hide();
+                    collectSpan.find('.processing').show();
+                    collectSpan.find('.failure').hide();
+                    jQuery('#bolt_integration_keys_message_span').text('');
+                },
+                onSuccess: function(response) {
+                    collectSpan.find('.processing').hide(); 
+                    if (response.hasOwnProperty('responseJSON')
+                        && response.responseJSON.hasOwnProperty('status')
+                        && response.responseJSON.hasOwnProperty('accesstoken')
+                        && response.responseJSON.status === 'success') {
+                        jQuery('#bolt_integration_exist_msg').show();
+                        jQuery('#bolt_integration_token_button').hide();
+                        jQuery('#bolt_integration_not_exist_msg').hide();
+                        collectSpan.find('.created').show();
+                        collectSpan.find('.failure').hide();
+                        jQuery('#bolt_integration_keys_message_span').html('Success.');
+                        keysValueId.val(response.responseJSON.accesstoken);
+                        jQuery('#bolt_link_api_token_button').removeClass('hidden');
+                    } else {
+                        if (response.hasOwnProperty('responseJSON') && response.responseJSON.hasOwnProperty('errorMessage')) {
+                            jQuery('#bolt_integration_keys_message_span').text(response.responseJSON.errorMessage);
+                        } else {
+                            jQuery('#bolt_integration_keys_message_span').text('Fail, please try again.');
+                        }
+                        collectSpan.find('.failure').show();
+                    }
+                },
+                onFailure: function() {
+                    collectSpan.find('.processing').hide();
+                    jQuery('#bolt_integration_keys_message_span').text('Fail, please try again.');
+                    collectSpan.find('.failure').show();
+                }
+            });
+        });
+        jQuery('#bolt_link_api_token_button').click(function () {                      
+            new Ajax.Request('<?= $block->escapeUrl($block->getLinkIntegrationTokenAjaxUrl()) ?>', {
+                parameters:     {'store_id': '<?= trim($block->getStoreId()) ?>'},
+                loaderArea:     false,
+                asynchronous:   true,
+                onCreate: function() {
+                    collectSpan.find('.created').hide();
+                    collectSpan.find('.processing').show();
+                    collectSpan.find('.failure').hide();
+                    jQuery('#bolt_integration_keys_message_span').text('');
+                },
+                onSuccess: function(response) {
+                    collectSpan.find('.processing').hide(); 
+                    if (response.hasOwnProperty('responseJSON')
+                        && response.responseJSON.hasOwnProperty('status')
+                        && response.responseJSON.status === 'success') {
+                        jQuery('#bolt_integration_link_token_msg').show();
+                        jQuery('#bolt_link_api_token_button').hide();
+                        jQuery('#bolt_integration_exist_msg').hide();
+                        collectSpan.find('.created').show();
+                        collectSpan.find('.failure').hide();
+                        jQuery('#bolt_integration_keys_message_span').html('Success.');
+                    } else {
+                        if (response.hasOwnProperty('responseJSON') && response.responseJSON.hasOwnProperty('errorMessage')) {
+                            jQuery('#bolt_integration_keys_message_span').text(response.responseJSON.errorMessage);
+                        } else {
+                            jQuery('#bolt_integration_keys_message_span').text('Fail, please try again.');
+                        }
+                        collectSpan.find('.failure').show();
+                    }
+                },
+                onFailure: function() {
+                    collectSpan.find('.processing').hide();
+                    jQuery('#bolt_integration_keys_message_span').text('Fail, please try again.');
+                    collectSpan.find('.failure').show();
+                }
+            });
+        });
+    });
+</script>
+<span id="bolt_integration_keys_span">
+    <img class="processing" hidden="hidden" alt="Processing" style="margin:0 5px" src="<?php echo $block->getViewFileUrl('images/process_spinner.gif') ?>"/>
+    <img class="created" hidden="hidden" alt="Created" style="margin:-3px 5px" src="<?php echo $block->getViewFileUrl('images/rule_component_apply.gif') ?>"/>
+    <img class="failure" hidden="hidden" alt="failure" style="margin:-3px 5px" src="<?php echo $block->getViewFileUrl('images/rule_component_remove.gif') ?>"/>
+    <span id="bolt_integration_keys_message_span"></span>
+</span>
+<div class="message message-notice" id="bolt_integration_exist_msg" <?= $isKeyEmpty || $isTokenLinked ? 'hidden="hidden"' : '' ?>>
+    <div>The Magento integration&access token is created, please click the button to link the access token to Bolt merchant account.</div>
+</div>
+<div class="message message-notice" id="bolt_integration_not_exist_msg" <?= !$isKeyEmpty ? 'hidden="hidden"' : '' ?>>
+    <div>None of Magento integration is associated to Bolt extension or the related access token has changed, please click the button to create Magento integration&access token.</div>
+</div>
+<div class="message message-notice" id="bolt_integration_link_token_msg" <?= $isKeyEmpty || !$isTokenLinked ? 'hidden="hidden"' : '' ?>>
+    <div>The access token of Magento integration is linked to Bolt merchant account.</div>
+</div>
