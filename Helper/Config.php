@@ -397,6 +397,16 @@ class Config extends AbstractHelper
 
     /** @var string  */
     const XML_PATH_ORDER_COMMENT_FIELD = 'payment/boltpay/order_comment_field';
+    
+    /**
+     * The access token of associated Magento integration
+     */
+    const XML_PATH_INTEGRATION_TOKEN = 'payment/boltpay/connect_magento_integration';
+    
+    /**
+     * Whether the access token of Magento integration is linked to Bolt merchant account or not
+     */
+    const XML_PATH_LINK_INTEGRATION_FLAG = 'payment/boltpay/link_integration_flag';
 
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
@@ -457,7 +467,9 @@ class Config extends AbstractHelper
         'api_emulate_session'                => self::XML_PATH_API_EMULATE_SESSION,
         'should_minify_javascript'           => self::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
         'capture_merchant_metrics'           => self::XML_PATH_CAPTURE_MERCHANT_METRICS,
-        'track_checkout_funnel'              => self::XML_PATH_TRACK_CHECKOUT_FUNNEL
+        'track_checkout_funnel'              => self::XML_PATH_TRACK_CHECKOUT_FUNNEL,
+        'connect_magento_integration'        => self::XML_PATH_INTEGRATION_TOKEN
+        'link_integration_flag'              => self::XML_PATH_LINK_INTEGRATION_FLAG
     ];
 
     /**
@@ -2168,6 +2180,30 @@ class Config extends AbstractHelper
             ScopeInterface::SCOPE_STORE,
             $storeId
         ) ?: 'customer_note';
+    }
+    
+    /**
+     * Gets the access token of associated Magento integration
+     *
+     * @return string
+     */
+    public function getIntegrationToken()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_INTEGRATION_TOKEN
+        );
+    }
+    
+    /**
+     * Gets whether the access token of associated Magento integration has been sent to Bolt
+     *
+     * @return bool
+     */
+    public function getLinkIntegrationFlag()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_LINK_INTEGRATION_FLAG
+        );
     }
 
     /**

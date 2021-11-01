@@ -37,4 +37,14 @@
     <type name="Magento\Ui\Component\Form\Element\Select">
         <plugin sortOrder="1" name="bolt_boltpay_ui_form_element_select" type="Bolt\Boltpay\Plugin\Magento\Ui\Component\Form\Element\SelectPlugin"/>
     </type>
+    <type name="Magento\Integration\Model\OauthService">
+        <plugin sortOrder="20"
+                name="Bolt_BoltPay_Integration_Model_OauthService"
+                type="Bolt\Boltpay\Plugin\Magento\Integration\Model\OauthServicePlugin"/>
+    </type>
+    <type name="Magento\Integration\Model\IntegrationService">
+        <plugin sortOrder="20"
+                name="Bolt_BoltPay_Integration_Model_IntegrationService"
+                type="Bolt\Boltpay\Plugin\Magento\Integration\Model\IntegrationServicePlugin"/>
+    </type>
 </config>
