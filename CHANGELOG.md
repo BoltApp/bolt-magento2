@@ -219,3 +219,5 @@
 - Updates to order tracking logic to handle product identification for configurable products
 - Updates to M2's product info endpoint to return catalog rule pricing
 - Related Bolt `cart.create` endpoint bug fix preventing carts with a `qty` of `1`
+## [v2.24.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.24.0) 2021-11-02
+- Changelog TBD
