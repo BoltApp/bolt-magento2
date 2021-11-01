@@ -1188,10 +1188,8 @@ class JsTest extends BoltTestCase
      */
     public function getModuleVersion_always_returnsModuleVersion()
     {
-        $moduleVersion = '2.2.3';
-        $this->configHelper->expects(static::once())->method('getModuleVersion')->willReturn($moduleVersion);
-
-        static::assertEquals($moduleVersion, $this->currentMock->getModuleVersion());
+        $moduleVersion = '2.24.1';
+        static::assertEquals($moduleVersion, $this->block->getModuleVersion());
     }
 
     /**
