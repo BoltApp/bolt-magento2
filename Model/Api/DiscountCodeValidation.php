@@ -172,7 +172,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
 
         $this->eventsForThirdPartyModules->dispatchEvent("beforeApplyDiscount", $parentQuote);
 
-        if ($coupon && $coupon->getCouponId()) {
+        if ($coupon && ($coupon->getCouponId() || $this->eventsForThirdPartyModules->runFilter("isValidCouponObj", false, $coupon, $couponCode))) {
             if ($this->shouldUseParentQuoteShippingAddressDiscount($couponCode, $immutableQuote, $parentQuote)) {
                 $result = $this->getParentQuoteDiscountResult($couponCode, $coupon, $parentQuote);
             } else {

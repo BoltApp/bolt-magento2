@@ -309,7 +309,8 @@ class Discount extends AbstractHelper
      */
     public function loadCouponCodeData($couponCode)
     {
-        return $this->couponFactory->create()->loadByCode($couponCode);
+        $coupon = $this->eventsForThirdPartyModules->runFilter("loadCouponCodeData", null, $couponCode);
+        return $coupon ?: $this->couponFactory->create()->loadByCode($couponCode);
     }
     
     /**
@@ -325,7 +326,8 @@ class Discount extends AbstractHelper
         try {
             $coupon = $this->loadCouponCodeData($couponCode);
             // Load the coupon discount rule
-            $rule = $this->ruleRepository->getById($coupon->getRuleId());
+            $rule = $this->eventsForThirdPartyModules->runFilter("getCouponRelatedRule", null, $coupon)
+                    ?: $this->ruleRepository->getById($coupon->getRuleId());
             $type = $rule->getSimpleAction();
             
             return $this->getBoltDiscountType($type);

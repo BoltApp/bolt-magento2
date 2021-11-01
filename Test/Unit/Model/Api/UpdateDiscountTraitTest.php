@@ -822,9 +822,10 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class);
         $eventsForThirdPartyModules->method('runFilter')
             ->withConsecutive(
+                ["filterApplyingCouponCode", false],
                 ["verifyRuleTimeFrame", true],
                 ["filterGetBoltCollectSaleRuleDiscounts", [self::RULE_ID => 10], $this->ruleMock]
-            )->willReturnOnConsecutiveCalls(false, [self::RULE_ID => 10]);
+            )->willReturnOnConsecutiveCalls(false, false, [self::RULE_ID => 10]);
 
         TestHelper::setProperty($this->currentMock, 'eventsForThirdPartyModules', $eventsForThirdPartyModules);
 
