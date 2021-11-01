@@ -17,12 +17,12 @@
 
 namespace Bolt\Boltpay\Test\Unit\ThirdPartyModules\IDme;
 
+use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\ThirdPartyModules\IDme\GroupVerification;
-use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Customer\Model\Session;
-use PHPUnit\Framework\MockObject\MockObject;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class GroupVerificationTest
@@ -37,49 +37,34 @@ class GroupVerificationTest extends BoltTestCase
     const IDME_SUBGROUP = 'IDME_SUBGROUP';
 
     /**
-     * @var Session|MockObject
+     * @var Session
      */
     private $customerSession;
 
     /**
-     * @var Quote|MockObject
+     * @var Quote
      */
     private $quote;
 
     /**
-     * @var GroupVerification|MockObject
+     * @var GroupVerification
      */
-    private $currentMock;
+    private $groupVerification;
+    private $objectManager;
 
     /**
      * @inheritdoc
      */
     public function setUpInternal()
     {
-        $this->customerSession = $this->quote = $this->createPartialMock(
-            Session::class,
-            [
-                'setIdmeUuid',
-                'setIdmeGroup',
-                'setIdmeSubgroups',
-                'getData',
-                'setData'
-            ]
-        );
-        $this->quote = $this->createPartialMock(
-            Quote::class,
-            [
-                'getIdmeUuid',
-                'getIdmeGroup',
-                'getIdmeSubgroups',
-            ]
-        );
-        $this->currentMock = (new ObjectManager($this))->getObject(
-            GroupVerification::class,
-            [
-                'customerSession' => $this->customerSession
-            ]
-        );
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->groupVerification = $this->objectManager->create(GroupVerification::class);
+        $this->quote = $this->objectManager->create(Quote::class);
+        $this->customerSession = $this->objectManager->create(Session::class);
+
     }
 
     /**
@@ -88,14 +73,15 @@ class GroupVerificationTest extends BoltTestCase
      */
     public function beforeApplyDiscount()
     {
-        $this->quote->expects(self::once())->method('getIdmeUuid')->willReturn(self::IDME_UUID);
-        $this->quote->expects(self::once())->method('getIdmeGroup')->willReturn(self::IDME_GROUP);
-        $this->quote->expects(self::once())->method('getIdmeSubgroups')->willReturn(self::IDME_SUBGROUP);
-        $this->customerSession->expects(self::once())->method('setIdmeUuid')->with(self::IDME_UUID)->willReturnSelf();
-        $this->customerSession->expects(self::once())->method('setIdmeGroup')->with(self::IDME_GROUP)->willReturnSelf();
-        $this->customerSession->expects(self::once())->method('setIdmeSubgroups')
-            ->with(self::IDME_SUBGROUP)->willReturnSelf();
-        $this->currentMock->beforeApplyDiscount($this->quote);
+        $this->quote->setIdmeUuid(self::IDME_UUID);
+        $this->quote->setIdmeGroup(self::IDME_GROUP);
+        $this->quote->setIdmeSubgroups(self::IDME_SUBGROUP);
+        TestHelper::setProperty($this->groupVerification,'customerSession', $this->customerSession);
+        $this->groupVerification->beforeApplyDiscount($this->quote);
+        self::assertEquals(self::IDME_UUID, $this->customerSession->getData('idme_uuid'));
+        self::assertEquals(self::IDME_GROUP, $this->customerSession->getData('idme_group'));
+        self::assertEquals(self::IDME_SUBGROUP, $this->customerSession->getData('idme_subgroups'));
+        $this->unsetIdmeCustomer();
     }
 
     /**
@@ -109,14 +95,12 @@ class GroupVerificationTest extends BoltTestCase
         $idmeUuid = sha1('idme_uuid');
         $idmeGroup = sha1('idme_group');
         $idmeSubgroups = sha1('idme_subgroups');
-        $this->customerSession->expects(static::exactly(6))->method('getData')->willReturnMap(
-            [
-                ['idme_uuid', false, $idmeUuid],
-                ['idme_group', false, $idmeGroup],
-                ['idme_subgroups', false, $idmeSubgroups],
-            ]
-        );
-        $result = $this->currentMock->collectSessionData([], $this->quote, $this->quote);
+
+        $this->customerSession->setIdmeUuid($idmeUuid);
+        $this->customerSession->setIdmeGroup($idmeGroup);
+        $this->customerSession->setIdmeSubgroups($idmeSubgroups);
+        TestHelper::setProperty($this->groupVerification,'customerSession', $this->customerSession);
+        $result = $this->groupVerification->collectSessionData([], $this->quote, $this->quote);
         static::assertEquals(
             [
                 'idme_uuid'      => $idmeUuid,
@@ -125,6 +109,7 @@ class GroupVerificationTest extends BoltTestCase
             ],
             $result
         );
+        $this->unsetIdmeCustomer();
     }
 
     /**
@@ -138,17 +123,24 @@ class GroupVerificationTest extends BoltTestCase
         $idmeUuid = sha1('idme_uuid');
         $idmeGroup = sha1('idme_group');
         $idmeSubgroups = sha1('idme_subgroups');
-        $this->customerSession->expects(static::exactly(3))->method('setData')->withConsecutive(
-            ['idme_uuid', $idmeUuid],
-            ['idme_group', $idmeGroup],
-            ['idme_subgroups', $idmeSubgroups]
-        );
-        $this->currentMock->restoreSessionData(
+
+        TestHelper::setProperty($this->groupVerification,'customerSession', $this->customerSession);
+        $this->groupVerification->restoreSessionData(
             [
                 'idme_uuid'      => $idmeUuid,
                 'idme_group'     => $idmeGroup,
                 'idme_subgroups' => $idmeSubgroups,
             ]
         );
+        self::assertEquals($idmeUuid, $this->customerSession->getData('idme_uuid'));
+        self::assertEquals($idmeGroup, $this->customerSession->getData('idme_group'));
+        self::assertEquals($idmeSubgroups, $this->customerSession->getData('idme_subgroups'));
+        $this->unsetIdmeCustomer();
+    }
+
+    public function unsetIdmeCustomer(){
+        $this->customerSession->unsIdmeUuid();
+        $this->customerSession->unsIdmeGroup();
+        $this->customerSession->unsIdmeSubgroups();
     }
 }
