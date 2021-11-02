@@ -271,8 +271,6 @@ abstract class UpdateCartCommon
 
         $shippingAddress
             ->setShippingMethod($shipment['reference'])
-            ->setCollectShippingRates(true)
-            ->collectShippingRates()
             ->save();
     }
 

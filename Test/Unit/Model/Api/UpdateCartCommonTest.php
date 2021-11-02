@@ -323,8 +323,6 @@ class UpdateCartCommonTest extends BoltTestCase
             [
                 'setShouldIgnoreValidation',
                 'setShippingMethod',
-                'setCollectShippingRates',
-                'collectShippingRates',
                 'addData',
                 'save'
             ]
@@ -653,8 +651,6 @@ class UpdateCartCommonTest extends BoltTestCase
             )
             ->willReturnSelf();
         $quoteAddress->expects(static::once())->method('setShippingMethod')->with('flatrate_flatrate')->willReturnSelf();
-        $quoteAddress->expects(static::once())->method('setCollectShippingRates')->with(true)->willReturnSelf();
-        $quoteAddress->expects(static::once())->method('collectShippingRates')->willReturnSelf();
         $quoteAddress->expects(static::once())->method('save');
         
         $immutableQuoteMock->expects(self::once())->method('getShippingAddress')->willReturn($quoteAddress);
