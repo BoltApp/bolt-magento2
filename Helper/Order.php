@@ -730,6 +730,7 @@ class Order extends AbstractHelper
         if (isset($transaction->order->user_note)) {
             $this->setOrderUserNote($order, $transaction->order->user_note);
         }
+        $this->eventsForThirdPartyModules->dispatchEvent('orderPostprocess', $order, $quote, $transaction);
         $order->save();
     }
 
@@ -1325,7 +1326,8 @@ class Order extends AbstractHelper
         // When the create_order hook (thread 1) takes a lot of time to execute and returns a timeout, the authorize/payment hook (thread 2) is sent to Magento.
         // It updates the order prior to the create_order hook (thread 1) process.
         // This ensures that the returned order in the create_order hook is the latest updated order.
-        $existingOrder =  $this->cartHelper->getOrderById($order->getId());
+        $existingOrder = $this->cartHelper->getOrderById($order->getId());
+        $existingOrder = $this->eventsForThirdPartyModules->runFilter('beforeGetOrderByIdProcessNewOrder', $existingOrder, $order);
         $orderPayment = $existingOrder->getPayment();
         if ($orderPayment && $orderPayment->getMethod() !== Payment::METHOD_CODE) {
             throw new LocalizedException(__(
