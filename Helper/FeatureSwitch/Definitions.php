@@ -46,6 +46,11 @@ class Definitions
     const M2_BOLT_ENABLED = 'M2_BOLT_ENABLED';
 
     /**
+     * Enable including mismatch amount into tax when adjusting price mismatch
+     */
+    const M2_INCLUDE_MISMATCH_AMOUNT_INTO_TAX_WHEN_ADJUSTING_PRICE_MISMATCH = 'M2_INCLUDE_MISMATCH_AMOUNT_INTO_TAX_WHEN_ADJUSTING_PRICE_MISMATCH';
+
+    /**
      * Enable logging of missing quote failed hooks
      *
      */
@@ -236,6 +241,12 @@ class Definitions
         ],
         self::M2_BOLT_ENABLED => [
             self::NAME_KEY        => self::M2_BOLT_ENABLED,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_INCLUDE_MISMATCH_AMOUNT_INTO_TAX_WHEN_ADJUSTING_PRICE_MISMATCH => [
+            self::NAME_KEY        => self::M2_INCLUDE_MISMATCH_AMOUNT_INTO_TAX_WHEN_ADJUSTING_PRICE_MISMATCH,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
