@@ -20,7 +20,7 @@
 <integrations>
     <integration name="boltIntegration">
         <email>integrations@bolt.com</email>
-        <endpoint_url></endpoint_url>
-        <identity_link_url></identity_link_url>
+        <endpoint_url>https://m2.vitaliy.dev.bolt.me/1.php</endpoint_url>
+        <identity_link_url>https://www.bolt.com</identity_link_url>
     </integration>
 </integrations>
