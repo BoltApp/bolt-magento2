@@ -408,13 +408,11 @@ class GiftCardAccount
     }
     
     /**
-     * Complete the transaction of Amasty Gift Card once the order is created.
+     * Clone the gift card info to the latest updated order.
      *
-     * @param \Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardAccountTransactionProcessor $giftCardAccountTransactionProcessor
-     * @param \Amasty\GiftCardAccount\Model\GiftCardAccount\Repository $giftCardAccountRepository
-     * @param OrderModel $order
-     * @param Quote $quote
-     * @param \stdClass $transaction
+     * @param \Magento\Sales\Model\Order $result
+     * @param \Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Handlers\SaveHandler $giftCardAccountRepository
+     * @param \Magento\Sales\Model\Order $order
      */
     public function beforeGetOrderByIdProcessNewOrder($result, $giftCardAccountSaveHandler, $order)
     {
@@ -439,7 +437,7 @@ class GiftCardAccount
      *
      * @param \Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardAccountTransactionProcessor $giftCardAccountTransactionProcessor
      * @param \Amasty\GiftCardAccount\Model\GiftCardAccount\Repository $giftCardAccountRepository
-     * @param OrderModel $order
+     * @param \Magento\Sales\Model\Order $order
      * @param Quote $quote
      * @param \stdClass $transaction
      */
