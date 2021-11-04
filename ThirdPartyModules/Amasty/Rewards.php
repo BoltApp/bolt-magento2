@@ -83,14 +83,20 @@ class Rewards
         list ($discounts, $totalAmount, $diff) = $result;
 
         try {
+            $pointsUsed = null;
             if ($quote->getData('amrewards_point')) {
                 $rewardData = $amastyRewardsHelperData->getRewardsData();
                 $pointsUsed = $amastyRewardsResourceModelQuote->getUsedRewards($quote->getId());
                 $pointsRate = $rewardData['rateForCurrency'];
                 $amount = $pointsUsed / $pointsRate;
+            } elseif ($pointsUsed = $quote->getData('am_spent_reward_points')) {
+                $rewardData = $amastyRewardsHelperData->getRewardsData();
+                $pointsRate = $rewardData['rateForCurrency'];
+                $amount = floatval($pointsUsed) / $pointsRate;
+            }
+            if ($pointsUsed) {
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-                
                 $discounts[] = [
                     'description'       => 'Reward Points',
                     'amount'            => $roundedAmount,
@@ -101,7 +107,6 @@ class Rewards
                     // For v1/merchant/order
                     'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'),
                 ];
-                
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
                 $totalAmount -= $roundedAmount;
             }
@@ -142,7 +147,7 @@ class Rewards
         $couponCode,
         $quote
     ) {
-        if ($couponCode == self::AMASTY_REWARD && $quote->getData('amrewards_point')) {
+        if ($couponCode == self::AMASTY_REWARD && ($quote->getData('amrewards_point') || $quote->getData('am_spent_reward_points'))) {
             $result[] = $couponCode;
         }
         
@@ -169,7 +174,7 @@ class Rewards
         $storeId
     ) {
         try {
-            if ($couponCode == self::AMASTY_REWARD && $quote->getData('amrewards_point')) {
+            if ($couponCode == self::AMASTY_REWARD && ($quote->getData('amrewards_point') || $quote->getData('am_spent_reward_points'))) {
                 $amastyRewardsManagement->collectCurrentTotals($quote, 0);
 
                 $amastyRewardsQuote->addReward(
