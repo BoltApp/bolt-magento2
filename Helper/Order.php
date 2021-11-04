@@ -749,7 +749,9 @@ class Order extends AbstractHelper
 
         if (abs($totalMismatch) > 0 && abs($totalMismatch) <= $priceFaultTolerance) {
             $boltGrandTotal = CurrencyUtils::toMajor($boltTotalAmount, $currencyCode);
-            $order->setBaseGrandTotal($boltGrandTotal)->setGrandTotal($boltGrandTotal);
+            $order->setTaxAmount($order->getTaxAmount() + CurrencyUtils::toMajor($totalMismatch, $currencyCode))
+                ->setBaseTaxAmount($order->getBaseTaxAmount() + CurrencyUtils::toMajor($totalMismatch, $currencyCode))
+                ->setBaseGrandTotal($boltGrandTotal)->setGrandTotal($boltGrandTotal);
 
             $this->bugsnag->registerCallback(function ($report) use ($quote, $boltTotalAmount, $magentoTotalAmount) {
 
