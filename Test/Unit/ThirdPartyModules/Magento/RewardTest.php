@@ -18,9 +18,12 @@
 namespace Bolt\Boltpay\Test\Unit\ThirdPartyModules\Magento;
 
 use Bolt\Boltpay\Helper\Config;
+use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Bolt\Boltpay\ThirdPartyModules\Magento\Reward;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
-use PHPUnit\Framework\MockObject\MockObject;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\Magento\Reward
@@ -29,36 +32,31 @@ class RewardTest extends BoltTestCase
 {
 
     /**
-     * @var Config|MockObject
+     * @var Config
      */
-    private $configHelperMock;
+    private $configHelper;
 
     /**
-     * @var Reward|MockObject
+     * @var \Magento\Framework\App\Http\Context
      */
-    private $currentMock;
+    private $httpContext;
+    private $objectManager;
 
-    /**
-     * @var \Magento\Framework\App\Http\Context|MockObject
-     */
-    private $httpContextMock;
+    /** @var Reward */
+    private $reward;
 
     /**
      * Setup test dependencies, called before each test
      */
     protected function setUpInternal()
     {
-        $this->configHelperMock = $this->createMock(Config::class);
-        $this->httpContextMock = $this->createMock(\Magento\Framework\App\Http\Context::class);
-        $this->currentMock = $this->getMockBuilder(Reward::class)
-            ->setConstructorArgs(
-                [
-                    $this->configHelperMock,
-                    $this->httpContextMock
-                ]
-            )
-            ->setMethods(null)
-            ->getMock();
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->reward = $this->objectManager->create(Reward::class);
+        $this->configHelper = $this->objectManager->create(Config::class);
+        $this->httpContext = $this->objectManager->create(\Magento\Framework\App\Http\Context::class);
     }
 
     /**
@@ -69,8 +67,8 @@ class RewardTest extends BoltTestCase
      */
     public function __construct_always_setsInternalProperties()
     {
-        $instance = new \Bolt\Boltpay\ThirdPartyModules\Magento\Reward($this->configHelperMock, $this->httpContextMock);
-        static::assertAttributeEquals($this->configHelperMock, 'configHelper', $instance);
+        $instance = new \Bolt\Boltpay\ThirdPartyModules\Magento\Reward($this->configHelper, $this->httpContext);
+        static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
     }
 
     /**
@@ -82,8 +80,7 @@ class RewardTest extends BoltTestCase
      */
     public function filterProcessLayout_notEnabledInConfig_doesNotAddLayout()
     {
-        $this->configHelperMock->expects(static::once())->method('useRewardPointsConfig')->willReturn(false);
-        static::assertEquals([], $this->currentMock->filterProcessLayout([]));
+        static::assertEquals([], $this->reward->filterProcessLayout([]));
     }
 
     /**
@@ -95,8 +92,19 @@ class RewardTest extends BoltTestCase
      */
     public function filterProcessLayout_ifEnabledInConfig_addsModuleSpecificLayout()
     {
-        $this->configHelperMock->expects(static::once())->method('useRewardPointsConfig')->willReturn(true);
-        $result = $this->currentMock->filterProcessLayout([]);
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
+        $configData = [
+            [
+                'path' => Config::XML_PATH_REWARD_POINTS,
+                'value' => true,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $result = $this->reward->filterProcessLayout([]);
         static::assertEquals(
             [
                 'component' => 'Magento_Reward/js/view/payment/reward'
@@ -119,28 +127,41 @@ class RewardTest extends BoltTestCase
     public function filterMinicartAddonsLayout_withVariousStates_appendsLayoutIfConditionsAreMet(
         $displayRewardPointsInMinicartConfig,
         $customerLoggedIn
-    ) {
-        $this->configHelperMock->method('displayRewardPointsInMinicartConfig')
-            ->willReturn($displayRewardPointsInMinicartConfig);
-        $this->httpContextMock->method('getValue')
-            ->willReturn($customerLoggedIn);
-        $result = $this->currentMock->filterMinicartAddonsLayout([]);
+    )
+    {
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $storeId = $store->getStore()->getId();
+
+        $configData = [
+            [
+                'path' => Config::XML_PATH_REWARD_POINTS_MINICART,
+                'value' => $displayRewardPointsInMinicartConfig,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $this->httpContext->setValue('customer_logged_in', $customerLoggedIn, null);
+        TestHelper::setProperty($this->reward, 'httpContext', $this->httpContext);
+
+        $result = $this->reward->filterMinicartAddonsLayout([]);
         if ($customerLoggedIn && $displayRewardPointsInMinicartConfig) {
             static::assertEquals(
                 [
                     [
-                        'parent'    => 'minicart_content.extra_info',
-                        'name'      => 'minicart_content.extra_info.rewards',
+                        'parent' => 'minicart_content.extra_info',
+                        'name' => 'minicart_content.extra_info.rewards',
                         'component' => 'Magento_Reward/js/view/payment/reward',
-                        'config'    => [],
+                        'config' => [],
                     ],
                     [
-                        'parent'    => 'minicart_content.extra_info',
-                        'name'      => 'minicart_content.extra_info.rewards_total',
+                        'parent' => 'minicart_content.extra_info',
+                        'name' => 'minicart_content.extra_info.rewards_total',
                         'component' => 'Magento_Reward/js/view/cart/reward',
-                        'config'    => [
+                        'config' => [
                             'template' => 'Magento_Reward/cart/reward',
-                            'title'    => 'Reward Points',
+                            'title' => 'Reward Points',
                         ],
                     ]
                 ],
