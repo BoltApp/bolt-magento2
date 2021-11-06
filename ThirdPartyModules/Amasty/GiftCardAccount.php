@@ -406,4 +406,55 @@ class GiftCardAccount
             $this->bugsnagHelper->notifyException($e);
         }
     }
+    
+    /**
+     * Clone the gift card info to the latest updated order.
+     *
+     * @param \Magento\Sales\Model\Order $result
+     * @param \Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Handlers\SaveHandler $giftCardAccountRepository
+     * @param \Magento\Sales\Model\Order $order
+     */
+    public function beforeGetOrderByIdProcessNewOrder($result, $giftCardAccountSaveHandler, $order)
+    {
+        try {
+            if ($order->getExtensionAttributes() && $order->getExtensionAttributes()->getAmGiftcardOrder()) {
+                $gCardOrder = $order->getExtensionAttributes()->getAmGiftcardOrder();
+                $existingOrderExtension = $result->getExtensionAttributes();
+                $gCardOrder->setOrderId((int)$result->getId());
+                $existingOrderExtension->setAmGiftcardOrder($gCardOrder);
+                $result->setExtensionAttributes($existingOrderExtension);
+                $giftCardAccountSaveHandler->saveAttributes($result);
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        } finally {
+            return $result;
+        }
+    }
+    
+    /**
+     * Complete the transaction of Amasty Gift Card once the order is created.
+     *
+     * @param \Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardAccountTransactionProcessor $giftCardAccountTransactionProcessor
+     * @param \Amasty\GiftCardAccount\Model\GiftCardAccount\Repository $giftCardAccountRepository
+     * @param \Magento\Sales\Model\Order $order
+     * @param Quote $quote
+     * @param \stdClass $transaction
+     */
+    public function orderPostprocess($giftCardAccountTransactionProcessor, $giftCardAccountRepository, $order, $quote, $transaction)
+    {
+        if (!$order->getExtensionAttributes() || !$order->getExtensionAttributes()->getAmGiftcardOrder()) {
+            return;
+        }
+        /** @var GiftCardOrderInterface $gCardOrder */
+        $gCardOrder = $order->getExtensionAttributes()->getAmGiftcardOrder();
+        try {
+            foreach ($gCardOrder->getAppliedAccounts() as $appliedAccount) {
+                $giftCardAccountRepository->save($appliedAccount);
+                $giftCardAccountTransactionProcessor->completeTransaction($appliedAccount);
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
 }

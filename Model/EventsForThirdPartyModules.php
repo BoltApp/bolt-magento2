@@ -418,6 +418,17 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        'orderPostprocess' => [
+            "listeners" => [
+                'Amasty Giftcard V2.5' => [
+                    "module"       => "Amasty_GiftCardAccount",
+                    "checkClasses" => self::AMASTY_GIFTCARD_V25_CHECK_CLASSES,
+                    'sendClasses'  => ['Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardAccountTransactionProcessor',
+                                       'Amasty\GiftCardAccount\Model\GiftCardAccount\Repository'],
+                    "boltClass"    => Amasty_GiftCardAccount::class,
+                ],
+            ],
+        ],
     ];
 
     const filterListeners = [
@@ -1167,6 +1178,16 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        'beforeGetOrderByIdProcessNewOrder' => [
+            "listeners" => [
+                'Amasty Giftcard V2.5' => [
+                    "module"       => "Amasty_GiftCardAccount",
+                    "checkClasses" => self::AMASTY_GIFTCARD_V25_CHECK_CLASSES,
+                    'sendClasses'  => ['Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Handlers\SaveHandler'],
+                    "boltClass"    => Amasty_GiftCardAccount::class,
+                ],
+            ],
+        ],
     ];
 
     /**
@@ -1178,6 +1199,13 @@ class EventsForThirdPartyModules
         'Amasty\GiftCard\Model\ResourceModel\Quote\CollectionFactory',
         'Amasty\GiftCard\Api\CodeRepositoryInterface',
         'Amasty\GiftCard\Api\AccountRepositoryInterface',
+    ];
+    
+    /**
+     * @var array Classes used to verify that Amasty Giftcard module version >= 2.5.0
+     */
+    const AMASTY_GIFTCARD_V25_CHECK_CLASSES = [
+        'Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardAccountTransactionProcessor',
     ];
 
     /**
