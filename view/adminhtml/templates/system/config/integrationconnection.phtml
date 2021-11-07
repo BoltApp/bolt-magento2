@@ -37,14 +37,13 @@ $isTokenLinked = !empty($block->getTokenLinked());
                         && response.responseJSON.hasOwnProperty('status')
                         && response.responseJSON.hasOwnProperty('accesstoken')
                         && response.responseJSON.status === 'success') {
-                        jQuery('#bolt_integration_exist_msg').show();
+                        jQuery('#bolt_integration_link_token_msg').show();
                         jQuery('#bolt_integration_token_button').hide();
                         jQuery('#bolt_integration_not_exist_msg').hide();
                         collectSpan.find('.created').show();
                         collectSpan.find('.failure').hide();
                         jQuery('#bolt_integration_keys_message_span').html('Success.');
                         keysValueId.val(response.responseJSON.accesstoken);
-                        jQuery('#bolt_link_api_token_button').removeClass('hidden');
                     } else {
                         if (response.hasOwnProperty('responseJSON') && response.responseJSON.hasOwnProperty('errorMessage')) {
                             jQuery('#bolt_integration_keys_message_span').text(response.responseJSON.errorMessage);
@@ -108,7 +107,7 @@ $isTokenLinked = !empty($block->getTokenLinked());
     <span id="bolt_integration_keys_message_span"></span>
 </span>
 <div class="message message-notice" id="bolt_integration_exist_msg" <?= $isKeyEmpty || $isTokenLinked ? 'hidden="hidden"' : '' ?>>
-    <div>The Magento integration&access token is created, please click the button to link the access token to Bolt merchant account.</div>
+    <div>The access token of Magento integration is linked to Bolt merchant account.</div>
 </div>
 <div class="message message-notice" id="bolt_integration_not_exist_msg" <?= !$isKeyEmpty ? 'hidden="hidden"' : '' ?>>
     <div>None of Magento integration is associated to Bolt extension or the related access token has changed, please click the button to create Magento integration&access token.</div>

@@ -24,10 +24,13 @@ use Magento\Framework\DataObjectFactory;
 use Magento\Integration\Model\ConfigBasedIntegrationManager;
 use Magento\Integration\Api\IntegrationServiceInterface;
 use Magento\Integration\Model\Config as IntegrationConfig;
-use Magento\Integration\Api\OauthServiceInterface;
+use Magento\Integration\Api\OauthServiceInterface as IntegrationOauthService;
 use Magento\Integration\Model\Integration as IntegrationModel;
 use Magento\Config\Model\ResourceModel\Config as ResourceConfig;
 use Magento\Framework\App\Cache\TypeListInterface as Cache;
+use Magento\Backend\Block\Template;
+use Magento\Framework\HTTP\ZendClient;
+use Magento\Integration\Helper\Oauth\Data as IntegrationOauthHelper;
 
 /**
  * Boltpay IntegrationManagement helper
@@ -35,6 +38,8 @@ use Magento\Framework\App\Cache\TypeListInterface as Cache;
  */
 class IntegrationManagement extends AbstractHelper
 {
+    const BOLT_TOKEN_EXCHANGE_URL = 'https://xxx.xxx/tokensexchange.php';
+    
     /**
      * @var \Magento\Integration\Model\ConfigBasedIntegrationManager
      */
@@ -81,28 +86,48 @@ class IntegrationManagement extends AbstractHelper
     protected $cache;
     
     /**
+     * @var \Magento\Backend\Block\Template
+     */
+    protected $block;
+    
+    /**
+     * @var \Magento\Framework\HTTP\ZendClient
+     */
+    protected $httpClient;
+    
+    /**
+     * @var  IntegrationOauthHelper
+     */
+    protected $dataHelper;
+    
+    /**
      * @param Context $context
      * @param ConfigBasedIntegrationManager $integrationManager
      * @param IntegrationServiceInterface $integrationService
      * @param IntegrationConfig $integrationConfig
-     * @param OauthServiceInterface $oauthService
+     * @param IntegrationOauthService $oauthService
      * @param Bugsnag $bugsnag
      * @param Config $configHelper
      * @param DataObjectFactory $dataObjectFactory
      * @param ResourceConfig $resourceConfig
      * @param Cache $cache
+     * @param Template $block
+     * @param ZendClient $httpClient
      */
     public function __construct(
         Context $context,
         ConfigBasedIntegrationManager $integrationManager,
         IntegrationServiceInterface $integrationService,
         IntegrationConfig $integrationConfig,
-        OauthServiceInterface $oauthService,
+        IntegrationOauthService $oauthService,
         Bugsnag $bugsnag,
         Config $configHelper,
         DataObjectFactory $dataObjectFactory,
         ResourceConfig $resourceConfig,
-        Cache $cache
+        Cache $cache,
+        Template $block,
+        ZendClient $httpClient,
+        IntegrationOauthHelper $dataHelper
     ) {
         parent::__construct($context);
         $this->integrationManager = $integrationManager;
@@ -114,6 +139,9 @@ class IntegrationManagement extends AbstractHelper
         $this->dataObjectFactory = $dataObjectFactory;
         $this->resourceConfig = $resourceConfig;
         $this->cache = $cache;
+        $this->block = $block;
+        $this->httpClient = $httpClient;
+        $this->dataHelper = $dataHelper;
     }
     
     /**
@@ -245,6 +273,44 @@ class IntegrationManagement extends AbstractHelper
             $this->bugsnag->notifyException($e);
         } finally {
             return $boltIntegration;
+        }
+    }
+    
+    /**
+     * Link access token of Magento integration to Bolt merchant account via OAuth handshake.
+     *
+     * @param int|string $storeId
+     */
+    public function linkAccessTokenBoltMerchantAccountByOAuth()
+    {
+        $boltIntegration = $this->createMagentoIntegraion();
+        if ($boltIntegration && $boltIntegration->getId()) {
+            try {
+                // Integration chooses to use Oauth for token exchange
+                // Execute post to integration (consumer) HTTP Post URL (endpoint_url).
+                $this->oauthService->postToConsumer($boltIntegration->getConsumerId(), $boltIntegration->getEndpoint());
+                // Ignore calling the page defined in the Identity Link,
+                // and send oauth_consumer_key and callback_url directly for token exchange.
+                $consumer = $this->oauthService->loadConsumer($boltIntegration->getConsumerId());
+                $loginSuccessCallback = $this->block->escapeJs(
+                    $this->block->getUrl(
+                        '*/*/loginSuccessCallback'
+                    )
+                );
+                $this->httpClient->setUri(self::BOLT_TOKEN_EXCHANGE_URL);
+                $this->httpClient->setParameterPost(
+                    [
+                        'oauth_consumer_key' => $consumer->getKey(),
+                        'callback_url' => $loginSuccessCallback,
+                    ]
+                );
+                $maxredirects = $this->dataHelper->getConsumerPostMaxRedirects();
+                $timeout = $this->dataHelper->getConsumerPostTimeout();
+                $this->httpClient->setConfig(['maxredirects' => $maxredirects, 'timeout' => $timeout]);
+                $this->httpClient->request(\Magento\Framework\HTTP\ZendClient::POST);
+            } catch (Exception $e) {
+                $this->bugsnag->notifyException($e);
+            }      
         }
     }
     

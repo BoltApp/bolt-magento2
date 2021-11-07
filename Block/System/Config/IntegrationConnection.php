@@ -95,7 +95,6 @@ class IntegrationConnection extends Field
         return ''
             . parent::_getElementHtml($element)
             . $this->getGenerateTokenButtonHtml($savedToken)
-            . $this->getLinkApiTokenButtonHtml($savedToken, $tokenLinked)
             . $block->toHtml()
         ;
     }

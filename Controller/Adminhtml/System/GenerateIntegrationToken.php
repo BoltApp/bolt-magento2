@@ -86,7 +86,8 @@ class GenerateIntegrationToken extends Action
     {
         $result = $this->resultJsonFactory->create();
         try {
-            $accessToken = $this->integrationManagement->createMagentoIntegraionToken();
+            $this->integrationManagement->linkAccessTokenBoltMerchantAccountByOAuth();
+            $accessToken = $this->integrationManagement->getMagentoIntegraionToken();
             if ($accessToken) {
                 $this->resourceConfig->saveConfig(BoltConfig::XML_PATH_INTEGRATION_TOKEN, $accessToken);
                 $this->cache->cleanType('config');
