@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\GiftOptionsHandler;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Sales\Model\Order;
 use Magento\TestFramework\Helper\Bootstrap;
