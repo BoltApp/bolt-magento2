@@ -43,7 +43,7 @@ class GiftOptionsHandlerTest extends BoltTestCase
     public function setUpInternal()
     {
         $this->objectManager = Bootstrap::getObjectManager();
-        $this->customFieldsHandler = $this->objectManager->create(CustomFieldsHandler::class);
+        $this->giftOptionsHandler = $this->objectManager->create(GiftOptionsHandler::class);
     }
 
     /**
@@ -54,7 +54,7 @@ class GiftOptionsHandlerTest extends BoltTestCase
     public function handle($transaction, $comment)
     {
         $order = TestUtils::createDumpyOrder();
-        $this->customFieldsHandler->handle($order, $transaction);
+        $this->giftOptionsHandler->handle($order, $transaction);
         if ($comment) {
             $commentPrefix = 'BOLTPAY INFO :: gift options';
             self::assertEquals($commentPrefix.$comment, $order->getAllStatusHistory()[0]->getComment());
