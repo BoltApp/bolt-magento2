@@ -114,11 +114,6 @@ class Api extends AbstractHelper
      * Path for sandbox mode
      */
     const XML_PATH_SANDBOX_MODE = 'payment/boltpay/sandbox_mode';
-    
-    /**
-     * Api save Magento integration access token
-     */
-    const API_CONFIG = 'merchant/config';
 
     /**
      * @var ZendClientFactory

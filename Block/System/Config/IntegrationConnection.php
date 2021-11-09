@@ -70,7 +70,6 @@ class IntegrationConnection extends Field
         // Get access token of Bolt integration if exists
         $integrationToken = $this->integrationManagement->getMagentoIntegraionToken();
         $savedToken = $element->getValue();
-        $tokenLinked = $this->configHelper->getLinkIntegrationFlag();
         // If the access token saved in the configuration is different from the one from Bolt integration,
         // it means either the Bolt integration is inactive or the access is reauthorized.
         if ($savedToken !== $integrationToken) {
@@ -83,9 +82,7 @@ class IntegrationConnection extends Field
                     'data' => [
                         'input_id' => $element->getId(),
                         'generate_integration_token_ajax_url' => $this->getGenerateIntegrationTokenAjaxUrl(),
-                        'link_integration_token_ajax_url' => $this->getLinkIntegrationTokenAjaxUrl(),
                         'key_value' => $savedToken,
-                        'token_linked' => $tokenLinked,
                         'store_id' => $this->_storeManager->getStore()->getId(),
                     ]
                 ]
@@ -110,16 +107,6 @@ class IntegrationConnection extends Field
     }
     
     /**
-     * Return ajax url for linking access token of Magento integration to Bolt merchant account.
-     *
-     * @return string
-     */
-    public function getLinkIntegrationTokenAjaxUrl()
-    {
-        return $this->getUrl('boltpay/system/linkIntegrationToken');
-    }
-    
-    /**
      * Create button html to generate access token of Magento integration.
      *
      * @return string
@@ -133,26 +120,6 @@ class IntegrationConnection extends Field
                 'id' => 'bolt_integration_token_button',
                 'label' => __('Generate Integration Token'),
                 'class' => !empty($value) ? 'hidden' : '',
-            ]
-        );
-
-        return $button->toHtml();
-    }
-    
-    /**
-     * Create button html to link access token of Magento integration to Bolt merchant account.
-     *
-     * @return string
-     */
-    public function getLinkApiTokenButtonHtml($value, $tokenLinked)
-    {
-        $button = $this->getLayout()->createBlock(
-            'Magento\Backend\Block\Widget\Button'
-        )->setData(
-            [
-                'id' => 'bolt_link_api_token_button',
-                'label' => __('Link API Token'),
-                'class' => empty($value) || $tokenLinked ? 'hidden' : '',
             ]
         );
 

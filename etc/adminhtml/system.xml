@@ -384,9 +384,6 @@
                         <config_path>payment/boltpay/connect_magento_integration</config_path>
                         <frontend_model>Bolt\Boltpay\Block\System\Config\IntegrationConnection</frontend_model>
                     </field>
-                    <field id="link_integration_flag" type="hidden" sortOrder="10" showInDefault="0" showInWebsite="0" showInStore="0">
-                        <config_path>payment/boltpay/link_integration_flag</config_path>
-                    </field>
                 </group>
                 <group id="third_party_modules" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Third Party Modules Support</label>

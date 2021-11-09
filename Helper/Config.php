@@ -402,11 +402,6 @@ class Config extends AbstractHelper
      * The access token of associated Magento integration
      */
     const XML_PATH_INTEGRATION_TOKEN = 'payment/boltpay/connect_magento_integration';
-    
-    /**
-     * Whether the access token of Magento integration is linked to Bolt merchant account or not
-     */
-    const XML_PATH_LINK_INTEGRATION_FLAG = 'payment/boltpay/link_integration_flag';
 
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
@@ -468,8 +463,7 @@ class Config extends AbstractHelper
         'should_minify_javascript'           => self::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
         'capture_merchant_metrics'           => self::XML_PATH_CAPTURE_MERCHANT_METRICS,
         'track_checkout_funnel'              => self::XML_PATH_TRACK_CHECKOUT_FUNNEL,
-        'connect_magento_integration'        => self::XML_PATH_INTEGRATION_TOKEN,
-        'link_integration_flag'              => self::XML_PATH_LINK_INTEGRATION_FLAG
+        'connect_magento_integration'        => self::XML_PATH_INTEGRATION_TOKEN
     ];
 
     /**
@@ -2191,18 +2185,6 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_INTEGRATION_TOKEN
-        );
-    }
-    
-    /**
-     * Gets whether the access token of associated Magento integration has been sent to Bolt
-     *
-     * @return bool
-     */
-    public function getLinkIntegrationFlag()
-    {
-        return $this->getScopeConfig()->getValue(
-            self::XML_PATH_LINK_INTEGRATION_FLAG
         );
     }
 

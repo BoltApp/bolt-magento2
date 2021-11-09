@@ -31,6 +31,8 @@ use Magento\Framework\App\Cache\TypeListInterface as Cache;
 use Magento\Backend\Block\Template;
 use Magento\Framework\HTTP\ZendClient;
 use Magento\Integration\Helper\Oauth\Data as IntegrationOauthHelper;
+use Magento\Integration\Model\Config\Converter as IntegrationConverter;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 
 /**
  * Boltpay IntegrationManagement helper
@@ -38,7 +40,15 @@ use Magento\Integration\Helper\Oauth\Data as IntegrationOauthHelper;
  */
 class IntegrationManagement extends AbstractHelper
 {
-    const BOLT_TOKEN_EXCHANGE_URL = 'https://xxx.xxx/tokensexchange.php';
+    const BOLT_INTEGRATION_NAME = 'boltIntegration';
+    
+    const BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL_SANDBOX = 'https://example.com/sandbox/endpoint.php';
+    const BOLT_INTEGRATION_IDENTITY_LINKING_URL_SANDBOX = 'https://example.com/sandbox/login.php';
+    const BOLT_INTEGRATION_TOKEN_EXCHANGE_URL_SANDBOX = 'https://example.com/sandbox/tokensexchange.php';
+    
+    const BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL_PRODUCTION = 'https://example.com/production/endpoint.php';
+    const BOLT_INTEGRATION_IDENTITY_LINKING_URL_PRODUCTION = 'https://example.com/production/login.php';
+    const BOLT_INTEGRATION_TOKEN_EXCHANGE_URL_PRODUCTION = 'https://example.com/production/tokensexchange.php';
     
     /**
      * @var \Magento\Integration\Model\ConfigBasedIntegrationManager
@@ -96,9 +106,14 @@ class IntegrationManagement extends AbstractHelper
     protected $httpClient;
     
     /**
-     * @var  IntegrationOauthHelper
+     * @var IntegrationOauthHelper
      */
     protected $dataHelper;
+    
+    /**
+     * @var DeciderHelper
+     */
+    protected $deciderHelper;
     
     /**
      * @param Context $context
@@ -113,6 +128,7 @@ class IntegrationManagement extends AbstractHelper
      * @param Cache $cache
      * @param Template $block
      * @param ZendClient $httpClient
+     * @param DeciderHelper $deciderHelper
      */
     public function __construct(
         Context $context,
@@ -127,7 +143,8 @@ class IntegrationManagement extends AbstractHelper
         Cache $cache,
         Template $block,
         ZendClient $httpClient,
-        IntegrationOauthHelper $dataHelper
+        IntegrationOauthHelper $dataHelper,
+        DeciderHelper $deciderHelper
     ) {
         parent::__construct($context);
         $this->integrationManager = $integrationManager;
@@ -142,6 +159,7 @@ class IntegrationManagement extends AbstractHelper
         $this->block = $block;
         $this->httpClient = $httpClient;
         $this->dataHelper = $dataHelper;
+        $this->deciderHelper = $deciderHelper;
     }
     
     /**
@@ -154,7 +172,7 @@ class IntegrationManagement extends AbstractHelper
     {
         $token = '';
         try {
-            if ($boltIntegration = $this->createMagentoIntegraion()) {
+            if ($boltIntegration = $this->processMagentoIntegraion()) {
                 $consumerId = $boltIntegration->getConsumerId();
                 $accessToken = $this->oauthService->getAccessToken($consumerId);
                 if (empty($accessToken)) {
@@ -258,17 +276,29 @@ class IntegrationManagement extends AbstractHelper
      *
      * @return IntegrationModel|null
      */
-    public function createMagentoIntegraion()
+    public function processMagentoIntegraion()
     {
         $boltIntegration = null;
         try {
-            $integrations = $this->integrationConfig->getIntegrations();
-            if (isset($integrations['boltIntegration'])) {
-                // Process integrations from config files for the given array of integration names.
-                // If Integration already exists, update it.
-                $this->integrationManager->processIntegrationConfig(['boltIntegration']);
-                $boltIntegration = $this->integrationService->findByName('boltIntegration');
-            }    
+            $integrationConfigs = $this->integrationConfig->getIntegrations();
+            if (isset($integrationConfigs[self::BOLT_INTEGRATION_NAME])) {
+                $integrationData = [
+                    IntegrationModel::NAME => self::BOLT_INTEGRATION_NAME,
+                    IntegrationModel::EMAIL => $integrationConfigs[self::BOLT_INTEGRATION_NAME][IntegrationConverter::KEY_EMAIL],
+                    IntegrationModel::ENDPOINT => $this->getEndpointUrl(),
+                    IntegrationModel::IDENTITY_LINK_URL => $this->getIdentityLinkUrl(),
+                    IntegrationModel::SETUP_TYPE => IntegrationModel::TYPE_CONFIG,
+                ];
+                $tmpIntegration = $this->integrationService->findByName(self::BOLT_INTEGRATION_NAME);
+                if ($tmpIntegration->getId()) {
+                    //If Integration already exists, update it.
+                    $integrationData[IntegrationModel::ID] = $tmpIntegration->getId();
+                    $this->integrationService->update($integrationData);
+                } else {
+                    $this->integrationService->create($integrationData);
+                }
+                $boltIntegration = $this->integrationService->findByName(self::BOLT_INTEGRATION_NAME);
+            }  
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
         } finally {
@@ -283,7 +313,7 @@ class IntegrationManagement extends AbstractHelper
      */
     public function linkAccessTokenBoltMerchantAccountByOAuth()
     {
-        $boltIntegration = $this->createMagentoIntegraion();
+        $boltIntegration = $this->processMagentoIntegraion();
         if ($boltIntegration && $boltIntegration->getId()) {
             try {
                 // Integration chooses to use Oauth for token exchange
@@ -297,7 +327,7 @@ class IntegrationManagement extends AbstractHelper
                         '*/*/loginSuccessCallback'
                     )
                 );
-                $this->httpClient->setUri(self::BOLT_TOKEN_EXCHANGE_URL);
+                $this->httpClient->setUri($this->getTokensExchangeUrl());
                 $this->httpClient->setParameterPost(
                     [
                         'oauth_consumer_key' => $consumer->getKey(),
@@ -314,32 +344,30 @@ class IntegrationManagement extends AbstractHelper
         }
     }
     
-    /**
-     * Link access token of Magento integration to Bolt merchant account.
-     *
-     * @param int|string $storeId
-     */
-    public function linkAccessTokenBoltMerchantAccount($storeId)
+    public function getEndpointUrl()
     {
-        $apiKey = $this->configHelper->getApiKey($storeId);
-        //Request Data
-        $accessToken = $this->getMagentoIntegraionToken();
-        if ($accessToken) {
-            $requestData = $this->dataObjectFactory->create();
-            $requestData->setApiData(['access_token' => $accessToken]);
-            $requestData->setDynamicApiUrl(Api::API_CONFIG);
-            $requestData->setApiKey($apiKey);
-            //$request = $this->apiHelper->buildRequest($requestData);
-            //$result = $this->apiHelper->sendRequest($request);
-
-            // Save the integration id (non-zero value) into XML_PATH_LINK_INTEGRATION_FLAG for two purposes:
-            // 1. Mark the access token has been linked to Bolt merchant account;
-            // 2. When the associated Magento integration is deleted, if the flag value and the integration id are identical, then reset the flag.
-            $this->resourceConfig->saveConfig(Config::XML_PATH_LINK_INTEGRATION_FLAG, $this->getMagentoIntegraionId());
-            $this->cache->cleanType('config');
-            return true;
+        //Check for sandbox mode
+        if ($this->deciderHelper->isIntegrationSandboxEnv()) {
+            return self::BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL_SANDBOX;
         }
-        
-        return false;
+        return self::BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL_PRODUCTION;
+    }
+    
+    public function getIdentityLinkUrl()
+    {
+        //Check for sandbox mode
+        if ($this->deciderHelper->isIntegrationSandboxEnv()) {
+            return self::BOLT_INTEGRATION_IDENTITY_LINKING_URL_SANDBOX;
+        }
+        return self::BOLT_INTEGRATION_IDENTITY_LINKING_URL_PRODUCTION;
+    }
+    
+    public function getTokensExchangeUrl()
+    {
+        //Check for sandbox mode
+        if ($this->deciderHelper->isIntegrationSandboxEnv()) {
+            return self::BOLT_INTEGRATION_TOKEN_EXCHANGE_URL_SANDBOX;
+        }
+        return self::BOLT_INTEGRATION_TOKEN_EXCHANGE_URL_PRODUCTION;
     }
 }

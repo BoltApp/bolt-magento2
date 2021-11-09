@@ -226,6 +226,11 @@ class Definitions
      * Enable product endpoint
      */
     const M2_ENABLE_PRODUCT_ENDPOINT = 'M2_ENABLE_PRODUCT_ENDPOINT';
+    
+    /**
+     * Set the env mode for integration
+     */
+    const M2_SET_M2_INTEGRATION_ENV = 'M2_SET_M2_INTEGRATION_ENV';
 
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
@@ -454,6 +459,12 @@ class Definitions
             self::NAME_KEY        => self::M2_ENABLE_PRODUCT_ENDPOINT,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_SET_M2_INTEGRATION_ENV => [
+            self::NAME_KEY        => self::M2_SET_M2_INTEGRATION_ENV,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => true,
             self::ROLLOUT_KEY     => 100
         ],
     ];
