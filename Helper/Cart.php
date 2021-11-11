@@ -47,6 +47,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Serialize\SerializerInterface as Serialize;
 use Magento\Framework\Session\SessionManagerInterface as CheckoutSession;
 use Magento\Framework\Webapi\Exception as WebapiException;
+use Magento\Msrp\Helper\Data as MsrpHelper;
 use Magento\Quote\Api\CartManagementInterface;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Quote\Api\Data\CartInterface;
@@ -260,6 +261,11 @@ class Cart extends AbstractHelper
      * @var Serialize
      */
     private $serialize;
+    
+    /**
+     * @var MsrpHelper
+     */
+    private $msrpHelper;
 
     /**
      * @param Context                    $context
@@ -292,6 +298,7 @@ class Cart extends AbstractHelper
      * @param Serialize                  $serialize
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      * @param RuleRepository             $ruleRepository
+     * @param MsrpHelper                 $msrpHelper
      */
     public function __construct(
         Context $context,
@@ -323,7 +330,8 @@ class Cart extends AbstractHelper
         DeciderHelper $deciderHelper,
         Serialize $serialize,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
-        RuleRepository $ruleRepository
+        RuleRepository $ruleRepository,
+        MsrpHelper $msrpHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -355,6 +363,7 @@ class Cart extends AbstractHelper
         $this->serialize = $serialize;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         $this->ruleRepository = $ruleRepository;
+        $this->msrpHelper = $msrpHelper;
     }
 
     /**
@@ -1494,6 +1503,9 @@ class Cart extends AbstractHelper
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = $quantity;
                 $product['sku']          = trim($item->getSku());
+                if ($this->msrpHelper->canApplyMsrp($_product) && $_product->getMsrp() !== null) {
+                    $product['msrp']     = CurrencyUtils::toMinor($_product->getMsrp(), $currencyCode);
+                }
 
                 // In current Bolt checkout flow, the shipping and tax endpoint is not called for virtual carts,
                 // It means we don't support taxes for virtual product and should handle all products as physical
