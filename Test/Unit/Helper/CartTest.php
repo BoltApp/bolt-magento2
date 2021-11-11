@@ -90,6 +90,7 @@ use Magento\Framework\Serialize\SerializerInterface as Serialize;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\SalesRule\Model\RuleRepository;
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
+use Magento\Msrp\Helper\Data as MsrpHelper;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
@@ -308,6 +309,9 @@ class CartTest extends BoltTestCase
 
     /** @var MockObject|ObjectManager */
     private $originalObjectManager;
+    
+    /** @var MockObject|MsrpHelper */
+    private $msrpHelper;
 
     /**
      * Setup test dependencies, called before each test
@@ -453,6 +457,7 @@ class CartTest extends BoltTestCase
             RuleRepository::class,
             ['getById']
         );
+        $this->msrpHelper = $this->createPartialMock(MsrpHelper::class, ['canApplyMsrp']);
         $this->currentMock = $this->getCurrentMock(null);
         $this->objectsToClean = [];
     }
@@ -505,7 +510,8 @@ class CartTest extends BoltTestCase
                     $this->deciderHelper,
                     $this->serialize,
                     $this->eventsForThirdPartyModules,
-                    $this->ruleRepository
+                    $this->ruleRepository,
+                    $this->msrpHelper
                 ]
             )
             ->getMock();
@@ -709,7 +715,8 @@ class CartTest extends BoltTestCase
             $this->deciderHelper,
             $this->serialize,
             $this->eventsForThirdPartyModules,
-            $this->ruleRepository
+            $this->ruleRepository,
+            $this->msrpHelper
         );
         static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
         static::assertAttributeEquals($this->productRepository, 'productRepository', $instance);
@@ -738,6 +745,7 @@ class CartTest extends BoltTestCase
         static::assertAttributeEquals($this->metricsClient, 'metricsClient', $instance);
         static::assertAttributeEquals($this->serialize, 'serialize', $instance);
         static::assertAttributeEquals($this->ruleRepository, 'ruleRepository', $instance);
+        static::assertAttributeEquals($this->msrpHelper, 'msrpHelper', $instance);
     }
 
     /**
@@ -4518,6 +4526,8 @@ ORDER
         $this->productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
         $this->productMock->method('getDescription')->willReturn('Product Description');
         $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
+        
+        $this->msrpHelper->method('canApplyMsrp')->with($this->productMock)->willReturn(true);
 
         $quoteItemMock = $this->getQuoteItemMock();
         $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItemMock]);
@@ -4584,6 +4594,8 @@ ORDER
         $this->productMock->method('getDescription')->willReturn('Product Description');
         $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
         $this->productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
+        
+        $this->msrpHelper->method('canApplyMsrp')->with($this->productMock)->willReturn(false);
 
         $quoteItemMock = $this->getQuoteItemMock();
         $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItemMock]);
@@ -4655,6 +4667,8 @@ ORDER
         $quoteItem->method('getOptionByCode')->with('option_ids')->willReturn([]);
         $quoteItem->method('getProductType')->willReturn('simple');
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
+        
+        $this->msrpHelper->method('canApplyMsrp')->with($productMock)->willReturn(false);
 
         $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
 
@@ -4752,6 +4766,8 @@ ORDER
         $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
         $quoteItem->method('getProduct')->willReturn($productMock);
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
+        
+        $this->msrpHelper->method('canApplyMsrp')->with($productMock)->willReturn(false);
 
         $this->imageHelper->method('init')
         ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
@@ -4819,6 +4835,8 @@ ORDER
         $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
         $quoteItem->method('getProduct')->willReturn($productMock);
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
+        
+        $this->msrpHelper->method('canApplyMsrp')->with($productMock)->willReturn(false);
 
         $this->imageHelper->method('init')
             ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
