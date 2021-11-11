@@ -124,4 +124,11 @@
             <resource ref="anonymous" />
         </resources>
     </route>
+        <!--Get Qoute Masked Id Endpoint-->
+    <route url="/V1/bolt/boltpay/quote/maskedid" method="GET">
+        <service class="Bolt\Boltpay\Api\GetMaskedQuoteIDInterface" method="execute"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
 </routes>
