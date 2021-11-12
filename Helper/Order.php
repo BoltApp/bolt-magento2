@@ -281,6 +281,11 @@ class Order extends AbstractHelper
      * @var Create|null
      */
     private $adminOrderCreateModel;
+    
+    /**
+     * @var GiftOptionsHandler
+     */
+    private $giftOptionsHandler;
 
     /**
      * Order constructor.
@@ -315,9 +320,10 @@ class Order extends AbstractHelper
      * @param CreditmemoFactory                   $creditmemoFactory
      * @param CreditmemoManagementInterface       $creditmemoManagement
      * @param EventsForThirdPartyModules          $eventsForThirdPartyModules
+     * @param GiftOptionsHandler                  $giftOptionsHandler
      * @param OrderManagementInterface|null       $orderManagement
      * @param OrderIncrementIdChecker|null        $orderIncrementIdChecker
-     * @param Create|null                         $adminOrderCreateModel
+     * @param Create|null                         $adminOrderCreateModel 
      */
     public function __construct(
         Context $context,
@@ -350,6 +356,7 @@ class Order extends AbstractHelper
         CreditmemoFactory $creditmemoFactory,
         CreditmemoManagementInterface $creditmemoManagement,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
+        GiftOptionsHandler $giftOptionsHandler,
         OrderManagementInterface $orderManagement = null,
         OrderIncrementIdChecker $orderIncrementIdChecker = null,
         Create $adminOrderCreateModel = null
@@ -384,6 +391,7 @@ class Order extends AbstractHelper
         $this->creditmemoFactory = $creditmemoFactory;
         $this->creditmemoManagement = $creditmemoManagement;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
+        $this->giftOptionsHandler = $giftOptionsHandler;
         $this->orderManagement = $orderManagement
             ?: \Magento\Framework\App\ObjectManager::getInstance()->get(OrderManagementInterface::class);
         $this->orderIncrementIdChecker = $orderIncrementIdChecker
@@ -730,6 +738,8 @@ class Order extends AbstractHelper
         if (isset($transaction->order->user_note)) {
             $this->setOrderUserNote($order, $transaction->order->user_note);
         }
+        // Add the gift options to the order comments.
+        $this->giftOptionsHandler->handle($order, $transaction);
         $this->eventsForThirdPartyModules->dispatchEvent('orderPostprocess', $order, $quote, $transaction);
         $order->save();
     }
