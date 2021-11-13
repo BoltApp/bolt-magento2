@@ -40,6 +40,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Customer\Model\EmailNotification;
 
 class OAuthRedirect implements OAuthRedirectInterface
 {
@@ -124,6 +125,11 @@ class OAuthRedirect implements OAuthRedirectInterface
     private $bugsnag;
 
     /**
+     * @var EmailNotification
+     */
+    private $emailNotification;
+
+    /**
      * @param Response                         $response
      * @param DeciderHelper                    $deciderHelper
      * @param SSOHelper                        $ssoHelper
@@ -140,6 +146,7 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param QuoteFactory                     $quoteFactory
      * @param Url                              $url
      * @param Bugsnag                          $bugsnag
+     * @param EmailNotification                $emailNotification
      */
     public function __construct(
         Response $response,
@@ -157,7 +164,8 @@ class OAuthRedirect implements OAuthRedirectInterface
         ResourceConnection $resourceConnection,
         QuoteFactory $quoteFactory,
         Url $url,
-        Bugsnag $bugsnag
+        Bugsnag $bugsnag,
+        EmailNotification $emailNotification
     ) {
         $this->response = $response;
         $this->deciderHelper = $deciderHelper;
@@ -175,6 +183,7 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->quoteFactory = $quoteFactory;
         $this->url = $url;
         $this->bugsnag = $bugsnag;
+        $this->emailNotification = $emailNotification;
     }
 
     /**
@@ -263,7 +272,17 @@ class OAuthRedirect implements OAuthRedirectInterface
         }
 
         try {
-            $customer = $customer ?: $this->createNewCustomer($websiteId, $storeId, $payload);
+            if (!$customer) {
+                $customer = $this->createNewCustomer($websiteId, $storeId, $payload);
+                // Send confirmation email
+                try {
+                    if ($customer->getId()) {
+                        $this->emailNotification->newAccount($customer, \Magento\Customer\Model\EmailNotificationInterface::NEW_ACCOUNT_EMAIL_REGISTERED_NO_PASSWORD,'', $customer->getStoreId());
+                    }
+                } catch (\Exception $exception) {
+                    $this->bugsnag->notifyException($exception);
+                }
+            }
 
             // The reference parameter is actually the Bolt Parent Quote ID
             if ($reference !== '') {
