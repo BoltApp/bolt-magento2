@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Plugin;
 
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
 
 class ClearQuote
 {
@@ -26,6 +27,11 @@ class ClearQuote
      * @var CartHelper
      */
     private $cartHelper;
+    
+    /**
+     * @var ConfigHelper
+     */
+    private $configHelper;
 
     /**
      * @var \Magento\Quote\Model\Quote|null
@@ -34,11 +40,14 @@ class ClearQuote
 
     /**
      * @param CartHelper $cartHelper
+     * @param ConfigHelper $configHelper
      */
     public function __construct(
-        CartHelper $cartHelper
+        CartHelper $cartHelper,
+        ConfigHelper $configHelper
     ) {
         $this->cartHelper = $cartHelper;
+        $this->configHelper = $configHelper;
     }
 
     /**
@@ -83,9 +92,11 @@ class ClearQuote
             return $subject;
         }
 
-        // Workaround for known magento issue - https://github.com/magento/magento2/issues/12504
-        $subject->setLoadInactive(false);
-        $subject->replaceQuote($subject->getQuote()->save());
+        if (version_compare($this->configHelper->getStoreVersion(), '2.2.0', '<')) {
+            // Workaround for known magento issue - https://github.com/magento/magento2/issues/12504
+            $subject->setLoadInactive(false);
+            $subject->replaceQuote($subject->getQuote()->save());
+        }
 
         return $subject;
     }
