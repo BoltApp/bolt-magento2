@@ -448,7 +448,7 @@ class CartTest extends BoltTestCase
             DeciderHelper::class,
             ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical',
              'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata', 'isCustomizableOptionsSupport',
-             'isPreventBoltCartForQuotesWithError']
+             'isPreventBoltCartForQuotesWithError','isAPIDrivenIntegrationEnabled']
         );
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
