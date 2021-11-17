@@ -9,6 +9,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Model\Quote\AddressFactory;
 use Magento\Sales\Model\Order\Item as OrderItem;
 use Magento\Sales\Model\Order\Address as OrderAddress;
 use Magento\Sales\Model\Order;
@@ -43,6 +44,11 @@ class TestUtils
     {
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
         $quote->setQuoteCurrencyCode("USD");
+
+        $addressFactory = Bootstrap::getObjectManager()->get(AddressFactory::class);
+        $quote->setBillingAddress($addressFactory->create());
+        $quote->setShippingAddress($addressFactory->create());
+
         if ($data) {
             foreach ($data as $key => $value) {
                 $quote->setData($key, $value);
