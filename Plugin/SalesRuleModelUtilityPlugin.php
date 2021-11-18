@@ -62,7 +62,7 @@ class SalesRuleModelUtilityPlugin
                                    $result, $discountData, $item, $qty)
     {
         $checkoutSession = $this->sessionHelper->getCheckoutSession();
-        $savedRuleId = $checkoutSession->getBoltNeedCollectSaleRuleDiscounts('');      
+        $savedRuleId = $checkoutSession->getBoltNeedCollectSaleRuleDiscounts('');
         if (!empty($savedRuleId)) {
             // If the sale rule has no coupon, its discount amount can not be retrieved directly,
             // so we store the discount amount in the checkout session with the rule id as key.
@@ -70,9 +70,11 @@ class SalesRuleModelUtilityPlugin
             if (!empty($boltDiscountBreakdown) && $boltDiscountBreakdown['rule_id'] == $savedRuleId) {
                 $discountAmount = $discountData->getAmount() - $boltDiscountBreakdown['item_discount'];
                 if ($discountAmount >= DiscountHelper::MIN_NONZERO_VALUE || $this->ruleRepository->getById($savedRuleId)->getSimpleFreeShipping()) {
+                    // To avoid the mismatch discount (rounding) issue, we must re-set the rounding delta to correct the Bolt discount
+                    $subject->resetRoundingDeltas();
                     $boltCollectSaleRuleDiscounts = $checkoutSession->getBoltCollectSaleRuleDiscounts([]);
                     if (!isset($boltCollectSaleRuleDiscounts[$savedRuleId])) {
-                        $boltCollectSaleRuleDiscounts[$savedRuleId] = $discountAmount;            
+                        $boltCollectSaleRuleDiscounts[$savedRuleId] = $discountAmount;
                     } else {
                         $boltCollectSaleRuleDiscounts[$savedRuleId] += $discountAmount;
                     }
