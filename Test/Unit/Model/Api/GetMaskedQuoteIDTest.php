@@ -25,6 +25,12 @@ use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 
+/**
+ * Class GetMaskedQuoteIDTest
+ *
+ * @package Bolt\Boltpay\Test\Unit\Model\Api
+ * @coversDefaultClass \Bolt\Boltpay\Model\Api\GetMaskedQuoteID
+ */
 class GetMaskedQuoteIDTest extends BoltTestCase
 {
     /** array of objects we need to delete after test */
