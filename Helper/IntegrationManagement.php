@@ -328,6 +328,9 @@ class IntegrationManagement extends AbstractHelper
                 $boltIntegration = $this->integrationService->findByName(self::BOLT_INTEGRATION_NAME);
                 if (!$boltIntegration->getId()) {
                     $boltIntegration = $this->integrationService->create($integrationData);
+                } else {
+                    $integrationData[IntegrationModel::ID] = $boltIntegration->getId();
+                    $boltIntegration = $this->integrationService->update($integrationData);
                 }
             }  
         } catch (Exception $e) {
