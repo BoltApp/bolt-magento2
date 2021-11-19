@@ -468,7 +468,7 @@ class Config extends AbstractHelper
         'should_minify_javascript'           => self::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
         'capture_merchant_metrics'           => self::XML_PATH_CAPTURE_MERCHANT_METRICS,
         'track_checkout_funnel'              => self::XML_PATH_TRACK_CHECKOUT_FUNNEL,
-        'connect_magento_integration_mode'        => self::XML_PATH_CONNECT_INTEGRATION_MODE
+        'connect_magento_integration_mode'   => self::XML_PATH_CONNECT_INTEGRATION_MODE
     ];
 
     /**
