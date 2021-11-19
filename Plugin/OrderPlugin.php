@@ -31,6 +31,11 @@ class OrderPlugin
     private $request;
     
     /**
+     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
+     */
+    private $featureSwitches;
+    
+    /**
      * @var array
      */
     private $disallowedOrderState;
@@ -39,9 +44,12 @@ class OrderPlugin
      * OrderPlugin constructor.
      * @param \Magento\Framework\App\RequestInterface $request
      */
-    public function __construct(\Magento\Framework\App\RequestInterface $request)
-    {
+    public function __construct(
+        \Magento\Framework\App\RequestInterface $request,
+        \Bolt\Boltpay\Helper\FeatureSwitch\Decider $featureSwitches
+    ) {
         $this->request = $request;
+        $this->featureSwitches = $featureSwitches;
         $this->disallowedOrderStates = [
             Order::STATE_PROCESSING,
             Order::STATE_COMPLETE,
@@ -111,6 +119,10 @@ class OrderPlugin
         if ($subject->getIsRechargedOrder()) {
             // Check and set the recharged order state to processing
             return [Order::STATE_PROCESSING];
+        }
+        
+        if (!$this->featureSwitches->isDisallowOrderStatusUpdatedBack()) {
+            return [$status];
         }
         
         $oldStatus = $subject->getStatus();

@@ -396,4 +396,12 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_ENABLE_PRODUCT_ENDPOINT);
     }
+    
+    /**
+     * Disallow the order in processing/complete/closed status won't be updated back to pending_review/new
+     */
+    public function isDisallowOrderStatusUpdatedBack()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_DISALLOW_SPECIFIC_ORDER_STATUS_UPDATE);
+    }
 }
