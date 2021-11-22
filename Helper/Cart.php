@@ -2195,8 +2195,9 @@ class Cart extends AbstractHelper
                             break;
                         case RuleInterface::COUPON_TYPE_NO_COUPON:
                         default:
+                            $description = trim($rule->getDescription()) ? $rule->getDescription() : $rule->getName();
                             $discounts[] = [
-                                'description'       => trim(__('Discount ') . $rule->getDescription()),
+                                'description'       => trim(__('Discount ') . $description),
                                 'amount'            => $roundedAmount,
                                 'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_AUTO_PROMO,
                                 'discount_type'     => $this->discountHelper->getBoltDiscountType($rule->getSimpleAction()), // For v1/discounts.code.apply and v2/cart.update

@@ -3870,7 +3870,7 @@ ORDER
         $appliedDiscountNoCoupon = 15; // $
         $shippingAddress->expects(static::once())->method('getDiscountAmount')->willReturn($appliedDiscount);
 
-        $quote->method('getAppliedRuleIds')->willReturn('2,3,4,5');
+        $quote->method('getAppliedRuleIds')->willReturn('2,3,4,5,6');
 
         $rule2 = $this->getMockBuilder(DataObject::class)
         ->setMethods(['getCouponType', 'getDescription'])
@@ -3887,7 +3887,7 @@ ORDER
         ->getMock();
         $rule3->expects(static::once())->method('getCouponType')
         ->willReturn('NO_COUPON');
-        $rule3->expects(static::once())->method('getDescription')
+        $rule3->expects(static::exactly(2))->method('getDescription')
         ->willReturn('Shopping cart price rule for the cart over $10');
         $rule3->expects(static::exactly(2))->method('getSimpleAction')
         ->willReturn('by_fixed');
@@ -3905,17 +3905,28 @@ ORDER
         $rule5->expects(static::once())->method('getDescription')
         ->willReturn('');
 
-        $this->ruleRepository->expects(static::exactly(4))
+        $rule6 = $this->getMockBuilder(DataObject::class)
+            ->setMethods(['getCouponType', 'getDescription','getName','getSimpleAction'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $rule6->expects(static::once())->method('getCouponType')
+            ->willReturn('NO_COUPON');
+        $rule6->expects(static::once())->method('getDescription')->willReturn(null);
+        $rule6->expects(static::once())->method('getName')->willReturn('Shopping cart price rule for the cart over $10');
+        $rule6->method('getSimpleAction')->willReturn('by_fixed');
+
+        $this->ruleRepository->expects(static::exactly(5))
         ->method('getById')
         ->withConsecutive(
             [2],
             [3],
             [4],
-            [5]
+            [5],
+            [6]
         )
-        ->willReturnOnConsecutiveCalls($rule2, $rule3, $rule4, $rule5);
+        ->willReturnOnConsecutiveCalls($rule2, $rule3, $rule4, $rule5, $rule6);
 
-        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $this->discountHelper->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
 
         $checkoutSession = $this->createPartialMock(
             CheckoutSession::class,
@@ -3923,7 +3934,7 @@ ORDER
         );
         $checkoutSession->expects(static::once())
                     ->method('getBoltCollectSaleRuleDiscounts')
-                    ->willReturn([2 => $appliedDiscount, 3 => $appliedDiscountNoCoupon, 4 => 0, 5 => $appliedDiscount]);
+                    ->willReturn([2 => $appliedDiscount, 3 => $appliedDiscountNoCoupon, 4 => 0, 5 => $appliedDiscount, 6 => $appliedDiscountNoCoupon]);
         $this->sessionHelper->expects(static::once())->method('getCheckoutSession')
          ->willReturn($checkoutSession);
 
@@ -3941,7 +3952,7 @@ ORDER
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedDiscountAmountNoCoupon = 100 * $appliedDiscountNoCoupon;
-        $expectedTotalAmount = $totalAmount - (2 * $expectedDiscountAmount) - $expectedDiscountAmountNoCoupon;
+        $expectedTotalAmount = $totalAmount - (2 * $expectedDiscountAmount) - 2 * $expectedDiscountAmountNoCoupon;
         $expectedDiscount = [
         [
             'description' => self::COUPON_DESCRIPTION,
@@ -3965,6 +3976,13 @@ ORDER
             'discount_category' => 'coupon',
             'discount_type'     => 'fixed_amount',
             'type'              => 'fixed_amount',
+        ],
+        [
+            'description' => trim(__('Discount ') . 'Shopping cart price rule for the cart over $10'),
+            'amount'      => $expectedDiscountAmountNoCoupon,
+            'discount_category' => 'automatic_promotion',
+            'discount_type'   => 'fixed_amount',
+            'type'   => 'fixed_amount',
         ],
         ];
         static::assertEquals($expectedDiscount, $discounts);
