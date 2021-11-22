@@ -680,7 +680,7 @@ class CreateOrder implements CreateOrderInterface
         }
         if ($quote->getShippingAddress() && !$quote->isVirtual()) {
             $amount = $quote->getShippingAddress()->getShippingAmount();
-            if (! $this->isBackOfficeOrder($quote)) {
+            if (! $this->isBackOfficeOrder($quote) && !$this->cartHelper->ignoreAdjustingShippingAmount($quote)) {
                 $amount -= $quote->getShippingAddress()->getShippingDiscountAmount();
             }
             $storeCost = CurrencyUtils::toMinor($amount, $quote->getQuoteCurrencyCode());

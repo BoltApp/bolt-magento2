@@ -24,6 +24,7 @@ use Bolt\Boltpay\Api\Data\TaxResultInterfaceFactory;
 use Bolt\Boltpay\Api\Data\TaxResultInterface;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Checkout\Api\TotalsInformationManagementInterface;
 use Magento\Checkout\Api\Data\TotalsInformationInterface;
 use Magento\Quote\Api\Data\TotalsInterface;
@@ -65,11 +66,16 @@ class Tax extends ShippingTax implements TaxInterface
      * @var TotalsInformationInterface
      */
     protected $addressInformation;
-    
+
     /**
      * @var PriceHelper
      */
     protected $priceHelper;
+
+    /**
+     * @var CartHelper
+     */
+    protected $cartHelper;
 
     /**
      * Assigns local references to global resources
@@ -81,6 +87,7 @@ class Tax extends ShippingTax implements TaxInterface
      * @param TotalsInformationManagementInterface $totalsInformationManagement
      * @param TotalsInformationInterface $addressInformation
      * @param PriceHelper $priceHelper
+     * @param CartHelper $cartHelper
      */
     public function __construct(
         ShippingTaxContext $shippingTaxContext,
@@ -88,14 +95,17 @@ class Tax extends ShippingTax implements TaxInterface
         TaxResultInterfaceFactory $taxResultFactory,
         TotalsInformationManagementInterface $totalsInformationManagement,
         TotalsInformationInterface $addressInformation,
-        PriceHelper $priceHelper
-    ) {
+        PriceHelper $priceHelper,
+        CartHelper $cartHelper
+    )
+    {
         parent::__construct($shippingTaxContext);
         $this->taxDataFactory = $taxDataFactory;
         $this->taxResultFactory = $taxResultFactory;
         $this->totalsInformationManagement = $totalsInformationManagement;
         $this->addressInformation = $addressInformation;
         $this->priceHelper = $priceHelper;
+        $this->cartHelper = $cartHelper;
     }
 
     /**
@@ -121,7 +131,7 @@ class Tax extends ShippingTax implements TaxInterface
 
         $this->addressInformation->setShippingCarrierCode($carrierCode);
         $this->addressInformation->setShippingMethodCode($methodCode);
-        
+
         $this->eventsForThirdPartyModules->dispatchEvent("setExtraAddressInformation", $this->addressInformation, $this->quote, $shipping_option, $ship_to_store_option, $addressData);
     }
 
@@ -169,7 +179,7 @@ class Tax extends ShippingTax implements TaxInterface
 
         return $shippingOption;
     }
-    
+
     /**
      * @param TotalsInterface $totalsInformation
      * @param string $currencyCode
@@ -185,9 +195,9 @@ class Tax extends ShippingTax implements TaxInterface
         $storeAddress->setLocality($ship_to_store_option['address']['locality']);
         $storeAddress->setRegion($ship_to_store_option['address']['region']);
         $storeAddress->setPostalCode($ship_to_store_option['address']['postal_code']);
-        
+
         $ship_to_store_option = $this->getShippingDiscount($totalsInformation, $currencyCode, $ship_to_store_option);
-        
+
         $shipToStoreOption = $this->shipToStoreOptionFactory->create();
         $shipToStoreOption->setReference($ship_to_store_option['reference']);
         $shipToStoreOption->setCost($ship_to_store_option['cost']);
@@ -199,7 +209,7 @@ class Tax extends ShippingTax implements TaxInterface
 
         return $shipToStoreOption;
     }
-    
+
     /**
      * @param TotalsInterface $totalsInformation
      * @param string $currencyCode
@@ -215,7 +225,8 @@ class Tax extends ShippingTax implements TaxInterface
             $this->quote,
             $this->quote->getShippingAddress()
         );
-        if ($shippingDiscountAmount >= DiscountHelper::MIN_NONZERO_VALUE) {
+
+        if ($shippingDiscountAmount >= DiscountHelper::MIN_NONZERO_VALUE && !$this->cartHelper->ignoreAdjustingShippingAmount($this->quote)) {
             $service = $shippingOption['service'] ?? '';
             $shippingCost = $totalsInformation->getShippingAmount() - $shippingDiscountAmount;
             $shippingRoundedCost = CurrencyUtils::toMinor($shippingCost, $currencyCode);
@@ -232,10 +243,10 @@ class Tax extends ShippingTax implements TaxInterface
             $shippingRoundedCost = CurrencyUtils::toMinor($totalsInformation->getShippingAmount(), $currencyCode);
             $taxAmount = CurrencyUtils::toMinor($totalsInformation->getShippingTaxAmount(), $currencyCode);
         }
-        
+
         $shippingOption['cost'] = $shippingRoundedCost;
         $shippingOption['tax_amount'] = $taxAmount;
-        
+
         return $shippingOption;
     }
 
@@ -256,12 +267,12 @@ class Tax extends ShippingTax implements TaxInterface
         );
 
         $currencyCode = $this->quote->getQuoteCurrencyCode();
-        
+
         $taxResult = $this->createTaxResult($totalsInformation, $currencyCode);
 
         $taxData = $this->taxDataFactory->create();
         $taxData->setTaxResult($taxResult);
-        
+
         if (!empty($shipping_option)) {
             $shippingOption = $this->createShippingOption($totalsInformation, $currencyCode, $shipping_option);
             $taxData->setShippingOption($shippingOption);

@@ -2762,4 +2762,32 @@ class Cart extends AbstractHelper
     {
         return $this->deciderHelper;
     }
+
+    /**
+     * Ignore adjusting shipping amount if quote has a cart rule of "Fixed amount discount for whole cart" and "Apply to shipping amount"
+     *
+     * @param $quote
+     * @return bool
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
+    public function ignoreAdjustingShippingAmount($quote)
+    {
+        if ($quote->getAppliedRuleIds()){
+            $salesruleIds = explode(',', $quote->getAppliedRuleIds());
+
+            foreach ($salesruleIds as $salesruleId) {
+                $rule = $this->ruleRepository->getById($salesruleId);
+                if (
+                    $rule &&
+                    $rule->getSimpleAction() == \Magento\SalesRule\Api\Data\RuleInterface::DISCOUNT_ACTION_FIXED_AMOUNT_FOR_CART
+                    && $rule->getApplyToShipping()
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 }
