@@ -396,4 +396,9 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_ENABLE_PRODUCT_ENDPOINT);
     }
+
+    public function isIncludeMismatchAmountIntoTaxWhenAdjustingPriceMismatch()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_INCLUDE_MISMATCH_AMOUNT_INTO_TAX_WHEN_ADJUSTING_PRICE_MISMATCH);
+    }
 }
