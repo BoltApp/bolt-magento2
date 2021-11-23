@@ -97,6 +97,10 @@
     <preference for="Bolt\Boltpay\Api\Data\CartDataInterface"   type="Bolt\Boltpay\Model\Api\Data\CartData" />
     <preference for="Bolt\Boltpay\Api\Data\UpdateCartResultInterface" type="Bolt\Boltpay\Model\Api\Data\UpdateCartResult" />
 
+    <!-- For get masked quote id endpoint -->
+    <preference for="Bolt\Boltpay\Api\GetMaskedQuoteIDInterface" type="Bolt\Boltpay\Model\Api\GetMaskedQuoteID" />
+    <preference for="Bolt\Boltpay\Api\Data\GetMaskedQuoteIDDataInterface"   type="Bolt\Boltpay\Model\Api\Data\GetMaskedQuoteIDData" />
+
     <virtualType name="boltUnirgyGiftCert" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Unirgy_Giftcert</argument>
