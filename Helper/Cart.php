@@ -2656,7 +2656,7 @@ class Cart extends AbstractHelper
             }
 
             // get immutable quote id stored with cart data
-            if ($response) {
+            if (!$this->deciderHelper->isAPIDrivenIntegrationEnabled() && $response) {
                 $cartReference = $this->getImmutableQuoteIdFromBoltCartArray($responseData['cart']);
             } else {
                 $cartReference = '';
