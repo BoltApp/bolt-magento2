@@ -486,7 +486,7 @@ class Definitions
             self::NAME_KEY        => self::M2_DISALLOW_ORDER_STATUS_OVERRIDE,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
-            self::ROLLOUT_KEY     => 100
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_ENABLE_API_DRIVEN_INTEGRAION => [
             self::NAME_KEY        => self::M2_ENABLE_API_DRIVEN_INTEGRAION,
