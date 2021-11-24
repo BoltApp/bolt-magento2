@@ -24,6 +24,9 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\SalesRule\Model\Rule\Action\Discount\AbstractDiscount;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Magento\Quote\Model\Quote\Item;
+use Magento\Quote\Model\Quote;
 
 /**
  * Class SalesRuleActionDiscountPluginTest
@@ -43,6 +46,9 @@ class SalesRuleActionDiscountPluginTest extends BoltTestCase
     /** @var SessionHelper */
     protected $sessionHelper;
     
+    /** @var CartHelper */
+    protected $cartHelper;
+    
     /** @var AbstractDiscount */
     protected $subject;
 
@@ -57,10 +63,15 @@ class SalesRuleActionDiscountPluginTest extends BoltTestCase
             CheckoutSession::class,
             ['setBoltNeedCollectSaleRuleDiscounts']
         );
+        $this->cartHelper = $this->createPartialMock(
+            CartHelper::class,
+            ['isCollectDiscountsByPlugin']
+        );
         $this->plugin = (new ObjectManager($this))->getObject(
             SalesRuleActionDiscountPlugin::class,
             [
-                'sessionHelper' => $this->sessionHelper
+                'sessionHelper' => $this->sessionHelper,
+                'cartHelper' => $this->cartHelper
             ]
         );
     }
@@ -78,12 +89,26 @@ class SalesRuleActionDiscountPluginTest extends BoltTestCase
         $rule->expects(self::once())
             ->method('getId')
             ->willReturn(2);
+        $item = $this->getMockBuilder(Item::class)
+            ->setMethods(['getQuote'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quote = $this->getMockBuilder(Quote::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $item->expects(self::once())
+                            ->method('getQuote')
+                            ->willReturn($quote);
+        $this->cartHelper->expects(self::once())
+                            ->method('isCollectDiscountsByPlugin')
+                            ->with($quote)
+                            ->willReturn(true);
         $this->checkoutSession->expects(self::once())
                             ->method('setBoltNeedCollectSaleRuleDiscounts')
                             ->with(2);
         $this->sessionHelper->expects(self::once())
                             ->method('getCheckoutSession')
                             ->willReturn($this->checkoutSession);
-        $this->plugin->afterCalculate($this->subject, null, $rule, null, null);
+        $this->plugin->afterCalculate($this->subject, null, $rule, $item, null);
     }
 }
