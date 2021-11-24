@@ -398,10 +398,10 @@ class Decider extends AbstractHelper
     }
     
     /**
-     * Disallow the order in processing/complete/closed status won't be updated back to pending_review/new
+     * Checks whether the feature switch for preventing the plugin method from overriding the order status
      */
-    public function isDisallowOrderStatusUpdatedBack()
+    public function isDisallowOrderStatusOverride()
     {
-        return $this->isSwitchEnabled(Definitions::M2_DISALLOW_SPECIFIC_ORDER_STATUS_UPDATE);
+        return $this->isSwitchEnabled(Definitions::M2_DISALLOW_ORDER_STATUS_OVERRIDE);
     }
 }

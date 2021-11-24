@@ -121,7 +121,7 @@ class OrderPlugin
             return [Order::STATE_PROCESSING];
         }
         
-        if (!$this->featureSwitches->isDisallowOrderStatusUpdatedBack()) {
+        if ($this->featureSwitches->isDisallowOrderStatusOverride()) {
             return [$status];
         }
         

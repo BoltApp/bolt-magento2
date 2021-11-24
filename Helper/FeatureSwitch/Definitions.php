@@ -225,7 +225,7 @@ class Definitions
     /**
      * Disallow the order in processing/complete/closed status won't be updated back to pending_review/new
      */
-    const M2_DISALLOW_SPECIFIC_ORDER_STATUS_UPDATE = 'M2_DISALLOW_SPECIFIC_ORDER_STATUS_UPDATE';
+    const M2_DISALLOW_ORDER_STATUS_OVERRIDE = 'M2_DISALLOW_ORDER_STATUS_OVERRIDE';
 
     /**
      * Enable product endpoint
@@ -461,8 +461,8 @@ class Definitions
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
         ],
-        self::M2_DISALLOW_SPECIFIC_ORDER_STATUS_UPDATE => [
-            self::NAME_KEY        => self::M2_DISALLOW_SPECIFIC_ORDER_STATUS_UPDATE,
+        self::M2_DISALLOW_ORDER_STATUS_OVERRIDE => [
+            self::NAME_KEY        => self::M2_DISALLOW_ORDER_STATUS_OVERRIDE,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
