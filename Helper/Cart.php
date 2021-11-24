@@ -1840,23 +1840,36 @@ class Cart extends AbstractHelper
         // cart data is being created for sending to Bolt create
         // order API, otherwise skip this step
         ////////////////////////////////////////////////////////
-        if (!$immutableQuote) {
+        if (!$immutableQuote && !$this->deciderHelper->isAPIDrivenIntegrationEnabled()) {
             $immutableQuote = $this->createImmutableQuote($quote);
         }
 
         ////////////////////////////////////////////////////////
 
         // Get array of all items that can be display directly
-        $items = $immutableQuote->getAllVisibleItems();
+        if ($immutableQuote) {
+            $items = $immutableQuote->getAllVisibleItems();
+        } else {
+            // hereinafter null immutable quote means we are in new API driven flow
+            $items = $quote->getAllVisibleItems();
+        }
 
         if (!$items) {
             // This is the case when customer empties the cart.
             return [];
         }
 
-        $this->setLastImmutableQuote($immutableQuote);
-
-        $immutableQuote->collectTotals();
+        if ($immutableQuote) {
+            $this->setLastImmutableQuote($immutableQuote);
+            $immutableQuote->collectTotals();
+        } else {
+            if ($this->deciderHelper->isRecalculateTotalForAPIDrivenIntegration()) {
+                // we did not change the quote there is no reason to spend time
+                // recalculating total
+                // but we have this settings just in case
+                $quote->collectTotals();
+            }
+        }
 
         $cart = $this->buildCartFromQuote($quote, $immutableQuote, $items, $placeOrderPayload, $paymentOnly);
         if ($cart == []) {
@@ -1864,18 +1877,16 @@ class Cart extends AbstractHelper
             return $cart;
         }
 
-        // Set order_reference to parent quote id.
-        // This is the constraint field on Bolt side and this way
-        // duplicate payments / orders are prevented
-        $cart['order_reference'] = $immutableQuote->getBoltParentQuoteId();
+        if ($immutableQuote) {
+            $cart['order_reference'] = $immutableQuote->getBoltParentQuoteId();
+            $this->sessionHelper->cacheFormKey($immutableQuote);
+        } else {
+            $cart['order_reference'] = $quote->getId();
+        }
 
         if ($this->deciderHelper->isIncludeUserGroupIntoCart()) {
             $cart['metadata']['user_group_id'] = $this->getUserGroupId();
         }
-
-        $this->sessionHelper->cacheFormKey($immutableQuote);
-
-        // $this->logHelper->addInfoLog(json_encode($cart, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES));
 
         return $cart;
     }
@@ -1883,7 +1894,7 @@ class Cart extends AbstractHelper
     /**
      * Build cart data from quote.
      *
-     * @param Quote  $quote
+     * @param Quote  $parentQuote
      * @param Quote  $immutableQuote
      * @param array  $items
      * @param bool   $paymentOnly           flag that represents the type of checkout
@@ -1893,18 +1904,22 @@ class Cart extends AbstractHelper
      * @return array
      * @throws \Exception
      */
-    public function buildCartFromQuote($quote, $immutableQuote, $items, $placeOrderPayload, $paymentOnly, $requireBillingAddress = true)
+    public function buildCartFromQuote($parentQuote, $immutableQuote, $items, $placeOrderPayload, $paymentOnly, $requireBillingAddress = true)
     {
+        // work with parent (native) quote for API driven flow
+        // and with immutable quote for legacy flow
+        $quote = $immutableQuote ?: $parentQuote;
         $cart = [];
 
-        $billingAddress  = $immutableQuote->getBillingAddress();
-        $shippingAddress = $immutableQuote->getShippingAddress();
+        $billingAddress  = $quote->getBillingAddress();
+        $shippingAddress = $quote->getShippingAddress();
 
         //Use display_id to hold and transmit, all the way back and forth, reserved order id
         $cart['display_id'] = '';
 
-        //Store immutable quote id in metadata of cart
-        $cart['metadata']['immutable_quote_id'] = $immutableQuote->getId();
+        if ($immutableQuote) {
+            $cart['metadata']['immutable_quote_id'] = $immutableQuote->getId();
+        }
 
         // Transmit session ID via cart metadata, making it available for session emulation in API calls
         if ($this->deciderHelper->isAddSessionIdToCartMetadata()) {
@@ -1913,7 +1928,7 @@ class Cart extends AbstractHelper
             );
         }
 
-        $sessionData = $this->eventsForThirdPartyModules->runFilter('collectSessionData', [], $quote, $immutableQuote);
+        $sessionData = $this->eventsForThirdPartyModules->runFilter('collectSessionData', [], $parentQuote, $immutableQuote);
         if (!empty($sessionData)) {
             $cart['metadata'][Session::ENCRYPTED_SESSION_DATA_KEY] = $this->encryptMetadataValue(
                 json_encode($sessionData)
@@ -1926,10 +1941,10 @@ class Cart extends AbstractHelper
         }
 
         //Currency
-        $currencyCode = $immutableQuote->getQuoteCurrencyCode();
+        $currencyCode = $quote->getQuoteCurrencyCode();
         $cart['currency'] = $currencyCode;
 
-        list ($cart['items'], $totalAmount, $diff) = $this->getCartItems($immutableQuote, $immutableQuote->getStoreId());
+        list ($cart['items'], $totalAmount, $diff) = $this->getCartItems($quote, $quote->getStoreId());
 
         // Email field is mandatory for saving the address.
         // For back-office orders (payment only) we need to get it from the store.
@@ -1937,7 +1952,7 @@ class Cart extends AbstractHelper
         $email = $billingAddress->getEmail()
             ?: $shippingAddress->getEmail()
             ?: $this->customerSession->getCustomer()->getEmail()
-            ?: $immutableQuote->getCustomerEmail();
+            ?: $quote->getCustomerEmail();
 
         // Billing address
         $cartBillingAddress = [
@@ -1988,13 +2003,13 @@ class Cart extends AbstractHelper
             $cart['billing_address'] = $cartBillingAddress;
         }
 
-        $address = $this->getCalculationAddress($immutableQuote);
+        $address = $this->getCalculationAddress($quote);
 
         // payment only checkout, include shipments, tax and grand total
         if ($paymentOnly) {
-            if ($immutableQuote->isVirtual()) {
+            if ($quote->isVirtual()) {
                 if (!empty($cart['billing_address'])) {
-                    $this->collectAddressTotals($immutableQuote, $address);
+                    $this->collectAddressTotals($quote, $address);
                     $address->save();
                 } elseif ($requireBillingAddress) {
                     $this->logAddressData($cartBillingAddress);
@@ -2008,8 +2023,8 @@ class Cart extends AbstractHelper
                 $address->setCollectShippingRates(true);
 
                 // assign parent shipping method to clone
-                if (!$address->getShippingMethod() && $quote) {
-                    $address->setShippingMethod($quote->getShippingAddress()->getShippingMethod());
+                if (!$address->getShippingMethod() && $parentQuote) {
+                    $address->setShippingMethod($parentQuote->getShippingAddress()->getShippingMethod());
                 }
 
                 if (!$address->getShippingMethod()) {
@@ -2020,7 +2035,7 @@ class Cart extends AbstractHelper
                     return [];
                 }
 
-                $this->collectAddressTotals($immutableQuote, $address);
+                $this->collectAddressTotals($quote, $address);
                 $address->save();
 
                 // Shipping address
@@ -2079,7 +2094,7 @@ class Cart extends AbstractHelper
             $totalAmount,
             $diff,
             $paymentOnly,
-            $immutableQuote
+            $quote
         );
         $cart['discounts'] = $discounts;
         /////////////////////////////////////////////////////////////////////////////////
@@ -2641,7 +2656,7 @@ class Cart extends AbstractHelper
             }
 
             // get immutable quote id stored with cart data
-            if ($response) {
+            if (!$this->deciderHelper->isAPIDrivenIntegrationEnabled() && $response) {
                 $cartReference = $this->getImmutableQuoteIdFromBoltCartArray($responseData['cart']);
             } else {
                 $cartReference = '';

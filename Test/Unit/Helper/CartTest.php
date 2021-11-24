@@ -448,7 +448,7 @@ class CartTest extends BoltTestCase
             DeciderHelper::class,
             ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical',
              'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata', 'isCustomizableOptionsSupport',
-             'isPreventBoltCartForQuotesWithError']
+             'isPreventBoltCartForQuotesWithError','isAPIDrivenIntegrationEnabled']
         );
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
@@ -2796,6 +2796,58 @@ ORDER
             'metadata'        => [
                 'immutable_quote_id' => $immutable_quote_id,
             ],
+        ];
+
+        static::assertEquals($expected, $result);
+    }
+
+    /**
+     * @test
+     * @covers ::getCartData
+     */
+    public function getCartData_inAPIDrivenFlowAndMultistepWithNoDiscount_returnsCartData() {
+        $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = TestUtils::createQuote();
+        $quote = TestUtils::getQuoteById($quote->getId());
+        $product = TestUtils::createSimpleProduct();
+        $product =  Bootstrap::getObjectManager()->create("Magento\Catalog\Model\ProductRepository")->getByID($product->getID());
+
+        $quote->addProduct($product, 1);
+
+        $quote->setTotalsCollectedFlag(false)->collectTotals();
+
+        TestUtils::setQuoteToSession($quote);
+
+        $apiDrivenFeatureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_ENABLE_API_DRIVEN_INTEGRAION, true);
+        $result = $boltHelperCart->getCartData(false, "");
+        TestUtils::cleanupFeatureSwitch($apiDrivenFeatureSwitch);
+
+        // check image url
+        static::assertMatchesRegularExpression(
+            "|https?://localhost/(pub\/)?static/version\d+/frontend/Magento/luma/en_US/Magento_Catalog/images/product/placeholder/small_image.jpg|",
+            $result['items'][0]['image_url']
+        );
+        unset($result['items'][0]['image_url']);
+
+        $expected = [
+            'order_reference' => $quote->getId(),
+            'display_id'      => '',
+            'currency'        => self::CURRENCY_CODE,
+            'items'           => [
+                [
+                    'reference'    => $product->getId(),
+                    'name'         => 'Test Product',
+                    'total_amount' => 10000,
+                    'unit_price'   => 10000,
+                    'quantity'     => 1,
+                    'sku'          => $product->getSku(),
+                    'type'         => 'physical',
+                    'description'  => 'Product Description',
+                ]
+            ],
+            'discounts'       => [],
+            'total_amount'    => 10000,
+            'tax_amount'      => 0,
         ];
 
         static::assertEquals($expected, $result);
