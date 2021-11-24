@@ -396,12 +396,27 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_ENABLE_PRODUCT_ENDPOINT);
     }
-    
+
     /**
      * Checks whether the feature switch for preventing the plugin method from overriding the order status
      */
     public function isDisallowOrderStatusOverride()
     {
         return $this->isSwitchEnabled(Definitions::M2_DISALLOW_ORDER_STATUS_OVERRIDE);
+    }
+
+    public function isIncludeMismatchAmountIntoTaxWhenAdjustingPriceMismatch()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_INCLUDE_MISMATCH_AMOUNT_INTO_TAX_WHEN_ADJUSTING_PRICE_MISMATCH);
+    }
+    
+    public function isAPIDrivenIntegrationEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_ENABLE_API_DRIVEN_INTEGRAION);
+    }
+
+    public function isRecalculateTotalForAPIDrivenIntegration()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_RECALCULATE_TOTAL_FOR_API_DRIVEN_INTEGRAION);
     }
 }

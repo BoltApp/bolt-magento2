@@ -46,6 +46,11 @@ class Definitions
     const M2_BOLT_ENABLED = 'M2_BOLT_ENABLED';
 
     /**
+     * Enable including mismatch amount into tax when adjusting price mismatch
+     */
+    const M2_INCLUDE_MISMATCH_AMOUNT_INTO_TAX_WHEN_ADJUSTING_PRICE_MISMATCH = 'M2_INCLUDE_MISMATCH_AMOUNT_INTO_TAX_WHEN_ADJUSTING_PRICE_MISMATCH';
+
+    /**
      * Enable logging of missing quote failed hooks
      *
      */
@@ -232,6 +237,16 @@ class Definitions
      */
     const M2_ENABLE_PRODUCT_ENDPOINT = 'M2_ENABLE_PRODUCT_ENDPOINT';
 
+    /**
+     * Enable API driven integration
+     */
+    const M2_ENABLE_API_DRIVEN_INTEGRAION = 'M2_ENABLE_API_DRIVEN_INTEGRAION';
+
+    /**
+     * Recalculate quote total for API driven integration
+     */
+    const M2_RECALCULATE_TOTAL_FOR_API_DRIVEN_INTEGRAION = 'M2_RECALCULATE_TOTAL_FOR_API_DRIVEN_INTEGRAION';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -241,6 +256,12 @@ class Definitions
         ],
         self::M2_BOLT_ENABLED => [
             self::NAME_KEY        => self::M2_BOLT_ENABLED,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_INCLUDE_MISMATCH_AMOUNT_INTO_TAX_WHEN_ADJUSTING_PRICE_MISMATCH => [
+            self::NAME_KEY        => self::M2_INCLUDE_MISMATCH_AMOUNT_INTO_TAX_WHEN_ADJUSTING_PRICE_MISMATCH,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
@@ -466,6 +487,18 @@ class Definitions
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_ENABLE_API_DRIVEN_INTEGRAION => [
+            self::NAME_KEY        => self::M2_ENABLE_API_DRIVEN_INTEGRAION,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_RECALCULATE_TOTAL_FOR_API_DRIVEN_INTEGRAION => [
+            self::NAME_KEY        => self::M2_RECALCULATE_TOTAL_FOR_API_DRIVEN_INTEGRAION,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
     ];
 }
