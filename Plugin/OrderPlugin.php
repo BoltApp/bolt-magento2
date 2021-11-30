@@ -125,7 +125,7 @@ class OrderPlugin
         
         // The order state is for Magento to understand and process the order in a defined workflow.
         // Whereas, the order status is for store owners to understand and process the order in a workflow.
-        // The merchant may create any number of custom order statuses to manege the exact order flow.
+        // The merchant may create any number of custom order statuses to manage the exact order flow.
         // The feature switch M2_DISALLOW_ORDER_STATUS_OVERRIDE is for preventing the plugin method from overriding the order status.
         if ($this->featureSwitches->isDisallowOrderStatusOverride()) {
             return [$status];
