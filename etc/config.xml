@@ -78,6 +78,7 @@ tr.shipping.totals td.amount span.price,
                 <universal_debug>1</universal_debug>
                 <aheadworks_reward_points_on_cart>1</aheadworks_reward_points_on_cart>
                 <mageworx_reward_points_on_cart>1</mageworx_reward_points_on_cart>
+                <aheadworks_store_credit_on_cart>1</aheadworks_store_credit_on_cart>
             </boltpay>
         </payment>
     </default>

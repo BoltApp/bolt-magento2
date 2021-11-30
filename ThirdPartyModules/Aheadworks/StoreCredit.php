@@ -18,8 +18,10 @@
 namespace Bolt\Boltpay\ThirdPartyModules\Aheadworks;
 
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Quote\Api\CartRepositoryInterface;
 
 class StoreCredit
@@ -35,6 +37,11 @@ class StoreCredit
      * @var Bugsnag
      */
     private $bugsnagHelper;
+    
+    /**
+     * @var Config
+     */
+    private $configHelper;
 
     /**
      * @var Discount
@@ -45,21 +52,32 @@ class StoreCredit
      * @var CartRepositoryInterface
      */
     private $quoteRepository;
+    
+    /**
+     * @var CustomerSession
+     */
+    private $customerSession;
 
     /**
      * StoreCredit constructor.
-     * @param Discount $discountHelper
-     * @param Bugsnag $bugsnagHelper
+     * @param Discount                $discountHelper
+     * @param Bugsnag                 $bugsnagHelper
+     * @param Config                  $configHelper
      * @param CartRepositoryInterface $quoteRepository
+     * @param CustomerSession         $customerSession
      */
     public function __construct(
         Discount $discountHelper,
         Bugsnag $bugsnagHelper,
-        CartRepositoryInterface $quoteRepository
+        Config $configHelper,
+        CartRepositoryInterface $quoteRepository,
+        CustomerSession $customerSession
     ) {
         $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
+        $this->configHelper = $configHelper;
         $this->quoteRepository = $quoteRepository;
+        $this->customerSession = $customerSession;
     }
 
     /**
@@ -153,5 +171,39 @@ class StoreCredit
         } catch (\Exception $e) {
             throw $e;
         }
+    }
+    
+    /**
+     * Add Aheadworks Store Credit to layout to be rendered below the cart.
+     * We may add extra css for styling the related section per the merchant's theme when needed.
+     *
+     * @param array                                  $jsLayout
+     * @param CustomerStoreCreditManagementInterface $customerStoreCreditManagement
+     *
+     * @return array
+     */
+    public function collectCartDiscountJsLayout(
+        $jsLayout,
+        $customerStoreCreditManagement
+    ) {
+        if ($this->customerSession->isLoggedIn()
+            && $this->configHelper->getUseAheadworksStoreCreditConfig()
+            && $customerStoreCreditManagement->getCustomerStoreCreditBalance($this->customerSession->getCustomerId()) > 0) {
+            $jsLayout["aw-store-credit"] = [
+                "sortOrder" => 0,
+                "component" => "Aheadworks_StoreCredit/js/view/payment/store-credit",
+                "config"    => [
+                    'template' => 'Aheadworks_StoreCredit/payment/store-credit'
+                ],
+                "children"  => [
+                    "errors" => [
+                        "sortOrder"   => 0,
+                        "component"   => "Aheadworks_StoreCredit/js/view/payment/store-credit-messages",
+                        "displayArea" => "messages",
+                    ]
+                ]
+            ];
+        }
+        return $jsLayout;
     }
 }
