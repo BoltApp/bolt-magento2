@@ -27,6 +27,8 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\SalesRule\Model\Rule\Action\Discount\Data as DiscountData;
 use Magento\Quote\Model\Quote\Item;
 use Magento\SalesRule\Model\RuleRepository;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Magento\Quote\Model\Quote;
 
 /**
  * Class SalesRuleModelUtilityPluginTest
@@ -51,6 +53,9 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
     
     /** @var RuleRepository */
     protected $ruleRepository;
+    
+    /** @var CartHelper */
+    protected $cartHelper;
 
     public function setUpInternal()
     {
@@ -63,10 +68,6 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
             RuleRepository::class,
             ['getById']
         );
-        $this->sessionHelper = $this->createPartialMock(
-            SessionHelper::class,
-            ['getCheckoutSession']
-        );
         $this->checkoutSession = $this->createPartialMock(
             CheckoutSession::class,
             ['getBoltNeedCollectSaleRuleDiscounts',
@@ -76,11 +77,16 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
              'setBoltDiscountBreakdown',
              'getBoltDiscountBreakdown']
         );
+        $this->cartHelper = $this->createPartialMock(
+            CartHelper::class,
+            ['isCollectDiscountsByPlugin']
+        );
         $this->plugin = (new ObjectManager($this))->getObject(
             SalesRuleModelUtilityPlugin::class,
             [
                 'sessionHelper' => $this->sessionHelper,
-                'ruleRepository' => $this->ruleRepository
+                'ruleRepository' => $this->ruleRepository,
+                'cartHelper' => $this->cartHelper
             ]
         );
     }
@@ -95,12 +101,22 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
                             ->method('getBoltNeedCollectSaleRuleDiscounts')
                             ->willReturn(2);
         $item = $this->getMockBuilder(Item::class)
-            ->setMethods(['getDiscountAmount'])
+            ->setMethods(['getDiscountAmount', 'getQuote'])
             ->disableOriginalConstructor()
             ->getMock();
         $item->expects(self::once())
             ->method('getDiscountAmount')
             ->willReturn(20.0);
+        $quote = $this->getMockBuilder(Quote::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $item->expects(self::once())
+                            ->method('getQuote')
+                            ->willReturn($quote);
+        $this->cartHelper->expects(self::once())
+                            ->method('isCollectDiscountsByPlugin')
+                            ->with($quote)
+                            ->willReturn(true);
         $this->sessionHelper->expects(self::once())
                             ->method('getCheckoutSession')
                             ->willReturn($this->checkoutSession);
@@ -113,6 +129,20 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
      */
     public function afterMinFix_saveSaleRuleDiscountsToCheckoutSession_sessionExists()
     {
+        $item = $this->getMockBuilder(Item::class)
+            ->setMethods(['getQuote'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quote = $this->getMockBuilder(Quote::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $item->expects(self::once())
+                            ->method('getQuote')
+                            ->willReturn($quote);
+        $this->cartHelper->expects(self::once())
+                            ->method('isCollectDiscountsByPlugin')
+                            ->with($quote)
+                            ->willReturn(true);
         $discountData = $this->getMockBuilder(DiscountData::class)
             ->setMethods(['getAmount'])
             ->disableOriginalConstructor()
@@ -140,7 +170,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
         $this->sessionHelper->expects(self::once())
                             ->method('getCheckoutSession')
                             ->willReturn($this->checkoutSession);
-        $this->plugin->afterMinFix($this->subject, null, $discountData, null, null);
+        $this->plugin->afterMinFix($this->subject, null, $discountData, $item, null);
     }
     
     /**
@@ -149,6 +179,20 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
      */
     public function afterMinFix_doNotSaveUselessSaleRuleDiscountsToCheckoutSession_sessionExists()
     {
+        $item = $this->getMockBuilder(Item::class)
+            ->setMethods(['getQuote'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quote = $this->getMockBuilder(Quote::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $item->expects(self::once())
+                            ->method('getQuote')
+                            ->willReturn($quote);
+        $this->cartHelper->expects(self::once())
+                            ->method('isCollectDiscountsByPlugin')
+                            ->with($quote)
+                            ->willReturn(true);
         $discountData = $this->getMockBuilder(DiscountData::class)
             ->setMethods(['getAmount'])
             ->disableOriginalConstructor()
@@ -183,7 +227,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
         $this->sessionHelper->expects(self::once())
                             ->method('getCheckoutSession')
                             ->willReturn($this->checkoutSession);
-        $this->plugin->afterMinFix($this->subject, null, $discountData, null, null);
+        $this->plugin->afterMinFix($this->subject, null, $discountData, $item, null);
     }
 
     /**
@@ -192,6 +236,20 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
      */
     public function afterMinFix_saveSaleRuleDiscountsToCheckoutSession_sessionNotExists()
     {
+        $item = $this->getMockBuilder(Item::class)
+            ->setMethods(['getQuote'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quote = $this->getMockBuilder(Quote::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $item->expects(self::once())
+                            ->method('getQuote')
+                            ->willReturn($quote);
+        $this->cartHelper->expects(self::once())
+                            ->method('isCollectDiscountsByPlugin')
+                            ->with($quote)
+                            ->willReturn(true);
         $this->checkoutSession->expects(self::once())
                             ->method('getBoltNeedCollectSaleRuleDiscounts')
                             ->willReturn('');
@@ -207,7 +265,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
         $this->sessionHelper->expects(self::once())
                             ->method('getCheckoutSession')
                             ->willReturn($this->checkoutSession);
-        $this->plugin->afterMinFix($this->subject, null, null, null, null);
+        $this->plugin->afterMinFix($this->subject, null, null, $item, null);
     }
     
     /**
@@ -216,6 +274,20 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
      */
     public function afterMinFix_FreeShippingRule_saveDiscountBreakdownToCheckoutSession()
     {
+        $item = $this->getMockBuilder(Item::class)
+            ->setMethods(['getQuote'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $quote = $this->getMockBuilder(Quote::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        $item->expects(self::once())
+                            ->method('getQuote')
+                            ->willReturn($quote);
+        $this->cartHelper->expects(self::once())
+                            ->method('isCollectDiscountsByPlugin')
+                            ->with($quote)
+                            ->willReturn(true);
         $discountData = $this->getMockBuilder(DiscountData::class)
             ->setMethods(['getAmount'])
             ->disableOriginalConstructor()
@@ -253,6 +325,6 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
         $this->sessionHelper->expects(self::once())
                             ->method('getCheckoutSession')
                             ->willReturn($this->checkoutSession);
-        $this->plugin->afterMinFix($this->subject, null, $discountData, null, null);
+        $this->plugin->afterMinFix($this->subject, null, $discountData, $item, null);
     }
 }

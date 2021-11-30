@@ -16,26 +16,30 @@
  */
 namespace Bolt\Boltpay\Plugin;
 
-use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Magento\SalesRule\Model\RuleRepository;
 
 class SalesRuleModelUtilityPlugin
-{    
+{
+    /** @var CartHelper */
+    private $cartHelper;
+    
     /** @var SessionHelper */
     private $sessionHelper;
-    
-    /**
-     * @var RuleRepository
-     */
+
+    /** @var RuleRepository */
     private $ruleRepository;
     
     public function __construct(
         SessionHelper $sessionHelper,
-        RuleRepository $ruleRepository
+        RuleRepository $ruleRepository,
+        CartHelper $cartHelper
     ) {
         $this->sessionHelper = $sessionHelper;
         $this->ruleRepository = $ruleRepository;
+        $this->cartHelper = $cartHelper;
     }
     
     /**
@@ -43,6 +47,10 @@ class SalesRuleModelUtilityPlugin
      */
     public function beforeMinFix(\Magento\SalesRule\Model\Utility $subject, $discountData, $item, $qty)
     {
+        if (!$this->cartHelper->isCollectDiscountsByPlugin($item->getQuote())) {
+            return [$discountData, $item, $qty];
+        }
+        
         $checkoutSession = $this->sessionHelper->getCheckoutSession();
         $savedRuleId = $checkoutSession->getBoltNeedCollectSaleRuleDiscounts('');      
         if (!empty($savedRuleId)) {
@@ -61,6 +69,10 @@ class SalesRuleModelUtilityPlugin
     public function afterMinFix(\Magento\SalesRule\Model\Utility $subject,
                                    $result, $discountData, $item, $qty)
     {
+        if (!$this->cartHelper->isCollectDiscountsByPlugin($item->getQuote())) {
+            return $result;
+        }
+        
         $checkoutSession = $this->sessionHelper->getCheckoutSession();
         $savedRuleId = $checkoutSession->getBoltNeedCollectSaleRuleDiscounts('');      
         if (!empty($savedRuleId)) {

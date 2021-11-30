@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\ThirdPartyModules\Mexbs;
 
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
@@ -58,6 +59,11 @@ class Tieredcoupon
      * @var CouponFactory
      */
     private $couponFactory;
+    
+    /**
+     * @var CartHelper
+     */
+    private $cartHelper;
 
     /**
      * @param Bugsnag         $bugsnagHelper
@@ -66,6 +72,7 @@ class Tieredcoupon
      * @param RuleRepository  $ruleRepository
      * @param Discount        $discountHelper
      * @param CouponFactory   $couponFactory
+     * @param CartHelper      $cartHelper
      */
     public function __construct(
         Bugsnag $bugsnagHelper,
@@ -73,7 +80,8 @@ class Tieredcoupon
         SessionHelper $sessionHelper,
         RuleRepository $ruleRepository,
         Discount $discountHelper,
-        CouponFactory $couponFactory
+        CouponFactory $couponFactory,
+        CartHelper $cartHelper
     ) {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->quoteRepository = $quoteRepository;
@@ -81,6 +89,7 @@ class Tieredcoupon
         $this->ruleRepository = $ruleRepository;
         $this->discountHelper = $discountHelper;
         $this->couponFactory = $couponFactory;
+        $this->cartHelper = $cartHelper;
     }
     
     /**
@@ -147,12 +156,13 @@ class Tieredcoupon
                 $tieredCoupon = $mexbsTieredcouponCouponFactory->create()->load($coupon->getCode(), 'code');
                 if ($tieredCoupon && $tieredCoupon->getId() && $tieredCoupon->getId() === $coupon->getId()) {
                     $subCouponCodes = $tieredCoupon->getSubCouponCodes();
-                    $boltCollectSaleRuleDiscounts = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
+                    $quote = $this->sessionHelper->getCheckoutSession()->getQuote();
+                    $saleRuleDiscounts = $this->cartHelper->getSaleRuleDiscounts($quote);
                     foreach ($subCouponCodes as $subCouponCode) {
                         try {
                             $coupon = $this->couponFactory->create()->loadByCode($subCouponCode);
                             $rule = $this->ruleRepository->getById($coupon->getRuleId());
-                            if (isset($boltCollectSaleRuleDiscounts[$rule->getRuleId()])) {
+                            if (isset($saleRuleDiscounts[$rule->getRuleId()])) {
                                 return $rule;
                             }
                         } catch (NoSuchEntityException $e) {
@@ -208,12 +218,14 @@ class Tieredcoupon
                     );
                 }
                 $subCouponCodes = $tieredCoupon->getSubCouponCodes();
-                $boltCollectSaleRuleDiscounts = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
+                $quote = $this->sessionHelper->getCheckoutSession()->getQuote();
+                $address = $quote->isVirtual() ? $quote->getBillingAddress() : $quote->getShippingAddress();
+                $saleRuleDiscounts = $this->cartHelper->getSaleRuleDiscounts($address);
                 $appliedSubCoupon = null;
                 foreach ($subCouponCodes as $subCouponCode) {
                     try {
                         $coupon = $this->couponFactory->create()->loadByCode($subCouponCode);
-                        if (isset($boltCollectSaleRuleDiscounts[$coupon->getRuleId()])) {
+                        if (isset($saleRuleDiscounts[$coupon->getRuleId()])) {
                             $appliedSubCoupon = $coupon;
                         }
                     } catch (NoSuchEntityException $e) {
