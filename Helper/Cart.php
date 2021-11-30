@@ -2782,6 +2782,7 @@ class Cart extends AbstractHelper
                     $rule &&
                     $rule->getSimpleAction() == \Magento\SalesRule\Api\Data\RuleInterface::DISCOUNT_ACTION_FIXED_AMOUNT_FOR_CART
                     && $rule->getApplyToShipping()
+                    && $rule->getDiscountAmount() <= $quote->getSubtotal()
                 ) {
                     return true;
                 }
