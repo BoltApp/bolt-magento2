@@ -226,6 +226,11 @@ class Definitions
      * Prevent Bolt IPs from being saved as customer IP on quote
      */
     const M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE = 'M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE';
+    
+    /**
+     * Disallow the order in processing/complete/closed status won't be updated back to pending_review/new
+     */
+    const M2_DISALLOW_ORDER_STATUS_OVERRIDE = 'M2_DISALLOW_ORDER_STATUS_OVERRIDE';
 
     /**
      * Enable product endpoint
@@ -476,6 +481,12 @@ class Definitions
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_DISALLOW_ORDER_STATUS_OVERRIDE => [
+            self::NAME_KEY        => self::M2_DISALLOW_ORDER_STATUS_OVERRIDE,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_ENABLE_API_DRIVEN_INTEGRAION => [
             self::NAME_KEY        => self::M2_ENABLE_API_DRIVEN_INTEGRAION,
