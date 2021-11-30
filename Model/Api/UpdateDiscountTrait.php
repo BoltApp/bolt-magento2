@@ -34,6 +34,7 @@ use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Model\Api\UpdateCartContext;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
@@ -102,7 +103,7 @@ trait UpdateDiscountTrait
     protected $eventsForThirdPartyModules;
 
     /**
-     * @var \Bolt\Boltpay\Helper\Cart
+     * @var CartHelper
      */
     protected $cartHelper;
 
@@ -369,12 +370,10 @@ trait UpdateDiscountTrait
             );
         }
 
-        $address = $quote->isVirtual() ?
-            $quote->getBillingAddress() :
-            $quote->getShippingAddress();
+        $ruleDiscountDetails = $this->cartHelper->getSaleRuleDiscounts($quote);
 
-        $boltCollectSaleRuleDiscounts = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
-        if (!isset($boltCollectSaleRuleDiscounts[$ruleId])) {
+        if (!isset($ruleDiscountDetails[$ruleId])) {
+            $this->discountHelper->setCouponCode($quote, '');
             throw new BoltException(
                 __('Failed to apply the coupon code %1', $couponCode),
                 null,
@@ -382,10 +381,13 @@ trait UpdateDiscountTrait
                 $quote
             );
         }
+        $address = $quote->isVirtual() ?
+            $quote->getBillingAddress() :
+            $quote->getShippingAddress();
 
         $discountAmount = ($address->getShippingMethod() && $this->cartHelper->ignoreAdjustingShippingAmount($quote))
             ? $address->getCartFixedRules()[$ruleId] + $address->getShippingDiscountAmount()
-            : $boltCollectSaleRuleDiscounts[$ruleId];
+            : $ruleDiscountDetails[$ruleId];
 
         $description = $rule->getDescription();
         $display = $description != '' ? $description : 'Discount (' . $couponCode . ')';
