@@ -102,6 +102,11 @@ trait UpdateDiscountTrait
     protected $eventsForThirdPartyModules;
 
     /**
+     * @var \Bolt\Boltpay\Helper\Cart
+     */
+    protected $cartHelper;
+
+    /**
      * UpdateDiscountTrait constructor.
      *
      * @param UpdateCartContext $updateCartContext
@@ -120,6 +125,7 @@ trait UpdateDiscountTrait
         $this->totalsCollector = $updateCartContext->getTotalsCollector();
         $this->sessionHelper = $updateCartContext->getSessionHelper();
         $this->eventsForThirdPartyModules = $updateCartContext->getEventsForThirdPartyModules();
+        $this->cartHelper = $updateCartContext->getCartHelper();
     }
 
     /**
@@ -377,13 +383,17 @@ trait UpdateDiscountTrait
             );
         }
 
+        $discountAmount = ($address->getShippingMethod() && $this->cartHelper->ignoreAdjustingShippingAmount($quote))
+            ? $address->getCartFixedRules()[$ruleId] + $address->getShippingDiscountAmount()
+            : $boltCollectSaleRuleDiscounts[$ruleId];
+
         $description = $rule->getDescription();
         $display = $description != '' ? $description : 'Discount (' . $couponCode . ')';
 
         $result = [
             'status'          => 'success',
             'discount_code'   => $couponCode,
-            'discount_amount' => abs(CurrencyUtils::toMinor($boltCollectSaleRuleDiscounts[$ruleId], $quote->getQuoteCurrencyCode())),
+            'discount_amount' => abs(CurrencyUtils::toMinor($discountAmount, $quote->getQuoteCurrencyCode())),
             'description'     => $display,
             'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
         ];
