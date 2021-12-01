@@ -3920,15 +3920,16 @@ ORDER
         $quote->method('getTotals')->willReturn([]);
         $quote->expects(static::any())->method('getCouponCode')->willReturn(self::COUPON_CODE);
         $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
-        $this->discountHelper->expects(static::exactly(4))
-            ->method('convertToBoltDiscountType')
+        $this->discountHelper->expects(static::exactly(5))
+            ->method('getBoltDiscountType')
             ->withConsecutive(
-                [self::COUPON_CODE],
-                [''],
-                [''],
-                [self::COUPON_CODE]
+                ['by_fixed'],
+                ['by_fixed'],
+                ['by_fixed'],
+                ['by_fixed'],
+                ['by_fixed']
             )
-            ->willReturnOnConsecutiveCalls('fixed_amount', 'fixed_amount', 'fixed_amount', 'fixed_amount');
+            ->willReturnOnConsecutiveCalls('fixed_amount', 'fixed_amount', 'fixed_amount', 'fixed_amount', 'fixed_amount');
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
@@ -3936,53 +3937,73 @@ ORDER
         $appliedDiscount = 10; // $
         $appliedDiscountNoCoupon = 15; // $
 
-        $quote->method('getAppliedRuleIds')->willReturn('2,3,4,5');
+        $quote->method('getAppliedRuleIds')->willReturn('2,3,4,5,6');
 
         $rule2 = $this->getMockBuilder(DataObject::class)
-        ->setMethods(['getCouponType', 'getDescription'])
+        ->setMethods(['getCouponType', 'getDescription', 'getSimpleAction'])
         ->disableOriginalConstructor()
         ->getMock();
         $rule2->expects(static::once())->method('getCouponType')
         ->willReturn('SPECIFIC_COUPON');
         $rule2->expects(static::once())->method('getDescription')
         ->willReturn(self::COUPON_DESCRIPTION);
+        $rule2->method('getSimpleAction')->willReturn('by_fixed');
 
         $rule3 = $this->getMockBuilder(DataObject::class)
-        ->setMethods(['getCouponType', 'getDescription'])
+        ->setMethods(['getCouponType', 'getDescription', 'getSimpleAction'])
         ->disableOriginalConstructor()
         ->getMock();
         $rule3->expects(static::once())->method('getCouponType')
         ->willReturn('NO_COUPON');
-        $rule3->expects(static::once())->method('getDescription')
+        $rule3->expects(static::exactly(2))->method('getDescription')
         ->willReturn('Shopping cart price rule for the cart over $10');
+        $rule3->method('getSimpleAction')->willReturn('by_fixed');
 
         $rule4 = $this->getMockBuilder(DataObject::class)
+        ->setMethods(['getCouponType', 'getDescription', 'getSimpleAction'])
         ->disableOriginalConstructor()
         ->getMock();
+        $rule4->expects(static::once())->method('getCouponType')
+        ->willReturn('');
+        $rule4->expects(static::once())->method('getDescription')
+        ->willReturn('');
+        $rule4->method('getSimpleAction')->willReturn('by_fixed');
 
         $rule5 = $this->getMockBuilder(DataObject::class)
-        ->setMethods(['getCouponType', 'getDescription'])
+        ->setMethods(['getCouponType', 'getDescription', 'getSimpleAction'])
         ->disableOriginalConstructor()
         ->getMock();
         $rule5->expects(static::once())->method('getCouponType')
         ->willReturn('SPECIFIC_COUPON');
         $rule5->expects(static::once())->method('getDescription')
         ->willReturn('');
+        $rule5->method('getSimpleAction')->willReturn('by_fixed');
+        
+        $rule6 = $this->getMockBuilder(DataObject::class)
+            ->setMethods(['getCouponType', 'getDescription','getName','getSimpleAction'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $rule6->expects(static::once())->method('getCouponType')
+            ->willReturn('NO_COUPON');
+        $rule6->expects(static::once())->method('getDescription')->willReturn(null);
+        $rule6->expects(static::once())->method('getName')->willReturn('Shopping cart price rule for the cart over $10');
+        $rule6->method('getSimpleAction')->willReturn('by_fixed');
 
-        $this->ruleRepository->expects(static::exactly(4))
+        $this->ruleRepository->expects(static::exactly(5))
         ->method('getById')
         ->withConsecutive(
             [2],
             [3],
             [4],
-            [5]
+            [5],
+            [6]
         )
-        ->willReturnOnConsecutiveCalls($rule2, $rule3, $rule4, $rule5);
+        ->willReturnOnConsecutiveCalls($rule2, $rule3, $rule4, $rule5, $rule6);
 
         $currentMock->expects(static::once())
                 ->method('getSaleRuleDiscounts')
                 ->with($quote)
-                ->willReturn([2 => $appliedDiscount, 3 => $appliedDiscountNoCoupon, 4 => 0, 5 => $appliedDiscount]);
+                ->willReturn([2 => $appliedDiscount, 3 => $appliedDiscountNoCoupon, 4 => 0, 5 => $appliedDiscount, 6 => $appliedDiscountNoCoupon]);
 
         $totalAmount = 10000; // cents
         $diff = 0;
@@ -3997,7 +4018,7 @@ ORDER
         static::assertEquals($diffResult, $diff);
         $expectedDiscountAmount = 100 * $appliedDiscount;
         $expectedDiscountAmountNoCoupon = 100 * $appliedDiscountNoCoupon;
-        $expectedTotalAmount = $totalAmount - (2 * $expectedDiscountAmount) - $expectedDiscountAmountNoCoupon;
+        $expectedTotalAmount = $totalAmount - (2 * $expectedDiscountAmount) - 2 * $expectedDiscountAmountNoCoupon;
         $expectedDiscount = [
         [
             'description' => self::COUPON_DESCRIPTION,
@@ -4028,6 +4049,13 @@ ORDER
             'discount_category' => 'coupon',
             'discount_type'     => 'fixed_amount',
             'type'              => 'fixed_amount',
+        ],
+        [
+            'description' => trim(__('Discount ') . 'Shopping cart price rule for the cart over $10'),
+            'amount'      => $expectedDiscountAmountNoCoupon,
+            'discount_category' => 'automatic_promotion',
+            'discount_type'   => 'fixed_amount',
+            'type'   => 'fixed_amount',
         ],
         ];
         static::assertEquals($expectedDiscount, $discounts);
@@ -4353,7 +4381,7 @@ ORDER
         $giftVoucher = "12345";
         $quote->expects(static::any())->method('getCouponCode')->willReturn($giftVoucher);
         $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
-        $this->discountHelper->expects(static::exactly(1))->method('convertToBoltDiscountType')->with($giftVoucher)->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(1))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn($giftVoucherDiscount);
         $this->quoteAddressTotal->expects(static::once())->method('getTitle')->willReturn("Gift Voucher");
         $quote->expects(static::any())->method('getTotals')->willReturn(
@@ -4363,13 +4391,14 @@ ORDER
         $quote->method('getAppliedRuleIds')->willReturn('2');
 
         $rule2 = $this->getMockBuilder(DataObject::class)
-        ->setMethods(['getCouponType', 'getDescription'])
+        ->setMethods(['getCouponType', 'getDescription','getSimpleAction'])
         ->disableOriginalConstructor()
         ->getMock();
         $rule2->expects(static::once())->method('getCouponType')
         ->willReturn('SPECIFIC_COUPON');
         $rule2->expects(static::once())->method('getDescription')
         ->willReturn(self::COUPON_DESCRIPTION);
+        $rule2->method('getSimpleAction')->willReturn('by_fixed');
 
         $this->ruleRepository->expects(static::once())
         ->method('getById')
