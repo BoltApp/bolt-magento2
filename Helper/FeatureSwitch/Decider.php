@@ -396,4 +396,12 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_ENABLE_PRODUCT_ENDPOINT);
     }
+    
+    /**
+     * Checks whether the feature switch for preventing the plugin method from overriding the order status
+     */
+    public function isDisallowOrderStatusOverride()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_DISALLOW_ORDER_STATUS_OVERRIDE);
+    }
 }

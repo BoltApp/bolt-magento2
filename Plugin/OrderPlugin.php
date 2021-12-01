@@ -34,14 +34,22 @@ class OrderPlugin
      * @var array
      */
     private $disallowedOrderState;
+    
+    /**
+     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
+     */
+    private $featureSwitches;
 
     /**
      * OrderPlugin constructor.
      * @param \Magento\Framework\App\RequestInterface $request
      */
-    public function __construct(\Magento\Framework\App\RequestInterface $request)
-    {
+    public function __construct(
+        \Magento\Framework\App\RequestInterface $request,
+        \Bolt\Boltpay\Helper\FeatureSwitch\Decider $featureSwitches
+    ){
         $this->request = $request;
+        $this->featureSwitches = $featureSwitches;
         $this->disallowedOrderStates = [
             Order::STATE_PROCESSING,
             Order::STATE_COMPLETE,
@@ -108,9 +116,19 @@ class OrderPlugin
             return [$status];
         }
 
+        // Recharge customer with an existing Bolt credit card is a custom behavior of Bolt plugin,
+        // so feature switch M2_DISALLOW_ORDER_STATUS_OVERRIDE does not affect it. 
         if ($subject->getIsRechargedOrder()) {
             // Check and set the recharged order state to processing
             return [Order::STATE_PROCESSING];
+        }
+        
+        // The order state is for Magento to understand and process the order in a defined workflow.
+        // Whereas, the order status is for store owners to understand and process the order in a workflow.
+        // The merchant may create any number of custom order statuses to manage the exact order flow.
+        // The feature switch M2_DISALLOW_ORDER_STATUS_OVERRIDE is for preventing the plugin method from overriding the order status.
+        if ($this->featureSwitches->isDisallowOrderStatusOverride()) {
+            return [$status];
         }
         
         $oldStatus = $subject->getStatus();
