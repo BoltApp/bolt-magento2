@@ -454,8 +454,8 @@ class CreateOrder implements CreateOrderInterface
         );
         $this->validateMinimumAmount($quote);
         $this->validateCartItems($quote, $transaction);
-        $this->validateTax($quote, $transaction);
         $this->validateShippingCost($quote, $transaction);
+        $this->validateTax($quote, $transaction);
         $this->validateTotalAmount($quote, $transaction);
     }
 
