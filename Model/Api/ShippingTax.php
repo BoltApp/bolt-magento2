@@ -113,6 +113,11 @@ abstract class ShippingTax
     protected $quote;
 
     /**
+     * @var Quote
+     */
+    protected $immutableQuote;
+
+    /**
      * @var ShippingTaxContext
      */
     protected $shippingTaxContext;
@@ -376,6 +381,7 @@ abstract class ShippingTax
         $this->cartHelper->replicateQuoteData($immutableQuote, $parentQuote);
 
         $this->quote = $parentQuote;
+        $this->immutableQuote = $immutableQuote;
         $this->quote->getStore()->setCurrentCurrencyCode($this->quote->getQuoteCurrencyCode());
         // Load logged in customer checkout and customer sessions from cached session id.
         // Replace the quote with $parentQuote in checkout session.
