@@ -2165,13 +2165,13 @@ class Cart extends AbstractHelper
             foreach ($ruleDiscountDetails as $salesruleId => $ruleDiscountAmount) {
                 $rule = $this->ruleRepository->getById($salesruleId);
                 $roundedAmount = CurrencyUtils::toMinor($ruleDiscountAmount, $currencyCode);
+                $discountType = $this->discountHelper->getBoltDiscountType($rule->getSimpleAction());
                 switch ($rule->getCouponType()) {
                     case RuleInterface::COUPON_TYPE_SPECIFIC_COUPON:
                     case RuleInterface::COUPON_TYPE_AUTO:
                         $couponCode = $quote->getCouponCode();
                         $ruleDescription = $rule->getDescription();
                         $description = $ruleDescription !== '' ? $ruleDescription : 'Discount (' . $couponCode . ')';
-                        $discountType = $this->discountHelper->convertToBoltDiscountType($couponCode);
                         $discounts[] = [
                             'description'       => $description,
                             'amount'            => $roundedAmount,
@@ -2185,9 +2185,9 @@ class Cart extends AbstractHelper
                         break;
                     case RuleInterface::COUPON_TYPE_NO_COUPON:
                     default:
-                        $discountType = $this->discountHelper->convertToBoltDiscountType('');
+                        $description = trim($rule->getDescription()) ? $rule->getDescription() : $rule->getName();
                         $discounts[] = [
-                            'description'       => trim(__('Discount ') . $rule->getDescription()),
+                            'description'       => trim(__('Discount ') . $description),
                             'amount'            => $roundedAmount,
                             'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_AUTO_PROMO,
                             'discount_type'     => $discountType, // For v1/discounts.code.apply and v2/cart.update
@@ -2820,11 +2820,7 @@ class Cart extends AbstractHelper
      */
     public function isCollectDiscountsByPlugin($quote)
     {
-        if ($this->configHelper->isActive($quote->getStore()->getId())
-            && version_compare($this->configHelper->getStoreVersion(), '2.3.4', '<')) {
-            return true;
-        }
-        
-        return false;
+        return $this->configHelper->isActive($quote->getStore()->getId())
+            && version_compare($this->configHelper->getStoreVersion(), '2.3.4', '<');
     }
 }
