@@ -2768,6 +2768,36 @@ class Cart extends AbstractHelper
 
         return false;
     }
+
+    /**
+     * @param $quote
+     * @param $shippingMethod
+     * @return bool
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
+    public function checkIfQuoteHasCartFixedAmountAndApplyToShippingRuleAndTableRateShippingMethod($quote, $shippingMethod) {
+        if ($shippingMethod !== 'tablerate_bestway') {
+            return false;
+        }
+
+        if ($quote->getAppliedRuleIds()){
+            $salesruleIds = explode(',', $quote->getAppliedRuleIds());
+
+            foreach ($salesruleIds as $salesruleId) {
+                $rule = $this->ruleRepository->getById($salesruleId);
+                if (
+                    $rule &&
+                    $rule->getSimpleAction() == \Magento\SalesRule\Api\Data\RuleInterface::DISCOUNT_ACTION_FIXED_AMOUNT_FOR_CART
+                    && $rule->getApplyToShipping()
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
     
     /**
      * Collect discount amount from each applied sale rules.

@@ -1568,6 +1568,15 @@ class Order extends AbstractHelper
         $this->setShippingMethod($quote, $transaction);
         $this->quoteAfterChange($quote);
 
+        if ($this->cartHelper->checkIfQuoteHasCartFixedAmountAndApplyToShippingRuleAndTableRateShippingMethod($quote, $quote->getShippingAddress()->getShippingMethod())) {
+            // If a customer applies a cart rule (fixed amount for whole cart and apply to shipping) and the table rate shipping method,
+            // we must re-set FreeMethodWeight of the parent quote from the immutable quote to get the correct shipping amount
+            $immutableQuote->collectTotals();
+            $quote->getShippingAddress()->setFreeMethodWeight(
+                $immutableQuote->getShippingAddress()->getFreeMethodWeight()
+            );
+        }
+
         $this->setPaymentMethod($quote);
         $this->quoteAfterChange($quote);
 
