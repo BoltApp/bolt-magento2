@@ -4923,7 +4923,7 @@ ORDER
      */
     public function getCartItemsForOrder_WithDeletedProduct()
     {
-        $product = TestUtils::getSimpleProduct();
+        $product = TestUtils::createSimpleProduct();
         $quantity = 2;
         $order = TestUtils::createDumpyOrder([], [], [TestUtils::createOrderItemByProduct($product, $quantity)]);
         $product->delete();
