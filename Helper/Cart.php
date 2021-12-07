@@ -1431,8 +1431,11 @@ class Cart extends AbstractHelper
 
         $products = array_map(
             function ($item) use ($imageHelper, &$totalAmount, &$diff, $isOrder, $storeId, $currencyCode, $additionalAttributes) {
+                $_product = $item->getProduct();
+                if (!$_product) {
+                    return [];
+                }
                 $product = [];
-
                 if ($isOrder) {
                     $unitPrice = $item->getPrice();
                     $quantity = round($item->getQtyOrdered());
@@ -1453,13 +1456,11 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 // Load item product object
                 ////////////////////////////////////
-                //By default this feature switch is enabled.
-                $_product = $item->getProduct();
                 $customizableOptions = null;
                 $itemSku = trim($item->getSku());
                 $itemReference = $item->getProductId();
                 $itemName = $item->getName();
-
+                //By default this feature switch is enabled.
                 if ($this->deciderHelper->isCustomizableOptionsSupport()) {
                     try {
                         $customizableOptions = $this->getProductCustomizableOptions($item);
