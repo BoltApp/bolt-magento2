@@ -173,8 +173,7 @@ class TestUtils
 
         /** @var Order $order */
         $order = $objectManager->create(Order::class);
-        $order->setIncrementId('100000001')
-            ->setState($state)
+        $order->setState($state)
             ->setStatus($order->getConfig()->getStateDefaultStatus($status))
             ->setSubtotal(100)
             ->setGrandTotal(100)

@@ -4928,7 +4928,7 @@ ORDER
         $order = TestUtils::createDumpyOrder([], [], [TestUtils::createOrderItemByProduct($product, $quantity)]);
         $product->delete();
         list($products, $totalAmount, $diff) = $this->currentMock->getCartItemsForOrder($order, self::STORE_ID);
-        static::assertCount(0, $products);
+        static::assertCount(0, $products[0]);
         TestUtils::cleanupSharedFixtures([$order]);
     }
 
