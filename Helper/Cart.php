@@ -643,6 +643,7 @@ class Cart extends AbstractHelper
             $identifier .= $this->convertCustomAddressFieldsToCacheIdentifier($immutableQuote);
             $identifier .= $this->convertExternalFieldsToCacheIdentifier($immutableQuote);
         }
+        $identifier .= $this->deciderHelper->isAPIDrivenIntegrationEnabled();
         $identifier = $this->eventsForThirdPartyModules->runFilter('getCartCacheIdentifier', $identifier, $immutableQuote, $cart);
 
         return hash('md5', $identifier);
@@ -883,6 +884,11 @@ class Cart extends AbstractHelper
                         'response' => ArrayHelper::arrayToObject($boltOrderData['response'])
                     ]
                 );
+
+                if ($this->deciderHelper->isAPIDrivenIntegrationEnabled()) {
+                    return $boltOrder;
+                }
+
                 $immutableQuoteId = $this->getImmutableQuoteIdFromBoltOrder($boltOrder->getResponse());
 
                 // found in cache, check if the old immutable quote is still there

@@ -315,6 +315,7 @@ class Js extends Template
             'always_present_checkout'               => $this->enableAlwaysPresentCheckoutButton(),
             'account_url'                           => $this->getAccountJsUrl(),
             'order_management_selector'             => $this->getOrderManagementSelector(),
+            'api_integration'                       => $this->featureSwitches->isAPIDrivenIntegrationEnabled(),
         ]);
     }
 

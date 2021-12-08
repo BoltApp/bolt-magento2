@@ -847,7 +847,13 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
                     invalidateBoltCart();
                 }
             }
-            
+
+            apiFlow = BoltState.boltCart.cartReference == "";
+            if (apiFlow != settings.api_integration && ( Date.now()/1000 - boltCartDataID > 60) ) {
+                invalidateBoltCart();
+                return;
+            }
+
             <?= /* @noEscape */ $block->getAdditionalInvalidateBoltCartJavascript(); ?>
         }
 
