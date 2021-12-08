@@ -117,7 +117,9 @@ trait ReceivedUrlTrait
                     );
                 }
 
-                $this->orderHelper->dispatchPostCheckoutEvents($order, $quote);
+                if (!$this->cartHelper->getFeatureSwitchDeciderHelper()->isAPIDrivenIntegrationEnabled()) {
+                    $this->orderHelper->dispatchPostCheckoutEvents($order, $quote);
+                }
 
                 $redirectUrl = $this->getRedirectUrl($order);
 
@@ -208,7 +210,11 @@ trait ReceivedUrlTrait
      */
     private function getOrderByIncrementId($incrementId)
     {
-        $order = $this->orderHelper->getExistingOrder($incrementId);
+        if ($this->cartHelper->getFeatureSwitchDeciderHelper()->isAPIDrivenIntegrationEnabled()) {
+            $order = $this->cartHelper->getOrderById($incrementId);
+        } else {
+            $order = $this->orderHelper->getExistingOrder($incrementId);
+        }
 
         if (!$order) {
             throw new NoSuchEntityException(
