@@ -6902,13 +6902,13 @@ ORDER
 
         /**
          * @test
-         * that getSaleRuleDiscounts properly handles free shipping promotion
+         * that getSaleRuleDiscounts properly handles free shipping promotion (with coupon code)
          *
          * @covers ::getSaleRuleDiscounts
          *
          * @throws NoSuchEntityException from tested method
          */
-    public function getSaleRuleDiscounts_withFreeShippingCoupon_collectsCoupon()
+    public function getSaleRuleDiscounts_withFreeShippingCouponSpecificCoupon_collectsCoupon()
     {
         $currentMock = $this->getCurrentMock(['getCalculationAddress', 'isCollectDiscountsByPlugin']);
         
@@ -6931,11 +6931,11 @@ ORDER
             ->willReturn($checkoutSession);
         
         $rule2 = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['getSimpleFreeShipping'])
+            ->setMethods(['getCouponType'])
             ->disableOriginalConstructor()
             ->getMock();
-        $rule2->expects(static::once())->method('getSimpleFreeShipping')
-            ->willReturn(true);
+        $rule2->expects(static::once())->method('getCouponType')
+            ->willReturn('SPECIFIC_COUPON');
 
         $this->ruleRepository->expects(static::once())
             ->method('getById')
@@ -6944,5 +6944,51 @@ ORDER
 
         $ruleDiscountDetails = $currentMock->getSaleRuleDiscounts($quote);
         static::assertEquals([2 => 0], $ruleDiscountDetails);
+    }
+    
+        /**
+         * @test
+         * that getSaleRuleDiscounts properly handles free shipping promotion (no coupon code)
+         *
+         * @covers ::getSaleRuleDiscounts
+         *
+         * @throws NoSuchEntityException from tested method
+         */
+    public function getSaleRuleDiscounts_withFreeShippingCouponNoCoupon_collectsCoupon()
+    {
+        $currentMock = $this->getCurrentMock(['getCalculationAddress', 'isCollectDiscountsByPlugin']);
+        
+        $shippingAddress = $this->getAddressMock();
+        $shippingAddress->expects(static::once())->method('getAppliedRuleIds')->willReturn('2');
+        
+        $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
+        $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
+        $currentMock->expects(static::once())->method('isCollectDiscountsByPlugin')->with($quote)->willReturn(true);
+    
+        $checkoutSession = $this->createPartialMock(
+            CheckoutSession::class,
+            ['getBoltCollectSaleRuleDiscounts']
+        );
+        $checkoutSession->expects(static::once())
+            ->method('getBoltCollectSaleRuleDiscounts')
+            ->willReturn([]);
+        $this->sessionHelper->expects(static::once())
+            ->method('getCheckoutSession')
+            ->willReturn($checkoutSession);
+        
+        $rule2 = $this->getMockBuilder(DataObject::class)
+            ->setMethods(['getCouponType'])
+            ->disableOriginalConstructor()
+            ->getMock();
+        $rule2->expects(static::once())->method('getCouponType')
+            ->willReturn('NO_COUPON');
+
+        $this->ruleRepository->expects(static::once())
+            ->method('getById')
+            ->with(2)
+            ->willReturn($rule2);
+
+        $ruleDiscountDetails = $currentMock->getSaleRuleDiscounts($quote);
+        static::assertEquals([], $ruleDiscountDetails);
     }
 }
