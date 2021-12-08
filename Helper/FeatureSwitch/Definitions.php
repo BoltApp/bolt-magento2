@@ -246,6 +246,11 @@ class Definitions
      * Recalculate quote total for API driven integration
      */
     const M2_RECALCULATE_TOTAL_FOR_API_DRIVEN_INTEGRAION = 'M2_RECALCULATE_TOTAL_FOR_API_DRIVEN_INTEGRAION';
+    
+    /**
+     * Force to collect discounts details via plugin methods
+     */
+    const M2_COLLECT_DISCOUNT_BY_PLUGIN = 'M2_COLLECT_DISCOUNT_BY_PLUGIN';
 
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
@@ -496,6 +501,12 @@ class Definitions
         ],
         self::M2_RECALCULATE_TOTAL_FOR_API_DRIVEN_INTEGRAION => [
             self::NAME_KEY        => self::M2_RECALCULATE_TOTAL_FOR_API_DRIVEN_INTEGRAION,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_COLLECT_DISCOUNT_BY_PLUGIN => [
+            self::NAME_KEY        => self::M2_COLLECT_DISCOUNT_BY_PLUGIN,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
