@@ -4782,8 +4782,8 @@ class OrderTest extends BoltTestCase
         $this->expectException(BoltException::class);
         $this->expectExceptionMessage(
             sprintf(
-                "Order Delete Error. Order is in invalid state. Order #: %d State: %s Immutable Quote ID: %d",
-                $order->getIncrementId(),
+                "Order Delete Error. Order is in invalid state. Order #: %s State: %s Immutable Quote ID: %d",
+                $incrementId,
                 OrderModel::STATE_PROCESSING,
                 self::QUOTE_ID
             )
