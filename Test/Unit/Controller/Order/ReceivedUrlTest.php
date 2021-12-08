@@ -202,14 +202,14 @@ class ReceivedUrlTest extends BoltTestCase
 
         $url = $this->createUrlMock();
 
-        $featureSwitchDeciderMock = $this->createMocK(\Bolt\Boltpay\Helper\FeatureSwitch\Decider::class);
-
         $cartHelper = $this->createMock(CartHelper::class);
         $cartHelper->expects($this->once())
             ->method('getQuoteById')
             ->with(self::QUOTE_ID)
             ->willReturn($quote);
-        $cartHelper->expects($this->once())
+
+        $featureSwitchDeciderMock = $this->createMock(\Bolt\Boltpay\Helper\FeatureSwitch\Decider::class);
+        $cartHelper->expects($this->any())
             ->method('getFeatureSwitchDeciderHelper')
             ->willReturn($featureSwitchDeciderMock);
 
@@ -327,6 +327,11 @@ class ReceivedUrlTest extends BoltTestCase
                    ->with(self::QUOTE_ID)
                    ->willReturn($quote);
 
+        $featureSwitchDeciderMock = $this->createMock(\Bolt\Boltpay\Helper\FeatureSwitch\Decider::class);
+        $cartHelper->expects($this->any())
+            ->method('getFeatureSwitchDeciderHelper')
+            ->willReturn($featureSwitchDeciderMock);
+
         $checkoutSession = $this->createMock(CheckoutSession::class);
 
         $configHelper = $this->createMock(ConfigHelper::class);
@@ -386,6 +391,11 @@ class ReceivedUrlTest extends BoltTestCase
         $cartHelper = $this->createMock(CartHelper::class);
         $cartHelper->method('getQuoteById')
             ->willReturn($quote);
+
+        $featureSwitchDeciderMock = $this->createMock(\Bolt\Boltpay\Helper\FeatureSwitch\Decider::class);
+        $cartHelper->expects($this->any())
+            ->method('getFeatureSwitchDeciderHelper')
+            ->willReturn($featureSwitchDeciderMock);
 
         $checkoutSession = $this->getMockBuilder(CheckoutSession::class)
             ->disableOriginalConstructor()
@@ -668,6 +678,11 @@ class ReceivedUrlTest extends BoltTestCase
         $this->context = $this->createMock(Context::class);
         $this->configHelper = $this->createMock(ConfigHelper::class);
         $this->cartHelper = $this->createMock(CartHelper::class);
+        $featureSwitchDeciderMock = $this->createMock(\Bolt\Boltpay\Helper\FeatureSwitch\Decider::class);
+        $this->cartHelper->expects($this->any())
+            ->method('getFeatureSwitchDeciderHelper')
+            ->willReturn($featureSwitchDeciderMock);
+
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->checkoutSession = $this->getMockBuilder(CheckoutSession::class)
