@@ -4914,6 +4914,23 @@ ORDER
 
         TestUtils::cleanupSharedFixtures([$order]);
     }
+    
+    /**
+     * @test
+     * that getCartItemsForOrder returns expected data and attributes
+     *
+     * @covers ::getCartItemsForOrder
+     */
+    public function getCartItemsForOrder_WithDeletedProduct()
+    {
+        $product = TestUtils::createSimpleProduct();
+        $quantity = 2;
+        $order = TestUtils::createDumpyOrder([], [], [TestUtils::createOrderItemByProduct($product, $quantity)]);
+        $product->delete();
+        list($products, $totalAmount, $diff) = $this->currentMock->getCartItemsForOrder($order, self::STORE_ID);
+        static::assertCount(0, $products[0]);
+        TestUtils::cleanupSharedFixtures([$order]);
+    }
 
         /**
          * @test
