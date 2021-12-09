@@ -589,7 +589,7 @@ trait UpdateDiscountTrait
                 return false;
             }
         } catch (\Exception $e) {
-            $this->bugsnagHelper->notifyException($e);
+            $this->bugsnag->notifyException($e);
 
             return false;
         }
