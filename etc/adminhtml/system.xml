@@ -394,6 +394,12 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <if_module_enabled>Aheadworks_RewardPoints</if_module_enabled>
                     </field>
+                    <field id="aheadworks_store_credit" translate="label" type="select" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Use Aheadworks Store Credit on Shopping Cart</label>
+                        <config_path>payment/boltpay/aheadworks_store_credit_on_cart</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <if_module_enabled>Aheadworks_StoreCredit</if_module_enabled>
+                    </field>
                     <field id="store_credit" translate="label" type="select" sortOrder="240" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Use Store Credit on Shopping Cart</label>
                         <config_path>payment/boltpay/store_credit</config_path>

@@ -322,6 +322,11 @@ class Config extends AbstractHelper
     const XML_PATH_AHEADWORKS_REWARD_POINTS_ON_CART = 'payment/boltpay/aheadworks_reward_points_on_cart';
     
     /**
+     * Use Aheadworks Store Credit on Shopping Cart configuration path
+     */
+    const XML_PATH_AHEADWORKS_STORE_CREDIT_ON_CART = 'payment/boltpay/aheadworks_store_credit_on_cart';
+    
+    /**
      * Use MageWorx Reward Points on Shopping Cart configuration path
      */
     const XML_PATH_MAGEWORX_REWARD_POINTS_ON_CART = 'payment/boltpay/mageworx_reward_points_on_cart';
@@ -2201,6 +2206,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_AHEADWORKS_REWARD_POINTS_ON_CART,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+    
+    /**
+     * Get Use Aheadworks Store Credit on Shopping Cart configuration
+     *
+     * @param int|string|Store $store
+     *
+     * @return bool
+     */
+    public function getUseAheadworksStoreCreditConfig($store = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_AHEADWORKS_STORE_CREDIT_ON_CART,
             ScopeInterface::SCOPE_STORE,
             $store
         );

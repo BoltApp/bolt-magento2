@@ -962,6 +962,11 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["MageWorx\RewardPoints\Helper\Data"],
                     "boltClass"   => MageWorx_RewardPoints::class,
                 ],
+                "Aheadworks_StoreCredit" => [
+                    "module"      => "Aheadworks_StoreCredit",
+                    "sendClasses" => ["Aheadworks\StoreCredit\Api\CustomerStoreCreditManagementInterface"],
+                    "boltClass"   => Aheadworks_StoreCredit::class,
+                ],
             ]
         ],
         "saveSessionData" => [
