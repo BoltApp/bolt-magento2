@@ -540,7 +540,7 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
 
             close: function () {
                 popUpOpen = false;
-                trackCallbacks.onClose();
+                trackCallbacks.onClose(callbacks);
 
                 if (callbacks.success_url) {
                     // redirect on success order save

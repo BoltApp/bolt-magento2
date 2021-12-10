@@ -49,7 +49,7 @@ $onSuccessCode = $block->getJavascriptSuccess() . $trackCallbackCode['success'];
         ?>,
         onPaymentSubmit: <?= /* @noEscape */ $block->wrapWithCatch($trackCallbackCode['payment_submit']); ?>,
         onSuccess: <?= /* @noEscape */ $block->wrapWithCatch($onSuccessCode, 'data') ?>,
-        onClose: <?= /* @noEscape */ $block->wrapWithCatch($trackCallbackCode['close']); ?>,
+        onClose: <?= /* @noEscape */ $block->wrapWithCatch($trackCallbackCode['close'], 'callbacks'); ?>,
     };
 
     ////////////////////////////////////////////////////////////////////////
