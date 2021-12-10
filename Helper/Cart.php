@@ -2179,6 +2179,7 @@ class Cart extends AbstractHelper
     ) {
         $currencyCode = $quote->getQuoteCurrencyCode();
         $parentQuote = $this->getQuoteById($quote->getBoltParentQuoteId());
+        $address = $this->getCalculationAddress($quote);
         /** @var AddressTotal[] */
         $totals = $quote->getTotals();
         $this->logHelper->addInfoLog('### CartTotals: ' . json_encode(array_keys($totals)));
@@ -2189,7 +2190,8 @@ class Cart extends AbstractHelper
         // selecting specific shipping option, so the conditional statement should also
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
-        if ($ruleDiscountDetails = $this->getSaleRuleDiscounts($quote)) {
+        if (($amount = abs($address->getDiscountAmount())) || $quote->getCouponCode()) {
+            $ruleDiscountDetails = $this->getSaleRuleDiscounts($quote);
             foreach ($ruleDiscountDetails as $salesruleId => $ruleDiscountAmount) {
                 $rule = $this->ruleRepository->getById($salesruleId);
                 $roundedAmount = CurrencyUtils::toMinor($ruleDiscountAmount, $currencyCode);
