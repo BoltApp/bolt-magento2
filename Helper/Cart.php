@@ -61,6 +61,7 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\Order;
 use Magento\SalesRule\Api\Data\RuleInterface;
+use Magento\SalesRule\Model\Rule;
 use Magento\SalesRule\Model\RuleRepository;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\ScopeInterface;
@@ -2179,6 +2180,7 @@ class Cart extends AbstractHelper
     ) {
         $currencyCode = $quote->getQuoteCurrencyCode();
         $parentQuote = $this->getQuoteById($quote->getBoltParentQuoteId());
+        $address = $this->getCalculationAddress($quote);
         /** @var AddressTotal[] */
         $totals = $quote->getTotals();
         $this->logHelper->addInfoLog('### CartTotals: ' . json_encode(array_keys($totals)));
@@ -2189,7 +2191,8 @@ class Cart extends AbstractHelper
         // selecting specific shipping option, so the conditional statement should also
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
-        if ($ruleDiscountDetails = $this->getSaleRuleDiscounts($quote)) {
+        if (($amount = abs($address->getDiscountAmount())) || $quote->getCouponCode()) {
+            $ruleDiscountDetails = $this->getSaleRuleDiscounts($quote);
             foreach ($ruleDiscountDetails as $salesruleId => $ruleDiscountAmount) {
                 $rule = $this->ruleRepository->getById($salesruleId);
                 $roundedAmount = CurrencyUtils::toMinor($ruleDiscountAmount, $currencyCode);
@@ -2860,8 +2863,8 @@ class Cart extends AbstractHelper
         $ruleDiscountDetails = [];
         foreach ($salesRuleIds as $salesRuleId) {
             $rule = $this->ruleRepository->getById($salesRuleId);
-            // Only collect non-zero discount / free shipping promotion
-            if (!$rule || (!array_key_exists($salesRuleId, $saleRuleDiscountsDetails) && !$rule->getSimpleFreeShipping())) {
+            // Only collect non-zero discount / free shipping promotion(with coupon code)
+            if (!$rule || (!array_key_exists($salesRuleId, $saleRuleDiscountsDetails) && $rule->getCouponType() == RuleInterface::COUPON_TYPE_NO_COUPON)) {
                 continue;
             }
             $ruleDiscountDetails[$salesRuleId] = array_key_exists($salesRuleId, $saleRuleDiscountsDetails) ? $saleRuleDiscountsDetails[$salesRuleId] : 0;
@@ -2878,7 +2881,9 @@ class Cart extends AbstractHelper
      */
     public function isCollectDiscountsByPlugin($quote)
     {
-        return $this->configHelper->isActive($quote->getStore()->getId())
-            && version_compare($this->configHelper->getStoreVersion(), '2.3.4', '<');
+        //By default this feature switch is disabled.
+        return $this->deciderHelper->isCollectDiscountsByPlugin()
+            || ($this->configHelper->isActive($quote->getStore()->getId())
+            && version_compare($this->configHelper->getStoreVersion(), '2.3.4', '<'));
     }
 }
