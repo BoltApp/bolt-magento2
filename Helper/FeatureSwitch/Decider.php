@@ -396,4 +396,9 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_ENABLE_PRODUCT_ENDPOINT);
     }
+
+    public function isCollectDiscountsByPlugin()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_COLLECT_DISCOUNT_BY_PLUGIN);
+    }
 }
