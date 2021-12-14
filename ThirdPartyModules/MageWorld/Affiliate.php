@@ -98,14 +98,27 @@ class Affiliate
      * Save MW affiliate referral code into cache.
      *
      * @param array $sessionData
+     * @param \MW\Affiliate\Helper\Data $mwAffiliateHelperData
      * @param int|string $quoteId
      * @param mixed $checkoutSession
      */
-    public function saveSessionData($sessionData, $quoteId, $checkoutSession)
+    public function saveSessionData($sessionData, $mwAffiliateHelperData, $quoteId, $checkoutSession)
     {
         try {
-            if ($referral_code = $checkoutSession->getReferralCode()) {
-                $sessionData['mwAffiliateReferralCode'] = $referral_code;
+            if ($referralCode = $checkoutSession->getReferralCode()) {
+                $sessionData['mwAffiliateReferralCode'] = $referralCode;
+            }
+            if ($customer = $mwAffiliateHelperData->getCookie('customer')) {
+                $sessionData['mwAffiliateCustomer'] = $customer;
+            }
+            if ($mwReferralFrom = $mwAffiliateHelperData->getCookie('mw_referral_from')) {
+                $sessionData['mwAffiliateReferralFrom'] = $mwReferralFrom;
+            }
+            if ($mwReferralFromDomain = $mwAffiliateHelperData->getCookie('mw_referral_from_domain')) {
+                $sessionData['mwAffiliateReferralFromDomain'] = $mwReferralFromDomain;
+            }
+            if ($mwReferralTo = $mwAffiliateHelperData->getCookie('mw_referral_to')) {
+                $sessionData['mwAffiliateReferralTo'] = $mwReferralTo;
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
@@ -158,6 +171,59 @@ class Affiliate
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
+        }
+    }
+    
+    /**
+     * Restore MW affiliate referral link info to the cookies.
+     *
+     * @param OrderModel $result
+     * @param \MW\Affiliate\Helper\Data $mwAffiliateHelperData
+     * @param \MW\Affiliate\Observer\SalesOrderAfter $mwAffiliateObserverSalesOrderAfter
+     * @param OrderModel $order
+     */
+    public function beforeGetOrderByIdProcessNewOrder($result, $mwAffiliateHelperData, $mwAffiliateObserverSalesOrderAfter, $order)
+    {
+        try {
+            $cacheIdentifier = BoltSession::BOLT_SESSION_PREFIX . $order->getQuoteId();
+            if ($serialized = $this->cache->load($cacheIdentifier)) {
+                $sessionData = $this->serialize->unserialize($serialized);
+                if (!isset($sessionData["mwAffiliateReferralCode"])) {
+                    $this->setAffiliateCookies($sessionData);
+                    // In Bolt pre-auth checkout process, the order creation does not trigger sales_order_place_after event
+                    // (instead, this event would be triggered when the payment is captured), as a result, the affiliate commission is missing.
+                    // To fix this issue, we execute the observer \MW\Affiliate\Observer\SalesOrderAfter programmatically.
+                    $event = new \Magento\Framework\DataObject(['order' => $order]);
+                    $observer = \Magento\Framework\App\ObjectManager::getInstance()->get(\Magento\Framework\Event\Observer::class);
+                    $observer->setEvent($event);
+                    $mwAffiliateObserverSalesOrderAfter->execute($observer);   
+                }
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        } finally {
+            return $result;
+        }
+    }
+    
+    /**
+     * Update affiliate invitation via cookies.
+     *
+     * @param array $sessionData
+     */
+    private function setAffiliateCookies($sessionData)
+    {
+        if (isset($sessionData["mwAffiliateCustomer"])) {
+            $_COOKIE['customer'] = $sessionData["mwAffiliateCustomer"];
+        }
+        if (isset($sessionData["mwAffiliateReferralFrom"])) {
+            $_COOKIE['mw_referral_from'] = $sessionData["mwAffiliateReferralFrom"];
+        }
+        if (isset($sessionData["mwAffiliateReferralFromDomain"])) {
+            $_COOKIE['mw_referral_from_domain'] = $sessionData["mwAffiliateReferralFromDomain"];
+        }
+        if (isset($sessionData["mwAffiliateReferralTo"])) {
+            $_COOKIE['mw_referral_to'] = $sessionData["mwAffiliateReferralTo"];
         }
     }
 }
