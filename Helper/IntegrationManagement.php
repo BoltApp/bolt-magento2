@@ -75,13 +75,13 @@ class IntegrationManagement extends AbstractHelper
     
     const BOLT_INTEGRATION_NAME = 'boltIntegration';
     
-    const BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL_SANDBOX = 'https://example.org/sandbox/endpoint.php';
-    const BOLT_INTEGRATION_IDENTITY_LINKING_URL_SANDBOX = 'https://example.org/sandbox/login.php';
-    const BOLT_INTEGRATION_TOKEN_EXCHANGE_URL_SANDBOX = 'https://example.org/sandbox/tokensexchange.php';
+    const BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL_SANDBOX = 'https://api-sandbox.bolt.com/v1/magento2/bolt-checkout/authorize';
+    const BOLT_INTEGRATION_IDENTITY_LINKING_URL_SANDBOX = 'https://status.bolt.com/';
+    const BOLT_INTEGRATION_TOKEN_EXCHANGE_URL_SANDBOX = 'https://api-sandbox.bolt.com/v1/magento2/bolt-checkout/exchange';
     
-    const BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL_PRODUCTION = 'https://example.org/prod/endpoint.php';
-    const BOLT_INTEGRATION_IDENTITY_LINKING_URL_PRODUCTION = 'https://example.org/prod/login.php';
-    const BOLT_INTEGRATION_TOKEN_EXCHANGE_URL_PRODUCTION = 'https://example.org/prod/tokensexchange.php';
+    const BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL_PRODUCTION = 'https://api.bolt.com/v1/magento2/bolt-checkout/authorize';
+    const BOLT_INTEGRATION_IDENTITY_LINKING_URL_PRODUCTION = 'https://status.bolt.com/';
+    const BOLT_INTEGRATION_TOKEN_EXCHANGE_URL_PRODUCTION = 'https://api.bolt.com/v1/magento2/bolt-checkout/exchange';
     
     /**
      * @var \Magento\Integration\Model\ConfigBasedIntegrationManager
