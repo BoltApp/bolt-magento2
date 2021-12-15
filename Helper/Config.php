@@ -402,6 +402,11 @@ class Config extends AbstractHelper
 
     /** @var string  */
     const XML_PATH_ORDER_COMMENT_FIELD = 'payment/boltpay/order_comment_field';
+    
+    /**
+     * The mode of Magento integration associated with Bolt API
+     */
+    const XML_PATH_CONNECT_INTEGRATION_MODE = 'payment/boltpay/connect_magento_integration_mode';
 
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
@@ -462,7 +467,8 @@ class Config extends AbstractHelper
         'api_emulate_session'                => self::XML_PATH_API_EMULATE_SESSION,
         'should_minify_javascript'           => self::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
         'capture_merchant_metrics'           => self::XML_PATH_CAPTURE_MERCHANT_METRICS,
-        'track_checkout_funnel'              => self::XML_PATH_TRACK_CHECKOUT_FUNNEL
+        'track_checkout_funnel'              => self::XML_PATH_TRACK_CHECKOUT_FUNNEL,
+        'connect_magento_integration_mode'   => self::XML_PATH_CONNECT_INTEGRATION_MODE
     ];
 
     /**
@@ -2173,6 +2179,18 @@ class Config extends AbstractHelper
             ScopeInterface::SCOPE_STORE,
             $storeId
         ) ?: 'customer_note';
+    }
+    
+    /**
+     * Gets the mode of Magento integration associated with Bolt API
+     *
+     * @return string
+     */
+    public function getConnectIntegrationMode()
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_CONNECT_INTEGRATION_MODE
+        );
     }
 
     /**
