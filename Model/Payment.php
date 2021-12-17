@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Model;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
+use Bolt\Boltpay\Helper\Hook;
 use Magento\Backend\Model\Auth\Session as AuthSession;
 use Magento\Framework\Api\AttributeValueFactory;
 use Magento\Framework\Api\ExtensionAttributesFactory;
@@ -269,6 +270,22 @@ class Payment extends AbstractMethod
         return $this->void($payment);
     }
 
+    private function getTransactionIDs(InfoInterface $payment) {
+        $transactionReference = $payment->getCcTransactionID();
+        if ($transactionReference) {
+            // api flow
+            return ['transaction_reference' => $transactionReference];
+        }
+
+        $transactionId = $payment->getAdditionalInformation('real_transaction_id');
+        if ($transactionId) {
+            return ['transaction_id' => $transactionId];
+        }
+
+        throw new LocalizedException(
+            __('Please wait while transaction gets updated from Bolt.')
+        );
+    }
     /**
      * Void the payment through gateway
      *
@@ -281,19 +298,10 @@ class Payment extends AbstractMethod
     {
         try {
             $startTime = $this->metricsClient->getCurrentTime();
-            $transactionId = $payment->getAdditionalInformation('real_transaction_id');
 
-            if (empty($transactionId)) {
-                throw new LocalizedException(
-                    __('Please wait while transaction gets updated from Bolt.')
-                );
-            }
+            $transactionData = $this->getTransactionIDs($payment);
+            $transactionData['skip_hook_notification'] = true;
 
-            //Get transaction data
-            $transactionData = [
-                'transaction_id' => $transactionId,
-                'skip_hook_notification' => true
-            ];
             $storeId = $payment->getOrder()->getStoreId();
             $apiKey = $this->configHelper->getApiKey($storeId);
 
@@ -399,21 +407,11 @@ class Payment extends AbstractMethod
                 return $this;
             }
 
-            $realTransactionId = $payment->getAdditionalInformation('real_transaction_id');
+            $capturedData = $this->getTransactionIDs($payment);
+            $capturedData['amount'] = $captureAmount;
+            $capturedData['currency'] = $order->getOrderCurrencyCode();
+            $capturedData['skip_hook_notification'] = true;
 
-            if (empty($realTransactionId)) {
-                throw new LocalizedException(
-                    __('Please wait while transaction get updated from Bolt.')
-                );
-            }
-
-            //Get capture data
-            $capturedData = [
-                'transaction_id' => $realTransactionId,
-                'amount'         => $captureAmount,
-                'currency'       => $order->getOrderCurrencyCode(),
-                'skip_hook_notification' => true
-            ];
 
             $storeId = $order->getStoreId();
             $apiKey = $this->configHelper->getApiKey($storeId);
@@ -499,20 +497,10 @@ class Payment extends AbstractMethod
                 return $this;
             }
 
-            $realTransactionId = $payment->getAdditionalInformation('real_transaction_id');
-
-            if (empty($realTransactionId)) {
-                throw new LocalizedException(
-                    __('Please wait while transaction get updated from Bolt.')
-                );
-            }
-
-            $refundData = [
-                'transaction_id' => $realTransactionId,
-                'amount'         => $refundAmount,
-                'currency'       => $orderCurrency,
-                'skip_hook_notification' => true
-            ];
+            $refundData = $this->getTransactionIDs($payment);
+            $refundData['amount'] = $refundAmount;
+            $refundData['currency'] = $orderCurrency;
+            $refundData['skip_hook_notification'] = true;
 
             $storeId = $order->getStoreId();
             $apiKey = $this->configHelper->getApiKey($storeId);
@@ -605,6 +593,12 @@ class Payment extends AbstractMethod
      */
     public function canReviewPayment()
     {
+        $info = $this->getInfoInstance();
+        $state = $info->getCcStatus();
+        if ($state) {
+            // api flow
+            return $state == Hook::HT_REJECTED_REVERSIBLE;
+        }
         return $this->getInfoInstance()->getAdditionalInformation('transaction_state') == OrderHelper::TS_REJECTED_REVERSIBLE;
     }
 
@@ -644,16 +638,8 @@ class Payment extends AbstractMethod
     protected function review(InfoInterface $payment, $review)
     {
         try {
-            $transId = $payment->getAdditionalInformation('real_transaction_id');
-
-            if (empty($transId)) {
-                throw new LocalizedException(__('Please wait while transaction gets updated from Bolt.'));
-            }
-
-            $transactionData = [
-                'transaction_id' => $transId,
-                'decision'       => $review,
-            ];
+            $transactionData = $this->getTransactionIDs($payment);
+            $transactionData['decision'] = $review;
 
             $storeId = $payment->getOrder()->getStoreId();
             $apiKey = $this->configHelper->getApiKey($storeId);
