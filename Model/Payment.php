@@ -594,7 +594,7 @@ class Payment extends AbstractMethod
     public function canReviewPayment()
     {
         $info = $this->getInfoInstance();
-        $state = $info->getCcStatus();
+        $state = $info->getCcStatusDescription();
         if ($state) {
             // api flow
             return $state == Hook::HT_REJECTED_REVERSIBLE;
