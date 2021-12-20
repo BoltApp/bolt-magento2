@@ -123,7 +123,7 @@ class TrackingSaveObserver implements ObserverInterface
             if ($isNonBoltOrder) {
                 $transactionReference = $order->getBoltTransactionReference();
             } else {
-                $transactionReference = $payment->getCcTransID();
+                $transactionReference = $payment->getCcTransId();
                 if (!$transactionReference) {
                     $transactionReference = $payment->getAdditionalInformation('transaction_reference');
                 }

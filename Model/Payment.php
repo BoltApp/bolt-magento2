@@ -271,7 +271,7 @@ class Payment extends AbstractMethod
     }
 
     private function getTransactionIDs(InfoInterface $payment) {
-        $transactionReference = $payment->getCcTransactionID();
+        $transactionReference = $payment->getCcTransId();
         if ($transactionReference) {
             // api flow
             return ['transaction_reference' => $transactionReference];
@@ -390,6 +390,13 @@ class Payment extends AbstractMethod
     {
         try {
             $startTime = $this->metricsClient->getCurrentTime();
+            if ($payment->getCcTransId()) {
+                // api flow
+                if ($payment->getCcStatusDescription() == "completed") {
+                    // we handle API call initiated by bolt, do nothing
+                    return $this;
+                }
+            }
             $order = $payment->getOrder();
 
             if ($amount < 0) {

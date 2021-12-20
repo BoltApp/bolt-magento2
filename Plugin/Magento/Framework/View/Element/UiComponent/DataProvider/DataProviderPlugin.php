@@ -106,7 +106,7 @@ class DataProviderPlugin
             }
             if ($payment->getCcTransId()) {
                 // api flow, title rendered on server side
-                $title = $info->getAdditionalData();
+                $title = $payment->getAdditionalData();
                 if (!$title) {
                     $item['payment_method'] = $title;
                 }
