@@ -345,7 +345,7 @@ class PaymentTest extends BoltTestCase
         $this->apiHelper->expects($this->never())->method('buildRequest');
         $this->apiHelper->expects($this->never())->method('sendRequest');
         $paymentMock = $this->getMockBuilder(InfoInterface::class)
-            ->setMethods(['getOrder' ])
+            ->setMethods(['getOrder', 'getCcTransId'])
             ->getMockForAbstractClass();
         $paymentMock->expects($this->once())->method('getOrder')->willReturn($this->orderMock);
 
