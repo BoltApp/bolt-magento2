@@ -104,6 +104,14 @@ class DataProviderPlugin
                 $item['payment_method'] .= '_' . $ccType;
                 continue;
             }
+            if ($payment->getCcTransId()) {
+                // api flow, title rendered on server side
+                $title = $payment->getAdditionalData();
+                if (!$title) {
+                    $item['payment_method'] = $title;
+                }
+                continue;
+            }
             if ($intersection = array_intersect(
                 [$payment->getData('additional_information/processor'), $payment->getAdditionalData()],
                 array_keys(Order::TP_METHOD_DISPLAY)

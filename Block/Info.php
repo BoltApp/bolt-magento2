@@ -60,8 +60,16 @@ class Info extends \Magento\Payment\Block\Info
     public function displayPaymentMethodTitle()
     {
         $info = $this->getInfo();
-        $token = $info->getAdditionalData();
 
+        if ($info->getCcTransId()) {
+            // api flow, title rendered on server side
+            $title = $info->getAdditionalData();
+            if (!$title) {
+                return $this->getMethod()->getConfigData('title', $info->getOrder()->getStoreId());
+            }
+            return $title;
+        }
+        $token = $info->getAdditionalData();
         $boltProcessor = $info->getAdditionalInformation('processor');
         //this check must be done first as applepay is not a processor. If done with the rest of the alternative
         //processors after the vantiv check then the display would be wrong.
