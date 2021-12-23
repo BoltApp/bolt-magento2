@@ -34,6 +34,7 @@ use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Model\Api\UpdateCartContext;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
@@ -100,6 +101,11 @@ trait UpdateDiscountTrait
      * @var EventsForThirdPartyModules
      */
     protected $eventsForThirdPartyModules;
+    
+    /**
+     * @var CartHelper
+     */
+    protected $cartHelper;
 
     /**
      * UpdateDiscountTrait constructor.
@@ -120,6 +126,7 @@ trait UpdateDiscountTrait
         $this->totalsCollector = $updateCartContext->getTotalsCollector();
         $this->sessionHelper = $updateCartContext->getSessionHelper();
         $this->eventsForThirdPartyModules = $updateCartContext->getEventsForThirdPartyModules();
+        $this->cartHelper = $updateCartContext->getCartHelper();
     }
 
     /**
@@ -363,12 +370,9 @@ trait UpdateDiscountTrait
             );
         }
 
-        $address = $quote->isVirtual() ?
-            $quote->getBillingAddress() :
-            $quote->getShippingAddress();
-
-        $boltCollectSaleRuleDiscounts = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
-        if (!isset($boltCollectSaleRuleDiscounts[$ruleId])) {
+        $ruleDiscountDetails = $this->cartHelper->getSaleRuleDiscounts($quote);
+        if (!isset($ruleDiscountDetails[$ruleId])) {
+            $this->discountHelper->setCouponCode($quote, '');
             throw new BoltException(
                 __('Failed to apply the coupon code %1', $couponCode),
                 null,
@@ -376,14 +380,14 @@ trait UpdateDiscountTrait
                 $quote
             );
         }
-
+            
         $description = $rule->getDescription();
         $display = $description != '' ? $description : 'Discount (' . $couponCode . ')';
 
         $result = [
             'status'          => 'success',
             'discount_code'   => $couponCode,
-            'discount_amount' => abs(CurrencyUtils::toMinor($boltCollectSaleRuleDiscounts[$ruleId], $quote->getQuoteCurrencyCode())),
+            'discount_amount' => abs(CurrencyUtils::toMinor($ruleDiscountDetails[$ruleId], $quote->getQuoteCurrencyCode())),
             'description'     => $display,
             'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
         ];

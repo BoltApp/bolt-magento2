@@ -61,6 +61,7 @@ use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\Order;
 use Magento\SalesRule\Api\Data\RuleInterface;
 use Magento\SalesRule\Model\RuleRepository;
+use Magento\SalesRule\Model\Rule;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\ScopeInterface;
 use Zend_Http_Client_Exception;
@@ -2163,50 +2164,42 @@ class Cart extends AbstractHelper
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
         if (($amount = abs($address->getDiscountAmount())) || $quote->getCouponCode()) {
-            // The discount amount of each sale rule is stored in the checkout session, using rule id as key,
-            // Bolt\Boltpay\Plugin\SalesRuleActionDiscountPlugin
-            $boltCollectSaleRuleDiscounts = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
-
-            $salesruleIds = explode(',', $quote->getAppliedRuleIds());
-            foreach ($salesruleIds as $salesruleId) {
-                if (!isset($boltCollectSaleRuleDiscounts[$salesruleId])) {
-                    continue;
-                }
+            $ruleDiscountDetails = $this->getSaleRuleDiscounts($quote);
+            foreach ($ruleDiscountDetails as $salesruleId => $ruleDiscountAmount) {
                 $rule = $this->ruleRepository->getById($salesruleId);
-                $ruleDiscountAmount = $boltCollectSaleRuleDiscounts[$salesruleId];
-                if ($rule && ($ruleDiscountAmount || $rule->getSimpleFreeShipping())) {
-                    $roundedAmount = CurrencyUtils::toMinor($ruleDiscountAmount, $currencyCode);
-                    switch ($rule->getCouponType()) {
-                        case RuleInterface::COUPON_TYPE_SPECIFIC_COUPON:
-                        case RuleInterface::COUPON_TYPE_AUTO:
-                            $couponCode = $quote->getCouponCode();
-                            $ruleDescription = $rule->getDescription();
-                            $description = $ruleDescription !== '' ? $ruleDescription : 'Discount (' . $couponCode . ')';
-                            $discounts[] = [
-                                'description'       => $description,
-                                'amount'            => $roundedAmount,
-                                'reference'         => $couponCode,
-                                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
-                                'discount_type'     => $this->discountHelper->convertToBoltDiscountType($couponCode), // For v1/discounts.code.apply and v2/cart.update
-                                'type'              => $this->discountHelper->convertToBoltDiscountType($couponCode), // For v1/merchant/order
-                            ];
-                            $this->logEmptyDiscountCode($couponCode, $description);
+                $roundedAmount = CurrencyUtils::toMinor($ruleDiscountAmount, $currencyCode);
+                $discountType = $this->discountHelper->getBoltDiscountType($rule->getSimpleAction());
+                switch ($rule->getCouponType()) {
+                    case RuleInterface::COUPON_TYPE_SPECIFIC_COUPON:
+                    case RuleInterface::COUPON_TYPE_AUTO:
+                        $couponCode = $quote->getCouponCode();
+                        $ruleDescription = $rule->getDescription();
+                        $description = $ruleDescription !== '' ? $ruleDescription : 'Discount (' . $couponCode . ')';
+                        $discounts[] = [
+                            'description'       => $description,
+                            'amount'            => $roundedAmount,
+                            'reference'         => $couponCode,
+                            'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
+                            'discount_type'     => $discountType, // For v1/discounts.code.apply and v2/cart.update
+                            'type'              => $discountType, // For v1/merchant/order
+                        ];
+                        $this->logEmptyDiscountCode($couponCode, $description);
 
-                            break;
-                        case RuleInterface::COUPON_TYPE_NO_COUPON:
-                        default:
-                            $discounts[] = [
-                                'description'       => trim(__('Discount ') . $rule->getDescription()),
-                                'amount'            => $roundedAmount,
-                                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_AUTO_PROMO,
-                                'discount_type'     => $this->discountHelper->getBoltDiscountType($rule->getSimpleAction()), // For v1/discounts.code.apply and v2/cart.update
-                                'type'              => $this->discountHelper->getBoltDiscountType($rule->getSimpleAction()), // For v1/merchant/order
-                            ];
+                        break;
+                    case RuleInterface::COUPON_TYPE_NO_COUPON:
+                    default:
+                        $description = trim($rule->getDescription()) ? $rule->getDescription() : $rule->getName();
+                        $discounts[] = [
+                            'description'       => trim(__('Discount ') . $description),
+                            'amount'            => $roundedAmount,
+                            'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_AUTO_PROMO,
+                            'discount_type'     => $discountType, // For v1/discounts.code.apply and v2/cart.update
+                            'type'              => $discountType, // For v1/merchant/order
+                        ];
 
-                            break;
-                    }
-                    $totalAmount -= $roundedAmount;
+                        break;
                 }
+                $totalAmount -= $roundedAmount;
             }
         }
         /////////////////////////////////////////////////////////////////////////////////
@@ -2748,5 +2741,62 @@ class Cart extends AbstractHelper
     public function getFeatureSwitchDeciderHelper()
     {
         return $this->deciderHelper;
+    }
+    
+    /**
+     * Collect discount amount from each applied sale rules.
+     *
+     * @param \Magento\Quote\Model\Quote $quote
+     *
+     * @return array
+     */
+    public function getSaleRuleDiscounts($quote)
+    {
+        $address = $this->getCalculationAddress($quote);
+        if (!($appliedSaleRuleIds = $address->getAppliedRuleIds())) {
+            return [];
+        }
+        $salesRuleIds = explode(',', $appliedSaleRuleIds);
+        $saleRuleDiscountsDetails = [];
+        // If the Magento version < 2.3.4, we still collect discounts details via plugin methods.
+        if ($this->isCollectDiscountsByPlugin($quote)) {
+            $saleRuleDiscountsDetails = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
+        } else {
+            /* @var \Magento\SalesRule\Api\Data\RuleDiscountInterface $ruleDiscounts */
+            $extensionSaleRuleDiscounts = $address->getExtensionAttributes()->getDiscounts();
+            if ($extensionSaleRuleDiscounts && is_array($extensionSaleRuleDiscounts)) {
+                foreach ($extensionSaleRuleDiscounts as $value) {
+                    /* @var \Magento\SalesRule\Api\Data\DiscountDataInterface $discountData */
+                    $discountData = $value->getDiscountData();
+                    $saleRuleDiscountsDetails[$value->getRuleID()] = $discountData->getAmount();
+                }
+            }
+        }
+        
+        $ruleDiscountDetails = [];
+        foreach ($salesRuleIds as $salesRuleId) {
+            $rule = $this->ruleRepository->getById($salesRuleId);
+            // Only collect non-zero discount / free shipping promotion(with coupon code)
+            if (!$rule || (!array_key_exists($salesRuleId, $saleRuleDiscountsDetails) && $rule->getCouponType() == RuleInterface::COUPON_TYPE_NO_COUPON)) {
+                continue;
+            }
+            $ruleDiscountDetails[$salesRuleId] = array_key_exists($salesRuleId, $saleRuleDiscountsDetails) ? $saleRuleDiscountsDetails[$salesRuleId] : 0;
+        }
+        return $ruleDiscountDetails;
+    }
+    
+    /**
+     * If the Magento version < 2.3.4, we still collect discounts details via plugin methods.
+     *
+     * @param \Magento\Quote\Model\Quote $quote
+     *
+     * @return bool
+     */
+    public function isCollectDiscountsByPlugin($quote)
+    {
+        //By default this feature switch is disabled.
+        return $this->deciderHelper->isCollectDiscountsByPlugin()
+            || ($this->configHelper->isActive($quote->getStore()->getId())
+            && version_compare($this->configHelper->getStoreVersion(), '2.3.4', '<'));
     }
 }

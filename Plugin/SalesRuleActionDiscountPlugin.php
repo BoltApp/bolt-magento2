@@ -16,18 +16,23 @@
  */
 namespace Bolt\Boltpay\Plugin;
 
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 
 class SalesRuleActionDiscountPlugin
 {
+    /** @var CartHelper */
+    private $cartHelper;
 
     /** @var SessionHelper */
     private $sessionHelper;
     
     public function __construct(
-        SessionHelper $sessionHelper
+        SessionHelper $sessionHelper,
+        CartHelper $cartHelper
     ) {
         $this->sessionHelper = $sessionHelper;
+        $this->cartHelper = $cartHelper;
     }
     
     public function afterCalculate(
@@ -37,6 +42,10 @@ class SalesRuleActionDiscountPlugin
         $item,
         $qty
     ) {
+        if (!$this->cartHelper->isCollectDiscountsByPlugin($item->getQuote())) {
+            return $result;
+        }
+        
         $checkoutSession = $this->sessionHelper->getCheckoutSession();
 
         // Save the sale rule id into session,

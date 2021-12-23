@@ -17,20 +17,30 @@
 namespace Bolt\Boltpay\Plugin;
 
 use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 
 class SalesRuleQuoteDiscountPlugin
 {
     /** @var SessionHelper */
     private $sessionHelper;
     
+    /** @var CartHelper */
+    private $cartHelper;
+    
     public function __construct(
-        SessionHelper $sessionHelper
+        SessionHelper $sessionHelper,
+        CartHelper $cartHelper
     ) {
         $this->sessionHelper = $sessionHelper;
+        $this->cartHelper = $cartHelper;
     }
     
     public function beforeCollect(\Magento\SalesRule\Model\Quote\Discount $subject, $quote, $shippingAssignment, $total)
     {
+        if (!$this->cartHelper->isCollectDiscountsByPlugin($quote)) {
+            return [$quote, $shippingAssignment, $total];
+        }
+        
         $items = $shippingAssignment->getItems();
         
         if (!count($items)) {
