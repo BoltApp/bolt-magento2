@@ -2043,6 +2043,15 @@ class Order extends AbstractHelper
         $payment = $order->getPayment();
 
         $this->checkPaymentMethod($payment);
+        
+        $this->eventsForThirdPartyModules->dispatchEvent(
+            'beforeUpdateOrderPayment',
+            $order,
+            $transaction,
+            $reference,
+            $hookType,
+            $hookPayload
+        );
 
         // Get the last stored transaction parameters
         $prevTransactionState = $payment->getAdditionalInformation('transaction_state');

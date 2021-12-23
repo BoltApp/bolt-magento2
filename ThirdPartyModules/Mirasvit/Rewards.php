@@ -26,6 +26,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Customer\Model\Session as CustomerSession;
+use Magento\Framework\App\CacheInterface;
 
 class Rewards
 {
@@ -103,6 +104,14 @@ class Rewards
      */
     private $customerSession;
     
+    /**
+     * @var CacheInterface
+     */
+    private $cache;
+    
+    /**
+     * @var string
+     */
     private $appliedRewardsMode;
 
     /**
@@ -114,6 +123,7 @@ class Rewards
      * @param SessionHelper $sessionHelper
      * @param CartHelper $cartHelper
      * @param CustomerSession $customerSession
+     * @param CacheInterface $cache
      */
     public function __construct(
         Bugsnag $bugsnagHelper,
@@ -122,7 +132,8 @@ class Rewards
         CustomerFactory $customerFactory,
         SessionHelper $sessionHelper,
         CartHelper $cartHelper,
-        CustomerSession $customerSession
+        CustomerSession $customerSession,
+        CacheInterface $cache
     ) {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->discountHelper = $discountHelper;
@@ -131,6 +142,7 @@ class Rewards
         $this->sessionHelper   = $sessionHelper;
         $this->cartHelper = $cartHelper;
         $this->customerSession = $customerSession;
+        $this->cache = $cache;
     }
 
     /**
@@ -302,7 +314,7 @@ class Rewards
     private function getMirasvitRewardsAmount($quote)
     {
         try {
-            $this->getAppliedRewardsMode();
+            $this->getAppliedRewardsMode($quote);
             
             if ($this->appliedRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_NONE) {
                 return 0;
@@ -551,17 +563,27 @@ class Rewards
      *
      * @return string
      */
-    private function getAppliedRewardsMode()
+    private function getAppliedRewardsMode($quote)
     {
         if (!$this->customerSession->isLoggedIn()) {
             $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_NONE;
         }
         
-        $boltCustomerMirasvitRewardsMode = $this->customerSession->getBoltMirasvitRewardsMode();
+        $boltCustomerMirasvitRewardsMode = $this->cache->load('boltMirasvitRewardsMode' . $quote->getId());
 
-        if (!empty($boltCustomerMirasvitRewardsMode)
-            && $boltCustomerMirasvitRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_PART
-        ) {
+        if (empty($boltCustomerMirasvitRewardsMode)) {
+            $purchase = $this->mirasvitRewardsPurchaseHelper->getByQuote($quote);
+            if ($purchase) {
+                if ($purchase->getSpendPoints() >= $purchase->getMaxPointsNumberToSpent()) {
+                    $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_ALL;
+                } else {
+                    $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_PART;
+                }
+            } else {
+                $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_NONE;
+            }
+            $this->cache->save($this->appliedRewardsMode, 'boltMirasvitRewardsMode' . $quote->getId(), [], 3600);
+        } elseif ($boltCustomerMirasvitRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_PART) {
             $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_PART;
         } else {
             $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_ALL;
@@ -719,6 +741,40 @@ class Rewards
             if ($couponCode == self::MIRASVIT_REWARDS) {
                 $miravitRewardsPurchase = $mirasvitRewardsPurchaseHelper->getByQuote($quote);
                 $mirasvitRewardsCheckoutHelper->updatePurchase($miravitRewardsPurchase, 0);
+            }
+        } catch (\Exception $e) {
+            throw $e;
+        }
+    }
+    
+    /**
+     * Prevent duplicate transaction from decreasing the number of points on the customer account.
+     *
+     * @param \Mirasvit\Rewards\Service\Order $mirasvitRewardsOrderService
+     * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
+     * @param OrderModel $order
+     * @param null|\stdClass $transaction
+     * @param null|string $reference
+     * @param null $hookType
+     * @param null|array   $hookPayload
+     *
+     */
+    public function beforeUpdateOrderPayment(
+        $mirasvitRewardsOrderService,
+        $mirasvitRewardsPurchaseHelper,
+        $order,
+        $transaction,
+        $reference,
+        $hookType,
+        $hookPayload
+    ) {
+        try {
+            $purchase = $mirasvitRewardsPurchaseHelper->getByQuote($order->getQuoteId());
+            if (!$purchase) {
+                return;
+            }
+            if (!$mirasvitRewardsOrderService->isLocked($order)) {
+                $mirasvitRewardsOrderService->lock($order);
             }
         } catch (\Exception $e) {
             throw $e;

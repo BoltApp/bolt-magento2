@@ -19,6 +19,8 @@ namespace Bolt\Boltpay\Plugin\Mirasvit\RewardsCheckout\Controller\Checkout;
 
 use Magento\Customer\Model\Session as CustomerSession;
 use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Rewards as BoltMirasvitRewards;
+use Magento\Framework\App\CacheInterface;
+use Magento\Checkout\Model\Cart;
 
 class ApplyPointsPostPlugin
 {
@@ -27,10 +29,24 @@ class ApplyPointsPostPlugin
      */
     private $customerSession;
     
+    /**
+     * @var CacheInterface
+     */
+    private $cache;
+    
+    /**
+     * @var Cart
+     */
+    private $cart;
+    
     public function __construct(
-        CustomerSession $customerSession
+        CustomerSession $customerSession,
+        CacheInterface $cache,
+        Cart $cart
     ) {
         $this->customerSession = $customerSession;
+        $this->cache = $cache;
+        $this->cart = $cart;
     }
     
     /**
@@ -48,16 +64,10 @@ class ApplyPointsPostPlugin
         
         if ($subject->getRequest()->isXmlHttpRequest()) {
             $points_all = $subject->getRequest()->getParam('points_all');
-
-            if (!empty($points_all)) {
-                $this->customerSession->setBoltMirasvitRewardsMode(
-                    BoltMirasvitRewards::MIRASVIT_REWARDS_APPLY_MODE_ALL
-                );
-            } else {
-                $this->customerSession->setBoltMirasvitRewardsMode(
-                    BoltMirasvitRewards::MIRASVIT_REWARDS_APPLY_MODE_PART
-                );
-            }
+            $appliedRewardsMode = !empty($points_all)
+                                  ? BoltMirasvitRewards::MIRASVIT_REWARDS_APPLY_MODE_ALL
+                                  : BoltMirasvitRewards::MIRASVIT_REWARDS_APPLY_MODE_PART;
+            $this->cache->save($appliedRewardsMode, 'boltMirasvitRewardsMode' . $this->cart->getQuote()->getId(), [], 3600);
         }
         
         return null;

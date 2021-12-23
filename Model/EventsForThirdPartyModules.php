@@ -387,6 +387,16 @@ class EventsForThirdPartyModules
                 ]
             ],
         ],
+        'beforeUpdateOrderPayment' => [
+            "listeners" => [
+                'Mirasvit_Rewards' => [
+                    'module' => 'Mirasvit_Rewards',
+                    'sendClasses' => ['Mirasvit\Rewards\Service\Order',
+                                      'Mirasvit\Rewards\Helper\Purchase'],
+                    'boltClass' => Mirasvit_Rewards::class,
+                ],
+            ],
+        ],
         'afterUpdateOrderPayment' => [
             "listeners" => [
                 'Webkul_Odoomagentoconnect' => [
