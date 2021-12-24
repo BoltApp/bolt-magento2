@@ -149,32 +149,6 @@ class Affiliate
     }
     
     /**
-     * Restore MW affiliate referral code to the checkout session when the event sales_order_place_after is dispatched.
-     *
-     * @param Quote $quote
-     */
-    public function beforeSaveUpdateOrder($quote, $transaction)
-    {
-        try {
-            $parentQuoteId = $transaction->order->cart->order_reference;
-            $cacheIdentifier = BoltSession::BOLT_SESSION_PREFIX . $parentQuoteId;
-            if ($serialized = $this->cache->load($cacheIdentifier)) {
-                $sessionData = $this->serialize->unserialize($serialized);
-                if (isset($sessionData["mwAffiliateReferralCode"])) {
-                    $checkoutSession = $this->boltSessionHelper->getCheckoutSession();
-                    $checkoutSession->setReferralCode($sessionData["mwAffiliateReferralCode"]);
-                    if (!is_a($quote, Quote::class, true)) {
-                        $parentQuote = $this->boltCartHelper->getQuoteById($parentQuoteId);
-                        $checkoutSession->replaceQuote($parentQuote);
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            $this->bugsnagHelper->notifyException($e);
-        }
-    }
-    
-    /**
      * Restore MW affiliate referral link info to the cookies.
      *
      * @param OrderModel $result
@@ -189,15 +163,17 @@ class Affiliate
             if ($serialized = $this->cache->load($cacheIdentifier)) {
                 $sessionData = $this->serialize->unserialize($serialized);
                 if (!isset($sessionData["mwAffiliateReferralCode"])) {
-                    $this->setAffiliateCookies($sessionData);
-                    // In Bolt pre-auth checkout process, the order creation does not trigger sales_order_place_after event
-                    // (instead, this event would be triggered when the payment is captured), as a result, the affiliate commission is missing.
-                    // To fix this issue, we execute the observer \MW\Affiliate\Observer\SalesOrderAfter programmatically.
-                    $event = new \Magento\Framework\DataObject(['order' => $order]);
-                    $observer = \Magento\Framework\App\ObjectManager::getInstance()->get(\Magento\Framework\Event\Observer::class);
-                    $observer->setEvent($event);
-                    $mwAffiliateObserverSalesOrderAfter->execute($observer);   
+                    $this->setAffiliateCookies($sessionData);   
+                } else {
+                    $this->boltSessionHelper->getCheckoutSession()->setReferralCode($sessionData["mwAffiliateReferralCode"]);
                 }
+                // In Bolt pre-auth checkout process, the order creation does not trigger sales_order_place_after event
+                // (instead, this event would be triggered when the payment is captured), as a result, the affiliate commission is missing.
+                // To fix this issue, we execute the observer \MW\Affiliate\Observer\SalesOrderAfter programmatically.
+                $event = new \Magento\Framework\DataObject(['order' => $order]);
+                $observer = \Magento\Framework\App\ObjectManager::getInstance()->get(\Magento\Framework\Event\Observer::class);
+                $observer->setEvent($event);
+                $mwAffiliateObserverSalesOrderAfter->execute($observer);
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);

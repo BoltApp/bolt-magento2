@@ -933,9 +933,7 @@ class Order extends AbstractHelper
             });
         }
         ///////////////////////////////////////////////////////////////
-
-        $this->eventsForThirdPartyModules->dispatchEvent("beforeSaveUpdateOrder", $immutableQuote, $transaction);
-
+        
         // check if the order exists
         $order = $this->getExistingOrder($incrementId, $parentQuoteId);
 

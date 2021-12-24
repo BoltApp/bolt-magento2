@@ -331,15 +331,6 @@ class EventsForThirdPartyModules
                 ],
             ]
         ],
-        'beforeSaveUpdateOrder' => [
-            "listeners" => [
-                [
-                    "module" => "MW_Affiliate",
-                    "checkClasses" => ["MW\Affiliate\Helper\Data"],
-                    "boltClass" => MW_Affiliate::class,
-                ],
-            ]
-        ],
         "setExtraAddressInformation" => [
             "listeners" => [
                 [
