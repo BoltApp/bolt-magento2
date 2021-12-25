@@ -149,7 +149,7 @@ class Affiliate
     }
     
     /**
-     * Restore MW affiliate referral link info to the cookies.
+     * Restore MW affiliate referral link info/referral code to the cookies/session.
      *
      * @param OrderModel $result
      * @param \MW\Affiliate\Helper\Data $mwAffiliateHelperData
