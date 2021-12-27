@@ -261,7 +261,7 @@ class Tax extends ShippingTax implements TaxInterface
     {
         $this->setAddressInformation($addressData, $shipping_option, $ship_to_store_option);
 
-        if ($this->cartHelper->checkIfQuoteHasCartFixedAmountAndApplyToShippingRuleAndTableRateShippingMethod($this->quote, $shipping_option['reference']))  {
+        if ($shipping_option && $this->cartHelper->checkIfQuoteHasCartFixedAmountAndApplyToShippingRuleAndTableRateShippingMethod($this->quote, $shipping_option['reference']))  {
             // If a customer applies a cart rule (fixed amount for whole cart and apply to shipping) and the table rate shipping method,
             // we must re-set FreeMethodWeight of the parent quote from the immutable quote to get the correct shipping amount
             $this->immutableQuote->collectTotals();
