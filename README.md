@@ -71,8 +71,16 @@ comma separated list of CSS selectors matching the elements to be replaced with 
 + Navigate to `Developers`
 + Click on the `API` tab
 + Scroll down to the `Merchant API` section
+
+> **Multi-step division**
 + Set **Webhook** URL to: `[store_url]/rest/V1/bolt/boltpay/order/manage`
-+ Set **Shipping and Tax** URL to: `[store_url]/rest/V1/bolt/boltpay/shipping/methods`
++ Set **Shipping and Tax** URL to: `[store_url]/rest/V1/bolt/boltpay/shipping/methods` (if the split shipping tax feature isn't enabled)
++ Set **Create Order** URL to: `[store_url]/rest/V1/bolt/boltpay/order/create` 
++ Set **Shipping** URL to: `[store_url]/rest/V1/bolt/boltpay/shippingoptions` (if the split shipping tax feature is enabled)
++ Set **Tax** URL to: `[store_url]/rest/V1/bolt/boltpay/tax` (if the split shipping tax feature is enabled)
+
+> **Back-office and payment only division**
++ Set **Webhook** URL to: `[store_url]/rest/V1/bolt/boltpay/order/manage`
 + Set **Create Order** URL to: `[store_url]/rest/V1/bolt/boltpay/order/create`
 
 # Success!
