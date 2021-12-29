@@ -1926,7 +1926,16 @@ class Cart extends AbstractHelper
             ?: $shippingAddress->getEmail()
             ?: $this->customerSession->getCustomer()->getEmail()
             ?: $immutableQuote->getCustomerEmail();
-
+$txt = var_export(date('H:i:s'), true);
+file_put_contents(dirname(__FILE__).'/new1.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
+$txt = '$billingAddress->getEmail()  '. var_export($billingAddress->getEmail(), true);
+file_put_contents(dirname(__FILE__).'/new1.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
+$txt = '$shippingAddress->getEmail()  '. var_export($shippingAddress->getEmail(), true);
+file_put_contents(dirname(__FILE__).'/new1.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
+$txt = '$this->customerSession->getCustomer()->getEmail()  '. var_export($this->customerSession->getCustomer()->getEmail(), true);
+file_put_contents(dirname(__FILE__).'/new1.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
+$txt = '$immutableQuote->getCustomerEmail()  '. var_export($immutableQuote->getCustomerEmail(), true);
+file_put_contents(dirname(__FILE__).'/new1.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
         // Billing address
         $cartBillingAddress = [
             'first_name'      => $billingAddress->getFirstname(),
