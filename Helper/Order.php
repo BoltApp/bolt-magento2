@@ -1411,7 +1411,8 @@ class Order extends AbstractHelper
     {
         $this->eventsForThirdPartyModules->dispatchEvent("beforeFailedPaymentOrderSave", $order);
         try {
-            $order->cancel()->save()->delete();
+            $order->cancel()->save();
+            $this->orderRepository->delete($order);
         } catch (\Exception $e) {
             $this->bugsnag->registerCallback(function ($report) use ($order) {
                 $report->setMetaData([
@@ -1422,7 +1423,7 @@ class Order extends AbstractHelper
                 ]);
             });
             $this->bugsnag->notifyException($e);
-            $order->delete();
+            $this->orderRepository->delete($order);
         }
     }
 
