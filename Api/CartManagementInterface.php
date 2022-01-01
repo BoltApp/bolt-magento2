@@ -27,12 +27,24 @@ interface CartManagementInterface
      *
      * @api
      *
-     * @param string $productID
+     * @param string $cartId
      *
      * @return \Bolt\Boltpay\Api\Data\GetMaskedQuoteIDDataInterface
      *
-     * @throws NoSuchEntityException
      * @throws WebapiException
      */
     public function getMaskedId($cartId = '');
+
+    /**
+     * Set specific cart active
+     *
+     * @api
+     *
+     * @param string $cartId
+     *
+     * @return void
+     *
+     * @throws WebapiException
+     */
+    public function setActive($cartId = '');
 }
