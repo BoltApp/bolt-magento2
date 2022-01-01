@@ -394,7 +394,7 @@ class OrderManagementTest extends BoltTestCase
         return $product;
     }
     
-    private function createQoute($product, $parentQuoteId = null)
+    private function createQuote($product, $parentQuoteId = null)
     {
         $addressData = TestUtils::createMagentoSampleAddress();
         
@@ -506,15 +506,13 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonPending()
     {
-        
-        
         global $apiRequestResult;
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
         $product = $this->createProduct();
         
-        $quote = $this->createQoute($product);
+        $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
         
         $addressInfo = TestUtils::createSampleAddress();
@@ -581,15 +579,13 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonAuth()
     {
-        
-        
         global $apiRequestResult;
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
         $product = $this->createProduct();
         
-        $quote = $this->createQoute($product);
+        $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
         
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
@@ -658,15 +654,13 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonCapture()
     {
-        
-        
         global $apiRequestResult;
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
         $product = $this->createProduct();
         
-        $quote = $this->createQoute($product);
+        $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
         
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
@@ -746,15 +740,13 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonCaptureIgnoreHookForInvoiceCreationIsEnabled()
     {
-        
-        
         global $apiRequestResult;
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
         $product = $this->createProduct();
         
-        $quote = $this->createQoute($product);
+        $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
         
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
@@ -847,15 +839,13 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonFailedPayment()
     {
-        
-        
         global $apiRequestResult;
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
         $product = $this->createProduct();
         
-        $quote = $this->createQoute($product);
+        $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
         
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
@@ -921,15 +911,13 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonFailedPaymentCancelled()
     {
-        
-        
         global $apiRequestResult;
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
         $product = $this->createProduct();
         
-        $quote = $this->createQoute($product);
+        $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
         
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
@@ -1021,15 +1009,13 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonFailedPaymentCancelledInvalidOrderState()
     {
-        
-        
         global $apiRequestResult;
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
         $product = $this->createProduct();
         
-        $quote = $this->createQoute($product);
+        $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
         
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
@@ -1112,15 +1098,13 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonRejectedIrreversible()
     {
-        
-        
         global $apiRequestResult;
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
         $product = $this->createProduct();
         
-        $quote = $this->createQoute($product);
+        $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
         
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
@@ -1182,15 +1166,13 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonRejectedIrreversibleOrderNotExist()
     {
-        
-        
         global $apiRequestResult;
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
         $product = $this->createProduct();
         
-        $quote = $this->createQoute($product);
+        $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
 
         $requestbodyParams =  [
@@ -1244,15 +1226,13 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonCredit()
     {
-        
-        
         global $apiRequestResult;
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
         $product = $this->createProduct();
         
-        $quote = $this->createQoute($product);
+        $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
 
         $requestbodyParams =  [
@@ -1362,15 +1342,13 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonCreditIgnoreHookForCreditMemoCreationIsEnabled()
     {
-        
-        
         global $apiRequestResult;
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
         $product = $this->createProduct();
         
-        $quote = $this->createQoute($product);
+        $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
 
         $requestbodyParams =  [
@@ -1478,15 +1456,13 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonVoid()
     {
-        
-        
         global $apiRequestResult;
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
         $product = $this->createProduct();
         
-        $quote = $this->createQoute($product);
+        $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
 
         $requestbodyParams =  [
@@ -1549,8 +1525,6 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonRejectedReversible()
     {
-        
-        
         global $apiRequestResult;
         
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
@@ -1620,8 +1594,6 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonCartCreate()
     {
-        
-        
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
         $product = $this->createProduct();
@@ -1685,8 +1657,6 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonCartCreateError()
     {
-        
-        
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
       
         $productOptions = [
@@ -1744,8 +1714,6 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManagePreconditionFailed()
     {
-        
-        
         global $apiRequestResult;
         
         $apiRequestResult = 'exception';
@@ -1839,8 +1807,6 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageEmptyReference()
     {
-        
-        
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
         
         $requestbodyParams =  [
@@ -1873,6 +1839,29 @@ class OrderManagementTest extends BoltTestCase
         $this->assertEquals('error', $responseData['status']);
         $this->assertEquals('6009', $responseData['code']);
         $this->assertEquals('Unprocessable Entity: Missing required parameters.', $responseData['message']);
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::deleteById
+     */
+    public function testDeleteById_happy_path()
+    {
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+        $product = $this->createProduct();
+        $quote = $this->createQuote($product);
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(self::BOLT_METHOD_CODE);
+        $payment->setAdditionalInformation([]);
+        $order = $this->createOrder($quote, $product, $payment, Order::STATE_PENDING_PAYMENT);
+        $orderId = $order->getId();
+
+        $boltOrderManagement->deleteById($orderId);
+
+        $orderHelper = $this->objectManager->create(OrderHelper::class);
+        $order = $orderHelper->getOrderById($orderId);
+        $this->assertTrue(empty($order));
     }
 }
 

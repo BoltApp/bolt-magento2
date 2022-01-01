@@ -30,6 +30,8 @@ use Magento\Framework\Webapi\Rest\Response;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Magento\Framework\Webapi\Exception as WebApiException;
+use Magento\Sales\Model\Order as OrderModel;
 
 /**
  * Class OrderManagement
@@ -360,5 +362,28 @@ class OrderManagement implements OrderManagementInterface
                 'cart' => $cart,
             ]));
         }
+    }
+
+    /**
+     * Deletes a specified order by ID.
+     *
+     * @param int $id The order ID.
+     * @return bool
+     * @throws \Magento\Framework\Exception\CouldNotDeleteException
+     * @throws NoSuchEntityException
+     * @throws WebapiException
+     */
+    public function deleteById($id)
+    {
+        $order = $this->orderHelper->getOrderById($id);
+        if ($order->getStatus() != OrderModel::STATE_PENDING_PAYMENT) {
+
+            throw new WebapiException(__('Unexpected order status'), 0, 422);
+        }
+        $payment = $order->getPayment();
+        if ($payment && $payment->getCcTransId() != "") {
+            throw new WebapiException(__('Order is already associated with transaction'), 0, 422);
+        }
+        $this->orderHelper->deleteOrder($order);
     }
 }
