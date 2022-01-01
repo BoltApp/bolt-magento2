@@ -1590,23 +1590,6 @@ class OrderTest extends BoltTestCase
     /**
      * @test
      *
-     * @covers ::deleteOrder
-     *
-     * @throws ReflectionException
-     */
-    public function deleteOrder_exception()
-    {
-        $exception = new Exception('');
-        $order = $this->createPartialMock(Order::class, ['cancel','save','getIncrementId','getId','delete']);
-        $order->expects(self::once())->method('cancel')->willReturnSelf();
-        $order->expects(self::once())->method('save')->willThrowException($exception);
-        $order->expects(self::once())->method('delete');
-        TestHelper::invokeMethod($this->orderHelper, 'deleteOrder', [$order]);
-    }
-
-    /**
-     * @test
-     *
      * @covers ::tryDeclinedPaymentCancelation
      *
      * @throws BoltException
