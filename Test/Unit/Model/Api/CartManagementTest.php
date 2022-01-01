@@ -29,7 +29,7 @@ use Magento\TestFramework\Helper\Bootstrap;
  * Class CartInterfaceTest
  *
  * @package Bolt\Boltpay\Test\Unit\Model\Api
- * @coversDefaultClass \Bolt\Boltpay\Model\Api\CartInterface
+ * @coversDefaultClass \Bolt\Boltpay\Model\Api\CartManagement
  */
 class CartInterfaceTest extends BoltTestCase
 {
