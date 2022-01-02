@@ -24,6 +24,7 @@ use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\TestFramework\Helper\Bootstrap;
+use Bolt\Boltpay\Helper\Cart as BoltHelperCart;
 
 /**
  * Class CartInterfaceTest
@@ -145,6 +146,56 @@ class CartInterfaceTest extends BoltTestCase
         $errorCode = 0;
         try {
             $response = $this->cartManagement->getMaskedId(1000000);
+        } catch (WebapiException $e) {
+            $errorCode = $e->getHttpCode();
+        }
+        $this->assertEquals($errorCode,404);
+    }
+
+    /**
+     * @test
+     * @covers ::setActive
+     */
+    public function setActive_happy_path()
+    {
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        $quote->setIsActive(false);
+        $this->cartManagement->setActive($quoteId);
+
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = $cartHelper->getQuoteById($quoteId);
+        $this->assertTrue((bool)$quote->getIsActive());
+    }
+
+    /**
+     * @test
+     * @covers ::setActive
+     */
+    public function setActive_success_if_active_is_already_true()
+    {
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        $quote->setIsActive(true);
+        $this->cartManagement->setActive($quoteId);
+
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = $cartHelper->getQuoteById($quoteId);
+        $this->assertTrue((bool)$quote->getIsActive());
+    }
+
+    /**
+     * @test
+     * @covers ::setActive
+     */
+    public function setActive_returns_404_if_quote_does_not_exist()
+    {
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        $quote->setIsActive(true);
+        $errorCode = 0;
+        try {
+            $this->cartManagement->setActive($quoteId+1);
         } catch (WebapiException $e) {
             $errorCode = $e->getHttpCode();
         }

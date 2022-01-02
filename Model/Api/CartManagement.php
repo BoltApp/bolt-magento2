@@ -23,6 +23,7 @@ use Bolt\Boltpay\Api\Data\GetMaskedQuoteIDDataInterface;
 use Bolt\Boltpay\Api\CartManagementInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Exception;
 
 
@@ -60,21 +61,29 @@ class CartManagement implements CartManagementInterface
     private $quoteIdMaskFactory;
 
     /**
+     * @var CartHelper
+     */
+    private $cartHelper;
+
+    /**
      * @param QuoteIdMaskFactory $quoteIdMaskFactory
      * @param GetMaskedQuoteIDDataInterface $data
      * @param StoreManagerInterface $storeManager
      * @param Bugsnag $bugsnag
+     * @param CartHelper $cartHelper
      */
     public function __construct(
         QuoteIdMaskFactory $quoteIdMaskFactory,
         GetMaskedQuoteIDDataInterface  $data,
         StoreManagerInterface $storeManager,
-        Bugsnag $bugsnag
+        Bugsnag $bugsnag,
+        CartHelper $cartHelper
     ) {
         $this->quoteIdMaskFactory = $quoteIdMaskFactory;
         $this->data = $data;
         $this->storeManager = $storeManager;
         $this->bugsnag = $bugsnag;
+        $this->cartHelper = $cartHelper;
     }
 
     /**
@@ -96,6 +105,33 @@ class CartManagement implements CartManagementInterface
             }
             $this->data->setMaskedQuoteID($maskedQuoteID);
             return $this->data;
+        } catch (WebapiException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
+        }
+    }
+
+    /**
+     * Set specific cart active
+     *
+     * @api
+     *
+     * @param string $cartId
+     *
+     * @return void
+     *
+     * @throws WebapiException
+     */
+    public function setActive($cartId = '')
+    {
+        try {
+            $quote = $this->cartHelper->getQuoteById($cartId);
+            if (!$quote) {
+                throw new WebapiException(__('Quote does not found'), 0, WebapiException::HTTP_NOT_FOUND);
+            }
+            $quote->setIsActive(true)->save();
         } catch (WebapiException $e) {
             throw $e;
         } catch (Exception $e) {
