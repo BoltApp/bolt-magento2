@@ -40,11 +40,12 @@ interface CartManagementInterface
      *
      * @api
      *
-     * @param string $cartId
+     * @param mixed $cartId
+     * @param mixed $isActive
      *
      * @return void
      *
      * @throws WebapiException
      */
-    public function setActive($cartId = '');
+    public function update($cartId = null, $isActive = null);
 }
