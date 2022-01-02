@@ -124,9 +124,9 @@
             <resource ref="anonymous" />
         </resources>
     </route>
-    <!--Get Qoute Masked Id Endpoint-->
-    <route url="/V1/bolt/boltpay/quote/maskedid" method="GET">
-        <service class="Bolt\Boltpay\Api\GetMaskedQuoteIDInterface" method="execute"/>
+    <!--Get Quote Masked Id Endpoint-->
+    <route url="/V1/bolt/boltpay/carts/:cartId/maskedid" method="GET">
+        <service class="Bolt\Boltpay\Api\CartManagementInterface" method="getMaskedId"/>
         <resources>
             <resource ref="Magento_Cart::manage" />
         </resources>

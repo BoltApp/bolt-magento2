@@ -17,7 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
-use Bolt\Boltpay\Model\Api\GetMaskedQuoteID;
+use Bolt\Boltpay\Model\Api\CartManagement;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Framework\Webapi\Exception as WebapiException;
@@ -26,12 +26,12 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 
 /**
- * Class GetMaskedQuoteIDTest
+ * Class CartInterfaceTest
  *
  * @package Bolt\Boltpay\Test\Unit\Model\Api
- * @coversDefaultClass \Bolt\Boltpay\Model\Api\GetMaskedQuoteID
+ * @coversDefaultClass \Bolt\Boltpay\Model\Api\CartManagement
  */
-class GetMaskedQuoteIDTest extends BoltTestCase
+class CartInterfaceTest extends BoltTestCase
 {
     /** array of objects we need to delete after test */
     private $objectsToClean;
@@ -43,7 +43,7 @@ class GetMaskedQuoteIDTest extends BoltTestCase
     {
         $this->objectsToClean = [];
         $this->objectManager = Bootstrap::getObjectManager();
-        $this->getMaskedQuoteID = $this->objectManager->create(GetMaskedQuoteID::class);
+        $this->cartManagement = $this->objectManager->create(CartManagement::class);
     }
 
     protected function tearDownInternal()
@@ -66,30 +66,30 @@ class GetMaskedQuoteIDTest extends BoltTestCase
 
     /**
      * @test
-     * @covers ::execute
+     * @covers ::getMaskedId
      */
-    public function execute_happyPath()
+    public function getMaskedId_happyPath()
     {
         $quote = TestUtils::createQuote();
 
         $this->forceMaskedQuoteIDCreation($quote->getID());
 
-        $response = $this->getMaskedQuoteID->execute($quote->getID());
+        $response = $this->cartManagement->getMaskedId($quote->getID());
         
         $this->assertEquals($response->getMaskedQuoteID(),$this->getMaskedQuoteID($quote->getID()));
     }
 
     /**
      * @test
-     * @covers ::execute
+     * @covers ::getMaskedId
      */
-    public function execute_maskedQuoteIDDoesNotCreated_throw404()
+    public function getMaskedId_maskedQuoteIDDoesNotCreated_throw404()
     {
         $quote = TestUtils::createQuote();
 
         $errorCode = 0;
         try {
-            $response = $this->getMaskedQuoteID->execute($quote->getID());
+            $response = $this->cartManagement->getMaskedId($quote->getID());
         } catch (WebapiException $e) {
             $errorCode = $e->getHttpCode();
         }
@@ -111,15 +111,11 @@ class GetMaskedQuoteIDTest extends BoltTestCase
 
     /**
      * @test
-     * @covers ::execute
+     * @covers ::getMaskedId
      */
-    public function execute_quoteCreatedByLoggedInUser_throw404()
+    public function getMaskedId_quoteCreatedByLoggedInUser_throw404()
     {
         $quote = TestUtils::createQuote();
-
-        /*$user = new \Magento\Framework\DataObject();
-        error_log("user1:".spl_object_hash($user));
-        $user->setId(1);*/
 
         $customer = $this->createCustomer();
 
@@ -133,7 +129,7 @@ class GetMaskedQuoteIDTest extends BoltTestCase
 
         $errorCode = 0;
         try {
-            $response = $this->getMaskedQuoteID->execute($quote->getID());
+            $response = $this->cartManagement->getMaskedId($quote->getID());
         } catch (WebapiException $e) {
             $errorCode = $e->getHttpCode();
         }
@@ -142,13 +138,13 @@ class GetMaskedQuoteIDTest extends BoltTestCase
 
     /**
      * @test
-     * @covers ::execute
+     * @covers ::getMaskedId
      */
-    public function execute_wrongQuoteID_throw404()
+    public function getMaskedId_wrongQuoteID_throw404()
     {
         $errorCode = 0;
         try {
-            $response = $this->getMaskedQuoteID->execute(1000000);
+            $response = $this->cartManagement->getMaskedId(1000000);
         } catch (WebapiException $e) {
             $errorCode = $e->getHttpCode();
         }

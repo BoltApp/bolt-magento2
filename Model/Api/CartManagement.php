@@ -20,13 +20,13 @@ namespace Bolt\Boltpay\Model\Api;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Quote\Model\QuoteIdMaskFactory;
 use Bolt\Boltpay\Api\Data\GetMaskedQuoteIDDataInterface;
-use Bolt\Boltpay\Api\GetMaskedQuoteIDInterface;
+use Bolt\Boltpay\Api\CartManagementInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Exception;
 
 
-class GetMaskedQuoteID implements GetMaskedQuoteIDInterface
+class CartManagement implements CartManagementInterface
 {
     /**
      * @var GetMaskedQuoteIDDataInterface
@@ -80,17 +80,17 @@ class GetMaskedQuoteID implements GetMaskedQuoteIDInterface
     /**
      * @api
      *
-     * @param string $quoteID
+     * @param string $cartId
      * 
      * @return \Bolt\Boltpay\Api\Data\GetMaskedQuoteInterface
      *
      * @throws WebapiException
      */
-    public function execute($quoteID = '')
+    public function getMaskedId($cartId = '')
     {
         try {
             $quoteIdMask = $this->quoteIdMaskFactory->create();
-            $maskedQuoteID = $quoteIdMask->load($quoteID, 'quote_id')->getMaskedId();
+            $maskedQuoteID = $quoteIdMask->load($cartId, 'quote_id')->getMaskedId();
             if (!$maskedQuoteID) {
                 throw new WebapiException(__('Masked quote ID does not found'), 0, WebapiException::HTTP_NOT_FOUND);
             }

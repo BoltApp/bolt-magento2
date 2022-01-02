@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Api;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 
-interface GetMaskedQuoteIDInterface
+interface CartManagementInterface
 {
     /**
      * Get masked id for specified quote ID
@@ -34,5 +34,5 @@ interface GetMaskedQuoteIDInterface
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function execute($quoteID = '');
+    public function getMaskedId($cartId = '');
 }
