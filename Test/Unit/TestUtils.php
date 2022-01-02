@@ -14,11 +14,11 @@ use Magento\Sales\Model\Order\Item as OrderItem;
 use Magento\Sales\Model\Order\Address as OrderAddress;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment;
+use Magento\Sales\Model\Order\Invoice;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Sales\Model\Service\InvoiceService;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
-
-
 
 
 use Magento\Framework\App\Config\MutableScopeConfigInterface;
@@ -27,7 +27,6 @@ use Magento\Framework\Session\SessionManagerInterface;
 
 class TestUtils
 {
-
     /**
      * @param $quote
      */
@@ -626,5 +625,20 @@ class TestUtils
         $orderItem->setSku($product->getSku());
 
         return $orderItem;
+    }
+
+    /**
+     * @param array $data
+     * @return mixed
+     */
+    public static function createInvoice()
+    {
+        $order = self::createDumpyOrder();
+        $invoiceService = Bootstrap::getObjectManager()->get(InvoiceService::class);
+        $invoice = $invoiceService->prepareInvoice($order);
+        $invoice->register();
+        $invoice->save();
+
+        return $invoice;
     }
 }
