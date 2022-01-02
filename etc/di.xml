@@ -46,6 +46,7 @@
     <!-- For rest api hook integration -->
     <preference for="Bolt\Boltpay\Api\OrderManagementInterface" type="Bolt\Boltpay\Model\Api\OrderManagement" />
     <preference for="Bolt\Boltpay\Api\CreateOrderInterface" type="Bolt\Boltpay\Model\Api\CreateOrder" />
+    <preference for="Bolt\Boltpay\Api\InvoiceManagementInterface" type="Bolt\Boltpay\Model\Api\InvoiceManagement" />
 
     <!-- For rest api shipping methods -->
     <preference for="Bolt\Boltpay\Api\ShippingMethodsInterface"      type="Bolt\Boltpay\Model\Api\ShippingMethods" />

@@ -145,4 +145,11 @@
             <resource ref="Magento_Sales::create" />
         </resources>
     </route>
+    <!--Update Invoice Endpoint-->
+    <route url="/V1/bolt/boltpay/invoice/:invoiceId" method="PUT">
+        <service class="Bolt\Boltpay\Api\InvoiceManagementInterface" method="update"/>
+        <resources>
+            <resource ref="Magento_Sales::create" />
+        </resources>
+    </route>
 </routes>
