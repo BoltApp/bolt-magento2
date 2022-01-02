@@ -28,7 +28,7 @@ use Magento\Sales\Api\InvoiceRepositoryInterface;
  * Class CartInterfaceTest
  *
  * @package Bolt\Boltpay\Test\Unit\Model\Api
- * @coversDefaultClass \Bolt\Boltpay\Model\Api\InvoiceManagemnt
+ * @coversDefaultClass \Bolt\Boltpay\Model\Api\InvoiceManagement
  */
 class InvoiceManagementTest extends BoltTestCase
 {
