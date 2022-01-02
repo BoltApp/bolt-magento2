@@ -876,6 +876,11 @@ class Order extends AbstractHelper
         return $this->cartHelper->getOrderByQuoteId($quoteId);
     }
 
+    public function getOrderById($orderId)
+    {
+        return $this->orderRepository->get($orderId);
+    }
+
     /**
      * Save/create the order (checkout, orphaned transaction),
      * Update order payment / transaction data (checkout, web hooks)
@@ -1402,11 +1407,12 @@ class Order extends AbstractHelper
      * @param OrderModel $order
      * @throws \Exception
      */
-    protected function deleteOrder($order)
+    public function deleteOrder($order)
     {
         $this->eventsForThirdPartyModules->dispatchEvent("beforeFailedPaymentOrderSave", $order);
         try {
-            $order->cancel()->save()->delete();
+            $order->cancel()->save();
+            $this->orderRepository->delete($order);
         } catch (\Exception $e) {
             $this->bugsnag->registerCallback(function ($report) use ($order) {
                 $report->setMetaData([
@@ -1417,7 +1423,7 @@ class Order extends AbstractHelper
                 ]);
             });
             $this->bugsnag->notifyException($e);
-            $order->delete();
+            $this->orderRepository->delete($order);
         }
     }
 

@@ -124,11 +124,18 @@
             <resource ref="anonymous" />
         </resources>
     </route>
-        <!--Get Qoute Masked Id Endpoint-->
+    <!--Get Qoute Masked Id Endpoint-->
     <route url="/V1/bolt/boltpay/quote/maskedid" method="GET">
         <service class="Bolt\Boltpay\Api\GetMaskedQuoteIDInterface" method="execute"/>
         <resources>
             <resource ref="Magento_Cart::manage" />
+        </resources>
+    </route>
+    <!--Delete Order Endpoint-->
+    <route url="/V1/bolt/boltpay/orders/:id" method="DELETE">
+        <service class="Bolt\Boltpay\Api\OrderManagementInterface" method="deleteById"/>
+        <resources>
+            <resource ref="Magento_Sales::create" />
         </resources>
     </route>
 </routes>

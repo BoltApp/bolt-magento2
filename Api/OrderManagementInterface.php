@@ -60,4 +60,15 @@ interface OrderManagementInterface
         $source_transaction_id = null,
         $source_transaction_reference = null
     );
+
+    /**
+     * Deletes a specified order by ID.
+     *
+     * @param int $id The order ID.
+     * @return bool
+     * @throws \Magento\Framework\Exception\CouldNotDeleteException
+     * @throws NoSuchEntityException
+     * @throws WebapiException
+     */
+    public function deleteById($id);
 }
