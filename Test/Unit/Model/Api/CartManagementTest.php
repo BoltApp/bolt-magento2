@@ -27,12 +27,12 @@ use Magento\TestFramework\Helper\Bootstrap;
 use Bolt\Boltpay\Helper\Cart as BoltHelperCart;
 
 /**
- * Class CartInterfaceTest
+ * Class CartManagementTest
  *
  * @package Bolt\Boltpay\Test\Unit\Model\Api
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\CartManagement
  */
-class CartInterfaceTest extends BoltTestCase
+class CartManagementTest extends BoltTestCase
 {
     /** array of objects we need to delete after test */
     private $objectsToClean;
@@ -154,14 +154,14 @@ class CartInterfaceTest extends BoltTestCase
 
     /**
      * @test
-     * @covers ::setActive
+     * @covers ::update
      */
-    public function setActive_happy_path()
+    public function update_active_to_true_happy_path()
     {
         $quote = TestUtils::createQuote();
         $quoteId = $quote->getId();
         $quote->setIsActive(false);
-        $this->cartManagement->setActive($quoteId);
+        $this->cartManagement->update($quoteId, true);
 
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = $cartHelper->getQuoteById($quoteId);
@@ -170,14 +170,30 @@ class CartInterfaceTest extends BoltTestCase
 
     /**
      * @test
-     * @covers ::setActive
+     * @covers ::update
+     */
+    public function update_active_to_false_happy_path()
+    {
+        $quote = TestUtils::createQuote();
+        $quoteId = $quote->getId();
+        $quote->setIsActive(true);
+        $this->cartManagement->update($quoteId, false);
+
+        $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
+        $quote = $cartHelper->getQuoteById($quoteId);
+        $this->assertFalse((bool)$quote->getIsActive());
+    }
+
+    /**
+     * @test
+     * @covers ::update
      */
     public function setActive_success_if_active_is_already_true()
     {
         $quote = TestUtils::createQuote();
         $quoteId = $quote->getId();
         $quote->setIsActive(true);
-        $this->cartManagement->setActive($quoteId);
+        $this->cartManagement->update($quoteId, true);
 
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = $cartHelper->getQuoteById($quoteId);
@@ -186,7 +202,7 @@ class CartInterfaceTest extends BoltTestCase
 
     /**
      * @test
-     * @covers ::setActive
+     * @covers ::update
      */
     public function setActive_returns_404_if_quote_does_not_exist()
     {
@@ -195,7 +211,7 @@ class CartInterfaceTest extends BoltTestCase
         $quote->setIsActive(true);
         $errorCode = 0;
         try {
-            $this->cartManagement->setActive($quoteId+1);
+            $this->cartManagement->update($quoteId+1, true);
         } catch (WebapiException $e) {
             $errorCode = $e->getHttpCode();
         }
