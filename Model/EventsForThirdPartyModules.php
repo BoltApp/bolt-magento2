@@ -331,15 +331,6 @@ class EventsForThirdPartyModules
                 ],
             ]
         ],
-        'beforeSaveUpdateOrder' => [
-            "listeners" => [
-                [
-                    "module" => "MW_Affiliate",
-                    "checkClasses" => ["MW\Affiliate\Helper\Data"],
-                    "boltClass" => MW_Affiliate::class,
-                ],
-            ]
-        ],
         "setExtraAddressInformation" => [
             "listeners" => [
                 [
@@ -978,7 +969,7 @@ class EventsForThirdPartyModules
                 ],
                 [
                     "module" => "MW_Affiliate",
-                    "checkClasses" => ["MW\Affiliate\Helper\Data"],
+                    "sendClasses" => ["MW\Affiliate\Helper\Data"],
                     "boltClass" => MW_Affiliate::class,
                 ],
             ],
@@ -1190,6 +1181,12 @@ class EventsForThirdPartyModules
                     "checkClasses" => self::AMASTY_GIFTCARD_V25_CHECK_CLASSES,
                     'sendClasses'  => ['Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Handlers\SaveHandler'],
                     "boltClass"    => Amasty_GiftCardAccount::class,
+                ],
+                'MW_Affiliate' => [
+                    "module" => "MW_Affiliate",
+                    "sendClasses" => ["MW\Affiliate\Helper\Data",
+                                      "MW\Affiliate\Observer\SalesOrderAfter"],
+                    "boltClass" => MW_Affiliate::class,
                 ],
             ],
         ],
