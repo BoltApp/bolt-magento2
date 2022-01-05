@@ -186,27 +186,32 @@ class RemoveBlocksObserverTest extends BoltTestCase
                     'should_unset_links' => false
                 ],
             ],
-            array_map(function ($route) {
-                return [
-                    'full_action_name' => $route,
-                    'is_prevent_sso_customers_from_editing_account_information' => true,
-                    'is_bolt_sso_fs_enabled' => true,
-                    'is_bolt_sso_config_enabled' => true,
-                    'should_unset_links' => false
-                ];
-            }, ['checkout_cart_index', 'catalog_product_view', 'catalog_category_view', 'checkout_cart_index']),
-            array_values(
-                array_map(function ($flags) {
+            array_map(
+                function ($route) {
                     return [
-                        'full_action_name' => 'customer_account',
-                        'is_prevent_sso_customers_from_editing_account_information' => $flags[0],
-                        'is_bolt_sso_fs_enabled' => $flags[1],
-                        'is_bolt_sso_config_enabled' => $flags[2],
-                        'should_unset_links' => $flags[0] && $flags[1] && $flags[2]
+                        'full_action_name' => $route,
+                        'is_prevent_sso_customers_from_editing_account_information' => true,
+                        'is_bolt_sso_fs_enabled' => true,
+                        'is_bolt_sso_config_enabled' => true,
+                        'should_unset_links' => false
                     ];
-                }, TestHelper::getAllBooleanCombinations(3))
+                },
+                ['checkout_cart_index', 'catalog_product_view', 'catalog_category_view', 'checkout_cart_index']
             ),
+            array_values(
+                array_map(
+                    function ($flags) {
+                        return [
+                            'full_action_name' => 'customer_account',
+                            'is_prevent_sso_customers_from_editing_account_information' => $flags[0],
+                            'is_bolt_sso_fs_enabled' => $flags[1],
+                            'is_bolt_sso_config_enabled' => $flags[2],
+                            'should_unset_links' => $flags[0] && $flags[1] && $flags[2]
+                        ];
+                    },
+                    TestHelper::getAllBooleanCombinations(3)
+                )
+            )
         );
     }
-    
 }
