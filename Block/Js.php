@@ -662,17 +662,6 @@ function($argName) {
         $storeId = $this->getStoreId();
         return $this->isOnCartPage() && !$this->configHelper->getBoltOnCartPage($storeId);
     }
-    
-    /**
-     * Return true if cart is empty, otherwise, false.
-     *
-     * @return bool
-     */
-    public function isCartEmpty()
-    {
-        $quote = $this->getQuoteFromCheckoutSession();
-        return $quote ? !($quote->getItemsCount()) : true;
-    }
 
     /**
      * @return string
