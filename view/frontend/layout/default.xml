@@ -21,7 +21,11 @@
     <body>
         <referenceBlock name="head.additional">
             <block class="Bolt\Boltpay\Block\Js" name="boltjs"    template="Bolt_Boltpay::js/boltjs.phtml"/>
-            <block class="Bolt\Boltpay\Block\Js" name="boltcss"   template="Bolt_Boltpay::css/boltcss.phtml"/>
+            <block class="Bolt\Boltpay\Block\Js" name="boltcss"   template="Bolt_Boltpay::css/boltcss.phtml">
+                <arguments>
+                    <argument name="feature_switches" xsi:type="object">Bolt\Boltpay\ViewModel\FeatureSwitches</argument>
+                </arguments>
+            </block>
             <block class="Bolt\Boltpay\Block\MinifiedJs" name="boltglobaljs" template="Bolt_Boltpay::js/boltglobaljs.phtml"/>
             <block class="Bolt\Boltpay\Block\MinifiedJs" name="replacejs" template="Bolt_Boltpay::js/replacejs.phtml"/>
         </referenceBlock>

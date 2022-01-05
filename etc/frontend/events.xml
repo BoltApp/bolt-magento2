@@ -4,4 +4,8 @@
     <event name="layout_generate_blocks_after">
         <observer name="removeLoginBoltSSO" instance="Bolt\Boltpay\Observer\RemoveBlocksObserver" />
     </event>
+    <event name="controller_action_predispatch">
+        <observer name="bolt_boltpay_controller_action_predispatch_prevent_customer_edit"
+                  instance="Bolt\Boltpay\Observer\PreventCustomerEdit" />
+    </event>
 </config>

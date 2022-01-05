@@ -19,6 +19,7 @@
 namespace Bolt\Boltpay\Observer;
 
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -36,15 +37,18 @@ class RemoveBlocksObserver implements ObserverInterface
     protected $logHelper;
 
     /**
-     * @param ConfigHelper $configHelper
-     * @param LogHelper    $logHelper
+     * @var Decider
      */
+    private $featureSwitches;
+
     public function __construct(
         ConfigHelper $configHelper,
-        LogHelper $logHelper
+        LogHelper $logHelper,
+        Decider $featureSwitches = null
     ) {
         $this->configHelper = $configHelper;
         $this->logHelper = $logHelper;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
@@ -54,9 +58,10 @@ class RemoveBlocksObserver implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
+        $fullActionName = $observer->getData('full_action_name');
+        $layout = $observer->getLayout();
         $BoltSSOPages = [ConfigHelper::LOGIN_PAGE_ACTION, ConfigHelper::CREATE_ACCOUNT_PAGE_ACTION];
-        if (in_array($observer->getData('full_action_name'), $BoltSSOPages)) {
-            $layout = $observer->getLayout();
+        if (in_array($fullActionName, $BoltSSOPages)) {
             if ($this->configHelper->isBoltSSOEnabled()) {
                 // Remove native block on login page
                 $layout->unsetElement('customer_form_login');
@@ -68,6 +73,14 @@ class RemoveBlocksObserver implements ObserverInterface
                 $layout->unsetElement('bolt_sso_login');
                 $layout->unsetElement('bolt_sso_register');
             }    
+        }
+
+        if ((strpos($fullActionName, 'customer_account') === 0)
+            && $this->featureSwitches->isPreventSSOCustomersFromEditingAccountInformation()
+            && $this->configHelper->isBoltSSOEnabled()
+            && $this->featureSwitches->isBoltSSOEnabled()) {
+            $layout->unsetElement('customer-account-navigation-address-link');
+            $layout->unsetElement('customer-account-navigation-account-edit-link');
         }
     }
 }
