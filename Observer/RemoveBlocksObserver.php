@@ -21,6 +21,7 @@ namespace Bolt\Boltpay\Observer;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 
@@ -48,7 +49,7 @@ class RemoveBlocksObserver implements ObserverInterface
     ) {
         $this->configHelper = $configHelper;
         $this->logHelper = $logHelper;
-        $this->featureSwitches = $featureSwitches;
+        $this->featureSwitches = $featureSwitches ?? ObjectManager::getInstance()->get(Decider::class);
     }
 
     /**

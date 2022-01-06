@@ -2,6 +2,7 @@
 
 namespace Bolt\Boltpay\Observer;
 
+use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\ActionFlag;
@@ -14,6 +15,7 @@ use Magento\Framework\UrlInterface;
 
 class PreventCustomerEdit implements ObserverInterface
 {
+
     /**
      * @var ActionFlag
      */
@@ -40,6 +42,11 @@ class PreventCustomerEdit implements ObserverInterface
     private $featureSwitches;
 
     /**
+     * @var Config
+     */
+    private $config;
+
+    /**
      * @param ActionFlag $actionFlag
      * @param RedirectInterface $redirect
      * @param UrlInterface $urlManager
@@ -51,13 +58,15 @@ class PreventCustomerEdit implements ObserverInterface
         RedirectInterface $redirect,
         UrlInterface      $urlManager,
         ManagerInterface  $messageManager,
-        Decider           $featureSwitches
+        Decider           $featureSwitches,
+        Config $config
     ) {
         $this->actionFlag = $actionFlag;
         $this->redirect = $redirect;
         $this->urlManager = $urlManager;
         $this->messageManager = $messageManager;
         $this->featureSwitches = $featureSwitches;
+        $this->config = $config;
     }
 
     /**
@@ -67,7 +76,9 @@ class PreventCustomerEdit implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        if (!$this->featureSwitches->isPreventSSOCustomersFromEditingAccountInformation()) {
+        if (!$this->featureSwitches->isPreventSSOCustomersFromEditingAccountInformation()
+            || !$this->featureSwitches->isBoltSSOEnabled()
+            || !$this->config->isBoltSSOEnabled()) {
             return;
         }
 
@@ -77,13 +88,7 @@ class PreventCustomerEdit implements ObserverInterface
         /** @var \Magento\Framework\App\Action\AbstractAction $action */
         $action = $observer->getData('controller_action');
 
-        if (in_array(
-            $request->getFullActionName(),
-            array_merge(
-                preg_filter('/^/', 'customer_account_', ['createPost', 'edit', 'editPost', 'resetPasswordPost']),
-                preg_filter('/^/', 'customer_address_', ['delete', 'edit', 'form', 'formPost', 'new'])
-            )
-        )) {
+        if (in_array($request->getFullActionName(), Config::PROHiBITED_CUSTOMER_ROUTES_WITH_SSO)) {
             $this->actionFlag->set('', Action::FLAG_NO_DISPATCH, true);
             $this->messageManager->addErrorMessage(
                 __('Account editing not supported for accounts created by Bolt SSO.')

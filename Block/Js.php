@@ -25,6 +25,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Exception;
 use Magento\Framework\App\Http\Context as HttpContext;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Session\SessionManager as CheckoutSession;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
@@ -758,5 +759,17 @@ function($argName) {
     {
         $storeId = $this->getStoreId();
         return $this->configHelper->getIsPreAuth($storeId);
+    }
+
+    /**
+     * Determines if SSO customers should be prevented from editing their account and address data
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isPreventSSOCustomersFromEditingAccountInformation()
+    {
+        return $this->featureSwitches->isPreventSSOCustomersFromEditingAccountInformation();
     }
 }
