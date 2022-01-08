@@ -912,6 +912,9 @@ class Cart extends AbstractHelper
 
         // cache Bolt order
         if ($isBoltOrderCachingEnabled) {
+            if ($this->deciderHelper->isAPIDrivenIntegrationEnabled()) {
+                $this->cache->clean([self::BOLT_ORDER_TAG . '_' . $cart['order_reference']]);
+            }
             $this->saveToCache(
                 $boltOrder,
                 $cacheIdentifier,
