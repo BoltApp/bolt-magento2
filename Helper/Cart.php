@@ -2199,6 +2199,16 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         if (($amount = abs($address->getDiscountAmount())) || $quote->getCouponCode()) {
             $ruleDiscountDetails = $this->getSaleRuleDiscounts($quote);
+            if ($this->deciderHelper->isAPIDrivenIntegrationEnabled() && empty($ruleDiscountDetails)) {
+                $quote->collectTotals();
+                $ruleDiscountDetails = $this->getSaleRuleDiscounts($quote);
+                if (empty($ruleDiscountDetails)) {
+                    $this->bugsnag->notifyError(
+                        "error bolt order creation",
+                        "unexpected empty sale rules for quote ".$quote->getId()
+                    );
+                }
+            }
             foreach ($ruleDiscountDetails as $salesruleId => $ruleDiscountAmount) {
                 $rule = $this->ruleRepository->getById($salesruleId);
                 $roundedAmount = CurrencyUtils::toMinor($ruleDiscountAmount, $currencyCode);
