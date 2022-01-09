@@ -20,13 +20,38 @@
 <integrations>
     <integration name="boltIntegration">
         <resources>
-            <!-- Example to grant permission to Magento_Sales::reorder, all its parent resources need to be declared-->
+            <resource name="Magento_Cart::cart" />
+            <resource name="Magento_Cart::manage" />
+            <resource name="Magento_Backend::admin" />
+            <resource name="Magento_Catalog::catalog" />
+            <resource name="Magento_Catalog::catalog_inventory" />
+            <resource name="Magento_Catalog::products" />
+            <resource name="Magento_Catalog::categories" />
+            <resource name="Magento_Customer::customer" />
+            <resource name="Magento_Customer::manage" />
+            <resource name="Magento_Customer::group" />
             <resource name="Magento_Sales::sales" />
             <resource name="Magento_Sales::sales_operation" />
             <resource name="Magento_Sales::sales_order" />
             <resource name="Magento_Sales::actions" />
+            <resource name="Magento_Sales::create"  />
             <resource name="Magento_Sales::actions_view" />
+            <resource name="Magento_Sales::email" />
+            <resource name="Magento_Sales::reorder" />
+            <resource name="Magento_Sales::actions_edit" />
+            <resource name="Magento_Sales::cancel" />
+            <resource name="Magento_Sales::review_payment" />
+            <resource name="Magento_Sales::capture" />
+            <resource name="Magento_Sales::invoice" />
+            <resource name="Magento_Sales::creditmemo" />
+            <resource name="Magento_Sales::hold" />
+            <resource name="Magento_Sales::unhold" />
+            <resource name="Magento_Sales::ship" />
             <resource name="Magento_Sales::comment" />
+            <resource name="Magento_Sales::emails" />
+            <resource name="Magento_Backend::marketing" />
+            <resource name="Magento_CatalogRule::promo" />
+            <resource name="Magento_SalesRule::quote"/>
         </resources>
     </integration>
 </integrations>
