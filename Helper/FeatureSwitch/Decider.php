@@ -424,4 +424,16 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_COLLECT_DISCOUNT_BY_PLUGIN);
     }
+
+    /**
+     * Determines if SSO customers should be prevented from editing their account and address data
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isPreventSSOCustomersFromEditingAccountInformation()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_PREVENT_SSO_CUSTOMERS_FROM_EDITING_ACCOUNT_INFORMATION);
+    }
 }

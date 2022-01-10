@@ -478,6 +478,21 @@ class Config extends AbstractHelper
      */
     const XML_PATH_DISABLE_GUEST_CHECKOUT = 'catalog/downloadable/disable_guest_checkout';
 
+    /**
+     * Routes that will forbidden for users when SSO is enabled
+     */
+    public const PROHIBITED_CUSTOMER_ROUTES_WITH_SSO = [
+        'customer_account_createPost',
+        'customer_account_edit',
+        'customer_account_editPost',
+        'customer_account_resetPasswordPost',
+        'customer_address_delete',
+        'customer_address_edit',
+        'customer_address_form',
+        'customer_address_formPost',
+        'customer_address_new',
+    ];
+
     public static $defaultPageWhitelist = [
         self::SHOPPING_CART_PAGE_ACTION,
         self::CHECKOUT_PAGE_ACTION,
