@@ -88,10 +88,10 @@ class PreventCustomerEdit implements ObserverInterface
         /** @var \Magento\Framework\App\Action\AbstractAction $action */
         $action = $observer->getData('controller_action');
 
-        if (in_array($request->getFullActionName(), Config::PROHiBITED_CUSTOMER_ROUTES_WITH_SSO)) {
+        if (in_array($request->getFullActionName(), Config::PROHIBITED_CUSTOMER_ROUTES_WITH_SSO)) {
             $this->actionFlag->set('', Action::FLAG_NO_DISPATCH, true);
             $this->messageManager->addErrorMessage(
-                __('Account editing not supported for accounts created by Bolt SSO.')
+                __('Account editing not supported.')
             );
             $action->getResponse()->setRedirect($this->redirect->error($this->urlManager->getUrl('customer/account')));
         }

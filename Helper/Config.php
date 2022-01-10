@@ -481,7 +481,7 @@ class Config extends AbstractHelper
     /**
      * Routes that will forbidden for users when SSO is enabled
      */
-    public const PROHiBITED_CUSTOMER_ROUTES_WITH_SSO = [
+    public const PROHIBITED_CUSTOMER_ROUTES_WITH_SSO = [
         'customer_account_createPost',
         'customer_account_edit',
         'customer_account_editPost',
