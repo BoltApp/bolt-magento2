@@ -622,6 +622,25 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get Bolt PaybByLink URL
+     *
+     * @param bool $isAllowCustomURLForProduction
+     *
+     * @return string
+     */
+    public function getPayByLinkUrl($isAllowCustomURLForProduction = false)
+    {
+        if ($this->isSandboxModeSet()) {
+            $url = $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_SANDBOX);
+        } else if ($isAllowCustomURLForProduction) {
+            $url = $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_PRODUCTION);
+        } else {
+            $url = self::CDN_URL_PRODUCTION;
+        }
+        return $url . '/checkout';
+    }
+
+    /**
      * Get Bolt Account base URL
      *
      * @param int|string $storeId

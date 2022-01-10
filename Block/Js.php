@@ -129,7 +129,9 @@ class Js extends Template
      */
     public function getPayByLinkUrl()
     {
-        return $this->configHelper->getCdnUrl() . '/checkout';
+        return $this->configHelper->getPayByLinkUrl(
+            $this->configHelper->isAllowCustomURLForProduction()
+        );
     }
 
     /**

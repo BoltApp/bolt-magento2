@@ -257,6 +257,11 @@ class Definitions
      */
     const M2_PREVENT_SSO_CUSTOMERS_FROM_EDITING_ACCOUNT_INFORMATION = 'M2_PREVENT_SSO_CUSTOMERS_FROM_EDITING_ACCOUNT_INFORMATION';
 
+    /**
+     * Allow custom CDN URL for production environment
+     */
+    const M2_ALLOW_CUSTOM_CDN_URL_FOR_PRODUCTION = 'M2_ALLOW_CUSTOM_CDN_URL_FOR_PRODUCTION';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -521,6 +526,12 @@ class Definitions
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100,
+        ],
+        self::M2_ALLOW_CUSTOM_CDN_URL_FOR_PRODUCTION => [
+            self::NAME_KEY        => self::M2_ALLOW_CUSTOM_CDN_URL_FOR_PRODUCTION,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
     ];
 }

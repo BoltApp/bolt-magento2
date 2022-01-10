@@ -436,4 +436,9 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_PREVENT_SSO_CUSTOMERS_FROM_EDITING_ACCOUNT_INFORMATION);
     }
+    
+    public function isAllowCustomURLForProduction()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_ALLOW_CUSTOM_CDN_URL_FOR_PRODUCTION);
+    }
 }
