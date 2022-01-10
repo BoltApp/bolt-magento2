@@ -130,7 +130,7 @@ class Js extends Template
     public function getPayByLinkUrl()
     {
         return $this->configHelper->getPayByLinkUrl(
-            $this->configHelper->isAllowCustomURLForProduction()
+            $this->featureSwitches->isAllowCustomURLForProduction()
         );
     }
 
