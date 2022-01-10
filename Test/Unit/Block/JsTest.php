@@ -227,6 +227,7 @@ class JsTest extends BoltTestCase
                 'path' => Config::XML_PATH_CUSTOM_CDN,
                 'value' => $value,
                 'scope' => \Magento\Framework\App\ScopeInterface::SCOPE_DEFAULT,
+                'scopeId' => null,
             ]
         ];
         TestUtils::setupBoltConfig($configData);
@@ -283,7 +284,6 @@ class JsTest extends BoltTestCase
         $sandboxMode, $customValue, $featureSwitch, $expectedResult)
     {
         $this->setSandboxMode($sandboxMode);
-        error_log("SET '$customValue'");
         $this->setCustomCDN($customValue);
         $featureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_ALLOW_CUSTOM_CDN_URL_FOR_PRODUCTION, $featureSwitch);
 
