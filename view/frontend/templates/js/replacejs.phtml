@@ -1582,30 +1582,58 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
     });
 
     if ((trim(location.pathname, '/') === 'checkout/cart') || (trim(location.pathname, '/') === 'checkout')) {
+        define("boltRequireOptional", [], {
+            load : function (moduleName, parentRequire, onload, config){
+                var onLoadSuccess = function(moduleInstance){
+                    // Module successfully loaded, call the onload callback so that
+                    // RequireJS can work its internal magic.
+                    onload(moduleInstance);
+                }
+                var onLoadFailure = function(err){
+                    // Module failed to load.
+                    if (err.requireModules) {
+                        var failedId = err.requireModules[0];
+                        console.warn("Could not load module: " + failedId);
+                        // Undefine the module to cleanup internal stuff in RequireJS
+                        requirejs.undef(failedId);
+                        // Now define the module instance as a simple empty object
+                        define(failedId, [], function(){return {};});
+                        // Now require the module make sure that RequireJS thinks 
+                        // that is it loaded. Since we've just defined it, RequireJS 
+                        // will not attempt to download any more script files and
+                        // will just call the onLoadSuccess handler immediately
+                        parentRequire([failedId], onLoadSuccess);
+                    }
+                }
+                parentRequire([moduleName], onLoadSuccess, onLoadFailure);
+            }
+        });
         require(['domReady!'], function() {
             require([
             'jquery',
-            'Magento_Checkout/js/model/quote',
+            'boltRequireOptional!Magento_Checkout/js/model/quote',
             ], function ($, quote) {
-                // If quote total was changed through a method we didn't create,
+                // If quote is not empty and quote total was changed through a method we didn't create,
                 // we should reload the bolt cart since totals are probably now out of sync.
-                quote.totals.subscribe(function (totals) {
-                    if (waitingForResolvingPromises) {
-                        return;
-                    }
-                    if (expectCartRendering) {
+                if (!jQuery.isEmptyObject(quote)) {
+                    quote.totals.subscribe(function (totals) {
+                        if (waitingForResolvingPromises) {
+                            return;
+                        }
+                        if (expectCartRendering) {
+                            expectCartRendering = false;
+                            try {
+                                if ((totals.base_subtotal+totals.base_discount_amount) * 100 == BoltState.boltCart.total_amount.amount
+                                    <?= /* @noEscape */ $block->getAdditionalQuoteTotalsConditions(); ?>) {
+                                    return;
+                                }
+                            } catch(err) {}
+                        }
+    
                         expectCartRendering = false;
-                        try {
-                            if ((totals.base_subtotal+totals.base_discount_amount) * 100 == BoltState.boltCart.total_amount.amount
-                                <?= /* @noEscape */ $block->getAdditionalQuoteTotalsConditions(); ?>) {
-                                return;
-                            }
-                        } catch(err) {}
-                    }
-
-                    expectCartRendering = false;
-                    $(document).trigger('bolt:createOrder');
-                });
+                        $(document).trigger('bolt:createOrder');
+                    });
+                }
             }, function (err) {
                 //The errback, error callback
                 var errLog = 'Error details: ' + err.message;
