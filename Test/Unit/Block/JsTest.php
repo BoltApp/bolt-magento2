@@ -218,8 +218,19 @@ class JsTest extends BoltTestCase
             ]
         ];
         TestUtils::setupBoltConfig($configData);
+    }
 
-
+    private function setCustomCDN($value)
+    {
+        $configData = [
+            [
+                'path' => Config::XML_PATH_CUSTOM_CDN,
+                'value' => $value,
+                'scope' => \Magento\Framework\App\ScopeInterface::SCOPE_DEFAULT,
+                'scopeId' => 0,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
     }
 
     /**
@@ -269,10 +280,16 @@ class JsTest extends BoltTestCase
      * @param bool $sandboxMode    configuration flag
      * @param bool $expectedResult of the tested method call
      */
-    public function getPayByLinkUrl_withVariousConfigurationModes_returnsCheckoutUrl($sandboxMode, $expectedResult)
+    public function getPayByLinkUrl_withVariousConfigurationModes_returnsCheckoutUrl(
+        $sandboxMode, $customValue, $featureSwitch, $expectedResult)
     {
         $this->setSandboxMode($sandboxMode);
+        $this->setCustomCDN($customValue);
+        $featureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_ALLOW_CUSTOM_CDN_URL_FOR_PRODUCTION, $featureSwitch);
+
         static::assertEquals($expectedResult, $this->block->getPayByLinkUrl());
+
+        TestUtils::cleanupSharedFixtures($featureSwitch);
     }
 
     /**
@@ -285,10 +302,38 @@ class JsTest extends BoltTestCase
         return [
             [
                 'sandboxMode'    => true,
+                'customValue'    => 'https://brand.bolt.com',
+                'featureSwitch'  => false,
+                'expectedResult' => 'https://brand.bolt.com' . '/checkout',
+            ],
+            [
+                'sandboxMode'    => true,
+                'customValue'    => '',
+                'featureSwitch'  => false,
                 'expectedResult' => HelperConfig::CDN_URL_SANDBOX . '/checkout',
             ],
             [
                 'sandboxMode'    => false,
+                'customValue'    => '',
+                'featureSwitch'  => false,
+                'expectedResult' => HelperConfig::CDN_URL_PRODUCTION . '/checkout',
+            ],
+            [
+                'sandboxMode'    => false,
+                'customValue'    => 'https://brand.bolt.com',
+                'featureSwitch'  => false,
+                'expectedResult' => HelperConfig::CDN_URL_PRODUCTION . '/checkout',
+            ],
+            [
+                'sandboxMode'    => false,
+                'customValue'    => 'https://brand.bolt.com',
+                'featureSwitch'  => true,
+                'expectedResult' => 'https://brand.bolt.com' . '/checkout',
+            ],
+            [
+                'sandboxMode'    => false,
+                'customValue'    => 'https://wrong.url.com',
+                'featureSwitch'  => true,
                 'expectedResult' => HelperConfig::CDN_URL_PRODUCTION . '/checkout',
             ],
         ];
