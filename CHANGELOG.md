@@ -221,3 +221,5 @@
 - Related Bolt `cart.create` endpoint bug fix preventing carts with a `qty` of `1`
 ## [v2.24.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.24.1) 2021-11-02
 - Fixed issue where a coupon granting free shipping would block the checkout flow.
+## [v2.25.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.25.0) 2022-01-17
+- Changelog TBD
