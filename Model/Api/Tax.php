@@ -76,6 +76,13 @@ class Tax extends ShippingTax implements TaxInterface
      * @var CartHelper
      */
     protected $cartHelper;
+    
+    /**
+     * Quote repository.
+     *
+     * @var \Magento\Quote\Api\CartRepositoryInterface
+     */
+    protected $cartRepository;
 
     /**
      * Assigns local references to global resources
@@ -106,6 +113,7 @@ class Tax extends ShippingTax implements TaxInterface
         $this->addressInformation = $addressInformation;
         $this->priceHelper = $priceHelper;
         $this->cartHelper = $cartHelper;
+        $this->cartRepository = $shippingTaxContext->getCartRepository();
     }
 
     /**
@@ -226,6 +234,14 @@ class Tax extends ShippingTax implements TaxInterface
             $this->quote->getShippingAddress()
         );
 
+        // Exclude discount amount of "Fixed amount discount for whole cart" sale rule from shipping discounts.
+        // Cause the Bolt cart has full discount amount of such type of sale rule applied before collecting shipping&tax.
+        if ($cartRules = $this->cartRepository->get($this->quote->getId())->getCartFixedRules()) {
+            foreach ($cartRules as $cartRuleId => $cartRuleShippingDiscountAmount) {
+                $shippingDiscountAmount -= $cartRuleShippingDiscountAmount;
+            }
+        }
+        
         if ($shippingDiscountAmount >= DiscountHelper::MIN_NONZERO_VALUE && !$this->cartHelper->ignoreAdjustingShippingAmount($this->quote)) {
             $service = $shippingOption['service'] ?? '';
             $shippingCost = $totalsInformation->getShippingAmount() - $shippingDiscountAmount;
