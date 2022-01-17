@@ -402,7 +402,7 @@ trait UpdateDiscountTrait
             $quote->getBillingAddress() :
             $quote->getShippingAddress();
 
-        $discountAmount = ($address->getShippingMethod() && $this->cartHelper->ignoreAdjustingShippingAmount($quote))
+        $discountAmount = ($address->getShippingMethod() && $address->getShippingAmount() && $this->cartHelper->ignoreAdjustingShippingAmount($quote))
             ? $address->getCartFixedRules()[$ruleId] + $address->getShippingDiscountAmount()
             : $ruleDiscountDetails[$ruleId];
 
