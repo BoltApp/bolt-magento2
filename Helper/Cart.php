@@ -2808,21 +2808,6 @@ class Cart extends AbstractHelper
 
         return false;
     }
-    
-    /**
-     * Check if get original discount amount of "Fixed amount discount for whole cart" sale rule.
-     *
-     * @param $quote
-     * @return bool
-     */
-    public function checkIfGetOriginalDiscountAmountFromSaleRule($quote)
-    {
-        $address = $this->getCalculationAddress($quote);
-
-        return $address->getShippingMethod()
-                && $address->getShippingAmount()
-                && $this->ignoreAdjustingShippingAmount($quote);
-    }
 
     /**
      * @param $quote
@@ -2878,17 +2863,17 @@ class Cart extends AbstractHelper
         } else {
             /* @var \Magento\SalesRule\Api\Data\RuleDiscountInterface $ruleDiscounts */
             $extensionSaleRuleDiscounts = $address->getExtensionAttributes()->getDiscounts();
-            $ifGetOriginalDiscount = $this->checkIfGetOriginalDiscountAmountFromSaleRule($quote);
-
+            $cartFixedRules = $address->getCartFixedRules();
             if ($extensionSaleRuleDiscounts && is_array($extensionSaleRuleDiscounts)) {
                 foreach ($extensionSaleRuleDiscounts as $value) {
                     /* @var \Magento\SalesRule\Api\Data\DiscountDataInterface $discountData */
                     $discountData = $value->getDiscountData();
-                    if ($ifGetOriginalDiscount && array_key_exists($value->getRuleID(),$quote->getCartFixedRules())) {
-                        $rule = $this->ruleRepository->getById($value->getRuleID());
-                        $saleRuleDiscountsDetails[$value->getRuleID()] = $rule->getDiscountAmount();
+                    $salesRuleId = $value->getRuleID();
+                    if (!empty($cartFixedRules) && array_key_exists($salesRuleId, $cartFixedRules)) {
+                        $rule = $this->ruleRepository->getById($salesRuleId);
+                        $saleRuleDiscountsDetails[$salesRuleId] = $discountData->getAmount() + $rule->getDiscountAmount() - $cartFixedRules[$salesRuleId];
                     } else {
-                        $saleRuleDiscountsDetails[$value->getRuleID()] = $discountData->getAmount();
+                        $saleRuleDiscountsDetails[$salesRuleId] = $discountData->getAmount();
                     }
                 }
             }
