@@ -398,21 +398,14 @@ trait UpdateDiscountTrait
                 $quote
             );
         }
-        $address = $quote->isVirtual() ?
-            $quote->getBillingAddress() :
-            $quote->getShippingAddress();
-
-        $discountAmount = ($address->getShippingMethod() && $this->cartHelper->ignoreAdjustingShippingAmount($quote))
-            ? $address->getCartFixedRules()[$ruleId] + $address->getShippingDiscountAmount()
-            : $ruleDiscountDetails[$ruleId];
-
+        
         $description = $rule->getDescription();
         $display = $description != '' ? $description : 'Discount (' . $couponCode . ')';
 
         $result = [
             'status'          => 'success',
             'discount_code'   => $couponCode,
-            'discount_amount' => abs(CurrencyUtils::toMinor($discountAmount, $quote->getQuoteCurrencyCode())),
+            'discount_amount' => abs(CurrencyUtils::toMinor($ruleDiscountDetails[$ruleId], $quote->getQuoteCurrencyCode())),
             'description'     => $display,
             'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
         ];

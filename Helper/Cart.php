@@ -2808,6 +2808,21 @@ class Cart extends AbstractHelper
 
         return false;
     }
+    
+    /**
+     * Check if get original discount amount of "Fixed amount discount for whole cart" sale rule.
+     *
+     * @param $quote
+     * @return bool
+     */
+    public function checkIfGetOriginalDiscountAmountFromSaleRule($quote)
+    {
+        $address = $this->getCalculationAddress($quote);
+
+        return $address->getShippingMethod()
+                && $address->getShippingAmount()
+                && $this->ignoreAdjustingShippingAmount($quote);
+    }
 
     /**
      * @param $quote
@@ -2863,11 +2878,18 @@ class Cart extends AbstractHelper
         } else {
             /* @var \Magento\SalesRule\Api\Data\RuleDiscountInterface $ruleDiscounts */
             $extensionSaleRuleDiscounts = $address->getExtensionAttributes()->getDiscounts();
+            $ifGetOriginalDiscount = $this->checkIfGetOriginalDiscountAmountFromSaleRule($quote);
+
             if ($extensionSaleRuleDiscounts && is_array($extensionSaleRuleDiscounts)) {
                 foreach ($extensionSaleRuleDiscounts as $value) {
                     /* @var \Magento\SalesRule\Api\Data\DiscountDataInterface $discountData */
                     $discountData = $value->getDiscountData();
-                    $saleRuleDiscountsDetails[$value->getRuleID()] = $discountData->getAmount();
+                    if ($ifGetOriginalDiscount && array_key_exists($value->getRuleID(),$quote->getCartFixedRules())) {
+                        $rule = $this->ruleRepository->getById($value->getRuleID());
+                        $saleRuleDiscountsDetails[$value->getRuleID()] = $rule->getDiscountAmount();
+                    } else {
+                        $saleRuleDiscountsDetails[$value->getRuleID()] = $discountData->getAmount();
+                    }
                 }
             }
         }
