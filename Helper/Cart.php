@@ -2821,6 +2821,18 @@ class Cart extends AbstractHelper
             return false;
         }
 
+        return $this->checkIfQuoteHasCartFixedAmountAndApplyToShippingRule($quote);
+    }
+    
+    /**
+     * @param $quote
+     * @param $shippingMethod
+     * @return bool
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
+    public function checkIfQuoteHasCartFixedAmountAndApplyToShippingRule($quote)
+    {
         if ($quote->getAppliedRuleIds()){
             $salesruleIds = explode(',', $quote->getAppliedRuleIds());
 

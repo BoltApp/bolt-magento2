@@ -139,7 +139,16 @@ class Tax extends ShippingTax implements TaxInterface
 
         $this->addressInformation->setShippingCarrierCode($carrierCode);
         $this->addressInformation->setShippingMethodCode($methodCode);
-
+        
+        if ($shipping_option && $this->cartHelper->checkIfQuoteHasCartFixedAmountAndApplyToShippingRule($this->quote)) {
+            // If a customer applies a cart rule (fixed amount for whole cart and apply to shipping) via the cart pgae,
+            // the function Magento\SalesRule\Helper\CartFixedDiscount::calculateShippingAmountWhenAppliedToShipping does not return correct value for tax calculation,
+            // it is because the $address->getShippingAmount() still returns shipping amount of last selected shipping method.
+            // So we need to correct the shipping amount.
+            $address->setShippingAmount(CurrencyUtils::toMajor($shipping_option['cost'], $this->quote->getQuoteCurrencyCode()));
+            $this->addressInformation->setAddress($address);
+        }
+        
         $this->eventsForThirdPartyModules->dispatchEvent("setExtraAddressInformation", $this->addressInformation, $this->quote, $shipping_option, $ship_to_store_option, $addressData);
     }
 
