@@ -932,6 +932,41 @@ class Config extends AbstractHelper
     }
 
     /**
+     * Get additional Custom SSO selectors configuration, stored in the following format in
+     * the Additional Configuration store admin field:
+     *
+     * {
+     *     "customSSOSelectors": {
+     *         "[data-action=\"login\"]": {},
+     *         "[data-action=\"logout\"]": {
+     *             "logout": true
+     *         },
+     *         "[href*=\"wishlist\"]": {
+     *             "redirect": "wishlist/index/index"
+     *         },
+     *         "[data-action=\"wishlist\"]": {
+     *             "redirect": "http://localhost/wishlist/index/index"
+     *         }
+     *     }
+     * }
+     *
+     * The default case where we want button to serve as login and to redirect to home page,
+     * we have selector as key and empty object as value.
+     * If we want a button to be used as logout, we again use selector as the key 
+     * but have logout set to true in the value object
+     * If we want to redirect to an arbitrary page after login, we set the redirect key to desired URL or Magento route
+     * 
+     * 
+     * @param int|string $storeId scope for which to retrieve additional checkout button attributes
+     *
+     * @return object
+     */
+    public function getAdditionalCustomSSOSelectors($storeId = null)
+    {
+        return $this->getAdditionalConfigProperty('customSSOSelectors', $storeId) ?: (object) [];
+    }
+
+    /**
      * Get Custom Prefetch Address Fields
      *
      * @param int|string $storeId

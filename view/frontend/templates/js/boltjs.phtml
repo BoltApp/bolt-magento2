@@ -31,6 +31,7 @@ $isLoadConnectJs = $block->isLoadConnectJs();
 $isLoadBoltJs = $block->isOnPageFromWhiteList() || $block->isMinicartEnabled() || $block->isBoltProductPage();
 $isDisableTrackJs = ($block->isDisableTrackJsOnHomePage() && $block->isOnHomePage())
                     || ($block->isDisableTrackJsOnNonBoltPages() && (!$isLoadBoltJs || !$isLoadConnectJs));
+$isLoadAccountJs = ($block->isBoltSSOEnabled() || $block->isOrderManagementEnabled());
 
 if (!$isDisableTrackJs) {
     $trackJsUrl = $block->getTrackJsUrl();
@@ -63,3 +64,12 @@ if ($isLoadBoltJs && $isLoadConnectJs) {
     <?php
 }
 ?>
+<?php if ($isLoadAccountJs): ?>
+    <script
+        id="bolt-account"
+        type="text/javascript"
+        src="<?= /* @noEscape */ $block->getAccountJsUrl(); ?>"
+        async
+        data-publishable-key="<?= /* @noEscape */ $checkoutKey; ?>">
+    </script>
+<?php endif; ?>
