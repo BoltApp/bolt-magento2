@@ -163,6 +163,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         // Set the shipment if request payload has that info.
         if (!empty($requestArray['cart']['shipments'][0]['reference'])) {
             $this->setShipment($requestArray['cart']['shipments'][0], $immutableQuote);
+            $this->setShippingAssignments($immutableQuote);
         }
 
         // Verify if the code is coupon or gift card and return proper object
