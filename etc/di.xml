@@ -267,4 +267,8 @@
     <type name="Amasty\Promo\Plugin\Quote\Model\Quote\TotalsCollectorPlugin">
         <plugin name="TotalsCollectorPlugin" type="Bolt\Boltpay\Plugin\Amasty\Promo\Quote\Model\Quote\TotalsCollectorPlugin"/>
     </type>
+    <type name="Magento\Fedex\Model\Carrier">
+        <plugin name="Bolt_Boltpay_Cache_Fedex_Api_Result"
+                type="Bolt\Boltpay\Plugin\Magento\Fedex\Model\CacheFedexResultPlugin" sortOrder="10"/>
+    </type>
 </config>
