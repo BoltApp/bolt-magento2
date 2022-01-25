@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2020 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2022 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 namespace Bolt\Boltpay\Plugin\Magento\Fedex\Model;
@@ -23,6 +23,10 @@ use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 
+/**
+ * Plugin for {@see \Magento\Fedex\Model\Carrier}
+ * Tested up to: Magento 2.4.3-p1
+ */
 class CacheFedexResultPlugin
 {
     const BOLT_CACHE_FEDEX_PREFIX  = 'BOLT_CACHE_FEDEX_';
