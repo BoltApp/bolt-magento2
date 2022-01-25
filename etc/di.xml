@@ -260,4 +260,8 @@
         <plugin name="Bolt_Boltpay_ImaginationMedia_TmwGiftCard_ForceInvoicePlugin"
                 type="Bolt\Boltpay\Plugin\ImaginationMedia\TmwGiftCard\ForceInvoicePlugin" sortOrder="1"/>
     </type>
+    <type name="Magento\Fedex\Model\Carrier">
+        <plugin name="Bolt_Boltpay_Cache_Fedex_Api_Result"
+                type="Bolt\Boltpay\Plugin\Magento\Fedex\Model\CacheFedexResultPlugin" sortOrder="10"/>
+    </type>
 </config>
