@@ -488,7 +488,8 @@ class UpdateCartTest extends BoltTestCase
             'setShipment',
             'generateResult',
             'verifyCouponCode',
-            'applyDiscount'
+            'applyDiscount',
+            'setShippingAssignments'
         ]);
         
         $immutableQuoteMock = $this->getQuoteMock();
@@ -517,6 +518,13 @@ class UpdateCartTest extends BoltTestCase
         $this->currentMock->expects(self::once())->method('applyDiscount')
             ->with(self::COUPON_CODE, $this->couponMock, null, $parentQuoteMock)
             ->willReturn(true);
+            
+        $this->currentMock->expects($this->exactly(2))
+            ->method('setShippingAssignments')
+            ->withConsecutive(
+                [$immutableQuoteMock],
+                [$parentQuoteMock]
+            );
 
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($parentQuoteMock, $immutableQuoteMock);
@@ -584,7 +592,8 @@ class UpdateCartTest extends BoltTestCase
             'generateResult',
             'getQuoteCart',
             'removeDiscount',
-            'getAppliedStoreCredit'
+            'getAppliedStoreCredit',
+            'setShippingAssignments'
         ]);
         
         $immutableQuoteMock = $this->getQuoteMock();
@@ -625,6 +634,13 @@ class UpdateCartTest extends BoltTestCase
         $this->currentMock->expects(self::once())->method('removeDiscount')
             ->with(self::COUPON_CODE, [self::COUPON_CODE => 'coupon'], $parentQuoteMock, self::WEBSITE_ID, self::STORE_ID)
             ->willReturn(true);
+            
+        $this->currentMock->expects($this->exactly(2))
+            ->method('setShippingAssignments')
+            ->withConsecutive(
+                [$immutableQuoteMock],
+                [$parentQuoteMock]
+            );
 
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($parentQuoteMock, $immutableQuoteMock);
@@ -763,7 +779,8 @@ class UpdateCartTest extends BoltTestCase
             'addItemToQuote',
             'updateTotals',
             'getCartItems',
-            'getQuoteItemByProduct'
+            'getQuoteItemByProduct',
+            'setShippingAssignments'
         ]);
         
         $immutableQuoteMock = $this->getQuoteMock();
@@ -816,6 +833,13 @@ class UpdateCartTest extends BoltTestCase
         
         $this->currentMock->expects(self::once())->method('updateTotals')
             ->with($parentQuoteMock);
+        
+        $this->currentMock->expects($this->exactly(2))
+            ->method('setShippingAssignments')
+            ->withConsecutive(
+                [$immutableQuoteMock],
+                [$parentQuoteMock]
+            );
   
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($parentQuoteMock, $immutableQuoteMock);
@@ -887,7 +911,8 @@ class UpdateCartTest extends BoltTestCase
             'getCartItems',
             'getProduct',
             'verifyItemData',
-            'getQuoteItemByProduct'
+            'getQuoteItemByProduct',
+            'setShippingAssignments'
         ]);
         
         $immutableQuoteMock = $this->getQuoteMock();
@@ -947,6 +972,13 @@ class UpdateCartTest extends BoltTestCase
         $this->currentMock->expects(self::once())->method('removeItemFromQuote')
             ->with($cartItems[0], $remove_items[0], $parentQuoteMock)
             ->willReturn(true);
+        
+        $this->currentMock->expects($this->exactly(2))
+            ->method('setShippingAssignments')
+            ->withConsecutive(
+                [$immutableQuoteMock],
+                [$parentQuoteMock]
+            );
 
         $this->cacheMock->expects(static::once())
             ->method('clean')->with([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);
