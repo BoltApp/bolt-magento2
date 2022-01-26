@@ -485,6 +485,10 @@ class DiscountCodeValidationTest extends BoltTestCase
             self::PARENT_QUOTE_ID
         );
         
+        $this->cartHelper->expects(self::once())->method('checkIfQuoteHasCartFixedAmountAndApplyToShippingRule')
+            ->with($immutableQuote)
+            ->willReturn(false);
+        
         $this->currentMock->expects(self::atLeastOnce())->method('getRequestContent')
             ->willReturn($request_data);
         
@@ -1092,7 +1096,8 @@ class DiscountCodeValidationTest extends BoltTestCase
             ->setMethods(
                 [
                     'getCartData',
-                    'getImmutableQuoteIdFromBoltCartArray'
+                    'getImmutableQuoteIdFromBoltCartArray',
+                    'checkIfQuoteHasCartFixedAmountAndApplyToShippingRule'
                 ]
             )
             ->disableOriginalConstructor()
