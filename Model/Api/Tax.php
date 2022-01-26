@@ -145,7 +145,8 @@ class Tax extends ShippingTax implements TaxInterface
             // the function Magento\SalesRule\Helper\CartFixedDiscount::calculateShippingAmountWhenAppliedToShipping does not return correct value for tax calculation,
             // it is because the $address->getShippingAmount() still returns shipping amount of last selected shipping method.
             // So we need to correct the shipping amount.
-            $address->setShippingAmount(CurrencyUtils::toMajor($shipping_option['cost'], $this->quote->getQuoteCurrencyCode()));
+            $shippingCost = CurrencyUtils::toMajor($shipping_option['cost'], $this->quote->getQuoteCurrencyCode());
+            $address->setShippingAmount($shippingCost);
             $this->addressInformation->setAddress($address);
         }
         
