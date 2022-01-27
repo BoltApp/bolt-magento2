@@ -20,7 +20,7 @@
 <integrations>
     <integration name="boltIntegration">
         <email>integrations@bolt.com</email>
-        <endpoint_url>https://api-sandbox.bolt.com/v1/magento2/bolt-checkout/authorize</endpoint_url>
+        <endpoint_url>https://api.bolt.com/v1/magento2/bolt-checkout/authorize</endpoint_url>
         <identity_link_url>https://status.bolt.com</identity_link_url>
     </integration>
 </integrations>
