@@ -37,6 +37,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterfaceFactory;
 use Bolt\Boltpay\Api\Data\StoreAddressInterfaceFactory;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Quote\Api\CartRepositoryInterface;
 
 /**
  * Class ShippingTaxContextTest
@@ -235,6 +236,20 @@ class ShippingTaxContextTest extends BoltTestCase
         $this->assertEquals(
             $this->objectManager->create(EventsForThirdPartyModules::class),
             $this->shippingTaxContext->getEventsForThirdPartyModules()
+        );
+    }
+    
+    /**
+     * @test
+     * that getCartRepository would returns CartRepositoryInterface instance
+     *
+     * @covers ::getCartRepository
+     */
+    public function getCartRepository_always_returnsCartRepositoryInterface()
+    {
+        $this->assertEquals(
+            $this->objectManager->create(CartRepositoryInterface::class),
+            $this->shippingTaxContext->getCartRepository()
         );
     }
 }

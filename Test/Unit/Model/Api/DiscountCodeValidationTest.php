@@ -416,7 +416,7 @@ class DiscountCodeValidationTest extends BoltTestCase
      */
     public function validateWithShippingOnlyCoupon()
     {
-        $this->initCurrentMock(['validateQuote','verifyCouponCode','setShipment','updateSession','applyingCouponCode','shouldUseParentQuoteShippingAddressDiscount']);
+        $this->initCurrentMock(['validateQuote','verifyCouponCode','setShipment','updateSession','applyingCouponCode','shouldUseParentQuoteShippingAddressDiscount','setShippingAssignments']);
         $couponCode = 'FREESHIPPINGFIXED';
 
         $request_shipping_addr = [
@@ -485,6 +485,10 @@ class DiscountCodeValidationTest extends BoltTestCase
             self::PARENT_QUOTE_ID
         );
         
+        $this->cartHelper->expects(self::once())->method('checkIfQuoteHasCartFixedAmountAndApplyToShippingRule')
+            ->with($immutableQuote)
+            ->willReturn(false);
+        
         $this->currentMock->expects(self::atLeastOnce())->method('getRequestContent')
             ->willReturn($request_data);
         
@@ -506,6 +510,9 @@ class DiscountCodeValidationTest extends BoltTestCase
         $this->currentMock->expects(self::once())->method('shouldUseParentQuoteShippingAddressDiscount')
             ->with($couponCode, $immutableQuote, $parentQuote)->willReturn(false);
         
+        $this->currentMock->expects(self::once())->method('setShippingAssignments')
+            ->with($immutableQuote);
+            
         $applyCouponResult = [
             'status'          => 'success',
             'discount_code'   => $couponCode,
@@ -1089,7 +1096,8 @@ class DiscountCodeValidationTest extends BoltTestCase
             ->setMethods(
                 [
                     'getCartData',
-                    'getImmutableQuoteIdFromBoltCartArray'
+                    'getImmutableQuoteIdFromBoltCartArray',
+                    'checkIfQuoteHasCartFixedAmountAndApplyToShippingRule'
                 ]
             )
             ->disableOriginalConstructor()

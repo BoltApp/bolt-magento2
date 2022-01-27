@@ -2831,6 +2831,18 @@ class Cart extends AbstractHelper
             return false;
         }
 
+        return $this->checkIfQuoteHasCartFixedAmountAndApplyToShippingRule($quote);
+    }
+    
+    /**
+     * @param $quote
+     * @param $shippingMethod
+     * @return bool
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
+    public function checkIfQuoteHasCartFixedAmountAndApplyToShippingRule($quote)
+    {
         if ($quote->getAppliedRuleIds()){
             $salesruleIds = explode(',', $quote->getAppliedRuleIds());
 
@@ -2870,11 +2882,18 @@ class Cart extends AbstractHelper
         } else {
             /* @var \Magento\SalesRule\Api\Data\RuleDiscountInterface $ruleDiscounts */
             $extensionSaleRuleDiscounts = $address->getExtensionAttributes()->getDiscounts();
+            $cartFixedRules = $address->getCartFixedRules();
             if ($extensionSaleRuleDiscounts && is_array($extensionSaleRuleDiscounts)) {
                 foreach ($extensionSaleRuleDiscounts as $value) {
                     /* @var \Magento\SalesRule\Api\Data\DiscountDataInterface $discountData */
                     $discountData = $value->getDiscountData();
-                    $saleRuleDiscountsDetails[$value->getRuleID()] = $discountData->getAmount();
+                    $salesRuleId = $value->getRuleID();
+                    if (!empty($cartFixedRules) && array_key_exists($salesRuleId, $cartFixedRules)) {
+                        $rule = $this->ruleRepository->getById($salesRuleId);
+                        $saleRuleDiscountsDetails[$salesRuleId] = $discountData->getAmount() + $rule->getDiscountAmount() - $cartFixedRules[$salesRuleId];
+                    } else {
+                        $saleRuleDiscountsDetails[$salesRuleId] = $discountData->getAmount();
+                    }
                 }
             }
         }

@@ -113,7 +113,9 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
             if (!empty($cart['shipments'][0]['reference'])) {
                 $this->setShipment($cart['shipments'][0], $immutableQuote);
+                $this->setShippingAssignments($immutableQuote);
                 $this->setShipment($cart['shipments'][0], $parentQuote);
+                $this->setShippingAssignments($parentQuote);
             }
 
             // Add discounts

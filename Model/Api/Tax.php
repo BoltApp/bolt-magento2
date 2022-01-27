@@ -76,6 +76,13 @@ class Tax extends ShippingTax implements TaxInterface
      * @var CartHelper
      */
     protected $cartHelper;
+    
+    /**
+     * Quote repository.
+     *
+     * @var \Magento\Quote\Api\CartRepositoryInterface
+     */
+    protected $cartRepository;
 
     /**
      * Assigns local references to global resources
@@ -106,6 +113,7 @@ class Tax extends ShippingTax implements TaxInterface
         $this->addressInformation = $addressInformation;
         $this->priceHelper = $priceHelper;
         $this->cartHelper = $cartHelper;
+        $this->cartRepository = $shippingTaxContext->getCartRepository();
     }
 
     /**
@@ -131,7 +139,17 @@ class Tax extends ShippingTax implements TaxInterface
 
         $this->addressInformation->setShippingCarrierCode($carrierCode);
         $this->addressInformation->setShippingMethodCode($methodCode);
-
+        
+        if ($shipping_option && $this->cartHelper->checkIfQuoteHasCartFixedAmountAndApplyToShippingRule($this->quote)) {
+            // If a customer applies a cart rule (fixed amount for whole cart and apply to shipping) via the cart pgae,
+            // the function Magento\SalesRule\Helper\CartFixedDiscount::calculateShippingAmountWhenAppliedToShipping does not return correct value for tax calculation,
+            // it is because the $address->getShippingAmount() still returns shipping amount of last selected shipping method.
+            // So we need to correct the shipping amount.
+            $shippingCost = CurrencyUtils::toMajor($shipping_option['cost'], $this->quote->getQuoteCurrencyCode());
+            $address->setShippingAmount($shippingCost);
+            $this->addressInformation->setAddress($address);
+        }
+        
         $this->eventsForThirdPartyModules->dispatchEvent("setExtraAddressInformation", $this->addressInformation, $this->quote, $shipping_option, $ship_to_store_option, $addressData);
     }
 
@@ -226,6 +244,14 @@ class Tax extends ShippingTax implements TaxInterface
             $this->quote->getShippingAddress()
         );
 
+        // Exclude discount amount of "Fixed amount discount for whole cart" sale rule from shipping discounts.
+        // Cause the Bolt cart has full discount amount of such type of sale rule applied before collecting shipping&tax.
+        if ($cartRules = $this->cartRepository->get($this->quote->getId())->getCartFixedRules()) {
+            foreach ($cartRules as $cartRuleId => $cartRuleShippingDiscountAmount) {
+                $shippingDiscountAmount -= $cartRuleShippingDiscountAmount;
+            }
+        }
+        
         if ($shippingDiscountAmount >= DiscountHelper::MIN_NONZERO_VALUE && !$this->cartHelper->ignoreAdjustingShippingAmount($this->quote)) {
             $service = $shippingOption['service'] ?? '';
             $shippingCost = $totalsInformation->getShippingAmount() - $shippingDiscountAmount;
