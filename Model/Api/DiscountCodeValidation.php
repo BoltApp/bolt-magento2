@@ -163,8 +163,16 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         // Set the shipment if request payload has that info.
         if (!empty($requestArray['cart']['shipments'][0]['reference'])) {
             $this->setShipment($requestArray['cart']['shipments'][0], $immutableQuote);
+            $this->setShippingAssignments($immutableQuote);
+            if (!$immutableQuote->isVirtual() && $this->cartHelper->checkIfQuoteHasCartFixedAmountAndApplyToShippingRule($immutableQuote)) {
+                    // If a customer applies a cart rule (fixed amount for whole cart and apply to shipping) via the cart page,
+                    // the function Magento\SalesRule\Helper\CartFixedDiscount::calculateShippingAmountWhenAppliedToShipping does not return correct value for tax calculation,
+                    // it is because the $address->getShippingAmount() still returns shipping amount of last selected shipping method.
+                    // So we need to correct the shipping amount.   
+                    $shippingCost = CurrencyUtils::toMajor($requestArray['cart']['shipments'][0]['cost']['amount'], $immutableQuote->getQuoteCurrencyCode());
+                    $immutableQuote->getShippingAddress()->setShippingAmount($shippingCost);
+            }
         }
-
         // Verify if the code is coupon or gift card and return proper object
         $result = $this->verifyCouponCode($couponCode, $parentQuote);
 

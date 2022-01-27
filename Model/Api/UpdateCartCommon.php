@@ -138,6 +138,16 @@ abstract class UpdateCartCommon
      * @var Decider
      */
     protected $featureSwitches;
+    
+    /**
+     * @var ShippingAssignmentProcessor
+     */
+    protected $shippingAssignmentProcessor;
+
+    /**
+     * @var CartExtensionFactory
+     */
+    protected $cartExtensionFactory;
 
     /**
      * UpdateCartCommon constructor.
@@ -165,6 +175,8 @@ abstract class UpdateCartCommon
         $this->sessionHelper = $updateCartContext->getSessionHelper();
         $this->productRepository = $updateCartContext->getProductRepositoryInterface();
         $this->featureSwitches = $updateCartContext->getFeatureSwitches();
+        $this->cartExtensionFactory = $updateCartContext->getCartExtensionFactory();
+        $this->shippingAssignmentProcessor = $updateCartContext->getShippingAssignmentProcessor();
     }
 
     /**
@@ -398,6 +410,25 @@ abstract class UpdateCartCommon
             ],
         ];
         return json_encode((object)$payload);
+    }
+    
+    /**
+     * Create shipping assignment for shopping cart
+     *
+     * @param CartInterface $quote
+     */
+    public function setShippingAssignments($quote)
+    {
+        $shippingAssignments = [];
+        if (!$quote->isVirtual() && $quote->getItemsQty() > 0) {
+            $shippingAssignments[] = $this->shippingAssignmentProcessor->create($quote);
+        }
+        $cartExtension = $quote->getExtensionAttributes();
+        if ($cartExtension === null) {
+            $cartExtension = $this->cartExtensionFactory->create();
+        }
+        $cartExtension->setShippingAssignments($shippingAssignments);
+        $quote->setExtensionAttributes($cartExtension);
     }
 
     /**

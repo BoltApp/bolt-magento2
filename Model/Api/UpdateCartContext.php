@@ -42,6 +42,8 @@ use Bolt\Boltpay\Helper\Discount as DiscountHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Magento\Quote\Api\Data\CartExtensionFactory;
+use Magento\Quote\Model\Quote\ShippingAssignment\ShippingAssignmentProcessor;
 
 /**
  * Class UpdateCartContext
@@ -174,6 +176,16 @@ class UpdateCartContext
      * @var Decider
      */
     protected $featureSwitches;
+    
+    /**
+     * @var ShippingAssignmentProcessor
+     */
+    protected $shippingAssignmentProcessor;
+
+    /**
+     * @var CartExtensionFactory
+     */
+    protected $cartExtensionFactory;
 
     /**
      * UpdateCartContext constructor.
@@ -205,6 +217,8 @@ class UpdateCartContext
      * @param StockStateInterface         $stockStateInterface
      * @param CartRepositoryInterface     $cartRepositoryInterface
      * @param Decider                     $featureSwitches
+     * @param CartExtensionFactory        $cartExtensionFactory
+     * @param ShippingAssignmentProcessor $shippingAssignmentProcessor
      */
     public function __construct(
         Request                     $request,
@@ -231,7 +245,9 @@ class UpdateCartContext
         ProductRepositoryInterface  $productRepositoryInterface,
         StockStateInterface         $stockStateInterface,
         CartRepositoryInterface     $cartRepositoryInterface,
-        Decider                     $featureSwitches
+        Decider                     $featureSwitches,
+        CartExtensionFactory        $cartExtensionFactory = null,
+        ShippingAssignmentProcessor $shippingAssignmentProcessor = null
     ) {
         $this->request = $request;
         $this->response = $response;
@@ -259,6 +275,10 @@ class UpdateCartContext
         $this->stockStateInterface = $stockStateInterface;
         $this->cartRepositoryInterface = $cartRepositoryInterface;
         $this->featureSwitches = $featureSwitches;
+        $this->cartExtensionFactory = $cartExtensionFactory
+            ?? \Magento\Framework\App\ObjectManager::getInstance()->get(CartExtensionFactory::class);
+        $this->shippingAssignmentProcessor = $shippingAssignmentProcessor
+            ?? \Magento\Framework\App\ObjectManager::getInstance()->get(ShippingAssignmentProcessor::class);
     }
 
     /**
@@ -459,5 +479,21 @@ class UpdateCartContext
     public function getFeatureSwitches()
     {
         return $this->featureSwitches;
+    }
+    
+    /**
+     * @return CartExtensionFactory
+     */
+    public function getCartExtensionFactory()
+    {
+        return $this->cartExtensionFactory;
+    }
+    
+    /**
+     * @return ShippingAssignmentProcessor
+     */
+    public function getShippingAssignmentProcessor()
+    {
+        return $this->shippingAssignmentProcessor;
     }
 }

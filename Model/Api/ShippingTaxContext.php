@@ -32,6 +32,7 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterfaceFactory;
 use Bolt\Boltpay\Api\Data\StoreAddressInterfaceFactory;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Quote\Api\CartRepositoryInterface;
 
 /**
  * Class ShippingTaxContext
@@ -115,6 +116,13 @@ class ShippingTaxContext
      * @var EventsForThirdPartyModules
      */
     protected $eventsForThirdPartyModules;
+    
+    /**
+     * Quote repository.
+     *
+     * @var \Magento\Quote\Api\CartRepositoryInterface
+     */
+    protected $cartRepository;
 
     /**
      * Assigns local references to global resources
@@ -134,6 +142,7 @@ class ShippingTaxContext
      * @param ShipToStoreOptionInterfaceFactory $shipToStoreOptionFactory
      * @param StoreAddressInterfaceFactory $storeAddressFactory
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
+     * @param \Magento\Quote\Api\CartRepositoryInterface $cartRepository
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -150,7 +159,8 @@ class ShippingTaxContext
         ShippingOptionInterfaceFactory $shippingOptionFactory,
         ShipToStoreOptionInterfaceFactory $shipToStoreOptionFactory,
         StoreAddressInterfaceFactory $storeAddressFactory,
-        EventsForThirdPartyModules $eventsForThirdPartyModules
+        EventsForThirdPartyModules $eventsForThirdPartyModules,
+        CartRepositoryInterface $cartRepository
     ) {
         $this->hookHelper = $hookHelper;
         $this->cartHelper = $cartHelper;
@@ -167,6 +177,7 @@ class ShippingTaxContext
         $this->shipToStoreOptionFactory = $shipToStoreOptionFactory;
         $this->storeAddressFactory = $storeAddressFactory;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
+        $this->cartRepository = $cartRepository;
     }
 
     /**
@@ -287,5 +298,13 @@ class ShippingTaxContext
     public function getEventsForThirdPartyModules()
     {
         return $this->eventsForThirdPartyModules;
+    }
+    
+    /**
+     * @return CartRepositoryInterface
+     */
+    public function getCartRepository()
+    {
+        return $this->cartRepository;
     }
 }
