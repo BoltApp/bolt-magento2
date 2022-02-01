@@ -79,17 +79,12 @@ $integrationStatus = $block->getIntegrationStatus();
     <img class="failure" hidden="hidden" alt="failure" style="margin:-3px 5px" src="<?php echo $block->getViewFileUrl('images/rule_component_remove.gif') ?>"/>
     <span id="bolt_integration_keys_message_span"></span>
 </span>
-<div class="message message-notice" id="bolt_integration_not_exist_msg" <?= $integrationStatus !== '0' ? 'hidden="hidden"' : '' ?>>
-    <div>Magento API keys are necessary for Bolt. <br />See <a>details on bolt help site.</a></div>
-</div>
 <div class="message message-notice" id="bolt_integration_exits_proper" <?= $integrationStatus !== '1' ? 'hidden="hidden"' : '' ?>>
     <div>It looks like Magento API keys successfully sent to Bolt. If you need to send keys again please click button above.
-    <br />See <a>details on bolt help site.</a>
     </div>
 </div>
 <div class="message message-notice" id="bolt_integration_exits_improper" <?= $integrationStatus !== '2' ? 'hidden="hidden"' : '' ?>>
     <div>It looks like Magento API keys were created for <?= trim($block->getBoltOppositeMode()) ?> and now this store is in <?= trim($block->getBoltCurrentMode()) ?> mode.
     Please delete keys and generate them again.
-    <br />See <a>details on bolt help site.</a>
     </div>
 </div>
