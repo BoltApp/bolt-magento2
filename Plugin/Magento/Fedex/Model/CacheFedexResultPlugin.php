@@ -108,7 +108,7 @@ class CacheFedexResultPlugin
      */
     public function afterCollectRates(\Magento\Fedex\Model\Carrier $subject, $result, $request)
     {
-        if (!HookHelper::$fromBolt || !$subject->canCollectRates()) {
+        if (!HookHelper::$fromBolt || !$subject->canCollectRates() || !$result || $result->getError()) {
             return $result;
         }        
         $this->saveFedexResponseToCacheIfExist($subject, \Magento\Fedex\Model\Carrier::RATE_REQUEST_GENERAL);
