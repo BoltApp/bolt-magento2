@@ -221,5 +221,10 @@
 - Related Bolt `cart.create` endpoint bug fix preventing carts with a `qty` of `1`
 ## [v2.24.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.24.1) 2021-11-02
 - Fixed issue where a coupon granting free shipping would block the checkout flow.
-## [v2.25.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.25.0) 2022-01-17
-- Changelog TBD
+## [v2.25.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.25.0) 2022-02-03
+- Starting from this release, the Magento plugin supports two completely different types of integration: legacy and API driven.
+- (LEGACY) Shoppers will no longer switch between Magento Store accounts when [Bolt SSO](https://help.bolt.com/developers/guides/checkout-guides/managed-checkout/adobe-commerce-setup-guide/adobe-sso) is enabled on a store.
+- (LEGACY) Generally, the way Bolt collects discount information from Magento has been refactored and improved for efficiency.
+- Resolved an issue where shoppers were unable to place an order when applying a fixed-amount discount towards their cart total due to how the discount impacted shipping calculations. 
+- Resolved an issue where discounts applied to a cart displayed a generic nondescrispt `DISCOUNT` tag when missing an associated description. This caused confusion when multiple discounts were applied. Now, discounts applied to a cart display their discount name as the tag. (e.g., `BOGO2022`)
+- Resolved an issue where refund (credit) grand totals were mismatched when compared to order grand totals.
