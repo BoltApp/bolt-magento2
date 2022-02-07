@@ -380,9 +380,10 @@
                         <comment>Defaults to customer_note, if not set</comment>
                     </field>
                     <field id="connect_magento_integration_mode" translate="label" type="hidden" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
-                        <label>Magento API Keys</label>
+                        <label>Bolt Authentication</label>
                         <config_path>payment/boltpay/connect_magento_integration_mode</config_path>
                         <frontend_model>Bolt\Boltpay\Block\System\Config\IntegrationConnection</frontend_model>
+                        <comment><![CDATA[This will create an integration with the required permissions for your Magento installation to be used by Bolt. <a>Why does Bolt need my Magento API keys?</a>]]></comment>
                     </field>
                 </group>
                 <group id="third_party_modules" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">

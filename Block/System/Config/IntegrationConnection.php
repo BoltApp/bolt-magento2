@@ -28,17 +28,17 @@ class IntegrationConnection extends Field
 {
     const IntegrationConnection_BLOCK_TEMPLATE = 'Bolt_Boltpay::system/config/integrationconnection.phtml';
     const IntegrationConnection_BLOCK_NAME     = "Bolt_Boltpay.adminhtml.config.integrationconnection.template";
-    
+
     /**
      * @var Bolt\Boltpay\Helper\Config
      */
     protected $configHelper;
-    
+
     /**
      * @var Bolt\Boltpay\Helper\IntegrationManagement
      */
     protected $integrationManagement;
-    
+
     /**
      * @param Context $context
      * @param ConfigHelper $configHelper
@@ -56,7 +56,7 @@ class IntegrationConnection extends Field
         $this->configHelper = $configHelper;
         $this->integrationManagement = $integrationManagement;
     }
-    
+
     /**
      * Retrieve element HTML markup
      *
@@ -87,14 +87,14 @@ class IntegrationConnection extends Field
                 ]
             );
         $block->setTemplate(self::IntegrationConnection_BLOCK_TEMPLATE);
-      
+
         return ''
             . parent::_getElementHtml($element)
             . $this->getGenerateTokenButtonHtml($integrationStatus)
             . $block->toHtml()
         ;
     }
-    
+
     /**
      * Return ajax url for processing access token of Bolt associated Magento integration.
      *
@@ -104,7 +104,7 @@ class IntegrationConnection extends Field
     {
         return $this->getUrl('boltpay/system/processIntegrationToken');
     }
-    
+
     /**
      * Create button html to process access token of Bolt associated Magento integration.
      *
@@ -114,13 +114,13 @@ class IntegrationConnection extends Field
     {
         switch ($integrationStatus) {
             case '1':
-                $label = __('Re-send API keys to Bolt');
+                $label = __('Reauthenticate with Bolt');
                 break;
             case '2':
                 $label = __('Delete API keys');
                 break;
             default:
-                $label = __('Create and send API keys to Bolt');
+                $label = __('Authenticate with Bolt');
                 break;
         }
         $button = $this->getLayout()->createBlock(
