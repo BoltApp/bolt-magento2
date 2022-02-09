@@ -127,7 +127,7 @@ jobs:
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
-      - image: circleci/mysql:8.0
+      - image: cimg/mysql:8.0
         command: --default-authentication-plugin=mysql_native_password
         environment:
           MYSQL_ROOT_PASSWORD: ""
@@ -147,7 +147,7 @@ jobs:
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
-      - image: circleci/mysql:5.7
+      - image: cimg/mysql:5.7
     steps:
       - m2-php-test:
           cache_key_separator: php72mag23installed
@@ -161,7 +161,7 @@ jobs:
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
-      - image: circleci/mysql:5.7
+      - image: cimg/mysql:5.7
     steps:
       - m2-php-test:
           cache_key_separator: php71mag22installed
@@ -196,7 +196,7 @@ jobs:
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
-      - image: circleci/mysql:5.7
+      - image: cimg/mysql:5.7
     steps:
       - m2-php-test-for-merchant-branches
 
@@ -218,7 +218,7 @@ jobs:
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
-      - image: circleci/mysql:5.7
+      - image: cimg/mysql:5.7
     steps:
       - checkout
       - run:
