@@ -2231,7 +2231,10 @@ class Cart extends AbstractHelper
                         break;
                     case RuleInterface::COUPON_TYPE_NO_COUPON:
                     default:
-                        $description = trim($rule->getDescription()) ? $rule->getDescription() : $rule->getName();
+                        $description = $rule->getDescription();
+                        if (!$description && $this->deciderHelper->isUseRuleNameIfDescriptionEmpty()) {
+                            $description = $rule->getName();
+                        }
                         $discounts[] = [
                             'description'       => trim(__('Discount ') . $description),
                             'amount'            => $roundedAmount,
