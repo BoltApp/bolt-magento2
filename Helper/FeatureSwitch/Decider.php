@@ -441,4 +441,9 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_ALLOW_CUSTOM_CDN_URL_FOR_PRODUCTION);
     }
+
+    public function isUseRuleNameIfDescriptionEmpty()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_USE_RULE_NAME_IF_DESCRIPTION_EMPTY);
+    }
 }
