@@ -4051,7 +4051,7 @@ ORDER
             'type'              => 'fixed_amount',
         ],
         [
-            'description' => trim(__('Discount ') . 'Shopping cart price rule for the cart over $10'),
+            'description' => trim(__('Discount ')),
             'amount'      => $expectedDiscountAmountNoCoupon,
             'discount_category' => 'automatic_promotion',
             'discount_type'   => 'fixed_amount',
