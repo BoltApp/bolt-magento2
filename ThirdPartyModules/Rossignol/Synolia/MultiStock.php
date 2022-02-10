@@ -93,6 +93,17 @@ class MultiStock
         }
     }
     
+    public function beforeApplyDiscount(
+        $quote
+    ) {
+        try {
+            $store = $quote->getStore();
+            $this->storeManager->setCurrentStore($store->getCode());
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+    
     /**
      * @param mixed $cart
      * @param mixed $shipping_address

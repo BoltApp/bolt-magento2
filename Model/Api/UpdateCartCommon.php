@@ -283,6 +283,7 @@ abstract class UpdateCartCommon
      */
     public function preProcessWebhook($storeId = null)
     {
+        HookHelper::$fromBolt = true;
         $this->hookHelper->preProcessWebhook($storeId);
     }
 

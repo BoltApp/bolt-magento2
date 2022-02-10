@@ -263,4 +263,9 @@
         <plugin name="Bolt_Boltpay_ImaginationMedia_TmwGiftCard_ForceInvoicePlugin"
                 type="Bolt\Boltpay\Plugin\ImaginationMedia\TmwGiftCard\ForceInvoicePlugin" sortOrder="1"/>
     </type>
+    
+    <type name="Synolia\Store\Helper\Data">
+        <plugin name="Bolt_Boltpay_Synolia_Store_HelperDataPlugin"
+                type="Bolt\Boltpay\Plugin\Synolia\Store\HelperDataPlugin" sortOrder="1"/>
+    </type>
 </config>
