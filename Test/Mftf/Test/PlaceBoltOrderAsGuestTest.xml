@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ /**
+  * Copyright © Magento, Inc. All rights reserved.
+  * See COPYING.txt for license details.
+  *
+  * This file is part of the Klarna KP module
+  *
+  * (c) Klarna Bank AB (publ)
+  *
+  * For the full copyright and license information, please view the NOTICE
+  * and LICENSE files that were distributed with this source code.
+  */
+-->
+<tests xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/testSchema.xsd">
+    <test name="PlaceBoltOrderAsGuestTest">
+        <annotations>
+            <features value="Boltpay Payments"/>
+            <stories value="Place an order as a guest customer"/>
+            <title value="Place order as guest"/>
+            <description value="A guest customer should be able to place an order with Boltpay Payments"/>
+            <severity value="CRITICAL"/>
+        </annotations>
+        <before>
+            <createData entity="SimpleTwo" stepKey="createSimpleProduct">
+                <field key="price">123.45</field>
+            </createData>
+        </before>
+        <after>
+            <deleteData createDataKey="createSimpleProduct" stepKey="deleteSimpleProduct"/>
+        </after>
+        <!--Go to product page-->
+        <actionGroup ref="GoToCreatedProductPageAndWaitForAddToCart" stepKey="GoToCreatedProductPageAndWaitForAddToCart">
+            <argument name="url" value="$$createSimpleProduct.custom_attributes[url_key]$$.html"/>
+        </actionGroup>
+
+        <!--Add product to shopping cart-->
+        <actionGroup ref="AddToCartFromStorefrontProductPageActionGroup" stepKey="AddToCartFromStorefrontProductPage">
+            <argument name="productName" value="$$createSimpleProduct.name$$"/>
+        </actionGroup>
+
+        <!-- Go to cart page and click Bolt button to open Bolt popup -->
+        <actionGroup ref="GotoCartPageAndOpenBoltPopupActionGroup" stepKey="GotoCartPageAndOpenBoltPopup"/>
+
+        <!-- Fill address info and click continue button in the shipping step in Bolt popup -->
+        <actionGroup ref="FillShippingAddressAndClickContinueButtonInShippingStepInBoltPopupActionGroup" stepKey="FillShippingAddressAndClickContinueButtonInShippingStepInBoltPopup"/>
+
+        <!-- Automatically chose the first shipping option and click the Pay button in Bolt popup -->
+        <actionGroup ref="FillCardInfoAndClickPayButtonInPaymentStepInBoltPopupActionGroup" stepKey="FillCardInfoAndClickPayButtonInPaymentStepInBoltPopup"/>
+        <wait time="30" stepKey="waitForSuccessPage"/>
+
+        <!-- Check if customer is redirected to the checkout success page -->
+        <seeInCurrentUrl url="{{CheckoutSuccessPage.url}}" stepKey="assertCheckoutSuccessPage"/>
+    </test>
+</tests>

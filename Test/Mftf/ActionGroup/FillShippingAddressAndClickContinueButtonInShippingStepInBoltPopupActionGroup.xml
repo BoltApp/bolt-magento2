@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ /**
+  * Copyright © Magento, Inc. All rights reserved.
+  * See COPYING.txt for license details.
+  */
+-->
+
+<actionGroups xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/actionGroupSchema.xsd">
+    <actionGroup name="FillShippingAddressAndClickContinueButtonInShippingStepInBoltPopupActionGroup">
+        <switchToIFrame stepKey="switchToBoltIframe" selector="{{BoltCheckoutSection.BoltModalIFrame}}"/>
+        <fillField stepKey="fillEmail" selector="{{BoltCheckoutSection.email}}" userInput="johnmctest1@bolt.com"/>
+        <selectOption stepKey="fillCountryCodeSelector" selector="{{BoltCheckoutSection.countryCodeSelector}}" userInput="US"/>
+        <fillField stepKey="fillPhone" selector="{{BoltCheckoutSection.phone}}" userInput="8888888888"/>
+        <fillField stepKey="fillShippingFirstName" selector="{{BoltCheckoutSection.shippingFirstName}}" userInput="John"/>
+        <fillField stepKey="fillShippingLastName" selector="{{BoltCheckoutSection.shippingLastName}}" userInput="MC"/>
+        <fillField stepKey="fillShippingAddressLine1" selector="{{BoltCheckoutSection.shippingAddressLine1}}" userInput="4535 ANNALEE Way"/>
+        <selectOption stepKey="fillShippingCountry" selector="{{BoltCheckoutSection.shippingCountry}}"  userInput="US"/>
+        <selectOption stepKey="fillShippingState" selector="{{BoltCheckoutSection.shippingState}}" userInput="Tennessee"/>
+        <fillField stepKey="fillShippingCity" selector="{{BoltCheckoutSection.shippingCity}}" userInput="Knoxville"/>
+        <fillField stepKey="fillShippingZip" selector="{{BoltCheckoutSection.shippingZip}}" userInput="37921"/>
+        <click selector="{{BoltCheckoutSection.checkoutContinueButton}}" stepKey="clickContinueButtonInShippingStep"/>
+    </actionGroup>
+</actionGroups>
