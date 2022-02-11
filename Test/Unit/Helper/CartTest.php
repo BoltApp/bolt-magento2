@@ -3955,7 +3955,7 @@ ORDER
         ->getMock();
         $rule3->expects(static::once())->method('getCouponType')
         ->willReturn('NO_COUPON');
-        $rule3->expects(static::exactly(2))->method('getDescription')
+        $rule3->expects(static::any())->method('getDescription')
         ->willReturn('Shopping cart price rule for the cart over $10');
         $rule3->method('getSimpleAction')->willReturn('by_fixed');
 
