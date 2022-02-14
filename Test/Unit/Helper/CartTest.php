@@ -448,7 +448,7 @@ class CartTest extends BoltTestCase
             DeciderHelper::class,
             ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical',
              'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata', 'isCustomizableOptionsSupport',
-             'isPreventBoltCartForQuotesWithError','isAPIDrivenIntegrationEnabled']
+             'isPreventBoltCartForQuotesWithError','isAPIDrivenIntegrationEnabled','isUseRuleNameIfDescriptionEmpty']
         );
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
@@ -3955,7 +3955,7 @@ ORDER
         ->getMock();
         $rule3->expects(static::once())->method('getCouponType')
         ->willReturn('NO_COUPON');
-        $rule3->expects(static::exactly(2))->method('getDescription')
+        $rule3->expects(static::any())->method('getDescription')
         ->willReturn('Shopping cart price rule for the cart over $10');
         $rule3->method('getSimpleAction')->willReturn('by_fixed');
 
@@ -3986,7 +3986,7 @@ ORDER
         $rule6->expects(static::once())->method('getCouponType')
             ->willReturn('NO_COUPON');
         $rule6->expects(static::once())->method('getDescription')->willReturn(null);
-        $rule6->expects(static::once())->method('getName')->willReturn('Shopping cart price rule for the cart over $10');
+        $rule6->expects(static::never())->method('getName');
         $rule6->method('getSimpleAction')->willReturn('by_fixed');
 
         $this->ruleRepository->expects(static::exactly(5))
@@ -4051,7 +4051,7 @@ ORDER
             'type'              => 'fixed_amount',
         ],
         [
-            'description' => trim(__('Discount ') . 'Shopping cart price rule for the cart over $10'),
+            'description' => trim(__('Discount ')),
             'amount'      => $expectedDiscountAmountNoCoupon,
             'discount_category' => 'automatic_promotion',
             'discount_type'   => 'fixed_amount',
