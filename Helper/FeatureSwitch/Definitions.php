@@ -262,6 +262,11 @@ class Definitions
      */
     const M2_ALLOW_CUSTOM_CDN_URL_FOR_PRODUCTION = 'M2_ALLOW_CUSTOM_CDN_URL_FOR_PRODUCTION';
 
+    /**
+     * Use rule name as coupon description if rule description is empty
+     */
+    const M2_USE_RULE_NAME_IF_DESCRIPTION_EMPTY = 'M2_USE_RULE_NAME_IF_DESCRIPTION_EMPTY';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -529,6 +534,12 @@ class Definitions
         ],
         self::M2_ALLOW_CUSTOM_CDN_URL_FOR_PRODUCTION => [
             self::NAME_KEY        => self::M2_ALLOW_CUSTOM_CDN_URL_FOR_PRODUCTION,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_USE_RULE_NAME_IF_DESCRIPTION_EMPTY => [
+            self::NAME_KEY        => self::M2_USE_RULE_NAME_IF_DESCRIPTION_EMPTY,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
