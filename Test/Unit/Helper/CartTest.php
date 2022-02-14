@@ -3986,7 +3986,7 @@ ORDER
         $rule6->expects(static::once())->method('getCouponType')
             ->willReturn('NO_COUPON');
         $rule6->expects(static::once())->method('getDescription')->willReturn(null);
-        $rule6->expects(static::once())->method('getName')->willReturn('Shopping cart price rule for the cart over $10');
+        $rule6->expects(static::never())->method('getName');
         $rule6->method('getSimpleAction')->willReturn('by_fixed');
 
         $this->ruleRepository->expects(static::exactly(5))
