@@ -50,13 +50,10 @@ class GetDefaultOrderStatuses implements \Bolt\Boltpay\Api\GetDefaultOrderStatus
         $this->defaultOrderStatusFactory = $defaultOrderStatusFactory;
     }
 
-
     /**
      * Get default order statuses
      *
      * @api
-     *
-     * @param string $cartId
      *
      * @return \Bolt\Boltpay\Api\Data\DefaultOrderStatusInterface[]
      */

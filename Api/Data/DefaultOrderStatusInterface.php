@@ -35,7 +35,7 @@ interface DefaultOrderStatusInterface
     /**
      * Set state.
      *
-     * @param string $name
+     * @param string $state
      *
      * @return $this
      * @api
@@ -53,7 +53,7 @@ interface DefaultOrderStatusInterface
     /**
      * Set status.
      *
-     * @param string $version
+     * @param string $status
      *
      * @return $this
      * @api

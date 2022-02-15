@@ -26,8 +26,6 @@ interface GetDefaultOrderStatusesInterface
      *
      * @api
      *
-     * @param string $cartId
-     *
      * @return \Bolt\Boltpay\Api\Data\DefaultOrderStatusInterface[]
      */
     public function get();

@@ -50,7 +50,7 @@ class DefaultOrderStatus implements DefaultOrderStatusInterface, \JsonSerializab
     /**
      * Set state.
      *
-     * @param string $name
+     * @param string $state
      *
      * @return $this
      * @api
@@ -76,7 +76,7 @@ class DefaultOrderStatus implements DefaultOrderStatusInterface, \JsonSerializab
     /**
      * Set status.
      *
-     * @param string $version
+     * @param string $status
      *
      * @return $this
      * @api
