@@ -229,4 +229,6 @@
 - Resolved an issue where discounts applied to a cart displayed a generic nondescript `DISCOUNT` tag when missing an associated description. This caused confusion when multiple discounts were applied. Now, discounts applied to a cart display their discount name as the tag. (e.g., `BOGO2022`)
 - Resolved an issue where refund (credit) grand totals were mismatched when compared to order grand totals.
 ## [v2.25.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.25.1) 2022-02-14
-- Resolved an issue where automated discounts with empty discount descriptions were showing as the name (set in discount name field) that merchants had set for the discount rule. Now, discount descriptions will show as the word "Discount", regardless of what the rule name was set as. 
+- (LEGACY) Resolved an issue where automated discounts with empty discount descriptions were showing as the name (set in discount name field) that merchants had set for the discount rule. Now, discount descriptions will show as the word "Discount", regardless of what the rule name was set as. 
+- (API) Added a new scope to our API to enable use of Magento's GET default order status per order state setting.  To support all invoice endpoints, the endpoint [`Magento_Sales::sales_invoice`](https://github.com/magento/magento2/commit/4b0eeb6a6d933c92416cd6eca48d720d48508d61) has been included.
+- (API) Implemented integration to use Magento's GET invoice endpoint for future use in our plugin's webhook handling.
