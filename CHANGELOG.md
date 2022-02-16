@@ -230,3 +230,14 @@
 - Resolved an issue where refund (credit) grand totals were mismatched when compared to order grand totals.
 ## [v2.25.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.25.1) 2022-02-14
 - Changelog TBD
+
+
+## [v2.26.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.0) 2022-06-03
+
+- Magento Admin users can now use Magento's [`carts/mine/payment-information`](https://devdocs.magento.com/redoc/2.3/async-customer-rest-api.html#operation/checkoutPaymentInformationManagementV1SavePaymentInformationAndPlaceOrderPost) endpoint (applies payment method and creates order) via Bolt's Magento 2 plugin integration.
+- Added `StripeID` into the `payment-information` object as the `authorization_id` property of the transaction for sending to Magento.
+- Refactored functions for collecting cart total when no discounts are found.
+- Resolved an issue where, occasionally, remote requests to Fedex were taking too long for a response, thus causing a timeout error during the Bolt API request. Now, responses are cached and then (if unchanged and valid) used when needed to prevent timeout errors in the future.
+- Resolved an issue where the checkout flow was blocked when a fixed amount discount was applied to whole carts as part of a sale. The plugin will no longer add the full discount to shipping discounts when calculated tax. 
+- Resolved an issue where initial integration objects meet general minimum character requirements.
+- (API-DRIVEN, BETA) For API-Driven Integrations, the Bolt Checkout Type is set to redirect back office orders to Magento.
