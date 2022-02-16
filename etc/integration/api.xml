@@ -43,6 +43,7 @@
             <resource name="Magento_Sales::review_payment" />
             <resource name="Magento_Sales::capture" />
             <resource name="Magento_Sales::invoice" />
+            <resource name="Magento_Sales::sales_invoice" />
             <resource name="Magento_Sales::creditmemo" />
             <resource name="Magento_Sales::hold" />
             <resource name="Magento_Sales::unhold" />
