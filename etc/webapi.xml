@@ -156,4 +156,11 @@
             <parameter name="cartId" force="true">%cart_id%</parameter>
         </data>
     </route>
+    <!--Get default order statuses-->
+    <route url="/V1/bolt/boltpay/defaultOrderStatuses" method="GET">
+        <service class="Bolt\Boltpay\Api\GetDefaultOrderStatusesInterface" method="get"/>
+        <resources>
+            <resource ref="Magento_Sales::create" />
+        </resources>
+    </route>
 </routes>

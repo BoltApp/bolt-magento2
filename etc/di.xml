@@ -101,6 +101,10 @@
     <preference for="Bolt\Boltpay\Api\CartManagementInterface" type="Bolt\Boltpay\Model\Api\CartManagement" />
     <preference for="Bolt\Boltpay\Api\Data\GetMaskedQuoteIDDataInterface"   type="Bolt\Boltpay\Model\Api\Data\GetMaskedQuoteIDData" />
 
+    <!-- For get default order statuses endpoint -->
+    <preference for="Bolt\Boltpay\Api\GetDefaultOrderStatusesInterface" type="Bolt\Boltpay\Model\Api\GetDefaultOrderStatuses" />
+    <preference for="Bolt\Boltpay\Api\Data\DefaultOrderStatusInterface"   type="Bolt\Boltpay\Model\Api\Data\DefaultOrderStatus" />
+
     <virtualType name="boltUnirgyGiftCert" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
             <argument name="moduleName" xsi:type="string">Unirgy_Giftcert</argument>
