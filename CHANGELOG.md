@@ -226,7 +226,9 @@
 - (LEGACY) Shoppers will no longer switch between Magento Store accounts when [Bolt SSO](https://help.bolt.com/developers/guides/checkout-guides/managed-checkout/adobe-commerce-setup-guide/adobe-sso) is enabled on a store.
 - (LEGACY) Generally, the way Bolt collects discount information from Magento has been refactored and improved for efficiency.
 - Resolved an issue where shoppers were unable to place an order when applying a fixed-amount discount towards their cart total due to how the discount impacted shipping calculations. 
-- Resolved an issue where discounts applied to a cart displayed a generic nondescrispt `DISCOUNT` tag when missing an associated description. This caused confusion when multiple discounts were applied. Now, discounts applied to a cart display their discount name as the tag. (e.g., `BOGO2022`)
+- Resolved an issue where discounts applied to a cart displayed a generic nondescript `DISCOUNT` tag when missing an associated description. This caused confusion when multiple discounts were applied. Now, discounts applied to a cart display their discount name as the tag. (e.g., `BOGO2022`)
 - Resolved an issue where refund (credit) grand totals were mismatched when compared to order grand totals.
 ## [v2.25.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.25.1) 2022-02-14
-- Changelog TBD
+- (LEGACY) Resolved an issue where automated discounts with empty discount descriptions were showing as the name (set in discount name field) that merchants had set for the discount rule. Now, discount descriptions will show as the word "Discount", regardless of what the rule name was set as. 
+- (API) Added a new scope to Bolt's M2 Plugin API to enable use of Magento's `Magento\Sales\Model\Order` endpoint to set status during webhook handling.  
+- (API) Implemented integration to use Magento's GET invoice endpoint to support all invoice endpoints([`Magento_Sales::sales_invoice`](https://github.com/magento/magento2/commit/4b0eeb6a6d933c92416cd6eca48d720d48508d61)).
