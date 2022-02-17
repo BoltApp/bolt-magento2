@@ -21,6 +21,7 @@ use Bolt\Boltpay\Helper\Bugsnag as BugsnagHelper;
 use Magento\Quote\Model\Quote;
 use Magento\Catalog\Api\ProductRepositoryInterface as ProductRepository;
 use Magento\Store\Model\StoreManagerInterface as StoreManager;
+use Magento\Quote\Api\CartRepositoryInterface;
 
 /**
  * Class MultiStock
@@ -44,6 +45,11 @@ class MultiStock
      * @var BugsnagHelper
      */
     private $bugsnagHelper;
+    
+    /**
+     * @var CartRepositoryInterface
+     */
+    private $quoteRepository;
 
     /**
      * MultiStock constructor.
@@ -54,11 +60,13 @@ class MultiStock
      */
     public function __construct(
         ProductRepository $productRepository,
+        CartRepositoryInterface $quoteRepository,
         StoreManager $storeManager,
         BugsnagHelper $bugsnagHelper
     ) {
         $this->productRepository = $productRepository;
-        $this->storeManager      = $storeManager;
+        $this->quoteRepository = $quoteRepository;
+        $this->storeManager = $storeManager;
         $this->bugsnagHelper = $bugsnagHelper;
     }
 
@@ -83,17 +91,6 @@ class MultiStock
      * Quote $quote
      */
     public function beforePrepareQuote(
-        $quote
-    ) {
-        try {
-            $store = $quote->getStore();
-            $this->storeManager->setCurrentStore($store->getCode());
-        } catch (\Exception $e) {
-            $this->bugsnagHelper->notifyException($e);
-        }
-    }
-    
-    public function beforeApplyDiscount(
         $quote
     ) {
         try {
@@ -157,6 +154,23 @@ class MultiStock
             $this->bugsnagHelper->notifyException($e);
         }
         
+    }
+    
+    /**
+     * @param int $quoteId
+     */
+    public function beforeHandleUpdateCartRequest(
+        $quoteId
+    ) {
+        try {
+            $quote = $this->quoteRepository->get($quoteId);
+            $store = $quote->getStore();
+            $this->storeManager->setCurrentStore($store->getCode());            
+            // Reset the quote errors after setting correct store code.
+            $this->quoteRepository->save($quote);
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
     }
     
     /**

@@ -133,11 +133,6 @@ class EventsForThirdPartyModules
                     "module" => "IDme_GroupVerification",
                     "boltClass" => IDme_GroupVerification::class,
                 ],
-                'Rossignol_Synolia_MultiStock' => [
-                    'module'      => 'Synolia_MultiStock',
-                    'checkClasses' => ["Synolia\MultiStock\Plugin\Magento\CatalogInventory\ResourceModel\Stock\StatusPlugin"],
-                    'boltClass'   => Rossignol_Synolia_MultiStock::class,
-                ],
             ]
         ],
         'beforePrepareQuote' => [
@@ -449,6 +444,15 @@ class EventsForThirdPartyModules
             ],
         ],
         'beforeHandleCreateCartRequest' => [
+            "listeners" => [
+                'Rossignol_Synolia_MultiStock' => [
+                    'module'      => 'Synolia_MultiStock',
+                    'checkClasses' => ["Synolia\MultiStock\Plugin\Magento\CatalogInventory\ResourceModel\Stock\StatusPlugin"],
+                    'boltClass'   => Rossignol_Synolia_MultiStock::class,
+                ],
+            ],
+        ],
+        'beforeHandleUpdateCartRequest' => [
             "listeners" => [
                 'Rossignol_Synolia_MultiStock' => [
                     'module'      => 'Synolia_MultiStock',
