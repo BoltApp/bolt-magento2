@@ -97,7 +97,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
 
             // Bolt server sends immutableQuoteId as order reference
             $immutableQuoteId = $cart['order_reference'];
-
+            $this->eventsForThirdPartyModules->dispatchEvent("beforeHandleUpdateCartRequest", $immutableQuoteId);
             $result = $this->validateQuote($immutableQuoteId);
             list($parentQuote, $immutableQuote) = $result;
 
