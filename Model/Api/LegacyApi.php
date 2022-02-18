@@ -176,13 +176,15 @@ class LegacyApi implements LegacyApiInterface
      * Shipping hook
      * @param mixed $cart cart details
      * @param mixed $shipping_address shipping address
+     * @param mixed $cart_shipment_type selected shipping option
      * @return \Bolt\Boltpay\Api\Data\ShippingDataInterface
      */
-    public function getShippingOptions($cart, $shipping_address)
+    public function getShippingOptions($cart, $shipping_address, $cart_shipment_type = null)
     {
         return $this->shipping->execute(
             $cart,
-            $shipping_address
+            $shipping_address,
+            $cart_shipment_type
         );
     }
 
@@ -193,15 +195,17 @@ class LegacyApi implements LegacyApiInterface
      * Get tax for a given shipping option.
      * @param mixed $cart cart details
      * @param mixed $shipping_address shipping address
+     * @param mixed $cart_shipment_type selected shipping option
      * @param mixed $shipping_option selected shipping option
      * @param mixed $ship_to_store_option selected ship to store option
      * @return \Bolt\Boltpay\Api\Data\TaxDataInterface
      */
-    public function getTax($cart, $shipping_address, $shipping_option = null, $ship_to_store_option = null)
+    public function getTax($cart, $shipping_address, $cart_shipment_type = null, $shipping_option = null, $ship_to_store_option = null)
     {
         return $this->tax->execute(
             $cart,
             $shipping_address,
+            $cart_shipment_type,
             $shipping_option,
             $ship_to_store_option
         );

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <fieldset name="bolt_shipment_type_cat">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="label" xsi:type="string" translate="true">Bolt Pay Options</item>
+                <item name="sortOrder" xsi:type="number">100</item>
+                <item name="collapsible" xsi:type="boolean">true</item>
+            </item>
+            <item name="js_config" xsi:type="array">
+                <item name="provider" xsi:type="string">category_form.category_form_data_source</item>
+                <item name="deps" xsi:type="string">category_form.category_form_data_source</item>
+            </item>
+        </argument>
+
+        <container name="container_bolt_shipment_type_cat">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="formElement" xsi:type="string">container</item>
+                    <item name="component" xsi:type="string">Magento_Ui/js/form/components/group</item>
+                    <item name="dataScope" xsi:type="string"/>
+                    <item name="sortOrder" xsi:type="number">10</item>
+                </item>
+            </argument>
+            <field name="bolt_shipment_type_cat_selector">
+                <argument name="data" xsi:type="array">
+                    <item name="options" xsi:type="object">Bolt\Boltpay\Model\Config\Source\ShipmentType</item>
+                    <item name="config" xsi:type="array">
+                        <item name="label" xsi:type="string" translate="true">Shipment Type</item>
+                        <item name="comment" xsi:type="string" translate="true">Leave -- Default Config -- to keep using the Stores > Configuration > Hide Price settings</item>
+                        <item name="formElement" xsi:type="string">select</item>
+                        <item name="scopeLabel" xsi:type="string">[STORE VIEW]</item>
+                        <item name="dataScope" xsi:type="string">bolt_shipment_type_cat</item>
+                        <item name="caption" xsi:type="string" translate="true">-- Please Select --</item>
+                    </item>
+                </argument>
+            </field>
+        </container>
+    </fieldset>
+</form>

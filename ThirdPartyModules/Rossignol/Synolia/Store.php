@@ -18,7 +18,12 @@
 namespace Bolt\Boltpay\ThirdPartyModules\Rossignol\Synolia;
 
 use Synolia\Store\Model\Carrier as InStorePickup;
+use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Bugsnag as BugsnagHelper;
+use Bolt\Boltpay\Api\Data\StoreAddressInterfaceFactory;
+use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterfaceFactory;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\InventorySourceSelection\Model\Address;
 
 /**
  * Class Store
@@ -31,6 +36,28 @@ class Store
      * @var BugsnagHelper
      */
     private $bugsnagHelper;
+    
+    /**
+     * @var OrderHelper
+     */
+    private $orderHelper;
+    
+    /**
+     * @var StoreAddressInterfaceFactory
+     */
+    protected $storeAddressFactory;
+    
+    /**
+     * @var ShipToStoreOptionInterfaceFactory
+     */
+    protected $shipToStoreOptionFactory;
+    
+    /**
+     * Store manager
+     *
+     * @var \Magento\Store\Model\StoreManagerInterface
+     */
+    protected $storeManager;
 
     /**
      * Store constructor.
@@ -38,9 +65,17 @@ class Store
      * @param BugsnagHelper $bugsnagHelper
      */
     public function __construct(
-        BugsnagHelper $bugsnagHelper
+        BugsnagHelper $bugsnagHelper,
+        OrderHelper $orderHelper,
+        StoreAddressInterfaceFactory $storeAddressFactory,
+        ShipToStoreOptionInterfaceFactory $shipToStoreOptionFactory,
+        StoreManagerInterface $storeManager
     ) {
         $this->bugsnagHelper = $bugsnagHelper;
+        $this->orderHelper = $orderHelper;
+        $this->storeAddressFactory = $storeAddressFactory;
+        $this->shipToStoreOptionFactory = $shipToStoreOptionFactory;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -52,24 +87,235 @@ class Store
      */
     public function getShipToStoreOptions(
         $result,
+        $synoliaStoreCollectionFactory,
+        $addressInterfaceFactory,
+        $getLatsLngsFromAddress,
         $quote,
         $shippingOptions,
-        $addressData
+        $addressData,
+        $cart_shipment_type
     ) {
         try {
-            if (!empty($shippingOptions)) {
-                $tmpShippingOptions = [];
-                foreach ($shippingOptions as $shippingOption) {
-                    if ($shippingOption->getReference() !== InStorePickup::CARRIER_CODE.'_'.InStorePickup::CARRIER_CODE) {
+            $tmpShippingOptions = [];
+            $shipToStoreOptions = [];
+            $hasInStorePickup = false;
+            $inStorePickupCost = 0;
+            foreach ($shippingOptions as $shippingOption) {
+                if ($shippingOption->getReference() !== InStorePickup::CARRIER_CODE.'_'.InStorePickup::CARRIER_CODE) {
+                    if ($cart_shipment_type != 'ship_to_store') {
                         $tmpShippingOptions[] = $shippingOption;
                     }
-                }                
-                $result = [[], $tmpShippingOptions];
-            }            
+                } else {
+                    $hasInStorePickup = true;
+                    $inStorePickupCost = $shippingOption->getCost();
+                }
+            }
+            if ($hasInStorePickup) {
+                $sourceSelectionAddress = $addressInterfaceFactory->create(
+                    [
+                        'country' => $addressData['country_code'],
+                        'postcode' => $addressData['postal_code'],
+                        'street' => $addressData['street_address1'],
+                        'region' => $addressData['region'],
+                        'city' => $addressData['locality']
+                    ]
+                );
+                $latsLngs = $getLatsLngsFromAddress->execute($sourceSelectionAddress);
+                if (!empty($latsLngs)) {
+                    $latsLng = $latsLngs[0];
+                    $collection = $synoliaStoreCollectionFactory->create();
+                    $collection->addFieldToFilter('enable_clickandcollect', ['eq' => 1])
+                            ->addFieldToFilter('is_active', true)
+                            ->addFieldToFilter('store', array('like' => '%'.$this->storeManager->getStore()->getCode().'%'));
+                    $validStores = [];
+                    foreach ($collection as $store) {        
+                        $distance = $this->vincentyGreatCircleDistance($latsLng->getLat(), $latsLng->getLng(), $store->getLatitude(), $store->getLongitude());
+                        if ($distance < 200) {
+                            $validStores[$distance * 100] = $store;                       
+                        }
+                    }
+                    ksort($validStores);
+                    foreach ($validStores as $distance => $store) {
+                        $storeAddress = $this->storeAddressFactory->create();
+                        $storeAddress->setStreetAddress1(is_null($store->getStreet()) ? '' : $store->getStreet());
+                        $storeAddress->setStreetAddress2('');
+                        $storeAddress->setLocality(is_null($store->getCity()) ? '' : $store->getCity());
+                        $storeAddress->setRegion('');
+                        $storeAddress->setPostalCode(is_null($store->getPostalCode()) ? '' : $store->getPostalCode());
+                        $storeAddress->setCountryCode(is_null($store->getCountry()) ? '' : $store->getCountry());
+    
+                        $shipToStoreOption = $this->shipToStoreOptionFactory->create();
+    
+                        $shipToStoreOption->setReference(InStorePickup::CARRIER_CODE.'_'.InStorePickup::CARRIER_CODE . '_' . $store->getIdentifier() . '_' . $store->getStoreId());
+                        $shipToStoreOption->setCost($inStorePickupCost);
+                        $shipToStoreOption->setStoreName(is_null($store->getName()) ? '' : $store->getName());
+                        $shipToStoreOption->setAddress($storeAddress);
+                        $shipToStoreOption->setDistance(round($distance / 100, 2));
+                        $shipToStoreOption->setDistanceUnit('km');
+    
+                        $shipToStoreOptions[] = $shipToStoreOption;
+                    }
+                }
+            }
+            $result = [$shipToStoreOptions, $tmpShippingOptions];           
         } catch (\Exception $e) {
+$txt = var_export(date('H:i:s'), true);
+file_put_contents(dirname(__FILE__).'/new1.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
+$txt = var_export($e->getMessage(), true);
+file_put_contents(dirname(__FILE__).'/new1.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
             $this->bugsnagHelper->notifyException($e);
         } finally {
             return $result;
         }
+    }
+    
+    /**
+     * @param array                     $result
+     * @param Magento\Quote\Model\Quote $quote
+     * @param array                     $ship_to_store_option
+     * @param array                     $addressData
+     * @return array
+     */
+    public function getShipToStoreCarrierMethodCodes(
+        $result,
+        $quote,
+        $ship_to_store_option,
+        $addressData
+    ) {
+        $referenceCodes = explode('_', $ship_to_store_option['reference']);
+        if ($this->checkIfRossignolSynoliaInStorePickupByCode($referenceCodes)) {
+            $quote->setClickandcollectId($referenceCodes[3]);
+            $shippingAddress = $quote->getShippingAddress();
+            $shippingAddress->setClickandcollectIdentifier($referenceCodes[2]);
+            $shippingAddress->setShippingMethod('clickandcollect_clickandcollect');
+            return [$referenceCodes[0], $referenceCodes[1]];
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * @param Magento\InventoryInStorePickupQuote\Model\ToQuoteAddress $addressConverter
+     * @param Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface $getPickupLocation
+     * @param Magento\Quote\Model\Quote $quote
+     * @param \stdClass                 $transaction
+     * @return array
+     */
+    public function setInStoreShippingAddressForPrepareQuote(
+        $quote,
+        $transaction
+    ) {
+        try {
+            if (isset($transaction->order->cart->in_store_shipments[0]->shipment)) {
+                $shipment = $transaction->order->cart->in_store_shipments[0]->shipment;
+                $referenceCodes = explode('_', $shipment->reference);
+                if ($this->checkIfRossignolSynoliaInStorePickupByCode($referenceCodes)) {
+                    $address = $transaction->order->cart->in_store_shipments[0]->address ?? null;
+                    if ($address) {
+                        $address->country_code = 'US'; 
+                        $this->orderHelper->setAddress($quote->getShippingAddress(), $address);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+    
+    /**
+     * @param Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation $setAddressPickupLocation
+     * @param Magento\Quote\Model\Quote $quote
+     * @param \stdClass                 $transaction
+     * @return array
+     */
+    public function setInStoreShippingMethodForPrepareQuote(
+        $quote,
+        $transaction
+    ) {
+        try {
+            if (isset($transaction->order->cart->in_store_shipments[0]->shipment)) {
+                $shipment = $transaction->order->cart->in_store_shipments[0]->shipment;
+                $referenceCodes = explode('_', $shipment->reference);
+                if ($this->checkIfRossignolSynoliaInStorePickupByCode($referenceCodes)) {
+                    $quote->setClickandcollectId($referenceCodes[3]);
+                    $shippingAddress = $quote->getShippingAddress();
+                    $shippingAddress->setCollectShippingRates(true);
+                    $shippingAddress->setClickandcollectIdentifier($referenceCodes[2]);
+                    $shippingAddress->setShippingMethod('clickandcollect_clickandcollect')->save();
+                }
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+    
+    /**
+     * @param Magento\InventoryInStorePickupQuote\Model\ToQuoteAddress $addressConverter
+     * @param Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface $getPickupLocation
+     * @param Magento\Quote\Model\Quote $quote
+     * @param \stdClass                 $transaction
+     * @return array
+     */
+    public function isInStorePickupShipping(
+        $result,
+        $quote,
+        $transaction
+    ) {
+        if (isset($transaction->order->cart->in_store_shipments[0]->address)) {
+            $referenceCodes = explode('_', $transaction->order->cart->in_store_shipments[0]->shipment->reference);
+            if ($this->checkIfRossignolSynoliaInStorePickupByCode($referenceCodes)) {
+                $address = $transaction->order->cart->in_store_shipments[0]->address ?? null;
+                return $address;
+            }
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * @param array $referenceCodes
+     * @return bool
+     */
+    private function checkIfRossignolSynoliaInStorePickupByCode($referenceCodes)
+    {
+        if (count($referenceCodes) > 2 &&
+            $referenceCodes[0] . '_' . $referenceCodes[1] == InStorePickup::CARRIER_CODE.'_'.InStorePickup::CARRIER_CODE) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Calculates the great-circle distance between two points, with the Vincenty formula.
+     * http://en.wikipedia.org/wiki/Great-circle_distance#Formulas
+     *
+     * @param float $latitudeFrom Latitude of start point in [deg decimal]
+     * @param float $longitudeFrom Longitude of start point in [deg decimal]
+     * @param float $latitudeTo Latitude of target point in [deg decimal]
+     * @param float $longitudeTo Longitude of target point in [deg decimal]
+     * @param float $earthRadius Mean earth radius in [m]
+     * @return float Distance between points in [m] (same as earthRadius)
+     */
+    public function vincentyGreatCircleDistance(
+        $latitudeFrom,
+        $longitudeFrom,
+        $latitudeTo,
+        $longitudeTo,
+        $earthRadius = 6371000
+    ) {
+        // convert from degrees to radians
+        $latFrom = deg2rad($latitudeFrom);
+        $lonFrom = deg2rad($longitudeFrom);
+        $latTo = deg2rad($latitudeTo);
+        $lonTo = deg2rad($longitudeTo);
+      
+        $lonDelta = $lonTo - $lonFrom;
+        $a = pow(cos($latTo) * sin($lonDelta), 2) +
+            pow(cos($latFrom) * sin($latTo) - sin($latFrom) * cos($latTo) * cos($lonDelta), 2);
+        $b = sin($latFrom) * sin($latTo) + cos($latFrom) * cos($latTo) * cos($lonDelta);
+      
+        $angle = atan2(sqrt($a), $b);
+        return round($angle * $earthRadius / 1000, 2);
     }
 }

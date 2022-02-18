@@ -64,6 +64,7 @@ use Magento\SalesRule\Model\RuleRepository;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\ScopeInterface;
 use Zend_Http_Client_Exception;
+use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory;
 
 /**
  * Boltpay Cart helper
@@ -260,6 +261,16 @@ class Cart extends AbstractHelper
      * @var Serialize
      */
     private $serialize;
+    
+    /**
+     * @var array
+     */
+    private $matchedPickInStoreCategories;
+    
+    /**
+     * @var CollectionFactory
+     */
+    private $categoryCollectionFactory;
 
     /**
      * @param Context                    $context
@@ -292,6 +303,7 @@ class Cart extends AbstractHelper
      * @param Serialize                  $serialize
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      * @param RuleRepository             $ruleRepository
+     * @param CollectionFactory          $categoryCollectionFactory
      */
     public function __construct(
         Context $context,
@@ -323,7 +335,8 @@ class Cart extends AbstractHelper
         DeciderHelper $deciderHelper,
         Serialize $serialize,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
-        RuleRepository $ruleRepository
+        RuleRepository $ruleRepository,
+        CollectionFactory $categoryCollectionFactory
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -355,6 +368,8 @@ class Cart extends AbstractHelper
         $this->serialize = $serialize;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         $this->ruleRepository = $ruleRepository;
+        $this->categoryCollectionFactory = $categoryCollectionFactory;
+        $this->matchedPickInStoreCategories = null;
     }
 
     /**
@@ -1392,6 +1407,39 @@ class Cart extends AbstractHelper
 
         return $this->getCartItemsFromItems($items, true, $currencyCode, $storeId, $totalAmount, $diff);
     }
+    
+    protected function getPickInStoreProduct($product, $storeId)
+    {
+        $boltShipmentType = $this->eventsForThirdPartyModules->runFilter('filterCartItemShipmentType', $product->getData('bolt_shipment_type'), $product, $storeId);
+
+        if ($boltShipmentType === 'pick_in_store') {
+            return true;
+        }
+
+        return false;
+    }
+    
+    protected function getPickInStoreCategories($product)
+    {
+        $productCategories = $product->getCategoryIds();
+        if ($this->matchedPickInStoreCategories === null) {
+            /* get categories only with not empty attributes customer_gr_cat and mode_cat */
+            $collection =  $this->categoryCollectionFactory->create()
+                ->addAttributeToSelect('bolt_shipment_type_cat')
+                ->addAttributeToFilter('bolt_shipment_type_cat', ['eq' => 'pick_in_store']);
+            $this->matchedPickInStoreCategories = $collection->getData();
+        }
+        
+        if (!empty($this->matchedPickInStoreCategories)) {
+            foreach ($this->matchedPickInStoreCategories as $category) {
+                if (in_array($category['entity_id'], $productCategories)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
 
     /**
      * Create cart data items array, given an array of items
@@ -1494,6 +1542,7 @@ class Cart extends AbstractHelper
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = $quantity;
                 $product['sku']          = trim($item->getSku());
+                $product['shipment_type']= $this->getPickInStoreCategories($_product) || $this->getPickInStoreProduct($_product, $storeId) ? 'ship_to_store' : 'unknown';
 
                 // In current Bolt checkout flow, the shipping and tax endpoint is not called for virtual carts,
                 // It means we don't support taxes for virtual product and should handle all products as physical
