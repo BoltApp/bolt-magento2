@@ -159,10 +159,6 @@ class Store
             }
             $result = [$shipToStoreOptions, $tmpShippingOptions];           
         } catch (\Exception $e) {
-$txt = var_export(date('H:i:s'), true);
-file_put_contents(dirname(__FILE__).'/new1.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
-$txt = var_export($e->getMessage(), true);
-file_put_contents(dirname(__FILE__).'/new1.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
             $this->bugsnagHelper->notifyException($e);
         } finally {
             return $result;
