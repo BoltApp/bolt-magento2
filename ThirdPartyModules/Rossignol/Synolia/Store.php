@@ -88,8 +88,7 @@ class Store
     public function getShipToStoreOptions(
         $result,
         $synoliaStoreCollectionFactory,
-        $addressInterfaceFactory,
-        $getLatsLngsFromAddress,
+        $synoliaStoreGeocodeHelper,
         $quote,
         $shippingOptions,
         $addressData,
@@ -111,49 +110,45 @@ class Store
                 }
             }
             if ($hasInStorePickup) {
-                $sourceSelectionAddress = $addressInterfaceFactory->create(
-                    [
-                        'country' => $addressData['country_code'],
-                        'postcode' => $addressData['postal_code'],
-                        'street' => $addressData['street_address1'],
-                        'region' => $addressData['region'],
-                        'city' => $addressData['locality']
-                    ]
-                );
-                $latsLngs = $getLatsLngsFromAddress->execute($sourceSelectionAddress);
-                if (!empty($latsLngs)) {
-                    $latsLng = $latsLngs[0];
-                    $collection = $synoliaStoreCollectionFactory->create();
-                    $collection->addFieldToFilter('enable_clickandcollect', ['eq' => 1])
-                            ->addFieldToFilter('is_active', true)
-                            ->addFieldToFilter('store', array('like' => '%'.$this->storeManager->getStore()->getCode().'%'));
-                    $validStores = [];
-                    foreach ($collection as $store) {        
-                        $distance = $this->vincentyGreatCircleDistance($latsLng->getLat(), $latsLng->getLng(), $store->getLatitude(), $store->getLongitude());
-                        if ($distance < 200) {
-                            $validStores[$distance * 100] = $store;                       
+                $shippingAddressQuery = $addressData['street_address1']
+                                    . ', '. $addressData['locality']
+                                    . ', ' . $addressData['region']
+                                    . ', ' . $addressData['postal_code']
+                                    . ', ' . $addressData['country_code'];
+                $coordinates = $synoliaStoreGeocodeHelper->getFirstCoordinatesByAddress($shippingAddressQuery);
+                if (!empty($coordinates)) {
+                    $collectionResultSearch = $synoliaStoreCollectionFactory->create();
+                    $collectionResultSearch->addDistanceFilter($coordinates['lat'], $coordinates['lng'], 100);
+                    if (!empty($collectionResultSearch)) {
+                        $validStores = [];
+                        foreach ($collectionResultSearch as $resultStore) {
+                            $distance = $this->vincentyGreatCircleDistance($coordinates['lat'], $coordinates['lng'], $resultStore->getLatitude(), $resultStore->getLongitude());         
+
+                            if ($distance < 100) {
+                                $validStores[$distance * 100] = $resultStore;                       
+                            }
                         }
-                    }
-                    ksort($validStores);
-                    foreach ($validStores as $distance => $store) {
-                        $storeAddress = $this->storeAddressFactory->create();
-                        $storeAddress->setStreetAddress1(is_null($store->getStreet()) ? '' : $store->getStreet());
-                        $storeAddress->setStreetAddress2('');
-                        $storeAddress->setLocality(is_null($store->getCity()) ? '' : $store->getCity());
-                        $storeAddress->setRegion('');
-                        $storeAddress->setPostalCode(is_null($store->getPostalCode()) ? '' : $store->getPostalCode());
-                        $storeAddress->setCountryCode(is_null($store->getCountry()) ? '' : $store->getCountry());
-    
-                        $shipToStoreOption = $this->shipToStoreOptionFactory->create();
-    
-                        $shipToStoreOption->setReference(InStorePickup::CARRIER_CODE.'_'.InStorePickup::CARRIER_CODE . '_' . $store->getIdentifier() . '_' . $store->getStoreId());
-                        $shipToStoreOption->setCost($inStorePickupCost);
-                        $shipToStoreOption->setStoreName(is_null($store->getName()) ? '' : $store->getName());
-                        $shipToStoreOption->setAddress($storeAddress);
-                        $shipToStoreOption->setDistance(round($distance / 100, 2));
-                        $shipToStoreOption->setDistanceUnit('km');
-    
-                        $shipToStoreOptions[] = $shipToStoreOption;
+                        ksort($validStores);
+                        foreach ($validStores as $distance => $store) {
+                            $storeAddress = $this->storeAddressFactory->create();
+                            $storeAddress->setStreetAddress1(is_null($store->getStreet()) ? '' : $store->getStreet());
+                            $storeAddress->setStreetAddress2('');
+                            $storeAddress->setLocality(is_null($store->getCity()) ? '' : $store->getCity());
+                            $storeAddress->setRegion('');
+                            $storeAddress->setPostalCode(is_null($store->getPostalCode()) ? '' : $store->getPostalCode());
+                            $storeAddress->setCountryCode(is_null($store->getCountry()) ? '' : $store->getCountry());
+        
+                            $shipToStoreOption = $this->shipToStoreOptionFactory->create();
+        
+                            $shipToStoreOption->setReference(InStorePickup::CARRIER_CODE.'_'.InStorePickup::CARRIER_CODE . '_' . $store->getIdentifier() . '_' . $store->getStoreId());
+                            $shipToStoreOption->setCost($inStorePickupCost);
+                            $shipToStoreOption->setStoreName(is_null($store->getName()) ? '' : $store->getName());
+                            $shipToStoreOption->setAddress($storeAddress);
+                            $shipToStoreOption->setDistance(round($distance / 100, 2));
+                            $shipToStoreOption->setDistanceUnit('km');
+
+                            $shipToStoreOptions[] = $shipToStoreOption;
+                        }    
                     }
                 }
             }

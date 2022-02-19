@@ -1049,8 +1049,7 @@ class EventsForThirdPartyModules
                     'checkClasses' => ["Synolia\Store\Model\Carrier"],
                     "sendClasses" => [
                         "Synolia\Store\Model\ResourceModel\Store\CollectionFactory",
-                        "Magento\InventorySourceSelectionApi\Api\Data\AddressInterfaceFactory",
-                        "Magento\InventoryDistanceBasedSourceSelection\Model\DistanceProvider\Offline\GetLatsLngsFromAddress"
+                        "Synolia\Store\Helper\Api\Geocode"
                     ],
                     'boltClass'   => Rossignol_Synolia_Store::class,
                 ],
