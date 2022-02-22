@@ -28,6 +28,10 @@ if (!$block->isBoltSSOEnabled()) {
     return;
 }
 
+if (!$block->featureSwitches->isInitializeBoltCustomSsoButtons()) {
+    return;
+}
+
 $customSSOSelectors = $block->getCustomSSOSelectors();
 ?>
 <script>

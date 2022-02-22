@@ -28,7 +28,7 @@ trait BlockTrait
 
 
     /** @var Decider */
-    protected $featureSwitches;
+    public $featureSwitches;
 
     /**
      * @return mixed
