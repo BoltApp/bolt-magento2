@@ -91,9 +91,9 @@ $customSSOSelectors = $block->getCustomSSOSelectors();
                             redirect = selectorConfig.redirect;
                         }
                         if (selectorConfig.hasOwnProperty('logout') && selectorConfig.logout) {
-                            BoltAccount.logoutButtonClicked(redirect); //@todo verify that this is API
+                            BoltAccount.logoutButtonClicked(redirect);
                         } else {
-                            BoltAccount.loginButtonClicked(redirect); //@todo verify that this is API
+                            BoltAccount.loginButtonClicked(redirect);
                         }
                         return false; // event stop propagation and prevent default
                     }
