@@ -99,7 +99,11 @@ class Store
             $shipToStoreOptions = [];
             $hasInStorePickup = false;
             $inStorePickupCost = 0;
+$txt = var_export(date('H:i:s'), true);
+file_put_contents(dirname(__FILE__).'/new1.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
             foreach ($shippingOptions as $shippingOption) {
+$txt = '$shippingOption->getReference()  '.var_export($shippingOption->getReference(), true);
+file_put_contents(dirname(__FILE__).'/new1.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
                 if ($shippingOption->getReference() !== InStorePickup::CARRIER_CODE.'_'.InStorePickup::CARRIER_CODE) {
                     if ($cart_shipment_type != 'ship_to_store') {
                         $tmpShippingOptions[] = $shippingOption;
@@ -109,13 +113,19 @@ class Store
                     $inStorePickupCost = $shippingOption->getCost();
                 }
             }
+$txt = '$hasInStorePickup  '.var_export($hasInStorePickup, true);
+file_put_contents(dirname(__FILE__).'/new1.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
             if ($hasInStorePickup) {
                 $shippingAddressQuery = $addressData['street_address1']
                                     . ', '. $addressData['locality']
                                     . ', ' . $addressData['region']
                                     . ', ' . $addressData['postal_code']
                                     . ', ' . $addressData['country_code'];
+$txt = '$shippingAddressQuery  '.var_export($shippingAddressQuery, true);
+file_put_contents(dirname(__FILE__).'/new1.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
                 $coordinates = $synoliaStoreGeocodeHelper->getFirstCoordinatesByAddress($shippingAddressQuery);
+$txt = '$coordinates  '.var_export($coordinates, true);
+file_put_contents(dirname(__FILE__).'/new1.txt', $txt.PHP_EOL , FILE_APPEND | LOCK_EX);
                 if (!empty($coordinates)) {
                     $collectionResultSearch = $synoliaStoreCollectionFactory->create();
                     $collectionResultSearch->addDistanceFilter($coordinates['lat'], $coordinates['lng'], 100);
