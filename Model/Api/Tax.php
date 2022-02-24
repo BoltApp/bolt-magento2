@@ -246,7 +246,7 @@ class Tax extends ShippingTax implements TaxInterface
      * @return TaxDataInterface
      * @throws \Exception
      */
-    public function generateResult($addressData, $shipping_option, $ship_to_store_option)
+    public function generateResult($addressData, $shipping_option, $ship_to_store_option, $cart_shipment_type)
     {
         $this->setAddressInformation($addressData, $shipping_option, $ship_to_store_option);
 

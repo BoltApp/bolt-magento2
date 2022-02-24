@@ -33,5 +33,5 @@ interface ShippingInterface
      * @param mixed $shipping_address shipping address
      * @return \Bolt\Boltpay\Api\Data\ShippingDataInterface
      */
-    public function execute($cart, $shipping_address);
+    public function execute($cart, $shipping_address, $cart_shipment_type = null);
 }

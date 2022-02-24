@@ -113,13 +113,10 @@ class InStorePickupShipping
         $getDistanceToSources,
         $quote,
         $shippingOptions,
-        $addressData
+        $addressData,
+        $cart_shipment_type
     ) {
         try {
-            if (empty($shippingOptions)) {
-                return $result;
-            }
-          
             $tmpShippingOptions = [];
             $inStorePickupCost = 0;
             $hasInStorePickup = false;
@@ -128,69 +125,68 @@ class InStorePickupShipping
                     $hasInStorePickup = true;
                     $inStorePickupCost = $shippingOption->getCost();
                 } else {
-                    $tmpShippingOptions[] = $shippingOption;
+                    if ($cart_shipment_type != 'ship_to_store') {
+                        $tmpShippingOptions[] = $shippingOption;
+                    }
                 }
-            }
-             
-            if (!$hasInStorePickup) {
-                return $result;
-            }
+            }             
+            if ($hasInStorePickup) {
+                $this->searchRequestBuilder = $searchRequestBuilder;
+                $this->getPickupLocations = $getPickupLocations;
+                $this->productInfo = $productInfo;
+                $this->searchRequestExtension = $searchRequestExtension;
+                $this->getDistanceToSources = $getDistanceToSources;
             
-            $this->searchRequestBuilder = $searchRequestBuilder;
-            $this->getPickupLocations = $getPickupLocations;
-            $this->productInfo = $productInfo;
-            $this->searchRequestExtension = $searchRequestExtension;
-            $this->getDistanceToSources = $getDistanceToSources;
-        
-            $productsInfo = [];
-            $items = $quote->getAllVisibleItems();
-            foreach ($items as $item) {
-                $itemSku = trim($item->getSku());
-                $productsInfo[] = $this->productInfo->create(['sku' => $itemSku]);
-            }
-            $extensionAttributes = $this->searchRequestExtension->create();
-            $extensionAttributes->setProductsInfo($productsInfo);
-            $searchRadius = (float)$this->config->getValue(
-                self::SEARCH_RADIUS,
-                ScopeInterface::SCOPE_WEBSITE
-            );
-            $searchTerm = $addressData['postal_code'] . ':' . $addressData['country_code'];
-            $searchRequest = $this->searchRequestBuilder->setScopeCode($quote->getStore()->getWebsite()->getCode())
-                        ->setScopeType(SalesChannelInterface::TYPE_WEBSITE)
-                        ->setAreaRadius($searchRadius)
-                        ->setAreaSearchTerm($searchTerm)
-                        ->setSearchRequestExtension($extensionAttributes)
-                        ->setPageSize(50)
-                        ->create();
-            $searchResult = $this->getPickupLocations->execute($searchRequest);
-            $distanceToSources = $this->getDistanceToSources->execute($searchRequest->getArea());
-            $shipToStoreOptions = [];
-            if ($searchResult->getTotalCount() !== 0) {
-                $items = $searchResult->getItems();
+                $productsInfo = [];
+                $items = $quote->getAllVisibleItems();
                 foreach ($items as $item) {
-                    $storeAddress = $this->storeAddressFactory->create();
-                    $storeAddress->setStreetAddress1($item->getStreet());
-                    $storeAddress->setStreetAddress2('');
-                    $storeAddress->setLocality($item->getCity());
-                    $storeAddress->setRegion($item->getRegion());
-                    $storeAddress->setPostalCode($item->getPostcode());
-                    $storeAddress->setCountryCode($item->getCountryId());
-                    
-                    $shipToStoreOption = $this->shipToStoreOptionFactory->create();
-                    $pickupLocationCode = $item->getPickupLocationCode();
-
-                    $shipToStoreOption->setReference(InStorePickup::DELIVERY_METHOD . '_' . $pickupLocationCode);
-                    $shipToStoreOption->setCost($inStorePickupCost);
-                    $shipToStoreOption->setStoreName($item->getName());
-                    $shipToStoreOption->setAddress($storeAddress);
-                    $shipToStoreOption->setDistance($distanceToSources[$pickupLocationCode]);
-                    $shipToStoreOption->setDistanceUnit('km');
-                    
-                    $shipToStoreOptions[] = $shipToStoreOption;
+                    $itemSku = trim($item->getSku());
+                    $productsInfo[] = $this->productInfo->create(['sku' => $itemSku]);
                 }
+                $extensionAttributes = $this->searchRequestExtension->create();
+                $extensionAttributes->setProductsInfo($productsInfo);
+                $searchRadius = (float)$this->config->getValue(
+                    self::SEARCH_RADIUS,
+                    ScopeInterface::SCOPE_WEBSITE
+                );
+                $searchTerm = $addressData['postal_code'] . ':' . $addressData['country_code'];
+                $searchRequest = $this->searchRequestBuilder->setScopeCode($quote->getStore()->getWebsite()->getCode())
+                            ->setScopeType(SalesChannelInterface::TYPE_WEBSITE)
+                            ->setAreaRadius($searchRadius)
+                            ->setAreaSearchTerm($searchTerm)
+                            ->setSearchRequestExtension($extensionAttributes)
+                            ->setPageSize(50)
+                            ->create();
+                $searchResult = $this->getPickupLocations->execute($searchRequest);
+                $distanceToSources = $this->getDistanceToSources->execute($searchRequest->getArea());
+                $shipToStoreOptions = [];
+                if ($searchResult->getTotalCount() !== 0) {
+                    $items = $searchResult->getItems();
+                    foreach ($items as $item) {
+                        $storeAddress = $this->storeAddressFactory->create();
+                        $storeAddress->setStreetAddress1($item->getStreet());
+                        $storeAddress->setStreetAddress2('');
+                        $storeAddress->setLocality($item->getCity());
+                        $storeAddress->setRegion($item->getRegion());
+                        $storeAddress->setPostalCode($item->getPostcode());
+                        $storeAddress->setCountryCode($item->getCountryId());
+                        
+                        $shipToStoreOption = $this->shipToStoreOptionFactory->create();
+                        $pickupLocationCode = $item->getPickupLocationCode();
+    
+                        $shipToStoreOption->setReference(InStorePickup::DELIVERY_METHOD . '_' . $pickupLocationCode);
+                        $shipToStoreOption->setCost($inStorePickupCost);
+                        $shipToStoreOption->setStoreName($item->getName());
+                        $shipToStoreOption->setAddress($storeAddress);
+                        $shipToStoreOption->setDistance($distanceToSources[$pickupLocationCode]);
+                        $shipToStoreOption->setDistanceUnit('km');
+                        
+                        $shipToStoreOptions[] = $shipToStoreOption;
+                    }
+                }
+                
+                $result = [$shipToStoreOptions, $tmpShippingOptions];
             }
-            
-            $result = [$shipToStoreOptions, $tmpShippingOptions];
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
         } finally {

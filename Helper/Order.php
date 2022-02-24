@@ -456,7 +456,7 @@ class Order extends AbstractHelper
      *
      * @throws \Exception
      */
-    protected function setAddress($quoteAddress, $address)
+    public function setAddress($quoteAddress, $address)
     {
         $address = $this->cartHelper->handleSpecialAddressCases($address);
 

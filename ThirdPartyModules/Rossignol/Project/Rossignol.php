@@ -106,6 +106,34 @@ class Rossignol
     }
     
     /**
+     * @param string $result
+     * @param \Magento\Catalog\Model\Product $product
+     * @param int $storeId
+     * @return string
+     */
+    public function filterCartItemShipmentType(
+        $result,
+        $product,
+        $storeId
+    ) {
+        try {
+            if ($result !== 'pick_in_store') {
+                $itemGroups = $this->configHelper->getRossignolExcludeItemAttributesFromPPCConfig($storeId);
+                if (!empty($itemGroups)) {
+                    $attributeSet = $this->attributeSetRepository->get($product->getAttributeSetId());
+                    if (in_array($attributeSet->getAttributeSetName(), $itemGroups)) {
+                        $result = 'pick_in_store';
+                    }
+                }    
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        } finally {
+            return $result;
+        }
+    }
+    
+    /**
      * @param array $result
      * @param \Magento\Quote\Model\Quote $quote
      * @return array
@@ -116,7 +144,8 @@ class Rossignol
     ) {
         try {
             $storeId = $quote->getStoreId();
-            $itemGroups = $this->configHelper->getRossignolExcludeItemAttributesFromPPCConfig($storeId);
+            //$itemGroups = $this->configHelper->getRossignolExcludeItemAttributesFromPPCConfig($storeId);
+            $itemGroups = [];
             if (!empty($itemGroups) && !empty($result['cart']['items'])) {
                 foreach ($result['cart']['items'] as $item) {
                     $product = $this->productRepository->get($item['sku']);
@@ -169,7 +198,7 @@ class Rossignol
         try {
             $disableTemplateList = ['Bolt_Boltpay::button.phtml', 'Bolt_Boltpay::js/replacejs.phtml', 'Bolt_Boltpay::css/boltcss.phtml', 'Bolt_Boltpay::js/boltglobaljs.phtml'];
             if (!$result
-                && 'checkout_cart_index' === $block->getRequest()->getFullActionName()
+                && 'checkout_index_index' === $block->getRequest()->getFullActionName()
                 && in_array($block->getTemplate(), $disableTemplateList)) {
                 $storeId = $block->getStoreId();
                 $itemGroups = $this->configHelper->getRossignolExcludeItemAttributesFromPPCConfig($storeId);           

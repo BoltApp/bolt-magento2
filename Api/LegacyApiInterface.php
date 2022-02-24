@@ -88,9 +88,10 @@ interface LegacyApiInterface
      * Shipping hook
      * @param mixed $cart cart details
      * @param mixed $shipping_address shipping address
+     * @param mixed $cart_shipment_type selected shipping option
      * @return \Bolt\Boltpay\Api\Data\ShippingDataInterface
      */
-    public function getShippingOptions($cart, $shipping_address);
+    public function getShippingOptions($cart, $shipping_address, $cart_shipment_type = null);
 
     /**
      * @api
@@ -99,11 +100,12 @@ interface LegacyApiInterface
      * Get tax for a given shipping option.
      * @param mixed $cart cart details
      * @param mixed $shipping_address shipping address
+     * @param mixed $cart_shipment_type selected shipping option
      * @param mixed $shipping_option selected shipping option
      * @param mixed $ship_to_store_option selected ship to store option
      * @return \Bolt\Boltpay\Api\Data\TaxDataInterface
      */
-    public function getTax($cart, $shipping_address, $shipping_option = null, $ship_to_store_option = null);
+    public function getTax($cart, $shipping_address, $cart_shipment_type = null, $shipping_option = null, $ship_to_store_option = null);
 
     /**
      * @api
