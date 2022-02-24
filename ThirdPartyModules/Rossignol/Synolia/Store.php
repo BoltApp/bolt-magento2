@@ -130,6 +130,8 @@ $this->logHelper->addInfoLog($hasInStorePickup);
                                     . ', ' . $addressData['country_code'];
 $this->logHelper->addInfoLog('### shippingAddressQuery');
 $this->logHelper->addInfoLog($shippingAddressQuery);
+$this->logHelper->addInfoLog('### synoliaStoreGeocodeHelper');
+$this->logHelper->addInfoLog(var_export(get_class($synoliaStoreGeocodeHelper), true));
                 $coordinates = $synoliaStoreGeocodeHelper->getFirstCoordinatesByAddress($shippingAddressQuery);
 $this->logHelper->addInfoLog('### coordinates');
 $this->logHelper->addInfoLog(var_export($coordinates, true));
