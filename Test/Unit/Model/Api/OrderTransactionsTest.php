@@ -62,7 +62,7 @@ class OrderTransactionsTest extends BoltTestCase
     public function testOrderTransactionSuccessCreation()
     {
         $order = TestUtils::createDumpyOrder();
-        $transactionObj = $this->objectManager->create(Transaction::class,);
+        $transactionObj = $this->objectManager->create(Transaction::class);
         $transactionObj->setData(
             [
                 'order_id' => $order->getId(),
