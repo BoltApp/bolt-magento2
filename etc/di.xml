@@ -104,6 +104,8 @@
     <!-- For get default order statuses endpoint -->
     <preference for="Bolt\Boltpay\Api\GetDefaultOrderStatusesInterface" type="Bolt\Boltpay\Model\Api\GetDefaultOrderStatuses" />
     <preference for="Bolt\Boltpay\Api\Data\DefaultOrderStatusInterface"   type="Bolt\Boltpay\Model\Api\Data\DefaultOrderStatus" />
+    <!-- Order transactions endpoint -->
+    <preference for="Bolt\Boltpay\Api\OrderTransactionsInterface" type="Bolt\Boltpay\Model\Api\OrderTransactions" />
 
     <virtualType name="boltUnirgyGiftCert" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
