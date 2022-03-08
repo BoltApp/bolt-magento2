@@ -42,4 +42,9 @@
                 name="Bolt_BoltPay_Integration_Model_IntegrationService"
                 type="Bolt\Boltpay\Plugin\Magento\Integration\Model\IntegrationServicePlugin"/>
     </type>
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\RegularFilter">
+        <plugin sortOrder="20"
+                name="Bolt_BoltPay_Ui_Component_DataProvider_RegularFilter"
+                type="Bolt\Boltpay\Plugin\Magento\Framework\View\Element\UiComponent\DataProvider\RegularFilterPlugin"/>
+    </type>
 </config>
