@@ -316,7 +316,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                 // if connect.js is not loaded postpone until it is
                 whenDefined(window, 'BoltCheckout', function(){
                     BoltCheckout.configureProductCheckout(cart, hints, callbacks);
-                });
+                }, 'configureProductCheckout');
             };
 
             setupProductPage();
