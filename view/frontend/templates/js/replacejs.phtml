@@ -422,7 +422,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
                 scriptTag.setAttribute('src', settings.connect_url);
             }
         };
-        
+
         var insertConnectScriptWithoutSrc = function() {
             var scriptTag = document.getElementById('bolt-connect');
             var publishableKey = getCheckoutKey();
@@ -438,7 +438,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             document.head.appendChild(scriptTag);
             return true;
         };
-        
+
         var insertTrackScript = function() {
             var scriptTag = document.getElementById('bolt-track');
             var publishableKey = getCheckoutKey();
@@ -765,7 +765,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
                 // Check if BoltCheckout is defined (connect.js executed).
                 // If not, postpone processing until it is
                 if (!window.BoltCheckout) {
-                    whenDefined(window, 'BoltCheckout', callConfigure);
+                    whenDefined(window, 'BoltCheckout', callConfigure, 'callConfigure');
                     return;
                 }
                 // waiting while all JS code is loaded
@@ -1110,7 +1110,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             // Check if BoltCheckout is defined (connect.js executed).
             // If not, postpone processing until it is
             if (!window.BoltCheckout) {
-                whenDefined(window, 'BoltCheckout', boltCheckoutSetup);
+                whenDefined(window, 'BoltCheckout', boltCheckoutSetup, 'boltCheckoutSetup');
                 return;
             }
 
@@ -1159,12 +1159,12 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
                         // We haven't seen magento cart yet. If Magento cart isn't set it means that bolt cart is wrong
                         return;
                     }
-                    
+
                     if (data.hints === undefined) {
                         // In some contexts, the data only has data_id.
                         return;
                     }
-                    
+
                     boltCartDataID = data.data_id;
                     if (BoltState.magentoCart.data_id > boltCartDataID) {
                         // bolt cart is unactual
@@ -1350,7 +1350,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             // Check if cart exists (orderToken received).
             // Othervise, do not update hints until it becomes available.
             if (!BoltState.boltCart.orderToken) {
-                whenDefined(BoltState.boltCart, 'orderToken', configureHints);
+                whenDefined(BoltState.boltCart, 'orderToken', configureHints, 'configureHints');
                 return;
             }
             var new_hints = JSON.stringify(hints);
@@ -1422,9 +1422,9 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             var state_selectors = ['div[name="billingAddressboltpay.region_id"] select[name=region_id]','div[name="shippingAddress.region_id"] select[name=region_id]','.payment-method-boltpay select[name=region_id]'];
         } else {
             var country_selectors = ['select[name=country_id]'];
-            var state_selectors = ['select[name=region_id]'];                
+            var state_selectors = ['select[name=region_id]'];
         }
-        
+
         ///////////////////////////////////////////////////////////
         // Monitor Country DOM element change and update hints
         ///////////////////////////////////////////////////////////
@@ -1440,7 +1440,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             configureHints();
         }, true);
         ///////////////////////////////////////////////////////////
-            
+
         ///////////////////////////////////////////////////////////
         // Monitor State DOM element change and update hints
         ///////////////////////////////////////////////////////////
@@ -1479,7 +1479,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             if ($isLoadConnectJsDynamic) {
                 if ($isLoadTrackJsDynamic) {
                 ?>
-            insertTrackScript();    
+            insertTrackScript();
                 <?php
                 }
                 ?>
@@ -1559,7 +1559,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
         ////////////////////////////////////////////////////
         boltCheckoutSetup();
         ////////////////////////////////////////////////////
-        
+
         <?php
         if ($isLoadConnectJsDynamic) {
             ?>
@@ -1571,9 +1571,9 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
                 insertTrackScript();
                 <?php
                 }
-                ?>                
+                ?>
                 insertConnectScript();
-            }            
+            }
         }
         customerData.get('cart').subscribe(magentoCartDataListenerLoadConnectJs);
             <?php
@@ -1598,8 +1598,8 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
                         requirejs.undef(failedId);
                         // Now define the module instance as a simple empty object
                         define(failedId, [], function(){return {};});
-                        // Now require the module make sure that RequireJS thinks 
-                        // that is it loaded. Since we've just defined it, RequireJS 
+                        // Now require the module make sure that RequireJS thinks
+                        // that is it loaded. Since we've just defined it, RequireJS
                         // will not attempt to download any more script files and
                         // will just call the onLoadSuccess handler immediately
                         parentRequire([failedId], onLoadSuccess);
@@ -1629,7 +1629,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
                                 }
                             } catch(err) {}
                         }
-    
+
                         expectCartRendering = false;
                         $(document).trigger('bolt:createOrder');
                     });
