@@ -338,7 +338,7 @@ trait UpdateDiscountTrait
             }
         }
 
-        if (!is_null($addQuote)) {
+        if (!is_null($addQuote) && $addQuote->getId() != $quote->getId()) {
             $this->discountHelper->setCouponCode($addQuote, $couponCode);
         }
 
