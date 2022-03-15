@@ -9,9 +9,6 @@
 <sections xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
           xsi:noNamespaceSchemaLocation="urn:magento:mftf:Page/etc/SectionObject.xsd">
     <section name="BoltCheckoutSection">
-        <element name="checkoutButtonInCartPage" type="button" selector=".cart-container .bolt-checkout-button.bolt-multi-step-checkout div[data-tid='bolt-checkout-button']" timeout="30"/>
-        <element name="checkoutContinueButton" type="button" selector="button[data-tid='checkout-continue-button']" timeout="30"/>
-
         <element name="BoltModalIFrame" type="iframe" selector="#bolt-checkout-frame"/>
         <element name="email" type="input" selector="//*[@id='email']"/>
         <element name="phone" type="input" selector="//*[@id='phone']"/>
@@ -23,7 +20,7 @@
         <element name="shippingState" type="select" selector="//*[@id='shippingState']"/>
         <element name="shippingCountry" type="select" selector="//*[@id='shippingCountry']"/>
         <element name="countryCodeSelector" type="select" selector="//*[@id='country-code-selector']"/>
-
+        <element name="checkoutContinueButton" type="button" selector="button[data-tid='checkout-continue-button']" timeout="30"/>
         <element name="checkoutButton" type="button" selector="button[data-tid='checkout-button']" timeout="30"/>
         <element name="CardNumber" type="input" selector="//*[@id='ccn']"/>
         <element name="CardExp" type="input" selector="//*[@id='exp']"/>

@@ -11,6 +11,6 @@
     <actionGroup name="GotoCartPageAndOpenBoltPopupActionGroup">
         <amOnPage url="/checkout/cart/index/" stepKey="redirectToCartPage"/>
         <waitForPageLoad time="60" stepKey="waitForPageLoad"/>
-        <click selector="{{BoltCheckoutSection.checkoutButtonInCartPage}}" stepKey="openBoltPopup"/>
+        <click selector="{{MagentoSection.checkoutButtonInCartPage}}" stepKey="openBoltPopup"/>
     </actionGroup>
 </actionGroups>

@@ -30,13 +30,9 @@
         <after>
             <deleteData createDataKey="createSimpleProduct" stepKey="deleteSimpleProduct"/>
         </after>
-        <!--Go to product page-->
-        <actionGroup ref="GoToCreatedProductPageAndWaitForAddToCart" stepKey="GoToCreatedProductPageAndWaitForAddToCart">
+        <!--Go to product page and add product to shopping cart-->
+        <actionGroup ref="GoToProductPageAndWaitForAddToCartActionGroup" stepKey="GoToProductPageAndWaitForAddToCartActionGroup">
             <argument name="url" value="$$createSimpleProduct.custom_attributes[url_key]$$.html"/>
-        </actionGroup>
-
-        <!--Add product to shopping cart-->
-        <actionGroup ref="AddToCartFromStorefrontProductPageActionGroup" stepKey="AddToCartFromStorefrontProductPage">
             <argument name="productName" value="$$createSimpleProduct.name$$"/>
         </actionGroup>
 

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<actionGroups xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:noNamespaceSchemaLocation="urn:magento:mftf:Test/etc/actionGroupSchema.xsd">
+    <actionGroup name="GoToProductPageAndWaitForAddToCartActionGroup">
+        <arguments>
+            <argument name="url" type="string"/>
+            <argument name="productName"/>
+        </arguments>
+
+        <amOnPage url="{{url}}" stepKey="navigateToSimpleProductPage"/>
+        <waitForPageLoad stepKey="waitForCatalogPageLoad"/>
+        <waitForElementChange selector="{{MagentoSection.addToCartButton}}" function="function(\Facebook\WebDriver\Remote\RemoteWebElement $el) {return $el->isEnabled();}" stepKey="waitForAddToCartButtonEnabled"/>
+
+        <click selector="{{MagentoSection.addToCartButton}}" stepKey="addToCart"/>
+        <waitForPageLoad stepKey="waitForAddToCart"/>
+        <waitForElementNotVisible selector="{{StorefrontProductActionSection.addToCartButtonTitleIsAdding}}" stepKey="waitForElementNotVisibleAddToCartButtonTitleIsAdding"/>
+        <waitForElementNotVisible selector="{{StorefrontProductActionSection.addToCartButtonTitleIsAdded}}" stepKey="waitForElementNotVisibleAddToCartButtonTitleIsAdded"/>
+        <waitForPageLoad stepKey="waitForPageLoad"/>
+        <waitForElementVisible selector="{{StorefrontMessagesSection.success}}" stepKey="waitForSuccessMessage"/>
+        <see selector="{{StorefrontMessagesSection.success}}" userInput="You added {{productName}} to your shopping cart." stepKey="seeAddToCartSuccessMessage"/>
+    </actionGroup>
+</actionGroups>
