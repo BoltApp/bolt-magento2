@@ -130,6 +130,16 @@ class OAuthRedirect implements OAuthRedirectInterface
     private $emailNotification;
 
     /**
+     * @var \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory
+     */
+    private $cookieMetadataFactory;
+
+    /**
+     * @var \Magento\Framework\Stdlib\Cookie\PhpCookieManager
+     */
+    private $cookieMetadataManager;
+
+    /**
      * @param Response                         $response
      * @param DeciderHelper                    $deciderHelper
      * @param SSOHelper                        $ssoHelper
@@ -186,6 +196,37 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->emailNotification = $emailNotification;
     }
 
+    /**
+     * Retrieve cookie manager
+     *
+     * @deprecated 100.1.0
+     * @return \Magento\Framework\Stdlib\Cookie\PhpCookieManager
+     */
+    private function getCookieManager()
+    {
+        if (!$this->cookieMetadataManager) {
+            $this->cookieMetadataManager = \Magento\Framework\App\ObjectManager::getInstance()->get(
+                \Magento\Framework\Stdlib\Cookie\PhpCookieManager::class
+            );
+        }
+        return $this->cookieMetadataManager;
+    }
+
+    /**
+     * Retrieve cookie metadata factory
+     *
+     * @deprecated 100.1.0
+     * @return \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory
+     */
+    private function getCookieMetadataFactory()
+    {
+        if (!$this->cookieMetadataFactory) {
+            $this->cookieMetadataFactory = \Magento\Framework\App\ObjectManager::getInstance()->get(
+                \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory::class
+            );
+        }
+        return $this->cookieMetadataFactory;
+    }
     /**
      * Login with Bolt SSO and redirect
      *
@@ -378,6 +419,14 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->externalCustomerEntityRepository->upsert($externalID, $customerID);
         $customerModel = $this->customerFactory->create()->load($customerID);
         $this->customerSession->setCustomerAsLoggedIn($customerModel);
+
+        if ($this->getCookieManager()->getCookie('mage-cache-sessid')) {
+            $metadata = $this->getCookieMetadataFactory()->createCookieMetadata();
+            $metadata->setPath('/');
+            $this->getCookieManager()->deleteCookie('mage-cache-sessid', $metadata);
+        }
+
         $this->response->setRedirect($this->url->getAccountUrl())->sendResponse();
+
     }
 }
