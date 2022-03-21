@@ -328,8 +328,22 @@ class Discount extends AbstractHelper
             // Load the coupon discount rule
             $rule = $this->eventsForThirdPartyModules->runFilter("getCouponRelatedRule", null, $coupon)
                     ?: $this->ruleRepository->getById($coupon->getRuleId());
+
+            return $this->getBoltDiscountTypeByRule($rule);
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
+        }
+    }
+
+    /**
+     * @param \Magento\SalesRule\Model\Rule $rule
+     * @return string
+     */
+    public function getBoltDiscountTypeByRule($rule)
+    {
+        try {
             $type = $rule->getSimpleAction();
-            
             return $this->getBoltDiscountType($type);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
