@@ -18,7 +18,6 @@
 namespace Bolt\Boltpay\Block\Adminhtml\System\Config\Form;
 
 use Magento\Backend\Block\Template\Context;
-use Magento\Framework\View\Helper\SecureHtmlRenderer;
 use Bolt\Boltpay\Helper\Config;
 
 class Version extends \Magento\Config\Block\System\Config\Form\Field
@@ -31,14 +30,12 @@ class Version extends \Magento\Config\Block\System\Config\Form\Field
     public function __construct(
         Context $context,
         Config $config,
-        array $data = [],
-        ?SecureHtmlRenderer $secureRenderer = null
+        array $data = []
     ) {
         $this->configHelper = $config;
         parent::__construct(
             $context,
-            $data,
-            $secureRenderer
+            $data
         );
     }
 
