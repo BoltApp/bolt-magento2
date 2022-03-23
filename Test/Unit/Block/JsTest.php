@@ -2768,4 +2768,99 @@ function(arg) {
             ],
         ];
     }
+
+    /**
+     * @test
+     * that getCustomSSOSelectors returns the expected selectors based on saved Additional Config
+     *
+     * @dataProvider getCustomSSOSelectors_withVariousAdditionalConfigsProvider
+     *
+     * @covers ::getCustomSSOSelectors
+     */
+    public function getCustomSSOSelectors_withVariousAdditionalConfigs_returnsCustomSSOSelectors(
+        $additionalConfig, 
+        $expectedCustomSSOSelectors
+    ) {
+        TestUtils::setupBoltConfig(
+            [
+                [
+                    'path' => Config::XML_PATH_ADDITIONAL_CONFIG,
+                    'value' => $additionalConfig,
+                    'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                    'scopeId' => $this->storeId,
+                ]
+            ]
+        );
+
+        static::assertEquals($expectedCustomSSOSelectors, $this->block->getCustomSSOSelectors());
+    }
+
+    /**
+     * Data provider for @see getCustomSSOSelectors
+     */
+    public function getCustomSSOSelectors_withVariousAdditionalConfigsProvider()
+    {
+        return [
+            'No additional config, default case' => [
+                'additionalConfig' => '{}',
+                'expectedCustomSSOSelectors' => [
+                    '[href^="http://localhost/index.php/customer/account/login"]' => [],
+                    '[href^="http://localhost/index.php/customer/account/create"]' => [],
+                    '[href^="http://localhost/index.php/customer/account/logout"]' => [
+                        'logout' => true
+                    ],
+                ]
+            ],
+            'Additional login selector' => [
+                'additionalConfig' => /** @lang JSON */ '{"customSSOSelectors": {"[data-action=\\"login\\"]": {}}}',
+                'expectedCustomSSOSelectors' => [
+                    '[href^="http://localhost/index.php/customer/account/login"]' => [],
+                    '[href^="http://localhost/index.php/customer/account/create"]' => [],
+                    '[href^="http://localhost/index.php/customer/account/logout"]' => ['logout' => true],
+                    '[data-action="login"]' => []
+                ]
+            ],
+            'Additional logout selector' => [
+                'additionalConfig' => /** @lang JSON */
+                    '{"customSSOSelectors": {"[data-action=\\"logout\\"]": {"logout": true}}}',
+                'expectedCustomSSOSelectors' => [
+                    '[href^="http://localhost/index.php/customer/account/login"]' => [],
+                    '[href^="http://localhost/index.php/customer/account/create"]' => [],
+                    '[href^="http://localhost/index.php/customer/account/logout"]' => ['logout' => true],
+                    '[data-action="logout"]' => ['logout' => true],
+                ]
+            ],
+            'Additional login and logout selector' => [
+                'additionalConfig' => /** @lang JSON */
+                    '{"customSSOSelectors": {"[data-action=\\"login\\"]": {}, "[data-action=\\"logout\\"]": {"logout": true}}}',
+                'expectedCustomSSOSelectors' => [
+                    '[href^="http://localhost/index.php/customer/account/login"]' => [],
+                    '[href^="http://localhost/index.php/customer/account/create"]' => [],
+                    '[href^="http://localhost/index.php/customer/account/logout"]' => ['logout' => true],
+                    '[data-action="login"]' => [],
+                    '[data-action="logout"]' => ['logout' => true],
+                ]
+            ],
+            'Additional login selector with redirect' => [
+                'additionalConfig' => /** @lang JSON */
+                    '{"customSSOSelectors": {"[href*=\\"wishlist/\\"]": {"redirect":"wishlist/index/index"}}}',
+                'expectedCustomSSOSelectors' => [
+                    '[href^="http://localhost/index.php/customer/account/login"]' => [],
+                    '[href^="http://localhost/index.php/customer/account/create"]' => [],
+                    '[href^="http://localhost/index.php/customer/account/logout"]' => ['logout' => true],
+                    '[href*="wishlist/"]' => ['redirect' => 'http://localhost/index.php/wishlist/index/index/'],
+                ]
+            ],
+            'Additional login selector with redirect that is direct url' => [
+                'additionalConfig' => /** @lang JSON */
+                    '{"customSSOSelectors": {"[href*=\\"wishlist/\\"]": {"redirect":"http://localhostalternative/index.php/wishlist/index/index/"}}}',
+                'expectedCustomSSOSelectors' => [
+                    '[href^="http://localhost/index.php/customer/account/login"]' => [],
+                    '[href^="http://localhost/index.php/customer/account/create"]' => [],
+                    '[href^="http://localhost/index.php/customer/account/logout"]' => ['logout' => true],
+                    '[href*="wishlist/"]' => ['redirect' => 'http://localhostalternative/index.php/wishlist/index/index/'],
+                ]
+            ],
+        ];
+    }
 }

@@ -1,0 +1,104 @@
+<?php
+/**
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2017-2022 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
+
+/**
+ * Track and Connect js template
+ *
+ * @var $block \Bolt\Boltpay\Block\Js
+ */
+if ($block->shouldDisableBoltCheckout()) {
+    return;
+}
+
+if (!$block->isBoltSSOEnabled()) {
+    return;
+}
+
+if (!$block->featureSwitches->isInitializeBoltCustomSsoButtons()) {
+    return;
+}
+
+$customSSOSelectors = $block->getCustomSSOSelectors();
+?>
+<script>
+    var boltSSOCustomClass = 'bolt-sso-custom';
+    window.whenDefined(window, 'BoltAccount', function () {
+        var selectors = <?php echo json_encode($customSSOSelectors); ?>;
+
+        /**
+         * Converts all present elements matching {@see loginSelectors} and {@see logoutSelectors}
+         * to custom Bolt SSO buttons
+         */
+        function initializeBoltSSOCustomLinks () {
+            var selectorConfig, link, linkIndex, links, selector;
+            for (selector in selectors) {
+                links = document.querySelectorAll(selector);
+                for (linkIndex = 0; linkIndex < links.length; linkIndex++) {
+                    link = links[linkIndex];
+                    selectorConfig = selectors[selector];
+                    if (selectorConfig.hasOwnProperty('logout') && selectorConfig.logout) {
+                        link.setAttribute('data-logged-in', 'true');
+                    }
+                    if (selectorConfig.hasOwnProperty('redirect') && selectorConfig.redirect) {
+                        link.setAttribute('data-destination-on-success', selectorConfig.redirect);
+                    }
+
+                    link.removeAttribute('href');
+                    link.removeAttribute('data-post');
+
+                    // add {@see boltSSOCustomClass} only once
+                    link.setAttribute(
+                        'class',
+                        (link.getAttribute('class') ?? '').replace(boltSSOCustomClass, '') + ' ' + boltSSOCustomClass
+                    );
+                    link.setAttribute('style', 'cursor:pointer;');
+                }
+            }
+            BoltAccount.injectButtons();
+        }
+
+        initializeBoltSSOCustomLinks();
+        require(['domReady!'], initializeBoltSSOCustomLinks);
+
+        require(['jquery'], function ($) {
+
+            /**
+             * Handles buttons matching configured selectors that weren't converted to Custom Bolt SSO buttons
+             */
+            $(document).on('click', Object.keys(selectors).join(','), function (e) {
+                if ($(e.currentTarget).hasClass(boltSSOCustomClass)) {
+                    return;
+                }
+                var redirect;
+                for (var selector in selectors) {
+                    if (e.currentTarget.matches(selector)) {
+                        var selectorConfig = selectors[selector];
+                        if (selectorConfig.hasOwnProperty('redirect') && selectorConfig.redirect) {
+                            redirect = selectorConfig.redirect;
+                        }
+                        if (selectorConfig.hasOwnProperty('logout') && selectorConfig.logout) {
+                            BoltAccount.logoutButtonClicked(redirect);
+                        } else {
+                            BoltAccount.loginButtonClicked(redirect);
+                        }
+                        return false; // event stop propagation and prevent default
+                    }
+                }
+            });
+        });
+    });
+</script>

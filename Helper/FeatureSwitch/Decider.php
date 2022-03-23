@@ -446,4 +446,16 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_USE_RULE_NAME_IF_DESCRIPTION_EMPTY);
     }
+
+    /**
+     * Determines if automatically initialize Bolt custom SSO buttons
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isInitializeBoltCustomSsoButtons()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_INITIALIZE_BOLT_CUSTOM_SSO_BUTTONS);
+    }
 }

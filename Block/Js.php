@@ -774,4 +774,40 @@ function($argName) {
     {
         return $this->featureSwitches->isPreventSSOCustomersFromEditingAccountInformation();
     }
+
+    /**
+     * Returns list of selectors that should match login and logout buttons/links
+     * to be converted to Bolt Custom SSO login buttons
+     *
+     * @return array of selectors
+     */
+    public function getCustomSSOSelectors()
+    {
+        $transformRouteToSelector = function ($route) {
+            return sprintf("[href^=\"%s\"]", rtrim($this->getUrl($route), '/'));
+        };
+
+        $additionalSelectors = $this->configHelper->getAdditionalCustomSSOSelectors();
+        return array_merge(
+            [
+                $transformRouteToSelector('customer/account/login') => [],
+                $transformRouteToSelector('customer/account/create') => [],
+                $transformRouteToSelector('customer/account/logout') => ['logout' => true],
+            ],
+            is_object($additionalSelectors)
+                ? array_map(
+                    function ($options) {
+                        if (!is_object($options)) {
+                            return [];
+                        }
+                        if (property_exists($options, 'redirect')) {
+                            $options->redirect = $this->getUrl($options->redirect);
+                        }
+                        return get_object_vars($options);
+                    },
+                    get_object_vars($additionalSelectors)
+                )
+                : []
+        );
+    }
 }

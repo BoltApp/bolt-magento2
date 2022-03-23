@@ -267,6 +267,11 @@ class Definitions
      */
     const M2_USE_RULE_NAME_IF_DESCRIPTION_EMPTY = 'M2_USE_RULE_NAME_IF_DESCRIPTION_EMPTY';
 
+    /**
+     * Automatically initialize Bolt custom SSO buttons
+     */
+    const M2_INITIALIZE_BOLT_CUSTOM_SSO_BUTTONS = 'M2_INITIALIZE_BOLT_CUSTOM_SSO_BUTTONS';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -543,6 +548,12 @@ class Definitions
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_INITIALIZE_BOLT_CUSTOM_SSO_BUTTONS => [
+            self::NAME_KEY        => self::M2_INITIALIZE_BOLT_CUSTOM_SSO_BUTTONS,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
         ],
     ];
 }
