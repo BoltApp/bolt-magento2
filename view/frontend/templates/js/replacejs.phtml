@@ -25,8 +25,8 @@
 if ($block->shouldDisableBoltCheckout()) { return;
 }
 
-// If Bolt checkout is disabled on the cart page
-if ($block->isBoltOnCartDisabled()) { return;
+// If Bolt checkout is disabled on the current page
+if ($block->isBoltDisabledOnCurrentPage()) { return;
 }
 
 //we need this script only for cart page, checkout page and other pages from white list
