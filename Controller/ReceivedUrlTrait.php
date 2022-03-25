@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2021 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2022 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -28,6 +28,9 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
+use Magento\Framework\App\CacheInterface;
+use Magento\Framework\Serialize\SerializerInterface as Serialize;
+use Bolt\Boltpay\Helper\Session as BoltSession;
 
 trait ReceivedUrlTrait
 {
@@ -55,6 +58,12 @@ trait ReceivedUrlTrait
      * @var OrderHelper
      */
     private $orderHelper;
+    
+    /** @var CacheInterface */
+    private $cache;
+    
+    /** @var Serialize */
+    private $serialize;
 
     /**
      * @return \Magento\Framework\App\ResponseInterface
@@ -126,6 +135,19 @@ trait ReceivedUrlTrait
 
                 // add order information to the session
                 $this->clearOrderSession($order, $redirectUrl);
+                
+                $cacheIdentifier = self::BOLT_ORDER_SUCCESS_PREFIX . $this->checkoutSession->getSessionId();
+                
+                $sessionData = [
+                    "LastQuoteId"   => $quote->getId(),
+                    "LastSuccessQuoteId"   => $quote->getId(),
+                    "LastOrderId"   => $order->getId(),
+                    "RedirectUrl"   => $redirectUrl,
+                    "LastRealOrderId"   => $order->getIncrementId(),
+                    "LastOrderStatus"   => $order->getStatus(),
+                ];
+                
+                $this->cache->save($this->serialize->serialize($sessionData), $cacheIdentifier, [], 600);
 
                 $this->_redirect($redirectUrl);
             } catch (NoSuchEntityException $noSuchEntityException) {
