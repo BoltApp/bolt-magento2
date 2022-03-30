@@ -3219,7 +3219,7 @@ ORDER
         $this->setUpAddressMock($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
         ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
+        $currentMock->expects(exactly(2))->method('getCalculationAddress')->with($this->immutableQuoteMock)
         ->willReturn($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
         $currentMock->expects(static::once())->method('collectDiscounts')->willReturn($collectDiscountsResult);
@@ -3306,7 +3306,7 @@ ORDER
         $this->setUpAddressMock($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
             ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
+        $currentMock->expects(exactly(2))->method('getCalculationAddress')->with($this->immutableQuoteMock)
             ->willReturn($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
         $currentMock->expects(static::once())->method('collectDiscounts')->willReturn($collectDiscountsResult);
@@ -3394,7 +3394,7 @@ ORDER
         $this->setUpAddressMock($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
         ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
+        $currentMock->expects(exactly(2))->method('getCalculationAddress')->with($this->immutableQuoteMock)
         ->willReturn($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
         $currentMock->expects(static::once())->method('collectDiscounts')->willReturn($collectDiscountsResult);
