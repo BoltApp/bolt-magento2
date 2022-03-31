@@ -3219,7 +3219,7 @@ ORDER
         $this->setUpAddressMock($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
         ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::exactly(2))->method('getCalculationAddress')->with($this->immutableQuoteMock)
+        $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
         ->willReturn($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
         $currentMock->expects(static::once())->method('collectDiscounts')->willReturn($collectDiscountsResult);
@@ -3228,7 +3228,7 @@ ORDER
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->quoteMock->expects(static::any())->method('getShippingAddress')
         ->willReturn($this->quoteShippingAddress);
-        $this->immutableQuoteMock->expects(static::exactly(2))->method('isVirtual')->willReturn(false);
+        $this->immutableQuoteMock->expects(static::exactly(2))->method('isVirtual')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
         ->willReturn($this->quoteBillingAddress);
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
@@ -3306,7 +3306,7 @@ ORDER
         $this->setUpAddressMock($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
             ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::exactly(2))->method('getCalculationAddress')->with($this->immutableQuoteMock)
+        $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
             ->willReturn($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
         $currentMock->expects(static::once())->method('collectDiscounts')->willReturn($collectDiscountsResult);
@@ -3315,7 +3315,7 @@ ORDER
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->quoteMock->expects(static::any())->method('getShippingAddress')
             ->willReturn($this->quoteShippingAddress);
-        $this->immutableQuoteMock->expects(static::exactly(2))->method('isVirtual')->willReturn(false);
+        $this->immutableQuoteMock->expects(static::exactly(2))->method('isVirtual')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
             ->willReturn($this->quoteBillingAddress);
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
@@ -3394,7 +3394,7 @@ ORDER
         $this->setUpAddressMock($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('createImmutableQuote')->with($this->quoteMock)
         ->willReturn($this->immutableQuoteMock);
-        $currentMock->expects(static::exactly(2))->method('getCalculationAddress')->with($this->immutableQuoteMock)
+        $currentMock->expects(static::once())->method('getCalculationAddress')->with($this->immutableQuoteMock)
         ->willReturn($this->quoteBillingAddress);
         $currentMock->expects(static::once())->method('getCartItems')->willReturn($getCartItemsResult);
         $currentMock->expects(static::once())->method('collectDiscounts')->willReturn($collectDiscountsResult);
@@ -3403,7 +3403,7 @@ ORDER
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->quoteMock->expects(static::any())->method('getShippingAddress')
         ->willReturn($this->quoteShippingAddress);
-        $this->immutableQuoteMock->expects(static::exactly(2))->method('isVirtual')->willReturn(false);
+        $this->immutableQuoteMock->expects(static::exactly(2))->method('isVirtual')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
         ->willReturn($this->quoteBillingAddress);
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
