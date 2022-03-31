@@ -1887,7 +1887,7 @@ class Cart extends AbstractHelper
 
         if ($immutableQuote) {
             $this->setLastImmutableQuote($immutableQuote);
-            if ($this->isBackendSession()) {
+            if ($this->isBackendSession() && !$immutableQuote->isVirtual()) {
                 $address = $this->getCalculationAddress($immutableQuote);
                 $address->setCollectShippingRates(true);
             }

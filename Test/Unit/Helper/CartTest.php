@@ -3228,7 +3228,7 @@ ORDER
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->quoteMock->expects(static::any())->method('getShippingAddress')
         ->willReturn($this->quoteShippingAddress);
-        $this->immutableQuoteMock->expects(static::once())->method('isVirtual')->willReturn(true);
+        $this->immutableQuoteMock->expects(static::exactly(2))->method('isVirtual')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
         ->willReturn($this->quoteBillingAddress);
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
@@ -3315,7 +3315,7 @@ ORDER
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->quoteMock->expects(static::any())->method('getShippingAddress')
             ->willReturn($this->quoteShippingAddress);
-        $this->immutableQuoteMock->expects(static::once())->method('isVirtual')->willReturn(true);
+        $this->immutableQuoteMock->expects(static::exactly(2))->method('isVirtual')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
             ->willReturn($this->quoteBillingAddress);
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
@@ -3403,7 +3403,7 @@ ORDER
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->quoteMock->expects(static::any())->method('getShippingAddress')
         ->willReturn($this->quoteShippingAddress);
-        $this->immutableQuoteMock->expects(static::once())->method('isVirtual')->willReturn(true);
+        $this->immutableQuoteMock->expects(static::exactly(2))->method('isVirtual')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
         ->willReturn($this->quoteBillingAddress);
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
