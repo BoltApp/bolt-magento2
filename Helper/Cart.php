@@ -65,6 +65,7 @@ use Magento\SalesRule\Model\Rule;
 use Magento\SalesRule\Model\RuleRepository;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Zend_Http_Client_Exception;
 
 /**
@@ -267,6 +268,11 @@ class Cart extends AbstractHelper
      * @var MsrpHelper
      */
     private $msrpHelper;
+    
+    /**
+     * @var PriceHelper
+     */
+    private $priceHelper;
 
     /**
      * @param Context                    $context
@@ -300,6 +306,7 @@ class Cart extends AbstractHelper
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      * @param RuleRepository             $ruleRepository
      * @param MsrpHelper                 $msrpHelper
+     * @param PriceHelper                $priceHelper
      */
     public function __construct(
         Context $context,
@@ -332,7 +339,8 @@ class Cart extends AbstractHelper
         Serialize $serialize,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
         RuleRepository $ruleRepository,
-        MsrpHelper $msrpHelper
+        MsrpHelper $msrpHelper,
+        PriceHelper $priceHelper
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -365,6 +373,7 @@ class Cart extends AbstractHelper
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         $this->ruleRepository = $ruleRepository;
         $this->msrpHelper = $msrpHelper;
+        $this->priceHelper = $priceHelper;
     }
 
     /**
@@ -886,7 +895,7 @@ class Cart extends AbstractHelper
                     ]
                 );
 
-                if ($this->deciderHelper->isAPIDrivenIntegrationEnabled()) {
+                if ($this->isBackendSession() || $this->deciderHelper->isAPIDrivenIntegrationEnabled()) {
                     return $boltOrder;
                 }
 
@@ -1878,6 +1887,10 @@ class Cart extends AbstractHelper
 
         if ($immutableQuote) {
             $this->setLastImmutableQuote($immutableQuote);
+            if ($this->isBackendSession() && !$immutableQuote->isVirtual()) {
+                $address = $this->getCalculationAddress($immutableQuote);
+                $address->setCollectShippingRates(true);
+            }
             $immutableQuote->collectTotals();
         } else {
             if ($this->deciderHelper->isRecalculateTotalForAPIDrivenIntegration()) {
@@ -2037,8 +2050,6 @@ class Cart extends AbstractHelper
                     return [];
                 }
             } else {
-                $address->setCollectShippingRates(true);
-
                 // assign parent shipping method to clone
                 if (!$address->getShippingMethod() && $parentQuote) {
                     $address->setShippingMethod($parentQuote->getShippingAddress()->getShippingMethod());
@@ -2051,10 +2062,13 @@ class Cart extends AbstractHelper
                     );
                     return [];
                 }
-
-                $this->collectAddressTotals($quote, $address);
-                $address->save();
-
+                
+                if (!$this->isBackendSession()) {
+                    $address->setCollectShippingRates(true);
+                    $this->collectAddressTotals($quote, $address);
+                    $address->save();
+                }
+                
                 // Shipping address
                 $shipAddress = [
                     'first_name' => $address->getFirstname(),
@@ -2072,8 +2086,20 @@ class Cart extends AbstractHelper
 
                 if ($this->isAddressComplete($shipAddress)) {
                     $cost = $address->getShippingAmount();
-                    $rounded_cost = CurrencyUtils::toMinor($cost, $currencyCode);
-
+                    $shippingService = $address->getShippingDescription();                    
+                    $shippingDiscountAmount = $this->eventsForThirdPartyModules->runFilter("collectShippingDiscounts", $address->getShippingDiscountAmount(), $quote, $address);
+                    if ($shippingDiscountAmount >= DiscountHelper::MIN_NONZERO_VALUE && !$this->ignoreAdjustingShippingAmount($quote)) {
+                        $cost = $cost - $shippingDiscountAmount;
+                        $rounded_cost = CurrencyUtils::toMinor($cost, $currencyCode);
+                        if ($rounded_cost == 0) {
+                            $shippingService .= ' [free&nbsp;shipping&nbsp;discount]';
+                        } else {
+                            $shippingDiscountAmount = $this->priceHelper->currency($shippingDiscountAmount, true, false);
+                            $shippingService .= " [$shippingDiscountAmount" . "&nbsp;discount]";
+                        }
+                    } else {
+                        $rounded_cost = CurrencyUtils::toMinor($cost, $currencyCode);
+                    }
                     $diff += CurrencyUtils::toMinorWithoutRounding($cost, $currencyCode) - $rounded_cost;
                     $totalAmount += $rounded_cost;
 
@@ -2081,7 +2107,7 @@ class Cart extends AbstractHelper
                         'cost' => $rounded_cost,
                         'tax_amount' => CurrencyUtils::toMinor($address->getShippingTaxAmount(), $currencyCode),
                         'shipping_address' => $shipAddress,
-                        'service' => $shippingAddress->getShippingDescription(),
+                        'service' => $shippingService,
                         'reference' => $shippingAddress->getShippingMethod(),
                     ]];
                 } else {

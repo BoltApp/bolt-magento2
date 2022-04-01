@@ -91,6 +91,7 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\SalesRule\Model\RuleRepository;
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Magento\Msrp\Helper\Data as MsrpHelper;
+use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
@@ -312,6 +313,9 @@ class CartTest extends BoltTestCase
     
     /** @var MockObject|MsrpHelper */
     private $msrpHelper;
+    
+    /** @var MockObject|PriceHelper */
+    private $priceHelper;
 
     /**
      * Setup test dependencies, called before each test
@@ -458,6 +462,7 @@ class CartTest extends BoltTestCase
             ['getById']
         );
         $this->msrpHelper = $this->createPartialMock(MsrpHelper::class, ['canApplyMsrp']);
+        $this->priceHelper = $this->createPartialMock(PriceHelper::class, ['currency']);
         $this->currentMock = $this->getCurrentMock(null);
         $this->objectsToClean = [];
     }
@@ -511,7 +516,8 @@ class CartTest extends BoltTestCase
                     $this->serialize,
                     $this->eventsForThirdPartyModules,
                     $this->ruleRepository,
-                    $this->msrpHelper
+                    $this->msrpHelper,
+                    $this->priceHelper
                 ]
             )
             ->getMock();
@@ -717,7 +723,8 @@ class CartTest extends BoltTestCase
             $this->serialize,
             $this->eventsForThirdPartyModules,
             $this->ruleRepository,
-            $this->msrpHelper
+            $this->msrpHelper,
+            $this->priceHelper
         );
         static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
         static::assertAttributeEquals($this->productRepository, 'productRepository', $instance);
@@ -747,6 +754,7 @@ class CartTest extends BoltTestCase
         static::assertAttributeEquals($this->serialize, 'serialize', $instance);
         static::assertAttributeEquals($this->ruleRepository, 'ruleRepository', $instance);
         static::assertAttributeEquals($this->msrpHelper, 'msrpHelper', $instance);
+        static::assertAttributeEquals($this->priceHelper, 'priceHelper', $instance);
     }
 
     /**
@@ -3220,7 +3228,7 @@ ORDER
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->quoteMock->expects(static::any())->method('getShippingAddress')
         ->willReturn($this->quoteShippingAddress);
-        $this->immutableQuoteMock->expects(static::once())->method('isVirtual')->willReturn(true);
+        $this->immutableQuoteMock->expects(static::exactly(2))->method('isVirtual')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
         ->willReturn($this->quoteBillingAddress);
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
@@ -3307,7 +3315,7 @@ ORDER
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->quoteMock->expects(static::any())->method('getShippingAddress')
             ->willReturn($this->quoteShippingAddress);
-        $this->immutableQuoteMock->expects(static::once())->method('isVirtual')->willReturn(true);
+        $this->immutableQuoteMock->expects(static::exactly(2))->method('isVirtual')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
             ->willReturn($this->quoteBillingAddress);
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
@@ -3395,7 +3403,7 @@ ORDER
         $this->immutableQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn(true);
         $this->quoteMock->expects(static::any())->method('getShippingAddress')
         ->willReturn($this->quoteShippingAddress);
-        $this->immutableQuoteMock->expects(static::once())->method('isVirtual')->willReturn(true);
+        $this->immutableQuoteMock->expects(static::exactly(2))->method('isVirtual')->willReturn(true);
         $this->immutableQuoteMock->expects(static::once())->method('getBillingAddress')
         ->willReturn($this->quoteBillingAddress);
         $this->immutableQuoteMock->expects(static::any())->method('getShippingAddress')
