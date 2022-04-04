@@ -17,48 +17,52 @@
 
 namespace Bolt\Boltpay\ThirdPartyModules\Amasty;
 
+use Amasty\Rewards\Helper\Data;
+use Amasty\Rewards\Model\ResourceModel\Quote;
+use Amasty\Rewards\Model\RewardsPropertyProvider;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+use Magento\Framework\App\ResourceConnection;
 
 class Rewards
 {
     const AMASTY_REWARD = 'amasty_rewards_point';
-    
+
     /**
      * @var Bugsnag
      */
     private $bugsnagHelper;
-    
+
     /**
      * @var Discount
      */
     protected $discountHelper;
-    
+
     /**
-     * @var \Amasty\Rewards\Model\ResourceModel\Quote
+     * @var Quote
      */
     protected $amastyRewardsResourceQuote;
-    
+
     /**
      * @var \Amasty\Rewards\Model\Quote
      */
     protected $amastyRewardsQuote;
-    
+
     /**
-     * @var \Magento\Framework\App\ResourceConnection
+     * @var ResourceConnection
      */
     private $resourceConnection;
 
     /**
      * @param Bugsnag $bugsnagHelper Bugsnag helper instance
      * @param Discount $discountHelper
-     * @param \Magento\Framework\App\ResourceConnection $resourceConnection
+     * @param ResourceConnection $resourceConnection
      */
     public function __construct(
         Bugsnag   $bugsnagHelper,
         Discount  $discountHelper,
-        \Magento\Framework\App\ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection
     ) {
         $this->bugsnagHelper   = $bugsnagHelper;
         $this->discountHelper  = $discountHelper;
@@ -67,7 +71,7 @@ class Rewards
 
     /**
      * @param array $result
-     * @param Amasty\Rewards\Helper\Data $amastyRewardsHelperData
+     * @param Data|RewardsPropertyProvider $amastyRewardsHelperData
      * @param Quote $quote
      *
      * @return array
@@ -132,7 +136,7 @@ class Rewards
         }';
         return $result;
     }
-    
+
     /**
      * Return code if the quote has Amasty reward points.
      *
@@ -150,10 +154,10 @@ class Rewards
         if ($couponCode == self::AMASTY_REWARD && ($quote->getData('amrewards_point') || $quote->getData('am_spent_reward_points'))) {
             $result[] = $couponCode;
         }
-        
+
         return $result;
     }
-    
+
     /**
      * Remove Amasty reward points from the quote.
      *
@@ -186,12 +190,12 @@ class Rewards
             throw $e;
         }
     }
-    
+
     /**
      * Amasty reward points are held in a separate table
      * and are not assigned to the quote / totals directly out of the customer session.
      *
-     * @param \Amasty\Rewards\Model\ResourceModel\Quote $amastyRewardsResourceQuote
+     * @param Quote $amastyRewardsResourceQuote
      * @param \Amasty\Rewards\Model\Quote  $amastyRewardsQuote
      * @param $immutableQuote
      */
@@ -205,11 +209,11 @@ class Rewards
 
         $this->setAmastyRewardPoints($immutableQuote);
     }
-    
+
     /**
      * If Amasty Reward Points extension is present clone applied reward points
      *
-     * @param \Amasty\Rewards\Model\ResourceModel\Quote $amastyRewardsResourceQuote
+     * @param Quote $amastyRewardsResourceQuote
      * @param \Amasty\Rewards\Model\Quote  $amastyRewardsQuote
      * @param $sourceQuote
      * @param $destinationQuote
@@ -225,7 +229,7 @@ class Rewards
 
         $this->setAmastyRewardPoints($sourceQuote, $destinationQuote);
     }
-    
+
     /**
      * Copy Amasty Reward Points data from source to destination quote.
      * The reward points are fetched from the 3rd party module DB table (amasty_rewards_quote)
@@ -242,7 +246,7 @@ class Rewards
         if ($destination === null) {
             $destination = $source;
         }
-        
+
         $amastyQuote = $this->amastyRewardsResourceQuote->loadByQuoteId($source->getId());
 
         if ($amastyQuote) {
@@ -251,7 +255,7 @@ class Rewards
             $destination->setAmrewardsPoint($amastyRewardPoints);
         }
     }
-    
+
     /**
      * Try to clear Amasty Reward Points data for the immutable quotes
      *
@@ -277,7 +281,7 @@ class Rewards
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * Remove Amasty Reward Points quote info
      *

@@ -86,7 +86,7 @@ class EventsForThirdPartyModules
                     "module" => "MW_Affiliate",
                     "checkClasses" => ["MW\Affiliate\Helper\Data"],
                     "boltClass" => MW_Affiliate::class,
-                ],                
+                ],
                 'Route_Route' => [
                     'module'      => 'Route_Route',
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
@@ -526,7 +526,11 @@ class EventsForThirdPartyModules
                 ],
                 [
                     "module" => "Amasty_Rewards",
-                    "sendClasses" => ["Amasty\Rewards\Helper\Data",
+                    "sendClasses" => [
+                                        [
+                                            "Amasty\Rewards\Model\RewardsPropertyProvider",
+                                            "Amasty\Rewards\Helper\Data"
+                                        ],
                                       "Amasty\Rewards\Model\ResourceModel\Quote"],
                     "boltClass" => Amasty_Rewards::class,
                 ],
@@ -1238,7 +1242,7 @@ class EventsForThirdPartyModules
         'Amasty\GiftCard\Api\CodeRepositoryInterface',
         'Amasty\GiftCard\Api\AccountRepositoryInterface',
     ];
-    
+
     /**
      * @var array Classes used to verify that Amasty Giftcard module version >= 2.5.0
      */
