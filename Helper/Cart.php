@@ -2916,7 +2916,7 @@ class Cart extends AbstractHelper
                     /* @var \Magento\SalesRule\Api\Data\DiscountDataInterface $discountData */
                     $discountData = $value->getDiscountData();
                     $salesRuleId = $value->getRuleID();
-                    if (!empty($cartFixedRules) && array_key_exists($salesRuleId, $cartFixedRules)) {
+                    if (!empty($cartFixedRules) && array_key_exists($salesRuleId, $cartFixedRules) && $cartFixedRules[$salesRuleId] > DiscountHelper::MIN_NONZERO_VALUE) {
                         $rule = $this->ruleRepository->getById($salesRuleId);
                         $saleRuleDiscountsDetails[$salesRuleId] = $discountData->getAmount() + $rule->getDiscountAmount() - $cartFixedRules[$salesRuleId];
                     } else {
