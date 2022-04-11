@@ -328,6 +328,11 @@ class Decider extends AbstractHelper
         return $this->isSwitchEnabled(Definitions::M2_DISABLE_TRACK_ON_NON_BOLT_PAGES);
     }
 
+    public function isDisableOpenReplayJs()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_DISABLE_OPENREPLAY);
+    }
+
     public function isReturnErrWhenRunFilter()
     {
         return $this->isSwitchEnabled(Definitions::M2_RETURN_ERR_WHEN_RUN_FILTER);

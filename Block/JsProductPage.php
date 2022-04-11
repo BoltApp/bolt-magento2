@@ -31,7 +31,7 @@ use Magento\Framework\App\Http\Context as HttpContext;
 use Magento\Framework\View\Element\Template\Context;
 
 /**
- * Js Block. The block class used in replace.phtml and track.phtml blocks.
+ * Js Block. The block class used in replace.phtml and boltjs.phtml blocks.
  *
  * @SuppressWarnings(PHPMD.DepthOfInheritance)
  */

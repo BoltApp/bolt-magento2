@@ -67,7 +67,7 @@ class JsTest extends BoltTestCase
     /**
      * @var int expected number of settings returned by {@see \Bolt\Boltpay\Block\Js::getSettings}
      */
-    const SETTINGS_NUMBER = 28;
+    const SETTINGS_NUMBER = 29;
 
     /**
      * @var int expeced number of tracking callback returned by {@see \Bolt\Boltpay\Block\Js::getTrackCallbacks}
@@ -832,6 +832,7 @@ class JsTest extends BoltTestCase
         $message = 'Cannot find following key in the Settings: ';
         static::assertArrayHasKey('connect_url', $array, $message . 'connect_url');
         static::assertArrayHasKey('track_url', $array, $message . 'track_url');
+        static::assertArrayHasKey('openreplay_url', $array, $message . 'openreplay_url');
         static::assertArrayHasKey('publishable_key_payment', $array, $message . 'publishable_key_payment');
         static::assertArrayHasKey('publishable_key_checkout', $array, $message . 'publishable_key_checkout');
         static::assertArrayHasKey('publishable_key_back_office', $array, $message . 'publishable_key_back_office');
@@ -2765,6 +2766,38 @@ function(arg) {
             [
                 'isDisableTrackJsOnNonBoltPages' => false,
                 'expectedResult'                  => false
+            ],
+        ];
+    }
+
+    /**
+     * @test
+     *
+     * @dataProvider isDisableOpenReplayJs_withVariousConfigsProvider
+     *
+     * @param bool $isDisableOpenReplayJs
+     * @param bool $expectedResult
+     */
+    public function isDisableOpenReplayJs_withVariousConfigs_returnsCorrectResult($isDisableOpenReplayJs, $expectedResult)
+    {
+        $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_DISABLE_OPENREPLAY, $isDisableOpenReplayJs);
+        static::assertEquals($expectedResult, $this->block->isDisableOpenReplayJs());
+        TestUtils::cleanupFeatureSwitch($featureSwitch);
+    }
+    
+    /**
+     * Data provider for
+     *
+     * @see isDisableOpenReplayJs_withVariousConfigs_returnsCorrectResult
+     *
+     * @return array
+     */
+    public function isDisableOpenReplayJs_withVariousConfigsProvider()
+    {
+        return [
+            [
+                'isDisableOpenReplayJs' => true,
+                'expectedResult'        => true
             ],
         ];
     }
