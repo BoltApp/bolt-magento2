@@ -566,13 +566,25 @@ class CreateOrder implements CreateOrderInterface
 
         $errorInfos = $quoteItem->getErrorInfos();
         $message = '';
+        $errorCode = null;
         foreach ($errorInfos as $errorInfo) {
             // origin, code, message, additionalData keys always set but can equal null
             if (isset($errorInfo['origin']) || isset($errorInfo['message'])) {
                 $message .= sprintf("(%s): %s%s", (string)$errorInfo['origin'], (string)$errorInfo['message'], PHP_EOL);
             }
+            if (isset($errorInfo['code'])) {
+                if (is_null($errorCode)) {
+                    $errorCode = $errorInfo['code'];
+                }
+                if ($errorInfo['code'] == CatalogInventoryData::ERROR_QTY && empty($errorInfo['message'])) {
+                    $stockStateResultHasError = $quoteItem->getStockStateResult()
+                        ? $quoteItem->getStockStateResult()->getHasError() : false;
+                    if ($stockStateResultHasError) {
+                        $message .= sprintf("(%s): %s%s", 'stock', (string)$quoteItem->getStockStateResult()->getMessage(), PHP_EOL);
+                    }
+                }
+            }
         }
-        $errorCode = isset($errorInfos[0]['code']) ? $errorInfos[0]['code'] : 0;
 
         $this->bugsnag->registerCallback(function ($report) use ($message, $errorCode) {
             $report->setMetaData([
