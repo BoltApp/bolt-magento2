@@ -196,7 +196,7 @@ class TrackingSaveObserver implements ObserverInterface
                 'items'                 => $items,
                 'is_non_bolt_order'     => $isNonBoltOrder,
                 'tracking_entity_id'    => $tracking->getId(),
-                'platform_shipment_id'  => $shipment->getId()
+                'platform_shipment_id'  => $tracking->getParentId()
             ];
 
             //Request Data
