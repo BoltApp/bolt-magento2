@@ -38,6 +38,7 @@ if (!$block->isOnPageFromWhiteList() && !$block->isMinicartEnabled()) { return;
 $connectJsUrl = $block->getConnectJsUrl();
 $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
 $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConnectJsDynamic;
+$isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
 ?>
 
 <script type="text/javascript">
@@ -452,6 +453,23 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
             scriptTag.setAttribute('id', 'bolt-track');
             scriptTag.setAttribute('data-publishable-key', publishableKey);
             scriptTag.setAttribute('src', settings.track_url);
+            document.head.appendChild(scriptTag);
+            return true;
+        };
+
+        var insertOpenReplayScript = function() {
+            var scriptTag = document.getElementById('bolt-openreplay');
+            var publishableKey = getCheckoutKey();
+            if (scriptTag) {
+                scriptTag.setAttribute('data-publishable-key', publishableKey);
+                return false;
+            }
+            scriptTag = document.createElement('script');
+            scriptTag.setAttribute('type', 'text/javascript');
+            scriptTag.setAttribute('async', '');
+            scriptTag.setAttribute('id', 'bolt-openreplay');
+            scriptTag.setAttribute('data-publishable-key', publishableKey);
+            scriptTag.setAttribute('src', settings.openreplay_url);
             document.head.appendChild(scriptTag);
             return true;
         };
@@ -1480,6 +1498,13 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
                 if ($isLoadTrackJsDynamic) {
                 ?>
             insertTrackScript();
+                <?php
+                }
+                ?>
+            <?php
+            if ($isLoadOpenReplayJsDynamic) {
+                ?>
+            insertOpenReplayScript();
                 <?php
                 }
                 ?>

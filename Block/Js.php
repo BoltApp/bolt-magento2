@@ -32,7 +32,7 @@ use Magento\Framework\View\Element\Template\Context;
 use Magento\Quote\Model\Quote;
 
 /**
- * Js Block. The block class used in track.phtml block.
+ * Js Block. The block class used in boltjs.phtml block.
  *
  * @SuppressWarnings(PHPMD.DepthOfInheritance)
  */
@@ -110,6 +110,16 @@ class Js extends Template
     public function getTrackJsUrl()
     {
         return $this->configHelper->getCdnUrl() . '/track.js';
+    }
+
+    /**
+     * Get open replay js url
+     *
+     * @return string
+     */
+    public function getOpenReplayJsUrl()
+    {
+        return $this->configHelper->getCdnUrl() . '/openreplay.js';
     }
 
     /**
@@ -293,6 +303,7 @@ class Js extends Template
         return json_encode([
             'connect_url'                           => $this->getConnectJsUrl(),
             'track_url'                             => $this->getTrackJsUrl(),
+            'openreplay_url'                        => $this->getOpenReplayJsUrl(),
             'publishable_key_payment'               => $this->configHelper->getPublishableKeyPayment(),
             'publishable_key_checkout'              => $this->configHelper->getPublishableKeyCheckout(),
             'publishable_key_back_office'           => $this->configHelper->getPublishableKeyBackOffice(),
@@ -512,6 +523,19 @@ class Js extends Template
     public function isDisableTrackJsOnNonBoltPages()
     {
         if ($this->featureSwitches->isDisableTrackJsOnNonBoltPages()) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * If feature switch M2_DISABLE_OPENREPLAY is enabled,
+     * then the Bolt openreplay.js would be disabled everywhere (catalog, product, cart and checkout).
+     */
+    public function isDisableOpenReplayJs()
+    {
+        if ($this->featureSwitches->isDisableOpenReplayJs()) {
             return true;
         }
         

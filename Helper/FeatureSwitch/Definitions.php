@@ -188,6 +188,11 @@ class Definitions
     const M2_DISABLE_TRACK_ON_NON_BOLT_PAGES = 'M2_DISABLE_TRACK_ON_NON_BOLT_PAGES';
 
     /**
+     * Remove openreplay.js everywhere (catalog, product, cart and checkout pages)
+     */
+    const M2_DISABLE_OPENREPLAY = 'M2_DISABLE_OPENREPLAY';
+
+    /**
      * Enable always return error if there is any exception when running filter.
      */
     const M2_RETURN_ERR_WHEN_RUN_FILTER = 'M2_RETURN_ERR_WHEN_RUN_FILTER';
@@ -461,6 +466,12 @@ class Definitions
         ],
         self::M2_DISABLE_TRACK_ON_NON_BOLT_PAGES => [
             self::NAME_KEY        => self::M2_DISABLE_TRACK_ON_NON_BOLT_PAGES,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_DISABLE_OPENREPLAY => [
+            self::NAME_KEY        => self::M2_DISABLE_OPENREPLAY,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
