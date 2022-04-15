@@ -217,7 +217,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ],
             'is_non_bolt_order'  => false,
             'tracking_entity_id' => self::ENTITY_ID,
-            'platform_shipment_id' => self::ENTITY_ID
+            'platform_shipment_id' => null
         ];
         $this->dataObject->expects($this->once())
             ->method('setApiData')
@@ -329,7 +329,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ],
             'is_non_bolt_order'  => false,
             'tracking_entity_id' => self::ENTITY_ID,
-            'platform_shipment_id' => self::ENTITY_ID
+            'platform_shipment_id' => null
         ];
         $this->dataObject->expects($this->once())
             ->method('setApiData')
@@ -522,7 +522,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ],
             'is_non_bolt_order'  => true,
             'tracking_entity_id' => self::ENTITY_ID,
-            'platform_shipment_id' => self::ENTITY_ID
+            'platform_shipment_id' => null
         ];
         $this->dataObject->expects($this->once())
             ->method('setApiData')
@@ -838,7 +838,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ],
             'is_non_bolt_order'  => false,
             'tracking_entity_id' => self::ENTITY_ID,
-            'platform_shipment_id' => self::ENTITY_ID
+            'platform_shipment_id' => null
         ];
         $this->dataObject->expects($this->once())
             ->method('setApiData')
