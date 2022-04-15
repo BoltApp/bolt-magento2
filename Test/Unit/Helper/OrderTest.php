@@ -64,7 +64,7 @@ use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Config;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
-use Magento\Sales\Model\Order\Item;
+use Magento\Sales\Model\Order\Item as OrderItem;
 use Magento\Sales\Model\Order\Payment as OrderPayment;
 use Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
@@ -2662,8 +2662,9 @@ class OrderTest extends BoltTestCase
      * @param int $orderTotalRefunded
      * @param int $orderGrandTotal
      * @param int $orderTotalPaid
+     * @param bool $orderCanShip
      */
-    public function transactionToOrderState($transactionState, $orderState, $isHookFromBolt = false, $isCreatingCreditMemoFromWebHookEnabled = false, $orderTotalRefunded = 0, $orderGrandTotal = 10, $orderTotalPaid = 10)
+    public function transactionToOrderState($transactionState, $orderState, $isHookFromBolt = false, $isCreatingCreditMemoFromWebHookEnabled = false, $orderTotalRefunded = 0, $orderGrandTotal = 10, $orderTotalPaid = 10, $orderCanShip = false)
     {
         Hook::$fromBolt = $isHookFromBolt;
         $featureSwitch = TestUtils::saveFeatureSwitch(
@@ -2675,6 +2676,20 @@ class OrderTest extends BoltTestCase
         $order->setTotalRefunded($orderTotalRefunded);
         $order->setGrandTotal($orderGrandTotal);
         $order->setTotalPaid($orderTotalPaid);
+        
+        $order->setActionFlag(Order::ACTION_FLAG_UNHOLD, $orderCanShip);
+        $order->setIsVirtual($orderCanShip);
+        $order->setActionFlag(Order::ACTION_FLAG_SHIP, !$orderCanShip);
+        $orderItem = $this->objectManager->create(OrderItem::class);
+        $orderItem->setQtyOrdered(1)
+                ->setQtyShipped($orderCanShip ? 0 : 1)
+                ->setQtyRefunded(0)
+                ->setQtyCanceled(0)
+                ->setIsVirtual(false)
+                ->setLockedDoShip(false);
+        $order->addItem($orderItem);
+        $orderRepository = $this->objectManager->create(OrderRepositoryInterface::class);
+        $orderRepository->save($order);
 
         static::assertEquals($orderState, $this->orderHelper->transactionToOrderState($transactionState, $order));
         TestUtils::cleanupFeatureSwitch($featureSwitch);
@@ -2695,6 +2710,7 @@ class OrderTest extends BoltTestCase
             [OrderHelper::TS_REJECTED_REVERSIBLE, OrderModel::STATE_PAYMENT_REVIEW],
             [OrderHelper::TS_REJECTED_IRREVERSIBLE, OrderModel::STATE_CANCELED],
             [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_CLOSED, true, true, 10, 10 ,10],
+            [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_PROCESSING, true, true, 10, 10 ,10, true],
             [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_PROCESSING, true, true, 8, 10 ,10],
             [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_PROCESSING, false, true],
             [OrderHelper::TS_CREDIT_COMPLETED, OrderModel::STATE_HOLDED, true, false],

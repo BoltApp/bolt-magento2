@@ -2034,7 +2034,7 @@ class Order extends AbstractHelper
     public function transactionToOrderState($transactionState, $order)
     {
         if ($transactionState == self::TS_CREDIT_IN_PROGRESS || $transactionState == self::TS_CREDIT_COMPLETED) {
-            if ($order->getTotalRefunded() == $order->getGrandTotal() && $order->getTotalRefunded() == $order->getTotalPaid()) {
+            if ($order->getTotalRefunded() == $order->getGrandTotal() && $order->getTotalRefunded() == $order->getTotalPaid() && !$order->canShip()) {
                 return OrderModel::STATE_CLOSED;
             }
             return (Hook::$fromBolt && !$this->featureSwitches->isCreatingCreditMemoFromWebHookEnabled()) ? OrderModel::STATE_HOLDED : OrderModel::STATE_PROCESSING;
