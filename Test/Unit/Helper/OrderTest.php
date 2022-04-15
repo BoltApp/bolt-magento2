@@ -2671,26 +2671,37 @@ class OrderTest extends BoltTestCase
             \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED,
             $isCreatingCreditMemoFromWebHookEnabled
         );
-
-        $order = $this->objectManager->create(Order::class);
-        $order->setTotalRefunded($orderTotalRefunded);
-        $order->setGrandTotal($orderGrandTotal);
-        $order->setTotalPaid($orderTotalPaid);
         
-        $order->setActionFlag(Order::ACTION_FLAG_UNHOLD, $orderCanShip);
-        $order->setIsVirtual($orderCanShip);
-        $order->setActionFlag(Order::ACTION_FLAG_SHIP, !$orderCanShip);
-        $orderItem = $this->objectManager->create(OrderItem::class);
+        $product = TestUtils::createSimpleProduct();
+        $payment = $this->objectManager->create(OrderPayment::class);
+        $payment->setMethod(Payment::METHOD_CODE);
+        $paymentData = [
+            'transaction_reference' => 'B74N-PQXW-PYQ9',
+            'transaction_state' => 'cc_payment:completed',
+        ];
+        $payment->setAdditionalInformation($paymentData);        
+        $addressData = TestUtils::createMagentoSampleAddress();
+        $orderItems = [];
+        $orderItem = TestUtils::createOrderItemByProduct($product, 1);
         $orderItem->setQtyOrdered(1)
                 ->setQtyShipped($orderCanShip ? 0 : 1)
                 ->setQtyRefunded(0)
                 ->setQtyCanceled(0)
                 ->setIsVirtual(false)
-                ->setLockedDoShip(false);
-        $order->addItem($orderItem);
-        $orderRepository = $this->objectManager->create(OrderRepositoryInterface::class);
-        $orderRepository->save($order);
-
+                ->setLockedDoShip(false)
+                ->setHasChildren(false)
+                ->setProductOptions([])
+                ->setParentItem(null);
+        $orderItems[] = $orderItem;
+        $order = TestUtils::createDumpyOrder([], $addressData, $orderItems, Order::STATE_PROCESSING, Order::STATE_PROCESSING, $payment);
+        $order->setTotalRefunded($orderTotalRefunded);
+        $order->setGrandTotal($orderGrandTotal);
+        $order->setTotalPaid($orderTotalPaid);
+        
+        $order->setActionFlag(Order::ACTION_FLAG_UNHOLD, $orderCanShip);
+        $order->setIsVirtual(!$orderCanShip);
+        $order->setActionFlag(Order::ACTION_FLAG_SHIP, $orderCanShip);
+        
         static::assertEquals($orderState, $this->orderHelper->transactionToOrderState($transactionState, $order));
         TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
