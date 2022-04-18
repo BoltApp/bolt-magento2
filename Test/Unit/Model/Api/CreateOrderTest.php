@@ -37,6 +37,8 @@ use Bolt\Boltpay\Model\ResponseFactory as BoltResponseFactory;
 use Bolt\Boltpay\Model\RequestFactory as BoltRequestFactory;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Quote\Model\Quote\Item as QuoteItem;
+use Magento\CatalogInventory\Helper\Data as CatalogInventoryData;
 
 /**
  * Class CreateOrderTest
@@ -625,6 +627,24 @@ class CreateOrderTest extends BoltTestCase
         $this->expectExceptionCode(CreateOrder::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED);
         $this->expectExceptionMessage('Cart data has changed. SKU: ["'.$productSku.'"]');
         $this->createOrder->validateCartItems($quote, json_decode('{"order":{"cart":{"items":{}}}}'));
+    }
+    
+    /**
+     * @test
+     * @covers ::hasItemErrors
+     */
+    public function hasItemErrors_exception()
+    {
+        $quoteItem = $this->objectManager->create(QuoteItem::class);
+        $quoteItem->addErrorInfo(
+            'cataloginventory',
+            CatalogInventoryData::ERROR_QTY,
+            __('This product is out of stock.')
+        );
+        $this->expectException(BoltException::class);
+        $this->expectExceptionCode(CreateOrder::E_BOLT_ITEM_OUT_OF_INVENTORY);
+        $this->expectExceptionMessage('This product is out of stock.');
+        $this->createOrder->hasItemErrors($quoteItem);
     }
 
     /**
