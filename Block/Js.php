@@ -229,7 +229,7 @@ class Js extends Template
         }
         return $this->configHelper->getGlobalCSS();
     }
-    
+
     /**
      * Get the global javascript to be added to any page.
      *
@@ -280,7 +280,7 @@ class Js extends Template
     {
         $flag = $this->checkoutSession->getBoltInitiateCheckout();
         $this->checkoutSession->unsBoltInitiateCheckout();
-        return (bool) $flag;
+        return (bool)$flag;
     }
 
     /**
@@ -340,7 +340,7 @@ class Js extends Template
     {
         $contact_email = $this->_scopeConfig->getValue('trans_email/ident_support/email')
             ?: $this->_scopeConfig->getValue('trans_email/ident_general/email')
-            ?: '';
+                ?: '';
         return __(
             'Your payment was successful and we\'re now processing your order. ' .
             'If you don\'t receive order confirmation email in next 30 minutes, please contact us at ' .
@@ -374,7 +374,7 @@ class Js extends Template
     {
         return $this->configHelper->getModuleVersion();
     }
-    
+
     /**
      * Get Magento version
      *
@@ -425,7 +425,7 @@ class Js extends Template
     {
         return $this->configHelper->getMinicartSupport();
     }
-    
+
     /**
      * Return true if bolt product page checkout is enabled
      */
@@ -441,7 +441,7 @@ class Js extends Template
     {
         return $this->isOnProductPage() && $this->isBoltPPCEnabled();
     }
-    
+
     /**
      * Return true if customer is on cart page
      */
@@ -450,7 +450,16 @@ class Js extends Template
         $currentPage = $this->getRequest()->getFullActionName();
         return $currentPage == 'checkout_cart_index';
     }
-    
+
+    /**
+     * Return true if customer is on checkout page
+     */
+    public function isOnCheckoutPage()
+    {
+        $currentPage = $this->getRequest()->getFullActionName();
+        return $currentPage == 'checkout_index_index';
+    }
+
     /**
      * Return true if customer is on product page
      */
@@ -459,7 +468,7 @@ class Js extends Template
         $currentPage = $this->getRequest()->getFullActionName();
         return $currentPage == 'catalog_product_view';
     }
-    
+
     /**
      * Return true if customer is on home page
      */
@@ -467,7 +476,7 @@ class Js extends Template
     {
         return $this->getRequest()->getFullActionName() == Config::HOME_PAGE_ACTION;
     }
-    
+
     /**
      * If feature switch M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE is enabled,
      * then we only fetch Bolt connect js on page load for the product page (PPC is enabled) and cart page.
@@ -481,10 +490,10 @@ class Js extends Template
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     /**
      * If feature switch M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE is enabled,
      * then on the product page, with PPC disabled and minicart enabled,
@@ -499,10 +508,10 @@ class Js extends Template
                 return true;
             }
         }
-        
+
         return false;
     }
-    
+
     /**
      * If feature switch M2_DISABLE_TRACK_ON_HOME_PAGE is enabled,
      * then the Bolt track.js should be disabled on the home page.
@@ -512,10 +521,10 @@ class Js extends Template
         if ($this->featureSwitches->isDisableTrackJsOnHomePage()) {
             return true;
         }
-        
+
         return false;
     }
-    
+
     /**
      * If feature switch M2_DISABLE_TRACK_ON_NON_BOLT_PAGES is enabled,
      * then the Bolt track.js would be loaded only on pages where we have Bolt connect.js.
@@ -525,7 +534,7 @@ class Js extends Template
         if ($this->featureSwitches->isDisableTrackJsOnNonBoltPages()) {
             return true;
         }
-        
+
         return false;
     }
 
@@ -614,7 +623,7 @@ class Js extends Template
     }
 
     /**
-     * @param $jsCode
+     * @param        $jsCode
      * @param string $argName
      *
      * @return string
@@ -654,7 +663,7 @@ function($argName) {
     {
         return $this->eventsForThirdPartyModules->runFilter('getAdditionalInvalidateBoltCartJavascript', null);
     }
-    
+
     /**
      * Get additional conditions to compare the quote totals.
      *
@@ -674,20 +683,29 @@ function($argName) {
     {
         return $this->httpContext->getValue(\Magento\Customer\Model\Context::CONTEXT_AUTH);
     }
-    
+
     /**
-     * Returns configuration value for Bolt Order Caching
-     *
-     * @see \Bolt\Boltpay\Helper\Config::isBoltOrderCachingEnabled
-     *
-     * @param null $storeId
-     *
+     * @return bool
+     */
+    public function isBoltDisabledOnCurrentPage()
+    {
+        return $this->isBoltOnCartDisabled() || $this->isBoltOnCheckoutPageDisabled();
+    }
+
+    /**
      * @return bool
      */
     public function isBoltOnCartDisabled()
     {
-        $storeId = $this->getStoreId();
-        return $this->isOnCartPage() && !$this->configHelper->getBoltOnCartPage($storeId);
+        return $this->isOnCartPage() && !$this->configHelper->getBoltOnCartPage($this->getStoreId());
+    }
+
+    /**
+     * @return bool
+     */
+    public function isBoltOnCheckoutPageDisabled()
+    {
+        return $this->isOnCheckoutPage() && !$this->configHelper->isPaymentOnlyCheckoutEnabled($this->getStoreId());
     }
 
     /**
