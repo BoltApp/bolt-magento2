@@ -277,4 +277,12 @@
         <plugin name="Bolt_Boltpay_Cache_Fedex_Api_Result"
                 type="Bolt\Boltpay\Plugin\Magento\Fedex\Model\CacheFedexResultPlugin" sortOrder="10"/>
     </type>
+    <type name="Amasty\Shiprestriction\Model\ShippingRestrictionRule">
+        <plugin name="Bolt_Boltpay_Amasty_Shiprestriction_Model_ShippingRestrictionRule"
+                type="Bolt\Boltpay\Plugin\Amasty\Shiprestriction\Model\ShippingRestrictionRulePlugin" sortOrder="10"/>
+    </type>
+    <type name="Amasty\CommonRules\Model\ResourceModel\Rule\Collection">
+        <plugin name="Bolt_Boltpay_Amasty_CommonRules_Model_ResourceModel_Rule_Collection"
+                type="Bolt\Boltpay\Plugin\Amasty\CommonRules\Model\ResourceModel\Rule\CollectionPlugin" sortOrder="10"/>
+    </type>
 </config>
