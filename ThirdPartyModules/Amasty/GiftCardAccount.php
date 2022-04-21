@@ -132,25 +132,43 @@ class GiftCardAccount
             // final discounts sum is greater than the cart total amount ($totalAmount < 0)
             // the "fixed_amount" type is added below.
             ///////////////////////////////////////////////////////////////////////////
-            if ($totalDiscount && $totalDiscount->getValue() && $this->discountHelper->getAmastyPayForEverything()) {
-                $giftcardQuote = $giftcardQuoteRepository->getByQuoteId($quote->getId());
+            if ($totalDiscount && $totalDiscount->getValue()) {
                 $discountType = $this->discountHelper->getBoltDiscountType('by_fixed');
-                foreach ($giftcardQuote->getGiftCards() as $appliedGiftcardData) {
-                    $giftcard = $giftcardAccountRepository->getById($appliedGiftcardData['id']);
-                    $amount = abs($giftcard->getCurrentValue());
-                    $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-                    $giftCardCode = $giftcard->getCodeModel()->getCode();
+                $appliedGiftCardItems = [];
+                if ($this->discountHelper->getAmastyPayForEverything()) {
+                    $giftcardQuote = $giftcardQuoteRepository->getByQuoteId($quote->getId());
+                    foreach ($giftcardQuote->getGiftCards() as $appliedGiftcardData) {
+                        $giftcard = $giftcardAccountRepository->getById($appliedGiftcardData['id']);
+                        $amount = abs($giftcard->getCurrentValue());               
+                        $giftCardCode = $giftcard->getCodeModel()->getCode();
+                        $appliedGiftCardItems[] = [
+                            'code' => $giftCardCode,
+                            'amount' => $amount
+                        ];
+                    }
+                } else {
+                    $extension = $quote->getExtensionAttributes();
+                    $appliedGiftCards = $extension->getAmAppliedGiftCards();
+                    foreach ($appliedGiftCards as $appliedGiftCard) {
+                        $amount = abs($appliedGiftCard[\Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardCartProcessor::GIFT_CARD_AMOUNT]);               
+                        $giftCardCode = $appliedGiftCard[\Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardCartProcessor::GIFT_CARD_CODE];
+                        $appliedGiftCardItems[] = [
+                            'code' => $giftCardCode,
+                            'amount' => $amount
+                        ];
+                    }
+                }
+                foreach ($appliedGiftCardItems as $appliedGiftCardItem) {
+                    $roundedAmount = CurrencyUtils::toMinor($appliedGiftCardItem['amount'], $currencyCode);
                     $discountItem = [
-                        'description'       => __('Gift Card ') . $giftCardCode,
+                        'description'       => __('Gift Card ') . $appliedGiftCardItem['code'],
                         'amount'            => $roundedAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                        'reference'         => $giftCardCode,
-                        'discount_type'     => $discountType,
-                        // For v1/discounts.code.apply and v2/cart.update
-                        'type'              => $discountType,
-                        // For v1/merchant/order
+                        'reference'         => $appliedGiftCardItem['code'],
+                        'discount_type'     => $discountType, // For v1/discounts.code.apply and v2/cart.update
+                        'type'              => $discountType, // For v1/merchant/order
                     ];
-                    $discountAmount += $amount;
+                    $discountAmount += $appliedGiftCardItem['amount'];
                     $roundedDiscountAmount += $roundedAmount;
                     $discounts[] = $discountItem;
                 }
