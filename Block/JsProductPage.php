@@ -179,12 +179,10 @@ class JsProductPage extends Js
 
         // By this point we know that the Select flag is true, the parent check is true, so
         // all that remains is to check if this product has the ppc attribute or not.
-        $attributes = $this->getProduct()->getAttributes();
-        foreach ($attributes as $attribute) {
-            if ($attribute->getName() == 'bolt_ppc') {
+        if ($this->getProduct()->getBoltPpc()) {
                 return true;
-            }
         }
+
         return false;
     }
 }

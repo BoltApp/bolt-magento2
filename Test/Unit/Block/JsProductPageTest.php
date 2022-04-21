@@ -266,7 +266,7 @@ class JsProductPageTest extends BoltTestCase
 
         $product = $this->getMockBuilder(Product::class)
             ->disableOriginalConstructor()
-            ->setMethods(['getExtensionAttributes', 'getStockItem', 'getTypeId', 'getId', 'getTypeInstance', 'getChildrenIds', 'getAttributes'])
+            ->setMethods(['getExtensionAttributes', 'getStockItem', 'getTypeId', 'getId', 'getTypeInstance', 'getChildrenIds', 'getAttributes','getBoltPpc'])
             ->getMock();
 
         $productViewMock = $this->getMockBuilder(ProductView::class)
@@ -297,11 +297,7 @@ class JsProductPageTest extends BoltTestCase
         $configHelper->expects(static::once())->method('getSelectProductPageCheckoutFlag')->willReturn(true);
         $configHelper->expects(static::once())->method('getProductPageCheckoutFlag')->willReturn(true);
         $requestMock->expects(static::once())->method('getFullActionName')->willReturn('catalog_product_view');
-        $attr1 = $this->createMock(AbstractAttribute::class);
-        $attr1->expects(static::once())->method('getName')->willReturn('attr1');
-        $attr2 = $this->createMock(AbstractAttribute::class);
-        $attr2->expects(static::once())->method('getName')->willReturn('bolt_ppc');
-        $product->expects(static::once())->method('getAttributes')->willReturn([$attr1, $attr2]);
+        $product->expects(static::once())->method('getBoltPpc')->willReturn(true);
         $this->assertEquals(true, $block->isBoltProductPage());
     }
 }
