@@ -67,23 +67,22 @@ class RegularFilterPlugin
         Collection $collection,
         Filter $filter
     ) {
-        if ($this->config->getShowCcTypeInOrderGrid() &&
-            $collection instanceof OrderGridCollection &&
+        if ($collection instanceof OrderGridCollection &&
             $filter->getField() == 'payment_method' &&
             strpos($filter->getValue(), Payment::METHOD_CODE . '_') !== false
         ) {
-            $collection->getSelect()->joinLeft(
+            $collectionSelect = $collection->getSelect();
+            $collectionAdapter = $collectionSelect->getConnection();
+            $collectionSelect->joinLeft(
                 ['payment' => $this->resourceConnection->getTableName('sales_order_payment')],
                 'main_table.entity_id = payment.parent_id',
-                ['cc_type' => 'LOWER(cc_type)']
+                ['additional_information' => 'LOWER(additional_information)', 'cc_type' => 'LOWER(cc_type)']
             );
-
-            $collection->getSelect()
-                ->where(
-                    'main_table.payment_method = "'. Payment::METHOD_CODE .'" AND cc_type = ?',
-                    str_replace(Payment::METHOD_CODE . '_', '', $filter->getValue())
-                );
-
+            $paymentMethod = str_replace(Payment::METHOD_CODE . '_', '', $filter->getValue());
+            $collectionSelect->where(
+                'main_table.payment_method = "'. Payment::METHOD_CODE .'"
+                AND ('. $collectionAdapter->quoteInto('additional_information like ?', '%' . $paymentMethod . '%') .' OR '. $collectionAdapter->quoteInto('cc_type = ?', $paymentMethod) .')'
+            );
         } else {
             return $proceed($collection, $filter);
         }
