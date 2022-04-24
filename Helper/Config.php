@@ -584,7 +584,7 @@ class Config extends AbstractHelper
     {
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
-            return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_API, self::API_URL_SANDBOX);
+            return $this->getApiUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_API, self::API_URL_SANDBOX);
         }
         return self::API_URL_PRODUCTION;
     }
@@ -600,7 +600,7 @@ class Config extends AbstractHelper
     {
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
-            return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_MERCHANT_DASH, self::MERCHANT_DASH_SANDBOX);
+            return $this->getMerchantDashboardUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_MERCHANT_DASH, self::MERCHANT_DASH_SANDBOX);
         }
         return self::MERCHANT_DASH_PRODUCTION;
     }
@@ -620,23 +620,6 @@ class Config extends AbstractHelper
         }
         return self::CDN_URL_PRODUCTION;
     }
-    
-    /**
-     * Get Bolt additional configuration for CDN URL, stored in the following format:
-     *
-     * {
-     *   "cdnURL": "bolt.com"
-     * }
-     * defaults to empty string if not set
-     *
-     * @param int|string $storeId
-     *
-     * @return string
-     */
-    public function getCdnUrlFromAdditionalConfig($storeId = null)
-    {
-        return $this->getAdditionalConfigProperty('cdnURL', $storeId);
-    }
 
     /**
      * Get Bolt PaybByLink URL
@@ -648,9 +631,9 @@ class Config extends AbstractHelper
     public function getPayByLinkUrl($isAllowCustomURLForProduction = false)
     {
         if ($this->isSandboxModeSet()) {
-            $url = $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_SANDBOX);
+            $url = $this->getCdnUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_SANDBOX);
         } else if ($isAllowCustomURLForProduction) {
-            $url = $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_PRODUCTION);
+            $url = $this->getCdnUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_PRODUCTION);
         } else {
             $url = self::CDN_URL_PRODUCTION;
         }
@@ -668,7 +651,7 @@ class Config extends AbstractHelper
     {
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
-            return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_ACCOUNT, self::ACCOUNT_URL_SANDBOX);
+            return $this->getAccountUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_ACCOUNT, self::ACCOUNT_URL_SANDBOX);
         }
         return self::ACCOUNT_URL_PRODUCTION;
     }
@@ -2456,5 +2439,73 @@ class Config extends AbstractHelper
             ScopeInterface::SCOPE_STORE,
             $storeId
         );
+    }
+    
+    /**
+     * Get Bolt additional configuration for CDN URL, stored in the following format:
+     *
+     * {
+     *   "cdnURL": "bolt.com"
+     * }
+     * defaults to empty string if not set
+     *
+     * @param int|string $storeId
+     *
+     * @return string
+     */
+    public function getCdnUrlFromAdditionalConfig($storeId = null)
+    {
+        return $this->getAdditionalConfigProperty('cdnURL', $storeId);
+    }
+    
+    /**
+     * Get Bolt additional configuration for account URL, stored in the following format:
+     *
+     * {
+     *   "accountURL": "bolt.com"
+     * }
+     * defaults to empty string if not set
+     *
+     * @param int|string $storeId
+     *
+     * @return string
+     */
+    public function getAccountUrlFromAdditionalConfig($storeId = null)
+    {
+        return $this->getAdditionalConfigProperty('accountURL', $storeId);
+    }
+    
+    /**
+     * Get Bolt additional configuration for api URL, stored in the following format:
+     *
+     * {
+     *   "apiURL": "bolt.com"
+     * }
+     * defaults to empty string if not set
+     *
+     * @param int|string $storeId
+     *
+     * @return string
+     */
+    public function getApiUrlFromAdditionalConfig($storeId = null)
+    {
+        return $this->getAdditionalConfigProperty('apiURL', $storeId);
+    }
+    
+    /**
+     * Get Bolt additional configuration for merchant dashboard URL, stored in the following format:
+     *
+     * {
+     *   "merchantDashboardURL": "bolt.com"
+     * }
+     * defaults to empty string if not set
+     *
+     * @param int|string $storeId
+     *
+     * @return string
+     */
+    public function getMerchantDashboardUrlFromAdditionalConfig($storeId = null)
+    {
+        return $this->getAdditionalConfigProperty('merchantDashboardURL', $storeId);
     }
 }
