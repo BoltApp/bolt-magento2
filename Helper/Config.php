@@ -616,9 +616,26 @@ class Config extends AbstractHelper
     {
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
-            return $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_SANDBOX);
+            return $this->getCdnUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_SANDBOX);
         }
         return self::CDN_URL_PRODUCTION;
+    }
+    
+    /**
+     * Get Bolt additional configuration for CDN URL, stored in the following format:
+     *
+     * {
+     *   "cdnURL": "bolt.com"
+     * }
+     * defaults to empty string if not set
+     *
+     * @param int|string $storeId
+     *
+     * @return string
+     */
+    public function getCdnUrlFromAdditionalConfig($storeId = null)
+    {
+        return $this->getAdditionalConfigProperty('cdnURL', $storeId);
     }
 
     /**
