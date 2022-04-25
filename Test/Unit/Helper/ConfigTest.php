@@ -121,7 +121,7 @@ JSON;
         $configData = [
             [
                 'path' => Config::XML_PATH_ADDITIONAL_CONFIG,
-                'value' => [],
+                'value' => '',
                 'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                 'scopeId' => $this->storeId,
             ],
