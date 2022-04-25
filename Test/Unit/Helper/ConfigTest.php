@@ -81,7 +81,11 @@ class ConfigTest extends BoltTestCase
     "ignoredShippingAddressCoupons": [
         "IGNORED_SHIPPING_ADDRESS_COUPON"
     ],
-     "priceFaultTolerance": "10"
+     "priceFaultTolerance": "10",
+     "merchantDashboardURL": "https://test-sandbox.bolt.com/",
+     "apiURL": "https://test-sandbox.bolt.com/",
+     "accountURL": "https://test-sandbox.bolt.com/",
+     "cdnURL": "https://test-sandbox.bolt.com/"
 }
 JSON;
 
@@ -128,6 +132,31 @@ JSON;
         TestUtils::setupBoltConfig($configData);
         $result = $this->configHelper->getMerchantDashboardUrl();
         self::assertEquals(BoltConfig::MERCHANT_DASH_SANDBOX, $result);
+    }
+    
+    /**
+     * @test
+     * @covers ::getMerchantDashboardUrl
+     */
+    public function getMerchantDashboardUrl_returnAdditionalConfigMerchantDashUrl()
+    {
+        $configData = [
+            [
+                'path' => Config::XML_PATH_SANDBOX_MODE,
+                'value' => true,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_ADDITIONAL_CONFIG,
+                'value' => self::ADDITIONAL_CONFIG,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $this->configHelper->getMerchantDashboardUrl();
+        self::assertEquals("https://test-sandbox.bolt.com/", $result);
     }
 
     /**
@@ -218,6 +247,31 @@ JSON;
         $result = $this->configHelper->getCdnUrl();
         self::assertEquals(Config::CDN_URL_SANDBOX, $result);
     }
+    
+    /**
+     * @test
+     * @covers ::getCdnUrl
+     */
+    public function getCdnUrl_setupAdditionalConfig_willReturnCdnUrlSandbox()
+    {
+        $configData = [
+            [
+                'path' => Config::XML_PATH_SANDBOX_MODE,
+                'value' => true,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_ADDITIONAL_CONFIG,
+                'value' => self::ADDITIONAL_CONFIG,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $this->configHelper->getCdnUrl();
+        self::assertEquals("https://test-sandbox.bolt.com/", $result);
+    }
 
     /**
      * @test
@@ -256,6 +310,31 @@ JSON;
         $result = $this->configHelper->getAccountUrl();
         self::assertEquals(Config::ACCOUNT_URL_SANDBOX, $result);
     }
+    
+    /**
+     * @test
+     * @covers ::getAccountUrl
+     */
+    public function getAccountUrl_setupAdditionalConfig_willReturnAccountUrlSandbox()
+    {
+        $configData = [
+            [
+                'path' => Config::XML_PATH_SANDBOX_MODE,
+                'value' => true,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_ADDITIONAL_CONFIG,
+                'value' => self::ADDITIONAL_CONFIG,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $this->configHelper->getAccountUrl();
+        self::assertEquals("https://test-sandbox.bolt.com/", $result);
+    }
 
     /**
      * @covers ::getApiUrl
@@ -292,6 +371,30 @@ JSON;
         TestUtils::setupBoltConfig($configData);
         $result = $this->configHelper->getApiUrl();
         self::assertEquals(Config::API_URL_SANDBOX, $result);
+    }
+    
+    /**
+     * @test
+     */
+    public function getApiUrl_setupAdditionalConfig_willReturnApiUrlSandbox()
+    {
+        $configData = [
+            [
+                'path' => Config::XML_PATH_SANDBOX_MODE,
+                'value' => true,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_ADDITIONAL_CONFIG,
+                'value' => self::ADDITIONAL_CONFIG,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $this->configHelper->getApiUrl();
+        self::assertEquals("https://test-sandbox.bolt.com/", $result);
     }
 
     /**

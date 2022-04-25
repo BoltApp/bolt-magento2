@@ -625,10 +625,11 @@ class Config extends AbstractHelper
      * Get Bolt PaybByLink URL
      *
      * @param bool $isAllowCustomURLForProduction
+     * @param int|string $storeId
      *
      * @return string
      */
-    public function getPayByLinkUrl($isAllowCustomURLForProduction = false)
+    public function getPayByLinkUrl($isAllowCustomURLForProduction = false, $storeId = null)
     {
         if ($this->isSandboxModeSet()) {
             $url = $this->getCdnUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_SANDBOX);
@@ -2445,7 +2446,7 @@ class Config extends AbstractHelper
      * Get Bolt additional configuration for CDN URL, stored in the following format:
      *
      * {
-     *   "cdnURL": "bolt.com"
+     *   "cdnURL": "https://api-sandbox.bolt.com/"
      * }
      * defaults to empty string if not set
      *
@@ -2462,7 +2463,7 @@ class Config extends AbstractHelper
      * Get Bolt additional configuration for account URL, stored in the following format:
      *
      * {
-     *   "accountURL": "bolt.com"
+     *   "accountURL": "https://api-sandbox.bolt.com/"
      * }
      * defaults to empty string if not set
      *
@@ -2479,7 +2480,7 @@ class Config extends AbstractHelper
      * Get Bolt additional configuration for api URL, stored in the following format:
      *
      * {
-     *   "apiURL": "bolt.com"
+     *   "apiURL": "https://api-sandbox.bolt.com/"
      * }
      * defaults to empty string if not set
      *
@@ -2496,7 +2497,7 @@ class Config extends AbstractHelper
      * Get Bolt additional configuration for merchant dashboard URL, stored in the following format:
      *
      * {
-     *   "merchantDashboardURL": "bolt.com"
+     *   "merchantDashboardURL": "https://api-sandbox.bolt.com/"
      * }
      * defaults to empty string if not set
      *

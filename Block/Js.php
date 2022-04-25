@@ -139,8 +139,9 @@ class Js extends Template
      */
     public function getPayByLinkUrl()
     {
+        $storeId = $this->getStoreId();
         return $this->configHelper->getPayByLinkUrl(
-            $this->featureSwitches->isAllowCustomURLForProduction()
+            $this->featureSwitches->isAllowCustomURLForProduction(), $storeId
         );
     }
 
