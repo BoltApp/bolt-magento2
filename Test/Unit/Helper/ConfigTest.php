@@ -114,6 +114,20 @@ JSON;
         $store = $this->objectManager->get(\Magento\Store\Model\StoreManagerInterface::class);
         $this->storeId = $store->getStore()->getId();
     }
+    
+    protected function tearDownInternal()
+    {
+        // Reset additional configuration
+        $configData = [
+            [
+                'path' => Config::XML_PATH_ADDITIONAL_CONFIG,
+                'value' => [],
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+        ];
+        TestUtils::setupBoltConfig($configData);
+    }
 
     /**
      * @test
