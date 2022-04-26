@@ -217,7 +217,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ],
             'is_non_bolt_order'  => false,
             'tracking_entity_id' => self::ENTITY_ID,
-            'platform_shipment_id' => null
+            'platform_shipment_id' => self::ENTITY_ID
         ];
         $this->dataObject->expects($this->once())
             ->method('setApiData')
@@ -252,6 +252,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->willReturn('simple');
         $map = [
             ['transaction_reference', '000123'],
+            ['platform_shipment_id',self::ENTITY_ID]
         ];
         $payment->expects($this->once())
             ->method('getAdditionalInformation')
@@ -329,7 +330,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ],
             'is_non_bolt_order'  => false,
             'tracking_entity_id' => self::ENTITY_ID,
-            'platform_shipment_id' => null
+            'platform_shipment_id' => self::ENTITY_ID
         ];
         $this->dataObject->expects($this->once())
             ->method('setApiData')
@@ -364,6 +365,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->willReturn('simple');
         $map = [
             ['transaction_reference', '000123'],
+            ['platform_shipment_id',self::ENTITY_ID]
         ];
         $payment->expects($this->once())
             ->method('getAdditionalInformation')
@@ -522,7 +524,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ],
             'is_non_bolt_order'  => true,
             'tracking_entity_id' => self::ENTITY_ID,
-            'platform_shipment_id' => null
+            'platform_shipment_id' => self::ENTITY_ID
         ];
         $this->dataObject->expects($this->once())
             ->method('setApiData')
@@ -753,6 +755,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->willReturn('simple');
         $map = [
             ['transaction_reference', '000123'],
+            ['platform_shipment_id',self::ENTITY_ID]
         ];
         $payment->expects($this->once())
             ->method('getAdditionalInformation')
@@ -838,7 +841,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ],
             'is_non_bolt_order'  => false,
             'tracking_entity_id' => self::ENTITY_ID,
-            'platform_shipment_id' => null
+            'platform_shipment_id' => self::ENTITY_ID
         ];
         $this->dataObject->expects($this->once())
             ->method('setApiData')
@@ -871,6 +874,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->willReturn('simple');
         $map = [
             ['transaction_reference', '000123'],
+            ['platform_shipment_id',self::ENTITY_ID]
         ];
         $payment->expects($this->once())
             ->method('getAdditionalInformation')
