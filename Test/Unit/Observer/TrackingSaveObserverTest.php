@@ -276,6 +276,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->method('getCarrierCode')
             ->willReturn('United States Postal Service');
         $track->method('getId')->willReturn(self::ENTITY_ID);
+        $track->method('getParentId')->willReturn(self::ENTITY_ID);
         $this->configHelper->expects($this->once())
             ->method('getStoreVersion')
             ->willReturn('2.2.0');
@@ -389,6 +390,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->method('getCarrierCode')
             ->willReturn((object) []);
         $track->method('getId')->willReturn(self::ENTITY_ID);
+        $track->method('getParentId')->willReturn(self::ENTITY_ID);
         $this->configHelper->expects($this->once())
             ->method('getStoreVersion')
             ->willReturn('2.2.0');
@@ -470,6 +472,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->method('getCarrierCode')
             ->willReturn('United States Postal Service');
         $track->method('getId')->willReturn(self::ENTITY_ID);
+        $track->method('getParentId')->willReturn(self::ENTITY_ID);
         $this->configHelper->expects($this->once())
             ->method('getStoreVersion')
             ->willReturn('2.2.0');
@@ -779,6 +782,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->method('getCarrierCode')
             ->willReturn((object) ['0' => 'United States Postal Service']);
         $track->method('getId')->willReturn(self::ENTITY_ID);
+        $track->method('getParentId')->willReturn(self::ENTITY_ID);
         $this->configHelper->expects($this->once())
             ->method('getStoreVersion')
             ->willReturn('2.2.0');
