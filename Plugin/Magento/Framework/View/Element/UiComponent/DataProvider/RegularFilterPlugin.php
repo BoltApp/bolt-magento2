@@ -76,12 +76,12 @@ class RegularFilterPlugin
             $collectionSelect->joinLeft(
                 ['payment' => $this->resourceConnection->getTableName('sales_order_payment')],
                 'main_table.entity_id = payment.parent_id',
-                ['additional_information' => 'LOWER(additional_information)', 'cc_type' => 'LOWER(cc_type)']
+                []
             );
             $paymentMethod = str_replace(Payment::METHOD_CODE . '_', '', $filter->getValue());
             $collectionSelect->where(
                 'main_table.payment_method = "'. Payment::METHOD_CODE .'"
-                AND ('. $collectionAdapter->quoteInto('additional_information like ?', '%' . $paymentMethod . '%') .' OR '. $collectionAdapter->quoteInto('cc_type = ?', $paymentMethod) .')'
+                AND ('. $collectionAdapter->quoteInto('LOWER(payment.additional_information) like ?', '%' . $paymentMethod . '%') .' OR '. $collectionAdapter->quoteInto('LOWER(payment.cc_type) = ?', $paymentMethod) .')'
             );
         } else {
             return $proceed($collection, $filter);
