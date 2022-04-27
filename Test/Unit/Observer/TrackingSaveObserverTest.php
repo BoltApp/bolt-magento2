@@ -139,6 +139,9 @@ class TrackingSaveObserverTest extends BoltTestCase
         $track->expects($this->once())
             ->method('getId')
             ->willReturn(self::ENTITY_ID);
+        $track->expects($this->once())
+            ->method('getParentId')
+            ->willReturn(self::ENTITY_ID);
         $this->configHelper->expects($this->once())
             ->method('getStoreVersion')
             ->willReturn('2.4.2');
