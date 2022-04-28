@@ -102,6 +102,7 @@ class TrackingSaveObserver implements ObserverInterface
 
         try {
             $startTime = $this->metricsClient->getCurrentTime();
+            /** @var \Magento\Sales\Model\Order\Shipment\Track $tracking */
             $tracking = $observer->getEvent()->getTrack();
 
             // If we update track (don't create) and carrier and number are the same do nothing
@@ -115,6 +116,7 @@ class TrackingSaveObserver implements ObserverInterface
                 return;
             }
 
+            /** @var \Magento\Sales\Model\Order\Shipment $shipment */
             $shipment = $tracking->getShipment();
             $order = $shipment->getOrder();
             $payment = $order->getPayment();
@@ -194,6 +196,7 @@ class TrackingSaveObserver implements ObserverInterface
                 'items'                 => $items,
                 'is_non_bolt_order'     => $isNonBoltOrder,
                 'tracking_entity_id'    => $tracking->getId(),
+                'platform_shipment_id'  => $tracking->getParentId()
             ];
 
             //Request Data

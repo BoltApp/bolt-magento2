@@ -139,6 +139,9 @@ class TrackingSaveObserverTest extends BoltTestCase
         $track->expects($this->once())
             ->method('getId')
             ->willReturn(self::ENTITY_ID);
+        $track->expects($this->once())
+            ->method('getParentId')
+            ->willReturn(self::ENTITY_ID);
         $this->configHelper->expects($this->once())
             ->method('getStoreVersion')
             ->willReturn('2.4.2');
@@ -217,6 +220,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ],
             'is_non_bolt_order'  => false,
             'tracking_entity_id' => self::ENTITY_ID,
+            'platform_shipment_id' => self::ENTITY_ID
         ];
         $this->dataObject->expects($this->once())
             ->method('setApiData')
@@ -251,6 +255,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->willReturn('simple');
         $map = [
             ['transaction_reference', '000123'],
+            ['platform_shipment_id',self::ENTITY_ID]
         ];
         $payment->expects($this->once())
             ->method('getAdditionalInformation')
@@ -274,6 +279,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->method('getCarrierCode')
             ->willReturn('United States Postal Service');
         $track->method('getId')->willReturn(self::ENTITY_ID);
+        $track->method('getParentId')->willReturn(self::ENTITY_ID);
         $this->configHelper->expects($this->once())
             ->method('getStoreVersion')
             ->willReturn('2.2.0');
@@ -328,6 +334,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ],
             'is_non_bolt_order'  => false,
             'tracking_entity_id' => self::ENTITY_ID,
+            'platform_shipment_id' => self::ENTITY_ID
         ];
         $this->dataObject->expects($this->once())
             ->method('setApiData')
@@ -362,6 +369,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->willReturn('simple');
         $map = [
             ['transaction_reference', '000123'],
+            ['platform_shipment_id',self::ENTITY_ID]
         ];
         $payment->expects($this->once())
             ->method('getAdditionalInformation')
@@ -385,6 +393,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->method('getCarrierCode')
             ->willReturn((object) []);
         $track->method('getId')->willReturn(self::ENTITY_ID);
+        $track->method('getParentId')->willReturn(self::ENTITY_ID);
         $this->configHelper->expects($this->once())
             ->method('getStoreVersion')
             ->willReturn('2.2.0');
@@ -466,6 +475,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->method('getCarrierCode')
             ->willReturn('United States Postal Service');
         $track->method('getId')->willReturn(self::ENTITY_ID);
+        $track->method('getParentId')->willReturn(self::ENTITY_ID);
         $this->configHelper->expects($this->once())
             ->method('getStoreVersion')
             ->willReturn('2.2.0');
@@ -520,6 +530,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ],
             'is_non_bolt_order'  => true,
             'tracking_entity_id' => self::ENTITY_ID,
+            'platform_shipment_id' => self::ENTITY_ID
         ];
         $this->dataObject->expects($this->once())
             ->method('setApiData')
@@ -750,6 +761,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->willReturn('simple');
         $map = [
             ['transaction_reference', '000123'],
+            ['platform_shipment_id',self::ENTITY_ID]
         ];
         $payment->expects($this->once())
             ->method('getAdditionalInformation')
@@ -773,6 +785,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->method('getCarrierCode')
             ->willReturn((object) ['0' => 'United States Postal Service']);
         $track->method('getId')->willReturn(self::ENTITY_ID);
+        $track->method('getParentId')->willReturn(self::ENTITY_ID);
         $this->configHelper->expects($this->once())
             ->method('getStoreVersion')
             ->willReturn('2.2.0');
@@ -835,6 +848,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ],
             'is_non_bolt_order'  => false,
             'tracking_entity_id' => self::ENTITY_ID,
+            'platform_shipment_id' => self::ENTITY_ID
         ];
         $this->dataObject->expects($this->once())
             ->method('setApiData')
@@ -867,6 +881,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->willReturn('simple');
         $map = [
             ['transaction_reference', '000123'],
+            ['platform_shipment_id',self::ENTITY_ID]
         ];
         $payment->expects($this->once())
             ->method('getAdditionalInformation')
