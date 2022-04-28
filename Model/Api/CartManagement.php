@@ -106,6 +106,7 @@ class CartManagement implements CartManagementInterface
             $this->data->setMaskedQuoteID($maskedQuoteID);
             return $this->data;
         } catch (WebapiException $e) {
+            $this->bugsnag->notifyException($e);
             throw $e;
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -132,11 +133,10 @@ class CartManagement implements CartManagementInterface
             if (!$quote) {
                 throw new WebapiException(__('Quote does not found'), 0, WebapiException::HTTP_NOT_FOUND);
             }
-            if (!is_null($isActive)) {
 
-            }
             $quote->setIsActive((bool)$isActive)->save();
         } catch (WebapiException $e) {
+            $this->bugsnag->notifyException($e);
             throw $e;
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
