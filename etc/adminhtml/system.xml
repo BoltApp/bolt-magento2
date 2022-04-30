@@ -423,6 +423,11 @@
                         <config_path>payment/boltpay/rossignol_exclude_ppc_attributes</config_path>
                         <if_module_enabled>Project_Rossignol</if_module_enabled>
                     </field>
+                    <field id="rossignol_store_search_radius" translate="label" type="text" sortOrder="252" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Store Search Radius</label>
+                        <config_path>payment/boltpay/rossignol_store_search_radius</config_path>
+                        <if_module_enabled>Synolia_Store</if_module_enabled>
+                    </field>
                 </group>
             </group>
         </section>

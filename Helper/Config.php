@@ -370,6 +370,11 @@ class Config extends AbstractHelper
      * Exclude item groups from product page checkout configuration path
      */
     const XML_PATH_ROSSIGNOL_EXCLUDE_ATTRIBUTES_FROM_PPC = 'payment/boltpay/rossignol_exclude_ppc_attributes';
+    
+    /**
+     * The Search Radius in kilometers for store pickup location search on storefront checkout.
+     */
+    const XML_PATH_ROSSIGNOL_STORE_SEARCH_RADIUS = 'payment/boltpay/rossignol_store_search_radius';
 
     /**
      * Minify JavaScript configuration path
@@ -463,7 +468,8 @@ class Config extends AbstractHelper
         'should_minify_javascript'           => self::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
         'capture_merchant_metrics'           => self::XML_PATH_CAPTURE_MERCHANT_METRICS,
         'track_checkout_funnel'              => self::XML_PATH_TRACK_CHECKOUT_FUNNEL,
-        'rossignol_exclude_ppc_attributes'   => self::XML_PATH_ROSSIGNOL_EXCLUDE_ATTRIBUTES_FROM_PPC
+        'rossignol_exclude_ppc_attributes'   => self::XML_PATH_ROSSIGNOL_EXCLUDE_ATTRIBUTES_FROM_PPC,
+        'rossignol_store_search_radius'      => self::XML_PATH_ROSSIGNOL_STORE_SEARCH_RADIUS,
     ];
 
     /**
@@ -1917,6 +1923,9 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('rossignol_exclude_ppc_attributes')
             ->setValue(var_export($this->getOrderCommentField(), true));
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+            ->setName('rossignol_store_search_radius')
+            ->setValue(var_export($this->getOrderCommentField(), true));
 
         return $boltSettings;
     }
@@ -2358,6 +2367,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_IP_WHITELIST,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+    
+    /**
+     * Get the Search Radius in kilometers for store pickup location search on storefront checkout.
+     *
+     * @param int|float $store scope used for retrieving the configuration value
+     *
+     * @return float
+     */
+    public function getRossignolStoreSearchRadius($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_ROSSIGNOL_STORE_SEARCH_RADIUS,
             ScopeInterface::SCOPE_STORE,
             $storeId
         );

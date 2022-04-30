@@ -79,6 +79,7 @@ tr.shipping.totals td.amount span.price,
                 <aheadworks_reward_points_on_cart>1</aheadworks_reward_points_on_cart>
                 <mageworx_reward_points_on_cart>1</mageworx_reward_points_on_cart>
                 <rossignol_exclude_ppc_attributes></rossignol_exclude_ppc_attributes>
+                <rossignol_store_search_radius>100</rossignol_store_search_radius>
             </boltpay>
         </payment>
     </default>

@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\ThirdPartyModules\Rossignol\Synolia;
 use Synolia\Store\Model\Carrier as InStorePickup;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Bugsnag as BugsnagHelper;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Api\Data\StoreAddressInterfaceFactory;
 use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterfaceFactory;
 use Magento\Store\Model\StoreManagerInterface;
@@ -58,6 +59,11 @@ class Store
      * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $storeManager;
+    
+    /**
+     * @var ConfigHelper
+     */
+    protected $configHelper;
 
     /**
      * Store constructor.
@@ -69,13 +75,15 @@ class Store
         OrderHelper $orderHelper,
         StoreAddressInterfaceFactory $storeAddressFactory,
         ShipToStoreOptionInterfaceFactory $shipToStoreOptionFactory,
-        StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        ConfigHelper $configHelper
     ) {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->orderHelper = $orderHelper;
         $this->storeAddressFactory = $storeAddressFactory;
         $this->shipToStoreOptionFactory = $shipToStoreOptionFactory;
         $this->storeManager = $storeManager;
+        $this->configHelper = $configHelper;
     }
 
     /**
@@ -118,13 +126,16 @@ class Store
                 $coordinates = $synoliaStoreGeocodeHelper->getFirstCoordinatesByAddress($shippingAddressQuery);
                 if (!empty($coordinates)) {
                     $collectionResultSearch = $synoliaStoreCollectionFactory->create();
-                    $collectionResultSearch->addDistanceFilter($coordinates['lat'], $coordinates['lng'], 100);
+                    // Get the Search Radius in kilometers for store pickup location search on storefront checkout.
+                    // Default to 100km.
+                    $searchRadius = $this->configHelper->getRossignolStoreSearchRadius($quote->getStoreId()) ?: 100;
+                    $collectionResultSearch->addDistanceFilter($coordinates['lat'], $coordinates['lng'], $searchRadius);
                     if (!empty($collectionResultSearch)) {
                         $validStores = [];
                         foreach ($collectionResultSearch as $resultStore) {
                             $distance = $this->vincentyGreatCircleDistance($coordinates['lat'], $coordinates['lng'], $resultStore->getLatitude(), $resultStore->getLongitude());         
 
-                            if ($distance < 100) {
+                            if ($distance < $searchRadius) {
                                 $validStores[$distance * 100] = $resultStore;                       
                             }
                         }
