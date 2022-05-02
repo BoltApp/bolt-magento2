@@ -376,9 +376,8 @@ class OrderManagement implements OrderManagementInterface
     public function deleteById($id)
     {
         $order = $this->orderHelper->getOrderById($id);
-        if ($order->getStatus() != OrderModel::STATE_PENDING_PAYMENT) {
-
-            throw new WebapiException(__('Unexpected order status'), 0, 422);
+        if ($order->getState() != OrderModel::STATE_PENDING_PAYMENT) {
+            throw new WebapiException(__('Unexpected order state'), 0, 422);
         }
         $payment = $order->getPayment();
         if ($payment && $payment->getCcTransId() != "") {
