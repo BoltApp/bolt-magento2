@@ -40,7 +40,7 @@ class Giftcard
      * @var Discount
      */
     protected $discountHelper;
-    
+
     /**
      * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
      */
@@ -75,9 +75,21 @@ class Giftcard
         list ($discounts, $totalAmount, $diff) = $result;
 
         try {
+            $quoteExtensionAttributes = $quote->getExtensionAttributes();
             $parentQuoteId = $quote->getData('bolt_parent_quote_id');
             $currencyCode = $quote->getQuoteCurrencyCode();
-            foreach ($aheadworksGiftcardManagement->get($parentQuoteId, false) as $giftcardQuote) {
+            if ($parentQuoteId) {
+                $giftCardQuotations = $aheadworksGiftcardManagement->get($parentQuoteId, false);
+            } elseif($quoteExtensionAttributes &&
+                method_exists($quoteExtensionAttributes, 'getAwGiftcardCodes') &&
+                !empty($quoteExtensionAttributes->getAwGiftcardCodes())
+            ) {
+                $giftCardQuotations = $quoteExtensionAttributes->getAwGiftcardCodes();
+            } else {
+                throw new LocalizedException(__('No AW GiftCards Quotations found, quote_id %', $quote->getId()));
+            }
+
+            foreach ($giftCardQuotations as $giftcardQuote) {
                 $discounts[] = [
                     'reference'         => $giftcardQuote->getGiftcardCode(),
                     'description'       => "Gift Card ({$giftcardQuote->getGiftcardCode()})",
@@ -109,7 +121,7 @@ class Giftcard
         if ($result !== null) {
             return $result;
         }
-        
+
         try {
             $storeId = $quote->getStoreId();
             return $aheadworksGiftcardRepository->getByCode($code, $storeId);
@@ -263,7 +275,7 @@ class Giftcard
                                     ? $destinationQuote->getExtensionAttributes()->getAwGiftcardCodes()
                                     : [];
             // Retrieve codes from applied Aw Giftcards
-            $sourceGiftcardCodes = $this->getAppliedAwGiftcardCodes($sourceQuote, $sourceGiftcards, $aheadworksGiftcardQuoteCollectionFactory);            
+            $sourceGiftcardCodes = $this->getAppliedAwGiftcardCodes($sourceQuote, $sourceGiftcards, $aheadworksGiftcardQuoteCollectionFactory);
             $destinationGiftcardCodes = $this->getAppliedAwGiftcardCodes($destinationQuote, $destinationGiftcards, $aheadworksGiftcardQuoteCollectionFactory);
             // Get Aw Giftcard codes need to be added
             $addGiftcardCodes = array_diff($sourceGiftcardCodes, $destinationGiftcardCodes);
@@ -289,7 +301,7 @@ class Giftcard
             $this->bugsnag->notifyException($e);
         }
     }
-    
+
     /**
      * @param Quote $quote
      * @param \Aheadworks\Giftcard\Api\Data\Giftcard\QuoteInterface $quoteGiftcards
@@ -309,7 +321,7 @@ class Giftcard
                 }
             }
         }
-        
+
         return $awGiftcardCodes;
     }
 }
