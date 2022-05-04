@@ -519,7 +519,7 @@ class CreateOrder implements CreateOrderInterface
 
         $quoteSkus = array_map(
             function ($item) {
-                return trim($item->getSku());
+                return $this->cartHelper->getSkuFromQuoteItem($item);
             },
             $quoteItems
         );
@@ -543,7 +543,7 @@ class CreateOrder implements CreateOrderInterface
 
         foreach ($quoteItems as $item) {
             /** @var QuoteItem $item */
-            $sku = trim($item->getSku());
+            $sku = $this->cartHelper->getSkuFromQuoteItem($item);
             $itemPrice = CurrencyUtils::toMinor($item->getCalculationPrice(), $quote->getQuoteCurrencyCode());
 
             $this->hasItemErrors($item);

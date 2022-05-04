@@ -1476,9 +1476,10 @@ class Cart extends AbstractHelper
                 // Load item product object
                 ////////////////////////////////////
                 $customizableOptions = null;
-                $itemSku = trim($item->getSku());
+                $itemSku = $this->getSkuFromQuoteItem($item);
                 $itemReference = $item->getProductId();
                 $itemName = $item->getName();
+                
                 //By default this feature switch is enabled.
                 if ($this->deciderHelper->isCustomizableOptionsSupport()) {
                     try {
@@ -1522,7 +1523,8 @@ class Cart extends AbstractHelper
                 $product['total_amount'] = $roundedTotalAmount;
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = $quantity;
-                $product['sku']          = trim($item->getSku());
+                $product['sku']          = $this->getSkuFromQuoteItem($item);
+                
                 if ($this->msrpHelper->canApplyMsrp($_product) && $_product->getMsrp() !== null) {
                     $product['msrp']     = CurrencyUtils::toMinor($_product->getMsrp(), $currencyCode);
                 }
@@ -2951,5 +2953,28 @@ class Cart extends AbstractHelper
         return $this->deciderHelper->isCollectDiscountsByPlugin()
             || ($this->configHelper->isActive($quote->getStore()->getId())
             && version_compare($this->configHelper->getStoreVersion(), '2.3.4', '<'));
+    }
+    
+    /**
+     * Get SKU of quote item
+     *
+     * @param \Magento\Quote\Model\Quote\Item $item
+     *
+     * @return string
+     */
+    public function getSkuFromQuoteItem($item)
+    {
+        // Get "Dynamic SKU" of the bundle product, so the quote item can be recognized.
+        if (($product = $item->getProduct())
+            && $item->getProductType() == \Magento\Catalog\Model\Product\Type::TYPE_BUNDLE
+            && ($oldSkuType = $product->getData('sku_type'))) {
+            // If "Dynamic SKU" is disabled, we need to enable it temporarily.
+            $product->setData('sku_type', 0);
+            $itemSku = $product->getTypeInstance()->getSku($product);
+            $product->setData('sku_type', $oldSkuType);
+            return $itemSku;
+        }
+        
+        return trim($item->getSku());
     }
 }
