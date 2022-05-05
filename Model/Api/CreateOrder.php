@@ -547,6 +547,13 @@ class CreateOrder implements CreateOrderInterface
             $itemPrice = CurrencyUtils::toMinor($item->getCalculationPrice(), $quote->getQuoteCurrencyCode());
 
             $this->hasItemErrors($item);
+            if (empty($transactionItems)) {
+                throw new BoltException(
+                    __('Quote item does not exist in Bolt cart. Item id: ' . $item->getItemId() .', SKU: ' . $this->cartHelper->getSkuFromQuoteItem($item)),
+                    null,
+                    self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
+                );
+            }
             $this->validateItemPrice($sku, $itemPrice, $transactionItems);
         }
     }
