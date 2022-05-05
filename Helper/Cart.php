@@ -1476,7 +1476,7 @@ class Cart extends AbstractHelper
                 // Load item product object
                 ////////////////////////////////////
                 $customizableOptions = null;
-                $itemSku = $this->getSkuFromQuoteItem($item);
+                $itemSku = trim($item->getSku());
                 $itemReference = $item->getProductId();
                 $itemName = $item->getName();
                 
