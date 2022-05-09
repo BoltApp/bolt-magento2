@@ -449,7 +449,10 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
             }
             scriptTag = document.createElement('script');
             scriptTag.setAttribute('type', 'text/javascript');
-            scriptTag.setAttribute('async', '');
+            // Preferring defer as opposed to async since script is loaded
+            // as a part of <head>. This would make it such that the script is
+            // loaded soon but not executed until HTML parsing is done.
+            scriptTag.setAttribute('defer', '');
             scriptTag.setAttribute('id', 'bolt-track');
             scriptTag.setAttribute('data-publishable-key', publishableKey);
             scriptTag.setAttribute('src', settings.track_url);
