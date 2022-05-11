@@ -210,11 +210,7 @@ trait ReceivedUrlTrait
      */
     private function getOrderByIncrementId($incrementId)
     {
-        if ($this->cartHelper->getFeatureSwitchDeciderHelper()->isAPIDrivenIntegrationEnabled()) {
-            $order = $this->cartHelper->getOrderById($incrementId);
-        } else {
-            $order = $this->orderHelper->getExistingOrder($incrementId);
-        }
+        $order = $this->orderHelper->getExistingOrder($incrementId);
 
         if (!$order) {
             throw new NoSuchEntityException(
