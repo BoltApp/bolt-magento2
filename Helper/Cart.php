@@ -2965,8 +2965,8 @@ class Cart extends AbstractHelper
     public function getSkuFromQuoteItem($item)
     {
         // Get "Dynamic SKU" of the bundle product, so the quote item can be recognized.
-        if (($product = $item->getProduct())
-            && $item->getProductType() == \Magento\Catalog\Model\Product\Type::TYPE_BUNDLE
+        if ($item->getProductType() == \Magento\Catalog\Model\Product\Type::TYPE_BUNDLE
+            && ($product = $item->getProduct())
             && ($oldSkuType = $product->getData('sku_type'))) {
             // If "Dynamic SKU" is disabled, we need to enable it temporarily.
             $product->setData('sku_type', 0);
