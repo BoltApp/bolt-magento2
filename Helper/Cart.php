@@ -1502,10 +1502,13 @@ class Cart extends AbstractHelper
                 }
 
                 try {
-                    if ($customizableOptions || $item->getProductType() == \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE) {
+                    $isConfigurableProduct = $item->getProductType() == \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE;
+                    if ($customizableOptions || $isConfigurableProduct) {
                         $_product = $this->productRepository->get($itemSku);
                         $itemReference = $_product->getId();
-                        $itemName = $_product->getName();
+                        // Add parent product name after variation name for configurable product,
+                        // cause the variation name may be identical between different cart items.
+                        $itemName = $isConfigurableProduct ? $_product->getName() : $_product->getName() . ' (' . $itemName . ')';
                     }
                 } catch (\Exception $e) {
                     $this->bugsnag->registerCallback(function ($report) use ($item) {
