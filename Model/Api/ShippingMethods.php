@@ -272,7 +272,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
         $quoteItems = ['quantity' => [], 'total' => []];
         foreach ($this->quote->getAllVisibleItems() as $item) {
-            $sku = trim($item->getSku());
+            $sku = $this->cartHelper->getSkuFromQuoteItem($item);
             $quantity = round($item->getQty());
             $unitPrice = round($item->getCalculationPrice(), 2);
             if (!isset($quoteItems['quantity'][$sku])) {
@@ -577,7 +577,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
             // include products in cache key
             foreach ($quote->getAllVisibleItems() as $item) {
-                $cacheIdentifier .= '_'.trim($item->getSku()).'_'.$item->getQty();
+                $cacheIdentifier .= '_'.$this->cartHelper->getSkuFromQuoteItem($item).'_'.$item->getQty();
             }
 
             // include applied rule ids (discounts) in cache key

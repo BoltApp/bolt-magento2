@@ -7016,4 +7016,39 @@ ORDER
         $ruleDiscountDetails = $currentMock->getSaleRuleDiscounts($quote);
         static::assertEquals([], $ruleDiscountDetails);
     }
+    
+    /**
+     * @test
+     * 
+     * @covers ::getSkuFromQuoteItem
+     */
+    public function getSkuFromQuoteItem_withBundleItem()
+    {
+        $quoteItem = $this->createPartialMock(
+            Item::class,
+            [
+                'getProduct',
+                'getProductType',
+                'getSku'
+            ]
+        );
+
+        $productMock = $this->createPartialMock(Product::class, ['getData','setData','getTypeInstance']);
+        $productMock->method('getData')->with('sku_type')->willReturn(1);
+        $productMock->expects(static::exactly(2))->method('setData')->withConsecutive(
+            ['sku_type', 0],
+            ['sku_type', 1]
+        );
+        $productTypeBundleMock = $this->getMockBuilder(\Magento\Bundle\Model\Product\Type::class)
+                                            ->setMethods(['getSku'])
+                                            ->disableOriginalConstructor()
+                                            ->getMock();
+        $productTypeBundleMock->method('getSku')->with($productMock)->willReturn('test-bundle-sku');
+        $productMock->method('getTypeInstance')->willReturn($productTypeBundleMock);
+        $quoteItem->expects(self::once())->method('getProduct')->willReturn($productMock);
+        $quoteItem->method('getProductType')->willReturn(\Magento\Catalog\Model\Product\Type::TYPE_BUNDLE);
+        $quoteItem->expects(self::never())->method('getSku')->willReturn($productMock);
+
+        $this->assertEquals('test-bundle-sku', $this->currentMock->getSkuFromQuoteItem($quoteItem));
+    }
 }

@@ -519,7 +519,7 @@ class CreateOrder implements CreateOrderInterface
 
         $quoteSkus = array_map(
             function ($item) {
-                return trim($item->getSku());
+                return $this->cartHelper->getSkuFromQuoteItem($item);
             },
             $quoteItems
         );
@@ -543,10 +543,17 @@ class CreateOrder implements CreateOrderInterface
 
         foreach ($quoteItems as $item) {
             /** @var QuoteItem $item */
-            $sku = trim($item->getSku());
+            $sku = $this->cartHelper->getSkuFromQuoteItem($item);
             $itemPrice = CurrencyUtils::toMinor($item->getCalculationPrice(), $quote->getQuoteCurrencyCode());
 
             $this->hasItemErrors($item);
+            if (empty($transactionItems)) {
+                throw new BoltException(
+                    __('Quote item does not exist in Bolt cart. Item id: ' . $item->getItemId() .', SKU: ' . $this->cartHelper->getSkuFromQuoteItem($item)),
+                    null,
+                    self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
+                );
+            }
             $this->validateItemPrice($sku, $itemPrice, $transactionItems);
         }
     }
