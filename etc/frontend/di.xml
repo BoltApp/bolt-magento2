@@ -85,4 +85,8 @@
         <plugin sortOrder="1" name="boltBoltpayRemove"
                 type="Bolt\Boltpay\Plugin\Magento\Rewards\Controller\Cart\RemoveActionPlugin"/>
     </type>
+    <type name="Magento\Checkout\Model\Session\SuccessValidator">
+        <plugin sortOrder="1" name="boltBoltpaySuccessValidatorPlugin"
+                type="Bolt\Boltpay\Plugin\Magento\Checkout\Model\Session\SuccessValidatorPlugin"/>
+    </type>
 </config>
