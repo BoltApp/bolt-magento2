@@ -108,7 +108,7 @@ class DataProviderPlugin
                 // api flow, title rendered on server side
                 $title = $payment->getAdditionalData();
                 if ($title && ($intersection = array_intersect([strtolower (str_replace('Bolt-', '', $title))], array_keys(Order::TP_METHOD_DISPLAY)))) {
-                    $item['payment_method'] = \Bolt\Boltpay\Model\Payment::METHOD_CODE . '_' . reset($intersection);//str_replace('-', '_', $title);
+                    $item['payment_method'] = \Bolt\Boltpay\Model\Payment::METHOD_CODE . '_' . reset($intersection);
                 }
                 continue;
             }
