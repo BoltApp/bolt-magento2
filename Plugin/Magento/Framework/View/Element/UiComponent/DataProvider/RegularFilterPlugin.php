@@ -81,7 +81,7 @@ class RegularFilterPlugin
             $paymentMethod = str_replace(Payment::METHOD_CODE . '_', '', $filter->getValue());
             $collectionSelect->where(
                 'main_table.payment_method = "'. Payment::METHOD_CODE .'"
-                AND ('. $collectionAdapter->quoteInto('LOWER(payment.additional_information) like ?', '%' . $paymentMethod . '%') .' OR '. $collectionAdapter->quoteInto('LOWER(payment.cc_type) = ?', $paymentMethod) .')'
+                AND ('. $collectionAdapter->quoteInto('LOWER(payment.additional_data) like ?', '%' . $paymentMethod . '%') .' OR '. $collectionAdapter->quoteInto('LOWER(payment.additional_information) like ?', '%' . $paymentMethod . '%') .' OR '. $collectionAdapter->quoteInto('LOWER(payment.cc_type) = ?', $paymentMethod) .')'
             );
         } else {
             return $proceed($collection, $filter);
