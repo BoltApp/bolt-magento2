@@ -63,9 +63,14 @@ use Magento\Sales\Model\Order;
 use Magento\SalesRule\Api\Data\RuleInterface;
 use Magento\SalesRule\Model\Rule;
 use Magento\SalesRule\Model\RuleRepository;
+use Magento\SalesRule\Model\RuleFactory;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
+use Magento\SalesRule\Model\Utility as SalesRuleUtility;
+use Magento\SalesRule\Model\Rule\Action\Discount\CalculatorFactory as DiscountCalculatorFactory;
+use Magento\SalesRule\Model\Validator as SalesRuleValidator;
+use Magento\Store\Model\StoreManagerInterface;;
 use Zend_Http_Client_Exception;
 
 /**
@@ -268,11 +273,31 @@ class Cart extends AbstractHelper
      * @var MsrpHelper
      */
     private $msrpHelper;
-    
+
     /**
      * @var PriceHelper
      */
     private $priceHelper;
+
+    /**
+     * @var SalesRuleUtility
+     */
+    private $salesRuleUtility;
+
+    /**
+     * @var DiscountCalculatorFactory
+     */
+    private $discountCalculatorFactory;
+
+    /**
+     * @var RuleFactory
+     */
+    private $ruleFactory;
+
+    /**
+     * @var SalesRuleValidator
+     */
+    private $salesRuleValidator;
 
     /**
      * @param Context                    $context
@@ -307,6 +332,10 @@ class Cart extends AbstractHelper
      * @param RuleRepository             $ruleRepository
      * @param MsrpHelper                 $msrpHelper
      * @param PriceHelper                $priceHelper
+     * @param SalesRuleUtility           $salesRuleUtility
+     * @param DiscountCalculatorFactory  $discountCalculatorFactory
+     * @param RuleFactory                $ruleFactory
+     * @param SalesRuleValidator         $salesRuleValidator
      */
     public function __construct(
         Context $context,
@@ -340,7 +369,11 @@ class Cart extends AbstractHelper
         EventsForThirdPartyModules $eventsForThirdPartyModules,
         RuleRepository $ruleRepository,
         MsrpHelper $msrpHelper,
-        PriceHelper $priceHelper
+        PriceHelper $priceHelper,
+        SalesRuleUtility $salesRuleUtility,
+        DiscountCalculatorFactory $discountCalculatorFactory,
+        RuleFactory $ruleFactory,
+        SalesRuleValidator $salesRuleValidator
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -374,6 +407,10 @@ class Cart extends AbstractHelper
         $this->ruleRepository = $ruleRepository;
         $this->msrpHelper = $msrpHelper;
         $this->priceHelper = $priceHelper;
+        $this->salesRuleUtility = $salesRuleUtility;
+        $this->discountCalculatorFactory = $discountCalculatorFactory;
+        $this->ruleFactory = $ruleFactory;
+        $this->salesRuleValidator = $salesRuleValidator;
     }
 
     /**
@@ -1479,7 +1516,7 @@ class Cart extends AbstractHelper
                 $itemSku = trim($item->getSku());
                 $itemReference = $item->getProductId();
                 $itemName = $item->getName();
-                
+
                 //By default this feature switch is enabled.
                 if ($this->deciderHelper->isCustomizableOptionsSupport()) {
                     try {
@@ -1524,7 +1561,7 @@ class Cart extends AbstractHelper
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = $quantity;
                 $product['sku']          = $this->getSkuFromQuoteItem($item);
-                
+
                 if ($this->msrpHelper->canApplyMsrp($_product) && $_product->getMsrp() !== null) {
                     $product['msrp']     = CurrencyUtils::toMinor($_product->getMsrp(), $currencyCode);
                 }
@@ -1839,11 +1876,11 @@ class Cart extends AbstractHelper
                     $report->addMetaData(
                         [
                             'quote_error_messages' => array_map(
-                                /**
-                                 * @param \Magento\Framework\Message\Error $error
-                                 *
-                                 * @return string
-                                 */
+                            /**
+                             * @param \Magento\Framework\Message\Error $error
+                             *
+                             * @return string
+                             */
                                 function ($error) {
                                     return $error->toString();
                                 },
@@ -1983,8 +2020,8 @@ class Cart extends AbstractHelper
         // Trying several possible places.
         $email = $billingAddress->getEmail()
             ?: $shippingAddress->getEmail()
-            ?: $this->customerSession->getCustomer()->getEmail()
-            ?: $quote->getCustomerEmail();
+                ?: $this->customerSession->getCustomer()->getEmail()
+                    ?: $quote->getCustomerEmail();
 
         // Billing address
         $cartBillingAddress = [
@@ -2064,13 +2101,13 @@ class Cart extends AbstractHelper
                     );
                     return [];
                 }
-                
+
                 if (!$this->isBackendSession()) {
                     $address->setCollectShippingRates(true);
                     $this->collectAddressTotals($quote, $address);
                     $address->save();
                 }
-                
+
                 // Shipping address
                 $shipAddress = [
                     'first_name' => $address->getFirstname(),
@@ -2088,7 +2125,7 @@ class Cart extends AbstractHelper
 
                 if ($this->isAddressComplete($shipAddress)) {
                     $cost = $address->getShippingAmount();
-                    $shippingService = $address->getShippingDescription();                    
+                    $shippingService = $address->getShippingDescription();
                     $shippingDiscountAmount = $this->eventsForThirdPartyModules->runFilter("collectShippingDiscounts", $address->getShippingDiscountAmount(), $quote, $address);
                     if ($shippingDiscountAmount >= DiscountHelper::MIN_NONZERO_VALUE && !$this->ignoreAdjustingShippingAmount($quote)) {
                         $cost = $cost - $shippingDiscountAmount;
@@ -2860,7 +2897,7 @@ class Cart extends AbstractHelper
 
         return $this->checkIfQuoteHasCartFixedAmountAndApplyToShippingRule($quote);
     }
-    
+
     /**
      * @param $quote
      * @param $shippingMethod
@@ -2887,7 +2924,7 @@ class Cart extends AbstractHelper
 
         return false;
     }
-    
+
     /**
      * Collect discount amount from each applied sale rules.
      *
@@ -2910,24 +2947,64 @@ class Cart extends AbstractHelper
         if ($this->isCollectDiscountsByPlugin($quote)) {
             $saleRuleDiscountsDetails = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
         } else {
-            /* @var \Magento\SalesRule\Api\Data\RuleDiscountInterface $ruleDiscounts */
-            $extensionSaleRuleDiscounts = $address->getExtensionAttributes()->getDiscounts();
-            $cartFixedRules = $address->getCartFixedRules();
-            if ($extensionSaleRuleDiscounts && is_array($extensionSaleRuleDiscounts)) {
-                foreach ($extensionSaleRuleDiscounts as $value) {
-                    /* @var \Magento\SalesRule\Api\Data\DiscountDataInterface $discountData */
-                    $discountData = $value->getDiscountData();
-                    $salesRuleId = $value->getRuleID();
-                    if (!empty($cartFixedRules) && array_key_exists($salesRuleId, $cartFixedRules) && $cartFixedRules[$salesRuleId] > DiscountHelper::MIN_NONZERO_VALUE) {
-                        $rule = $this->ruleRepository->getById($salesRuleId);
-                        $saleRuleDiscountsDetails[$salesRuleId] = $discountData->getAmount() + $rule->getDiscountAmount() - $cartFixedRules[$salesRuleId];
+            $rulesDiscountPerItem = [];
+            $quote->setCartFixedRules([]);
+            $items = $this->salesRuleValidator->sortItemsByPriority($quote->getAllItems(), $address);
+            $this->salesRuleValidator->reset($address);
+            $this->salesRuleValidator->init($quote->getStore()->getWebsiteId(), $quote->getCustomerGroupId(), $quote->getCouponCode());
+            $this->salesRuleValidator->initTotals($items, $address);
+            foreach ($items as $item) {
+                $item->setDiscountAmount(0);
+                $item->setBaseDiscountAmount(0);
+                $itemDiscount = 0;
+                if ($item->getParentItem()) {
+                    continue;
+                }
+                $discounts = $item->getExtensionAttributes()->getDiscounts();
+                if (!$discounts || empty($discounts)) {
+                    continue;
+                }
+                foreach ($discounts as $discount) {
+                    $rule = $this->ruleFactory->create()->load($discount->getRuleID());
+                    if (!$rule->getId()) {
+                        throw new NoSuchEntityException(__('Rule with id %1 is not found', $discount->getRuleID()));
+                    }
+                    $discountCalculator = $this->discountCalculatorFactory->create($rule->getSimpleAction());
+                    $qty = $this->salesRuleUtility->getItemQty($item, $rule);
+                    $qty = $discountCalculator->fixQuantity($qty, $rule);
+                    $discountData = $discountCalculator->calculate($rule, $item, $qty);
+                    $this->_eventManager->dispatch(
+                        'salesrule_validator_process',
+                        [
+                            'rule' => $rule,
+                            'item' => $item,
+                            'address' => $item->getAddress(),
+                            'quote' => $quote,
+                            'qty' => $qty,
+                            'result' => $discountData
+                        ]
+                    );
+                    $this->salesRuleUtility->deltaRoundingFix($discountData, $item);
+                    $this->salesRuleUtility->minFix($discountData, $item, $qty);
+                    $item->setDiscountAmount($discountData->getAmount());
+                    $item->setBaseDiscountAmount($discountData->getBaseAmount());
+                    $item->setOriginalDiscountAmount($discountData->getOriginalAmount());
+                    $item->setBaseOriginalDiscountAmount($discountData->getBaseOriginalAmount());
+                    $rulesDiscountPerItem[$item->getId()][$rule->getId()] = $discountData->getAmount() - $itemDiscount;
+                    $itemDiscount = $discountData->getAmount();
+                }
+            }
+            foreach ($rulesDiscountPerItem as $discounts) {
+                foreach ($discounts as $ruleId => $discountValue) {
+                    if (isset($saleRuleDiscountsDetails[$ruleId])) {
+                        $saleRuleDiscountsDetails[$ruleId] += $discountValue;
                     } else {
-                        $saleRuleDiscountsDetails[$salesRuleId] = $discountData->getAmount();
+                        $saleRuleDiscountsDetails[$ruleId] = $discountValue;
                     }
                 }
             }
         }
-        
+
         $ruleDiscountDetails = [];
         foreach ($salesRuleIds as $salesRuleId) {
             $rule = $this->ruleRepository->getById($salesRuleId);
@@ -2939,7 +3016,7 @@ class Cart extends AbstractHelper
         }
         return $ruleDiscountDetails;
     }
-    
+
     /**
      * If the Magento version < 2.3.4, we still collect discounts details via plugin methods.
      *
@@ -2952,9 +3029,9 @@ class Cart extends AbstractHelper
         //By default this feature switch is disabled.
         return $this->deciderHelper->isCollectDiscountsByPlugin()
             || ($this->configHelper->isActive($quote->getStore()->getId())
-            && version_compare($this->configHelper->getStoreVersion(), '2.3.4', '<'));
+                && version_compare($this->configHelper->getStoreVersion(), '2.3.4', '<'));
     }
-    
+
     /**
      * Get SKU of quote item
      *
@@ -2974,7 +3051,7 @@ class Cart extends AbstractHelper
             $product->setData('sku_type', $oldSkuType);
             return $itemSku;
         }
-        
+
         return trim($item->getSku());
     }
 }
