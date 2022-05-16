@@ -70,7 +70,6 @@ use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Magento\SalesRule\Model\Utility as SalesRuleUtility;
 use Magento\SalesRule\Model\Rule\Action\Discount\CalculatorFactory as DiscountCalculatorFactory;
 use Magento\SalesRule\Model\Validator as SalesRuleValidator;
-use Magento\Store\Model\StoreManagerInterface;;
 use Zend_Http_Client_Exception;
 
 /**
