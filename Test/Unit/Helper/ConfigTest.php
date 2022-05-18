@@ -85,7 +85,8 @@ class ConfigTest extends BoltTestCase
      "merchantDashboardURL": "https://test-sandbox.bolt.com/",
      "apiURL": "https://test-sandbox.bolt.com/",
      "accountURL": "https://test-sandbox.bolt.com/",
-     "cdnURL": "https://test-sandbox.bolt.com/"
+     "cdnURL": "https://test-sandbox.bolt.com/",
+     "integrationBaseURL": "https://test-sandbox.bolt.com/"
 }
 JSON;
 
@@ -1357,5 +1358,68 @@ Room 4000',
         ];
         TestUtils::setupBoltConfig($configData);
         $this->assertEquals('customer_note', $this->configHelper->getOrderCommentField());
+    }
+    
+    /**
+     * @test
+     * @covers ::getIntegrationBaseUrl
+     */
+    public function getIntegrationBaseUrl_returnIntegrationBaseUrlSandbox()
+    {
+        $configData = [
+            [
+                'path' => Config::XML_PATH_SANDBOX_MODE,
+                'value' => true,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $this->configHelper->getIntegrationBaseUrl();
+        self::assertEquals(BoltConfig::API_URL_SANDBOX, $result);
+    }
+    
+    /**
+     * @test
+     * @covers ::getIntegrationBaseUrl
+     */
+    public function getIntegrationBaseUrl_returnAdditionalConfigIntegrationBaseUrl()
+    {
+        $configData = [
+            [
+                'path' => Config::XML_PATH_SANDBOX_MODE,
+                'value' => true,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_ADDITIONAL_CONFIG,
+                'value' => self::ADDITIONAL_CONFIG,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ],
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $this->configHelper->getIntegrationBaseUrl();
+        self::assertEquals("https://test-sandbox.bolt.com/", $result);
+    }
+
+    /**
+     * @test
+     * @covers ::getIntegrationBaseUrl
+     */
+    public function getIntegrationBaseUrl_returnIntegrationBaseUrlProduction()
+    {
+        $configData = [
+            [
+                'path' => Config::XML_PATH_SANDBOX_MODE,
+                'value' => false,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $this->configHelper->getIntegrationBaseUrl();
+        self::assertEquals(BoltConfig::API_URL_PRODUCTION, $result);
     }
 }
