@@ -293,4 +293,7 @@
         <plugin name="Bolt_Boltpay_Magento_Framework_View_Element_UiComponent_DataProvider_Reporting"
                 type="Bolt\Boltpay\Plugin\Magento\Framework\View\Element\UiComponent\DataProvider\ReportingPlugin" sortOrder="10"/>
     </type>
+    <!-- Catalog ingestion product events -->
+    <preference for="Bolt\Boltpay\Api\Data\ProductEventInterface" type="Bolt\Boltpay\Model\CatalogIngestion\ProductEvent" />
+    <preference for="Bolt\Boltpay\Api\ProductEventRepositoryInterface" type="Bolt\Boltpay\Model\CatalogIngestion\ProductEventRepository" />
 </config>
