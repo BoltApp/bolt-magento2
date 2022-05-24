@@ -343,4 +343,60 @@
     <type name="Magento\Config\Model\Config">
         <plugin name="boltRequestAfterConfigurationChange" type="Bolt\Boltpay\Plugin\Magento\Config\Model\ConfigPlugin" />
     </type>
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\ProductEventManager">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\ProductEventsLogger</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\StoreConfigurationManager">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\ProductEventsLogger</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Plugin\Magento\CatalogInventory\Api\StockItemRepositoryPlugin">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\ProductEventsLogger</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\Command\PublishSourceItemsProductEvent">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\ProductEventsLogger</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\Command\RunInstantProductEvent">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\ProductEventsLogger</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Observer\PublishBoltProductEventObserver">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\ProductEventsLogger</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\SourceItemsDeletePlugin">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\ProductEventsLogger</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Plugin\Magento\Catalog\Api\ProductRepositoryPlugin">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\ProductEventsLogger</argument>
+        </arguments>
+    </type>
+    <virtualType name="Bolt\Boltpay\Logger\ProductEventsLogger"
+                 type="Bolt\Boltpay\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">BoltProductEvents</argument>
+            <argument name="handlers"  xsi:type="array">
+                <item name="system" xsi:type="object">Bolt\Boltpay\Logger\ProductEventsHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Bolt\Boltpay\Logger\ProductEventsHandler"
+                 type="Bolt\Boltpay\Logger\Handler">
+        <arguments>
+            <argument name="fileName" xsi:type="string">/var/log/bolt-product-events.log</argument>
+            <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </virtualType>
 </config>
