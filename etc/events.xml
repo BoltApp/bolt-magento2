@@ -19,4 +19,8 @@
     <event name="taxjar_salestax_import_rates">
         <observer name="clearBoltCache" instance="Bolt\Boltpay\Observer\ClearBoltShippingTaxCacheObserver" />
     </event>
+    <!--catalog ingestion product event publishers -->
+    <event name="catalog_product_save_commit_after">
+        <observer name="publishBoltProductEventAfterProductSave" instance="Bolt\Boltpay\Observer\PublishBoltProductEventObserver" />
+    </event>
 </config>
