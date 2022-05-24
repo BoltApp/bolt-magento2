@@ -210,7 +210,7 @@ class StoreAddress implements StoreAddressInterface, \JsonSerializable
     /**
      * @inheritDoc
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             'street_address1' => $this->streetAddress1,

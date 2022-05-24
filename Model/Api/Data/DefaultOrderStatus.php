@@ -91,7 +91,7 @@ class DefaultOrderStatus implements DefaultOrderStatusInterface, \JsonSerializab
     /**
      * @inheritDoc
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             'state' => $this->state,

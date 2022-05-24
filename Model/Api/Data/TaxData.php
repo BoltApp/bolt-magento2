@@ -120,7 +120,7 @@ class TaxData implements TaxDataInterface, \JsonSerializable
     /**
      * @inheritDoc
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             'tax_result' => $this->taxResult,
