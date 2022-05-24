@@ -33,7 +33,6 @@ use Magento\Framework\App\Area;
  */
 class Route
 {
-    use \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartItems;
     use \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartBeforeLegacyShippingAndTax;
     use \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartBeforeSplitShippingAndTax;
     use \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartBeforeCreateOrder;
