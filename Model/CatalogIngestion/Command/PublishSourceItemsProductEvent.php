@@ -22,7 +22,7 @@ use Bolt\Boltpay\Api\ProductEventManagerInterface;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Logger\Logger;
 use Bolt\Boltpay\Model\Config\Source\Catalog\Ingestion\Events;
-use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\ProductFactory;
 use Magento\Inventory\Model\SourceItem;
 
 /**
@@ -46,9 +46,9 @@ class PublishSourceItemsProductEvent
     private $config;
 
     /**
-     * @var ProductRepositoryInterface
+     * @var ProductFactory
      */
-    private $productRepository;
+    private $productFactory;
 
     /**
      * @var Logger
@@ -64,20 +64,20 @@ class PublishSourceItemsProductEvent
      * @param ProductEventManagerInterface $productEventManager
      * @param RunInstantProductEvent $runInstantProductEvent
      * @param Config $config
-     * @param ProductRepositoryInterface $productRepository
+     * @param ProductFactory $productFactory
      * @param Logger $logger
      */
     public function __construct(
         ProductEventManagerInterface $productEventManager,
         RunInstantProductEvent $runInstantProductEvent,
         Config $config,
-        ProductRepositoryInterface $productRepository,
+        ProductFactory $productFactory,
         Logger $logger
     ) {
         $this->productEventManager = $productEventManager;
         $this->runInstantProductEvent = $runInstantProductEvent;
         $this->config = $config;
-        $this->productRepository = $productRepository;
+        $this->productFactory = $productFactory;
         $this->logger = $logger;
     }
 
@@ -92,20 +92,20 @@ class PublishSourceItemsProductEvent
         try {
             foreach ($sourceItems as $sourceItem) {
                 /** @var SourceItem $sourceItem */
-                $product = $this->productRepository->get($sourceItem->getSku());
+                $productId = $this->productFactory->create()->getIdBySku($sourceItem->getSku());
                 if ($this->config->getIsCatalogIngestionInstantEnabled() &&
-                    !in_array($product->getId(), $this->instantProductEventUpdatedList) &&
+                    !in_array($productId, $this->instantProductEventUpdatedList) &&
                     in_array(Events::STOCK_STATUS_CHANGES, $this->config->getCatalogIngestionEvents()) &&
                     $sourceItem->getOrigData('status') != $sourceItem->getData('status')
                 ) {
                     $this->runInstantProductEvent->execute(
-                        (int)$product->getId(),
+                        (int)$productId,
                         ProductEventInterface::TYPE_UPDATE
                     );
-                    $this->instantProductEventUpdatedList[] = $product->getId();
+                    $this->instantProductEventUpdatedList[] = $productId;
                 }
 
-                if (!in_array($product->getId(), $this->instantProductEventUpdatedList) &&
+                if (!in_array($productId, $this->instantProductEventUpdatedList) &&
                     $this->config->getIsCatalogIngestionScheduleEnabled() &&
                     (
                         $sourceItem->getOrigData('status') != $sourceItem->getData('status') ||
@@ -113,7 +113,7 @@ class PublishSourceItemsProductEvent
                     )
                 ) {
                     $this->productEventManager->publishProductEvent(
-                        (int)$product->getId(),
+                        (int)$productId,
                         ProductEventInterface::TYPE_UPDATE
                     );
                 }
