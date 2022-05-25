@@ -56,7 +56,6 @@ class ComponentSwitcherProcessor extends LayoutProcessor
      */
     public function process($jsLayout)
     {
-        /* @see \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartTotalsLayout */
         return $this->eventsForThirdPartyModules->runFilter('filterProcessLayout', $jsLayout);
     }
 }
