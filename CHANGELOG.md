@@ -232,7 +232,7 @@
 - (LEGACY) Resolved an issue where automated discounts with empty discount descriptions were showing as the name (set in discount name field) that merchants had set for the discount rule. Now, discount descriptions will show as the word "Discount", regardless of what the rule name was set as. 
 - (API) Added a new scope to Bolt's M2 Plugin API to enable use of Magento's `Magento\Sales\Model\Order` endpoint to set status during webhook handling.  
 - (API) Implemented integration to use Magento's GET invoice endpoint to support all invoice endpoints([`Magento_Sales::sales_invoice`](https://github.com/magento/magento2/commit/4b0eeb6a6d933c92416cd6eca48d720d48508d61)).
-- ##[v2.25.2](https://github.com/BoltApp/bolt-magento2/releases/tag/2.25.2) 2002-05-25
+##[v2.25.2](https://github.com/BoltApp/bolt-magento2/releases/tag/2.25.2) 2022-05-25
 - Users no longer need to add a `Bolt SSO JS block` to their Magento 2 theme when installing SSO Commerce. CSS and JavaScript are now injected programmatically.
 - Fixed issue that caused Bolt button not to load in the mini-cart and the checkout modal to timeout.
 - Users can now check out with a fixed amount shipping discount.
