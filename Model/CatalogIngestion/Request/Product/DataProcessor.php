@@ -76,9 +76,9 @@ class DataProcessor
     private $localeResolver;
 
     /**
-     * @var GetSourceItemsBySkuInterface|null
+     * @var string|null
      */
-    private $getSourceItemsBySku;
+    private $getSourceItemsBySkuClass;
 
     /**
      * @var GalleryReadHandler
@@ -123,8 +123,7 @@ class DataProcessor
         $this->galleryReadHandler = $galleryReadHandler;
         $this->mime = $mime;
         $this->emulation = $emulation;
-        $this->getSourceItemsBySku = ($getSourceItemsBySkuClass) ?
-            $this->initGetSourceItemsBySku($getSourceItemsBySkuClass) : null;
+        $this->getSourceItemsBySkuClass = $getSourceItemsBySkuClass;
     }
 
     /**
@@ -407,8 +406,11 @@ class DataProcessor
     {
         $inventories = [];
         $stockItems = [];
-        if ($this->getSourceItemsBySku) {
-            $stockItems = $this->getSourceItemsBySku->execute($product->getSku());
+        $getSourceItemsBySku = ($this->getSourceItemsBySkuClass) ?
+            $this->initGetSourceItemsBySku($this->getSourceItemsBySkuClass) : null;
+
+        if ($getSourceItemsBySku) {
+            $stockItems = $getSourceItemsBySku->execute($product->getSku());
         }
         if (!empty($stockItems)) {
             foreach ($stockItems as $stockItem) {
@@ -554,7 +556,7 @@ class DataProcessor
      */
     private function initGetSourceItemsBySku(string $getSourceItemsBySkuClass)
     {
-        return (interface_exists($getSourceItemsBySkuClass))
+        return (class_exists($getSourceItemsBySkuClass))
             ? $this->objectManager->get($getSourceItemsBySkuClass) : null;
     }
 }

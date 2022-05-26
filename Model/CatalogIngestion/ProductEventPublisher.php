@@ -39,11 +39,6 @@ class ProductEventPublisher
     private $objectManager;
 
     /**
-     * @var BulkManagementInterface|null
-     */
-    private $bulkManagement;
-
-    /**
      * @var IdentityGeneratorInterface
      */
     private $identityGenerator;
@@ -59,10 +54,14 @@ class ProductEventPublisher
     private $jsonSerializer;
 
     /**
-     * @var OperationInterfaceFactory|null
+     * @var string|null
      */
-    private $operationFactory;
+    private $operationFactoryClassName;
 
+    /**
+     * @var string|null
+     */
+    private $bulkManagementClassName;
     /**
      * @param IdentityGeneratorInterface $identityGenerator
      * @param UserContextInterface $userContext
@@ -81,10 +80,8 @@ class ProductEventPublisher
         $this->identityGenerator = $identityGenerator;
         $this->userContext = $userContext;
         $this->jsonSerializer = $jsonSerializer;
-        $this->operationFactory = ($operationFactoryClassName)
-            ? $this->initOperationFactory($operationFactoryClassName) : null;
-        $this->bulkManagement = ($bulkManagementClassName)
-            ? $this->initPublisher($bulkManagementClassName) : null;
+        $this->operationFactoryClassName = $operationFactoryClassName;
+        $this->bulkManagementClassName = $bulkManagementClassName;
     }
 
     /**
@@ -98,7 +95,12 @@ class ProductEventPublisher
      */
     public function publishBulk(int $productId, string $type, string $date): string
     {
-        if (!$this->operationFactory || !$this->bulkManagement) {
+        $operationFactory = ($this->operationFactoryClassName)
+            ? $this->initOperationFactory($this->operationFactoryClassName) : null;
+        $bulkManagement = ($this->bulkManagementClassName)
+            ? $this->initPublisher($this->bulkManagementClassName) : null;
+
+        if (!$operationFactory || !$bulkManagement) {
             throw new LocalizedException(
                 __(
                     'Magento Asynchronous Operations is not supported on your magento version, please verify.'
@@ -109,7 +111,7 @@ class ProductEventPublisher
         $userId = $this->userContext->getUserId();
         $bulkId = $this->identityGenerator->generateId();
         try {
-            if (!$this->bulkManagement->scheduleBulk($bulkId, [], $description, $userId)) {
+            if (!$bulkManagement->scheduleBulk($bulkId, [], $description, $userId)) {
                 throw new LocalizedException(
                     __(
                         'Something went wrong while scheduling product event bulk %1 Check logs for details.',
@@ -142,8 +144,8 @@ class ProductEventPublisher
                 ]
             ];
 
-            $operations[] = $this->operationFactory->create($data);
-            if (!$this->bulkManagement->scheduleBulk($bulkId, $operations, $description, $userId)) {
+            $operations[] = $operationFactory->create($data);
+            if (!$bulkManagement->scheduleBulk($bulkId, $operations, $description, $userId)) {
                 throw new LocalizedException(
                     __(
                         'Something went wrong while scheduling product event bulk %1 Check logs for details.',
@@ -153,7 +155,7 @@ class ProductEventPublisher
             }
         } catch (\Exception $e) {
             if (isset($operations)) {
-                $this->bulkManagement->deleteBulk($bulkId);
+                $bulkManagement->deleteBulk($bulkId);
             }
             throw new LocalizedException(
                 __(
@@ -174,7 +176,7 @@ class ProductEventPublisher
      */
     private function initOperationFactory(string $operationFactoryClass)
     {
-        return (interface_exists($operationFactoryClass))
+        return (class_exists((string)$operationFactoryClass))
             ? $this->objectManager->get($operationFactoryClass) : null;
     }
 
@@ -186,7 +188,7 @@ class ProductEventPublisher
      */
     private function initPublisher(string $bulkManagementClass)
     {
-        if (class_exists($bulkManagementClass)) {
+        if (class_exists((string)$bulkManagementClass)) {
             $publisher = $this->objectManager->create('Magento\Framework\MessageQueue\PublisherPool', [
                 'publishers' => [
                     'async' => [
