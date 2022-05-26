@@ -37,6 +37,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Catalog\Api\Data\ProductAttributeMediaGalleryEntryInterface;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Api\Data\WebsiteInterface;
+use Magento\Framework\App\ObjectManager;
 
 /**
  * Product event product data processor to collect product data for bolt request
@@ -48,6 +49,11 @@ class DataProcessor
     private const PRODUCT_VISIBILITY_VISIBLE = 'visible';
 
     private const PRODUCT_VISIBILITY_NOT_VISIBLE = 'not_visible';
+
+    /**
+     * @var ObjectManager
+     */
+    private $objectManager;
 
     /**
      * @var Config
@@ -70,7 +76,7 @@ class DataProcessor
     private $localeResolver;
 
     /**
-     * @var GetSourceItemsBySkuInterface
+     * @var GetSourceItemsBySkuInterface|null
      */
     private $getSourceItemsBySku;
 
@@ -94,29 +100,31 @@ class DataProcessor
      * @param ProductRepositoryInterface $productRepository
      * @param StoreManagerInterface $storeManager
      * @param LocaleResolver $localeResolver
-     * @param GetSourceItemsBySkuInterface $getSourceItemsBySku
      * @param GalleryReadHandler $galleryReadHandler
      * @param Mime $mime
      * @param Emulation $emulation
+     * @param string|null $getSourceItemsBySkuClass
      */
     public function __construct(
         Config $config,
         ProductRepositoryInterface $productRepository,
         StoreManagerInterface $storeManager,
         LocaleResolver $localeResolver,
-        GetSourceItemsBySkuInterface $getSourceItemsBySku,
         GalleryReadHandler $galleryReadHandler,
         Mime $mime,
-        Emulation $emulation
+        Emulation $emulation,
+        string $getSourceItemsBySkuClass = null
     ) {
+        $this->objectManager = ObjectManager::getInstance();
         $this->config = $config;
         $this->productRepository = $productRepository;
         $this->storeManager = $storeManager;
         $this->localeResolver = $localeResolver;
-        $this->getSourceItemsBySku = $getSourceItemsBySku;
         $this->galleryReadHandler = $galleryReadHandler;
         $this->mime = $mime;
         $this->emulation = $emulation;
+        $this->getSourceItemsBySku = ($getSourceItemsBySkuClass) ?
+            $this->initGetSourceItemsBySku($getSourceItemsBySkuClass) : null;
     }
 
     /**
@@ -260,7 +268,7 @@ class DataProcessor
         if ($height = $product->getHeight()) {
             $productData['Height'] = $height;
         }
-        
+
         $this->emulation->stopEnvironmentEmulation();
         return $productData;
     }
@@ -398,7 +406,10 @@ class DataProcessor
     private function getInventories(ProductInterface $product): array
     {
         $inventories = [];
-        $stockItems = $this->getSourceItemsBySku->execute($product->getSku());
+        $stockItems = [];
+        if ($this->getSourceItemsBySku) {
+            $stockItems = $this->getSourceItemsBySku->execute($product->getSku());
+        }
         if (!empty($stockItems)) {
             foreach ($stockItems as $stockItem) {
                 $sourceItemData['fullfillment_center_id'] = $stockItem->getSourceCode();
@@ -533,5 +544,17 @@ class DataProcessor
     {
         return (!(($product->getVisibility() == Visibility::VISIBILITY_NOT_VISIBLE))) ?
             self::PRODUCT_VISIBILITY_VISIBLE : self::PRODUCT_VISIBILITY_NOT_VISIBLE;
+    }
+
+    /**
+     * Init get source items cmd, for Magento 2.2 support
+     *
+     * @param string $getSourceItemsBySkuClass
+     * @return mixed|null
+     */
+    private function initGetSourceItemsBySku(string $getSourceItemsBySkuClass)
+    {
+        return (class_exists($getSourceItemsBySkuClass))
+            ? $this->objectManager->get($getSourceItemsBySkuClass) : null;
     }
 }

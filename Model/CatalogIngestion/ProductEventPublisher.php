@@ -24,6 +24,7 @@ use Magento\Framework\Serialize\Serializer\Json;
 use Magento\AsynchronousOperations\Api\Data\OperationInterfaceFactory;
 use Magento\AsynchronousOperations\Api\Data\OperationInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\App\ObjectManager;
 
 /**
  * Product event async consumer job publisher
@@ -33,7 +34,12 @@ class ProductEventPublisher
     private const TOPIC_NAME = 'async.bolt.boltpay.api.producteventmanagerinterface.requestproductevent.post';
 
     /**
-     * @var BulkManagementInterface
+     * @var ObjectManager
+     */
+    private $objectManager;
+
+    /**
+     * @var BulkManagementInterface|null
      */
     private $bulkManagement;
 
@@ -53,42 +59,52 @@ class ProductEventPublisher
     private $jsonSerializer;
 
     /**
-     * @var OperationInterfaceFactory
+     * @var OperationInterfaceFactory|null
      */
     private $operationFactory;
 
     /**
-     * @param BulkManagementInterface $bulkManagement
      * @param IdentityGeneratorInterface $identityGenerator
      * @param UserContextInterface $userContext
      * @param Json $jsonSerializer
-     * @param OperationInterfaceFactory $operationFactory
+     * @param string|null $operationFactoryClassName
+     * @param string|null $bulkManagementClassName
      */
     public function __construct(
-        BulkManagementInterface $bulkManagement,
         IdentityGeneratorInterface $identityGenerator,
         UserContextInterface $userContext,
         Json $jsonSerializer,
-        OperationInterfaceFactory $operationFactory
+        string $operationFactoryClassName = null,
+        string $bulkManagementClassName = null
     ) {
-        $this->bulkManagement = $bulkManagement;
+        $this->objectManager = ObjectManager::getInstance();
         $this->identityGenerator = $identityGenerator;
         $this->userContext = $userContext;
         $this->jsonSerializer = $jsonSerializer;
-        $this->operationFactory = $operationFactory;
+        $this->operationFactory = ($operationFactoryClassName)
+            ? $this->initOperationFactory($operationFactoryClassName) : null;
+        $this->bulkManagement = ($bulkManagementClassName)
+            ? $this->initPublisher($bulkManagementClassName) : null;
     }
 
     /**
      * Publish product event to the bulk async message queue
      *
      * @param int $productId
-     * @param int $type
-     * @param string date
+     * @param string $type
+     * @param string $date
      * @return string
      * @throws LocalizedException
      */
     public function publishBulk(int $productId, string $type, string $date): string
     {
+        if (!$this->operationFactory || !$this->bulkManagement) {
+            throw new LocalizedException(
+                __(
+                    'Magento Asynchronous Operations is not supported on your magento version, please verify.'
+                )
+            );
+        }
         $description = __('Publish product event, product_id: %1', $productId);
         $userId = $this->userContext->getUserId();
         $bulkId = $this->identityGenerator->generateId();
@@ -148,5 +164,39 @@ class ProductEventPublisher
             );
         }
         return $bulkId;
+    }
+
+    /**
+     * Init operation factory class, for Magento 2.2 support
+     *
+     * @param string $operationFactoryClass
+     * @return mixed|null
+     */
+    private function initOperationFactory(string $operationFactoryClass)
+    {
+        return (class_exists($operationFactoryClass))
+            ? $this->objectManager->get($operationFactoryClass) : null;
+    }
+
+    /**
+     * Init publisher instance, for Magento 2.2 support
+     *
+     * @param string $bulkManagementClass
+     * @return mixed|null
+     */
+    private function initPublisher(string $bulkManagementClass)
+    {
+        if (class_exists($bulkManagementClass)) {
+            $publisher = $this->objectManager->create('Magento\Framework\MessageQueue\PublisherPool', [
+                'publishers' => [
+                    'async' => [
+                        'amqp' => $this->objectManager->get('Magento\AsynchronousOperations\Model\MassPublisher'),
+                        'db' => $this->objectManager->get('Magento\AsynchronousOperations\Model\MassPublisher')
+                    ]
+                ]
+            ]);
+            return $this->objectManager->create($bulkManagementClass, ['publisher' => $publisher]);
+        }
+        return null;
     }
 }
