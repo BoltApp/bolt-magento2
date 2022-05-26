@@ -227,7 +227,7 @@ class Order implements \JsonSerializable
     /**
      * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             'billingAddress' => $this->billingAddress,

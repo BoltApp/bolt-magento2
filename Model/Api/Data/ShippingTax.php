@@ -58,7 +58,7 @@ class ShippingTax implements ShippingTaxInterface, \JsonSerializable
     /**
      * @inheritDoc
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             "amount" => $this->amount

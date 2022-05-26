@@ -18,14 +18,9 @@
 namespace Bolt\Boltpay\ThirdPartyModules\Magento;
 
 use Bolt\Boltpay\Helper\Config;
-use Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartTotalsLayout;
-use Bolt\Boltpay\Model\ThirdPartyEvents\FiltersMinicartAddonsLayout;
 
 class Reward
 {
-    use FiltersCartTotalsLayout;
-    use FiltersMinicartAddonsLayout;
-
     /**
      * @var Config
      */

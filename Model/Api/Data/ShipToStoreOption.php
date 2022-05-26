@@ -235,7 +235,7 @@ class ShipToStoreOption implements ShipToStoreOptionInterface, \JsonSerializable
     /**
      * @inheritDoc
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             'reference' => $this->reference,

@@ -21,12 +21,9 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
-use Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartTotalsLayout;
 
 class StoreCredit
 {
-    use FiltersCartTotalsLayout;
-
     const AMASTY_STORECREDIT = 'amstorecredit';
 
     /**

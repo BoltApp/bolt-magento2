@@ -27,10 +27,6 @@ use Magento\Quote\Model\Quote;
  */
 class Extrafee
 {
-    use \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartItems;
-    use \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersTransactionBeforeValidation;
-    use \Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartBeforeLegacyShippingAndTax;
-
     /**
      * @var string total code used by the Extrafee module
      */
