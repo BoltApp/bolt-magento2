@@ -38,6 +38,8 @@ class PublishBoltProductEventObserver implements ObserverInterface
 
     private const CUSTOM_OPTIONS_KEY = 'options';
 
+    private const MEDIA_GALLERY_ATTR = 'media_gallery';
+
     /**
      * @var ProductEventManagerInterface
      */
@@ -140,19 +142,19 @@ class PublishBoltProductEventObserver implements ObserverInterface
                     return false;
                 }
                 foreach ($newValue as $key => $valueArr) {
-                   if (!isset($oldValues[0][$key])) {
-                       return true;
-                   } else {
-                       foreach ($valueArr as $field => $value) {
-                           if (!isset($oldValues[0][$key][$field])) {
-                               continue;
-                           }
-                           if ($value != $oldValues[0][$key][$field]) {
-                               return true;
-                           }
-                       }
-                   }
-               }
+                    if (!isset($oldValues[0][$key])) {
+                        return true;
+                    } else {
+                        foreach ($valueArr as $field => $value) {
+                            if (!isset($oldValues[0][$key][$field])) {
+                                continue;
+                            }
+                            if ($value != $oldValues[0][$key][$field]) {
+                                return true;
+                            }
+                        }
+                    }
+                }
             }
         }
         return $this->isSystemProductAttributesChanged($product, $origData);
@@ -193,8 +195,8 @@ class PublishBoltProductEventObserver implements ObserverInterface
      */
     private function isMediaGalleryChanged(Product $product, ?array $origData = null): bool
     {
-        $mediaGallery = $product->getData(Product::MEDIA_GALLERY);
-        $origMediaGallery = $origData[Product::MEDIA_GALLERY];
+        $mediaGallery = $product->getData(self::MEDIA_GALLERY_ATTR);
+        $origMediaGallery = $origData[self::MEDIA_GALLERY_ATTR];
         $mediaGalleryImages = $mediaGallery[Image::MEDIA_TYPE_CONFIG_NODE];
         $origMediaGalleryImages = $origMediaGallery[Image::MEDIA_TYPE_CONFIG_NODE];
 
