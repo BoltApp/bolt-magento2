@@ -56,32 +56,32 @@ class ProductEventPublisher
     /**
      * @var string|null
      */
-    private $operationFactoryClassName;
+    private $operationFactoryClass;
 
     /**
      * @var string|null
      */
-    private $bulkManagementClassName;
+    private $bulkManagementClass;
     /**
      * @param IdentityGeneratorInterface $identityGenerator
      * @param UserContextInterface $userContext
      * @param Json $jsonSerializer
-     * @param string|null $operationFactoryClassName
-     * @param string|null $bulkManagementClassName
+     * @param string|null $operationFactoryClass
+     * @param string|null $bulkManagementClass
      */
     public function __construct(
         IdentityGeneratorInterface $identityGenerator,
         UserContextInterface $userContext,
         Json $jsonSerializer,
-        string $operationFactoryClassName = null,
-        string $bulkManagementClassName = null
+        string $operationFactoryClass = null,
+        string $bulkManagementClass = null
     ) {
         $this->objectManager = ObjectManager::getInstance();
         $this->identityGenerator = $identityGenerator;
         $this->userContext = $userContext;
         $this->jsonSerializer = $jsonSerializer;
-        $this->operationFactoryClassName = $operationFactoryClassName;
-        $this->bulkManagementClassName = $bulkManagementClassName;
+        $this->operationFactoryClass = $operationFactoryClass;
+        $this->bulkManagementClass = $bulkManagementClass;
     }
 
     /**
@@ -95,10 +95,8 @@ class ProductEventPublisher
      */
     public function publishBulk(int $productId, string $type, string $date): string
     {
-        $operationFactory = ($this->operationFactoryClassName)
-            ? $this->initOperationFactory($this->operationFactoryClassName) : null;
-        $bulkManagement = ($this->bulkManagementClassName)
-            ? $this->initPublisher($this->bulkManagementClassName) : null;
+        $operationFactory = $this->initOperationFactory();
+        $bulkManagement = $this->initBulkManagement();
 
         if (!$operationFactory || !$bulkManagement) {
             throw new LocalizedException(
@@ -171,24 +169,29 @@ class ProductEventPublisher
     /**
      * Init operation factory class, for Magento 2.2 support
      *
-     * @param string $operationFactoryClass
      * @return mixed|null
      */
-    private function initOperationFactory(string $operationFactoryClass)
+    private function initOperationFactory()
     {
-        return (class_exists((string)$operationFactoryClass))
-            ? $this->objectManager->get($operationFactoryClass) : null;
+        if (!$this->operationFactoryClass) {
+            return null;
+        }
+        return (class_exists($this->operationFactoryClass) || interface_exists($this->operationFactoryClass))
+            ? $this->objectManager->get($this->operationFactoryClass) : null;
     }
 
     /**
-     * Init publisher instance, for Magento 2.2 support
+     * Init bulk management instance, for Magento 2.2 support
      *
-     * @param string $bulkManagementClass
      * @return mixed|null
      */
-    private function initPublisher(string $bulkManagementClass)
+    private function initBulkManagement()
     {
-        if (class_exists((string)$bulkManagementClass)) {
+        if (!$this->bulkManagementClass) {
+            return null;
+        }
+
+        if (class_exists($this->bulkManagementClass) || interface_exists($this->bulkManagementClass)) {
             $publisher = $this->objectManager->create('Magento\Framework\MessageQueue\PublisherPool', [
                 'publishers' => [
                     'async' => [
@@ -197,7 +200,7 @@ class ProductEventPublisher
                     ]
                 ]
             ]);
-            return $this->objectManager->create($bulkManagementClass, ['publisher' => $publisher]);
+            return $this->objectManager->create($this->bulkManagementClass, ['publisher' => $publisher]);
         }
         return null;
     }

@@ -299,8 +299,8 @@
     <preference for="Bolt\Boltpay\Api\ProductEventManagerInterface" type="Bolt\Boltpay\Model\CatalogIngestion\ProductEventManager" />
     <type name="Bolt\Boltpay\Model\CatalogIngestion\ProductEventPublisher">
         <arguments>
-            <argument name="bulkManagementClassName" xsi:type="string">Magento\AsynchronousOperations\Model\BulkManagement</argument>
-            <argument name="operationFactoryClassName" xsi:type="string">Magento\AsynchronousOperations\Api\Data\OperationInterfaceFactory</argument>
+            <argument name="bulkManagementClass" xsi:type="string">Magento\AsynchronousOperations\Model\BulkManagement</argument>
+            <argument name="operationFactoryClass" xsi:type="string">Magento\AsynchronousOperations\Api\Data\OperationInterfaceFactory</argument>
         </arguments>
     </type>
     <type name="Bolt\Boltpay\Model\CatalogIngestion\Request\Product\DataProcessor">

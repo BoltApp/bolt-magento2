@@ -406,8 +406,7 @@ class DataProcessor
     {
         $inventories = [];
         $stockItems = [];
-        $getSourceItemsBySku = ($this->getSourceItemsBySkuClass) ?
-            $this->initGetSourceItemsBySku($this->getSourceItemsBySkuClass) : null;
+        $getSourceItemsBySku = $this->initGetSourceItemsBySku();
 
         if ($getSourceItemsBySku) {
             $stockItems = $getSourceItemsBySku->execute($product->getSku());
@@ -551,12 +550,14 @@ class DataProcessor
     /**
      * Init get source items cmd, for Magento 2.2 support
      *
-     * @param string $getSourceItemsBySkuClass
      * @return mixed|null
      */
-    private function initGetSourceItemsBySku(string $getSourceItemsBySkuClass)
+    private function initGetSourceItemsBySku()
     {
-        return (class_exists($getSourceItemsBySkuClass))
-            ? $this->objectManager->get($getSourceItemsBySkuClass) : null;
+        if (!$this->getSourceItemsBySkuClass) {
+            return null;
+        }
+        return (class_exists($this->getSourceItemsBySkuClass) || interface_exists($this->getSourceItemsBySkuClass))
+            ? $this->objectManager->get($this->getSourceItemsBySkuClass) : null;
     }
 }
