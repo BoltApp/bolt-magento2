@@ -329,4 +329,7 @@
         <plugin name="publishProductEventAfterCatalogInventorySave"
                 type="Bolt\Boltpay\Plugin\Magento\CatalogInventory\Model\ResourceModel\StockPlugin"/>
     </type>
+    <type name="Magento\CatalogInventory\Api\StockItemRepositoryInterface">
+        <plugin name="boltCatalogEventPublisher" type="Bolt\Boltpay\Plugin\Magento\CatalogInventory\Api\StockItemRepositoryPlugin" />
+    </type>
 </config>
