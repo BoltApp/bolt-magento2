@@ -174,7 +174,7 @@ class ProductEventPublisher
      */
     private function initOperationFactory(string $operationFactoryClass)
     {
-        return (class_exists($operationFactoryClass))
+        return (interface_exists($operationFactoryClass))
             ? $this->objectManager->get($operationFactoryClass) : null;
     }
 

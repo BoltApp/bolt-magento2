@@ -554,7 +554,7 @@ class DataProcessor
      */
     private function initGetSourceItemsBySku(string $getSourceItemsBySkuClass)
     {
-        return (class_exists($getSourceItemsBySkuClass))
+        return (interface_exists($getSourceItemsBySkuClass))
             ? $this->objectManager->get($getSourceItemsBySkuClass) : null;
     }
 }
