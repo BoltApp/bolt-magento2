@@ -114,7 +114,7 @@ JSON;
         $store = $this->objectManager->get(\Magento\Store\Model\StoreManagerInterface::class);
         $this->storeId = $store->getStore()->getId();
     }
-    
+
     protected function tearDownInternal()
     {
         // Reset additional configuration
@@ -147,7 +147,7 @@ JSON;
         $result = $this->configHelper->getMerchantDashboardUrl();
         self::assertEquals(BoltConfig::MERCHANT_DASH_SANDBOX, $result);
     }
-    
+
     /**
      * @test
      * @covers ::getMerchantDashboardUrl
@@ -261,7 +261,7 @@ JSON;
         $result = $this->configHelper->getCdnUrl();
         self::assertEquals(Config::CDN_URL_SANDBOX, $result);
     }
-    
+
     /**
      * @test
      * @covers ::getCdnUrl
@@ -324,7 +324,7 @@ JSON;
         $result = $this->configHelper->getAccountUrl();
         self::assertEquals(Config::ACCOUNT_URL_SANDBOX, $result);
     }
-    
+
     /**
      * @test
      * @covers ::getAccountUrl
@@ -386,7 +386,7 @@ JSON;
         $result = $this->configHelper->getApiUrl();
         self::assertEquals(Config::API_URL_SANDBOX, $result);
     }
-    
+
     /**
      * @test
      */
@@ -445,6 +445,7 @@ JSON;
             ['isSandboxModeSet', BoltConfig::XML_PATH_SANDBOX_MODE, false],
             ['getPrefetchShipping', BoltConfig::XML_PATH_PREFETCH_SHIPPING],
             ['getResetShippingCalculation', BoltConfig::XML_PATH_RESET_SHIPPING_CALCULATION, false],
+            ['getMagentoNativeDiscountCalculation', BoltConfig::XML_PATH_MAGENTO_NATIVE_DISCOUNT_CALCULATION, false],
             ['isDebugModeOn', BoltConfig::XML_PATH_DEBUG],
             ['shouldTrackCheckoutFunnel', BoltConfig::XML_PATH_TRACK_CHECKOUT_FUNNEL, false],
             ['getIsPreAuth', BoltConfig::XML_PATH_IS_PRE_AUTH],

@@ -199,17 +199,23 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Set to YES if shipping is not calculated correctly.</comment>
                     </field>
-                    <field id="javascript_success" translate="label" type="textarea" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="magento_native_discount_calculation" translate="label" type="select" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Magento Native Discount Calculation</label>
+                        <config_path>payment/boltpay/magento_native_discount_calculation</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                        <comment>Set to YES if discounts is not calculated correctly.</comment>
+                    </field>
+                    <field id="javascript_success" translate="label" type="textarea" sortOrder="135" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Javascript: success</label>
                         <config_path>payment/boltpay/javascript_success</config_path>
                         <comment>This function is called when the Bolt checkout transaction is successful.</comment>
                     </field>
-                    <field id="debug" translate="label" type="select" sortOrder="135" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <field id="debug" translate="label" type="select" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
                         <label>Debug</label>
                         <config_path>payment/boltpay/debug</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
-                    <field id="additional_js" translate="label" type="textarea" sortOrder="140" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="additional_js" translate="label" type="textarea" sortOrder="145" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Additional Javascript</label>
                         <config_path>payment/boltpay/additional_js</config_path>
                     </field>
@@ -218,7 +224,7 @@
                         <config_path>payment/boltpay/track_on_checkout_start</config_path>
                         <comment>The javascript code executed when checkout modal pops up and the shipping details form is presented to the user.</comment>
                     </field>
-                    <field id="track_on_email_enter" translate="label" type="textarea" sortOrder="151" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="track_on_email_enter" translate="label" type="textarea" sortOrder="155" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Tracking: onEmailEnter</label>
                         <config_path>payment/boltpay/track_on_email_enter</config_path>
                         <comment>The javascript code executed when user enters or changes email. Email can be accessed as a variable named email.</comment>

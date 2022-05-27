@@ -2946,59 +2946,78 @@ class Cart extends AbstractHelper
         if ($this->isCollectDiscountsByPlugin($quote)) {
             $saleRuleDiscountsDetails = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
         } else {
-            $rulesDiscountPerItem = [];
-            $quote->setCartFixedRules([]);
-            $items = $this->salesRuleValidator->sortItemsByPriority($quote->getAllItems(), $address);
-            $this->salesRuleValidator->reset($address);
-            $this->salesRuleValidator->init($quote->getStore()->getWebsiteId(), $quote->getCustomerGroupId(), $quote->getCouponCode());
-            $this->salesRuleValidator->initTotals($items, $address);
-            foreach ($items as $item) {
-                $item->setDiscountAmount(0);
-                $item->setBaseDiscountAmount(0);
-                $itemDiscount = 0;
-                if ($item->getParentItem()) {
-                    continue;
-                }
-                $discounts = $item->getExtensionAttributes()->getDiscounts();
-                if (!$discounts || empty($discounts)) {
-                    continue;
-                }
-                foreach ($discounts as $discount) {
-                    $rule = $this->ruleFactory->create()->load($discount->getRuleID());
-                    if (!$rule->getId()) {
-                        throw new NoSuchEntityException(__('Rule with id %1 is not found', $discount->getRuleID()));
+            if ($this->configHelper->getMagentoNativeDiscountCalculation()) {
+                $rulesDiscountPerItem = [];
+                $quote->setCartFixedRules([]);
+                $items = $this->salesRuleValidator->sortItemsByPriority($quote->getAllItems(), $address);
+                $this->salesRuleValidator->reset($address);
+                $this->salesRuleValidator->init($quote->getStore()->getWebsiteId(), $quote->getCustomerGroupId(), $quote->getCouponCode());
+                $this->salesRuleValidator->initTotals($items, $address);
+                foreach ($items as $item) {
+                    $item->setDiscountAmount(0);
+                    $item->setBaseDiscountAmount(0);
+                    $itemDiscount = 0;
+                    if ($item->getParentItem()) {
+                        continue;
                     }
-                    $discountCalculator = $this->discountCalculatorFactory->create($rule->getSimpleAction());
-                    $qty = $this->salesRuleUtility->getItemQty($item, $rule);
-                    $qty = $discountCalculator->fixQuantity($qty, $rule);
-                    $discountData = $discountCalculator->calculate($rule, $item, $qty);
-                    $this->_eventManager->dispatch(
-                        'salesrule_validator_process',
-                        [
-                            'rule' => $rule,
-                            'item' => $item,
-                            'address' => $item->getAddress(),
-                            'quote' => $quote,
-                            'qty' => $qty,
-                            'result' => $discountData
-                        ]
-                    );
-                    $this->salesRuleUtility->deltaRoundingFix($discountData, $item);
-                    $this->salesRuleUtility->minFix($discountData, $item, $qty);
-                    $item->setDiscountAmount($discountData->getAmount());
-                    $item->setBaseDiscountAmount($discountData->getBaseAmount());
-                    $item->setOriginalDiscountAmount($discountData->getOriginalAmount());
-                    $item->setBaseOriginalDiscountAmount($discountData->getBaseOriginalAmount());
-                    $rulesDiscountPerItem[$item->getId()][$rule->getId()] = $discountData->getAmount() - $itemDiscount;
-                    $itemDiscount = $discountData->getAmount();
+                    $discounts = $item->getExtensionAttributes()->getDiscounts();
+                    if (!$discounts || empty($discounts)) {
+                        continue;
+                    }
+                    foreach ($discounts as $discount) {
+                        $rule = $this->ruleFactory->create()->load($discount->getRuleID());
+                        if (!$rule->getId()) {
+                            throw new NoSuchEntityException(__('Rule with id %1 is not found', $discount->getRuleID()));
+                        }
+                        $discountCalculator = $this->discountCalculatorFactory->create($rule->getSimpleAction());
+                        $qty = $this->salesRuleUtility->getItemQty($item, $rule);
+                        $qty = $discountCalculator->fixQuantity($qty, $rule);
+                        $discountData = $discountCalculator->calculate($rule, $item, $qty);
+                        $this->_eventManager->dispatch(
+                            'salesrule_validator_process',
+                            [
+                                'rule' => $rule,
+                                'item' => $item,
+                                'address' => $item->getAddress(),
+                                'quote' => $quote,
+                                'qty' => $qty,
+                                'result' => $discountData
+                            ]
+                        );
+                        $this->salesRuleUtility->deltaRoundingFix($discountData, $item);
+                        $this->salesRuleUtility->minFix($discountData, $item, $qty);
+                        $item->setDiscountAmount($discountData->getAmount());
+                        $item->setBaseDiscountAmount($discountData->getBaseAmount());
+                        $item->setOriginalDiscountAmount($discountData->getOriginalAmount());
+                        $item->setBaseOriginalDiscountAmount($discountData->getBaseOriginalAmount());
+                        $rulesDiscountPerItem[$item->getId()][$rule->getId()] = $discountData->getAmount() - $itemDiscount;
+                        $itemDiscount = $discountData->getAmount();
+                    }
                 }
-            }
-            foreach ($rulesDiscountPerItem as $discounts) {
-                foreach ($discounts as $ruleId => $discountValue) {
-                    if (isset($saleRuleDiscountsDetails[$ruleId])) {
-                        $saleRuleDiscountsDetails[$ruleId] += $discountValue;
-                    } else {
-                        $saleRuleDiscountsDetails[$ruleId] = $discountValue;
+                foreach ($rulesDiscountPerItem as $discounts) {
+                    foreach ($discounts as $ruleId => $discountValue) {
+                        if (isset($saleRuleDiscountsDetails[$ruleId])) {
+                            $saleRuleDiscountsDetails[$ruleId] += $discountValue;
+                        } else {
+                            $saleRuleDiscountsDetails[$ruleId] = $discountValue;
+                        }
+                    }
+                }
+            } else {
+                /* @var \Magento\SalesRule\Api\Data\RuleDiscountInterface $ruleDiscounts */
+                $extensionSaleRuleDiscounts = $address->getExtensionAttributes()->getDiscounts();
+                $cartFixedRules = $address->getCartFixedRules();
+                if ($extensionSaleRuleDiscounts && is_array($extensionSaleRuleDiscounts)) {
+                    foreach ($extensionSaleRuleDiscounts as $value) {
+                        /* @var \Magento\SalesRule\Api\Data\DiscountDataInterface $discountData */
+                        $discountData = $value->getDiscountData();
+                        $salesRuleId = $value->getRuleID();
+                        if (!empty($cartFixedRules) && array_key_exists($salesRuleId, $cartFixedRules) && $cartFixedRules[$salesRuleId] > DiscountHelper::MIN_NONZERO_VALUE) {
+                            $rule = $this->ruleRepository->getById($salesRuleId);
+                            $saleRuleDiscountsDetails[$salesRuleId] = $discountData->getAmount() + $rule->getDiscountAmount() - $cartFixedRules[$salesRuleId];
+                        } else {
+                            $saleRuleDiscountsDetails[$salesRuleId] = $discountData->getAmount();
+                        }
                     }
                 }
             }

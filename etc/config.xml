@@ -59,6 +59,7 @@ tr.shipping.totals td.amount span.price,
                 <success_page>checkout/onepage/success</success_page>
                 <prefetch_shipping>0</prefetch_shipping>
                 <reset_shipping_calculation>0</reset_shipping_calculation>
+                <magento_native_discount_calculation>0</magento_native_discount_calculation>
                 <minicart_support>1</minicart_support>
                 <enable_bolt_on_cart_page>1</enable_bolt_on_cart_page>
                 <store_credit>0</store_credit>
