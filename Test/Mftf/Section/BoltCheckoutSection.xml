@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ /**
+  * Copyright © Magento, Inc. All rights reserved.
+  * See COPYING.txt for license details.
+  */
+-->
+
+<sections xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="urn:magento:mftf:Page/etc/SectionObject.xsd">
+    <section name="BoltCheckoutSection">
+        <element name="BoltModalIFrame" type="iframe" selector="#bolt-checkout-frame"/>
+        <element name="email" type="input" selector="#email"/>
+        <element name="phone" type="input" selector="#phone"/>
+        <element name="shippingFirstName" type="input" selector="#shippingFirstName"/>
+        <element name="shippingLastName" type="input" selector="#shippingLastName"/>
+        <element name="shippingAddressLine1" type="input" selector="#shippingAddressLine1"/>
+        <element name="shippingZip" type="input" selector="#shippingZip"/>
+        <element name="shippingCity" type="input" selector="#shippingCity"/>
+        <element name="shippingState" type="select" selector="#shippingState"/>
+        <element name="shippingCountry" type="select" selector="#shippingCountry"/>
+        <element name="countryCodeSelector" type="select" selector="#country-code-selector"/>
+        <element name="checkoutContinueButton" type="button" selector="button[data-tid='checkout-continue-button']" timeout="30"/>
+        <element name="checkoutButton" type="button" selector="button[data-tid='checkout-button']" timeout="30"/>
+        <element name="CardNumber" type="input" selector="#ccn"/>
+        <element name="CardExp" type="input" selector="#exp"/>
+        <element name="CardCvv" type="input" selector="#cvv"/>
+    </section>
+</sections>
