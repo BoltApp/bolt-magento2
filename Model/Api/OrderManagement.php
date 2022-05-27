@@ -375,14 +375,23 @@ class OrderManagement implements OrderManagementInterface
      */
     public function deleteById($id)
     {
-        $order = $this->orderHelper->getOrderById($id);
-        if ($order->getState() != OrderModel::STATE_PENDING_PAYMENT) {
-            throw new WebapiException(__('Unexpected order state'), 0, 422);
+        try {
+            $order = $this->orderHelper->getOrderById($id);
+            if ($order->getState() != OrderModel::STATE_PENDING_PAYMENT) {
+                throw new WebapiException(__('Unexpected order state'), 0, 422);
+            }
+            $payment = $order->getPayment();
+            if ($payment && $payment->getCcTransId() != "") {
+                throw new WebapiException(__('Order is already associated with transaction'), 0, 422);
+            }
+            $this->orderHelper->deleteOrder($order);
+        } catch (WebapiException $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
         }
-        $payment = $order->getPayment();
-        if ($payment && $payment->getCcTransId() != "") {
-            throw new WebapiException(__('Order is already associated with transaction'), 0, 422);
-        }
-        $this->orderHelper->deleteOrder($order);
+
     }
 }
