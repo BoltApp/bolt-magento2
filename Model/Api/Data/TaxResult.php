@@ -58,7 +58,7 @@ class TaxResult implements TaxResultInterface, \JsonSerializable
     /**
      * @inheritDoc
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             'subtotal_amount' => $this->subtotalAmount

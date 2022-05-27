@@ -59,7 +59,7 @@ class Metric implements \JsonSerializable
      *
      * @return array()
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return
             [ $this->key => $this->data ];

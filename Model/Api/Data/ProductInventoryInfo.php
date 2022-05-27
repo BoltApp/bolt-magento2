@@ -91,7 +91,7 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
     /**
      * @inheritDoc
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             'product' => $this->product,

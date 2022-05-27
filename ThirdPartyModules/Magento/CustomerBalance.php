@@ -18,12 +18,9 @@
 namespace Bolt\Boltpay\ThirdPartyModules\Magento;
 
 use Bolt\Boltpay\Helper\Config;
-use Bolt\Boltpay\Model\ThirdPartyEvents\FiltersCartTotalsLayout;
 
 class CustomerBalance
 {
-    use FiltersCartTotalsLayout;
-
     /**
      * @var Config
      */

@@ -22,9 +22,6 @@ use Magento\Customer\Model\Session;
 
 class GroupVerification
 {
-    use ThirdPartyEvents\CollectsSessionData;
-    use ThirdPartyEvents\RestoresSessionData;
-
     /**
      * @var Session
      */

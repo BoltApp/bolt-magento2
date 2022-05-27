@@ -57,7 +57,7 @@ class GetMaskedQuoteIDData implements GetMaskedQuoteIDDataInterface, \JsonSerial
     /**
      * @inheritDoc
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             'maskedQuoteID' => $this->maskedQuoteID,
