@@ -149,7 +149,7 @@ class ShippingOption implements ShippingOptionInterface, \JsonSerializable
     /**
      * @inheritDoc
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             'service' => $this->service,

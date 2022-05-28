@@ -193,7 +193,7 @@ class DebugInfo implements \JsonSerializable
     /**
      * @inheritDoc
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return array_filter([
             'php_version'              => $this->phpVersion,

@@ -242,7 +242,7 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
     /**
      * @inheritDoc
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             'product' => $this->product,

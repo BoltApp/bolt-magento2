@@ -93,7 +93,7 @@ class Config implements \JsonSerializable
     /**
      * @inheritDoc
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return [
             'storeItems' => $this->storeItems,
