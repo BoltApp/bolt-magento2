@@ -1675,7 +1675,7 @@ class Order extends AbstractHelper
      */
     private function getProcessedItems($payment, $itemType)
     {
-        return array_filter(explode(',', $payment->getAdditionalInformation($itemType)));
+        return array_filter(explode(',', ($payment->getAdditionalInformation($itemType) ?: '')));
     }
 
     /**
@@ -1915,7 +1915,7 @@ class Order extends AbstractHelper
     {
         return [
             'Time' => $this->timezone->formatDateTime(
-                date('Y-m-d H:i:s', $transaction->date / 1000),
+                date('Y-m-d H:i:s', (int)($transaction->date / 1000)),
                 2,
                 2
             ),

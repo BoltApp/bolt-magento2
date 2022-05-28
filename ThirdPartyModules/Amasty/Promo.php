@@ -85,7 +85,7 @@ class Promo
             $roundedDiscountAmount = 0;
             $discountAmount = 0;
             if ($couponCode = $quote->getCouponCode()) {
-                $salesruleIds = explode(',', $quote->getAppliedRuleIds());
+                $salesruleIds = explode(',', ($quote->getAppliedRuleIds() ?: ''));
                 foreach ($salesruleIds as $salesruleId) {
                     $rule = $this->ruleRepository->getById($salesruleId);
 
@@ -108,7 +108,6 @@ class Promo
                         $discounts[] = $discountItem;
                     }
                 }
-
             }
             $diff -= CurrencyUtils::toMinorWithoutRounding($discountAmount, $currencyCode) - $roundedDiscountAmount;
             $totalAmount -= $roundedDiscountAmount;
