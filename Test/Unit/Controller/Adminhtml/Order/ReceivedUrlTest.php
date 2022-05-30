@@ -30,6 +30,9 @@ use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Magento\Backend\Model\UrlInterface;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Magento\Framework\App\CacheInterface;
+use Magento\Framework\Serialize\SerializerInterface as Serialize;
+use Bolt\Boltpay\Controller\ReceivedUrlInterface;
 use PHPUnit_Framework_MockObject_MockObject;
 
 /**
@@ -79,6 +82,16 @@ class ReceivedUrlTest extends BoltTestCase
      * @var UrlInterface
      */
     private $backendUrl;
+    
+    /**
+     * @var CacheInterface
+     */
+    private $cache;
+
+    /**
+     * @var Serialize
+     */
+    private $serialize;
 
     /**
      * @var ReceivedUrl
@@ -99,6 +112,8 @@ class ReceivedUrlTest extends BoltTestCase
         $this->checkoutSession = $this->createMock(CheckoutSession::class);
         $this->orderHelper = $this->createMock(OrderHelper::class);
         $this->order = $this->createPartialMock(Order::class, ['getStoreId','getId','getStore']);
+        $this->cache = $this->createMock(CacheInterface::class);
+        $this->serialize = $this->createMock(Serialize::class);
         $this->currentMock = $this->getMockBuilder(ReceivedUrl::class)
             ->setConstructorArgs([
                 $this->context,
@@ -107,7 +122,9 @@ class ReceivedUrlTest extends BoltTestCase
                 $this->bugsnag,
                 $this->logHelper,
                 $this->checkoutSession,
-                $this->orderHelper
+                $this->orderHelper,
+                $this->cache,
+                $this->serialize
             ])
             ->disableProxyingToOriginalMethods()
             ->getMock();

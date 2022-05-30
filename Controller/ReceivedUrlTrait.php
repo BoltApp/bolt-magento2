@@ -30,7 +30,6 @@ use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Serialize\SerializerInterface as Serialize;
-use Bolt\Boltpay\Helper\Session as BoltSession;
 
 trait ReceivedUrlTrait
 {

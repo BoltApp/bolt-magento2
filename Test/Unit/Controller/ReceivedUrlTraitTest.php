@@ -27,6 +27,7 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
+use Bolt\Boltpay\Controller\ReceivedUrlInterface;
 
 /**
  * Class ReceivedUrlTraitTest

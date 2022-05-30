@@ -37,6 +37,9 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
 use Magento\Framework\App\Response\RedirectInterface;
+use Magento\Framework\App\CacheInterface;
+use Magento\Framework\Serialize\SerializerInterface as Serialize;
+use Bolt\Boltpay\Controller\ReceivedUrlInterface;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Controller\Order\ReceivedUrl
@@ -121,6 +124,16 @@ class ReceivedUrlTest extends BoltTestCase
      * @var RedirectInterface | MockObject
      */
     private $redirect;
+    
+    /**
+     * @var CacheInterface
+     */
+    private $cache;
+
+    /**
+     * @var Serialize
+     */
+    private $serialize;
 
     /**
      * @test
@@ -700,6 +713,8 @@ class ReceivedUrlTest extends BoltTestCase
         $this->orderHelper = $this->createMock(OrderHelper::class);
         $this->backendUrl = $this->createMock(BackendUrl::class);
         $this->redirect = $this->createMock(RedirectInterface::class);
+        $this->cache = $this->createMock(CacheInterface::class);
+        $this->serialize = $this->createMock(Serialize::class);
     }
 
     private function createOrderMock($state)
@@ -737,6 +752,8 @@ class ReceivedUrlTest extends BoltTestCase
                 $orderHelper,
                 $this->backendUrl,
                 $this->redirect,
+                $this->cache,
+                $this->serialize
             ])
             ->getMock();
         return $receivedUrl;

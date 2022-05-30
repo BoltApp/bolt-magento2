@@ -27,7 +27,6 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Controller\ReceivedUrlTrait;
-use Bolt\Boltpay\Helper\Session as BoltSession;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Serialize\SerializerInterface as Serialize;
 use Bolt\Boltpay\Controller\ReceivedUrlInterface;
