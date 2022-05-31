@@ -30,6 +30,7 @@ use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Serialize\SerializerInterface as Serialize;
+use Bolt\Boltpay\Controller\ReceivedUrlInterface;
 
 trait ReceivedUrlTrait
 {
@@ -137,7 +138,7 @@ trait ReceivedUrlTrait
                 // add order information to the session
                 $this->clearOrderSession($order, $redirectUrl);
                 
-                $cacheIdentifier = self::BOLT_ORDER_SUCCESS_PREFIX . $this->checkoutSession->getSessionId();
+                $cacheIdentifier = ReceivedUrlInterface::BOLT_ORDER_SUCCESS_PREFIX . $this->checkoutSession->getSessionId();
                 
                 $sessionData = [
                     "LastQuoteId"   => $quote->getId(),

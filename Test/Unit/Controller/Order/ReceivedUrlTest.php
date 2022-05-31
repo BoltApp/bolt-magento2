@@ -751,7 +751,6 @@ class ReceivedUrlTest extends BoltTestCase
                 $checkoutSession,
                 $orderHelper,
                 $this->backendUrl,
-                $this->redirect,
                 $this->cache,
                 $this->serialize
             ])
