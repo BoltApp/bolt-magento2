@@ -79,11 +79,12 @@ class RunInstantProductEvent
      *
      * @param int $productId
      * @param string $type
+     * @param int|null $websiteId
      * @return void
      */
-    public function execute(int $productId, string $type): void
+    public function execute(int $productId, string $type, int $websiteId = null): void
     {
-        if ($this->config->getIsCatalogIngestionInstantAsyncEnabled()) {
+        if ($this->config->getIsCatalogIngestionInstantAsyncEnabled($websiteId)) {
             $this->productEventManager->publishProductEventAsyncJob($productId, $type);
         } else {
             $productEvent = $this->productEventFactory->create();
