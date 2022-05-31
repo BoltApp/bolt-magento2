@@ -29,7 +29,6 @@ use Magento\Downloadable\Model\Product\Type as DownloadableProductType;
 use Magento\Catalog\Model\Product\Type as ProductType;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Locale\Resolver as LocaleResolver;
-use Magento\InventoryApi\Api\GetSourceItemsBySkuInterface;
 use Magento\Catalog\Model\Product\Gallery\ReadHandler as GalleryReadHandler;
 use Magento\Framework\File\Mime;
 use Magento\Framework\Exception\FileSystemException;
@@ -38,6 +37,7 @@ use Magento\Catalog\Api\Data\ProductAttributeMediaGalleryEntryInterface;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Api\Data\WebsiteInterface;
 use Magento\Framework\App\ObjectManager;
+use Magento\Catalog\Model\ResourceModel\Eav\Attribute as EavAttribute;
 
 /**
  * Product event product data processor to collect product data for bolt request
@@ -106,15 +106,16 @@ class DataProcessor
      * @param string|null $getSourceItemsBySkuClass
      */
     public function __construct(
-        Config $config,
+        Config                     $config,
         ProductRepositoryInterface $productRepository,
-        StoreManagerInterface $storeManager,
-        LocaleResolver $localeResolver,
-        GalleryReadHandler $galleryReadHandler,
-        Mime $mime,
-        Emulation $emulation,
-        string $getSourceItemsBySkuClass = null
-    ) {
+        StoreManagerInterface      $storeManager,
+        LocaleResolver             $localeResolver,
+        GalleryReadHandler         $galleryReadHandler,
+        Mime                       $mime,
+        Emulation                  $emulation,
+        string                     $getSourceItemsBySkuClass = null
+    )
+    {
         $this->objectManager = ObjectManager::getInstance();
         $this->config = $config;
         $this->productRepository = $productRepository;
@@ -229,7 +230,7 @@ class DataProcessor
             'Inventories' => $this->getInventories($product),
             'Media' => $this->getMedia($product),
             'Options' => $this->getOptions($product),
-            'Properties' => $this->getProperties($product, (int)$storeView->getWebsiteId())
+            'Properties' => $this->getProperties($product)
         ];
 
         if ($merchantVariantId = $product->getMerchantVariantId()) {
@@ -313,22 +314,13 @@ class DataProcessor
      * Returns product properties
      *
      * @param ProductInterface $product
-     * @param int $websiteId
      * @return array
      */
-    private function getProperties(ProductInterface $product, int $websiteId): array
+    private function getProperties(ProductInterface $product): array
     {
-        $requiredAttributes = $this->config->getCatalogIngestionProductPropertiesAttributes($websiteId);
-        if (empty($requiredAttributes)) {
-            return [];
-        }
         $properties = [];
         $productAttributes = $product->getAttributes();
-        foreach ($requiredAttributes as $requiredAttrCode) {
-            if (!isset($productAttributes[$requiredAttrCode])) {
-                continue;
-            }
-            $productAttribute = $productAttributes[$requiredAttrCode];
+        foreach ($productAttributes as $productAttribute) {
             $productAttributeData = [
                 'Name' => $productAttribute->getAttributeCode(),
                 'NameID' => $productAttribute->getAttributeId(),
@@ -336,7 +328,7 @@ class DataProcessor
                 'ValueID' => $product->getData($productAttribute->getAttributeCode()),
                 'DisplayType' => $productAttribute->getFrontendInput(),
                 'DisplayName' => $productAttribute->getAttributeCode(),
-                'DisplayValue' => $product->getAttributeText($productAttribute->getAttributeCode()),
+                'DisplayValue' => ($this->getAttributeDisplayValue($product, $productAttribute)) ?: '',
                 'Visibility' => ($productAttribute->getIsVisible()) ? 'visible' : '',
                 'TextLabel' => $productAttribute->getFrontendLabel(),
                 'ImageURL' => '',
@@ -346,6 +338,22 @@ class DataProcessor
         }
 
         return $properties;
+    }
+
+    /**
+     * Returns product attribute display value
+     *
+     * @param ProductInterface $product
+     * @param EavAttribute $attribute
+     * @return string|null
+     */
+    private function getAttributeDisplayValue(ProductInterface $product, EavAttribute $attribute): ?string
+    {
+        try {
+            return $product->getAttributeText($attribute->getAttributeCode());
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     /**
