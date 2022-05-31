@@ -350,7 +350,14 @@ class DataProcessor
     private function getAttributeDisplayValue(ProductInterface $product, EavAttribute $attribute): ?string
     {
         try {
-            return $product->getAttributeText($attribute->getAttributeCode());
+            $value = $product->getResource()
+                ->getAttribute($attribute->getAttributeCode())
+                ->getFrontend()
+                ->getValue($product);
+            if (is_array($value)) {
+                $value = $product->getAttributeText($attribute->getAttributeCode());
+            }
+            return $value;
         } catch (\Exception $e) {
             return null;
         }
