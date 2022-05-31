@@ -1642,7 +1642,7 @@ class Cart extends AbstractHelper
 
         $customizableOptions = [];
         $product = $item->getProduct();
-        foreach (explode(',', $optionIds->getValue()) as $optionId) {
+        foreach (explode(',', ($optionIds->getValue() ?: '')) as $optionId) {
             $option = $product->getOptionById($optionId);
             if ($option) {
                 $confItemOption = $product->getCustomOption(\Magento\Catalog\Model\Product\Type\AbstractType::OPTION_PREFIX . $optionId);

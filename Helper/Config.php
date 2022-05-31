@@ -778,7 +778,7 @@ class Config extends AbstractHelper
      */
     public function getPublishableKeyCheckout($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, $storeId);
+        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, $storeId) ?: '';
     }
 
     /**
@@ -980,7 +980,7 @@ class Config extends AbstractHelper
             self::XML_PATH_PREFETCH_ADDRESS_FIELDS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -2439,7 +2439,7 @@ class Config extends AbstractHelper
             self::XML_PATH_IP_WHITELIST,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
     
     /**
