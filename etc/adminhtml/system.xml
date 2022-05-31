@@ -441,34 +441,20 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Enable catalog ingestion</comment>
                     </field>
-                    <field id="catalog_ingestion_product_trigger_attributes" translate="label" type="multiselect" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>Product attributes for triggering sync. process</label>
-                        <config_path>payment/boltpay/catalog_ingestion_product_trigger_attributes</config_path>
-                        <depends><field id="catalog_ingestion_enabled">1</field></depends>
-                        <source_model>Bolt\Boltpay\Model\Config\Source\Catalog\Ingestion\Attributes</source_model>
-                        <comment>The change of these attributes will trigger product event publishing for sending to bolt</comment>
-                    </field>
-                    <field id="catalog_ingestion_product_prop_attributes" translate="label" type="multiselect" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>Product attributes for sending to bolt</label>
-                        <config_path>payment/boltpay/catalog_ingestion_product_prop_attributes</config_path>
-                        <depends><field id="catalog_ingestion_enabled">1</field></depends>
-                        <source_model>Bolt\Boltpay\Model\Config\Source\Catalog\Ingestion\Attributes</source_model>
-                        <comment>Product attributes which will be sent to bolt as properties</comment>
-                    </field>
-                    <field id="catalog_ingestion_cron_expr" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="catalog_ingestion_cron_expr" translate="label" type="text" sortOrder="20" showInDefault="0" showInWebsite="0" showInStore="0">
                         <label>Schedule Sync. Cron Expr</label>
                         <config_path>payment/boltpay/catalog_ingestion_cron_expr</config_path>
                         <depends><field id="catalog_ingestion_enabled">1</field></depends>
                         <comment>Cron expression for catalog synchronisation</comment>
                     </field>
-                    <field id="catalog_ingestion_instant_enabled" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="catalog_ingestion_instant_enabled" translate="label" type="select" sortOrder="30" showInDefault="0" showInWebsite="0" showInStore="0">
                         <label>Instant Sync. Enabled</label>
                         <config_path>payment/boltpay/catalog_ingestion_instant_enabled</config_path>
                         <depends><field id="catalog_ingestion_enabled">1</field></depends>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Enable instant catalog synchronisation by custom events</comment>
                     </field>
-                    <field id="catalog_ingestion_instant_async_enabled" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="catalog_ingestion_instant_async_enabled" translate="label" type="select" sortOrder="40" showInDefault="0" showInWebsite="0" showInStore="0">
                         <label>Instant Async Mode Enabled</label>
                         <config_path>payment/boltpay/catalog_ingestion_instant_async_enabled</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
@@ -478,7 +464,7 @@
                         </depends>
                         <comment><![CDATA[Enable async mode for instant catalog synchronisation by "async.operations.all" consumer <a target="_blank" href="https://devdocs.magento.com/guides/v2.3/config-guide/mq/manage-message-queues.html#configuration">https://devdocs.magento.com/guides/v2.3/config-guide/mq/manage-message-queues.html</a>]]></comment>
                     </field>
-                    <field id="catalog_ingestion_instant_events" translate="label" type="multiselect" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="0" canRestore="1">
+                    <field id="catalog_ingestion_instant_events" translate="label" type="multiselect" sortOrder="50" showInDefault="0" showInWebsite="0" showInStore="0" canRestore="1">
                         <label>Instant Events</label>
                         <config_path>payment/boltpay/catalog_ingestion_instant_events</config_path>
                         <source_model>Bolt\Boltpay\Model\Config\Source\Catalog\Ingestion\Events</source_model>
@@ -488,7 +474,7 @@
                         </depends>
                         <comment>Instant catalog synchronisation custom events</comment>
                     </field>
-                    <field id="catalog_ingestion_system_configuration_update_request_enabled" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <field id="catalog_ingestion_system_configuration_update_request_enabled" translate="label" type="select" sortOrder="60" showInDefault="0" showInWebsite="0" showInStore="0">
                         <label>System configuration update request</label>
                         <config_path>payment/boltpay/catalog_ingestion_system_configuration_update_request_enabled</config_path>
                         <depends><field id="catalog_ingestion_enabled">1</field></depends>

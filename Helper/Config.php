@@ -288,16 +288,6 @@ class Config extends AbstractHelper
     const XML_PATH_CATALOG_INGESTION_INSTANT_EVENT = 'payment/boltpay/catalog_ingestion_instant_events';
 
     /**
-     * Path for catalog ingestion product trigger attributes list for triggering sync.
-     */
-    const XML_PATH_CATALOG_INGESTION_PRODUCT_TRIGGER_ATTRIBUTES = 'payment/boltpay/catalog_ingestion_product_trigger_attributes';
-
-    /**
-     * Path for catalog ingestion product properties attributes list for triggering sync.
-     */
-    const XML_PATH_CATALOG_INGESTION_PRODUCT_PROP_ATTRIBUTES = 'payment/boltpay/catalog_ingestion_product_prop_attributes';
-
-    /**
      * Path for system configuration updates request
      */
     const XML_PATH_CATALOG_INGESTION_SYSTEM_CONFIGURATION_UPDATE_REQUEST = 'payment/boltpay/catalog_ingestion_system_configuration_update_request_enabled';
@@ -2609,42 +2599,6 @@ class Config extends AbstractHelper
         );
         return ($eventsConfigValue !== null) ?
             explode(',', $eventsConfigValue) : [];
-    }
-
-    /**
-     * Returns catalog ingestion product trigger attributes for sync.
-     *
-     * @param int|string|null $websiteId
-     *
-     * @return array
-     */
-    public function getCatalogIngestionProductTriggerAttributes($websiteId = null)
-    {
-        $productAttributes =  $this->getScopeConfig()->getValue(
-            self::XML_PATH_CATALOG_INGESTION_PRODUCT_TRIGGER_ATTRIBUTES,
-            ScopeInterface::SCOPE_WEBSITES,
-            $websiteId
-        );
-        return ($productAttributes !== null) ?
-            explode(',', $productAttributes) : [];
-    }
-
-    /**
-     * Returns catalog ingestion product properties attributes for sync.
-     *
-     * @param int|string|null $websiteId
-     *
-     * @return array
-     */
-    public function getCatalogIngestionProductPropertiesAttributes($websiteId = null)
-    {
-        $productAttributes =  $this->getScopeConfig()->getValue(
-            self::XML_PATH_CATALOG_INGESTION_PRODUCT_PROP_ATTRIBUTES,
-            ScopeInterface::SCOPE_WEBSITES,
-            $websiteId
-        );
-        return ($productAttributes !== null) ?
-            explode(',', $productAttributes) : [];
     }
 
     /**
