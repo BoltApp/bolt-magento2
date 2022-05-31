@@ -81,7 +81,7 @@ class PublishBoltProductEventObserver implements ObserverInterface
         try {
             /** @var Product $product */
             $product = $observer->getEvent()->getProduct();
-            if ($this->config->getIsCatalogIngestionScheduleEnabled($product->getStore()->getWebsiteId()) &&
+            if ($this->config->getIsCatalogIngestionEnabled($product->getStore()->getWebsiteId()) &&
                 $this->hasProductChanged($product, $product->getOrigData())
             ) {
                 $this->productEventManager->publishProductEvent(
