@@ -28,6 +28,8 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Helper\Image;
+use Magento\Eav\Model\Config as EavConfig;
+use Magento\Catalog\Api\Data\ProductAttributeInterface;
 
 /**
  * Publish product event after the product is saved
@@ -41,6 +43,17 @@ class PublishBoltProductEventObserver implements ObserverInterface
     private const MEDIA_GALLERY_ATTR = 'media_gallery';
 
     /**
+     * Disabled attributes for triggering sync.
+     * @var []
+     */
+    private $disabledAttrCodes = [
+        'has_options',
+        'required_options',
+        'media_gallery',
+        'updated_at'
+    ];
+
+    /**
      * @var ProductEventManagerInterface
      */
     private $productEventManager;
@@ -51,6 +64,11 @@ class PublishBoltProductEventObserver implements ObserverInterface
     private $config;
 
     /**
+     * @var EavConfig
+     */
+    private $eavConfig;
+
+    /**
      * @var Logger
      */
     private $logger;
@@ -58,15 +76,18 @@ class PublishBoltProductEventObserver implements ObserverInterface
     /**
      * @param ProductEventManagerInterface $productEventManager
      * @param Config $config
+     * @param EavConfig $eavConfig
      * @param Logger $logger
      */
     public function __construct(
         ProductEventManagerInterface $productEventManager,
         Config $config,
+        EavConfig $eavConfig,
         Logger $logger
     ) {
         $this->productEventManager = $productEventManager;
         $this->config = $config;
+        $this->eavConfig = $eavConfig;
         $this->logger = $logger;
     }
 
@@ -81,13 +102,17 @@ class PublishBoltProductEventObserver implements ObserverInterface
         try {
             /** @var Product $product */
             $product = $observer->getEvent()->getProduct();
-            if ($this->config->getIsCatalogIngestionEnabled($product->getStore()->getWebsiteId()) &&
-                $this->hasProductChanged($product, $product->getOrigData())
-            ) {
-                $this->productEventManager->publishProductEvent(
-                    (int)$product->getId(),
-                    $this->getProductEventType($product)
-                );
+            $websiteIds = $product->getWebsiteIds();
+            foreach ($websiteIds as $websiteId) {
+                if ($this->config->getIsCatalogIngestionEnabled($websiteId) &&
+                    $this->hasProductChanged($product, $product->getOrigData())
+                ) {
+                    $this->productEventManager->publishProductEvent(
+                        (int)$product->getId(),
+                        $this->getProductEventType($product)
+                    );
+                    break;
+                }
             }
         } catch (\Exception $e) {
             $this->logger->critical($e);
@@ -115,14 +140,16 @@ class PublishBoltProductEventObserver implements ObserverInterface
      */
     private function hasProductChanged(Product $product, ?array $origData = null): bool
     {
-        $requiredAttributes = $this->config->getCatalogIngestionProductTriggerAttributes();
+        $requiredAttributes = $this->eavConfig->getEntityAttributes(ProductAttributeInterface::ENTITY_TYPE_CODE);
         $attributes = $product->getAttributes();
 
         foreach ($requiredAttributes as $requiredAttribute) {
-            if (!array_key_exists($requiredAttribute, $attributes)) {
+            if (!array_key_exists($requiredAttribute->getAttributeCode(), $attributes) ||
+                in_array($requiredAttribute->getAttributeCode(), $this->disabledAttrCodes)
+            ) {
                 continue;
             }
-            $attribute = $attributes[$requiredAttribute];
+            $attribute = $attributes[$requiredAttribute->getAttributeCode()];
             $oldValues = $this->fetchOldValues($attribute, $origData);
             try {
                 $newValue = $this->extractAttributeValue($product, $attribute);
@@ -130,7 +157,9 @@ class PublishBoltProductEventObserver implements ObserverInterface
                 //No new value
                 continue;
             }
-            if (!is_array($newValue) && $newValue !== null && !in_array($newValue, $oldValues, true)) {
+            if (!is_array($newValue) && $newValue !== null && $newValue !== '' && $newValue !== '0' &&
+                !in_array($newValue, $oldValues, true)
+            ) {
                 return true;
             } elseif (is_array($newValue)) {
                 if ((!isset($oldValues[0]) && !empty($newValue)) ||
@@ -145,11 +174,17 @@ class PublishBoltProductEventObserver implements ObserverInterface
                     if (!isset($oldValues[0][$key])) {
                         return true;
                     } else {
-                        foreach ($valueArr as $field => $value) {
-                            if (!isset($oldValues[0][$key][$field])) {
-                                continue;
+                        if(is_array($valueArr)) {
+                            foreach ($valueArr as $field => $value) {
+                                if (!isset($oldValues[0][$key][$field])) {
+                                    continue;
+                                }
+                                if ($value != $oldValues[0][$key][$field]) {
+                                    return true;
+                                }
                             }
-                            if ($value != $oldValues[0][$key][$field]) {
+                        } else {
+                            if ($valueArr != $oldValues[0][$key]) {
                                 return true;
                             }
                         }
