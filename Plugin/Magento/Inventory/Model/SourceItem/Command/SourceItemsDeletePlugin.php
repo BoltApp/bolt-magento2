@@ -16,12 +16,7 @@
  */
 namespace Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command;
 
-use Bolt\Boltpay\Api\Data\ProductEventInterface;
-use Bolt\Boltpay\Api\ProductEventManagerInterface;
-use Bolt\Boltpay\Helper\Config;
-use Bolt\Boltpay\Logger\Logger;
-use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\Inventory\Model\SourceItem;
+use Bolt\Boltpay\Model\CatalogIngestion\Command\PublishSourceItemsProductEvent;
 use Magento\InventoryApi\Api\SourceItemsDeleteInterface;
 
 /**
@@ -30,41 +25,16 @@ use Magento\InventoryApi\Api\SourceItemsDeleteInterface;
 class SourceItemsDeletePlugin
 {
     /**
-     * @var ProductEventManagerInterface
+     * @var PublishSourceItemsProductEvent
      */
-    private $productEventManager;
+    private $publishSourceItemsProductEvent;
 
     /**
-     * @var Config
+     * @param PublishSourceItemsProductEvent $publishSourceItemsProductEvent
      */
-    private $config;
-
-    /**
-     * @var ProductRepositoryInterface
-     */
-    private $productRepository;
-
-    /**
-     * @var Logger
-     */
-    private $logger;
-
-    /**
-     * @param ProductEventManagerInterface $productEventManager
-     * @param Config $config
-     * @param ProductRepositoryInterface $productRepository
-     * @param Logger $logger
-     */
-    public function __construct(
-        ProductEventManagerInterface $productEventManager,
-        Config $config,
-        ProductRepositoryInterface $productRepository,
-        Logger $logger
-    ) {
-        $this->productEventManager = $productEventManager;
-        $this->config = $config;
-        $this->productRepository = $productRepository;
-        $this->logger = $logger;
+    public function __construct(PublishSourceItemsProductEvent $publishSourceItemsProductEvent)
+    {
+        $this->publishSourceItemsProductEvent = $publishSourceItemsProductEvent;
     }
 
     /**
@@ -82,24 +52,8 @@ class SourceItemsDeletePlugin
         array $sourceItems
     ): void
     {
-        try {
-            foreach ($sourceItems as $sourceItem) {
-                /** @var SourceItem $sourceItem */
-                $product = $this->productRepository->get($sourceItem->getSku());
-                if ($this->config->getIsCatalogIngestionInstantEnabled()) {
-                    $this->productEventManager->publishProductEventAsyncJob(
-                        (int)$product->getId(),
-                        ProductEventInterface::TYPE_UPDATE
-                    );
-                } elseif ($this->config->getIsCatalogIngestionScheduleEnabled()) {
-                    $this->productEventManager->publishProductEvent(
-                        (int)$product->getId(),
-                        ProductEventInterface::TYPE_UPDATE
-                    );
-                }
-            }
-        } catch (\Exception $e) {
-            $this->logger->critical($e);
+        if (!empty($sourceItems)) {
+            $this->publishSourceItemsProductEvent->execute($sourceItems, true);
         }
     }
 }

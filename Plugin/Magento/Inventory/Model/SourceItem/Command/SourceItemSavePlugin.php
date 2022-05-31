@@ -52,6 +52,8 @@ class SourceItemSavePlugin
         array $sourceItems
     ): void
     {
-        $this->publishSourceItemsProductEvent->execute($sourceItems);
+        if (!empty($sourceItems)) {
+            $this->publishSourceItemsProductEvent->execute($sourceItems);
+        }
     }
 }

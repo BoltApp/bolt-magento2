@@ -26,7 +26,7 @@ use Bolt\Boltpay\Model\CatalogIngestion\Command\RunInstantProductEvent;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\CatalogInventory\Api\StockItemRepositoryInterface;
 use Magento\CatalogInventory\Api\Data\StockItemInterface;
-use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Catalog\Model\ResourceModel\Product\Website\Link as ProductWebsiteLink;
 
 /**
  * Catalog ingestion product event processor after stock item saving process
@@ -60,6 +60,11 @@ class StockItemRepositoryPlugin
     private $config;
 
     /**
+     * @var ProductWebsiteLink
+     */
+    private $productWebsiteLink;
+
+    /**
      * @var Logger
      */
     private $logger;
@@ -70,6 +75,7 @@ class StockItemRepositoryPlugin
      * @param RunInstantProductEvent $runInstantProductEvent
      * @param ProductRepositoryInterface $productRepository
      * @param Config $config
+     * @param ProductWebsiteLink $productWebsiteLink
      * @param Logger $logger
      */
     public function __construct(
@@ -78,6 +84,7 @@ class StockItemRepositoryPlugin
         RunInstantProductEvent $runInstantProductEvent,
         ProductRepositoryInterface $productRepository,
         Config $config,
+        ProductWebsiteLink $productWebsiteLink,
         Logger $logger
     ) {
         $this->productEventManager = $productEventManager;
@@ -85,6 +92,7 @@ class StockItemRepositoryPlugin
         $this->runInstantProductEvent = $runInstantProductEvent;
         $this->productRepository = $productRepository;
         $this->config = $config;
+        $this->productWebsiteLink = $productWebsiteLink;
         $this->logger = $logger;
     }
 
@@ -101,30 +109,55 @@ class StockItemRepositoryPlugin
         callable $proceed,
         StockItemInterface $stockItem
     ): StockItemInterface {
-        $currentStock = ($stockItem->getItemId()) ?
+        $oldStockItem = ($stockItem->getItemId()) ?
             $subject->get($stockItem->getItemId()) : null;
 
         /** @var StockItemInterface $stockItemUpdated */
         $stockItemUpdated = $proceed($stockItem);
+        $websiteIds = $this->productWebsiteLink->getWebsiteIdsByProductId($stockItem->getProductId());
+        foreach ($websiteIds as $websiteId) {
+            if (!$this->config->getIsCatalogIngestionEnabled($websiteId)) {
+                continue;
+            }
+            $this->processStockItem($oldStockItem, $stockItemUpdated, $websiteId);
+        }
+        return $stockItemUpdated;
+    }
+
+    /**
+     * Process stock item product events
+     *
+     * @param StockItemInterface $stockItemUpdated
+     * @param StockItemInterface|null $oldStockItem
+     * @param int|null $websiteId
+     * @return void
+     */
+    private function processStockItem(
+        StockItemInterface $stockItemUpdated,
+        StockItemInterface $oldStockItem = null,
+        int $websiteId = null
+    ): void
+    {
         try {
-            if (!$currentStock ||
-                $currentStock->getQty() != $stockItemUpdated->getQty() ||
-                $currentStock->getIsInStock() != $stockItemUpdated->getIsInStock() ||
-                $currentStock->getManageStock() != $stockItemUpdated->getManageStock()
+            if (!$oldStockItem ||
+                $oldStockItem->getQty() != $stockItemUpdated->getQty() ||
+                $oldStockItem->getIsInStock() != $stockItemUpdated->getIsInStock() ||
+                $oldStockItem->getManageStock() != $stockItemUpdated->getManageStock()
             ) {
-                if ($currentStock &&
-                    $this->config->getIsCatalogIngestionInstantEnabled() &&
-                    in_array(Events::STOCK_STATUS_CHANGES, $this->config->getCatalogIngestionEvents()) &&
-                    $currentStock->getIsInStock() != $stockItemUpdated->getIsInStock()
+                if ($oldStockItem &&
+                    $this->config->getIsCatalogIngestionInstantEnabled($websiteId) &&
+                    in_array(Events::STOCK_STATUS_CHANGES, $this->config->getCatalogIngestionEvents($websiteId)) &&
+                    $oldStockItem->getIsInStock() != $stockItemUpdated->getIsInStock()
                 ) {
                     $this->runInstantProductEvent->execute(
-                        $stockItem->getProductId(),
-                        ProductEventInterface::TYPE_UPDATE
+                        $stockItemUpdated->getProductId(),
+                        ProductEventInterface::TYPE_UPDATE,
+                        $websiteId
                     );
-                } elseif ($this->config->getIsCatalogIngestionScheduleEnabled()) {
+                } else {
                     $this->productEventManager->publishProductEvent(
-                        (int)$stockItem->getProductId(),
-                        (!$currentStock) ? ProductEventInterface::TYPE_CREATE
+                        (int)$stockItemUpdated->getProductId(),
+                        (!$oldStockItem) ? ProductEventInterface::TYPE_CREATE
                             : ProductEventInterface::TYPE_UPDATE
                     );
                 }
@@ -132,7 +165,5 @@ class StockItemRepositoryPlugin
         } catch (\Exception $e) {
             $this->logger->critical($e);
         }
-
-        return $stockItemUpdated;
     }
 }

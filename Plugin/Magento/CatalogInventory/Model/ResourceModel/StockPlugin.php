@@ -22,6 +22,7 @@ use Bolt\Boltpay\Api\Data\ProductEventInterfaceFactory;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Logger\Logger;
 use Magento\CatalogInventory\Model\ResourceModel\Stock;
+use Magento\Catalog\Model\ResourceModel\Product\Website\Link as ProductWebsiteLink;
 
 /**
  * Catalog ingestion product event processor after catalog inventory qty correction
@@ -45,6 +46,11 @@ class StockPlugin
     private $config;
 
     /**
+     * @var ProductWebsiteLink
+     */
+    private $productWebsiteLink;
+
+    /**
      * @var Logger
      */
     private $logger;
@@ -53,17 +59,20 @@ class StockPlugin
      * @param ProductEventManagerInterface $productEventManager
      * @param ProductEventInterfaceFactory $productEventFactory
      * @param Config $config
+     * @param ProductWebsiteLink $productWebsiteLink
      * @param Logger $logger
      */
     public function __construct(
         ProductEventManagerInterface $productEventManager,
         ProductEventInterfaceFactory $productEventFactory,
         Config $config,
+        ProductWebsiteLink $productWebsiteLink,
         Logger $logger
     ) {
         $this->productEventManager = $productEventManager;
         $this->productEventFactory = $productEventFactory;
         $this->config = $config;
+        $this->productWebsiteLink = $productWebsiteLink;
         $this->logger = $logger;
     }
 
@@ -86,14 +95,29 @@ class StockPlugin
         $websiteId,
         $operator
     ): void {
-        if (!$this->config->getIsCatalogIngestionScheduleEnabled($websiteId)) {
-            return;
-        }
         foreach ($items as $productId => $qty) {
-            $this->productEventManager->publishProductEvent(
-                $productId,
-                ProductEventInterface::TYPE_UPDATE
-            );
+            $this->processProductEvent((int)$productId);
+        }
+    }
+
+    /**
+     * Process product event
+     *
+     * @param int $productId
+     * @return void
+     */
+    private function processProductEvent(int $productId): void
+    {
+        $websiteIds = $this->productWebsiteLink->getWebsiteIdsByProductId($productId);
+        foreach ($websiteIds as $websiteId) {
+            if ($this->config->getIsCatalogIngestionEnabled($websiteId)) {
+                $this->productEventManager->publishProductEvent(
+                    $productId,
+                    ProductEventInterface::TYPE_UPDATE
+                );
+                //break, because product event already created and future websites check is not needed
+                break;
+            }
         }
     }
 }

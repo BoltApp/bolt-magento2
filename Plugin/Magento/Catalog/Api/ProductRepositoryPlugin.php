@@ -63,24 +63,29 @@ class ProductRepositoryPlugin
      * Publish bolt product event after product removing
      *
      * @param ProductRepositoryInterface $subject
-     * @param $result
+     * @param callable $proceed
      * @param ProductInterface $product
      * @return bool
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function afterDelete(
+    public function aroundDelete(
         ProductRepositoryInterface $subject,
-        $result,
+        callable $proceed,
         ProductInterface $product
     ): bool {
-        if ($this->config->getIsCatalogIngestionScheduleEnabled($product->getStore()->getWebsiteId())) {
-            try {
-                $this->productEventManager->publishProductEvent(
-                    $product->getId(),
-                    ProductEventInterface::TYPE_DELETE
-                );
-            } catch (\Exception $e) {
-                $this->logger->critical($e);
+        $websiteIds = $product->getWebsiteIds();
+        $result = $proceed($product);
+        foreach ($websiteIds as $websiteId) {
+            if ($this->config->getIsCatalogIngestionEnabled($websiteId)) {
+                try {
+                    $this->productEventManager->publishProductEvent(
+                        $product->getId(),
+                        ProductEventInterface::TYPE_DELETE
+                    );
+                    //break, because product event already created and future websites check is not needed
+                    break;
+                } catch (\Exception $e) {
+                    $this->logger->critical($e);
+                }
             }
         }
         return $result;
