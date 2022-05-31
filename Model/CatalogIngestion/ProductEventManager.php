@@ -194,9 +194,7 @@ class ProductEventManager implements ProductEventManagerInterface
             }
 
             foreach ($websiteIds as $websiteId) {
-                if (!$this->config->getIsCatalogIngestionScheduleEnabled($websiteId) &&
-                    !$this->config->getIsCatalogIngestionInstantEnabled($websiteId)
-                ) {
+                if (!$this->config->getIsCatalogIngestionEnabled($websiteId)) {
                     continue;
                 }
                 $request = $this->productEventRequestBuilder->getRequest($productEvent, (int)$websiteId);

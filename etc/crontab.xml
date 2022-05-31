@@ -11,7 +11,7 @@
     </group>
     <group id="bolt_catalog_ingestion">
         <job name="bolt_catalog_ingestion" instance="Bolt\Boltpay\Cron\CatalogIngestion" method="execute">
-            <config_path>payment/boltpay/catalog_ingestion_schedule_cron_expr</config_path>
+            <config_path>payment/boltpay/catalog_ingestion_cron_expr</config_path>
         </job>
     </group>
 </config>
