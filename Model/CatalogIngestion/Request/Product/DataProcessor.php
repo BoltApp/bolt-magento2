@@ -299,9 +299,9 @@ class DataProcessor
             if ($values = $option->getValues()) {
                 foreach ($values as $valueId => $value) {
                     $optionData['values'][] = [
-                        'value' => $valueId,
-                        'display_value' => $value->getTitle(),
-                        'sort_order' => $value->getSortOrder()
+                        'Value' => $valueId,
+                        'DisplayValue' => $value->getTitle(),
+                        'SortOrder' => $value->getSortOrder()
                     ];
                 }
             }
