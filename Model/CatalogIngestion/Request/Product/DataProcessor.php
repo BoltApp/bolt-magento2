@@ -287,12 +287,12 @@ class DataProcessor
         $result = [];
         foreach ($options as $option) {
             $optionData = [
-                'name' => $option->getDefaultTitle(),
-                'display_type' => $option->getType(),
-                'display_name' => $option->getTitle(),
-                'values' => [],
-                'visibility' => 'visible',
-                'sort_order' => $option->getSortOrder(),
+                'Name' => $option->getDefaultTitle(),
+                'DisplayType' => $option->getType(),
+                'DisplayName' => $option->getTitle(),
+                'Values' => [],
+                'Visibility' => 'visible',
+                'SortOrder' => $option->getSortOrder(),
             ];
 
             if ($values = $option->getValues()) {
@@ -330,17 +330,17 @@ class DataProcessor
             }
             $productAttribute = $productAttributes[$requiredAttrCode];
             $productAttributeData = [
-                'name' => $productAttribute->getAttributeCode(),
-                'name_id' => $productAttribute->getAttributeId(),
-                'value' => $product->getData($productAttribute->getAttributeCode()),
-                'value_id' => $product->getData($productAttribute->getAttributeCode()),
-                'display_type' => $productAttribute->getFrontendInput(),
-                'display_name' => $productAttribute->getAttributeCode(),
-                'display_value' => $product->getAttributeText($productAttribute->getAttributeCode()),
-                'visibility' => ($productAttribute->getIsVisible()) ? 'visible' : '',
-                'text_label' => $productAttribute->getFrontendLabel(),
-                'image_url' => '',
-                'position' => (int)$productAttribute->getPosition(),
+                'Name' => $productAttribute->getAttributeCode(),
+                'NameID' => $productAttribute->getAttributeId(),
+                'Value' => $product->getData($productAttribute->getAttributeCode()),
+                'ValueID' => $product->getData($productAttribute->getAttributeCode()),
+                'DisplayType' => $productAttribute->getFrontendInput(),
+                'DisplayName' => $productAttribute->getAttributeCode(),
+                'DisplayValue' => $product->getAttributeText($productAttribute->getAttributeCode()),
+                'Visibility' => ($productAttribute->getIsVisible()) ? 'visible' : '',
+                'TextLabel' => $productAttribute->getFrontendLabel(),
+                'ImageURL' => '',
+                'Position' => (int)$productAttribute->getPosition(),
             ];
             $properties[] = $productAttributeData;
         }
@@ -364,14 +364,14 @@ class DataProcessor
             foreach ($mediaGalleryImages as $imageId => $mediaImage) {
                 $imageSize = getimagesize($mediaImage->getPath());
                 $mediaData = [
-                    'media_file' => $mediaImage->getPath(),
-                    'media_type' => $this->mime->getMimeType($mediaImage->getPath()),
-                    'url' => $mediaImage->getUrl(),
-                    'size_name' => implode(',', $this->getMediaImageEntry($product, $imageId)->getTypes()),
-                    'width' => $imageSize[0],
-                    'height' => $imageSize[1],
-                    'length' => null,
-                    'description' => ($mediaImage->getVideoDescription()) ?: '',
+                    'MediaFile' => $mediaImage->getPath(),
+                    'MediaType' => $this->mime->getMimeType($mediaImage->getPath()),
+                    'URL' => $mediaImage->getUrl(),
+                    'SizeName' => implode(',', $this->getMediaImageEntry($product, $imageId)->getTypes()),
+                    'Width' => $imageSize[0],
+                    'Height' => $imageSize[1],
+                    'Length' => null,
+                    'Description' => ($mediaImage->getVideoDescription()) ?: '',
                 ];
                 $media[] = $mediaData;
             }
@@ -413,15 +413,15 @@ class DataProcessor
         }
         if (!empty($stockItems)) {
             foreach ($stockItems as $stockItem) {
-                $sourceItemData['fullfillment_center_id'] = $stockItem->getSourceCode();
-                $sourceItemData['inventory_level'] = $stockItem->getQuantity();
+                $sourceItemData['FulfillmentCenterID'] = $stockItem->getSourceCode();
+                $sourceItemData['InventoryLevel'] = $stockItem->getQuantity();
                 $inventories[] = $sourceItemData;
             }
         } else {
             $stockItem = $product->getExtensionAttributes()->getStockItem();
             $inventories[] = [
-                'fullfillment_center_id' => 'default',
-                'inventory_level' => $stockItem->getQty(),
+                'FulfillmentCenterID' => 'default',
+                'InventoryLevel' => $stockItem->getQty(),
             ];
         }
         return $inventories;
@@ -438,11 +438,11 @@ class DataProcessor
     {
         $prices = [
             [
-                'list_price' => $product->getPriceInfo()->getPrice('final_price')->getValue(),
-                'sale_price' => $product->getPriceInfo()->getPrice('final_price')->getValue(),
-                'currency' => $this->storeManager->getDefaultStoreView()->getCurrentCurrency()->getCode(),
-                'locale' => $this->localeResolver->emulate($this->storeManager->getDefaultStoreView()->getId()),
-                'unit' => '',
+                'ListPrice' => $product->getPriceInfo()->getPrice('final_price')->getValue(),
+                'SalePrice' => $product->getPriceInfo()->getPrice('final_price')->getValue(),
+                'Currency' => $this->storeManager->getDefaultStoreView()->getCurrentCurrency()->getCode(),
+                'Locale' => $this->localeResolver->emulate($this->storeManager->getDefaultStoreView()->getId()),
+                'Unit' => '',
             ]
         ];
         return $prices;
