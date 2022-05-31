@@ -80,9 +80,9 @@ tr.shipping.totals td.amount span.price,
                 <mageworx_reward_points_on_cart>1</mageworx_reward_points_on_cart>
                 <aheadworks_store_credit_on_cart>1</aheadworks_store_credit_on_cart>
                 <connect_magento_integration_mode>0</connect_magento_integration_mode>
+                <catalog_ingestion_enabled>0</catalog_ingestion_enabled>
                 <catalog_ingestion_product_trigger_attributes>sku,name,image,weight,url_key,url_path,status,visibility,description</catalog_ingestion_product_trigger_attributes>
-                <catalog_ingestion_schedule_enabled>0</catalog_ingestion_schedule_enabled>
-                <catalog_ingestion_schedule_cron_expr>* * * * *</catalog_ingestion_schedule_cron_expr>
+                <catalog_ingestion_cron_expr>* * * * *</catalog_ingestion_cron_expr>
                 <catalog_ingestion_instant_enabled>0</catalog_ingestion_instant_enabled>
                 <catalog_ingestion_instant_async_enabled>0</catalog_ingestion_instant_async_enabled>
                 <catalog_ingestion_instant_events>product_stock_status</catalog_ingestion_instant_events>

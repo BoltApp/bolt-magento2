@@ -268,9 +268,9 @@ class Config extends AbstractHelper
     const XML_PATH_GEOLOCATION_API_KEY = 'payment/boltpay/geolocation_api_key';
 
     /**
-     * Path for catalog ingestion schedule enabled
+     * Path for catalog ingestion enabled
      */
-    const XML_PATH_CATALOG_INGESTION_SCHEDULE_ENABLED = 'payment/boltpay/catalog_ingestion_schedule_enabled';
+    const XML_PATH_CATALOG_INGESTION_ENABLED = 'payment/boltpay/catalog_ingestion_enabled';
 
     /**
      * Path for catalog ingestion instant enabled
@@ -2546,16 +2546,16 @@ class Config extends AbstractHelper
     }
 
     /**
-     * Returns if catalog ingestion by schedule cronjob enabled.
+     * Returns if catalog ingestion enabled.
      *
      * @param int|string|null $websiteId
      *
      * @return bool
      */
-    public function getIsCatalogIngestionScheduleEnabled($websiteId = null)
+    public function getIsCatalogIngestionEnabled($websiteId = null)
     {
         return $this->getScopeConfig()->isSetFlag(
-            self::XML_PATH_CATALOG_INGESTION_SCHEDULE_ENABLED,
+            self::XML_PATH_CATALOG_INGESTION_ENABLED,
             ScopeInterface::SCOPE_WEBSITES,
             $websiteId
         );
