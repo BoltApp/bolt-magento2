@@ -321,23 +321,39 @@ class DataProcessor
         $properties = [];
         $productAttributes = $product->getAttributes();
         foreach ($productAttributes as $productAttribute) {
+            if (!$productAttribute->getIsUserDefined()) {
+                continue;
+            }
             $productAttributeData = [
                 'Name' => $productAttribute->getAttributeCode(),
-                'NameID' => $productAttribute->getAttributeId(),
+                'NameID' => ($productAttribute->getAttributeId())? (int)$productAttribute->getAttributeId() : null,
                 'Value' => $product->getData($productAttribute->getAttributeCode()),
-                'ValueID' => $product->getData($productAttribute->getAttributeCode()),
+                'ValueID' => $this->getAttributeValueId($product, $productAttribute),
                 'DisplayType' => $productAttribute->getFrontendInput(),
                 'DisplayName' => $productAttribute->getAttributeCode(),
-                'DisplayValue' => ($this->getAttributeDisplayValue($product, $productAttribute)) ?: '',
-                'Visibility' => ($productAttribute->getIsVisible()) ? 'visible' : '',
+                'DisplayValue' => ($this->getAttributeDisplayValue($product, $productAttribute)),
+                'Visibility' => ($productAttribute->getIsVisible()) ? 'visible' : null,
                 'TextLabel' => $productAttribute->getFrontendLabel(),
-                'ImageURL' => '',
+                'ImageURL' => null,
                 'Position' => (int)$productAttribute->getPosition(),
             ];
             $properties[] = $productAttributeData;
         }
 
         return $properties;
+    }
+
+    /**
+     * Returns attribute value id
+     *
+     * @param ProductInterface $product
+     * @param EavAttribute $attribute
+     * @return int|null
+     */
+    private function getAttributeValueId(ProductInterface $product, EavAttribute $attribute): ?int
+    {
+        $attributeValue = $product->getData($attribute->getAttributeCode());
+        return (is_numeric($attributeValue)) ? (int)$attributeValue : null;
     }
 
     /**
@@ -429,14 +445,14 @@ class DataProcessor
         if (!empty($stockItems)) {
             foreach ($stockItems as $stockItem) {
                 $sourceItemData['FulfillmentCenterID'] = $stockItem->getSourceCode();
-                $sourceItemData['InventoryLevel'] = $stockItem->getQuantity();
+                $sourceItemData['InventoryLevel'] = (int)$stockItem->getQuantity();
                 $inventories[] = $sourceItemData;
             }
         } else {
             $stockItem = $product->getExtensionAttributes()->getStockItem();
             $inventories[] = [
                 'FulfillmentCenterID' => 'default',
-                'InventoryLevel' => $stockItem->getQty(),
+                'InventoryLevel' => (int)$stockItem->getQty(),
             ];
         }
         return $inventories;
