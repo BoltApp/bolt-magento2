@@ -90,7 +90,7 @@ class CartManagement implements CartManagementInterface
      * @api
      *
      * @param string $cartId
-     * 
+     *
      * @return \Bolt\Boltpay\Api\Data\GetMaskedQuoteInterface
      *
      * @throws WebapiException
@@ -101,7 +101,11 @@ class CartManagement implements CartManagementInterface
             $quoteIdMask = $this->quoteIdMaskFactory->create();
             $maskedQuoteID = $quoteIdMask->load($cartId, 'quote_id')->getMaskedId();
             if (!$maskedQuoteID) {
-                throw new WebapiException(__('Masked quote ID does not found'), 0, WebapiException::HTTP_NOT_FOUND);
+                $maskedQuoteID = $this->generateMaskQuoteId($cartId);
+                if (!$maskedQuoteID) {
+                    throw new WebapiException(__('Masked quote ID does not found'), 0, WebapiException::HTTP_NOT_FOUND);
+                }
+
             }
             $this->data->setMaskedQuoteID($maskedQuoteID);
             return $this->data;
@@ -112,6 +116,16 @@ class CartManagement implements CartManagementInterface
             $this->bugsnag->notifyException($e);
             throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
+    }
+
+    /**
+     * @param $cartId
+     * @return mixed
+     */
+    public function generateMaskQuoteId($cartId)
+    {
+        $this->quoteIdMaskFactory->create()->setQuoteId($cartId)->save();
+        return $this->quoteIdMaskFactory->create()->load($cartId, 'quote_id')->getMaskedId();
     }
 
     /**
