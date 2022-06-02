@@ -78,7 +78,7 @@ class DataProcessor
     /**
      * @var string|null
      */
-    private $getSourceItemsBySkuClass;
+    private $getSalableQuantityDataBySkuClass;
 
     /**
      * @var GalleryReadHandler
@@ -103,7 +103,7 @@ class DataProcessor
      * @param GalleryReadHandler $galleryReadHandler
      * @param Mime $mime
      * @param Emulation $emulation
-     * @param string|null $getSourceItemsBySkuClass
+     * @param string|null $getSalableQuantityDataBySkuClass
      */
     public function __construct(
         Config                     $config,
@@ -113,7 +113,7 @@ class DataProcessor
         GalleryReadHandler         $galleryReadHandler,
         Mime                       $mime,
         Emulation                  $emulation,
-        string                     $getSourceItemsBySkuClass = null
+        string                     $getSalableQuantityDataBySkuClass = null
     )
     {
         $this->objectManager = ObjectManager::getInstance();
@@ -124,7 +124,7 @@ class DataProcessor
         $this->galleryReadHandler = $galleryReadHandler;
         $this->mime = $mime;
         $this->emulation = $emulation;
-        $this->getSourceItemsBySkuClass = $getSourceItemsBySkuClass;
+        $this->getSalableQuantityDataBySkuClass = $getSalableQuantityDataBySkuClass;
     }
 
     /**
@@ -437,15 +437,15 @@ class DataProcessor
     {
         $inventories = [];
         $stockItems = [];
-        $getSourceItemsBySku = $this->initGetSourceItemsBySku();
+        $getSalableQuantityDataBySku = $this->initGetSalableQuantityDataBySku();
 
-        if ($getSourceItemsBySku) {
-            $stockItems = $getSourceItemsBySku->execute($product->getSku());
+        if ($getSalableQuantityDataBySku) {
+            $stockItems = $getSalableQuantityDataBySku->execute($product->getSku());
         }
         if (!empty($stockItems)) {
             foreach ($stockItems as $stockItem) {
-                $sourceItemData['FulfillmentCenterID'] = $stockItem->getSourceCode();
-                $sourceItemData['InventoryLevel'] = (int)$stockItem->getQuantity();
+                $sourceItemData['FulfillmentCenterID'] = $stockItem['stock_name'];
+                $sourceItemData['InventoryLevel'] = (int)$stockItem['qty'];
                 $inventories[] = $sourceItemData;
             }
         } else {
@@ -579,16 +579,16 @@ class DataProcessor
     }
 
     /**
-     * Init get source items cmd, for Magento 2.2 support
+     * Init getSalableQuantityDataBySku instance, for Magento 2.2 support
      *
      * @return mixed|null
      */
-    private function initGetSourceItemsBySku()
+    private function initGetSalableQuantityDataBySku()
     {
-        if (!$this->getSourceItemsBySkuClass) {
+        if (!$this->getSalableQuantityDataBySkuClass) {
             return null;
         }
-        return (class_exists($this->getSourceItemsBySkuClass) || interface_exists($this->getSourceItemsBySkuClass))
-            ? $this->objectManager->get($this->getSourceItemsBySkuClass) : null;
+        return (class_exists($this->getSalableQuantityDataBySkuClass) || interface_exists($this->getSalableQuantityDataBySkuClass))
+            ? $this->objectManager->get($this->getSalableQuantityDataBySkuClass) : null;
     }
 }

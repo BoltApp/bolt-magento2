@@ -305,7 +305,7 @@
     </type>
     <type name="Bolt\Boltpay\Model\CatalogIngestion\Request\Product\DataProcessor">
         <arguments>
-            <argument name="getSourceItemsBySkuClass" xsi:type="string">Magento\InventoryApi\Api\GetSourceItemsBySkuInterface</argument>
+            <argument name="getSalableQuantityDataBySkuClass" xsi:type="string">Magento\InventorySalesAdminUi\Model\GetSalableQuantityDataBySku</argument>
         </arguments>
     </type>
 </config>
