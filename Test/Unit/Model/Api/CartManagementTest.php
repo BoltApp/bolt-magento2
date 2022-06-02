@@ -37,6 +37,10 @@ class CartManagementTest extends BoltTestCase
     /** array of objects we need to delete after test */
     private $objectsToClean;
 
+    private $cartManagement;
+
+    private $objectManager;
+
     /**
      * @inheritdoc
      */
@@ -80,23 +84,6 @@ class CartManagementTest extends BoltTestCase
         $this->assertEquals($response->getMaskedQuoteID(),$this->getMaskedQuoteID($quote->getID()));
     }
 
-    /**
-     * @test
-     * @covers ::getMaskedId
-     */
-    public function getMaskedId_maskedQuoteIDDoesNotCreated_throw404()
-    {
-        $quote = TestUtils::createQuote();
-
-        $errorCode = 0;
-        try {
-            $response = $this->cartManagement->getMaskedId($quote->getID());
-        } catch (WebapiException $e) {
-            $errorCode = $e->getHttpCode();
-        }
-        $this->assertEquals($errorCode,404);
-    }
-
     private function createCustomer()
     {
         $addressInfo = TestUtils::createSampleAddress();
@@ -109,47 +96,15 @@ class CartManagementTest extends BoltTestCase
         return $customer;
     }
 
-
     /**
      * @test
      * @covers ::getMaskedId
      */
-    public function getMaskedId_quoteCreatedByLoggedInUser_throw404()
+    public function getMaskedId_maskedQuoteIDDoesNotCreated_reGenerateMaskQuoteId()
     {
         $quote = TestUtils::createQuote();
-
-        $customer = $this->createCustomer();
-
-        $session = Bootstrap::getObjectManager()->get(
-            \Magento\Customer\Model\Session::class
-        );
-        $session->setCustomer($customer);
-
-        // magento doesnot create masked quote ID for logged in users
-        $this->forceMaskedQuoteIDCreation($quote->getID());
-
-        $errorCode = 0;
-        try {
-            $response = $this->cartManagement->getMaskedId($quote->getID());
-        } catch (WebapiException $e) {
-            $errorCode = $e->getHttpCode();
-        }
-        $this->assertEquals($errorCode,404);
-    }
-
-    /**
-     * @test
-     * @covers ::getMaskedId
-     */
-    public function getMaskedId_wrongQuoteID_throw404()
-    {
-        $errorCode = 0;
-        try {
-            $response = $this->cartManagement->getMaskedId(1000000);
-        } catch (WebapiException $e) {
-            $errorCode = $e->getHttpCode();
-        }
-        $this->assertEquals($errorCode,404);
+        $response = $this->cartManagement->getMaskedId($quote->getID());
+        $this->assertEquals($response->getMaskedQuoteID(),$this->getMaskedQuoteID($quote->getID()));
     }
 
     /**
