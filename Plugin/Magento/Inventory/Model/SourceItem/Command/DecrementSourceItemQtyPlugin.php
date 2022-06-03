@@ -16,7 +16,7 @@
  */
 namespace Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command;
 
-use Bolt\Boltpay\Model\CatalogIngestion\Command\PublishSourceItemsProductEvent;
+use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
 use Magento\Inventory\Model\SourceItem\Command\DecrementSourceItemQty;
 
 /**
@@ -25,16 +25,16 @@ use Magento\Inventory\Model\SourceItem\Command\DecrementSourceItemQty;
 class DecrementSourceItemQtyPlugin
 {
     /**
-     * @var PublishSourceItemsProductEvent
+     * @var ProductEventProcessor
      */
-    private $publishSourceItemsProductEvent;
+    private $productEventProcessor;
 
     /**
-     * @param PublishSourceItemsProductEvent $publishSourceItemsProductEvent
+     * @param ProductEventProcessor $productEventProcessor
      */
-    public function __construct(PublishSourceItemsProductEvent $publishSourceItemsProductEvent)
+    public function __construct(ProductEventProcessor $productEventProcessor)
     {
-        $this->publishSourceItemsProductEvent = $publishSourceItemsProductEvent;
+        $this->productEventProcessor = $productEventProcessor;
     }
 
     /**
@@ -54,7 +54,7 @@ class DecrementSourceItemQtyPlugin
     {
         $sourceItems = array_column($sourceItemDecrementData, 'source_item');
         if (!empty($sourceItems)) {
-            $this->publishSourceItemsProductEvent->execute($sourceItems);
+            $this->productEventProcessor->processProductEventSourceItemsBased($sourceItems);
         }
     }
 }

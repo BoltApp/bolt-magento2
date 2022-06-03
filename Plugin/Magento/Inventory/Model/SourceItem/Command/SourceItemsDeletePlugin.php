@@ -16,7 +16,7 @@
  */
 namespace Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command;
 
-use Bolt\Boltpay\Model\CatalogIngestion\Command\PublishSourceItemsProductEvent;
+use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
 use Magento\InventoryApi\Api\SourceItemsDeleteInterface;
 
 /**
@@ -25,16 +25,16 @@ use Magento\InventoryApi\Api\SourceItemsDeleteInterface;
 class SourceItemsDeletePlugin
 {
     /**
-     * @var PublishSourceItemsProductEvent
+     * @var ProductEventProcessor
      */
-    private $publishSourceItemsProductEvent;
+    private $productEventProcessor;
 
     /**
-     * @param PublishSourceItemsProductEvent $publishSourceItemsProductEvent
+     * @param ProductEventProcessor $productEventProcessor
      */
-    public function __construct(PublishSourceItemsProductEvent $publishSourceItemsProductEvent)
+    public function __construct(ProductEventProcessor $productEventProcessor)
     {
-        $this->publishSourceItemsProductEvent = $publishSourceItemsProductEvent;
+        $this->productEventProcessor = $productEventProcessor;
     }
 
     /**
@@ -53,7 +53,7 @@ class SourceItemsDeletePlugin
     ): void
     {
         if (!empty($sourceItems)) {
-            $this->publishSourceItemsProductEvent->execute($sourceItems, true);
+            $this->productEventProcessor->processProductEventSourceItemsBased($sourceItems, true);
         }
     }
 }

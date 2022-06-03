@@ -16,13 +16,10 @@
  */
 namespace Bolt\Boltpay\Plugin\Magento\CatalogInventory\Model\ResourceModel;
 
-use Bolt\Boltpay\Api\Data\ProductEventInterface;
-use Bolt\Boltpay\Api\ProductEventManagerInterface;
-use Bolt\Boltpay\Api\Data\ProductEventInterfaceFactory;
-use Bolt\Boltpay\Helper\Config;
-use Bolt\Boltpay\Logger\Logger;
+use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
 use Magento\CatalogInventory\Model\ResourceModel\Stock;
-use Magento\Catalog\Model\ResourceModel\Product\Website\Link as ProductWebsiteLink;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
 
 /**
  * Catalog ingestion product event processor after catalog inventory qty correction
@@ -31,51 +28,26 @@ use Magento\Catalog\Model\ResourceModel\Product\Website\Link as ProductWebsiteLi
 class StockPlugin
 {
     /**
-     * @var ProductEventManagerInterface
+     * @var ProductEventProcessor
      */
-    private $productEventManager;
+    private $productEventProcessor;
 
     /**
-     * @var ProductEventInterfaceFactory
+     * @var ProductRepositoryInterface
      */
-    private $productEventFactory;
+    private $productRepository;
 
     /**
-     * @var Config
-     */
-    private $config;
-
-    /**
-     * @var ProductWebsiteLink
-     */
-    private $productWebsiteLink;
-
-    /**
-     * @var Logger
-     */
-    private $logger;
-
-    /**
-     * @param ProductEventManagerInterface $productEventManager
-     * @param ProductEventInterfaceFactory $productEventFactory
-     * @param Config $config
-     * @param ProductWebsiteLink $productWebsiteLink
-     * @param Logger $logger
+     * @param ProductEventProcessor $productEventProcessor
+     * @param ProductRepositoryInterface $productRepository
      */
     public function __construct(
-        ProductEventManagerInterface $productEventManager,
-        ProductEventInterfaceFactory $productEventFactory,
-        Config $config,
-        ProductWebsiteLink $productWebsiteLink,
-        Logger $logger
+        ProductEventProcessor $productEventProcessor,
+        ProductRepositoryInterface $productRepository
     ) {
-        $this->productEventManager = $productEventManager;
-        $this->productEventFactory = $productEventFactory;
-        $this->config = $config;
-        $this->productWebsiteLink = $productWebsiteLink;
-        $this->logger = $logger;
+        $this->productEventProcessor = $productEventProcessor;
+        $this->productRepository = $productRepository;
     }
-
 
     /**
      * Publish bolt catalog product event after catalog inventory correction
@@ -95,28 +67,15 @@ class StockPlugin
         $websiteId,
         $operator
     ): void {
-        foreach ($items as $productId => $qty) {
-            $this->processProductEvent((int)$productId);
-        }
-    }
-
-    /**
-     * Process product event
-     *
-     * @param int $productId
-     * @return void
-     */
-    private function processProductEvent(int $productId): void
-    {
-        $websiteIds = $this->productWebsiteLink->getWebsiteIdsByProductId($productId);
-        foreach ($websiteIds as $websiteId) {
-            if ($this->config->getIsCatalogIngestionEnabled($websiteId)) {
-                $this->productEventManager->publishProductEvent(
-                    $productId,
-                    ProductEventInterface::TYPE_UPDATE
-                );
-                //break, because product event already created and future websites check is not needed
-                break;
+        if (!empty($items)) {
+            foreach ($items as $productId => $qty) {
+                try {
+                    $product = $this->productRepository->getById($productId);
+                    //force update without changes check, because on this place we know that qty was changed
+                    $this->productEventProcessor->processProductEventUpdateByProduct($product, true);
+                } catch (NoSuchEntityException $e) {
+                    continue;
+                }
             }
         }
     }
