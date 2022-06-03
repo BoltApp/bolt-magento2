@@ -134,13 +134,9 @@ class ProductEventManager implements ProductEventManagerInterface
         }
 
         if (!$productEvent->getId()) {
-            try {
-                $productEvent->setProductId($productId);
-                $productEvent->setType($type);
-                $this->productEventRepository->save($productEvent);
-            } catch (\Exception $e) {
-                $this->logger->critical($e);
-            }
+            $productEvent->setProductId($productId);
+            $productEvent->setType($type);
+            $this->productEventRepository->save($productEvent);
         }
 
         return $productEvent;
@@ -151,30 +147,20 @@ class ProductEventManager implements ProductEventManagerInterface
      */
     public function deleteProductEvent(int $productId): bool
     {
-        try {
-            $this->productEventRepository->deleteByProductId($productId);
-        } catch (\Exception $e) {
-            $this->logger->critical($e);
-        }
+        $this->productEventRepository->deleteByProductId($productId);
         return true;
     }
 
     /**
      * @inheritDoc
      */
-    public function publishProductEventAsyncJob(int $productId,  string $type): ?string
+    public function publishProductEventAsyncJob(int $productId,  string $type): string
     {
-        $bulkId = null;
-        try {
-            $bulkId = $this->productEventPublisher->publishBulk(
-                $productId,
-                $type,
-                $this->dateTime->formatDate(true)
-            );
-        } catch (\Exception $e) {
-            $this->logger->critical($e);
-        }
-        return $bulkId;
+        return $this->productEventPublisher->publishBulk(
+            $productId,
+            $type,
+            $this->dateTime->formatDate(true)
+        );
     }
 
     /**
@@ -182,28 +168,39 @@ class ProductEventManager implements ProductEventManagerInterface
      */
     public function requestProductEvent(ProductEventInterface $productEvent): bool
     {
-        try {
-            if ($productEvent->getType() == ProductEventInterface::TYPE_DELETE) {
-                $websites = $this->storeManager->getWebsites();
-                foreach ($websites as $website) {
-                    $websiteIds[] = $website->getId();
-                }
-            } else {
-                $product = $this->productRepository->getById($productEvent->getProductId());
-                $websiteIds = $product->getWebsiteIds();
+        if ($productEvent->getType() == ProductEventInterface::TYPE_DELETE) {
+            $websites = $this->storeManager->getWebsites();
+            foreach ($websites as $website) {
+                $websiteIds[] = $website->getId();
             }
+        } else {
+            $product = $this->productRepository->getById($productEvent->getProductId());
+            $websiteIds = $product->getWebsiteIds();
+        }
 
-            foreach ($websiteIds as $websiteId) {
-                if (!$this->config->getIsCatalogIngestionEnabled($websiteId)) {
-                    continue;
-                }
-                $request = $this->productEventRequestBuilder->getRequest($productEvent, (int)$websiteId);
-                $this->apiHelper->sendRequest($request);
+        foreach ($websiteIds as $websiteId) {
+            if (!$this->config->getIsCatalogIngestionEnabled($websiteId)) {
+                continue;
             }
-            return true;
-        } catch (\Exception $e) {
-            $this->logger->critical($e);
-            return false;
+            $request = $this->productEventRequestBuilder->getRequest($productEvent, (int)$websiteId);
+            $this->apiHelper->sendRequest($request);
+        }
+        return true;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function runInstantProductEvent(int $productId, string $type, int $websiteId = null): void
+    {
+        if ($this->config->getIsCatalogIngestionInstantAsyncEnabled($websiteId)) {
+            $this->publishProductEventAsyncJob($productId, $type);
+        } else {
+            $productEvent = $this->productEventFactory->create();
+            $productEvent->setProductId($productId);
+            $productEvent->setType($type);
+            $productEvent->setCreatedAt($this->dateTime->formatDate(true));
+            $this->requestProductEvent($productEvent);
         }
     }
 }

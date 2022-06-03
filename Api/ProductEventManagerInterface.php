@@ -18,6 +18,8 @@
 namespace Bolt\Boltpay\Api;
 
 use Bolt\Boltpay\Api\Data\ProductEventInterface;
+use Magento\Framework\Exception\StateException;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Product event manager interface
@@ -39,6 +41,7 @@ interface ProductEventManagerInterface
      *
      * @param int $productId
      * @return bool
+     * @throws StateException
      */
     public function deleteProductEvent(int $productId): bool;
 
@@ -48,6 +51,7 @@ interface ProductEventManagerInterface
      * @param int $productId
      * @param string $type
      * @return string|null
+     * @throws LocalizedException
      */
     public function publishProductEventAsyncJob(int $productId, string $type): ?string;
 
@@ -56,6 +60,20 @@ interface ProductEventManagerInterface
      *
      * @param ProductEventInterface $productEvent
      * @return bool
+     * @throws LocalizedException
+     * @throws \Zend_Http_Client_Exception
      */
     public function requestProductEvent(ProductEventInterface $productEvent): bool;
+
+    /**
+     * Run product event instant update (async/sync mode configuration based)
+     *
+     * @param int $productId
+     * @param string $type
+     * @param int|null $websiteId
+     * @return void
+     * @throws LocalizedException
+     * @throws \Zend_Http_Client_Exception
+     */
+    public function runInstantProductEvent(int $productId, string $type, int $websiteId = null): void;
 }
