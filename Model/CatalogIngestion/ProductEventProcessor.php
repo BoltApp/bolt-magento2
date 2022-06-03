@@ -145,7 +145,7 @@ class ProductEventProcessor
                     (int)$stockItem->getQty(),
                     (int)$websiteId,
                     $oldStockItem->getIsInStock(),
-                    (int)$oldStockItem->getQty(),
+                    (int)$oldStockItem->getQty()
                 );
             } catch (\Exception $e) {
                 $this->logger->critical($e);
