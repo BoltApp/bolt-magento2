@@ -31,7 +31,7 @@ class StoreConfigurationRequestBuilder
 {
     private CONST API_REQUEST_METHOD_TYPE = 'POST';
 
-    private CONST API_REQUEST_API_URL = 'catalog/store';
+    private CONST API_REQUEST_API_URL = 'catalog/m2/store';
 
     /**
      * @var Config
