@@ -353,32 +353,7 @@
             <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionLogger</argument>
         </arguments>
     </type>
-    <type name="Bolt\Boltpay\Plugin\Magento\CatalogInventory\Api\StockItemRepositoryPlugin">
-        <arguments>
-            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionLogger</argument>
-        </arguments>
-    </type>
-    <type name="Bolt\Boltpay\Model\CatalogIngestion\Command\PublishSourceItemsProductEvent">
-        <arguments>
-            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionLogger</argument>
-        </arguments>
-    </type>
-    <type name="Bolt\Boltpay\Model\CatalogIngestion\Command\RunInstantProductEvent">
-        <arguments>
-            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionLogger</argument>
-        </arguments>
-    </type>
-    <type name="Bolt\Boltpay\Observer\PublishBoltProductEventObserver">
-        <arguments>
-            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionLogger</argument>
-        </arguments>
-    </type>
-    <type name="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\SourceItemsDeletePlugin">
-        <arguments>
-            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionLogger</argument>
-        </arguments>
-    </type>
-    <type name="Bolt\Boltpay\Plugin\Magento\Catalog\Api\ProductRepositoryPlugin">
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor">
         <arguments>
             <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionLogger</argument>
         </arguments>
