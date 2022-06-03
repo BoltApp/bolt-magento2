@@ -154,6 +154,33 @@ class ProductEventProcessor
     }
 
     /**
+     * Process product event for product
+     *
+     * @param Product $product
+     * @return void
+     */
+    public function processProductEventUpdateByProduct(Product $product, $forcePublish = false)
+    {
+        $websiteIds = $product->getWebsiteIds();
+        foreach ($websiteIds as $websiteId) {
+            try {
+                if ($this->config->getIsCatalogIngestionEnabled($websiteId) &&
+                    ($forcePublish || $this->hasProductChanged($product, $product->getOrigData()))
+                ) {
+                    $this->productEventManager->publishProductEvent(
+                        (int)$product->getId(),
+                        $this->getProductEventType($product)
+                    );
+                    //break, because product event already created and future websites check is not needed
+                    break;
+                }
+            } catch (\Exception $e) {
+                $this->logger->critical($e);
+            }
+        }
+    }
+
+    /**
      * Process product event by inventory main data
      *
      * @param int $productId
@@ -228,33 +255,6 @@ class ProductEventProcessor
             return false;
         }
         return $oldStatus != $newStatus;
-    }
-
-    /**
-     * Process product event for product
-     *
-     * @param Product $product
-     * @return void
-     */
-    public function processProductEventUpdateByProduct(Product $product, $forcePublish = false)
-    {
-        $websiteIds = $product->getWebsiteIds();
-        foreach ($websiteIds as $websiteId) {
-            try {
-                if ($this->config->getIsCatalogIngestionEnabled($websiteId) &&
-                    ($forcePublish || $this->hasProductChanged($product, $product->getOrigData()))
-                ) {
-                    $this->productEventManager->publishProductEvent(
-                        (int)$product->getId(),
-                        $this->getProductEventType($product)
-                    );
-                    //break, because product event already created and future websites check is not needed
-                    break;
-                }
-            } catch (\Exception $e) {
-                $this->logger->critical($e);
-            }
-        }
     }
 
     /**
