@@ -42,11 +42,6 @@ class RewardPointsTest extends BoltTestCase
     const ORDER_ID = 123;
 
     /**
-     * @var Discount|\PHPUnit_Framework_MockObject_MockObject
-     */
-    private $discountHelperMock;
-
-    /**
      * @var Bugsnag|\PHPUnit_Framework_MockObject_MockObject
      */
     private $bugsnagHelperMock;
@@ -97,7 +92,6 @@ class RewardPointsTest extends BoltTestCase
      */
     protected function setUpInternal()
     {
-        $this->discountHelperMock = $this->createPartialMock(Discount::class, []);
         $this->bugsnagHelperMock = $this->createMock(Bugsnag::class);
         $this->quoteRepositoryMock = $this->createMock(CartRepositoryInterface::class);
         $this->orderServiceMock = $this->createMock(OrderService::class);
@@ -106,7 +100,6 @@ class RewardPointsTest extends BoltTestCase
         $this->currentMock = $this->getMockBuilder(\Bolt\Boltpay\ThirdPartyModules\Aheadworks\RewardPoints::class)
             ->setConstructorArgs(
                 [
-                    $this->discountHelperMock,
                     $this->bugsnagHelperMock,
                     $this->configHelperMock,
                     $this->customerSessionMock,
@@ -143,14 +136,12 @@ class RewardPointsTest extends BoltTestCase
     public function __construct_always_setsInternalProperties()
     {
         $instance = new \Bolt\Boltpay\ThirdPartyModules\Aheadworks\RewardPoints(
-            $this->discountHelperMock,
             $this->bugsnagHelperMock,
             $this->configHelperMock,
             $this->customerSessionMock,
             $this->quoteRepositoryMock,
             $this->orderServiceMock
         );
-        static::assertAttributeEquals($this->discountHelperMock, 'discountHelper', $instance);
         static::assertAttributeEquals($this->bugsnagHelperMock, 'bugsnagHelper', $instance);
         static::assertAttributeEquals($this->configHelperMock, 'configHelper', $instance);
         static::assertAttributeEquals($this->customerSessionMock, 'customerSession', $instance);
