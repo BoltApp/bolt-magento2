@@ -44,11 +44,6 @@ class StoreCredit
     private $configHelper;
 
     /**
-     * @var Discount
-     */
-    protected $discountHelper;
-    
-    /**
      * @var CartRepositoryInterface
      */
     private $quoteRepository;
@@ -60,20 +55,17 @@ class StoreCredit
 
     /**
      * StoreCredit constructor.
-     * @param Discount                $discountHelper
      * @param Bugsnag                 $bugsnagHelper
      * @param Config                  $configHelper
      * @param CartRepositoryInterface $quoteRepository
      * @param CustomerSession         $customerSession
      */
     public function __construct(
-        Discount $discountHelper,
         Bugsnag $bugsnagHelper,
         Config $configHelper,
         CartRepositoryInterface $quoteRepository,
         CustomerSession $customerSession
     ) {
-        $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
         $this->configHelper = $configHelper;
         $this->quoteRepository = $quoteRepository;
@@ -104,15 +96,14 @@ class StoreCredit
                 $amount = abs($this->aheadworksCustomerStoreCreditManagement
                     ->getCustomerStoreCreditBalance($quote->getCustomerId()));
                 $currencyCode = $quote->getQuoteCurrencyCode();
-                $discountType = $this->discountHelper->getBoltDiscountType('by_fixed');
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                 $discounts[] = [
                     'description' => 'Store Credit',
                     'amount' => $roundedAmount,
                     'reference' => self::AHEADWORKS_STORE_CREDIT,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                    'discount_type' => $discountType, // For v1/discounts.code.apply and v2/cart.update
-                    'type' => $discountType, // For v1/merchant/order
+                    'discount_type' => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
+                    'type' => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/merchant/order
                 ];
 
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;

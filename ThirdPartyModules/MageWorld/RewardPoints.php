@@ -27,11 +27,6 @@ class RewardPoints
     const MW_REWARDPOINTS = 'mw_reward_points';
     
     /**
-     * @var Discount
-     */
-    protected $discountHelper;
-    
-    /**
      * @var Bugsnag
      */
     protected $bugsnagHelper;
@@ -52,15 +47,12 @@ class RewardPoints
     protected $mwRewardPointsModelCustomer;
 
     /**
-     * @param Discount       $discountHelper
      * @param Bugsnag        $bugsnagHelper
      */
     public function __construct(
-        Discount        $discountHelper,
         Bugsnag         $bugsnagHelper,
         SessionManager  $sessionManager
     ) {
-        $this->discountHelper = $discountHelper;
         $this->bugsnagHelper  = $bugsnagHelper;
         $this->sessionManager  = $sessionManager;
     }
@@ -107,9 +99,9 @@ class RewardPoints
                     'reference'         => self::MW_REWARDPOINTS,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                     // For v1/discounts.code.apply and v2/cart.update
-                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                    'discount_type'     => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                     // For v1/merchant/order
-                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                    'type'              => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                 ];
 
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;

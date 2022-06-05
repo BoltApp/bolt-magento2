@@ -27,11 +27,6 @@ class StoreCredit
     const TEAMWORK_STORECREDIT = 'teamworkstorecredit';
 
     /**
-     * @var Discount
-     */
-    protected $discountHelper;
-
-    /**
      * @var Bugsnag
      */
     private $bugsnagHelper;
@@ -45,17 +40,14 @@ class StoreCredit
 
     /**
      * StoreCredit constructor.
-     * @param Discount $discountHelper
      * @param Bugsnag $bugsnagHelper
      * @param CurrentCustomer $currentCustomer
      */
     public function __construct(
-        Discount $discountHelper,
         Bugsnag $bugsnagHelper,
         CurrentCustomer $currentCustomer
     )
     {
-        $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
         $this->currentCustomer = $currentCustomer;
     }
@@ -92,8 +84,8 @@ class StoreCredit
                     'reference' => self::TEAMWORK_STORECREDIT,
                     'amount' => $roundedAmount,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                    'discount_type' => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                    'type' => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                    'discount_type' => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
+                    'type' => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/merchant/order
                 ];
 
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;

@@ -26,11 +26,6 @@ class TmwGiftCard
     const IMAGINATIONMEDIA_GIFTCARD = 'imaginationmediagifcard';
 
     /**
-     * @var Discount
-     */
-    protected $discountHelper;
-
-    /**
      * @var Bugsnag
      */
     private $bugsnagHelper;
@@ -42,15 +37,12 @@ class TmwGiftCard
 
     /**
      * GiftCardDiscount constructor.
-     * @param Discount $discountHelper
      * @param Bugsnag $bugsnagHelper
      */
     public function __construct(
-        Discount $discountHelper,
         Bugsnag $bugsnagHelper
     )
     {
-        $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
     }
 
@@ -84,8 +76,8 @@ class TmwGiftCard
                     'reference' => self::IMAGINATIONMEDIA_GIFTCARD,
                     'amount' => $roundedAmount,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
-                    'discount_type' => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                    'type' => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                    'discount_type' => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
+                    'type' => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/merchant/order
                 ];
 
                 $diff -= CurrencyUtils::toMinorWithoutRounding($giftCard, $currencyCode) - $roundedAmount;

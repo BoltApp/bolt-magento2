@@ -133,7 +133,6 @@ class GiftCardAccount
             // the "fixed_amount" type is added below.
             ///////////////////////////////////////////////////////////////////////////
             if ($totalDiscount && $totalDiscount->getValue()) {
-                $discountType = $this->discountHelper->getBoltDiscountType('by_fixed');
                 $appliedGiftCardItems = [];
                 if ($this->discountHelper->getAmastyPayForEverything()) {
                     $giftcardQuote = $giftcardQuoteRepository->getByQuoteId($quote->getId());
@@ -165,8 +164,8 @@ class GiftCardAccount
                         'amount'            => $roundedAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                         'reference'         => $appliedGiftCardItem['code'],
-                        'discount_type'     => $discountType, // For v1/discounts.code.apply and v2/cart.update
-                        'type'              => $discountType, // For v1/merchant/order
+                        'discount_type'     => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
+                        'type'              => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/merchant/order
                     ];
                     $discountAmount += $appliedGiftCardItem['amount'];
                     $roundedDiscountAmount += $roundedAmount;

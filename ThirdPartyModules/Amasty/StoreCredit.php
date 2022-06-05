@@ -32,27 +32,19 @@ class StoreCredit
     private $bugsnagHelper;
 
     /**
-     * @var Discount
-     */
-    protected $discountHelper;
-
-    /**
      * @var Config
      */
     protected $configHelper;
 
     /**
      * StoreCredit constructor.
-     * @param Discount $discountHelper
      * @param Bugsnag $bugsnagHelper
      * @param Config $configHelper
      */
     public function __construct(
-        Discount $discountHelper,
         Bugsnag $bugsnagHelper,
         Config $configHelper
     ) {
-        $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
         $this->configHelper = $configHelper;
     }
@@ -78,13 +70,12 @@ class StoreCredit
                 $amount = abs($totals[self::AMASTY_STORECREDIT]->getValue());
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 $roundedDiscountAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-                $discountType = $this->discountHelper->getBoltDiscountType('by_fixed');
                 $discounts[] = [
                     'description' => $totals[self::AMASTY_STORECREDIT]->getTitle(),
                     'amount' => $roundedDiscountAmount,
                     'reference' => self::AMASTY_STORECREDIT,
-                    'discount_type' => $discountType, // For v1/discounts.code.apply and v2/cart.update
-                    'type' => $discountType, // For v1/discounts.code.apply and v2/cart.update
+                    'discount_type' => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
+                    'type' => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT
                 ];
 

@@ -35,11 +35,6 @@ class Rewards
     private $bugsnagHelper;
 
     /**
-     * @var Discount
-     */
-    protected $discountHelper;
-
-    /**
      * @var Quote
      */
     protected $amastyRewardsResourceQuote;
@@ -56,16 +51,13 @@ class Rewards
 
     /**
      * @param Bugsnag $bugsnagHelper Bugsnag helper instance
-     * @param Discount $discountHelper
      * @param ResourceConnection $resourceConnection
      */
     public function __construct(
         Bugsnag   $bugsnagHelper,
-        Discount  $discountHelper,
         ResourceConnection $resourceConnection
     ) {
         $this->bugsnagHelper   = $bugsnagHelper;
-        $this->discountHelper  = $discountHelper;
         $this->resourceConnection = $resourceConnection;
     }
 
@@ -107,9 +99,9 @@ class Rewards
                     'reference'         => self::AMASTY_REWARD,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                     // For v1/discounts.code.apply and v2/cart.update
-                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                    'discount_type'     => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                     // For v1/merchant/order
-                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                    'type'              => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                 ];
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
                 $totalAmount -= $roundedAmount;

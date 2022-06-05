@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Api\DiscountCodeValidationInterface;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Framework\Exception\LocalizedException;
@@ -262,7 +263,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 'discount_code'   => $code,
                 'discount_amount' => abs(CurrencyUtils::toMinor($giftAmount, $immutableQuote->getQuoteCurrencyCode())),
                 'description'     =>  __('Gift Card'),
-                'discount_type'   => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                'discount_type'   => Discount::BOLT_DISCOUNT_TYPE_FIXED,
             ];
         }
 
