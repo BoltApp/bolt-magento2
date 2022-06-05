@@ -347,6 +347,9 @@ class Discount extends AbstractHelper
      */
     public function getBoltDiscountType($rule)
     {
+        if ($rule->getSimpleFreeShipping()) {
+            return self::BOLT_DISCOUNT_TYPE_FREE_SHIPPING;
+        }
         $type = $rule->getSimpleAction();
         switch ($type) {
             case "by_fixed":
