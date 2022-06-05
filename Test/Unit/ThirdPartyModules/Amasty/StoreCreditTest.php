@@ -38,11 +38,6 @@ class StoreCreditTest extends BoltTestCase
     private $storeCredit;
 
     /**
-     * @var Discount
-     */
-    private $discountHelper;
-
-    /**
      * @var Bugsnag
      */
     private $bugsnagHelper;
@@ -62,7 +57,6 @@ class StoreCreditTest extends BoltTestCase
         }
         $this->objectManager = Bootstrap::getObjectManager();
         $this->storeCredit = $this->objectManager->create(StoreCredit::class);
-        $this->discountHelper = $this->objectManager->create(Discount::class);
         $this->bugsnagHelper = $this->objectManager->create(Bugsnag::class);
         $this->configHelper = $this->objectManager->create(Config::class);
     }
@@ -75,8 +69,7 @@ class StoreCreditTest extends BoltTestCase
      */
     public function __construct_always_setsInternalProperties()
     {
-        $instance = new StoreCredit($this->discountHelper, $this->bugsnagHelper, $this->configHelper);
-        static::assertAttributeEquals($this->discountHelper, 'discountHelper', $instance);
+        $instance = new StoreCredit($this->bugsnagHelper, $this->configHelper);
         static::assertAttributeEquals($this->bugsnagHelper, 'bugsnagHelper', $instance);
         static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
     }
