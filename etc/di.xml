@@ -285,4 +285,12 @@
         <plugin name="Bolt_Boltpay_Amasty_CommonRules_Model_ResourceModel_Rule_Collection"
                 type="Bolt\Boltpay\Plugin\Amasty\CommonRules\Model\ResourceModel\Rule\CollectionPlugin" sortOrder="10"/>
     </type>
+    <type name="Magento\Ui\Model\Export\MetadataProvider">
+        <plugin name="Bolt_Boltpay_Magento_Ui_Model_Export_MetadataProvider"
+                type="Bolt\Boltpay\Plugin\Magento\Ui\Model\Export\MetadataProviderPlugin" sortOrder="10"/>
+    </type>
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\Reporting">
+        <plugin name="Bolt_Boltpay_Magento_Framework_View_Element_UiComponent_DataProvider_Reporting"
+                type="Bolt\Boltpay\Plugin\Magento\Framework\View\Element\UiComponent\DataProvider\ReportingPlugin" sortOrder="10"/>
+    </type>
 </config>
