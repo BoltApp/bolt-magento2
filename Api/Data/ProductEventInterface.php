@@ -36,7 +36,6 @@ interface ProductEventInterface extends ExtensibleDataInterface
     /**
      * Allowed product event operation types
      */
-    public const TYPE_UNKNOWN = 'unknown';
     public const TYPE_CREATE = 'create';
     public const TYPE_UPDATE = 'update';
     public const TYPE_DELETE = 'delete';
