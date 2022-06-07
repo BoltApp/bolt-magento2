@@ -317,12 +317,12 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE);
     }
-    
+
     public function isDisableTrackJsOnHomePage()
     {
         return $this->isSwitchEnabled(Definitions::M2_DISABLE_TRACK_ON_HOME_PAGE);
     }
-    
+
     public function isDisableTrackJsOnNonBoltPages()
     {
         return $this->isSwitchEnabled(Definitions::M2_DISABLE_TRACK_ON_NON_BOLT_PAGES);
@@ -414,7 +414,7 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_INCLUDE_MISMATCH_AMOUNT_INTO_TAX_WHEN_ADJUSTING_PRICE_MISMATCH);
     }
-    
+
     public function isAPIDrivenIntegrationEnabled()
     {
         return $this->isSwitchEnabled(Definitions::M2_ENABLE_API_DRIVEN_INTEGRAION);
@@ -424,7 +424,7 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_RECALCULATE_TOTAL_FOR_API_DRIVEN_INTEGRAION);
     }
-    
+
     public function isCollectDiscountsByPlugin()
     {
         return $this->isSwitchEnabled(Definitions::M2_COLLECT_DISCOUNT_BY_PLUGIN);
@@ -441,7 +441,7 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_PREVENT_SSO_CUSTOMERS_FROM_EDITING_ACCOUNT_INFORMATION);
     }
-    
+
     public function isAllowCustomURLForProduction()
     {
         return $this->isSwitchEnabled(Definitions::M2_ALLOW_CUSTOM_CDN_URL_FOR_PRODUCTION);
@@ -462,5 +462,29 @@ class Decider extends AbstractHelper
     public function isInitializeBoltCustomSsoButtons()
     {
         return $this->isSwitchEnabled(Definitions::M2_INITIALIZE_BOLT_CUSTOM_SSO_BUTTONS);
+    }
+
+    /**
+     * Checks whether the feature switch for catalog ingestion is enabled
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isCatalogIngestionEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_CATALOG_INGESTION);
+    }
+
+    /**
+     * Checks whether the feature switch for store configuration is enabled
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isStoreConfigurationEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_STORE_CONFIGURATION);
     }
 }

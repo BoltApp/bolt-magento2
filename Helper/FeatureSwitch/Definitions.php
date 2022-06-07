@@ -176,12 +176,12 @@ class Definitions
      * Enable connect.js on cart page or product page (if PPC enabled) only
      */
     const M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE = 'M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE';
-    
+
     /**
      * Remove track.js from home page of the site
      */
     const M2_DISABLE_TRACK_ON_HOME_PAGE = 'M2_DISABLE_TRACK_ON_HOME_PAGE';
-    
+
     /**
      * Include track.js only on pages where we have connect.js
      */
@@ -231,7 +231,7 @@ class Definitions
      * Prevent Bolt IPs from being saved as customer IP on quote
      */
     const M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE = 'M2_PREVENT_SETTING_BOLT_IPS_AS_CUSTOMER_IP_ON_QUOTE';
-    
+
     /**
      * Disallow the order in processing/complete/closed status won't be updated back to pending_review/new
      */
@@ -251,12 +251,12 @@ class Definitions
      * Recalculate quote total for API driven integration
      */
     const M2_RECALCULATE_TOTAL_FOR_API_DRIVEN_INTEGRAION = 'M2_RECALCULATE_TOTAL_FOR_API_DRIVEN_INTEGRAION';
-    
+
     /**
      * Force to collect discounts details via plugin methods
      */
     const M2_COLLECT_DISCOUNT_BY_PLUGIN = 'M2_COLLECT_DISCOUNT_BY_PLUGIN';
-    
+
     /**
      * Prevent customers from editing their account and address data when SSO is enabled
      */
@@ -276,6 +276,16 @@ class Definitions
      * Automatically initialize Bolt custom SSO buttons
      */
     const M2_INITIALIZE_BOLT_CUSTOM_SSO_BUTTONS = 'M2_INITIALIZE_BOLT_CUSTOM_SSO_BUTTONS';
+
+    /**
+     * Enable catalog ingestion
+     */
+    const M2_CATALOG_INGESTION = 'M2_CATALOG_INGESTION';
+
+    /**
+     * Enable store configuration update request
+     */
+    const M2_STORE_CONFIGURATION = 'M2_STORE_CONFIGURATION';
 
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
@@ -566,5 +576,17 @@ class Definitions
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
         ],
+        self::M2_CATALOG_INGESTION => [
+            self::NAME_KEY        => self::M2_CATALOG_INGESTION,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_STORE_CONFIGURATION => [
+            self::NAME_KEY        => self::M2_STORE_CONFIGURATION,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => true,
+            self::ROLLOUT_KEY     => 100
+        ]
     ];
 }
