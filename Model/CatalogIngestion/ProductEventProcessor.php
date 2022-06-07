@@ -32,6 +32,7 @@ use Magento\Eav\Model\Config as EavConfig;
 use Magento\Catalog\Api\Data\ProductAttributeInterface;
 use Magento\Eav\Api\Data\AttributeInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\InventoryApi\Api\Data\SourceItemInterface;
 
 /**
  * Product Event Processor
@@ -113,7 +114,7 @@ class ProductEventProcessor
      * Publishing product event's based on magento product inventory source items.
      * Checking previous values of qty/status of source item and publishing or not catalog ingestion product event.
      *
-     * @param array $sourceItems
+     * @param SourceItemInterface[] $sourceItems
      * @return void
      */
     public function processProductEventSourceItemsBased(array $sourceItems, $forcePublish = false): void
