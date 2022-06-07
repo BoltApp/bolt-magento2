@@ -147,7 +147,7 @@ class ProductEventRepository implements ProductEventRepositoryInterface
      */
     public function deleteByProductId(int $productId): bool
     {
-        $productEvent = $this->get($productId);
+        $productEvent = $this->getByProductId($productId);
         return $this->delete($productEvent);
     }
 
