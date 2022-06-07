@@ -56,9 +56,34 @@ class ProductEventProcessor
     ];
 
     /**
+     * @var ProductEventManagerInterface
+     */
+    private $productEventManager;
+
+    /**
+     * @var Config
+     */
+    private $config;
+
+    /**
+     * @var ProductFactory
+     */
+    private $productFactory;
+
+    /**
+     * @var ProductWebsiteLink
+     */
+    private $productWebsiteLink;
+
+    /**
      * @var EavConfig
      */
     private $eavConfig;
+
+    /**
+     * @var Logger
+     */
+    private $logger;
 
     /**
      * @param ProductEventManagerInterface $productEventManager
