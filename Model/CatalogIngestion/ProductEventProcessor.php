@@ -115,9 +115,10 @@ class ProductEventProcessor
      * Checking previous values of qty/status of source item and publishing or not catalog ingestion product event.
      *
      * @param SourceItemInterface[] $sourceItems
+     * @param bool $forcePublish force publishing flag to prevent checking qty/status
      * @return void
      */
-    public function processProductEventSourceItemsBased(array $sourceItems, $forcePublish = false): void
+    public function processProductEventSourceItemsBased(array $sourceItems, bool $forcePublish = false): void
     {
         try {
             foreach ($sourceItems as $sourceItem) {
@@ -186,6 +187,7 @@ class ProductEventProcessor
      * Checking previous values of product attributes and publishing or not catalog ingestion product event
      *
      * @param Product $product
+     * @param bool $forcePublish force publishing flag to prevent attributes checking
      * @return void
      */
     public function processProductEventUpdateByProduct(Product $product, $forcePublish = false)
