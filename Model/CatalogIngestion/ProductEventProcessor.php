@@ -111,7 +111,7 @@ class ProductEventProcessor
     }
 
     /**
-     * Publishing product event's based on magento product inventory source items.
+     * Publishing product event based on magento product inventory source items.
      * Checking previous values of qty/status of source item and publishing or not catalog ingestion product event.
      *
      * @param SourceItemInterface[] $sourceItems
@@ -150,7 +150,7 @@ class ProductEventProcessor
     }
 
     /**
-     * Publishing product event's based on magento product inventory stock item.
+     * Publishing product event based on magento product inventory stock item.
      * Checking previous values of qty/status of product inventory item and publishing or not catalog ingestion product event.
      *
      * @param StockItemInterface $stockItem
@@ -183,7 +183,7 @@ class ProductEventProcessor
     }
 
     /**
-     * Publishing product event's based on magento product attributes update.
+     * Publishing product event based on magento product attributes update.
      * Checking previous values of product attributes and publishing or not catalog ingestion product event
      *
      * @param Product $product
