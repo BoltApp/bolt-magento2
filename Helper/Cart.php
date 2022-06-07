@@ -2289,8 +2289,8 @@ class Cart extends AbstractHelper
                     'description'       => 'Store Credit',
                     'amount'            => $roundedAmount,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                    'discount_type'     => DiscountHelper::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
+                    'type'              => DiscountHelper::BOLT_DISCOUNT_TYPE_FIXED, // For v1/merchant/order
                 ];
 
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -2313,8 +2313,8 @@ class Cart extends AbstractHelper
                         'description'       => 'Store Credit',
                         'amount'            => $roundedAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                        'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                        'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                        'discount_type'     => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
+                        'type'              => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/merchant/order
                     ];
 
                     $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -2336,8 +2336,8 @@ class Cart extends AbstractHelper
                     'description'       => 'Reward Points',
                     'amount'            => $roundedAmount,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                    'discount_type'     => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
+                    'type'              => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/merchant/order
                 ];
 
                 $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -2360,8 +2360,8 @@ class Cart extends AbstractHelper
                         'description'       => 'Reward Points',
                         'amount'            => $roundedAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
-                        'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                        'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                        'discount_type'     => DiscountHelper::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
+                        'type'              => DiscountHelper::BOLT_DISCOUNT_TYPE_FIXED, // For v1/merchant/order
                     ];
 
                     $diff -= CurrencyUtils::toMinorWithoutRounding($amount, $currencyCode) - $roundedAmount;
@@ -2400,8 +2400,8 @@ class Cart extends AbstractHelper
                         'amount'            => $roundedDiscountAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                         'reference'         => $gcCode,
-                        'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/discounts.code.apply and v2/cart.update
-                        'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'), // For v1/merchant/order
+                        'discount_type'     => DiscountHelper::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
+                        'type'              => DiscountHelper::BOLT_DISCOUNT_TYPE_FIXED, // For v1/merchant/order
                     ];
                     $this->logEmptyDiscountCode($gcCode, $gcDescription);
                     $discounts[] = $discountItem;

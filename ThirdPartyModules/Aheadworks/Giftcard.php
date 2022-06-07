@@ -37,11 +37,6 @@ class Giftcard
     private $bugsnagHelper;
 
     /**
-     * @var Discount
-     */
-    protected $discountHelper;
-
-    /**
      * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
      */
     private $featureSwitches;
@@ -49,18 +44,15 @@ class Giftcard
     /**
      * @param OrderService $orderService Magento order service instance
      * @param Bugsnag $bugsnagHelper Bugsnag helper instance
-     * @param Discount $discountHelper
      * @param Decider  $featureSwitches
      */
     public function __construct(
         OrderService  $orderService,
         Bugsnag       $bugsnagHelper,
-        Discount      $discountHelper,
         Decider       $featureSwitches
     ) {
         $this->orderService   = $orderService;
         $this->bugsnagHelper  = $bugsnagHelper;
-        $this->discountHelper = $discountHelper;
         $this->featureSwitches = $featureSwitches;
     }
 
@@ -96,9 +88,9 @@ class Giftcard
                     'amount'            => CurrencyUtils::toMinor($giftcardQuote->getGiftcardBalance(), $currencyCode),
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                     // For v1/discounts.code.apply and v2/cart.update
-                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                    'discount_type'     => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                     // For v1/merchant/order
-                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                    'type'              => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                 ];
                 $totalAmount -= CurrencyUtils::toMinor($giftcardQuote->getGiftcardAmount(), $currencyCode);
             }

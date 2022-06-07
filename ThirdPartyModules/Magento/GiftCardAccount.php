@@ -33,11 +33,6 @@ class GiftCardAccount
     private $bugsnagHelper;
 
     /**
-     * @var Discount
-     */
-    private $discountHelper;
-    
-    /**
      * @var Cart
      */
     private $cartHelper;
@@ -59,18 +54,15 @@ class GiftCardAccount
 
     /**
      * @param Bugsnag     $bugsnagHelper Bugsnag helper instance
-     * @param Discount    $discountHelper
      * @param Cart        $cartHelper
      * @param Decider     $featureSwitches
      */
     public function __construct(
         Bugsnag  $bugsnagHelper,
-        Discount $discountHelper,
         Cart     $cartHelper,
         Decider  $featureSwitches
     ) {
         $this->bugsnagHelper = $bugsnagHelper;
-        $this->discountHelper = $discountHelper;
         $this->cartHelper = $cartHelper;
         $this->featureSwitches = $featureSwitches;
     }
@@ -103,14 +95,13 @@ class GiftCardAccount
             foreach ($giftCardCodes as $giftCardCode => $giftCardAmount) {
                 $amount = abs($giftCardAmount);
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-                $boltDiscountType = $this->discountHelper->getBoltDiscountType('by_fixed');
                 $discountItem = [
                     'description'       => 'Gift Card: ' . $giftCardCode,
                     'amount'            => $roundedAmount,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                     'reference'         => (string)$giftCardCode,
-                    'discount_type'     => $boltDiscountType, // For v1/discounts.code.apply and v2/cart.update
-                    'type'              => $boltDiscountType, // For v1/merchant/order
+                    'discount_type'     => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
+                    'type'              => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/merchant/order
                 ];
                 $this->cartHelper->logEmptyDiscountCode($giftCardCode, 'Gift Card: ' . $giftCardCode);
                 $discountAmount += $amount;

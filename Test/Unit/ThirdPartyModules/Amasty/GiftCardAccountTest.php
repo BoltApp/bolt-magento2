@@ -312,10 +312,6 @@ class GiftCardAccountTest extends BoltTestCase
         $immutableQuote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
         $shippingAddress->expects(static::any())->method('getDiscountAmount')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getUnirgyGiftCertBalanceByCode');
-        $this->discountHelper->expects(static::exactly(1))
-            ->method('getBoltDiscountType')->with('by_fixed')->willReturn(
-                'fixed_amount'
-            );
         $this->discountHelper->expects(static::once())->method('getAmastyPayForEverything')->willReturn(true);
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
         $immutableQuote->expects(static::any())->method('getTotals')

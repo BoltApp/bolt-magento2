@@ -24,11 +24,6 @@ class StoreCredit
     private $bugsnagHelper;
 
     /**
-     * @var Discount
-     */
-    private $discountHelper;
-
-    /**
      * @var Config
      */
     private $configHelper;
@@ -40,19 +35,16 @@ class StoreCredit
 
     /**
      * StoreCredit constructor.
-     * @param Discount $discountHelper
      * @param Bugsnag $bugsnagHelper
      * @param Config $configHelper
      * @param PriceCurrencyInterface $priceCurrency
      */
     public function __construct(
-        Discount $discountHelper,
         Bugsnag $bugsnagHelper,
         Config $configHelper,
         PriceCurrencyInterface $priceCurrency
     )
     {
-        $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
         $this->configHelper = $configHelper;
         $this->priceCurrency = $priceCurrency;
@@ -92,13 +84,12 @@ class StoreCredit
                         2
                     );                   
                     $roundedDiscountAmount = CurrencyUtils::toMinor($amount, $currencyCode);
-                    $discountType = $this->discountHelper->getBoltDiscountType('by_fixed');
                     $discounts[] = [
                         'description' => 'Bag Riders Store Credit',
                         'amount' => $roundedDiscountAmount,
                         'reference' => self::BAGRIDERS_STORECREDIT_REFERENCE,
-                        'discount_type' => $discountType, // For v1/discounts.code.apply and v2/cart.update
-                        'type' => $discountType, // For v1/discounts.code.apply and v2/cart.update
+                        'discount_type' => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
+                        'type' => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT
                     ];
     

@@ -139,7 +139,6 @@ class GiftCard
                 $giftcardQuotes = $giftcardQuoteCollectionFactory->create()->joinAccount()
                     ->getGiftCardsByQuoteId($quote->getId());
                 /** @var \Amasty\GiftCard\Model\Quote|\Amasty\GiftCard\Model\Account $giftcard */
-                $discountType = $this->discountHelper->getBoltDiscountType('by_fixed');
                 foreach ($giftcardQuotes->getItems() as $giftcard) {
                     $amount = abs($giftcard->getCurrentValue());
                     $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
@@ -149,9 +148,9 @@ class GiftCard
                         'amount'            => $roundedAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                         'reference'         => $giftCardCode,
-                        'discount_type'     => $discountType,
+                        'discount_type'     => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                         // For v1/discounts.code.apply and v2/cart.update
-                        'type'              => $discountType,
+                        'type'              => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                         // For v1/merchant/order
                     ];
                     $discountAmount += $amount;

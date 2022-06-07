@@ -4142,7 +4142,6 @@ ORDER
         ->willReturn(self::CURRENCY_CODE);
         $this->immutableQuoteMock->expects(static::once())->method('getUseCustomerBalance')->willReturn(true);
         $this->immutableQuoteMock->expects(static::any())->method('getCouponCode')->willReturn(false);
-        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $this->immutableQuoteMock->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
 
         ObjectManager::setInstance($this->objectManagerMock);
@@ -4228,7 +4227,6 @@ ORDER
         ->getMock();
         $this->objectManagerMock->expects(static::once())->method('create')
         ->with('Magento\Reward\Model\Reward')->willReturn($rewardModelMock);
-        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
 
         $this->customerSession->expects(static::once())->method('getCustomer')->willReturn($this->customerMock);
         $rewardModelMock->expects(static::once())->method('setCustomer')->with($this->customerMock)
@@ -4337,7 +4335,6 @@ ORDER
         $quote->expects(static::any())->method("getData")->with("giftcert_code")->willReturn($unirgyGiftcertCode);
         $this->discountHelper->expects(static::once())->method('getUnirgyGiftCertBalanceByCode')
         ->with($unirgyGiftcertCode)->willReturn($appliedDiscount);
-        $this->discountHelper->expects(static::exactly(2))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn(5);
         $quote->expects(static::any())->method('getTotals')
         ->willReturn([DiscountHelper::UNIRGY_GIFT_CERT => $this->quoteAddressTotal]);
