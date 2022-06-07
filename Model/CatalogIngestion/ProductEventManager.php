@@ -166,7 +166,7 @@ class ProductEventManager implements ProductEventManagerInterface
     /**
      * @inheritDoc
      */
-    public function requestProductEvent(ProductEventInterface $productEvent): bool
+    public function sendProductEvent(ProductEventInterface $productEvent): bool
     {
         if ($productEvent->getType() == ProductEventInterface::TYPE_DELETE) {
             $websites = $this->storeManager->getWebsites();
@@ -200,7 +200,7 @@ class ProductEventManager implements ProductEventManagerInterface
             $productEvent->setProductId($productId);
             $productEvent->setType($type);
             $productEvent->setCreatedAt($this->dateTime->formatDate(true));
-            $this->requestProductEvent($productEvent);
+            $this->sendProductEvent($productEvent);
         }
     }
 }

@@ -31,7 +31,7 @@ use Magento\Framework\App\ObjectManager;
  */
 class ProductEventPublisher
 {
-    private const TOPIC_NAME = 'async.bolt.boltpay.api.producteventmanagerinterface.requestproductevent.post';
+    private const TOPIC_NAME = 'async.bolt.boltpay.api.producteventmanagerinterface.sendproductevent.post';
 
     /**
      * @var ObjectManager

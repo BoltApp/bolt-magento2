@@ -73,7 +73,7 @@ class CatalogIngestion
         }
 
         foreach ($productEvents->getItems() as $productEvent) {
-            $result = $this->productEventManager->requestProductEvent($productEvent);
+            $result = $this->productEventManager->sendProductEvent($productEvent);
             if ($result === true) {
                 $this->productEventRepository->delete($productEvent);
             }

@@ -56,14 +56,14 @@ interface ProductEventManagerInterface
     public function publishProductEventAsyncJob(int $productId, string $type): ?string;
 
     /**
-     * Request catalog product event to bolt
+     * Send catalog product event request to bolt
      *
      * @param ProductEventInterface $productEvent
      * @return bool
      * @throws LocalizedException
      * @throws \Zend_Http_Client_Exception
      */
-    public function requestProductEvent(ProductEventInterface $productEvent): bool;
+    public function sendProductEvent(ProductEventInterface $productEvent): bool;
 
     /**
      * Run product event instant update (async/sync mode configuration based)
