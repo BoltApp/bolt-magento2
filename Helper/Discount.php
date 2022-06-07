@@ -40,6 +40,9 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
  */
 class Discount extends AbstractHelper
 {
+    // Bolt discount types
+    const BOLT_DISCOUNT_TYPE_FIXED = "fixed_amount";
+    
     // Discount totals key identifiers
     const AMASTY_GIFTCARD = 'amasty_giftcard';
     const GIFT_VOUCHER_AFTER_TAX = 'giftvoucheraftertax';
@@ -320,7 +323,7 @@ class Discount extends AbstractHelper
     public function convertToBoltDiscountType($couponCode)
     {
         if ($couponCode == "") {
-            return "fixed_amount";
+            return self::BOLT_DISCOUNT_TYPE_FIXED;
         }
         
         try {
@@ -346,14 +349,14 @@ class Discount extends AbstractHelper
         switch ($type) {
             case "by_fixed":
             case "cart_fixed":
-                return "fixed_amount";
+                return self::BOLT_DISCOUNT_TYPE_FIXED;
             case "by_percent":
                 return "percentage";
             case "by_shipping":
                 return "shipping";
         }
 
-        return "fixed_amount";
+        return self::BOLT_DISCOUNT_TYPE_FIXED;
     }
     
     /**

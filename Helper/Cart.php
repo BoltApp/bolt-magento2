@@ -2235,7 +2235,8 @@ class Cart extends AbstractHelper
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
         if (($amount = abs($address->getDiscountAmount())) || $quote->getCouponCode()) {
-            $ruleDiscountDetails = $this->getSaleRuleDiscounts($quote);
+            $ruleDiscountDetails = $this->getSaleRuleDiscounts($quote);     
+            list($ruleDiscountDetails, $discounts, $totalAmount) = $this->eventsForThirdPartyModules->runFilter('filterQuoteDiscountDetails', [$ruleDiscountDetails, $discounts, $totalAmount], $quote);
             foreach ($ruleDiscountDetails as $salesruleId => $ruleDiscountAmount) {
                 $rule = $this->ruleRepository->getById($salesruleId);
                 $roundedAmount = CurrencyUtils::toMinor($ruleDiscountAmount, $currencyCode);
