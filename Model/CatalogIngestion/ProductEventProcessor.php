@@ -110,7 +110,8 @@ class ProductEventProcessor
     }
 
     /**
-     * Update product events based on source items
+     * Publishing product event's based on magento product inventory source items.
+     * Checking previous values of qty/status of source item and publishing or not catalog ingestion product event.
      *
      * @param array $sourceItems
      * @return void
@@ -147,7 +148,8 @@ class ProductEventProcessor
     }
 
     /**
-     * Process stock item product events
+     * Publishing product event's based on magento product inventory stock item.
+     * Checking previous values of qty/status of product inventory item and publishing or not catalog ingestion product event.
      *
      * @param StockItemInterface $stockItem
      * @param StockItemInterface|null $oldStockItem
@@ -179,7 +181,8 @@ class ProductEventProcessor
     }
 
     /**
-     * Process product event for product
+     * Publishing product event's based on magento product attributes update.
+     * Checking previous values of product attributes and publishing or not catalog ingestion product event
      *
      * @param Product $product
      * @return void
@@ -206,7 +209,7 @@ class ProductEventProcessor
     }
 
     /**
-     * Process product event by inventory main data
+     * Process of publishing instant/scheduled product event based on inventory status / inventory qty
      *
      * @param int $productId
      * @param string $newStatus
@@ -244,7 +247,7 @@ class ProductEventProcessor
     }
 
     /**
-     * Check if inventory main data was changed
+     * Checking if inventory status / inventory qty were changed
      *
      * @param string $newStatus
      * @param int $newQty
@@ -262,7 +265,7 @@ class ProductEventProcessor
     }
 
     /**
-     * Check if instant update is available for "product_stock_status" catalog ingestion event
+     * Checking if instant update is available for "product_stock_status" catalog ingestion event
      *
      * @param string $newStatus
      * @param int $websiteId
@@ -283,7 +286,8 @@ class ProductEventProcessor
     }
 
     /**
-     * Returns product event type
+     * Returns product event type based on product entity_id.
+     * If product don't have original entity_id therefore this product is new and product event type should be "create"
      *
      * @param Product $product
      * @return string
@@ -359,7 +363,10 @@ class ProductEventProcessor
     }
 
     /**
-     * Check if system product attributes was changed like "custom options"
+     * Checking if system product attributes were changed:
+     * "custom options"
+     * "media gallery"
+     * "product type"
      *
      * @param Product $product
      * @param array|null $origData
@@ -373,7 +380,7 @@ class ProductEventProcessor
     }
 
     /**
-     * Check if product type was changed
+     * Checking if product type was changed
      *
      * @param Product $product
      * @param array|null $origData
@@ -385,7 +392,7 @@ class ProductEventProcessor
     }
 
     /**
-     * Check if media gallery was changed
+     * Checking if media gallery was changed
      *
      * @param Product $product
      * @param array|null $origData
@@ -425,7 +432,7 @@ class ProductEventProcessor
     }
 
     /**
-     * Check if custom options was changed
+     * Checking if custom options were changed
      *
      * @param Product $product
      * @param array|null $origData
