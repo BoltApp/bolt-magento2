@@ -77,6 +77,7 @@ class PlaceReservationsForSalesEventPlugin
         SalesEventInterface $salesEvent
     ): void {
         if (empty($items)) {
+            $proceed($items, $salesChannel, $salesEvent);
             return;
         }
         $stockId = $this->getStockBySalesChannel->execute($salesChannel)->getStockId();
@@ -84,7 +85,6 @@ class PlaceReservationsForSalesEventPlugin
         foreach ($items as $item) {
             $skus[] = $item->getSku();
         }
-
         $productsSalableStatusOld = $this->areProductsSalable->execute($skus, $stockId);
         $proceed($items, $salesChannel, $salesEvent);
         $productsSalableStatus = $this->areProductsSalable->execute($skus, $stockId);
