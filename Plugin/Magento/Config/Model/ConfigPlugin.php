@@ -87,7 +87,7 @@ class ConfigPlugin
         Config $subject,
         Config $result
     ): Config {
-        if (!$this->featureSwitches->isStoreConfigurationEnabled()) {
+        if (!$this->featureSwitches->isStoreConfigurationWebhookEnabled()) {
             return $result;
         }
         if ($result->getScope() == AppScopeInterface::SCOPE_DEFAULT) {

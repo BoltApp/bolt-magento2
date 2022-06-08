@@ -483,7 +483,7 @@ class Decider extends AbstractHelper
      *
      * @throws LocalizedException if the feature switch key is unknown
      */
-    public function isStoreConfigurationEnabled()
+    public function isStoreConfigurationWebhookEnabled()
     {
         return $this->isSwitchEnabled(Definitions::M2_STORE_CONFIGURATION_WEBHOOK);
     }
