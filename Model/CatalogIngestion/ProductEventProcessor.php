@@ -33,6 +33,7 @@ use Magento\Catalog\Api\Data\ProductAttributeInterface;
 use Magento\Eav\Api\Data\AttributeInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
+use Magento\InventorySalesApi\Api\Data\IsProductSalableResultInterface;
 
 /**
  * Product Event Processor
@@ -204,6 +205,48 @@ class ProductEventProcessor
                     );
                     //break, because product event already created and future websites check is not needed
                     break;
+                }
+            } catch (\Exception $e) {
+                $this->logger->critical($e);
+            }
+        }
+    }
+
+    /**
+     * Publishing product event based on magento products salable result data.
+     * Checking previous values of status of salable result data and publishing or not catalog ingestion product event.
+     *
+     * @param IsProductSalableResultInterface[] $productsSalableStatus
+     * @param IsProductSalableResultInterface[] $productsSalableStatusOld
+     * @return void
+     */
+    public function processProductEventSalableResultItemsBased(array $productsSalableStatus, array $productsSalableStatusOld): void
+    {
+        foreach ($productsSalableStatus as $key => $salableStatus) {
+            try {
+                $productId = $this->productFactory->create()->getIdBySku($salableStatus->getSku());
+                $websiteIds = $this->productWebsiteLink->getWebsiteIdsByProductId($productId);
+                foreach ($websiteIds as $websiteId) {
+                    if (!$this->config->getIsCatalogIngestionEnabled($websiteId)) {
+                        continue;
+                    }
+                    $salableStatusOld = $productsSalableStatusOld[$key];
+                    if ($this->isCatalogIngestionInstantUpdateByStockStatusAvailable(
+                        $salableStatus->isSalable(),
+                        $websiteId,
+                        $salableStatusOld->isSalable()
+                    )) {
+                        $this->productEventManager->runInstantProductEvent(
+                            $productId,
+                            ProductEventInterface::TYPE_UPDATE,
+                            $websiteId
+                        );
+                    } else {
+                        $this->productEventManager->publishProductEvent(
+                            $productId,
+                            ProductEventInterface::TYPE_UPDATE
+                        );
+                    }
                 }
             } catch (\Exception $e) {
                 $this->logger->critical($e);
