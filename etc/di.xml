@@ -332,4 +332,7 @@
     <type name="Magento\CatalogInventory\Api\StockItemRepositoryInterface">
         <plugin name="boltCatalogEventPublisher" type="Bolt\Boltpay\Plugin\Magento\CatalogInventory\Api\StockItemRepositoryPlugin" />
     </type>
+    <type name="Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventInterface">
+        <plugin name="publishBoltProductEventAfterPlacingReservation" type="Bolt\Boltpay\Plugin\Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventPlugin" />
+    </type>
 </config>
