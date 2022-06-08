@@ -20,8 +20,10 @@ namespace Bolt\Boltpay\Cron;
 use Bolt\Boltpay\Api\ProductEventRepositoryInterface;
 use Bolt\Boltpay\Api\ProductEventManagerInterface;
 use Bolt\Boltpay\Helper\Config;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Exception\CouldNotSaveException;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Catalog ingestion catalog event schedule processor cron class
@@ -51,31 +53,44 @@ class CatalogIngestion
     private $config;
 
     /**
+     * @var Decider
+     */
+    private $featureSwitches;
+
+    /**
      * @param ProductEventRepositoryInterface $productEventRepository
      * @param ProductEventManagerInterface $productEventManager
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param Config $config
+     * @param Decider $featureSwitches
      */
     public function __construct(
         ProductEventRepositoryInterface $productEventRepository,
         ProductEventManagerInterface $productEventManager,
         SearchCriteriaBuilder $searchCriteriaBuilder,
-        Config $config
+        Config $config,
+        Decider $featureSwitches
     ) {
         $this->productEventRepository = $productEventRepository;
         $this->productEventManager = $productEventManager;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->config = $config;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
-     * Request product events
+     * Sending product event list to bolt
      *
      * @return void
      * @throws CouldNotSaveException
+     * @throws LocalizedException
+     * @throws \Zend_Http_Client_Exception
      */
     public function execute(): void
     {
+        if (!$this->featureSwitches->isCatalogIngestionEnabled()) {
+            return;
+        }
         $pageSize = ($this->config->getCatalogIngestionCronMaxItems()) ?
             $this->config->getCatalogIngestionCronMaxItems() : self::DEFAULT_MAX_ITEMS_COUNT;
         $searchCriteria = $this->searchCriteriaBuilder->create();
