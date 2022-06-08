@@ -257,6 +257,14 @@ class Tieredcoupon
         return $result;
     }
     
+    /**
+     * Apply tiered coupon to discounts for Bolt cart
+     *
+     * @param bool                                            $result
+     * @param \Mexbs\Tieredcoupon\Model\TieredcouponFactory   $mexbsTieredcouponCouponFactory
+     * @param \Magento\Quote\Model\Quote                      $quote
+     * @return array
+     */
     public function filterQuoteDiscountDetails(
         $result,
         $mexbsTieredcouponCouponFactory,
