@@ -91,7 +91,7 @@ class Config extends AbstractHelper
      * Path for Global CSS
      */
     const XML_PATH_GLOBAL_CSS = 'payment/boltpay/global_css';
-    
+
     /**
      * Path for Global Javascript
      */
@@ -268,6 +268,36 @@ class Config extends AbstractHelper
     const XML_PATH_GEOLOCATION_API_KEY = 'payment/boltpay/geolocation_api_key';
 
     /**
+     * Path for catalog ingestion enabled
+     */
+    const XML_PATH_CATALOG_INGESTION_ENABLED = 'payment/boltpay/catalog_ingestion_enabled';
+
+    /**
+     * Path for catalog ingestion cron max items
+     */
+    const XML_PATH_CATALOG_INGESTION_CRON_MAX_ITEMS = 'payment/boltpay/catalog_ingestion_cron_max_items';
+
+    /**
+     * Path for catalog ingestion instant enabled
+     */
+    const XML_PATH_CATALOG_INGESTION_INSTANT_ENABLED = 'payment/boltpay/catalog_ingestion_instant_enabled';
+
+    /**
+     * Path for catalog ingestion instant async enabled
+     */
+    const XML_PATH_CATALOG_INGESTION_INSTANT_ASYNC_ENABLED = 'payment/boltpay/catalog_ingestion_instant_async_enabled';
+
+    /**
+     * Path for catalog ingestion instant available custom events
+     */
+    const XML_PATH_CATALOG_INGESTION_INSTANT_EVENT = 'payment/boltpay/catalog_ingestion_instant_events';
+
+    /**
+     * Path for system configuration updates request
+     */
+    const XML_PATH_CATALOG_INGESTION_SYSTEM_CONFIGURATION_UPDATE_REQUEST = 'payment/boltpay/catalog_ingestion_system_configuration_update_request_enabled';
+
+    /**
      * Path for Additional Javascript
      */
     const XML_PATH_ADDITIONAL_JS = 'payment/boltpay/additional_js';
@@ -295,7 +325,7 @@ class Config extends AbstractHelper
      * MiniCart Support configuration path
      */
     const XML_PATH_MINICART_SUPPORT = 'payment/boltpay/minicart_support';
-    
+
     /**
      * Display Bolt Checkout on the Cart Page configuration path
      */
@@ -320,12 +350,12 @@ class Config extends AbstractHelper
      * Use Aheadworks Reward Points on Shopping Cart configuration path
      */
     const XML_PATH_AHEADWORKS_REWARD_POINTS_ON_CART = 'payment/boltpay/aheadworks_reward_points_on_cart';
-    
+
     /**
      * Use Aheadworks Store Credit on Shopping Cart configuration path
      */
     const XML_PATH_AHEADWORKS_STORE_CREDIT_ON_CART = 'payment/boltpay/aheadworks_store_credit_on_cart';
-    
+
     /**
      * Use MageWorx Reward Points on Shopping Cart configuration path
      */
@@ -402,7 +432,7 @@ class Config extends AbstractHelper
 
     /** @var string  */
     const XML_PATH_ORDER_COMMENT_FIELD = 'payment/boltpay/order_comment_field';
-    
+
     /**
      * The mode of Magento integration associated with Bolt API
      */
@@ -868,7 +898,7 @@ class Config extends AbstractHelper
             $storeId
         );
     }
-    
+
     /**
      * Get Global Javascript from config
      *
@@ -953,11 +983,11 @@ class Config extends AbstractHelper
      *
      * The default case where we want button to serve as login and to redirect to home page,
      * we have selector as key and empty object as value.
-     * If we want a button to be used as logout, we again use selector as the key 
+     * If we want a button to be used as logout, we again use selector as the key
      * but have logout set to true in the value object
      * If we want to redirect to an arbitrary page after login, we set the redirect key to desired URL or Magento route
-     * 
-     * 
+     *
+     *
      * @param int|string $storeId scope for which to retrieve additional checkout button attributes
      *
      * @return object
@@ -1408,7 +1438,7 @@ class Config extends AbstractHelper
             $store
         );
     }
-    
+
     /**
      * Get Display Bolt Checkout on the Cart Page config
      *
@@ -1911,7 +1941,7 @@ class Config extends AbstractHelper
         // Display Bolt Checkout on the Cart Page configuration path
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('enable_bolt_on_cart_page')
-            ->setValue(var_export($this->getBoltOnCartPage(), true));    
+            ->setValue(var_export($this->getBoltOnCartPage(), true));
         // Client IP Restriction
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('ip_whitelist')
@@ -2250,7 +2280,7 @@ class Config extends AbstractHelper
             $storeId
         ) ?: 'customer_note';
     }
-    
+
     /**
      * Gets the mode of Magento integration associated with Bolt API
      *
@@ -2298,7 +2328,7 @@ class Config extends AbstractHelper
             $store
         );
     }
-    
+
     /**
      * Get Use Aheadworks Store Credit on Shopping Cart configuration
      *
@@ -2314,7 +2344,7 @@ class Config extends AbstractHelper
             $store
         );
     }
-    
+
     /**
      * Get Use MageWorx Reward Points on Shopping Cart configuration
      *
@@ -2441,7 +2471,7 @@ class Config extends AbstractHelper
             $storeId
         ) ?: '';
     }
-    
+
     /**
      * Get Bolt additional configuration for CDN URL, stored in the following format:
      *
@@ -2458,7 +2488,7 @@ class Config extends AbstractHelper
     {
         return $this->getAdditionalConfigProperty('cdnURL', $storeId);
     }
-    
+
     /**
      * Get Bolt additional configuration for account URL, stored in the following format:
      *
@@ -2475,7 +2505,7 @@ class Config extends AbstractHelper
     {
         return $this->getAdditionalConfigProperty('accountURL', $storeId);
     }
-    
+
     /**
      * Get Bolt additional configuration for api URL, stored in the following format:
      *
@@ -2492,7 +2522,7 @@ class Config extends AbstractHelper
     {
         return $this->getAdditionalConfigProperty('apiURL', $storeId);
     }
-    
+
     /**
      * Get Bolt additional configuration for merchant dashboard URL, stored in the following format:
      *
@@ -2508,5 +2538,103 @@ class Config extends AbstractHelper
     public function getMerchantDashboardUrlFromAdditionalConfig($storeId = null)
     {
         return $this->getAdditionalConfigProperty('merchantDashboardURL', $storeId);
+    }
+
+    /**
+     * Returns if catalog ingestion enabled.
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return bool
+     */
+    public function getIsCatalogIngestionEnabled($websiteId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_CATALOG_INGESTION_ENABLED,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
+    }
+
+    /**
+     * Returns catalog ingestion maximum cron items count witch will be processed.
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return string
+     */
+    public function getCatalogIngestionCronMaxItems($websiteId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_CATALOG_INGESTION_CRON_MAX_ITEMS,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
+    }
+    
+    /**
+     * Returns if catalog ingestion by instant job.
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return bool
+     */
+    public function getIsCatalogIngestionInstantEnabled($websiteId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_CATALOG_INGESTION_INSTANT_ENABLED,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
+    }
+
+    /**
+     * Returns if catalog ingestion by async instant job.
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return bool
+     */
+    public function getIsCatalogIngestionInstantAsyncEnabled($websiteId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_CATALOG_INGESTION_INSTANT_ASYNC_ENABLED,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
+    }
+
+    /**
+     * Returns available custom catalog ingestion instant job events.
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return array
+     */
+    public function getCatalogIngestionEvents($websiteId = null)
+    {
+        $eventsConfigValue =  $this->getScopeConfig()->getValue(
+            self::XML_PATH_CATALOG_INGESTION_INSTANT_EVENT,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
+        return ($eventsConfigValue !== null) ?
+            explode(',', $eventsConfigValue) : [];
+    }
+
+    /**
+     * Returns if system configuration request enabled
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return bool
+     */
+    public function getIsSystemConfigurationUpdateRequestEnabled($websiteId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_CATALOG_INGESTION_SYSTEM_CONFIGURATION_UPDATE_REQUEST,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
     }
 }
