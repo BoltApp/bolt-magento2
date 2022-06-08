@@ -22,7 +22,6 @@ use Magento\InventorySalesApi\Api\Data\SalesEventInterface;
 use Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventInterface;
 use Magento\InventorySalesApi\Api\AreProductsSalableInterface;
 use Magento\InventorySalesApi\Api\GetStockBySalesChannelInterface;
-use Magento\InventorySalesApi\Api\Data\IsProductSalableResultInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 
 /**
@@ -85,7 +84,7 @@ class PlaceReservationsForSalesEventPlugin
         foreach ($items as $item) {
             $skus[] = $item->getSku();
         }
-        /** @var IsProductSalableResultInterface[] $oldSalesItems */
+
         $productsSalableStatusOld = $this->areProductsSalable->execute($skus, $stockId);
         $proceed($items, $salesChannel, $salesEvent);
         $productsSalableStatus = $this->areProductsSalable->execute($skus, $stockId);
