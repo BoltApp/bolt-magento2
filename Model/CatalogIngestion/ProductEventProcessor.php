@@ -240,6 +240,9 @@ class ProductEventProcessor
      */
     public function processProductEventSalableResultItemsBased(array $productsSalableStatus, array $productsSalableStatusOld): void
     {
+        if (!$this->featureSwitches->isCatalogIngestionEnabled()) {
+            return;
+        }
         foreach ($productsSalableStatus as $key => $salableStatus) {
             try {
                 $productId = $this->productFactory->create()->getIdBySku($salableStatus->getSku());
