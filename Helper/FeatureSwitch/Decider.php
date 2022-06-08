@@ -477,7 +477,7 @@ class Decider extends AbstractHelper
     }
 
     /**
-     * Checks whether the feature switch for store configuration is enabled
+     * Checks whether the feature switch for store configuration webhook is enabled
      *
      * @return bool whether the feature switch is enabled
      *
@@ -485,6 +485,6 @@ class Decider extends AbstractHelper
      */
     public function isStoreConfigurationEnabled()
     {
-        return $this->isSwitchEnabled(Definitions::M2_STORE_CONFIGURATION);
+        return $this->isSwitchEnabled(Definitions::M2_STORE_CONFIGURATION_WEBHOOK);
     }
 }

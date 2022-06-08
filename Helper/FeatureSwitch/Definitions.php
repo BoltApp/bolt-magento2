@@ -283,9 +283,9 @@ class Definitions
     const M2_CATALOG_INGESTION = 'M2_CATALOG_INGESTION';
 
     /**
-     * Enable store configuration update request
+     * Enable store configuration webhook
      */
-    const M2_STORE_CONFIGURATION = 'M2_STORE_CONFIGURATION';
+    const M2_STORE_CONFIGURATION_WEBHOOK = 'M2_STORE_CONFIGURATION_WEBHOOK';
 
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
@@ -580,12 +580,12 @@ class Definitions
             self::NAME_KEY        => self::M2_CATALOG_INGESTION,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
-            self::ROLLOUT_KEY     => 100
+            self::ROLLOUT_KEY     => 0
         ],
-        self::M2_STORE_CONFIGURATION => [
-            self::NAME_KEY        => self::M2_STORE_CONFIGURATION,
+        self::M2_STORE_CONFIGURATION_WEBHOOK => [
+            self::NAME_KEY        => self::M2_STORE_CONFIGURATION_WEBHOOK,
             self::VAL_KEY         => true,
-            self::DEFAULT_VAL_KEY => true,
+            self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
         ]
     ];
