@@ -273,6 +273,11 @@ class Config extends AbstractHelper
     const XML_PATH_CATALOG_INGESTION_ENABLED = 'payment/boltpay/catalog_ingestion_enabled';
 
     /**
+     * Path for catalog ingestion cron max items
+     */
+    const XML_PATH_CATALOG_INGESTION_CRON_MAX_ITEMS = 'payment/boltpay/catalog_ingestion_cron_max_items';
+
+    /**
      * Path for catalog ingestion instant enabled
      */
     const XML_PATH_CATALOG_INGESTION_INSTANT_ENABLED = 'payment/boltpay/catalog_ingestion_instant_enabled';
@@ -2551,6 +2556,22 @@ class Config extends AbstractHelper
         );
     }
 
+    /**
+     * Returns catalog ingestion maximum cron items count witch will be processed.
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return string
+     */
+    public function getCatalogIngestionCronMaxItems($websiteId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_CATALOG_INGESTION_CRON_MAX_ITEMS,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
+    }
+    
     /**
      * Returns if catalog ingestion by instant job.
      *

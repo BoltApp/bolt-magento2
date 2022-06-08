@@ -82,6 +82,7 @@ tr.shipping.totals td.amount span.price,
                 <connect_magento_integration_mode>0</connect_magento_integration_mode>
                 <catalog_ingestion_enabled>0</catalog_ingestion_enabled>
                 <catalog_ingestion_cron_expr>*/5 * * * *</catalog_ingestion_cron_expr>
+                <catalog_ingestion_cron_max_items>100</catalog_ingestion_cron_max_items>
                 <catalog_ingestion_instant_enabled>1</catalog_ingestion_instant_enabled>
                 <catalog_ingestion_instant_async_enabled>0</catalog_ingestion_instant_async_enabled>
                 <catalog_ingestion_instant_events>product_stock_status</catalog_ingestion_instant_events>
