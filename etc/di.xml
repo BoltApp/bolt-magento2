@@ -296,4 +296,16 @@
     <!-- Catalog ingestion product events -->
     <preference for="Bolt\Boltpay\Api\Data\ProductEventInterface" type="Bolt\Boltpay\Model\CatalogIngestion\ProductEvent" />
     <preference for="Bolt\Boltpay\Api\ProductEventRepositoryInterface" type="Bolt\Boltpay\Model\CatalogIngestion\ProductEventRepository" />
+    <preference for="Bolt\Boltpay\Api\ProductEventManagerInterface" type="Bolt\Boltpay\Model\CatalogIngestion\ProductEventManager" />
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\ProductEventPublisher">
+        <arguments>
+            <argument name="bulkManagementClass" xsi:type="string">Magento\AsynchronousOperations\Model\BulkManagement</argument>
+            <argument name="operationFactoryClass" xsi:type="string">Magento\AsynchronousOperations\Api\Data\OperationInterfaceFactory</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\Request\Product\DataProcessor">
+        <arguments>
+            <argument name="getSalableQuantityDataBySkuClass" xsi:type="string">Magento\InventorySalesAdminUi\Model\GetSalableQuantityDataBySku</argument>
+        </arguments>
+    </type>
 </config>
