@@ -20,9 +20,10 @@ use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
 use Magento\InventorySalesApi\Api\Data\SalesChannelInterface;
 use Magento\InventorySalesApi\Api\Data\SalesEventInterface;
 use Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventInterface;
-use Magento\InventorySalesApi\Api\AreProductsSalableInterface;
 use Magento\InventorySalesApi\Api\GetStockBySalesChannelInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\App\ObjectManager;
+use Magento\InventorySalesApi\Api\AreProductsSalableInterface;
 
 /**
  * Triggering catalog ingestion process during product inventory reservation update
@@ -40,23 +41,29 @@ class PlaceReservationsForSalesEventPlugin
     private $getStockBySalesChannel;
 
     /**
-     * @var AreProductsSalableInterface
+     * @var string
      */
-    private $areProductsSalable;
+    private $areProductsSalableClass;
+
+    /**
+     * @var ObjectManager
+     */
+    private $objectManager;
 
     /**
      * @param ProductEventProcessor $productEventProcessor
      * @param GetStockBySalesChannelInterface $getStockBySalesChannel
-     * @param AreProductsSalableInterface $areProductsSalable
+     * @param string|null $areProductsSalable
      */
     public function __construct(
         ProductEventProcessor $productEventProcessor,
         GetStockBySalesChannelInterface $getStockBySalesChannel,
-        AreProductsSalableInterface $areProductsSalable
+        string $areProductsSalableClass = null
     ) {
+        $this->objectManager = ObjectManager::getInstance();
         $this->productEventProcessor = $productEventProcessor;
         $this->getStockBySalesChannel = $getStockBySalesChannel;
-        $this->areProductsSalable = $areProductsSalable;
+        $this->areProductsSalableClass = $areProductsSalableClass;
     }
 
 
@@ -76,7 +83,9 @@ class PlaceReservationsForSalesEventPlugin
         SalesChannelInterface $salesChannel,
         SalesEventInterface $salesEvent
     ): void {
-        if (empty($items)) {
+        /** @var AreProductsSalableInterface $areProductsSalable */
+        $areProductsSalable = $this->initAreProductsSalableClass();
+        if (empty($items) || !$areProductsSalable) {
             $proceed($items, $salesChannel, $salesEvent);
             return;
         }
@@ -85,12 +94,26 @@ class PlaceReservationsForSalesEventPlugin
         foreach ($items as $item) {
             $skus[] = $item->getSku();
         }
-        $productsSalableStatusOld = $this->areProductsSalable->execute($skus, $stockId);
+        $productsSalableStatusOld = $areProductsSalable->execute($skus, $stockId);
         $proceed($items, $salesChannel, $salesEvent);
-        $productsSalableStatus = $this->areProductsSalable->execute($skus, $stockId);
+        $productsSalableStatus = $areProductsSalable->execute($skus, $stockId);
         $this->productEventProcessor->processProductEventSalableResultItemsBased(
             $productsSalableStatus,
             $productsSalableStatusOld
         );
+    }
+
+    /**
+     * Init areProductsSalableClass instance, for Magento 2.2 support
+     *
+     * @return mixed|null
+     */
+    private function initAreProductsSalableClass()
+    {
+        if (!$this->areProductsSalableClass) {
+            return null;
+        }
+        return (class_exists($this->areProductsSalableClass) || interface_exists($this->areProductsSalableClass))
+            ? $this->objectManager->get($this->areProductsSalableClass) : null;
     }
 }

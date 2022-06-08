@@ -309,6 +309,11 @@
             <argument name="getSalableQuantityDataBySkuClass" xsi:type="string">Magento\InventorySalesAdminUi\Model\GetSalableQuantityDataBySku</argument>
         </arguments>
     </type>
+    <type name="Bolt\Boltpay\Plugin\Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventPlugin">
+        <arguments>
+            <argument name="areProductsSalableClass" xsi:type="string">Magento\InventorySalesApi\Api\AreProductsSalableInterface</argument>
+        </arguments>
+    </type>
     <type name="Magento\Catalog\Api\ProductRepositoryInterface">
         <plugin name="publishProductEventAfterProductDelete"
                 type="Bolt\Boltpay\Plugin\Magento\Catalog\Api\ProductRepositoryPlugin"/>
