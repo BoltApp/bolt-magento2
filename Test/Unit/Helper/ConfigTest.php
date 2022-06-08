@@ -1223,7 +1223,7 @@ Room 4000',
         $e = new \Exception(__('Test'));
         $composerFactory->expects(self::once())->method('getVersion')->willThrowException($e);
         TestHelper::setInaccessibleProperty($this->configHelper, 'composerFactory', $composerFactory);
-        $this->assertNull($this->configHelper->getComposerVersion());
+        $this->assertEquals('', $this->configHelper->getComposerVersion());
     }
 
     /**
@@ -1315,7 +1315,7 @@ Room 4000',
         $composerFactory->expects(self::once())->method('findPackage')->with(Config::BOLT_COMPOSER_NAME, '*')->willReturn(null);
         $composerFactory->expects(self::never())->method('getVersion');
         TestHelper::setInaccessibleProperty($this->configHelper, 'composerFactory', $composerFactory);
-        $this->assertNull($this->configHelper->getComposerVersion());
+        $this->assertEquals('', $this->configHelper->getComposerVersion());
     }
 
     /**
