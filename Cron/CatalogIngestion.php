@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Cron;
 
 use Bolt\Boltpay\Api\ProductEventRepositoryInterface;
 use Bolt\Boltpay\Api\ProductEventManagerInterface;
+use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Exception\CouldNotSaveException;
 
@@ -27,6 +28,8 @@ use Magento\Framework\Exception\CouldNotSaveException;
  */
 class CatalogIngestion
 {
+    private const DEFAULT_MAX_ITEMS_COUNT = 100;
+
     /**
      * @var ProductEventRepositoryInterface
      */
@@ -43,18 +46,26 @@ class CatalogIngestion
     private $productEventManager;
 
     /**
+     * @var Config
+     */
+    private $config;
+
+    /**
      * @param ProductEventRepositoryInterface $productEventRepository
      * @param ProductEventManagerInterface $productEventManager
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param Config $config
      */
     public function __construct(
         ProductEventRepositoryInterface $productEventRepository,
         ProductEventManagerInterface $productEventManager,
-        SearchCriteriaBuilder $searchCriteriaBuilder
+        SearchCriteriaBuilder $searchCriteriaBuilder,
+        Config $config
     ) {
         $this->productEventRepository = $productEventRepository;
         $this->productEventManager = $productEventManager;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->config = $config;
     }
 
     /**
@@ -65,13 +76,14 @@ class CatalogIngestion
      */
     public function execute(): void
     {
+        $pageSize = ($this->config->getCatalogIngestionCronMaxItems()) ?
+            $this->config->getCatalogIngestionCronMaxItems() : self::DEFAULT_MAX_ITEMS_COUNT;
         $searchCriteria = $this->searchCriteriaBuilder->create();
-
+        $searchCriteria->setPageSize((int)$pageSize);
         $productEvents = $this->productEventRepository->getList($searchCriteria);
         if (empty($productEvents->getItems())) {
             return;
         }
-
         foreach ($productEvents->getItems() as $productEvent) {
             $result = $this->productEventManager->sendProductEvent($productEvent);
             if ($result === true) {
