@@ -340,4 +340,7 @@
     <type name="Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventInterface">
         <plugin name="publishBoltProductEventAfterPlacingReservation" type="Bolt\Boltpay\Plugin\Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventPlugin" />
     </type>
+    <type name="Magento\Config\Model\Config">
+        <plugin name="boltRequestAfterConfigurationChange" type="Bolt\Boltpay\Plugin\Magento\Config\Model\ConfigPlugin" />
+    </type>
 </config>
