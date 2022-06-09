@@ -586,7 +586,7 @@ class Config extends AbstractHelper
         if ($this->isSandboxModeSet($storeId)) {
             return $this->getApiUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_API, self::API_URL_SANDBOX);
         }
-        return self::API_URL_PRODUCTION ?: '';
+        return self::API_URL_PRODUCTION;
     }
 
     /**
