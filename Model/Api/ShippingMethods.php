@@ -882,7 +882,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 ]);
             });
 
-            $this->bugsnag->notifyError('Shipping Method Error', $error);
+            $this->bugsnag->notifyError('Shipping Method Error', var_export($errors, true));
         }
 
         if (!$shippingMethods) {

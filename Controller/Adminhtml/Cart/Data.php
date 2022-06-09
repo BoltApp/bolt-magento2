@@ -45,7 +45,6 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
 {
     /**
      * @var JsonFactory
-     * @deprecated
      */
     private $resultJsonFactory;
 

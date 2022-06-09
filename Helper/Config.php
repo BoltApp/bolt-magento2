@@ -1526,6 +1526,7 @@ class Config extends AbstractHelper
                 }
             }
         }
+        return '';
     }
 
     /**

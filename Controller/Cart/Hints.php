@@ -64,8 +64,8 @@ class Hints extends Action
      */
     public function execute()
     {
+        $result = $this->resultJsonFactory->create();
         try {
-            $result = $this->resultJsonFactory->create();
             $hints = $this->cartHelper->getHints(null, 'product');
             $result->setData([
                 'hints' => $hints

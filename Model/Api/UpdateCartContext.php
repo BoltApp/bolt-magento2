@@ -240,12 +240,12 @@ class UpdateCartContext
         DiscountHelper              $discountHelper,
         TotalsCollector             $totalsCollector,
         SessionHelper               $sessionHelper,
-        CacheInterface              $cache = null,
         EventsForThirdPartyModules  $eventsForThirdPartyModules,
         ProductRepositoryInterface  $productRepositoryInterface,
         StockStateInterface         $stockStateInterface,
         CartRepositoryInterface     $cartRepositoryInterface,
         Decider                     $featureSwitches,
+        CacheInterface              $cache = null,
         CartExtensionFactory        $cartExtensionFactory = null,
         ShippingAssignmentProcessor $shippingAssignmentProcessor = null
     ) {
@@ -268,13 +268,13 @@ class UpdateCartContext
         $this->discountHelper = $discountHelper;
         $this->totalsCollector = $totalsCollector;
         $this->sessionHelper = $sessionHelper;
-        $this->cache = $cache ?: \Magento\Framework\App\ObjectManager::getInstance()
-                ->get(\Magento\Framework\App\CacheInterface::class);
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockStateInterface = $stockStateInterface;
         $this->cartRepositoryInterface = $cartRepositoryInterface;
         $this->featureSwitches = $featureSwitches;
+        $this->cache = $cache ?: \Magento\Framework\App\ObjectManager::getInstance()
+                ->get(\Magento\Framework\App\CacheInterface::class);
         $this->cartExtensionFactory = $cartExtensionFactory
             ?? \Magento\Framework\App\ObjectManager::getInstance()->get(CartExtensionFactory::class);
         $this->shippingAssignmentProcessor = $shippingAssignmentProcessor

@@ -190,8 +190,8 @@ class CreateOrder implements CreateOrderInterface
         $order = null,
         $currency = null
     ) {
+        $startTime = $this->metricsClient->getCurrentTime();
         try {
-            $startTime = $this->metricsClient->getCurrentTime();
             $payload = $this->request->getContent();
             $this->logHelper->addInfoLog('[-= Pre-Auth CreateOrder =-]');
             $this->logHelper->addInfoLog($payload);

@@ -192,8 +192,6 @@ class RewardPoints
     
     /**
      * Check whether the customer choose to use maximum
-     *
-     * @return string
      */
     private function getAppliedRewardsMode()
     {

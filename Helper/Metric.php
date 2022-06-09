@@ -57,7 +57,7 @@ class Metric implements \JsonSerializable
     /**
      * Required function to use the json_encode function
      *
-     * @return array()
+     * @return array
      */
     public function jsonSerialize(): array
     {
