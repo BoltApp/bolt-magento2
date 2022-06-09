@@ -22,6 +22,7 @@ use Bolt\Boltpay\Api\ProductEventManagerInterface;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Logger\Logger;
 use Bolt\Boltpay\Model\Config\Source\Catalog\Ingestion\Events;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\CatalogInventory\Api\Data\StockItemInterface;
 use Magento\Inventory\Model\SourceItem;
@@ -83,6 +84,11 @@ class ProductEventProcessor
     private $eavConfig;
 
     /**
+     * @var Decider
+     */
+    private $featureSwitches;
+
+    /**
      * @var Logger
      */
     private $logger;
@@ -93,6 +99,7 @@ class ProductEventProcessor
      * @param ProductFactory $productFactory
      * @param ProductWebsiteLink $productWebsiteLink
      * @param EavConfig $eavConfig
+     * @param Decider $featureSwitches
      * @param Logger $logger
      */
     public function __construct(
@@ -101,6 +108,7 @@ class ProductEventProcessor
         ProductFactory $productFactory,
         ProductWebsiteLink $productWebsiteLink,
         EavConfig $eavConfig,
+        Decider $featureSwitches,
         Logger $logger
     ) {
         $this->productEventManager = $productEventManager;
@@ -108,6 +116,7 @@ class ProductEventProcessor
         $this->productFactory = $productFactory;
         $this->productWebsiteLink = $productWebsiteLink;
         $this->eavConfig = $eavConfig;
+        $this->featureSwitches = $featureSwitches;
         $this->logger = $logger;
     }
 
@@ -121,6 +130,9 @@ class ProductEventProcessor
      */
     public function processProductEventSourceItemsBased(array $sourceItems, bool $forcePublish = false): void
     {
+        if (!$this->featureSwitches->isCatalogIngestionEnabled()) {
+            return;
+        }
         try {
             foreach ($sourceItems as $sourceItem) {
                 /** @var SourceItem $sourceItem */
@@ -163,6 +175,9 @@ class ProductEventProcessor
         StockItemInterface $oldStockItem = null
     ): void
     {
+        if (!$this->featureSwitches->isCatalogIngestionEnabled()) {
+            return;
+        }
         $websiteIds = $this->productWebsiteLink->getWebsiteIdsByProductId($stockItem->getProductId());
         if (!$oldStockItem) {
             return;
@@ -193,6 +208,9 @@ class ProductEventProcessor
      */
     public function processProductEventUpdateByProduct(Product $product, $forcePublish = false)
     {
+        if (!$this->featureSwitches->isCatalogIngestionEnabled()) {
+            return;
+        }
         $websiteIds = $product->getWebsiteIds();
         foreach ($websiteIds as $websiteId) {
             try {
@@ -222,6 +240,9 @@ class ProductEventProcessor
      */
     public function processProductEventSalableResultItemsBased(array $productsSalableStatus, array $productsSalableStatusOld): void
     {
+        if (!$this->featureSwitches->isCatalogIngestionEnabled()) {
+            return;
+        }
         foreach ($productsSalableStatus as $key => $salableStatus) {
             try {
                 $productId = $this->productFactory->create()->getIdBySku($salableStatus->getSku());

@@ -23,6 +23,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Api\StoreRepositoryInterface;
 use Magento\Framework\App\ScopeInterface as AppScopeInterface;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Send bolt request after configuration save
@@ -50,21 +51,29 @@ class ConfigPlugin
     private $storeRepository;
 
     /**
+     * @var Decider
+     */
+    private $featureSwitches;
+
+    /**
      * @param StoreConfigurationManagerInterface $storeConfigurationManager
      * @param BoltConfig $boltConfig
      * @param WebsiteRepositoryInterface $websiteRepository
      * @param StoreRepositoryInterface $storeRepository
+     * @param Decider $featureSwitches
      */
     public function __construct(
         StoreConfigurationManagerInterface $storeConfigurationManager,
         BoltConfig $boltConfig,
         WebsiteRepositoryInterface $websiteRepository,
-        StoreRepositoryInterface $storeRepository
+        StoreRepositoryInterface $storeRepository,
+        Decider $featureSwitches
     ) {
         $this->storeConfigurationManager = $storeConfigurationManager;
         $this->boltConfig = $boltConfig;
         $this->websiteRepository = $websiteRepository;
         $this->storeRepository = $storeRepository;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
@@ -78,7 +87,9 @@ class ConfigPlugin
         Config $subject,
         Config $result
     ): Config {
-
+        if (!$this->featureSwitches->isStoreConfigurationWebhookEnabled()) {
+            return $result;
+        }
         if ($result->getScope() == AppScopeInterface::SCOPE_DEFAULT) {
             $websites = $this->websiteRepository->getList();
             foreach ($websites as $website) {
