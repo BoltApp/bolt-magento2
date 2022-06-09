@@ -309,4 +309,35 @@
             <argument name="getSalableQuantityDataBySkuClass" xsi:type="string">Magento\InventorySalesAdminUi\Model\GetSalableQuantityDataBySku</argument>
         </arguments>
     </type>
+    <type name="Bolt\Boltpay\Plugin\Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventPlugin">
+        <arguments>
+            <argument name="areProductsSalableClass" xsi:type="string">Magento\InventorySalesApi\Api\AreProductsSalableInterface</argument>
+        </arguments>
+    </type>
+    <type name="Magento\Catalog\Api\ProductRepositoryInterface">
+        <plugin name="publishProductEventAfterProductDelete"
+                type="Bolt\Boltpay\Plugin\Magento\Catalog\Api\ProductRepositoryPlugin"/>
+    </type>
+    <type name="Magento\InventoryApi\Api\SourceItemsSaveInterface">
+        <plugin name="publishProductEventAfterSourceItemsSave"
+                type="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\SourceItemSavePlugin"/>
+    </type>
+    <type name="Magento\InventoryApi\Api\SourceItemsDeleteInterface">
+        <plugin name="publishProductEventAfterSourceItemsDelete"
+                type="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\SourceItemsDeletePlugin"/>
+    </type>
+    <type name="Magento\Inventory\Model\SourceItem\Command\DecrementSourceItemQty">
+        <plugin name="publishProductEventAfterSourceItemsDecrementQty"
+                type="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\DecrementSourceItemQtyPlugin"/>
+    </type>
+    <type name="Magento\CatalogInventory\Model\ResourceModel\Stock">
+        <plugin name="publishProductEventAfterCatalogInventorySave"
+                type="Bolt\Boltpay\Plugin\Magento\CatalogInventory\Model\ResourceModel\StockPlugin"/>
+    </type>
+    <type name="Magento\CatalogInventory\Api\StockItemRepositoryInterface">
+        <plugin name="boltCatalogEventPublisher" type="Bolt\Boltpay\Plugin\Magento\CatalogInventory\Api\StockItemRepositoryPlugin" />
+    </type>
+    <type name="Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventInterface">
+        <plugin name="publishBoltProductEventAfterPlacingReservation" type="Bolt\Boltpay\Plugin\Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventPlugin" />
+    </type>
 </config>
