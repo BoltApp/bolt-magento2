@@ -199,7 +199,6 @@ class OAuthRedirect implements OAuthRedirectInterface
     /**
      * Retrieve cookie manager
      *
-     * @deprecated 100.1.0
      * @return \Magento\Framework\Stdlib\Cookie\PhpCookieManager
      */
     private function getCookieManager()

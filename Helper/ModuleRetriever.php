@@ -57,18 +57,18 @@ class ModuleRetriever
     public function getInstalledModules()
     {
         $connection = $this->resource->getConnection();
+        $installedModules = [];
         try {
-            $installedModules = [];
             $rows = $connection->fetchAll('SELECT module, schema_version FROM setup_module');
             foreach ($rows as $row) {
                 $installedModules[] = $this->pluginVersionFactory->create()
                                                                  ->setName($row['module'])
                                                                  ->setVersion($row['schema_version']);
             }
-
-            return $installedModules;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
+        } finally {
+            return $installedModules;
         }
     }
 }

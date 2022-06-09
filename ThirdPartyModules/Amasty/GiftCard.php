@@ -319,8 +319,8 @@ class GiftCard
         if ($source->getId() == $destination->getId()) {
             return;
         }
+        $connection = $this->resourceConnection->getConnection();
         try {
-            $connection = $this->resourceConnection->getConnection();
             $connection->beginTransaction();
             $giftCardTable = $this->resourceConnection->getTableName('amasty_amgiftcard_quote');
 

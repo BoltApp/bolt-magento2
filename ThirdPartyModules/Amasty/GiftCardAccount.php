@@ -402,10 +402,10 @@ class GiftCardAccount
     public function removeAmastyGiftCard($amastyGiftCardAccountManagement, $codeId, $quote)
     {
         try {
-            if ($quote->getExtensionAttributes() && $quote->getExtensionAttributes()->getAmGiftcardQuote()) {
-                $cards = $quote->getExtensionAttributes()->getAmGiftcardQuote()->getGiftCards();
+            if (!$quote->getExtensionAttributes() || !$quote->getExtensionAttributes()->getAmGiftcardQuote()) {
+                return;
             }
-
+            $cards = $quote->getExtensionAttributes()->getAmGiftcardQuote()->getGiftCards();
             $giftCodeExists = false;
             $giftCode = '';
             foreach ($cards as $k => $card) {

@@ -539,8 +539,6 @@ class Rewards
     
     /**
      * Check whether the customer choose to use maximum
-     *
-     * @return string
      */
     private function getAppliedRewardsMode()
     {

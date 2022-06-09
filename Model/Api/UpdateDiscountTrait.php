@@ -555,8 +555,6 @@ trait UpdateDiscountTrait
 
             return false;
         }
-
-        return true;
     }
 
     /**

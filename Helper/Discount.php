@@ -244,7 +244,7 @@ class Discount extends AbstractHelper
      * Apply Unirgy Gift Cert to quote
      *
      * @param Quote $quote
-     * @param string $giftCard
+     * @param \Unirgy\Giftcert\Model\Cert $giftCard
      *
      */
     public function addUnirgyGiftCertToQuote($quote, $giftCard)
