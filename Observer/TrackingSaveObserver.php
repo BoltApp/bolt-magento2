@@ -99,9 +99,8 @@ class TrackingSaveObserver implements ObserverInterface
         if (!$this->decider->isTrackShipmentEnabled()) {
             return;
         }
-
+        $startTime = $this->metricsClient->getCurrentTime();
         try {
-            $startTime = $this->metricsClient->getCurrentTime();
             /** @var \Magento\Sales\Model\Order\Shipment\Track $tracking */
             $tracking = $observer->getEvent()->getTrack();
 

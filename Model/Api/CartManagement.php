@@ -91,7 +91,7 @@ class CartManagement implements CartManagementInterface
      *
      * @param string $cartId
      *
-     * @return \Bolt\Boltpay\Api\Data\GetMaskedQuoteInterface
+     * @return \Bolt\Boltpay\Api\Data\GetMaskedQuoteIDDataInterface
      *
      * @throws WebapiException
      */

@@ -64,7 +64,7 @@ class AutomatedTesting extends AbstractHelper
     private $searchCriteriaBuilder;
 
     /**
-     * @var SortOrderBuilder;
+     * @var SortOrderBuilder
      */
     private $sortOrderBuilder;
 
@@ -271,6 +271,7 @@ class AutomatedTesting extends AbstractHelper
             $simpleStoreItem = $this->convertToStoreItem($simpleProduct, 'simple');
             $virtualStoreItem = $this->convertToStoreItem($virtualProduct, 'virtual');
             $saleStoreItem = $this->convertToStoreItem($saleProduct, 'sale');
+            $storeItems = [];
             $storeItems[] = $simpleStoreItem;
             if ($virtualStoreItem !== null) {
                 $storeItems[] = $virtualStoreItem;

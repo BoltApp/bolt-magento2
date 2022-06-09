@@ -120,7 +120,6 @@ class Tax extends ShippingTax implements TaxInterface
      * @param array $addressData
      * @param array|null $shipping_option
      * @param array|null $ship_to_store_option
-     * @return TotalsInformationInterface
      */
     public function setAddressInformation($addressData, $shipping_option, $ship_to_store_option)
     {
@@ -128,7 +127,7 @@ class Tax extends ShippingTax implements TaxInterface
         $this->addressInformation->setAddress($address);
 
         if ($this->quote->isVirtual() || (!$shipping_option && !$ship_to_store_option)) {
-            return ;
+            return;
         }
 
         if ($shipping_option) {

@@ -57,8 +57,8 @@ class ThirdPartyModuleFactory
     ) {
         $this->_moduleManager = $moduleManager;
         $this->_objectManager = $objectManager;
-        $this->moduleName = $moduleName;
-        $this->className = $className;
+        $this->moduleName = $moduleName ?: '';
+        $this->className = $className ?: '';
         $this->logHelper = $logHelper;
     }
 

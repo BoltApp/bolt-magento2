@@ -2691,6 +2691,7 @@ class Cart extends AbstractHelper
                 $this->metricsClient->processMetric("order_token.success", 1, "order_token.latency", $startTime);
             } else {
                 // Empty cart - order_token not fetched because doesn't exist. Not a failure.
+                $responseData = [];
                 $responseData['cart'] = [];
             }
 

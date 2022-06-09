@@ -328,6 +328,7 @@ abstract class UpdateCartCommon
     {
         $items = $quote->getAllVisibleItems();
         $currencyCode = $quote->getQuoteCurrencyCode();
+        $products = [];
 
         foreach ($items as $item) {
             $product = [];

@@ -97,7 +97,7 @@ class JWK
         if (!isset($jwk['kty'])) {
             throw new UnexpectedValueException('JWK must contain a "kty" parameter');
         }
-
+        $publicKey = '';
         switch ($jwk['kty']) {
             case 'RSA':
                 if (\array_key_exists('d', $jwk)) {
@@ -114,11 +114,12 @@ class JWK
                         'OpenSSL error: ' . \openssl_error_string()
                     );
                 }
-                return $publicKey;
+                break;
             default:
                 // Currently only RSA is supported
                 break;
         }
+        return $publicKey;
     }
 
     /**

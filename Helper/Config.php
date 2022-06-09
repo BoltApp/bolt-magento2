@@ -632,7 +632,7 @@ class Config extends AbstractHelper
         if ($this->isSandboxModeSet($storeId)) {
             return $this->getMerchantDashboardUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_MERCHANT_DASH, self::MERCHANT_DASH_SANDBOX);
         }
-        return self::MERCHANT_DASH_PRODUCTION;
+        return self::MERCHANT_DASH_PRODUCTION ?: '';
     }
 
     /**
@@ -648,7 +648,7 @@ class Config extends AbstractHelper
         if ($this->isSandboxModeSet($storeId)) {
             return $this->getCdnUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_SANDBOX);
         }
-        return self::CDN_URL_PRODUCTION;
+        return self::CDN_URL_PRODUCTION ?: '';
     }
 
     /**
@@ -666,7 +666,7 @@ class Config extends AbstractHelper
         } else if ($isAllowCustomURLForProduction) {
             $url = $this->getCdnUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_PRODUCTION);
         } else {
-            $url = self::CDN_URL_PRODUCTION;
+            $url = self::CDN_URL_PRODUCTION ?: '';
         }
         return $url . '/checkout';
     }
@@ -684,7 +684,7 @@ class Config extends AbstractHelper
         if ($this->isSandboxModeSet($storeId)) {
             return $this->getAccountUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_ACCOUNT, self::ACCOUNT_URL_SANDBOX);
         }
-        return self::ACCOUNT_URL_PRODUCTION;
+        return self::ACCOUNT_URL_PRODUCTION ?: '';
     }
 
     /**
@@ -711,11 +711,11 @@ class Config extends AbstractHelper
     /**
      * Get module version
      *
-     * @return false|string
+     * @return string
      */
     public function getModuleVersion()
     {
-        return $this->moduleResource->getDataVersion('Bolt_Boltpay');
+        return $this->moduleResource->getDataVersion('Bolt_Boltpay') ?: '';
     }
 
     /**
@@ -731,20 +731,20 @@ class Config extends AbstractHelper
                 ->getLockedRepository()
                 ->findPackage(self::BOLT_COMPOSER_NAME, '*');
 
-            return ($boltPackage) ? $boltPackage->getVersion() : null;
+            return ($boltPackage) ? $boltPackage->getVersion() : '';
         } catch (Exception $exception) {
-            return null;
+            return '';
         }
     }
 
     /**
      * Get store version
      *
-     * @return false|string
+     * @return string
      */
     public function getStoreVersion()
     {
-        return $this->productMetadata->getVersion();
+        return $this->productMetadata->getVersion() ?: '';
     }
 
     /**
@@ -772,7 +772,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TITLE,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -784,7 +784,7 @@ class Config extends AbstractHelper
      */
     public function getApiKey($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_API_KEY, $storeId);
+        return $this->getEncryptedKey(self::XML_PATH_API_KEY, $storeId) ?: '';
     }
 
     /**
@@ -796,7 +796,7 @@ class Config extends AbstractHelper
      */
     public function getSigningSecret($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_SIGNING_SECRET, $storeId);
+        return $this->getEncryptedKey(self::XML_PATH_SIGNING_SECRET, $storeId) ?: '';
     }
 
     /**
@@ -820,7 +820,7 @@ class Config extends AbstractHelper
      */
     public function getPublishableKeyPayment($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_PAYMENT, $storeId);
+        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_PAYMENT, $storeId) ?: '';
     }
 
     /**
@@ -832,7 +832,7 @@ class Config extends AbstractHelper
      */
     public function getPublishableKeyBackOffice($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE, $storeId);
+        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE, $storeId) ?: '';
     }
 
     /**
@@ -848,7 +848,7 @@ class Config extends AbstractHelper
             self::XML_PATH_BUTTON_COLOR,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -864,7 +864,7 @@ class Config extends AbstractHelper
             self::XML_PATH_REPLACE_SELECTORS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -880,7 +880,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TOTALS_CHANGE_SELECTORS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -896,7 +896,7 @@ class Config extends AbstractHelper
             self::XML_PATH_GLOBAL_CSS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -912,7 +912,7 @@ class Config extends AbstractHelper
             self::XML_PATH_GLOBAL_JS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -922,7 +922,7 @@ class Config extends AbstractHelper
      */
     public function getShowCcTypeInOrderGrid()
     {
-        return $this->getScopeConfig()->getValue(self::XML_PATH_SHOW_CC_TYPE_IN_ORDER_GRID);
+        return $this->getScopeConfig()->getValue(self::XML_PATH_SHOW_CC_TYPE_IN_ORDER_GRID) ?: '';
     }
 
     /**
@@ -938,7 +938,7 @@ class Config extends AbstractHelper
             self::XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1026,7 +1026,7 @@ class Config extends AbstractHelper
             self::XML_PATH_SUCCESS_PAGE_REDIRECT,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1042,7 +1042,7 @@ class Config extends AbstractHelper
             self::XML_PATH_JAVASCRIPT_SUCCESS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1107,7 +1107,7 @@ class Config extends AbstractHelper
             self::XML_PATH_PRODUCT_ORDER_MANAGEMENT_SELECTOR,
             ScopeInterface::SCOPE_STORE,
             $store
-        );
+        ) ?: '';
     }
 
     /**
@@ -1220,7 +1220,7 @@ class Config extends AbstractHelper
      */
     public function getGeolocationApiKey($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_GEOLOCATION_API_KEY, $storeId);
+        return $this->getEncryptedKey(self::XML_PATH_GEOLOCATION_API_KEY, $storeId) ?: '';
     }
 
     /**
@@ -1236,7 +1236,7 @@ class Config extends AbstractHelper
             self::XML_PATH_ADDITIONAL_JS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1250,7 +1250,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_CHECKOUT_START,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1264,7 +1264,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_EMAIL_ENTER,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1278,7 +1278,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_SHIPPING_DETAILS_COMPLETE,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1292,7 +1292,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1306,7 +1306,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_PAYMENT_SUBMIT,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1320,7 +1320,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_SUCCESS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1334,7 +1334,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_CLOSE,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1507,7 +1507,7 @@ class Config extends AbstractHelper
      *
      * @param null $storeId
      *
-     * @return string
+     * @return int
      */
     public function getPriceFaultTolerance($storeId = null)
     {
@@ -1556,6 +1556,7 @@ class Config extends AbstractHelper
                 }
             }
         }
+        return '';
     }
 
     /**
@@ -2290,7 +2291,7 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_CONNECT_INTEGRATION_MODE
-        );
+        ) ?: '';
     }
 
     /**
@@ -2387,7 +2388,7 @@ class Config extends AbstractHelper
             $path,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
 
         //Decrypt management key
         $key = $this->encryptor->decrypt($key);
@@ -2486,7 +2487,7 @@ class Config extends AbstractHelper
      */
     public function getCdnUrlFromAdditionalConfig($storeId = null)
     {
-        return $this->getAdditionalConfigProperty('cdnURL', $storeId);
+        return $this->getAdditionalConfigProperty('cdnURL', $storeId) ?: '';
     }
 
     /**
@@ -2503,7 +2504,7 @@ class Config extends AbstractHelper
      */
     public function getAccountUrlFromAdditionalConfig($storeId = null)
     {
-        return $this->getAdditionalConfigProperty('accountURL', $storeId);
+        return $this->getAdditionalConfigProperty('accountURL', $storeId) ?: '';
     }
 
     /**
@@ -2520,7 +2521,7 @@ class Config extends AbstractHelper
      */
     public function getApiUrlFromAdditionalConfig($storeId = null)
     {
-        return $this->getAdditionalConfigProperty('apiURL', $storeId);
+        return $this->getAdditionalConfigProperty('apiURL', $storeId) ?: '';
     }
 
     /**
@@ -2537,7 +2538,7 @@ class Config extends AbstractHelper
      */
     public function getMerchantDashboardUrlFromAdditionalConfig($storeId = null)
     {
-        return $this->getAdditionalConfigProperty('merchantDashboardURL', $storeId);
+        return $this->getAdditionalConfigProperty('merchantDashboardURL', $storeId) ?: '';
     }
 
     /**
