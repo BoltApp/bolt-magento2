@@ -274,12 +274,12 @@ class UpdateCartContextTest extends BoltTestCase
             $this->discountHelper,
             $this->totalsCollector,
             $this->sessionHelper,
-            $this->cache,
             $this->eventsForThirdPartyModules,
             $this->productRepositoryInterface,
             $this->stockStateInterface,
             $this->cartRepositoryInterface,
-            $this->featureSwitches
+            $this->featureSwitches,            
+            $this->cache
         );
         
         static::assertAttributeInstanceOf(Request::class, 'request', $instance);

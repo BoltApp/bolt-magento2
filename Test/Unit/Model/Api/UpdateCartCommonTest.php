@@ -252,12 +252,12 @@ class UpdateCartCommonTest extends BoltTestCase
                     $this->discountHelper,
                     $this->totalsCollector,
                     $this->sessionHelper,
-                    $this->cache,
                     $this->eventsForThirdPartyModules,
                     $this->productRepositoryInterface,
                     $this->stockStateInterface,
                     $this->cartRepository,
-                    $this->featureSwitches
+                    $this->featureSwitches,
+                    $this->cache
                 ]
             )
             ->enableProxyingToOriginalMethods()
