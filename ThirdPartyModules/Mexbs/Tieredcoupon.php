@@ -119,17 +119,17 @@ class Tieredcoupon
     /**
      * Check if the coupon is a valid tiered coupon
      *
-     * @param bool                                            $result
-     * @param \Mexbs\Tieredcoupon\Model\TieredcouponFactory   $mexbsTieredcouponCouponFactory
-     * @param mixed                                           $coupon
-     * @param string                                          $couponCode
+     * @param bool                              $result
+     * @param \Mexbs\Tieredcoupon\Helper\Data   $mexbsTieredcouponHelperData
+     * @param mixed                             $coupon
+     * @param string                            $couponCode
      * @return bool
      */
-    public function isValidCouponObj($result, $mexbsTieredcouponCouponFactory, $coupon, $couponCode)
+    public function isValidCouponObj($result, $mexbsTieredcouponHelperData, $coupon, $couponCode)
     {
         try {
             if (!$result) {
-                $tieredCoupon = $mexbsTieredcouponCouponFactory->create()->load($couponCode, 'code');
+                $tieredCoupon = $mexbsTieredcouponHelperData->getTieredCouponByCouponCode($couponCode);
                 if ($tieredCoupon && $tieredCoupon->getId() && $tieredCoupon->getId() === $coupon->getId()) {
                     return true;
                 }
@@ -144,16 +144,16 @@ class Tieredcoupon
     /**
      * Return the sale rule of applied subcoupon
      *
-     * @param mixed|null                                      $result
-     * @param \Mexbs\Tieredcoupon\Model\TieredcouponFactory   $mexbsTieredcouponCouponFactory
-     * @param mixed                                           $coupon
+     * @param mixed|null                        $result
+     * @param \Mexbs\Tieredcoupon\Helper\Data   $mexbsTieredcouponHelperData
+     * @param mixed                             $coupon
      * @return mixed|null
      */
-    public function getCouponRelatedRule($result, $mexbsTieredcouponCouponFactory, $coupon)
+    public function getCouponRelatedRule($result, $mexbsTieredcouponHelperData, $coupon)
     {
         try {
             if (!$result && $coupon) {
-                $tieredCoupon = $mexbsTieredcouponCouponFactory->create()->load($coupon->getCode(), 'code');
+                $tieredCoupon = $mexbsTieredcouponHelperData->getTieredCouponByCouponCode($coupon->getCode());
                 if ($tieredCoupon && $tieredCoupon->getId() && $tieredCoupon->getId() === $coupon->getId()) {
                     $subCouponCodes = $tieredCoupon->getSubCouponCodes();
                     $quote = $this->sessionHelper->getCheckoutSession()->getQuote();
@@ -182,24 +182,24 @@ class Tieredcoupon
     /**
      * Apply tiered coupon to quote
      *
-     * @param bool                                            $result
-     * @param \Mexbs\Tieredcoupon\Model\TieredcouponFactory   $mexbsTieredcouponCouponFactory
-     * @param string                                          $couponCode
-     * @param mixed                                           $coupon
-     * @param \Magento\Quote\Model\Quote                      $quote
-     * @param \Magento\Quote\Model\Quote                      $addQuote
+     * @param bool                              $result
+     * @param \Mexbs\Tieredcoupon\Helper\Data   $mexbsTieredcouponHelperData
+     * @param string                            $couponCode
+     * @param mixed                             $coupon
+     * @param \Magento\Quote\Model\Quote        $quote
+     * @param \Magento\Quote\Model\Quote        $addQuote
      * @return bool
      */
     public function filterApplyingCouponCode(
         $result,
-        $mexbsTieredcouponCouponFactory,
+        $mexbsTieredcouponHelperData,
         $couponCode,
         $coupon,
         $quote,
         $addQuote
     ) {
         if (!$result) {
-            $tieredCoupon = $mexbsTieredcouponCouponFactory->create()->load($couponCode, 'code');
+            $tieredCoupon = $mexbsTieredcouponHelperData->getTieredCouponByCouponCode($couponCode);
             if ($tieredCoupon->getId() === $coupon->getId()) {
                 if (!is_null($addQuote)) {
                     $addQuote->getShippingAddress()->setCollectShippingRates(true);
@@ -260,18 +260,18 @@ class Tieredcoupon
     /**
      * Apply tiered coupon to discounts for Bolt cart
      *
-     * @param bool                                            $result
-     * @param \Mexbs\Tieredcoupon\Model\TieredcouponFactory   $mexbsTieredcouponCouponFactory
-     * @param \Magento\Quote\Model\Quote                      $quote
+     * @param bool                              $result
+     * @param \Mexbs\Tieredcoupon\Helper\Data   $mexbsTieredcouponHelperData
+     * @param \Magento\Quote\Model\Quote        $quote
      * @return array
      */
     public function filterQuoteDiscountDetails(
         $result,
-        $mexbsTieredcouponCouponFactory,
+        $mexbsTieredcouponHelperData,
         $quote
     ) {
         if ($couponCode = $quote->getCouponCode()) {
-            $tieredCoupon = $mexbsTieredcouponCouponFactory->create()->load($couponCode, 'code');
+            $tieredCoupon = $mexbsTieredcouponHelperData->getTieredCouponByCouponCode($couponCode);
             if ($tieredCoupon && $tieredCoupon->getId()) {
                 list($ruleDiscountDetails, $discounts, $totalAmount) = $result;
                 $subCouponCodes = $tieredCoupon->getSubCouponCodes();

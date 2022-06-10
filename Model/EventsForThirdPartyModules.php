@@ -1191,7 +1191,7 @@ class EventsForThirdPartyModules
             "listeners" => [
                 'Mexbs_Tieredcoupon' => [
                     'module'      => 'Mexbs_Tieredcoupon',
-                    'sendClasses' => ['Mexbs\Tieredcoupon\Model\TieredcouponFactory'],
+                    'sendClasses' => ['Mexbs\Tieredcoupon\Helper\Data'],
                     'boltClass'   => Mexbs_Tieredcoupon::class,
                 ],
             ],
@@ -1200,7 +1200,7 @@ class EventsForThirdPartyModules
             "listeners" => [
                 'Mexbs_Tieredcoupon' => [
                     'module'      => 'Mexbs_Tieredcoupon',
-                    'sendClasses' => ['Mexbs\Tieredcoupon\Model\TieredcouponFactory'],
+                    'sendClasses' => ['Mexbs\Tieredcoupon\Helper\Data'],
                     'boltClass'   => Mexbs_Tieredcoupon::class,
                 ],
             ],
@@ -1209,7 +1209,7 @@ class EventsForThirdPartyModules
             "listeners" => [
                 'Mexbs_Tieredcoupon' => [
                     'module'      => 'Mexbs_Tieredcoupon',
-                    'sendClasses' => ['Mexbs\Tieredcoupon\Model\TieredcouponFactory'],
+                    'sendClasses' => ['Mexbs\Tieredcoupon\Helper\Data'],
                     'boltClass'   => Mexbs_Tieredcoupon::class,
                 ],
             ],
@@ -1234,7 +1234,7 @@ class EventsForThirdPartyModules
             "listeners" => [
                 'Mexbs_Tieredcoupon' => [
                     'module'      => 'Mexbs_Tieredcoupon',
-                    'sendClasses' => ['Mexbs\Tieredcoupon\Model\TieredcouponFactory'],
+                    'sendClasses' => ['Mexbs\Tieredcoupon\Helper\Data'],
                     'boltClass'   => Mexbs_Tieredcoupon::class,
                 ],
             ],
