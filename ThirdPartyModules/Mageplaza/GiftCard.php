@@ -36,11 +36,6 @@ class GiftCard
     private $bugsnagHelper;
 
     /**
-     * @var Discount
-     */
-    protected $discountHelper;
-
-    /**
      * @var Session
      */
     private $sessionHelper;
@@ -57,12 +52,10 @@ class GiftCard
     private $featureSwitches;
 
     public function __construct(
-        Discount $discountHelper,
         Bugsnag $bugsnagHelper,
         Session $sessionHelper,
         Decider  $featureSwitches
     ) {
-        $this->discountHelper = $discountHelper;
         $this->bugsnagHelper = $bugsnagHelper;
         $this->sessionHelper = $sessionHelper;
         $this->featureSwitches = $featureSwitches;
@@ -107,9 +100,9 @@ class GiftCard
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                         'reference' => $giftCardCode,
                         // For v1/discounts.code.apply and v2/cart.update
-                        'discount_type' => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                        'discount_type' => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                         // For v1/merchant/order
-                        'type' => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                        'type' => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                     ];
                     $discountAmount += $amount;
                     $roundedDiscountAmount += $roundedAmount;
@@ -199,7 +192,7 @@ class GiftCard
                 'discount_code' => $code,
                 'discount_amount' => abs(CurrencyUtils::toMinor($giftAmount, $immutableQuote->getQuoteCurrencyCode())),
                 'description' => __('Gift Card'),
-                'discount_type' => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                'discount_type' => Discount::BOLT_DISCOUNT_TYPE_FIXED,
             ];
             return $result;
         } catch (\Exception $e) {

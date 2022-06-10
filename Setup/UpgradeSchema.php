@@ -106,6 +106,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
         $this->setupExternalCustomerEntityTable($setup);
 
+        $this->setupCatalogProductEventTable($setup);
+
         $setup->endSetup();
     }
 
@@ -259,6 +261,80 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 ['nullable' => false],
                 'Customer ID'
             )->setComment('Bolt External Customer Entity table');
+        $setup->getConnection()->createTable($table);
+    }
+
+    private function setupCatalogProductEventTable($setup)
+    {
+        $tableCreated = $setup->getConnection()->isTableExists('bolt_product_event');
+        if ($tableCreated) {
+            return;
+        }
+
+        $table = $setup->getConnection()
+            ->newTable($setup->getTable('bolt_product_event'))
+            ->addColumn(
+                'id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true],
+                'ID'
+            )
+            ->addColumn(
+                'product_id',
+                \Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+                null,
+                ['unsigned' => true, 'nullable' => false],
+                'Product Id'
+            )
+            ->addColumn(
+                'type',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                255,
+                ['unsigned' => true, 'nullable' => false],
+                'Operation type'
+            )
+            ->addColumn(
+                'created_at',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TIMESTAMP,
+                null,
+                [
+                    'nullable' => false,
+                    'default'  => \Magento\Framework\DB\Ddl\Table::TIMESTAMP_INIT
+                ],
+                'Created At'
+            )
+            ->addIndex(
+                $setup->getIdxName(
+                    $setup->getTable('bolt_product_event'),
+                    ['created_at']
+                ),
+                ['created_at']
+            )
+            ->addIndex(
+                $setup->getIdxName(
+                    $setup->getTable('bolt_product_event'),
+                    ['type']
+                ),
+                ['type']
+            )
+            ->addIndex(
+                $setup->getIdxName(
+                    $setup->getTable('bolt_product_event'),
+                    ['product_id']
+                ),
+                ['product_id']
+            )
+            ->addIndex(
+                $setup->getIdxName(
+                    $setup->getTable('bolt_product_event'),
+                    ['product_id'],
+                    \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_UNIQUE
+                ),
+                ['product_id'],
+                ['type' => \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_UNIQUE]
+            )
+            ->setComment('Bolt Product Event Table');
         $setup->getConnection()->createTable($table);
     }
 }

@@ -170,4 +170,11 @@
             <resource ref="Magento_Sales::create" />
         </resources>
     </route>
+    <!--Catalog Ingestion Product Event Request-->
+    <route url="/V1/bolt/boltpay/producteventrequest" method="POST">
+        <service class="Bolt\Boltpay\Api\ProductEventManagerInterface" method="sendProductEvent"/>
+        <resources>
+            <resource ref="Magento_Catalog::products" />
+        </resources>
+    </route>
 </routes>

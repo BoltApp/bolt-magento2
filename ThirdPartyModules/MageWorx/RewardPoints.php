@@ -47,11 +47,6 @@ class RewardPoints
     private $customerSession;
     
     /**
-     * @var Discount
-     */
-    private $discountHelper;
-    
-    /**
      * @var \MageWorx\RewardPoints\Helper\Data
      */
     private $mageWorxRewardPointsHelper;
@@ -69,18 +64,15 @@ class RewardPoints
      * @param Bugsnag          $bugsnagHelper
      * @param CustomerSession  $customerSession
      * @param Config           $configHelper
-     * @param Discount         $discountHelper
      */
     public function __construct(
         Bugsnag $bugsnagHelper,
         CustomerSession $customerSession,
-        Config $configHelper,
-        Discount $discountHelper
+        Config $configHelper
     ) {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->customerSession = $customerSession;
         $this->configHelper = $configHelper;
-        $this->discountHelper = $discountHelper;
     }
     
     /**
@@ -124,16 +116,15 @@ class RewardPoints
                 }
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 $roundedAmount = CurrencyUtils::toMinor($currencyAmount, $currencyCode);
-                $discountType = $this->discountHelper->getBoltDiscountType('by_fixed');
                 $discounts[] = [
                     'description'       => 'Reward Points',
                     'amount'            => $roundedAmount,
                     'reference'         => self::MAGEWORX_REWARD,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                     // For v1/discounts.code.apply and v2/cart.update
-                    'discount_type'     => $discountType,
+                    'discount_type'     => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                     // For v1/merchant/order
-                    'type'              => $discountType,
+                    'type'              => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                 ];
                 $diff -= CurrencyUtils::toMinorWithoutRounding($currencyAmount, $currencyCode) - $roundedAmount;
                 $totalAmount -= $roundedAmount;
@@ -201,8 +192,6 @@ class RewardPoints
     
     /**
      * Check whether the customer choose to use maximum
-     *
-     * @return string
      */
     private function getAppliedRewardsMode()
     {

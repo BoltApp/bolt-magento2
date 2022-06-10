@@ -37,11 +37,6 @@ class Giftcard
     private $bugsnagHelper;
 
     /**
-     * @var Discount
-     */
-    protected $discountHelper;
-
-    /**
      * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
      */
     private $featureSwitches;
@@ -49,18 +44,15 @@ class Giftcard
     /**
      * @param OrderService $orderService Magento order service instance
      * @param Bugsnag $bugsnagHelper Bugsnag helper instance
-     * @param Discount $discountHelper
      * @param Decider  $featureSwitches
      */
     public function __construct(
         OrderService  $orderService,
         Bugsnag       $bugsnagHelper,
-        Discount      $discountHelper,
         Decider       $featureSwitches
     ) {
         $this->orderService   = $orderService;
         $this->bugsnagHelper  = $bugsnagHelper;
-        $this->discountHelper = $discountHelper;
         $this->featureSwitches = $featureSwitches;
     }
 
@@ -96,9 +88,9 @@ class Giftcard
                     'amount'            => CurrencyUtils::toMinor($giftcardQuote->getGiftcardBalance(), $currencyCode),
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                     // For v1/discounts.code.apply and v2/cart.update
-                    'discount_type'     => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                    'discount_type'     => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                     // For v1/merchant/order
-                    'type'              => $this->discountHelper->getBoltDiscountType('by_fixed'),
+                    'type'              => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                 ];
                 $totalAmount -= CurrencyUtils::toMinor($giftcardQuote->getGiftcardAmount(), $currencyCode);
             }
@@ -123,8 +115,8 @@ class Giftcard
         }
 
         try {
-            $storeId = $quote->getStoreId();
-            return $aheadworksGiftcardRepository->getByCode($code, $storeId);
+            $websiteId = $quote->getStore()->getWebsiteId();
+            return $aheadworksGiftcardRepository->getByCode($code, $websiteId);
         } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
             return null;
         } catch (\Exception $e) {
@@ -267,61 +259,54 @@ class Giftcard
     public function replicateQuoteData($aheadworksGiftcardOrderServicePlugin, $aheadworksGiftcardQuoteCollectionFactory, $sourceQuote, $destinationQuote)
     {
         try {
-            // Get applied Aw Giftcards from extension attributes
-            $sourceGiftcards = ($sourceQuote->getExtensionAttributes() && $sourceQuote->getExtensionAttributes()->getAwGiftcardCodes())
-                                ? $sourceQuote->getExtensionAttributes()->getAwGiftcardCodes()
-                                : [];
-            $destinationGiftcards = ($destinationQuote->getExtensionAttributes() && $destinationQuote->getExtensionAttributes()->getAwGiftcardCodes())
-                                    ? $destinationQuote->getExtensionAttributes()->getAwGiftcardCodes()
-                                    : [];
             // Retrieve codes from applied Aw Giftcards
-            $sourceGiftcardCodes = $this->getAppliedAwGiftcardCodes($sourceQuote, $sourceGiftcards, $aheadworksGiftcardQuoteCollectionFactory);
-            $destinationGiftcardCodes = $this->getAppliedAwGiftcardCodes($destinationQuote, $destinationGiftcards, $aheadworksGiftcardQuoteCollectionFactory);
-            // Get Aw Giftcard codes need to be added
-            $addGiftcardCodes = array_diff($sourceGiftcardCodes, $destinationGiftcardCodes);
+            $sourceGiftcardCodes = $this->getAppliedAwGiftcardCodes($sourceQuote);
+            $destinationGiftcardCodes = $this->getAppliedAwGiftcardCodes($destinationQuote);
+
             // Get Aw Giftcard codes need to be removed
             $removeGiftcardCodes = array_diff($destinationGiftcardCodes, $sourceGiftcardCodes);
+
             // Add Aw Giftcard which exists in $sourceQuote but not $destinationQuote
-            foreach ($addGiftcardCodes as $code) {
+            foreach ($sourceGiftcardCodes as $code) {
                 try {
-                    $aheadworksGiftcardOrderServicePlugin->set($destinationQuote->getId(), $code, false);
+                    // on subsequent validation calls from Bolt checkout
+                    // try removing the gift card before adding it
+                    $aheadworksGiftcardOrderServicePlugin->remove($destinationQuote->getId(), $code, false);
                 } catch (\Exception $e) {
-                    $this->bugsnag->notifyException($e);
+    
                 }
+                $aheadworksGiftcardOrderServicePlugin->set($destinationQuote->getId(), $code, false);
             }
             // Remove Aw Giftcard which exists in $destinationQuote but not $sourceQuote
             foreach ($removeGiftcardCodes as $code) {
                 try {
                     $aheadworksGiftcardOrderServicePlugin->remove($destinationQuote->getId(), $code, false);
                 } catch (\Exception $e) {
-                    $this->bugsnag->notifyException($e);
+                    
                 }
             }
         } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
+            $this->bugsnagHelper->notifyException($e);
         }
     }
 
     /**
      * @param Quote $quote
-     * @param \Aheadworks\Giftcard\Api\Data\Giftcard\QuoteInterface $quoteGiftcards
-     * @param \Aheadworks\Giftcard\Model\ResourceModel\Giftcard\Quote\CollectionFactory $aheadworksGiftcardQuoteCollectionFactory
      */
-    private function getAppliedAwGiftcardCodes($quote, $quoteGiftcards, $aheadworksGiftcardQuoteCollectionFactory) {
+    private function getAppliedAwGiftcardCodes($quote) {
         $awGiftcardCodes = [];
+        $quoteGiftcards = ($quote->getExtensionAttributes() && $quote->getExtensionAttributes()->getAwGiftcardCodes())
+                            ? $quote->getExtensionAttributes()->getAwGiftcardCodes()
+                            : [];
         if (!empty($quoteGiftcards)) {
             foreach ($quoteGiftcards as $giftcard) {
-                $giftcardQuoteItems = $aheadworksGiftcardQuoteCollectionFactory->create()
-                    ->addFieldToFilter('quote_id', $quote->getId())
-                    ->addFieldToFilter('giftcard_id', $giftcard->getId())
-                    ->load()
-                    ->getItems();
-                if ($giftcardQuoteItems) {
-                    $awGiftcardCodes[] = $giftcard->getGiftcardCode();
+                if ($giftcard->isRemove()) {
+                    continue;
                 }
+                $awGiftcardCodes[] = $giftcard->getGiftcardCode();
             }
         }
-
+        
         return $awGiftcardCodes;
     }
 }

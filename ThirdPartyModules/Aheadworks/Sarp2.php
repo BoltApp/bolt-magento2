@@ -61,7 +61,7 @@ class Sarp2
         $class = SpecificationFactory::class;
         $globalConfig = $this->configLoader->load(\Magento\Framework\App\Area::AREA_GLOBAL);
         $adminConfig = $this->configLoader->load(\Magento\Framework\App\Area::AREA_ADMINHTML);
-
+        $merged = [];
         if ($this->configLoader instanceof \Magento\Framework\App\ObjectManager\ConfigLoader\Compiled) {
             //PRODUCTION MODE
             $merged['arguments'][$class] = array_merge(

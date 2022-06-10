@@ -285,4 +285,93 @@
         <plugin name="Bolt_Boltpay_Amasty_CommonRules_Model_ResourceModel_Rule_Collection"
                 type="Bolt\Boltpay\Plugin\Amasty\CommonRules\Model\ResourceModel\Rule\CollectionPlugin" sortOrder="10"/>
     </type>
+    <type name="Magento\Ui\Model\Export\MetadataProvider">
+        <plugin name="Bolt_Boltpay_Magento_Ui_Model_Export_MetadataProvider"
+                type="Bolt\Boltpay\Plugin\Magento\Ui\Model\Export\MetadataProviderPlugin" sortOrder="10"/>
+    </type>
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\Reporting">
+        <plugin name="Bolt_Boltpay_Magento_Framework_View_Element_UiComponent_DataProvider_Reporting"
+                type="Bolt\Boltpay\Plugin\Magento\Framework\View\Element\UiComponent\DataProvider\ReportingPlugin" sortOrder="10"/>
+    </type>
+    <!-- Catalog ingestion product events -->
+    <preference for="Bolt\Boltpay\Api\Data\ProductEventInterface" type="Bolt\Boltpay\Model\CatalogIngestion\ProductEvent" />
+    <preference for="Bolt\Boltpay\Api\ProductEventRepositoryInterface" type="Bolt\Boltpay\Model\CatalogIngestion\ProductEventRepository" />
+    <preference for="Bolt\Boltpay\Api\ProductEventManagerInterface" type="Bolt\Boltpay\Model\CatalogIngestion\ProductEventManager" />
+    <preference for="Bolt\Boltpay\Api\StoreConfigurationManagerInterface" type="Bolt\Boltpay\Model\CatalogIngestion\StoreConfigurationManager" />
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\ProductEventPublisher">
+        <arguments>
+            <argument name="bulkManagementClass" xsi:type="string">Magento\AsynchronousOperations\Model\BulkManagement</argument>
+            <argument name="operationFactoryClass" xsi:type="string">Magento\AsynchronousOperations\Api\Data\OperationInterfaceFactory</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\Request\Product\DataProcessor">
+        <arguments>
+            <argument name="getSalableQuantityDataBySkuClass" xsi:type="string">Magento\InventorySalesAdminUi\Model\GetSalableQuantityDataBySku</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Plugin\Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventPlugin">
+        <arguments>
+            <argument name="areProductsSalableClass" xsi:type="string">Magento\InventorySalesApi\Api\AreProductsSalableInterface</argument>
+        </arguments>
+    </type>
+    <type name="Magento\Catalog\Api\ProductRepositoryInterface">
+        <plugin name="publishProductEventAfterProductDelete"
+                type="Bolt\Boltpay\Plugin\Magento\Catalog\Api\ProductRepositoryPlugin"/>
+    </type>
+    <type name="Magento\InventoryApi\Api\SourceItemsSaveInterface">
+        <plugin name="publishProductEventAfterSourceItemsSave"
+                type="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\SourceItemSavePlugin"/>
+    </type>
+    <type name="Magento\InventoryApi\Api\SourceItemsDeleteInterface">
+        <plugin name="publishProductEventAfterSourceItemsDelete"
+                type="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\SourceItemsDeletePlugin"/>
+    </type>
+    <type name="Magento\Inventory\Model\SourceItem\Command\DecrementSourceItemQty">
+        <plugin name="publishProductEventAfterSourceItemsDecrementQty"
+                type="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\DecrementSourceItemQtyPlugin"/>
+    </type>
+    <type name="Magento\CatalogInventory\Model\ResourceModel\Stock">
+        <plugin name="publishProductEventAfterCatalogInventorySave"
+                type="Bolt\Boltpay\Plugin\Magento\CatalogInventory\Model\ResourceModel\StockPlugin"/>
+    </type>
+    <type name="Magento\CatalogInventory\Api\StockItemRepositoryInterface">
+        <plugin name="boltCatalogEventPublisher" type="Bolt\Boltpay\Plugin\Magento\CatalogInventory\Api\StockItemRepositoryPlugin" />
+    </type>
+    <type name="Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventInterface">
+        <plugin name="publishBoltProductEventAfterPlacingReservation" type="Bolt\Boltpay\Plugin\Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventPlugin" />
+    </type>
+    <type name="Magento\Config\Model\Config">
+        <plugin name="boltRequestAfterConfigurationChange" type="Bolt\Boltpay\Plugin\Magento\Config\Model\ConfigPlugin" />
+    </type>
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\ProductEventManager">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionLogger</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\StoreConfigurationManager">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionLogger</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionLogger</argument>
+        </arguments>
+    </type>
+    <virtualType name="Bolt\Boltpay\Logger\CatalogIngestionLogger"
+                 type="Bolt\Boltpay\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">BoltProductEvents</argument>
+            <argument name="handlers"  xsi:type="array">
+                <item name="system" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Bolt\Boltpay\Logger\CatalogIngestionHandler"
+                 type="Bolt\Boltpay\Logger\Handler">
+        <arguments>
+            <argument name="fileName" xsi:type="string">/var/log/bolt-catalog-ingestion.log</argument>
+            <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </virtualType>
 </config>

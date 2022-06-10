@@ -219,11 +219,12 @@ class JWT
             throw new DomainException('Algorithm not supported');
         }
         list($function, $algorithm) = static::$supported_algs[$alg];
+        $signature = '';
         switch ($function) {
             case 'hash_hmac':
-                return \hash_hmac($algorithm, $msg, $key, true);
+                $signature = \hash_hmac($algorithm, $msg, $key, true);
+                break;
             case 'openssl':
-                $signature = '';
                 $success = \openssl_sign($msg, $signature, $key, $algorithm);
                 if (!$success) {
                     throw new DomainException('OpenSSL unable to sign data');
@@ -231,8 +232,11 @@ class JWT
                 if ($alg === 'ES256') {
                     $signature = self::signatureFromDER($signature, 256);
                 }
-                return $signature;
+                break;
+            default:
+                break;
         }
+        return $signature;
     }
 
     /**

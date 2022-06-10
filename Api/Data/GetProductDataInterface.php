@@ -31,7 +31,7 @@ interface GetProductDataInterface
      * Get product info.
      *
      * @api
-     * @return \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface;
+     * @return \Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface
      */
     public function getProductInventory();
 

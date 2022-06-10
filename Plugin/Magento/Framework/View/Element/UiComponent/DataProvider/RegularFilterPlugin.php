@@ -16,13 +16,12 @@
  */
 namespace Bolt\Boltpay\Plugin\Magento\Framework\View\Element\UiComponent\DataProvider;
 
+use Bolt\Boltpay\Model\Payment;
 use Magento\Framework\View\Element\UiComponent\DataProvider\RegularFilter;
 use Magento\Framework\Data\Collection;
 use Magento\Framework\Api\Filter;
 use Magento\Framework\App\ResourceConnection;
-use \Magento\Sales\Model\ResourceModel\Order\Grid\Collection as OrderGridCollection;
-use Bolt\Boltpay\Helper\Config;
-use Bolt\Boltpay\Model\Payment;
+use Magento\Sales\Model\ResourceModel\Order\Grid\Collection as OrderGridCollection;
 
 /**
  * Ui component filter plugin to implement filter sales order grid by bolt payment methods
@@ -30,24 +29,16 @@ use Bolt\Boltpay\Model\Payment;
 class RegularFilterPlugin
 {
     /**
-     * @var Config
-     */
-    private $config;
-
-    /**
      * @var ResourceConnection
      */
     private $resourceConnection;
 
     /**
-     * @param Config $config
      * @param ResourceConnection $resourceConnection
      */
     public function __construct(
-        Config $config,
         ResourceConnection $resourceConnection
     ) {
-        $this->config = $config;
         $this->resourceConnection = $resourceConnection;
     }
 
@@ -73,11 +64,6 @@ class RegularFilterPlugin
         ) {
             $collectionSelect = $collection->getSelect();
             $collectionAdapter = $collectionSelect->getConnection();
-            $collectionSelect->joinLeft(
-                ['payment' => $this->resourceConnection->getTableName('sales_order_payment')],
-                'main_table.entity_id = payment.parent_id',
-                []
-            );
             $paymentMethod = str_replace(Payment::METHOD_CODE . '_', '', $filter->getValue());
             $collectionSelect->where(
                 'main_table.payment_method = "'. Payment::METHOD_CODE .'"

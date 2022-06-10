@@ -34,11 +34,6 @@ class Rewardpoints
     private $bugsnagHelper;
 
     /**
-     * @var Discount
-     */
-    private $discountHelper;
-    
-    /**
      * @var PriceCurrencyInterface
      */
     private $priceCurrency;
@@ -55,18 +50,15 @@ class Rewardpoints
 
     /**
      * @param Bugsnag                $bugsnagHelper
-     * @param Discount               $discountHelper
      * @param PriceCurrencyInterface $priceCurrency
      * @param QuoteRepository        $quoteRepository
      */
     public function __construct(
         Bugsnag $bugsnagHelper,
-        Discount $discountHelper,
         PriceCurrencyInterface $priceCurrency,
         QuoteRepository $quoteRepository
     ) {
         $this->bugsnagHelper = $bugsnagHelper;
-        $this->discountHelper = $discountHelper;
         $this->priceCurrency = $priceCurrency;
         $this->quoteRepository = $quoteRepository;
     }
@@ -107,16 +99,15 @@ class Rewardpoints
                 $discountAmount = abs($this->priceCurrency->convert($pointsValue));        
                 $currencyCode = $quote->getQuoteCurrencyCode();                
                 $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
-                $discount_type = $this->discountHelper->getBoltDiscountType('by_fixed');
                 $discounts[] = [
                     'description'       => 'Reward Points',
                     'amount'            => $roundedDiscountAmount,
                     'reference'         => self::J2T_REWARD_POINTS,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                     // For v1/discounts.code.apply and v2/cart.update
-                    'discount_type'     => $discount_type,
+                    'discount_type'     => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                     // For v1/merchant/order
-                    'type'              => $discount_type,
+                    'type'              => Discount::BOLT_DISCOUNT_TYPE_FIXED,
                 ];                
                 $diff -= CurrencyUtils::toMinorWithoutRounding($discountAmount, $currencyCode) - $roundedDiscountAmount;
                 $totalAmount -= $roundedDiscountAmount;

@@ -368,7 +368,6 @@ class OrderManagement implements OrderManagementInterface
      * Deletes a specified order by ID.
      *
      * @param int $id The order ID.
-     * @return bool
      * @throws \Magento\Framework\Exception\CouldNotDeleteException
      * @throws NoSuchEntityException
      * @throws WebapiException

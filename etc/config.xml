@@ -80,6 +80,13 @@ tr.shipping.totals td.amount span.price,
                 <mageworx_reward_points_on_cart>1</mageworx_reward_points_on_cart>
                 <aheadworks_store_credit_on_cart>1</aheadworks_store_credit_on_cart>
                 <connect_magento_integration_mode>0</connect_magento_integration_mode>
+                <catalog_ingestion_enabled>0</catalog_ingestion_enabled>
+                <catalog_ingestion_cron_expr>*/5 * * * *</catalog_ingestion_cron_expr>
+                <catalog_ingestion_cron_max_items>100</catalog_ingestion_cron_max_items>
+                <catalog_ingestion_instant_enabled>1</catalog_ingestion_instant_enabled>
+                <catalog_ingestion_instant_async_enabled>0</catalog_ingestion_instant_async_enabled>
+                <catalog_ingestion_instant_events>product_stock_status</catalog_ingestion_instant_events>
+                <catalog_ingestion_system_configuration_update_request_enabled>1</catalog_ingestion_system_configuration_update_request_enabled>
             </boltpay>
         </payment>
     </default>

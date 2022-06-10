@@ -422,7 +422,6 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
     /**
      * @param array $result
      * @param Quote $quote
-     * @return array
      * @throws \Exception
      */
     protected function sendSuccessResponse($result, $quote = null)

@@ -388,8 +388,8 @@ class Payment extends AbstractMethod
      */
     public function capture(InfoInterface $payment, $amount)
     {
+        $startTime = $this->metricsClient->getCurrentTime();
         try {
-            $startTime = $this->metricsClient->getCurrentTime();
             if ($payment->getCcTransId()) {
                 // api flow
                 if ($payment->getCcStatusDescription() == "completed") {

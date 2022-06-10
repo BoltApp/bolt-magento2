@@ -539,7 +539,6 @@ class DiscountTest extends BoltTestCase
             ['types' => 'by_fixed', 'expectedResult' => 'fixed_amount'],
             ['types' => 'cart_fixed', 'expectedResult' => 'fixed_amount'],
             ['types' => 'by_percent', 'expectedResult' => 'percentage'],
-            ['types' => 'by_shipping', 'expectedResult' => 'shipping'],
             ['types' => 'none_list', 'expectedResult' => 'fixed_amount'],
             ['types' => '', 'expectedResult' => 'fixed_amount'],
         ];

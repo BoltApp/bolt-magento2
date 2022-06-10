@@ -91,7 +91,7 @@ class Config extends AbstractHelper
      * Path for Global CSS
      */
     const XML_PATH_GLOBAL_CSS = 'payment/boltpay/global_css';
-    
+
     /**
      * Path for Global Javascript
      */
@@ -268,6 +268,36 @@ class Config extends AbstractHelper
     const XML_PATH_GEOLOCATION_API_KEY = 'payment/boltpay/geolocation_api_key';
 
     /**
+     * Path for catalog ingestion enabled
+     */
+    const XML_PATH_CATALOG_INGESTION_ENABLED = 'payment/boltpay/catalog_ingestion_enabled';
+
+    /**
+     * Path for catalog ingestion cron max items
+     */
+    const XML_PATH_CATALOG_INGESTION_CRON_MAX_ITEMS = 'payment/boltpay/catalog_ingestion_cron_max_items';
+
+    /**
+     * Path for catalog ingestion instant enabled
+     */
+    const XML_PATH_CATALOG_INGESTION_INSTANT_ENABLED = 'payment/boltpay/catalog_ingestion_instant_enabled';
+
+    /**
+     * Path for catalog ingestion instant async enabled
+     */
+    const XML_PATH_CATALOG_INGESTION_INSTANT_ASYNC_ENABLED = 'payment/boltpay/catalog_ingestion_instant_async_enabled';
+
+    /**
+     * Path for catalog ingestion instant available custom events
+     */
+    const XML_PATH_CATALOG_INGESTION_INSTANT_EVENT = 'payment/boltpay/catalog_ingestion_instant_events';
+
+    /**
+     * Path for system configuration updates request
+     */
+    const XML_PATH_CATALOG_INGESTION_SYSTEM_CONFIGURATION_UPDATE_REQUEST = 'payment/boltpay/catalog_ingestion_system_configuration_update_request_enabled';
+
+    /**
      * Path for Additional Javascript
      */
     const XML_PATH_ADDITIONAL_JS = 'payment/boltpay/additional_js';
@@ -295,7 +325,7 @@ class Config extends AbstractHelper
      * MiniCart Support configuration path
      */
     const XML_PATH_MINICART_SUPPORT = 'payment/boltpay/minicart_support';
-    
+
     /**
      * Display Bolt Checkout on the Cart Page configuration path
      */
@@ -320,12 +350,12 @@ class Config extends AbstractHelper
      * Use Aheadworks Reward Points on Shopping Cart configuration path
      */
     const XML_PATH_AHEADWORKS_REWARD_POINTS_ON_CART = 'payment/boltpay/aheadworks_reward_points_on_cart';
-    
+
     /**
      * Use Aheadworks Store Credit on Shopping Cart configuration path
      */
     const XML_PATH_AHEADWORKS_STORE_CREDIT_ON_CART = 'payment/boltpay/aheadworks_store_credit_on_cart';
-    
+
     /**
      * Use MageWorx Reward Points on Shopping Cart configuration path
      */
@@ -402,7 +432,7 @@ class Config extends AbstractHelper
 
     /** @var string  */
     const XML_PATH_ORDER_COMMENT_FIELD = 'payment/boltpay/order_comment_field';
-    
+
     /**
      * The mode of Magento integration associated with Bolt API
      */
@@ -602,7 +632,7 @@ class Config extends AbstractHelper
         if ($this->isSandboxModeSet($storeId)) {
             return $this->getMerchantDashboardUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_MERCHANT_DASH, self::MERCHANT_DASH_SANDBOX);
         }
-        return self::MERCHANT_DASH_PRODUCTION;
+        return self::MERCHANT_DASH_PRODUCTION ?: '';
     }
 
     /**
@@ -618,7 +648,7 @@ class Config extends AbstractHelper
         if ($this->isSandboxModeSet($storeId)) {
             return $this->getCdnUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_SANDBOX);
         }
-        return self::CDN_URL_PRODUCTION;
+        return self::CDN_URL_PRODUCTION ?: '';
     }
 
     /**
@@ -636,7 +666,7 @@ class Config extends AbstractHelper
         } else if ($isAllowCustomURLForProduction) {
             $url = $this->getCdnUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_PRODUCTION);
         } else {
-            $url = self::CDN_URL_PRODUCTION;
+            $url = self::CDN_URL_PRODUCTION ?: '';
         }
         return $url . '/checkout';
     }
@@ -654,7 +684,7 @@ class Config extends AbstractHelper
         if ($this->isSandboxModeSet($storeId)) {
             return $this->getAccountUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_ACCOUNT, self::ACCOUNT_URL_SANDBOX);
         }
-        return self::ACCOUNT_URL_PRODUCTION;
+        return self::ACCOUNT_URL_PRODUCTION ?: '';
     }
 
     /**
@@ -681,11 +711,11 @@ class Config extends AbstractHelper
     /**
      * Get module version
      *
-     * @return false|string
+     * @return string
      */
     public function getModuleVersion()
     {
-        return $this->moduleResource->getDataVersion('Bolt_Boltpay');
+        return $this->moduleResource->getDataVersion('Bolt_Boltpay') ?: '';
     }
 
     /**
@@ -701,20 +731,20 @@ class Config extends AbstractHelper
                 ->getLockedRepository()
                 ->findPackage(self::BOLT_COMPOSER_NAME, '*');
 
-            return ($boltPackage) ? $boltPackage->getVersion() : null;
+            return ($boltPackage) ? $boltPackage->getVersion() : '';
         } catch (Exception $exception) {
-            return null;
+            return '';
         }
     }
 
     /**
      * Get store version
      *
-     * @return false|string
+     * @return string
      */
     public function getStoreVersion()
     {
-        return $this->productMetadata->getVersion();
+        return $this->productMetadata->getVersion() ?: '';
     }
 
     /**
@@ -742,7 +772,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TITLE,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -754,7 +784,7 @@ class Config extends AbstractHelper
      */
     public function getApiKey($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_API_KEY, $storeId);
+        return $this->getEncryptedKey(self::XML_PATH_API_KEY, $storeId) ?: '';
     }
 
     /**
@@ -766,7 +796,7 @@ class Config extends AbstractHelper
      */
     public function getSigningSecret($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_SIGNING_SECRET, $storeId);
+        return $this->getEncryptedKey(self::XML_PATH_SIGNING_SECRET, $storeId) ?: '';
     }
 
     /**
@@ -790,7 +820,7 @@ class Config extends AbstractHelper
      */
     public function getPublishableKeyPayment($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_PAYMENT, $storeId);
+        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_PAYMENT, $storeId) ?: '';
     }
 
     /**
@@ -802,7 +832,7 @@ class Config extends AbstractHelper
      */
     public function getPublishableKeyBackOffice($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE, $storeId);
+        return $this->getEncryptedKey(self::XML_PATH_PUBLISHABLE_KEY_BACK_OFFICE, $storeId) ?: '';
     }
 
     /**
@@ -818,7 +848,7 @@ class Config extends AbstractHelper
             self::XML_PATH_BUTTON_COLOR,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -834,7 +864,7 @@ class Config extends AbstractHelper
             self::XML_PATH_REPLACE_SELECTORS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -850,7 +880,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TOTALS_CHANGE_SELECTORS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -866,9 +896,9 @@ class Config extends AbstractHelper
             self::XML_PATH_GLOBAL_CSS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
-    
+
     /**
      * Get Global Javascript from config
      *
@@ -882,7 +912,7 @@ class Config extends AbstractHelper
             self::XML_PATH_GLOBAL_JS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -892,7 +922,7 @@ class Config extends AbstractHelper
      */
     public function getShowCcTypeInOrderGrid()
     {
-        return $this->getScopeConfig()->getValue(self::XML_PATH_SHOW_CC_TYPE_IN_ORDER_GRID);
+        return $this->getScopeConfig()->getValue(self::XML_PATH_SHOW_CC_TYPE_IN_ORDER_GRID) ?: '';
     }
 
     /**
@@ -908,7 +938,7 @@ class Config extends AbstractHelper
             self::XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -953,11 +983,11 @@ class Config extends AbstractHelper
      *
      * The default case where we want button to serve as login and to redirect to home page,
      * we have selector as key and empty object as value.
-     * If we want a button to be used as logout, we again use selector as the key 
+     * If we want a button to be used as logout, we again use selector as the key
      * but have logout set to true in the value object
      * If we want to redirect to an arbitrary page after login, we set the redirect key to desired URL or Magento route
-     * 
-     * 
+     *
+     *
      * @param int|string $storeId scope for which to retrieve additional checkout button attributes
      *
      * @return object
@@ -996,7 +1026,7 @@ class Config extends AbstractHelper
             self::XML_PATH_SUCCESS_PAGE_REDIRECT,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1012,7 +1042,7 @@ class Config extends AbstractHelper
             self::XML_PATH_JAVASCRIPT_SUCCESS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1077,7 +1107,7 @@ class Config extends AbstractHelper
             self::XML_PATH_PRODUCT_ORDER_MANAGEMENT_SELECTOR,
             ScopeInterface::SCOPE_STORE,
             $store
-        );
+        ) ?: '';
     }
 
     /**
@@ -1190,7 +1220,7 @@ class Config extends AbstractHelper
      */
     public function getGeolocationApiKey($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_GEOLOCATION_API_KEY, $storeId);
+        return $this->getEncryptedKey(self::XML_PATH_GEOLOCATION_API_KEY, $storeId) ?: '';
     }
 
     /**
@@ -1206,7 +1236,7 @@ class Config extends AbstractHelper
             self::XML_PATH_ADDITIONAL_JS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1220,7 +1250,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_CHECKOUT_START,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1234,7 +1264,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_EMAIL_ENTER,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1248,7 +1278,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_SHIPPING_DETAILS_COMPLETE,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1262,7 +1292,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1276,7 +1306,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_PAYMENT_SUBMIT,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1290,7 +1320,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_SUCCESS,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1304,7 +1334,7 @@ class Config extends AbstractHelper
             self::XML_PATH_TRACK_CLOSE,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
     }
 
     /**
@@ -1408,7 +1438,7 @@ class Config extends AbstractHelper
             $store
         );
     }
-    
+
     /**
      * Get Display Bolt Checkout on the Cart Page config
      *
@@ -1477,7 +1507,7 @@ class Config extends AbstractHelper
      *
      * @param null $storeId
      *
-     * @return string
+     * @return int
      */
     public function getPriceFaultTolerance($storeId = null)
     {
@@ -1526,6 +1556,7 @@ class Config extends AbstractHelper
                 }
             }
         }
+        return '';
     }
 
     /**
@@ -1911,7 +1942,7 @@ class Config extends AbstractHelper
         // Display Bolt Checkout on the Cart Page configuration path
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('enable_bolt_on_cart_page')
-            ->setValue(var_export($this->getBoltOnCartPage(), true));    
+            ->setValue(var_export($this->getBoltOnCartPage(), true));
         // Client IP Restriction
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('ip_whitelist')
@@ -2250,7 +2281,7 @@ class Config extends AbstractHelper
             $storeId
         ) ?: 'customer_note';
     }
-    
+
     /**
      * Gets the mode of Magento integration associated with Bolt API
      *
@@ -2260,7 +2291,7 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->getValue(
             self::XML_PATH_CONNECT_INTEGRATION_MODE
-        );
+        ) ?: '';
     }
 
     /**
@@ -2298,7 +2329,7 @@ class Config extends AbstractHelper
             $store
         );
     }
-    
+
     /**
      * Get Use Aheadworks Store Credit on Shopping Cart configuration
      *
@@ -2314,7 +2345,7 @@ class Config extends AbstractHelper
             $store
         );
     }
-    
+
     /**
      * Get Use MageWorx Reward Points on Shopping Cart configuration
      *
@@ -2357,7 +2388,7 @@ class Config extends AbstractHelper
             $path,
             ScopeInterface::SCOPE_STORE,
             $storeId
-        );
+        ) ?: '';
 
         //Decrypt management key
         $key = $this->encryptor->decrypt($key);
@@ -2441,7 +2472,7 @@ class Config extends AbstractHelper
             $storeId
         ) ?: '';
     }
-    
+
     /**
      * Get Bolt additional configuration for CDN URL, stored in the following format:
      *
@@ -2456,9 +2487,9 @@ class Config extends AbstractHelper
      */
     public function getCdnUrlFromAdditionalConfig($storeId = null)
     {
-        return $this->getAdditionalConfigProperty('cdnURL', $storeId);
+        return $this->getAdditionalConfigProperty('cdnURL', $storeId) ?: '';
     }
-    
+
     /**
      * Get Bolt additional configuration for account URL, stored in the following format:
      *
@@ -2473,9 +2504,9 @@ class Config extends AbstractHelper
      */
     public function getAccountUrlFromAdditionalConfig($storeId = null)
     {
-        return $this->getAdditionalConfigProperty('accountURL', $storeId);
+        return $this->getAdditionalConfigProperty('accountURL', $storeId) ?: '';
     }
-    
+
     /**
      * Get Bolt additional configuration for api URL, stored in the following format:
      *
@@ -2490,9 +2521,9 @@ class Config extends AbstractHelper
      */
     public function getApiUrlFromAdditionalConfig($storeId = null)
     {
-        return $this->getAdditionalConfigProperty('apiURL', $storeId);
+        return $this->getAdditionalConfigProperty('apiURL', $storeId) ?: '';
     }
-    
+
     /**
      * Get Bolt additional configuration for merchant dashboard URL, stored in the following format:
      *
@@ -2507,6 +2538,104 @@ class Config extends AbstractHelper
      */
     public function getMerchantDashboardUrlFromAdditionalConfig($storeId = null)
     {
-        return $this->getAdditionalConfigProperty('merchantDashboardURL', $storeId);
+        return $this->getAdditionalConfigProperty('merchantDashboardURL', $storeId) ?: '';
+    }
+
+    /**
+     * Returns if catalog ingestion enabled.
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return bool
+     */
+    public function getIsCatalogIngestionEnabled($websiteId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_CATALOG_INGESTION_ENABLED,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
+    }
+
+    /**
+     * Returns catalog ingestion maximum cron items count witch will be processed.
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return string
+     */
+    public function getCatalogIngestionCronMaxItems($websiteId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_CATALOG_INGESTION_CRON_MAX_ITEMS,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
+    }
+    
+    /**
+     * Returns if catalog ingestion by instant job.
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return bool
+     */
+    public function getIsCatalogIngestionInstantEnabled($websiteId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_CATALOG_INGESTION_INSTANT_ENABLED,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
+    }
+
+    /**
+     * Returns if catalog ingestion by async instant job.
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return bool
+     */
+    public function getIsCatalogIngestionInstantAsyncEnabled($websiteId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_CATALOG_INGESTION_INSTANT_ASYNC_ENABLED,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
+    }
+
+    /**
+     * Returns available custom catalog ingestion instant job events.
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return array
+     */
+    public function getCatalogIngestionEvents($websiteId = null)
+    {
+        $eventsConfigValue =  $this->getScopeConfig()->getValue(
+            self::XML_PATH_CATALOG_INGESTION_INSTANT_EVENT,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
+        return ($eventsConfigValue !== null) ?
+            explode(',', $eventsConfigValue) : [];
+    }
+
+    /**
+     * Returns if system configuration request enabled
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return bool
+     */
+    public function getIsSystemConfigurationUpdateRequestEnabled($websiteId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_CATALOG_INGESTION_SYSTEM_CONFIGURATION_UPDATE_REQUEST,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
     }
 }
