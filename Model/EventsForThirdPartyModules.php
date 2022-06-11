@@ -435,6 +435,15 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        'processExistingOrder' => [
+            "listeners" => [
+                'Grasscity_StockReservationManagement' => [
+                    "module" => "Grasscity_StockReservationManagement",
+                    'checkClasses' => ['Grasscity\StockReservationManagement\Service\StockProcessor'],
+                    "boltClass" => Grasscity_StockReservationManagement::class,
+                ],
+            ],
+        ],
     ];
 
     const filterListeners = [
@@ -1227,6 +1236,11 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["MW\Affiliate\Helper\Data",
                                       "MW\Affiliate\Observer\SalesOrderAfter"],
                     "boltClass" => MW_Affiliate::class,
+                ],
+                'Grasscity_StockReservationManagement' => [
+                    "module" => "Grasscity_StockReservationManagement",
+                    'checkClasses' => ['Grasscity\StockReservationManagement\Service\StockProcessor'],
+                    "boltClass" => Grasscity_StockReservationManagement::class,
                 ],
             ],
         ],

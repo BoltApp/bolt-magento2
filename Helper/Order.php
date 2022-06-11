@@ -1208,7 +1208,7 @@ class Order extends AbstractHelper
     {
         // check if the order has been created in the meanwhile
         if ($order = $this->getExistingOrder(null, $quote->getId())) {
-
+            $this->eventsForThirdPartyModules->dispatchEvent("processExistingOrder", $order, $quote, $transaction);
             if ($order->isCanceled()) {
                 throw new BoltException(
                     __(

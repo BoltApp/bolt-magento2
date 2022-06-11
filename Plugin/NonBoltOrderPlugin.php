@@ -18,6 +18,8 @@ use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Sales\Api\OrderManagementInterface;
+use Magento\Sales\Api\Data\OrderInterface;
+use Magento\Framework\Module\Manager;
 use Zend_Http_Client_Exception;
 
 class NonBoltOrderPlugin
@@ -66,6 +68,11 @@ class NonBoltOrderPlugin
      * @var Decider
      */
     private $decider;
+    
+    /**
+     * @var \Magento\Framework\Module\Manager
+     */
+    private $moduleManager;
 
     /**
      * @param ApiHelper $apiHelper
@@ -87,7 +94,8 @@ class NonBoltOrderPlugin
         LogHelper $logHelper,
         MetricsClient $metricsClient,
         QuoteRepository $quoteRepository,
-        Decider $decider
+        Decider $decider,
+        Manager $moduleManager
     ) {
         $this->apiHelper = $apiHelper;
         $this->bugsnag = $bugsnag;
@@ -98,6 +106,7 @@ class NonBoltOrderPlugin
         $this->metricsClient = $metricsClient;
         $this->quoteRepository = $quoteRepository;
         $this->decider = $decider;
+        $this->moduleManager = $moduleManager;
     }
 
     /**
@@ -282,5 +291,28 @@ class NonBoltOrderPlugin
                 $address->setLastName($name);
             }
         }
+    }
+    
+    /**
+     * Support stock service of Grasscity.
+     * Add additional data 'stock_processor_reserve_items' to payment for new order.
+     * 
+     * @param OrderManagementInterface $subject
+     * @param callable $proceed
+     * @param OrderInterface $order
+     */
+    public function aroundPlace(OrderManagementInterface $subject, callable $proceed, OrderInterface $order)
+    {
+        try {
+            if ($this->moduleManager->isEnabled('Grasscity_StockReservationManagement')) {
+                $orderPayment = $order->getPayment();
+                if ($orderPayment && $orderPayment->getMethod() === Payment::METHOD_CODE) {
+                    $orderPayment->setAdditionalInformation(array_merge((array)$orderPayment->getAdditionalInformation(), ['stock_processor_reserve_items' => true]));
+                }
+            }
+        } catch (Exception $exception) {
+            $this->bugsnag->notifyException($exception);
+        }
+        return $proceed($order);
     }
 }
