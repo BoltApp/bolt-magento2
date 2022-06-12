@@ -18,6 +18,9 @@
 namespace Bolt\Boltpay\ThirdPartyModules\Grasscity;
 
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Model\Payment;
+use Bolt\Boltpay\Exception\BoltException;
+use Bolt\Boltpay\Model\Api\CreateOrder;
 
 class StockReservationManagement
 {
@@ -48,16 +51,16 @@ class StockReservationManagement
     public function processExistingOrder($order, $quote, $transaction) {
         $orderPayment = $order->getPayment();
         if ($orderPayment
-            && $orderPayment->getMethod() === Bolt\Boltpay\Model\Payment::METHOD_CODE
+            && $orderPayment->getMethod() === Payment::METHOD_CODE
             && (bool)$orderPayment->getAdditionalInformation('stock_processor_reserve_items')) {
-            throw new Bolt\Boltpay\Exception\BoltException(
+            throw new BoltException(
                 __(
                     'Order creation timeout due to the stock service is down. Quote ID: %1 Order Increment ID %2',
                     $quote->getId(),
                     $order->getIncrementId()
                 ),
                 null,
-                Bolt\Boltpay\Model\Api\CreateOrder::E_BOLT_REJECTED_ORDER
+                CreateOrder::E_BOLT_REJECTED_ORDER
             );
         }
     }
@@ -72,7 +75,7 @@ class StockReservationManagement
     {
         try {
             $orderPayment = $order->getPayment();
-            if ($orderPayment && $orderPayment->getMethod() === Bolt\Boltpay\Model\Payment::METHOD_CODE) {
+            if ($orderPayment && $orderPayment->getMethod() === Payment::METHOD_CODE) {
                 $orderPayment->setAdditionalInformation(array_merge((array)$orderPayment->getAdditionalInformation(), ['stock_processor_reserve_items' => false]));
                 $orderPayment->save();
             }

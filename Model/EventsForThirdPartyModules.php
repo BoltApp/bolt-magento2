@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Model;
 
+use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\ThirdPartyModules\Aheadworks\Giftcard as Aheadworks_Giftcard;
 use Bolt\Boltpay\ThirdPartyModules\Aheadworks\RewardPoints as Aheadworks_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\Mageplaza\ShippingRestriction as Mageplaza_ShippingRestriction;
@@ -53,6 +54,7 @@ use Bolt\Boltpay\ThirdPartyModules\MageWorx\RewardPoints as MageWorx_RewardPoint
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\ShippingRules as MageWorx_ShippingRules;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Promo as Amasty_Promo;
 use Bolt\Boltpay\ThirdPartyModules\Mexbs\Tieredcoupon as Mexbs_Tieredcoupon;
+use Bolt\Boltpay\ThirdPartyModules\Grasscity\StockReservationManagement as Grasscity_StockReservationManagement;
 use Exception;
 
 class EventsForThirdPartyModules
@@ -1401,6 +1403,8 @@ class EventsForThirdPartyModules
                     $boltClass->$eventName(...$arguments);
                 }
             }
+        } catch (BoltException $e) {
+            throw $e;
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
         }
