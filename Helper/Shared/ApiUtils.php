@@ -81,7 +81,9 @@ class ApiUtils
             'Content-Type'          => $contentType,
             'Content-Length'        => $requestData ? strlen($requestData) : null,
             'X-Api-Key'             => $apiKey,
-            'X-Nonce'               => rand(100000000000, 999999999999)
+            'X-Nonce'               => rand(100000000000, 999999999999),
+            'X-BOLT-SOURCE-NAME'    => 'magento2',
+            'X-BOLT-SOURCE-VERSION' => $moduleVersion
         ] + $additionalHeaders;
     }
 }
