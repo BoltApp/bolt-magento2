@@ -4718,14 +4718,15 @@ ORDER
         static::assertEquals(
             [
             [
-                'reference'    => 20102,
-                'name'         => 'Test Product',
-                'total_amount' => 10000,
-                'unit_price'   => 10000,
-                'quantity'     => 1.0,
-                'sku'          => self::PRODUCT_SKU,
-                'type'         => 'physical',
-                'description'  => '',
+                'reference'           => 20102,
+                'name'                => 'Test Product',
+                'total_amount'        => 10000,
+                'unit_price'          => 10000,
+                'quantity'            => 1.0,
+                'sku'                 => self::PRODUCT_SKU,
+                'type'                => 'physical',
+                'description'         => '',
+                'merchant_product_id' => 20102,
             ],
             ],
             $products
