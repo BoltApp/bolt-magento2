@@ -93,6 +93,8 @@ class ApiUtilsTest extends BoltTestCase
         $this->assertEquals($headers['Content-Type'], 'application/json');
         $this->assertEquals($headers['Content-Length'], 12);
         $this->assertEquals($headers['X-Api-Key'], 'api-key');
+        $this->assertEquals($headers['X-BOLT-SOURCE-NAME'], 'magento2');
+        $this->assertEquals($headers['X-BOLT-SOURCE-VERSION'], 'moduleVersion');
     }
 
     /**
@@ -117,5 +119,7 @@ class ApiUtilsTest extends BoltTestCase
         $this->assertEquals($headers['Content-Length'], 12);
         $this->assertEquals($headers['X-Api-Key'], 'api-key');
         $this->assertEquals($headers['new-thing'], 'nothing');
+        $this->assertEquals($headers['X-BOLT-SOURCE-NAME'], 'magento2');
+        $this->assertEquals($headers['X-BOLT-SOURCE-VERSION'], 'moduleVersion');
     }
 }
