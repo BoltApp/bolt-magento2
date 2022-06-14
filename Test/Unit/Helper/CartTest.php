@@ -2789,14 +2789,15 @@ ORDER
             'currency'        => self::CURRENCY_CODE,
             'items'           => [
                 [
-                    'reference'    => $product->getId(),
-                    'name'         => 'Test Product',
-                    'total_amount' => 10000,
-                    'unit_price'   => 10000,
-                    'quantity'     => 1,
-                    'sku'          => $product->getSku(),
-                    'type'         => 'physical',
-                    'description'  => 'Product Description',
+                    'reference'           => $product->getId(),
+                    'name'                => 'Test Product',
+                    'total_amount'        => 10000,
+                    'unit_price'          => 10000,
+                    'quantity'            => 1,
+                    'sku'                 => $product->getSku(),
+                    'type'                => 'physical',
+                    'description'         => 'Product Description',
+                    'merchant_product_id' => $product->getId(),
                 ]
             ],
             'discounts'       => [],
@@ -2844,14 +2845,15 @@ ORDER
             'currency'        => self::CURRENCY_CODE,
             'items'           => [
                 [
-                    'reference'    => $product->getId(),
-                    'name'         => 'Test Product',
-                    'total_amount' => 10000,
-                    'unit_price'   => 10000,
-                    'quantity'     => 1,
-                    'sku'          => $product->getSku(),
-                    'type'         => 'physical',
-                    'description'  => 'Product Description',
+                    'reference'           => $product->getId(),
+                    'name'                => 'Test Product',
+                    'total_amount'        => 10000,
+                    'unit_price'          => 10000,
+                    'quantity'            => 1,
+                    'sku'                 => $product->getSku(),
+                    'type'                => 'physical',
+                    'description'         => 'Product Description',
+                    'merchant_product_id' => $product->getId(),
                 ]
             ],
             'discounts'       => [],
@@ -2999,14 +3001,15 @@ ORDER
             'currency'        => self::CURRENCY_CODE,
             'items'           =>  [
                 [
-                    'reference'    => $product->getId(),
-                    'name'         => 'Test Product',
-                    'total_amount' => 10000.0,
-                    'unit_price'   => 10000,
-                    'quantity'     => 1.0,
-                    'sku'          => $product->getSku(),
-                    'type'         => 'physical',
-                    'description'  => 'Product Description',
+                    'reference'           => $product->getId(),
+                    'name'                => 'Test Product',
+                    'total_amount'        => 10000.0,
+                    'unit_price'          => 10000,
+                    'quantity'            => 1.0,
+                    'sku'                 => $product->getSku(),
+                    'type'                => 'physical',
+                    'description'         => 'Product Description',
+                    'merchant_product_id' => $product->getId(),
                 ]
             ],
             'discounts' => [],
@@ -3146,14 +3149,15 @@ ORDER
             'currency'        => 'USD',
             'items'           => [
                 [
-                    'reference'    => $product->getId(),
-                    'name'         => 'Test Virtual Product',
-                    'total_amount' => 10000.0,
-                    'unit_price'   => 10000,
-                    'quantity'     => 1.0,
-                    'sku'          => $product->getSku(),
-                    'type'         => 'digital',
-                    'description'  => 'Product Description',
+                    'reference'           => $product->getId(),
+                    'name'                => 'Test Virtual Product',
+                    'total_amount'        => 10000.0,
+                    'unit_price'          => 10000,
+                    'quantity'            => 1.0,
+                    'sku'                 => $product->getSku(),
+                    'type'                => 'digital',
+                    'description'         => 'Product Description',
+                    'merchant_product_id' => $product->getId(),
                 ]
             ],
             'billing_address' =>
@@ -4681,14 +4685,15 @@ ORDER
                     $reportMock->expects(static::once())->method('setMetaData')->with(
                         [
                             'ITEM' => [
-                                'reference'    => self::PRODUCT_ID,
-                                'name'         => 'Test Product',
-                                'total_amount' => 10000,
-                                'unit_price'   => 10000,
-                                'quantity'     => 1.0,
-                                'sku'          => self::PRODUCT_SKU,
-                                'type'         => 'physical',
-                                'description'  => '',
+                                'reference'           => self::PRODUCT_ID,
+                                'name'                => 'Test Product',
+                                'total_amount'        => 10000,
+                                'unit_price'          => 10000,
+                                'quantity'            => 1.0,
+                                'sku'                 => self::PRODUCT_SKU,
+                                'type'                => 'physical',
+                                'description'         => '',
+                                'merchant_product_id' => self::PRODUCT_ID,
                             ]
                         ]
                     );
@@ -4713,14 +4718,15 @@ ORDER
         static::assertEquals(
             [
             [
-                'reference'    => 20102,
-                'name'         => 'Test Product',
-                'total_amount' => 10000,
-                'unit_price'   => 10000,
-                'quantity'     => 1.0,
-                'sku'          => self::PRODUCT_SKU,
-                'type'         => 'physical',
-                'description'  => '',
+                'reference'           => 20102,
+                'name'                => 'Test Product',
+                'total_amount'        => 10000,
+                'unit_price'          => 10000,
+                'quantity'            => 1.0,
+                'sku'                 => self::PRODUCT_SKU,
+                'type'                => 'physical',
+                'description'         => '',
+                'merchant_product_id' => 20102,
             ],
             ],
             $products
@@ -4782,14 +4788,15 @@ ORDER
         static::assertEquals(
             [
                 [
-                    'reference'    => 20102,
-                    'name'         => 'Test Product',
-                    'total_amount' => 10000,
-                    'unit_price'   => 10000,
-                    'quantity'     => 1.0,
-                    'sku'          => self::PRODUCT_SKU,
-                    'type'         => 'physical',
-                    'description'  => '',
+                    'reference'           => 20102,
+                    'name'                => 'Test Product',
+                    'total_amount'        => 10000,
+                    'unit_price'          => 10000,
+                    'quantity'            => 1.0,
+                    'sku'                 => self::PRODUCT_SKU,
+                    'type'                => 'physical',
+                    'description'         => '',
+                    'merchant_product_id' => 20102,
                 ],
             ],
             $products
@@ -4866,14 +4873,15 @@ ORDER
         static::assertEquals(
             [
                 [
-                    'reference'    => 20102,
-                    'name'         => 'Test Product',
-                    'total_amount' => 10000,
-                    'unit_price'   => 10000,
-                    'quantity'     => 1.0,
-                    'sku'          => self::PRODUCT_SKU,
-                    'type'         => 'physical',
-                    'description'  => '',
+                    'reference'           => 20102,
+                    'name'                => 'Test Product',
+                    'total_amount'        => 10000,
+                    'unit_price'          => 10000,
+                    'quantity'            => 1.0,
+                    'sku'                 => self::PRODUCT_SKU,
+                    'type'                => 'physical',
+                    'description'         => '',
+                    'merchant_product_id' => 20102,
                 ],
                 [
                     'reference' => 1,

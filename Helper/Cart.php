@@ -1501,11 +1501,13 @@ class Cart extends AbstractHelper
                     }
                 }
 
+                $product['merchant_product_id'] = $item->getProductId();
                 try {
                     if ($customizableOptions || $item->getProductType() == \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE) {
                         $_product = $this->productRepository->get($itemSku);
                         $itemReference = $_product->getId();
                         $itemName = $_product->getName();
+                        $product['merchant_variant_id'] = $_product->getID();
                     }
                 } catch (\Exception $e) {
                     $this->bugsnag->registerCallback(function ($report) use ($item) {
