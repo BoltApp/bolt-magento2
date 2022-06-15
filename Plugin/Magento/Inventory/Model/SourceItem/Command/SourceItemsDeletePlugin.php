@@ -16,8 +16,13 @@
  */
 namespace Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command;
 
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
+use Magento\Catalog\Model\ProductFactory;
+use Magento\Catalog\Model\ResourceModel\Product\Website\Link as ProductWebsiteLink;
 use Magento\InventoryApi\Api\SourceItemsDeleteInterface;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterSourceItemsDeletePlugin;
 
 /**
  * Catalog ingestion product event processor after source items removing
@@ -30,30 +35,78 @@ class SourceItemsDeletePlugin
     private $productEventProcessor;
 
     /**
-     * @param ProductEventProcessor $productEventProcessor
+     * @var ProductFactory
      */
-    public function __construct(ProductEventProcessor $productEventProcessor)
-    {
+    private $productFactory;
+
+    /**
+     * @var ProductWebsiteLink
+     */
+    private $productWebsiteLink;
+
+    /**
+     * @var Decider
+     */
+    private $featureSwitches;
+
+    /**
+     * @var ReindexAfterSourceItemsDeletePlugin
+     */
+    private $reindexAfterSourceItemsDeletePlugin;
+
+    /**
+     * @param ProductEventProcessor $productEventProcessor
+     * @param ProductFactory $productFactory
+     * @param ProductWebsiteLink $productWebsiteLink
+     * @param Decider $featureSwitches
+     * @param ReindexAfterSourceItemsDeletePlugin $reindexAfterSourceItemsDeletePlugin
+     */
+    public function __construct(
+        ProductEventProcessor $productEventProcessor,
+        ProductFactory $productFactory,
+        ProductWebsiteLink $productWebsiteLink,
+        Decider $featureSwitches,
+        ReindexAfterSourceItemsDeletePlugin $reindexAfterSourceItemsDeletePlugin
+    ) {
         $this->productEventProcessor = $productEventProcessor;
+        $this->productFactory = $productFactory;
+        $this->productWebsiteLink = $productWebsiteLink;
+        $this->featureSwitches = $featureSwitches;
+        $this->reindexAfterSourceItemsDeletePlugin = $reindexAfterSourceItemsDeletePlugin;
     }
 
     /**
      * Publish bolt catalog product event after source items removing
      *
      * @param SourceItemsDeleteInterface $subject
-     * @param $result
+     * @param callable $proceed
      * @param array $sourceItems
      * @return void
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @throws LocalizedException
      */
-    public function afterExecute(
+    public function aroundExecute(
         SourceItemsDeleteInterface $subject,
-        $result,
+        callable $proceed,
         array $sourceItems
     ): void
     {
-        if (!empty($sourceItems)) {
-            $this->productEventProcessor->processProductEventSourceItemsBased($sourceItems, true);
+        if (empty($sourceItems) || !$this->featureSwitches->isCatalogIngestionEnabled()) {
+            $proceed($sourceItems);
+            return;
         }
+
+        $beforeProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
+        $proceed($sourceItems);
+        $this->reindexAfterSourceItemsDeletePlugin->aroundExecute($subject, $proceed, $sourceItems);
+        $afterProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
+        foreach ($sourceItems as $sourceItem) {
+            //set quantity to 0, because we are removing the source item
+            $sourceItem->setData('quantity', 0);
+        }
+        $this->productEventProcessor->processProductEventSourceItemsBased(
+            $beforeProductStatuses,
+            $afterProductStatuses,
+            $sourceItems
+        );
     }
 }

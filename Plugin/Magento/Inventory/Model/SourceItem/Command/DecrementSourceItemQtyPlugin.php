@@ -16,8 +16,13 @@
  */
 namespace Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command;
 
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
+use Magento\Catalog\Model\ProductFactory;
+use Magento\Catalog\Model\ResourceModel\Product\Website\Link as ProductWebsiteLink;
 use Magento\Inventory\Model\SourceItem\Command\DecrementSourceItemQty;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterDecrementSourceItemQty;
 
 /**
  * Catalog ingestion product event processor after source items decrement
@@ -30,31 +35,77 @@ class DecrementSourceItemQtyPlugin
     private $productEventProcessor;
 
     /**
-     * @param ProductEventProcessor $productEventProcessor
+     * @var ProductFactory
      */
-    public function __construct(ProductEventProcessor $productEventProcessor)
-    {
+    private $productFactory;
+
+    /**
+     * @var ProductWebsiteLink
+     */
+    private $productWebsiteLink;
+
+    /**
+     * @var Decider
+     */
+    private $featureSwitches;
+
+    /**
+     * @var ReindexAfterDecrementSourceItemQty
+     */
+    private $reindexAfterDecrementSourceItemQty;
+
+    /**
+     * @param ProductEventProcessor $productEventProcessor
+     * @param ProductFactory $productFactory
+     * @param ProductWebsiteLink $productWebsiteLink
+     * @param Decider $featureSwitches
+     * @param ReindexAfterDecrementSourceItemQty $reindexAfterDecrementSourceItemQty
+     */
+    public function __construct(
+        ProductEventProcessor $productEventProcessor,
+        ProductFactory $productFactory,
+        ProductWebsiteLink $productWebsiteLink,
+        Decider $featureSwitches,
+        ReindexAfterDecrementSourceItemQty $reindexAfterDecrementSourceItemQty
+    ) {
         $this->productEventProcessor = $productEventProcessor;
+        $this->productFactory = $productFactory;
+        $this->productWebsiteLink = $productWebsiteLink;
+        $this->featureSwitches = $featureSwitches;
+        $this->reindexAfterDecrementSourceItemQty = $reindexAfterDecrementSourceItemQty;
     }
 
     /**
      * Publish bolt catalog product event after source items decrement update
      *
      * @param DecrementSourceItemQty $subject
-     * @param $result
+     * @param callable $proceed
      * @param array $sourceItemDecrementData
      * @return void
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @throws LocalizedException
      */
-    public function afterExecute(
+    public function aroundExecute(
         DecrementSourceItemQty $subject,
-        $result,
+        callable $proceed,
         array $sourceItemDecrementData
     ): void
     {
+        if (!$this->featureSwitches->isCatalogIngestionEnabled()) {
+            $proceed($sourceItemDecrementData);
+            return;
+        }
+
         $sourceItems = array_column($sourceItemDecrementData, 'source_item');
         if (!empty($sourceItems)) {
-            $this->productEventProcessor->processProductEventSourceItemsBased($sourceItems);
+            $beforeProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
+            $proceed($sourceItemDecrementData);
+            $this->reindexAfterDecrementSourceItemQty->afterExecute($subject, null, $sourceItemDecrementData);
+            $afterProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
+            $this->productEventProcessor->processProductEventSourceItemsBased(
+                $beforeProductStatuses,
+                $afterProductStatuses,
+                $sourceItems
+            );
         }
     }
 }

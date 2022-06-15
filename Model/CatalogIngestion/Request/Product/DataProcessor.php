@@ -27,6 +27,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\CatalogInventory\Model\Stock;
 use Magento\Downloadable\Model\Product\Type as DownloadableProductType;
 use Magento\Catalog\Model\Product\Type as ProductType;
+use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Locale\Resolver as LocaleResolver;
 use Magento\Catalog\Model\Product\Gallery\ReadHandler as GalleryReadHandler;
@@ -38,6 +39,7 @@ use Magento\Store\Model\App\Emulation;
 use Magento\Store\Api\Data\WebsiteInterface;
 use Magento\Framework\App\ObjectManager;
 use Magento\Catalog\Model\ResourceModel\Eav\Attribute as EavAttribute;
+use Magento\InventorySalesAdminUi\Model\GetSalableQuantityDataBySku;
 
 /**
  * Product event product data processor to collect product data for bolt request
@@ -54,6 +56,11 @@ class DataProcessor
      * @var ObjectManager
      */
     private $objectManager;
+
+    /**
+     * @var ModuleManager
+     */
+    private $moduleManager;
 
     /**
      * @var Config
@@ -96,6 +103,11 @@ class DataProcessor
     private $emulation;
 
     /**
+     * @var GetSalableQuantityDataBySku
+     */
+    private $getSalableQuantityDataBySku;
+
+    /**
      * @param Config $config
      * @param ProductRepositoryInterface $productRepository
      * @param StoreManagerInterface $storeManager
@@ -103,17 +115,17 @@ class DataProcessor
      * @param GalleryReadHandler $galleryReadHandler
      * @param Mime $mime
      * @param Emulation $emulation
-     * @param string|null $getSalableQuantityDataBySkuClass
+     * @param ModuleManager $moduleManager
      */
     public function __construct(
-        Config                     $config,
+        Config $config,
         ProductRepositoryInterface $productRepository,
-        StoreManagerInterface      $storeManager,
-        LocaleResolver             $localeResolver,
-        GalleryReadHandler         $galleryReadHandler,
-        Mime                       $mime,
-        Emulation                  $emulation,
-        string                     $getSalableQuantityDataBySkuClass = null
+        StoreManagerInterface $storeManager,
+        LocaleResolver $localeResolver,
+        GalleryReadHandler $galleryReadHandler,
+        Mime $mime,
+        Emulation $emulation,
+        ModuleManager $moduleManager
     )
     {
         $this->objectManager = ObjectManager::getInstance();
@@ -124,7 +136,11 @@ class DataProcessor
         $this->galleryReadHandler = $galleryReadHandler;
         $this->mime = $mime;
         $this->emulation = $emulation;
-        $this->getSalableQuantityDataBySkuClass = $getSalableQuantityDataBySkuClass;
+        $this->moduleManager = $moduleManager;
+        if ($this->moduleManager->isEnabled('Magento_InventoryCatalog')) {
+            $this->getSalableQuantityDataBySku = $this->objectManager
+                ->get('Magento\InventorySalesAdminUi\Model\GetSalableQuantityDataBySku');
+        }
     }
 
     /**
@@ -437,10 +453,9 @@ class DataProcessor
     {
         $inventories = [];
         $stockItems = [];
-        $getSalableQuantityDataBySku = $this->initGetSalableQuantityDataBySku();
 
-        if ($getSalableQuantityDataBySku) {
-            $stockItems = $getSalableQuantityDataBySku->execute($product->getSku());
+        if ($this->getSalableQuantityDataBySku) {
+            $stockItems = $this->getSalableQuantityDataBySku->execute($product->getSku());
         }
         if (!empty($stockItems)) {
             foreach ($stockItems as $stockItem) {
@@ -576,19 +591,5 @@ class DataProcessor
     {
         return (!(($product->getVisibility() == Visibility::VISIBILITY_NOT_VISIBLE))) ?
             self::PRODUCT_VISIBILITY_VISIBLE : self::PRODUCT_VISIBILITY_NOT_VISIBLE;
-    }
-
-    /**
-     * Init getSalableQuantityDataBySku instance, for Magento 2.2 support
-     *
-     * @return mixed|null
-     */
-    private function initGetSalableQuantityDataBySku()
-    {
-        if (!$this->getSalableQuantityDataBySkuClass) {
-            return null;
-        }
-        return (class_exists($this->getSalableQuantityDataBySkuClass) || interface_exists($this->getSalableQuantityDataBySkuClass))
-            ? $this->objectManager->get($this->getSalableQuantityDataBySkuClass) : null;
     }
 }

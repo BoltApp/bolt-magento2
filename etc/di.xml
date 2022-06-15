@@ -298,22 +298,6 @@
     <preference for="Bolt\Boltpay\Api\ProductEventRepositoryInterface" type="Bolt\Boltpay\Model\CatalogIngestion\ProductEventRepository" />
     <preference for="Bolt\Boltpay\Api\ProductEventManagerInterface" type="Bolt\Boltpay\Model\CatalogIngestion\ProductEventManager" />
     <preference for="Bolt\Boltpay\Api\StoreConfigurationManagerInterface" type="Bolt\Boltpay\Model\CatalogIngestion\StoreConfigurationManager" />
-    <type name="Bolt\Boltpay\Model\CatalogIngestion\ProductEventPublisher">
-        <arguments>
-            <argument name="bulkManagementClass" xsi:type="string">Magento\AsynchronousOperations\Model\BulkManagement</argument>
-            <argument name="operationFactoryClass" xsi:type="string">Magento\AsynchronousOperations\Api\Data\OperationInterfaceFactory</argument>
-        </arguments>
-    </type>
-    <type name="Bolt\Boltpay\Model\CatalogIngestion\Request\Product\DataProcessor">
-        <arguments>
-            <argument name="getSalableQuantityDataBySkuClass" xsi:type="string">Magento\InventorySalesAdminUi\Model\GetSalableQuantityDataBySku</argument>
-        </arguments>
-    </type>
-    <type name="Bolt\Boltpay\Plugin\Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventPlugin">
-        <arguments>
-            <argument name="areProductsSalableClass" xsi:type="string">Magento\InventorySalesApi\Api\AreProductsSalableInterface</argument>
-        </arguments>
-    </type>
     <type name="Magento\Catalog\Api\ProductRepositoryInterface">
         <plugin name="publishProductEventAfterProductDelete"
                 type="Bolt\Boltpay\Plugin\Magento\Catalog\Api\ProductRepositoryPlugin"/>
@@ -324,7 +308,8 @@
     </type>
     <type name="Magento\InventoryApi\Api\SourceItemsDeleteInterface">
         <plugin name="publishProductEventAfterSourceItemsDelete"
-                type="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\SourceItemsDeletePlugin"/>
+                type="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\SourceItemsDeletePlugin"
+                sortOrder="1" />
     </type>
     <type name="Magento\Inventory\Model\SourceItem\Command\DecrementSourceItemQty">
         <plugin name="publishProductEventAfterSourceItemsDecrementQty"
