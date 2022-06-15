@@ -232,21 +232,21 @@ class ProductEventProcessorTest extends BoltTestCase
         $this->resource = $this->objectManager->get(ResourceConnection::class);
         $this->cartManagement = $this->objectManager->get(CartManagementInterface::class);
         $this->quoteRepository = $this->objectManager->get(CartRepositoryInterface::class);
-
-        $decrementSourceItemQtyPlugin = $this->objectManager->get(DecrementSourceItemQtyPlugin::class);
-        $sourceItemSavePlugin = $this->objectManager->get(SourceItemSavePlugin::class);
-        $sourceItemsDeletePlugin = $this->objectManager->get(SourceItemsDeletePlugin::class);
-        $placeReservationsForSalesEventPlugin = $this->objectManager->get(PlaceReservationsForSalesEventPlugin::class);
-
         $featureSwitches = $this->createMock(Decider::class);
         TestHelper::setProperty($this->productEventProcessor, 'featureSwitches', $featureSwitches);
-        TestHelper::setProperty($decrementSourceItemQtyPlugin, 'featureSwitches', $featureSwitches);
-        TestHelper::setProperty($sourceItemSavePlugin, 'featureSwitches', $featureSwitches);
-        TestHelper::setProperty($sourceItemsDeletePlugin, 'featureSwitches', $featureSwitches);
-        TestHelper::setProperty($placeReservationsForSalesEventPlugin, 'featureSwitches', $featureSwitches);
         $featureSwitches->method('isCatalogIngestionEnabled')->willReturn(true);
         $this->apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $this->apiHelper);
+        if ($this->moduleManger->isEnabled('Magento_InventoryCatalog')) {
+            $decrementSourceItemQtyPlugin = $this->objectManager->get(DecrementSourceItemQtyPlugin::class);
+            $sourceItemSavePlugin = $this->objectManager->get(SourceItemSavePlugin::class);
+            $sourceItemsDeletePlugin = $this->objectManager->get(SourceItemsDeletePlugin::class);
+            $placeReservationsForSalesEventPlugin = $this->objectManager->get(PlaceReservationsForSalesEventPlugin::class);
+            TestHelper::setProperty($decrementSourceItemQtyPlugin, 'featureSwitches', $featureSwitches);
+            TestHelper::setProperty($sourceItemSavePlugin, 'featureSwitches', $featureSwitches);
+            TestHelper::setProperty($sourceItemsDeletePlugin, 'featureSwitches', $featureSwitches);
+            TestHelper::setProperty($placeReservationsForSalesEventPlugin, 'featureSwitches', $featureSwitches);
+        }
         $websiteId = $this->storeManager->getWebsite()->getId();
         $configData = [
             [
@@ -500,7 +500,6 @@ class ProductEventProcessorTest extends BoltTestCase
         $quote->getPayment()->setMethod('checkmo');
         $quote->setCustomerEmail('test@bolt.com');
         $quote->collectTotals();
-        $quote->setShippingAddress($shippingAddress);
         $this->quoteRepository->save($quote);
         /** @var QuoteIdMask $quoteIdMask */
         $quoteIdMask = $this->objectManager
