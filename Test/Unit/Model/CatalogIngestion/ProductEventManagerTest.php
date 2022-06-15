@@ -27,6 +27,7 @@ use Bolt\Boltpay\Model\CatalogIngestion\ProductEventManager;
 use Bolt\Boltpay\Api\Data\ProductEventInterface;
 use Bolt\Boltpay\Helper\Config as BoltConfig;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Framework\App\ResourceConnection;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -76,6 +77,11 @@ class ProductEventManagerTest extends BoltTestCase
     private $moduleManger;
 
     /**
+     * @var ResourceConnection
+     */
+    private $resource;
+
+    /**
      * @inheritDoc
      */
     protected function setUpInternal()
@@ -85,6 +91,7 @@ class ProductEventManagerTest extends BoltTestCase
         $this->productEventManager = $this->objectManager->get(ProductEventManager::class);
         $this->storeManager = $this->objectManager->get(StoreManagerInterface::class);
         $this->moduleManger = $this->objectManager->get(Manager::class);
+        $this->resource = $this->objectManager->get(ResourceConnection::class);
         $websiteId = $this->storeManager->getWebsite()->getId();
         $configData = [
             [
