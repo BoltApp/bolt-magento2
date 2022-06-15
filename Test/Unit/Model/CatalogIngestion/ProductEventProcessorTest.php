@@ -294,6 +294,7 @@ class ProductEventProcessorTest extends BoltTestCase
 
     /**
      * @test
+     * @magentoAppArea adminhtml
      */
     public function testProcessProductEventUpdateByProduct_deleteProduct()
     {
