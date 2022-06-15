@@ -254,6 +254,18 @@ class ProductEventProcessorTest extends BoltTestCase
                 'value' => 1,
                 'scope' => ScopeInterface::SCOPE_WEBSITES,
                 'scopeId' => $websiteId,
+            ],
+            [
+                'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_INSTANT_ENABLED,
+                'value' => 1,
+                'scope' => ScopeInterface::SCOPE_WEBSITES,
+                'scopeId' => $websiteId,
+            ],
+            [
+                'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_INSTANT_ASYNC_ENABLED,
+                'value' => 0,
+                'scope' => ScopeInterface::SCOPE_WEBSITES,
+                'scopeId' => $websiteId,
             ]
         ];
         TestUtils::setupBoltConfig($configData);
