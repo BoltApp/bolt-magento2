@@ -97,8 +97,8 @@ class ProductEventProcessorTest extends BoltTestCase
      */
     private $stocksData = [
         [
-            StockInterface::STOCK_ID => 10,
-            StockInterface::NAME => 'EU-stock',
+            'stock_id' => 10,
+            'name' => 'EU-stock',
         ]
     ];
 
@@ -107,18 +107,18 @@ class ProductEventProcessorTest extends BoltTestCase
      */
     private $sourcesData = [
         [
-            SourceInterface::SOURCE_CODE => 'eu-1',
-            SourceInterface::NAME => 'EU-source-1',
-            SourceInterface::ENABLED => true,
-            SourceInterface::POSTCODE => 'postcode',
-            SourceInterface::COUNTRY_ID => 'FR',
+            'source_code' => 'eu-1',
+            'name' => 'EU-source-1',
+            'enabled' => true,
+            'postcode' => 'postcode',
+            'country_id' => 'FR',
         ],
         [
-            SourceInterface::SOURCE_CODE => 'eu-2',
-            SourceInterface::NAME => 'EU-source-2',
-            SourceInterface::ENABLED => true,
-            SourceInterface::POSTCODE => 'postcode',
-            SourceInterface::COUNTRY_ID => 'FR',
+            'source_code' => 'eu-2',
+            'name' => 'EU-source-2',
+            'enabled' => true,
+            'postcode' => 'postcode',
+            'country_id' => 'FR',
         ]
     ];
 
@@ -127,14 +127,14 @@ class ProductEventProcessorTest extends BoltTestCase
      */
     private $linksData = [
         [
-            StockSourceLinkInterface::STOCK_ID => 10,
-            StockSourceLinkInterface::SOURCE_CODE => 'eu-1',
-            StockSourceLinkInterface::PRIORITY => 1,
+            'stock_id' => 10,
+            'source_code' => 'eu-1',
+            'priority' => 1,
         ],
         [
-            StockSourceLinkInterface::STOCK_ID => 10,
-            StockSourceLinkInterface::SOURCE_CODE => 'eu-2',
-            StockSourceLinkInterface::PRIORITY => 2,
+            'stock_id' => 10,
+            'source_code' => 'eu-2',
+            'priority' => 2,
         ]
     ];
 
