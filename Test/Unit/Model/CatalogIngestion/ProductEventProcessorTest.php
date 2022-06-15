@@ -143,16 +143,16 @@ class ProductEventProcessorTest extends BoltTestCase
      */
     private $sourcesItemsData = [
         [
-            SourceItemInterface::SOURCE_CODE => 'eu-1',
-            SourceItemInterface::SKU => 'ci_simple',
-            SourceItemInterface::QUANTITY => 50,
-            SourceItemInterface::STATUS => SourceItemInterface::STATUS_IN_STOCK,
+            'source_code' => 'eu-1',
+            'sku' => 'ci_simple',
+            'quantity' => 50,
+            'status' => 1,
         ],
         [
-            SourceItemInterface::SOURCE_CODE => 'eu-2',
-            SourceItemInterface::SKU => 'ci_simple',
-            SourceItemInterface::QUANTITY => 60,
-            SourceItemInterface::STATUS => SourceItemInterface::STATUS_IN_STOCK,
+            'source_code' => 'eu-2',
+            'sku' => 'ci_simple',
+            'quantity' => 60,
+            'status' => 1,
         ]
     ];
 
