@@ -84,6 +84,9 @@ class ProductEventManagerTest extends BoltTestCase
      */
     private $resource;
 
+    /**
+     * @var DeploymentConfig
+     */
     private $deploymentConfig;
 
     /**

@@ -32,7 +32,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use PHPUnit\Framework\MockObject\MockObject;
-
+use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
 
 /**
  * Class CatalogIngestionTest
@@ -87,8 +87,10 @@ class CatalogIngestionTest extends BoltTestCase
         $this->catalogIngestionCron = $this->objectManager->get(CatalogIngestionCron::class);
         $this->productEventRepository = $this->objectManager->get(ProductEventRepositoryInterface::class);
         $this->resource = $this->objectManager->get(ResourceConnection::class);
+        $productEventProcessor = $this->objectManager->get(ProductEventProcessor::class);
         $featureSwitches = $this->createMock(Decider::class);
         TestHelper::setProperty($this->catalogIngestionCron, 'featureSwitches', $featureSwitches);
+        TestHelper::setProperty($productEventProcessor, 'featureSwitches', $featureSwitches);
         $featureSwitches->method('isCatalogIngestionEnabled')->willReturn(true);
         $this->apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $this->apiHelper);
