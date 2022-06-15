@@ -20,6 +20,8 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\Catalog\Model\ResourceModel\Product\Website\Link as ProductWebsiteLink;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\InventoryApi\Api\SourceItemsDeleteInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterSourceItemsDeletePlugin;
@@ -29,6 +31,16 @@ use Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterSourceItemsDeletePl
  */
 class SourceItemsDeletePlugin
 {
+    /**
+     * @var ObjectManager
+     */
+    private $objectManager;
+
+    /**
+     * @var ModuleManager
+     */
+    private $moduleManager;
+
     /**
      * @var ProductEventProcessor
      */
@@ -59,20 +71,25 @@ class SourceItemsDeletePlugin
      * @param ProductFactory $productFactory
      * @param ProductWebsiteLink $productWebsiteLink
      * @param Decider $featureSwitches
-     * @param ReindexAfterSourceItemsDeletePlugin $reindexAfterSourceItemsDeletePlugin
+     * @param ModuleManager $moduleManager
      */
     public function __construct(
         ProductEventProcessor $productEventProcessor,
         ProductFactory $productFactory,
         ProductWebsiteLink $productWebsiteLink,
         Decider $featureSwitches,
-        ReindexAfterSourceItemsDeletePlugin $reindexAfterSourceItemsDeletePlugin
+        ModuleManager $moduleManager
     ) {
+        $this->objectManager = ObjectManager::getInstance();
+        $this->moduleManager = $moduleManager;
         $this->productEventProcessor = $productEventProcessor;
         $this->productFactory = $productFactory;
         $this->productWebsiteLink = $productWebsiteLink;
         $this->featureSwitches = $featureSwitches;
-        $this->reindexAfterSourceItemsDeletePlugin = $reindexAfterSourceItemsDeletePlugin;
+        if ($this->moduleManager->isEnabled('Magento_InventoryIndexer')) {
+            $this->reindexAfterSourceItemsDeletePlugin = $this->objectManager
+                ->get('Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterSourceItemsDeletePlugin');
+        }
     }
 
     /**

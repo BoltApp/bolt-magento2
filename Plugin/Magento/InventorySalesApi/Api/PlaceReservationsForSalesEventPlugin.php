@@ -18,6 +18,8 @@ namespace Bolt\Boltpay\Plugin\Magento\InventorySalesApi\Api;
 
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\InventorySalesApi\Api\Data\SalesChannelInterface;
 use Magento\InventorySalesApi\Api\Data\SalesEventInterface;
 use Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventInterface;
@@ -32,9 +34,24 @@ use Magento\Framework\Exception\LocalizedException;
 class PlaceReservationsForSalesEventPlugin
 {
     /**
+     * @var ObjectManager
+     */
+    private $objectManager;
+
+    /**
      * @var ProductEventProcessor
      */
     private $productEventProcessor;
+
+    /**
+     * @var ModuleManager
+     */
+    private $moduleManager;
+
+    /**
+     * @var Decider
+     */
+    private $featureSwitches;
 
     /**
      * @var GetStockBySalesChannelInterface
@@ -47,26 +64,25 @@ class PlaceReservationsForSalesEventPlugin
     private $areProductsSalable;
 
     /**
-     * @var Decider
-     */
-    private $featureSwitches;
-
-    /**
      * @param ProductEventProcessor $productEventProcessor
-     * @param GetStockBySalesChannelInterface $getStockBySalesChannel
-     * @param AreProductsSalableInterface $areProductsSalable
+     * @param ModuleManager $moduleManager
      * @param Decider $featureSwitches
      */
     public function __construct(
         ProductEventProcessor $productEventProcessor,
-        GetStockBySalesChannelInterface $getStockBySalesChannel,
-        AreProductsSalableInterface $areProductsSalable,
+        ModuleManager $moduleManager,
         Decider $featureSwitches
     ) {
+        $this->objectManager = ObjectManager::getInstance();
         $this->productEventProcessor = $productEventProcessor;
-        $this->getStockBySalesChannel = $getStockBySalesChannel;
-        $this->areProductsSalable = $areProductsSalable;
+        $this->moduleManager = $moduleManager;
         $this->featureSwitches = $featureSwitches;
+        if ($this->moduleManager->isEnabled('Magento_InventorySalesApi')) {
+            $this->getStockBySalesChannel = $this->objectManager
+                ->get('Magento\InventorySalesApi\Api\GetStockBySalesChannelInterface');
+            $this->areProductsSalable = $this->objectManager
+                ->get('Magento\InventorySalesApi\Api\AreProductsSalableInterface');
+        }
     }
 
     /**

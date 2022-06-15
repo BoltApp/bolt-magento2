@@ -20,6 +20,8 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\Catalog\Model\ResourceModel\Product\Website\Link as ProductWebsiteLink;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterSourceItemsSavePlugin;
@@ -29,6 +31,16 @@ use Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterSourceItemsSavePlug
  */
 class SourceItemSavePlugin
 {
+    /**
+     * @var ObjectManager
+     */
+    private $objectManager;
+
+    /**
+     * @var ModuleManager
+     */
+    private $moduleManager;
+
     /**
      * @var ProductEventProcessor
      */
@@ -59,20 +71,25 @@ class SourceItemSavePlugin
      * @param ProductFactory $productFactory
      * @param ProductWebsiteLink $productWebsiteLink
      * @param Decider $featureSwitches
-     * @param ReindexAfterSourceItemsSavePlugin $reindexAfterSourceItemsSavePlugin
+     * @param ModuleManager $moduleManager
      */
     public function __construct(
         ProductEventProcessor $productEventProcessor,
         ProductFactory $productFactory,
         ProductWebsiteLink $productWebsiteLink,
         Decider $featureSwitches,
-        ReindexAfterSourceItemsSavePlugin $reindexAfterSourceItemsSavePlugin
+        ModuleManager $moduleManager
     ) {
+        $this->objectManager = ObjectManager::getInstance();
+        $this->moduleManager = $moduleManager;
         $this->productEventProcessor = $productEventProcessor;
         $this->productFactory = $productFactory;
         $this->productWebsiteLink = $productWebsiteLink;
         $this->featureSwitches = $featureSwitches;
-        $this->reindexAfterSourceItemsSavePlugin = $reindexAfterSourceItemsSavePlugin;
+        if ($this->moduleManager->isEnabled('Magento_InventoryIndexer')) {
+            $this->reindexAfterSourceItemsSavePlugin = $this->objectManager
+                ->get('Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterSourceItemsSavePlugin');
+        }
     }
 
     /***

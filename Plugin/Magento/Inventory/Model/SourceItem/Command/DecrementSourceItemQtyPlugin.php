@@ -20,6 +20,8 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\Catalog\Model\ResourceModel\Product\Website\Link as ProductWebsiteLink;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\Inventory\Model\SourceItem\Command\DecrementSourceItemQty;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterDecrementSourceItemQty;
@@ -29,6 +31,11 @@ use Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterDecrementSourceItem
  */
 class DecrementSourceItemQtyPlugin
 {
+    /**
+     * @var ObjectManager
+     */
+    private $objectManager;
+
     /**
      * @var ProductEventProcessor
      */
@@ -50,6 +57,11 @@ class DecrementSourceItemQtyPlugin
     private $featureSwitches;
 
     /**
+     * @var ModuleManager
+     */
+    private $moduleManager;
+
+    /**
      * @var ReindexAfterDecrementSourceItemQty
      */
     private $reindexAfterDecrementSourceItemQty;
@@ -59,20 +71,25 @@ class DecrementSourceItemQtyPlugin
      * @param ProductFactory $productFactory
      * @param ProductWebsiteLink $productWebsiteLink
      * @param Decider $featureSwitches
-     * @param ReindexAfterDecrementSourceItemQty $reindexAfterDecrementSourceItemQty
+     * @param ModuleManager $moduleManager
      */
     public function __construct(
         ProductEventProcessor $productEventProcessor,
         ProductFactory $productFactory,
         ProductWebsiteLink $productWebsiteLink,
         Decider $featureSwitches,
-        ReindexAfterDecrementSourceItemQty $reindexAfterDecrementSourceItemQty
+        ModuleManager $moduleManager
     ) {
+        $this->objectManager = ObjectManager::getInstance();
         $this->productEventProcessor = $productEventProcessor;
         $this->productFactory = $productFactory;
         $this->productWebsiteLink = $productWebsiteLink;
         $this->featureSwitches = $featureSwitches;
-        $this->reindexAfterDecrementSourceItemQty = $reindexAfterDecrementSourceItemQty;
+        $this->moduleManager = $moduleManager;
+        if ($this->moduleManager->isEnabled('Magento_InventoryIndexer')) {
+            $this->reindexAfterDecrementSourceItemQty = $this->objectManager
+                ->get('Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterDecrementSourceItemQty');
+        }
     }
 
     /**
