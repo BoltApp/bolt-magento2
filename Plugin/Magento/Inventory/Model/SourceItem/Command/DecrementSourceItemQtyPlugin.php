@@ -86,7 +86,9 @@ class DecrementSourceItemQtyPlugin
         $this->productWebsiteLink = $productWebsiteLink;
         $this->featureSwitches = $featureSwitches;
         $this->moduleManager = $moduleManager;
-        if ($this->moduleManager->isEnabled('Magento_InventoryIndexer')) {
+        if ($this->moduleManager->isEnabled('Magento_InventoryIndexer') &&
+            class_exists('Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterDecrementSourceItemQty')
+        ) {
             $this->reindexAfterDecrementSourceItemQty = $this->objectManager
                 ->get('Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterDecrementSourceItemQty');
         }
@@ -116,7 +118,9 @@ class DecrementSourceItemQtyPlugin
         if (!empty($sourceItems)) {
             $beforeProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
             $proceed($sourceItemDecrementData);
-            $this->reindexAfterDecrementSourceItemQty->afterExecute($subject, null, $sourceItemDecrementData);
+            if ($this->reindexAfterDecrementSourceItemQty) {
+                $this->reindexAfterDecrementSourceItemQty->afterExecute($subject, null, $sourceItemDecrementData);
+            }
             $afterProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
             $this->productEventProcessor->processProductEventSourceItemsBased(
                 $beforeProductStatuses,
