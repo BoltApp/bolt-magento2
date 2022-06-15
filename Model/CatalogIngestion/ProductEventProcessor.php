@@ -38,7 +38,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
 use Magento\InventorySalesApi\Api\Data\IsProductSalableResultInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\InventorySalesApi\Api\AreProductsSalableInterface;
+use Magento\InventorySalesApi\Api\IsProductSalableInterface;;
 use Magento\InventorySalesApi\Api\StockResolverInterface;
 
 /**
@@ -118,9 +118,9 @@ class ProductEventProcessor
     private $stockResolver;
 
     /**
-     * @var AreProductsSalableInterface
+     * @var IsProductSalableInterface
      */
-    private $areProductsSalable;
+    private $isProductSalable;
 
     /**
      * @param StoreManagerInterface $storeManager
@@ -157,8 +157,8 @@ class ProductEventProcessor
         if ($this->moduleManager->isEnabled('Magento_InventorySalesApi')) {
             $this->stockResolver = $this->objectManager
                 ->get('Magento\InventorySalesApi\Api\StockResolverInterface');
-            $this->areProductsSalable = $this->objectManager
-                ->get('Magento\InventorySalesApi\Api\AreProductsSalableInterface');
+            $this->isProductSalable = $this->objectManager
+                ->get('Magento\InventorySalesApi\Api\IsProductSalableInterface');
         }
     }
 
@@ -166,8 +166,8 @@ class ProductEventProcessor
      * Publishing product event based on magento product inventory source items.
      * Checking previous values of qty/status of source item and publishing or not catalog ingestion product event.
      *
-     * @param array $beforeProductStatuses, array[product_id...][website_id...] = IsProductSalableResultInterface
-     * @param array $afterProductStatuses, array[product_id...][website_id...] = IsProductSalableResultInterface
+     * @param array $beforeProductStatuses, array[product_id...][website_id...] = bool isSalable
+     * @param array $afterProductStatuses, array[product_id...][website_id...] = bool isSalable
      * @param SourceItemInterface[] $sourceItems
      * @return void
      */
@@ -186,16 +186,16 @@ class ProductEventProcessor
                 $productId = $this->productFactory->create()->getIdBySku($sourceItem->getSku());
                 $websiteIds = $this->productWebsiteLink->getWebsiteIdsByProductId($productId);
                 foreach ($websiteIds as $websiteId) {
-                    $isProductSalableResultBefore = (isset($beforeProductStatuses[$productId][$websiteId])) ?
+                    $isProductSalableBefore = (isset($beforeProductStatuses[$productId][$websiteId])) ?
                         $beforeProductStatuses[$productId][$websiteId] : false;
-                    $isProductSalableResultAfter = (isset($afterProductStatuses[$productId][$websiteId])) ?
+                    $isProductSalableAfter = (isset($afterProductStatuses[$productId][$websiteId])) ?
                         $afterProductStatuses[$productId][$websiteId] : false;
                     $this->processProductEventByInventoryData(
                         (int)$productId,
-                        ($isProductSalableResultAfter) ? $isProductSalableResultAfter->isSalable() : false,
+                        $isProductSalableAfter,
                         (int)$sourceItem->getData('quantity'),
                         (int)$websiteId,
-                        ($isProductSalableResultBefore) ? $isProductSalableResultBefore->isSalable() : false,
+                        $isProductSalableBefore,
                         (!is_null($sourceItem->getOrigData('quantity'))) ? (int)$sourceItem->getOrigData('quantity') : null
                     );
                 }
@@ -209,7 +209,7 @@ class ProductEventProcessor
      * Get product statuses based on source items
      *
      * @param SourceItemInterface[] $sourceItems
-     * @return array, returns stock statuses as array[product_id...][website_id...] = IsProductSalableResultInterface
+     * @return array, returns stock statuses as array[product_id...][website_id...] = bool isSalable
      * @throws LocalizedException
      */
     public function getProductStatusesSourceItemsBased(array $sourceItems): array
@@ -223,9 +223,7 @@ class ProductEventProcessor
                 $websiteCode = $this->storeManager->getWebsite($websiteId)->getCode();
                 $stock = $this->stockResolver->execute('website', $websiteCode);
                 $stockId = (int)$stock->getStockId();
-                /** @var IsProductSalableResultInterface $isSalable */
-                $isSalable = $this->areProductsSalable->execute([$sku], $stockId);
-                $isSalable = current($isSalable);
+                $isSalable = $this->isProductSalable->execute($sku, $stockId);
                 $result[$productId][$websiteId] = $isSalable;
             }
         }
@@ -301,31 +299,30 @@ class ProductEventProcessor
     }
 
     /**
-     * Publishing product event based on magento products salable result data.
+     * Publishing product event based on magento products is salable result data.
      * Checking previous values of status of salable result data and publishing or not catalog ingestion product event.
      *
-     * @param IsProductSalableResultInterface[] $productsSalableStatus
-     * @param IsProductSalableResultInterface[] $productsSalableStatusOld
+     * @param array $afterStatuses
+     * @param array $beforeStatuses
      * @return void
      */
-    public function processProductEventSalableResultItemsBased(array $productsSalableStatus, array $productsSalableStatusOld): void
+    public function processProductEventSalableItemsBased(array $afterStatuses, array $beforeStatuses): void
     {
         if (!$this->featureSwitches->isCatalogIngestionEnabled()) {
             return;
         }
-        foreach ($productsSalableStatus as $key => $salableStatus) {
+        foreach ($afterStatuses as $sku => $salableStatus) {
             try {
-                $productId = $this->productFactory->create()->getIdBySku($salableStatus->getSku());
+                $productId = $this->productFactory->create()->getIdBySku($sku);
                 $websiteIds = $this->productWebsiteLink->getWebsiteIdsByProductId($productId);
                 foreach ($websiteIds as $websiteId) {
                     if (!$this->config->getIsCatalogIngestionEnabled($websiteId)) {
                         continue;
                     }
-                    $salableStatusOld = $productsSalableStatusOld[$key];
                     if ($this->isCatalogIngestionInstantUpdateByStockStatusAvailable(
-                        $salableStatus->isSalable(),
+                        $salableStatus,
                         $websiteId,
-                        $salableStatusOld->isSalable()
+                        $beforeStatuses[$sku]
                     )) {
                         $this->productEventManager->runInstantProductEvent(
                             $productId,

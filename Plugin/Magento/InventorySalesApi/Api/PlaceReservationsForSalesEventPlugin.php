@@ -25,7 +25,7 @@ use Magento\InventorySalesApi\Api\Data\SalesEventInterface;
 use Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventInterface;
 use Magento\InventorySalesApi\Api\GetStockBySalesChannelInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\InventorySalesApi\Api\AreProductsSalableInterface;
+use Magento\InventorySalesApi\Api\IsProductSalableInterface;
 use Magento\Framework\Exception\LocalizedException;
 
 /**
@@ -59,9 +59,9 @@ class PlaceReservationsForSalesEventPlugin
     private $getStockBySalesChannel;
 
     /**
-     * @var AreProductsSalableInterface
+     * @var IsProductSalableInterface
      */
-    private $areProductsSalable;
+    private $isProductsSalable;
 
     /**
      * @param ProductEventProcessor $productEventProcessor
@@ -80,8 +80,8 @@ class PlaceReservationsForSalesEventPlugin
         if ($this->moduleManager->isEnabled('Magento_InventorySalesApi')) {
             $this->getStockBySalesChannel = $this->objectManager
                 ->get('Magento\InventorySalesApi\Api\GetStockBySalesChannelInterface');
-            $this->areProductsSalable = $this->objectManager
-                ->get('Magento\InventorySalesApi\Api\AreProductsSalableInterface');
+            $this->isProductsSalable = $this->objectManager
+                ->get('Magento\InventorySalesApi\Api\IsProductSalableInterface');
         }
     }
 
@@ -104,22 +104,33 @@ class PlaceReservationsForSalesEventPlugin
         SalesChannelInterface $salesChannel,
         SalesEventInterface $salesEvent
     ): void {
-        /** @var AreProductsSalableInterface $areProductsSalable */
         if (empty($items) || !$this->featureSwitches->isCatalogIngestionEnabled()) {
             $proceed($items, $salesChannel, $salesEvent);
             return;
         }
         $stockId = $this->getStockBySalesChannel->execute($salesChannel)->getStockId();
-        $skus = [];
-        foreach ($items as $item) {
-            $skus[] = $item->getSku();
-        }
-        $productsSalableStatusOld = $this->areProductsSalable->execute($skus, $stockId);
+        $beforeStatuses = $this->getProductStatusesByItems($items, (int)$stockId);
         $proceed($items, $salesChannel, $salesEvent);
-        $productsSalableStatus = $this->areProductsSalable->execute($skus, $stockId);
-        $this->productEventProcessor->processProductEventSalableResultItemsBased(
-            $productsSalableStatus,
-            $productsSalableStatusOld
+        $afterStatuses = $this->getProductStatusesByItems($items, (int)$stockId);
+        $this->productEventProcessor->processProductEventSalableItemsBased(
+            $afterStatuses,
+            $beforeStatuses
         );
+    }
+
+    /**
+     * Get product statuses by reservation items
+     *
+     * @param array $items
+     * @param int $stockId
+     * @return array
+     */
+    private function getProductStatusesByItems(array $items, int $stockId): array
+    {
+        $statuses = [];
+        foreach ($items as $item) {
+            $statuses[$item->getSku()] = $this->isProductsSalable->execute($item->getSku(), $stockId);
+        }
+        return $statuses;
     }
 }
