@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\CatalogIngestion;
 
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config;
+use Magento\Framework\Amqp\Config as AmqpConfig;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Test\Unit\TestUtils;
@@ -34,10 +35,12 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Framework\Module\Manager;
+use Magento\Framework\App\DeploymentConfig;
 
 /**
  * Class ProductEventManagerTest
  * @coversDefaultClass \Bolt\Boltpay\Model\CatalogIngestion\ProductEventManager
+ * @magentoDbIsolation disabled
  */
 class ProductEventManagerTest extends BoltTestCase
 {
@@ -81,6 +84,8 @@ class ProductEventManagerTest extends BoltTestCase
      */
     private $resource;
 
+    private $deploymentConfig;
+
     /**
      * @inheritDoc
      */
@@ -92,6 +97,7 @@ class ProductEventManagerTest extends BoltTestCase
         $this->storeManager = $this->objectManager->get(StoreManagerInterface::class);
         $this->moduleManger = $this->objectManager->get(Manager::class);
         $this->resource = $this->objectManager->get(ResourceConnection::class);
+        $this->deploymentConfig = $this->objectManager->get(DeploymentConfig::class);;
         $websiteId = $this->storeManager->getWebsite()->getId();
         $configData = [
             [
@@ -140,7 +146,18 @@ class ProductEventManagerTest extends BoltTestCase
      */
     public function testPublishProductEventAsyncJob()
     {
-        if (!$this->moduleManger->isEnabled('Magento_AsynchronousOperations')) {
+        $amqpConfigExist = false;
+
+        if (class_exists('Magento\Framework\Amqp\Config')) {
+            $queueConfig = $this->deploymentConfig->getConfigData(AmqpConfig::QUEUE_CONFIG);
+            $amqpConfigExist = isset($queueConfig[AmqpConfig::AMQP_CONFIG])? true : false;
+        }
+
+        if ($this->moduleManger->isEnabled('Magento_AsynchronousOperations') && !$amqpConfigExist) {
+            $this->expectExceptionMessage('Unknown connection name amqp');
+        }
+
+        if (!$this->moduleManger->isEnabled('Magento_AsynchronousOperations') && !$amqpConfigExist) {
             $this->expectExceptionMessage('Magento Asynchronous Operations is not supported on your magento version, please verify.');
         }
 
@@ -149,7 +166,7 @@ class ProductEventManagerTest extends BoltTestCase
             ProductEventInterface::TYPE_UPDATE
         );
 
-        if (!$this->moduleManger->isEnabled('Magento_AsynchronousOperations')) {
+        if (!$this->moduleManger->isEnabled('Magento_AsynchronousOperations') && $amqpConfigExist) {
             $this->assertNotEmpty($bulkId);
         }
     }
@@ -208,7 +225,17 @@ class ProductEventManagerTest extends BoltTestCase
      */
     public function testRunInstantProductEvent_withAsync()
     {
-        if (!$this->moduleManger->isEnabled('Magento_AsynchronousOperations')) {
+        $amqpConfigExist = false;
+        if (class_exists('Magento\Framework\Amqp\Config')) {
+            $queueConfig = $this->deploymentConfig->getConfigData(AmqpConfig::QUEUE_CONFIG);
+            $amqpConfigExist = isset($queueConfig[AmqpConfig::AMQP_CONFIG])? true : false;
+        }
+
+        if ($this->moduleManger->isEnabled('Magento_AsynchronousOperations') && !$amqpConfigExist) {
+            $this->expectExceptionMessage('Unknown connection name amqp');
+        }
+
+        if (!$this->moduleManger->isEnabled('Magento_AsynchronousOperations') && !$amqpConfigExist) {
             $this->expectExceptionMessage('Magento Asynchronous Operations is not supported on your magento version, please verify.');
         }
 
