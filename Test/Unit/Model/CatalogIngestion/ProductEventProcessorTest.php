@@ -642,14 +642,9 @@ class ProductEventProcessorTest extends BoltTestCase
      */
     private function cleanDataBase(): void
     {
-        try {
-            $this->productRepository->deleteById(self::PRODUCT_SKU);
-        } catch (NoSuchEntityException $e) {
-            //Product already removed
-        }
-
         $connection = $this->resource->getConnection('default');
         $connection->truncateTable($this->resource->getTableName('bolt_product_event'));
+        $connection->delete($connection->getTableName('catalog_product_entity'));
         $connection->delete($connection->getTableName('quote'));
         $connection->delete($connection->getTableName('sales_order'));
 

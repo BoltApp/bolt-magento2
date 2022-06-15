@@ -98,6 +98,15 @@ class ProductEventManagerTest extends BoltTestCase
     }
 
     /**
+     * @inheritdoc
+     */
+    protected function tearDownInternal(): void
+    {
+        $this->cleanDataBase();
+        parent::tearDownInternal();
+    }
+
+    /**
      * @test
      */
     public function testPublishProductEvent()
@@ -241,5 +250,17 @@ class ProductEventManagerTest extends BoltTestCase
         TestUtils::createStockItemForProduct($product, self::PRODUCT_QTY);
 
         return $productRepository->save($product);
+    }
+
+    /**
+     * Cleaning test data from database
+     *
+     * @return void
+     */
+    private function cleanDataBase(): void
+    {
+        $connection = $this->resource->getConnection('default');
+        $connection->truncateTable($this->resource->getTableName('bolt_product_event'));
+        $connection->delete($connection->getTableName('catalog_product_entity'));
     }
 }
