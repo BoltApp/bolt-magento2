@@ -165,7 +165,7 @@ class ProductEventManagerTest extends BoltTestCase
 
         if (class_exists('Magento\Framework\Amqp\Config')) {
             $queueConfig = $this->deploymentConfig->getConfigData(AmqpConfig::QUEUE_CONFIG);
-            $amqpConfigExist = isset($queueConfig[AmqpConfig::AMQP_CONFIG])? true : false;
+            $amqpConfigExist = isset($queueConfig[AmqpConfig::AMQP_CONFIG]) ? true : false;
         }
 
         if ($this->moduleManger->isEnabled('Magento_AsynchronousOperations') && !$amqpConfigExist) {
