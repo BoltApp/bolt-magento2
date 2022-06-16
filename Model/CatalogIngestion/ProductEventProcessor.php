@@ -25,6 +25,8 @@ use Bolt\Boltpay\Model\Config\Source\Catalog\Ingestion\Events;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\CatalogInventory\Api\Data\StockItemInterface;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\Inventory\Model\SourceItem;
 use Magento\Catalog\Model\ResourceModel\Product\Website\Link as ProductWebsiteLink;
 use Magento\Catalog\Model\Product;
@@ -35,6 +37,9 @@ use Magento\Eav\Api\Data\AttributeInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
 use Magento\InventorySalesApi\Api\Data\IsProductSalableResultInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\InventorySalesApi\Api\IsProductSalableInterface;;
+use Magento\InventorySalesApi\Api\StockResolverInterface;
 
 /**
  * Product Event Processor
@@ -55,8 +60,17 @@ class ProductEventProcessor
         'has_options',
         'required_options',
         'media_gallery',
-        'updated_at'
+        'updated_at',
+        'quantity_and_stock_status'
     ];
+
+    private $objectManager;
+
+
+    /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
 
     /**
      * @var ProductEventManagerInterface
@@ -94,6 +108,22 @@ class ProductEventProcessor
     private $logger;
 
     /**
+     * @var ModuleManager
+     */
+    private $moduleManager;
+
+    /**
+     * @var StockResolverInterface
+     */
+    private $stockResolver;
+
+    /**
+     * @var IsProductSalableInterface
+     */
+    private $isProductSalable;
+
+    /**
+     * @param StoreManagerInterface $storeManager
      * @param ProductEventManagerInterface $productEventManager
      * @param Config $config
      * @param ProductFactory $productFactory
@@ -101,16 +131,21 @@ class ProductEventProcessor
      * @param EavConfig $eavConfig
      * @param Decider $featureSwitches
      * @param Logger $logger
+     * @param ModuleManager $moduleManager
      */
     public function __construct(
+        StoreManagerInterface $storeManager,
         ProductEventManagerInterface $productEventManager,
         Config $config,
         ProductFactory $productFactory,
         ProductWebsiteLink $productWebsiteLink,
         EavConfig $eavConfig,
         Decider $featureSwitches,
-        Logger $logger
+        Logger $logger,
+        ModuleManager $moduleManager
     ) {
+        $this->objectManager = ObjectManager::getInstance();
+        $this->storeManager = $storeManager;
         $this->productEventManager = $productEventManager;
         $this->config = $config;
         $this->productFactory = $productFactory;
@@ -118,17 +153,29 @@ class ProductEventProcessor
         $this->eavConfig = $eavConfig;
         $this->featureSwitches = $featureSwitches;
         $this->logger = $logger;
+        $this->moduleManager = $moduleManager;
+        if ($this->moduleManager->isEnabled('Magento_InventorySalesApi')) {
+            $this->stockResolver = $this->objectManager
+                ->get('Magento\InventorySalesApi\Api\StockResolverInterface');
+            $this->isProductSalable = $this->objectManager
+                ->get('Magento\InventorySalesApi\Api\IsProductSalableInterface');
+        }
     }
 
     /**
      * Publishing product event based on magento product inventory source items.
      * Checking previous values of qty/status of source item and publishing or not catalog ingestion product event.
      *
+     * @param array $beforeProductStatuses, array[product_id...][website_id...] = bool isSalable
+     * @param array $afterProductStatuses, array[product_id...][website_id...] = bool isSalable
      * @param SourceItemInterface[] $sourceItems
-     * @param bool $forcePublish force publishing flag to prevent checking qty/status
      * @return void
      */
-    public function processProductEventSourceItemsBased(array $sourceItems, bool $forcePublish = false): void
+    public function processProductEventSourceItemsBased(
+        array $beforeProductStatuses,
+        array $afterProductStatuses,
+        array $sourceItems
+    ): void
     {
         if (!$this->featureSwitches->isCatalogIngestionEnabled()) {
             return;
@@ -139,27 +186,48 @@ class ProductEventProcessor
                 $productId = $this->productFactory->create()->getIdBySku($sourceItem->getSku());
                 $websiteIds = $this->productWebsiteLink->getWebsiteIdsByProductId($productId);
                 foreach ($websiteIds as $websiteId) {
-                    if ($forcePublish && $this->config->getIsCatalogIngestionEnabled($websiteId)) {
-                        $this->productEventManager->publishProductEvent(
-                            $productId,
-                            ProductEventInterface::TYPE_UPDATE
-                        );
-                        break;
-                    } else {
-                        $this->processProductEventByInventoryData(
-                            (int)$productId,
-                            $sourceItem->getData('status'),
-                            (int)$sourceItem->getData('quantity'),
-                            (int)$websiteId,
-                            $sourceItem->getOrigData('status'),
-                            (int)$sourceItem->getOrigData('quantity')
-                        );
-                    }
+                    $isProductSalableBefore = (isset($beforeProductStatuses[$productId][$websiteId])) ?
+                        $beforeProductStatuses[$productId][$websiteId] : false;
+                    $isProductSalableAfter = (isset($afterProductStatuses[$productId][$websiteId])) ?
+                        $afterProductStatuses[$productId][$websiteId] : false;
+                    $this->processProductEventByInventoryData(
+                        (int)$productId,
+                        $isProductSalableAfter,
+                        (int)$sourceItem->getData('quantity'),
+                        (int)$websiteId,
+                        $isProductSalableBefore,
+                        (!is_null($sourceItem->getOrigData('quantity'))) ? (int)$sourceItem->getOrigData('quantity') : null
+                    );
                 }
             }
         } catch (\Exception $e) {
             $this->logger->critical($e);
         }
+    }
+
+    /**
+     * Get product statuses based on source items
+     *
+     * @param SourceItemInterface[] $sourceItems
+     * @return array, returns stock statuses as array[product_id...][website_id...] = bool isSalable
+     * @throws LocalizedException
+     */
+    public function getProductStatusesSourceItemsBased(array $sourceItems): array
+    {
+        $result = [];
+        foreach ($sourceItems as $sourceItem) {
+            $sku = $sourceItem->getSku();
+            $productId = $this->productFactory->create()->getIdBySku($sku);
+            $websiteIds = $this->productWebsiteLink->getWebsiteIdsByProductId($productId);
+            foreach ($websiteIds as $websiteId) {
+                $websiteCode = $this->storeManager->getWebsite($websiteId)->getCode();
+                $stock = $this->stockResolver->execute('website', $websiteCode);
+                $stockId = (int)$stock->getStockId();
+                $isSalable = $this->isProductSalable->execute($sku, $stockId);
+                $result[$productId][$websiteId] = $isSalable;
+            }
+        }
+        return $result;
     }
 
     /**
@@ -186,11 +254,11 @@ class ProductEventProcessor
             try {
                 $this->processProductEventByInventoryData(
                     (int)$stockItem->getProductId(),
-                    $oldStockItem->getIsInStock(),
+                    (bool)$stockItem->getIsInStock(),
                     (int)$stockItem->getQty(),
                     (int)$websiteId,
-                    $oldStockItem->getIsInStock(),
-                    (int)$oldStockItem->getQty()
+                    (!is_null($oldStockItem->getIsInStock())) ? (bool)$oldStockItem->getIsInStock() : null,
+                    (!is_null($oldStockItem->getQty())) ? (int)$oldStockItem->getQty() : null
                 );
             } catch (\Exception $e) {
                 $this->logger->critical($e);
@@ -231,31 +299,30 @@ class ProductEventProcessor
     }
 
     /**
-     * Publishing product event based on magento products salable result data.
+     * Publishing product event based on magento products is salable result data.
      * Checking previous values of status of salable result data and publishing or not catalog ingestion product event.
      *
-     * @param IsProductSalableResultInterface[] $productsSalableStatus
-     * @param IsProductSalableResultInterface[] $productsSalableStatusOld
+     * @param array $afterStatuses
+     * @param array $beforeStatuses
      * @return void
      */
-    public function processProductEventSalableResultItemsBased(array $productsSalableStatus, array $productsSalableStatusOld): void
+    public function processProductEventSalableItemsBased(array $afterStatuses, array $beforeStatuses): void
     {
         if (!$this->featureSwitches->isCatalogIngestionEnabled()) {
             return;
         }
-        foreach ($productsSalableStatus as $key => $salableStatus) {
+        foreach ($afterStatuses as $sku => $salableStatus) {
             try {
-                $productId = $this->productFactory->create()->getIdBySku($salableStatus->getSku());
+                $productId = $this->productFactory->create()->getIdBySku($sku);
                 $websiteIds = $this->productWebsiteLink->getWebsiteIdsByProductId($productId);
                 foreach ($websiteIds as $websiteId) {
                     if (!$this->config->getIsCatalogIngestionEnabled($websiteId)) {
                         continue;
                     }
-                    $salableStatusOld = $productsSalableStatusOld[$key];
                     if ($this->isCatalogIngestionInstantUpdateByStockStatusAvailable(
-                        $salableStatus->isSalable(),
+                        $salableStatus,
                         $websiteId,
-                        $salableStatusOld->isSalable()
+                        $beforeStatuses[$sku]
                     )) {
                         $this->productEventManager->runInstantProductEvent(
                             $productId,
@@ -279,10 +346,10 @@ class ProductEventProcessor
      * Process of publishing instant/scheduled product event based on inventory status / inventory qty
      *
      * @param int $productId
-     * @param string $newStatus
+     * @param bool $newStatus
      * @param int $newQty
      * @param int $websiteId
-     * @param string|null $oldStatus
+     * @param bool|null $oldStatus
      * @param int|null $oldQty
      * @return void
      * @throws LocalizedException
@@ -290,10 +357,10 @@ class ProductEventProcessor
      */
     private function processProductEventByInventoryData(
         int $productId,
-        string $newStatus,
+        bool $newStatus,
         int $newQty,
         int $websiteId,
-        string $oldStatus = null,
+        bool $oldStatus = null,
         int $oldQty = null
     ): void {
         if (!$this->config->getIsCatalogIngestionEnabled($websiteId)) {
@@ -392,7 +459,8 @@ class ProductEventProcessor
                 continue;
             }
             if (!is_array($newValue) && $newValue !== null && $newValue !== '' && $newValue !== '0' &&
-                !in_array($newValue, $oldValues, true)
+                !in_array($newValue, $oldValues, true) &&
+                !($newValue == 'no_selection' && !empty($oldValues) && $oldValues[0] == null)
             ) {
                 return true;
             } elseif (is_array($newValue)) {

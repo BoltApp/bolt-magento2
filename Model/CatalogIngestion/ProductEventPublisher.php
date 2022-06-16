@@ -17,14 +17,16 @@
 
 namespace Bolt\Boltpay\Model\CatalogIngestion;
 
-use Magento\Framework\Bulk\BulkManagementInterface;
+use Bolt\Boltpay\Helper\Config as BoltConfig;
 use Magento\Framework\DataObject\IdentityGeneratorInterface;
 use Magento\Authorization\Model\UserContextInterface;
+use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\AsynchronousOperations\Api\Data\OperationInterfaceFactory;
 use Magento\AsynchronousOperations\Api\Data\OperationInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\App\ObjectManager;
+use Magento\AsynchronousOperations\Model\BulkManagement;
 
 /**
  * Product event async consumer job publisher
@@ -32,6 +34,8 @@ use Magento\Framework\App\ObjectManager;
 class ProductEventPublisher
 {
     private const TOPIC_NAME = 'async.bolt.boltpay.api.producteventmanagerinterface.sendproductevent.post';
+
+    private const TOPIC_NAME_V1 = 'async.V1.bolt.boltpay.producteventrequest.POST';
 
     /**
      * @var ObjectManager
@@ -54,34 +58,61 @@ class ProductEventPublisher
     private $jsonSerializer;
 
     /**
-     * @var string|null
+     * @var ModuleManager
      */
-    private $operationFactoryClass;
+    private $moduleManager;
 
     /**
-     * @var string|null
+     * @var BulkManagement
      */
-    private $bulkManagementClass;
+    private $bulkManagement;
+
+    /**
+     * @var OperationInterfaceFactory
+     */
+    private $operationFactory;
+
+    /**
+     * @var BoltConfig
+     */
+    private $boltConfig;
+
     /**
      * @param IdentityGeneratorInterface $identityGenerator
      * @param UserContextInterface $userContext
      * @param Json $jsonSerializer
-     * @param string|null $operationFactoryClass
-     * @param string|null $bulkManagementClass
+     * @param BoltConfig $boltConfig
+     * @param ModuleManager $moduleManager
      */
     public function __construct(
         IdentityGeneratorInterface $identityGenerator,
         UserContextInterface $userContext,
         Json $jsonSerializer,
-        string $operationFactoryClass = null,
-        string $bulkManagementClass = null
+        BoltConfig $boltConfig,
+        ModuleManager $moduleManager
     ) {
         $this->objectManager = ObjectManager::getInstance();
         $this->identityGenerator = $identityGenerator;
         $this->userContext = $userContext;
         $this->jsonSerializer = $jsonSerializer;
-        $this->operationFactoryClass = $operationFactoryClass;
-        $this->bulkManagementClass = $bulkManagementClass;
+        $this->boltConfig = $boltConfig;
+        $this->moduleManager = $moduleManager;
+        if ($this->moduleManager->isEnabled('Magento_AsynchronousOperations')) {
+            $this->operationFactory = $this->objectManager
+                ->get('Magento\AsynchronousOperations\Api\Data\OperationInterfaceFactory');
+
+            $publisher = $this->objectManager->create('Magento\Framework\MessageQueue\PublisherPool', [
+                'publishers' => [
+                    'async' => [
+                        'amqp' => $this->objectManager->get('Magento\AsynchronousOperations\Model\MassPublisher'),
+                        'db' => $this->objectManager->get('Magento\AsynchronousOperations\Model\MassPublisher')
+                    ]
+                ]
+            ]);
+
+            $this->bulkManagement = $this->objectManager
+                ->create('Magento\AsynchronousOperations\Model\BulkManagement', ['publisher' => $publisher]);
+        }
     }
 
     /**
@@ -95,21 +126,21 @@ class ProductEventPublisher
      */
     public function publishBulk(int $productId, string $type, string $date): string
     {
-        $operationFactory = $this->initOperationFactory();
-        $bulkManagement = $this->initBulkManagement();
-
-        if (!$operationFactory || !$bulkManagement) {
+        if (!$this->operationFactory || !$this->bulkManagement) {
             throw new LocalizedException(
                 __(
                     'Magento Asynchronous Operations is not supported on your magento version, please verify.'
                 )
             );
         }
+        $topicName = (version_compare($this->boltConfig->getStoreVersion(), '2.4.0', '<')) ?
+            self::TOPIC_NAME_V1 : self::TOPIC_NAME;
+
         $description = __('Publish product event, product_id: %1', $productId);
         $userId = $this->userContext->getUserId();
         $bulkId = $this->identityGenerator->generateId();
         try {
-            if (!$bulkManagement->scheduleBulk($bulkId, [], $description, $userId)) {
+            if (!$this->bulkManagement->scheduleBulk($bulkId, [], $description, $userId)) {
                 throw new LocalizedException(
                     __(
                         'Something went wrong while scheduling product event bulk %1 Check logs for details.',
@@ -136,14 +167,14 @@ class ProductEventPublisher
                 'data' => [
                     OperationInterface::ID => 0,
                     OperationInterface::BULK_ID => $bulkId,
-                    OperationInterface::TOPIC_NAME => self::TOPIC_NAME,
+                    OperationInterface::TOPIC_NAME => $topicName,
                     OperationInterface::SERIALIZED_DATA => $this->jsonSerializer->serialize($serializedData),
                     OperationInterface::STATUS => OperationInterface::STATUS_TYPE_OPEN,
                 ]
             ];
 
-            $operations[] = $operationFactory->create($data);
-            if (!$bulkManagement->scheduleBulk($bulkId, $operations, $description, $userId)) {
+            $operations[] = $this->operationFactory->create($data);
+            if (!$this->bulkManagement->scheduleBulk($bulkId, $operations, $description, $userId)) {
                 throw new LocalizedException(
                     __(
                         'Something went wrong while scheduling product event bulk %1 Check logs for details.',
@@ -153,7 +184,7 @@ class ProductEventPublisher
             }
         } catch (\Exception $e) {
             if (isset($operations)) {
-                $bulkManagement->deleteBulk($bulkId);
+                $this->bulkManagement->deleteBulk($bulkId);
             }
             throw new LocalizedException(
                 __(
@@ -164,44 +195,5 @@ class ProductEventPublisher
             );
         }
         return $bulkId;
-    }
-
-    /**
-     * Init operation factory class, for Magento 2.2 support
-     *
-     * @return mixed|null
-     */
-    private function initOperationFactory()
-    {
-        if (!$this->operationFactoryClass) {
-            return null;
-        }
-        return (class_exists($this->operationFactoryClass) || interface_exists($this->operationFactoryClass))
-            ? $this->objectManager->get($this->operationFactoryClass) : null;
-    }
-
-    /**
-     * Init bulk management instance, for Magento 2.2 support
-     *
-     * @return mixed|null
-     */
-    private function initBulkManagement()
-    {
-        if (!$this->bulkManagementClass) {
-            return null;
-        }
-
-        if (class_exists($this->bulkManagementClass) || interface_exists($this->bulkManagementClass)) {
-            $publisher = $this->objectManager->create('Magento\Framework\MessageQueue\PublisherPool', [
-                'publishers' => [
-                    'async' => [
-                        'amqp' => $this->objectManager->get('Magento\AsynchronousOperations\Model\MassPublisher'),
-                        'db' => $this->objectManager->get('Magento\AsynchronousOperations\Model\MassPublisher')
-                    ]
-                ]
-            ]);
-            return $this->objectManager->create($this->bulkManagementClass, ['publisher' => $publisher]);
-        }
-        return null;
     }
 }
