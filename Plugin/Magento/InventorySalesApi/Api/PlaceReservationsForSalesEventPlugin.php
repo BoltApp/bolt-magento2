@@ -114,6 +114,7 @@ class PlaceReservationsForSalesEventPlugin
         }
         $stockId = $this->getStockBySalesChannel->execute($salesChannel)->getStockId();
         $this->beforeStatuses = $this->getProductStatusesByItems($items, (int)$stockId);
+        return [$items, $salesChannel, $salesEvent];
     }
 
     /**
