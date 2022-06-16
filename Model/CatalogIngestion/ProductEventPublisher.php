@@ -98,6 +98,8 @@ class ProductEventPublisher
         $this->boltConfig = $boltConfig;
         $this->moduleManager = $moduleManager;
         if ($this->moduleManager->isEnabled('Magento_AsynchronousOperations')) {
+            //Initialisation of Magento_AsynchronousOperations classes for magento > 2.3.*, which are missing in magento  <= 2.2.*
+            //To prevent di compilation fails
             $this->operationFactory = $this->objectManager
                 ->get('Magento\AsynchronousOperations\Api\Data\OperationInterfaceFactory');
 

@@ -89,6 +89,9 @@ class DecrementSourceItemQtyPlugin
         if ($this->moduleManager->isEnabled('Magento_InventoryIndexer') &&
             class_exists('Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterDecrementSourceItemQty')
         ) {
+            //Initialisation of Magento_InventoryIndexer classes for magento > 2.3.*, which are missing in magento  <= 2.2.*
+            //Additional check class_exists related to magento 2.3.*, because Magento_InventoryIndexer doesn't have this class.
+            //To prevent di compilation fails
             $this->reindexAfterDecrementSourceItemQty = $this->objectManager
                 ->get('Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterDecrementSourceItemQty');
         }

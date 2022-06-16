@@ -87,6 +87,8 @@ class SourceItemsDeletePlugin
         $this->productWebsiteLink = $productWebsiteLink;
         $this->featureSwitches = $featureSwitches;
         if ($this->moduleManager->isEnabled('Magento_InventoryIndexer')) {
+            //Initialisation of Magento_InventoryIndexer classes for magento > 2.3.*, which are missing in magento  <= 2.2.*
+            //To prevent di compilation fails
             $this->reindexAfterSourceItemsDeletePlugin = $this->objectManager
                 ->get('Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterSourceItemsDeletePlugin');
         }
@@ -114,7 +116,9 @@ class SourceItemsDeletePlugin
 
         $beforeProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
         $proceed($sourceItems);
-        $this->reindexAfterSourceItemsDeletePlugin->aroundExecute($subject, $proceed, $sourceItems);
+        if ($this->reindexAfterSourceItemsDeletePlugin) {
+            $this->reindexAfterSourceItemsDeletePlugin->aroundExecute($subject, $proceed, $sourceItems);
+        }
         $afterProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
         foreach ($sourceItems as $sourceItem) {
             //set quantity to 0, because we are removing the source item

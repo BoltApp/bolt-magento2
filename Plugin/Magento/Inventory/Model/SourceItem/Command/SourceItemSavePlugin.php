@@ -87,6 +87,8 @@ class SourceItemSavePlugin
         $this->productWebsiteLink = $productWebsiteLink;
         $this->featureSwitches = $featureSwitches;
         if ($this->moduleManager->isEnabled('Magento_InventoryIndexer')) {
+            //Initialisation of Magento_InventoryIndexer classes for magento > 2.3.*, which are missing in magento  <= 2.2.*
+            //To prevent di compilation fails
             $this->reindexAfterSourceItemsSavePlugin = $this->objectManager
                 ->get('Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterSourceItemsSavePlugin');
         }
@@ -114,7 +116,9 @@ class SourceItemSavePlugin
 
         $beforeProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
         $proceed($sourceItems);
-        $this->reindexAfterSourceItemsSavePlugin->afterExecute($subject, null, $sourceItems);
+        if ($this->reindexAfterSourceItemsSavePlugin) {
+            $this->reindexAfterSourceItemsSavePlugin->afterExecute($subject, null, $sourceItems);
+        }
         $afterProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
         $this->productEventProcessor->processProductEventSourceItemsBased(
             $beforeProductStatuses,
