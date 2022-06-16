@@ -31,7 +31,7 @@ class StoreConfigurationRequestBuilder
 {
     private CONST API_REQUEST_METHOD_TYPE = 'POST';
 
-    private CONST API_REQUEST_API_URL = 'catalog/m2/store';
+    public CONST API_REQUEST_API_URL = 'catalog/m2/store';
 
     /**
      * @var Config
@@ -95,5 +95,21 @@ class StoreConfigurationRequestBuilder
             'store_code' => $storeCode
         ]);
         return $this->apiHelper->buildRequest($requestData);
+    }
+
+    /**
+     * Check whether the response in successful
+     *
+     * @param int $responseStatus
+     * @return boolean
+     */
+    public function isSuccessfulResponseStatus(int $responseStatus)
+    {
+        $restype = floor($responseStatus / 100);
+        if ($restype == 2 || $restype == 1) { // Shouldn't 3xx count as success as well ???
+            return true;
+        }
+
+        return false;
     }
 }

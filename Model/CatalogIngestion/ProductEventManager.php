@@ -26,6 +26,7 @@ use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Logger\Logger;
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventRequestBuilder;
 use Bolt\Boltpay\Helper\Config;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Catalog\Api\ProductRepositoryInterface;
@@ -196,9 +197,20 @@ class ProductEventManager implements ProductEventManagerInterface
                 continue;
             }
             $request = $this->productEventRequestBuilder->getRequest($productEvent, (int)$websiteId);
-            $this->apiHelper->sendRequest($request);
+            $responseStatus = $this->apiHelper->sendRequest($request);
+            if ($this->productEventRequestBuilder->isSuccessfulResponseStatus((int)$responseStatus) ) {
+                return true;
+            } else {
+                throw new LocalizedException(
+                    __(
+                        'Error response status during %1 request, status: %2',
+                        ProductEventRequestBuilder::API_REQUEST_API_URL,
+                        $responseStatus
+                    )
+                );
+            }
         }
-        return true;
+        return false;
     }
 
     /**

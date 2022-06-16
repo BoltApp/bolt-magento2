@@ -24,6 +24,7 @@ use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Api\StoreRepositoryInterface;
 use Magento\Framework\App\ScopeInterface as AppScopeInterface;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Logger\Logger;
 
 /**
  * Send bolt request after configuration save
@@ -56,24 +57,32 @@ class ConfigPlugin
     private $featureSwitches;
 
     /**
+     * @var Logger
+     */
+    private $logger;
+
+    /**
      * @param StoreConfigurationManagerInterface $storeConfigurationManager
      * @param BoltConfig $boltConfig
      * @param WebsiteRepositoryInterface $websiteRepository
      * @param StoreRepositoryInterface $storeRepository
      * @param Decider $featureSwitches
+     * @param Logger $logger
      */
     public function __construct(
         StoreConfigurationManagerInterface $storeConfigurationManager,
         BoltConfig $boltConfig,
         WebsiteRepositoryInterface $websiteRepository,
         StoreRepositoryInterface $storeRepository,
-        Decider $featureSwitches
+        Decider $featureSwitches,
+        Logger $logger
     ) {
         $this->storeConfigurationManager = $storeConfigurationManager;
         $this->boltConfig = $boltConfig;
         $this->websiteRepository = $websiteRepository;
         $this->storeRepository = $storeRepository;
         $this->featureSwitches = $featureSwitches;
+        $this->logger = $logger;
     }
 
     /**
@@ -90,32 +99,36 @@ class ConfigPlugin
         if (!$this->featureSwitches->isStoreConfigurationWebhookEnabled()) {
             return $result;
         }
-        if ($result->getScope() == AppScopeInterface::SCOPE_DEFAULT) {
-            $websites = $this->websiteRepository->getList();
-            foreach ($websites as $website) {
-                if ($website->getWebsiteId() == 0) {
-                    continue;
-                }
-                if ($this->boltConfig->getIsSystemConfigurationUpdateRequestEnabled($website->getId())
-                ) {
-                    foreach ($website->getStores() as $store) {
-                        $this->storeConfigurationManager->requestStoreConfigurationUpdated($store->getCode());
+        try {
+            if ($result->getScope() == AppScopeInterface::SCOPE_DEFAULT) {
+                $websites = $this->websiteRepository->getList();
+                foreach ($websites as $website) {
+                    if ($website->getWebsiteId() == 0) {
+                        continue;
+                    }
+                    if ($this->boltConfig->getIsSystemConfigurationUpdateRequestEnabled($website->getId())
+                    ) {
+                        foreach ($website->getStores() as $store) {
+                            $this->storeConfigurationManager->requestStoreConfigurationUpdated($store->getCode());
+                        }
                     }
                 }
             }
-        }
 
-        if ($result->getScope() == ScopeInterface::SCOPE_WEBSITES &&
-            $this->boltConfig->getIsSystemConfigurationUpdateRequestEnabled($result->getWebsite())
-        ) {
-            $website = $this->websiteRepository->getById((int)$result->getWebsite());
-            foreach ($website->getStores() as $store) {
-                $this->storeConfigurationManager->requestStoreConfigurationUpdated($store->getCode());
+            if ($result->getScope() == ScopeInterface::SCOPE_WEBSITES &&
+                $this->boltConfig->getIsSystemConfigurationUpdateRequestEnabled($result->getWebsite())
+            ) {
+                $website = $this->websiteRepository->getById((int)$result->getWebsite());
+                foreach ($website->getStores() as $store) {
+                    $this->storeConfigurationManager->requestStoreConfigurationUpdated($store->getCode());
+                }
             }
-        }
 
-        if ($result->getScope() == ScopeInterface::SCOPE_STORES) {
-            $this->storeConfigurationManager->requestStoreConfigurationUpdated($result->getScopeCode());
+            if ($result->getScope() == ScopeInterface::SCOPE_STORES) {
+                $this->storeConfigurationManager->requestStoreConfigurationUpdated($result->getScopeCode());
+            }
+        } catch (\Exception $e) {
+            $this->logger->critical($e);
         }
 
         return $result;

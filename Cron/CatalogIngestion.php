@@ -21,6 +21,7 @@ use Bolt\Boltpay\Api\ProductEventRepositoryInterface;
 use Bolt\Boltpay\Api\ProductEventManagerInterface;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Logger\Logger;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\LocalizedException;
@@ -58,24 +59,32 @@ class CatalogIngestion
     private $featureSwitches;
 
     /**
+     * @var Logger
+     */
+    private $logger;
+
+    /**
      * @param ProductEventRepositoryInterface $productEventRepository
      * @param ProductEventManagerInterface $productEventManager
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param Config $config
      * @param Decider $featureSwitches
+     * @param Logger $logger
      */
     public function __construct(
         ProductEventRepositoryInterface $productEventRepository,
         ProductEventManagerInterface $productEventManager,
         SearchCriteriaBuilder $searchCriteriaBuilder,
         Config $config,
-        Decider $featureSwitches
+        Decider $featureSwitches,
+        Logger $logger
     ) {
         $this->productEventRepository = $productEventRepository;
         $this->productEventManager = $productEventManager;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->config = $config;
         $this->featureSwitches = $featureSwitches;
+        $this->logger = $logger;
     }
 
     /**
@@ -100,9 +109,13 @@ class CatalogIngestion
             return;
         }
         foreach ($productEvents->getItems() as $productEvent) {
-            $result = $this->productEventManager->sendProductEvent($productEvent);
-            if ($result === true) {
-                $this->productEventRepository->delete($productEvent);
+            try {
+                $result = $this->productEventManager->sendProductEvent($productEvent);
+                if ($result === true) {
+                    $this->productEventRepository->delete($productEvent);
+                }
+            } catch (\Exception $e) {
+                $this->logger->critical($e);
             }
         }
     }
