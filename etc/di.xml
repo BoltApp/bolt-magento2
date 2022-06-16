@@ -285,4 +285,7 @@
         <plugin name="Bolt_Boltpay_Amasty_CommonRules_Model_ResourceModel_Rule_Collection"
                 type="Bolt\Boltpay\Plugin\Amasty\CommonRules\Model\ResourceModel\Rule\CollectionPlugin" sortOrder="10"/>
     </type>
+    <type name="Magento\Sales\Model\InvoiceOrder">
+        <plugin name="BoltBoltpayInvoiceOrderPlugin" type="Bolt\Boltpay\Plugin\Magento\Sales\Model\InvoiceOrderPlugin" sortOrder="1"/>
+    </type>
 </config>
