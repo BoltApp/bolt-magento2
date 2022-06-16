@@ -82,8 +82,7 @@ class PlaceReservationsForSalesEventPlugin
         $this->productEventProcessor = $productEventProcessor;
         $this->moduleManager = $moduleManager;
         $this->featureSwitches = $featureSwitches;
-        // Initialisation of Magento_InventorySalesApi classes for magento >= 2.3.*, which are missing in magento  <= 2.2.*
-        // To prevent di compilation fails
+        // Magento_AsynchronousOperations introduced in Magento 2.3.x
         if ($this->moduleManager->isEnabled('Magento_InventorySalesApi')) {
             $this->getStockBySalesChannel = $this->objectManager
                 ->get('Magento\InventorySalesApi\Api\GetStockBySalesChannelInterface');
