@@ -66,7 +66,7 @@ class PlaceReservationsForSalesEventPlugin
     /**
      * @var array
      */
-    private $beforeStatuses;
+    private $beforeProductStatuses;
 
     /**
      * @param ProductEventProcessor $productEventProcessor
@@ -113,7 +113,7 @@ class PlaceReservationsForSalesEventPlugin
             return [$items, $salesChannel, $salesEvent];
         }
         $stockId = $this->getStockBySalesChannel->execute($salesChannel)->getStockId();
-        $this->beforeStatuses = $this->getProductStatusesByItems($items, (int)$stockId);
+        $this->beforeProductStatuses = $this->getProductStatusesByItems($items, (int)$stockId);
         return [$items, $salesChannel, $salesEvent];
     }
 
@@ -146,7 +146,7 @@ class PlaceReservationsForSalesEventPlugin
         $afterStatuses = $this->getProductStatusesByItems($items, (int)$stockId);
         $this->productEventProcessor->processProductEventSalableItemsBased(
             $afterStatuses,
-            $this->beforeStatuses
+            $this->beforeProductStatuses
         );
     }
 
