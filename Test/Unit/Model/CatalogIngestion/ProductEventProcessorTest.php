@@ -440,7 +440,6 @@ class ProductEventProcessorTest extends BoltTestCase
             $sourceItems = $getSourceItemsBySku->execute($product->getSku());
             foreach ($sourceItems as $sourceItem) {
                 $sourceItem->setStatus(0);
-                break;
             }
             $sourceItemsSave->execute($sourceItems);
         }
