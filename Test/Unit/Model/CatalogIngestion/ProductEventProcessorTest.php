@@ -95,6 +95,10 @@ class ProductEventProcessorTest extends BoltTestCase
 
     private const PRODUCT_QTY = 100;
 
+    private const RESPONSE_SUCCESS_STATUS = 200;
+
+    private const RESPONSE_FAIL_STATUS = 404;
+
     /**
      * @var array
      */
@@ -377,7 +381,7 @@ class ProductEventProcessorTest extends BoltTestCase
     public function testProcessProductEventStockItemBased_updateStockItemStatusInstant()
     {
         $this->setCatalogIngestionInstantUpdateConfig(1);
-        $this->apiHelper->method('sendRequest')->willReturn(true);
+        $this->apiHelper->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
         $this->apiHelper->expects(self::once())->method('sendRequest');
         $product = $this->createProduct(self::PRODUCT_QTY, true);
         $stockItem = $this->objectManager->create(StockItemInterface::class);
@@ -432,7 +436,7 @@ class ProductEventProcessorTest extends BoltTestCase
     {
         if ($this->moduleManger->isEnabled('Magento_InventoryCatalog')) {
             $this->setCatalogIngestionInstantUpdateConfig(1);
-            $this->apiHelper->method('sendRequest')->willReturn(true);
+            $this->apiHelper->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
             $this->apiHelper->expects(self::once())->method('sendRequest');
             $product = $this->createProductWithSourceItems();
             $getSourceItemsBySku = $this->objectManager->get(GetSourceItemsBySkuInterface::class);
@@ -474,7 +478,7 @@ class ProductEventProcessorTest extends BoltTestCase
             TestHelper::setProperty($stockItemValidator, 'quoteItemQtyList', $quoteItemList);
         }
         $this->setCatalogIngestionInstantUpdateConfig(1);
-        $this->apiHelper->method('sendRequest')->willReturn(true);
+        $this->apiHelper->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
         $this->apiHelper->expects(self::once())->method('sendRequest');
         $product = $this->createProduct(1, true);
         $quote = $this->createQuote();

@@ -54,6 +54,10 @@ class ProductEventManagerTest extends BoltTestCase
 
     private const PRODUCT_QTY = 100;
 
+    private const RESPONSE_SUCCESS_STATUS = 200;
+
+    private const RESPONSE_FAIL_STATUS = 404;
+
     /**
      * @var ObjectManagerInterface
      */
@@ -192,7 +196,7 @@ class ProductEventManagerTest extends BoltTestCase
     public function testSendProductEvent()
     {
         $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
-        $apiHelper->expects(self::once())->method('sendRequest')->willReturn(true);
+        $apiHelper->expects(self::once())->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
         $product = $this->createProduct();
 
@@ -225,7 +229,7 @@ class ProductEventManagerTest extends BoltTestCase
         TestUtils::setupBoltConfig($configData);
 
         $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
-        $apiHelper->expects(self::once())->method('sendRequest')->willReturn(true);
+        $apiHelper->expects(self::once())->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
         $product = $this->createProduct();
 

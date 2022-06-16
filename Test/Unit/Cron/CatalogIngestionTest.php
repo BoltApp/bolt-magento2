@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
+use Bolt\Boltpay\Api\Data\ProductEventInterface;
 use Bolt\Boltpay\Api\ProductEventRepositoryInterface;
 use Bolt\Boltpay\Cron\CatalogIngestion as CatalogIngestionCron;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
@@ -41,6 +42,12 @@ use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
  */
 class CatalogIngestionTest extends BoltTestCase
 {
+    private const CRON_MAX_ITEMS_OPTION = 3;
+
+    private const RESPONSE_SUCCESS_STATUS = 200;
+
+    private const RESPONSE_FAIL_STATUS = 404;
+
     /**
      * @var ObjectManagerInterface
      */
@@ -72,11 +79,6 @@ class CatalogIngestionTest extends BoltTestCase
     private $resource;
 
     /**
-     * @var ApiHelper|MockObject
-     */
-    private $apiHelper;
-
-    /**
      * @inheritDoc
      */
     protected function setUpInternal()
@@ -92,9 +94,6 @@ class CatalogIngestionTest extends BoltTestCase
         TestHelper::setProperty($this->catalogIngestionCron, 'featureSwitches', $featureSwitches);
         TestHelper::setProperty($productEventProcessor, 'featureSwitches', $featureSwitches);
         $featureSwitches->method('isCatalogIngestionEnabled')->willReturn(true);
-        $this->apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
-        TestHelper::setProperty($this->productEventManager, 'apiHelper', $this->apiHelper);
-
         $websiteId = $this->storeManager->getWebsite()->getId();
         $configData = [
             [
@@ -119,15 +118,61 @@ class CatalogIngestionTest extends BoltTestCase
     /**
      * @test
      */
-    public function testExecute()
+    public function testExecute_sendCorrectRequestsCountEventsRemovedAfterSuccessCalls_withDefaultCronMaxItemsParam()
     {
         $this->expectExceptionMessage("The bolt product event that was requested doesn't exist.");
+        $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
+        TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
+        $apiHelper->expects(self::exactly(2))->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
         $product1 = TestUtils::createSimpleProduct();
         $product2 = TestUtils::createSimpleProduct();
-        $this->apiHelper->expects(self::exactly(2))->method('sendRequest');
         $this->catalogIngestionCron->execute();
         $this->productEventRepository->getByProductId($product1->getId());
         $this->productEventRepository->getByProductId($product2->getId());
+    }
+
+    /**
+     * @test
+     */
+    public function testExecute_sendCorrectRequestsCountEventsRemovedAfterSuccessCalls_withCronMaxItemsParam()
+    {
+        $this->expectExceptionMessage("The bolt product event that was requested doesn't exist.");
+        $configData = [
+            [
+                'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_CRON_MAX_ITEMS,
+                'value' => self::CRON_MAX_ITEMS_OPTION,
+                'scope' => ScopeInterface::SCOPE_WEBSITES,
+                'scopeId' => $this->storeManager->getWebsite()->getId(),
+            ]
+        ];
+        $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
+        TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
+        $apiHelper->expects(self::exactly(self::CRON_MAX_ITEMS_OPTION))->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
+        TestUtils::setupBoltConfig($configData);
+        $product1 = TestUtils::createSimpleProduct();
+        $product2 = TestUtils::createSimpleProduct();
+        $product3 = TestUtils::createSimpleProduct();
+        $product4 = TestUtils::createSimpleProduct();
+        $this->catalogIngestionCron->execute();
+        $productEvent = $this->productEventRepository->getByProductId($product4->getId());
+        $this->assertEquals($product4->getId(), $productEvent->getProductId());
+        $this->assertEquals(ProductEventInterface::TYPE_CREATE, $productEvent->getType());
+        $this->productEventRepository->getByProductId($product3->getId());
+    }
+
+    /**
+     * @test
+     */
+    public function testExecute_sendCorrectRequestsCountEventsWasNotRemovedAfterFailCalls_withDefaultCronMaxItemsParam()
+    {
+        $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
+        TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
+        $apiHelper->expects(self::exactly(1))->method('sendRequest')->willReturn(self::RESPONSE_FAIL_STATUS);
+        $product1 = TestUtils::createSimpleProduct();
+        $this->catalogIngestionCron->execute();
+        $productEvent = $this->productEventRepository->getByProductId($product1->getId());
+        $this->assertEquals($product1->getId(), $productEvent->getProductId());
+        $this->assertEquals(ProductEventInterface::TYPE_CREATE, $productEvent->getType());
     }
 
     /**
