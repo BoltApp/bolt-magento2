@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\CatalogIngestion;
 use Bolt\Boltpay\Api\ProductEventRepositoryInterface;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Test\Unit\TestUtils;
@@ -75,6 +76,8 @@ use Magento\Quote\Model\QuoteIdMask;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote\Address\Rate;
 use Magento\Quote\Model\Quote;
+use Magento\CatalogInventory\Model\Quote\Item\QuantityValidator\Initializer\StockItem;
+use Magento\CatalogInventory\Model\Quote\Item\QuantityValidator\QuoteItemQtyList;
 use PHPUnit\Framework\MockObject\MockObject;
 
 /**
@@ -217,6 +220,11 @@ class ProductEventProcessorTest extends BoltTestCase
     private $quoteRepository;
 
     /**
+     * @var ConfigHelper
+     */
+    private $configHelper;
+
+    /**
      * @inheritDoc
      */
     protected function setUpInternal()
@@ -232,6 +240,7 @@ class ProductEventProcessorTest extends BoltTestCase
         $this->resource = $this->objectManager->get(ResourceConnection::class);
         $this->cartManagement = $this->objectManager->get(CartManagementInterface::class);
         $this->quoteRepository = $this->objectManager->get(CartRepositoryInterface::class);
+        $this->configHelper = $this->objectManager->get(ConfigHelper::class);
         $featureSwitches = $this->createMock(Decider::class);
         TestHelper::setProperty($this->productEventProcessor, 'featureSwitches', $featureSwitches);
         $featureSwitches->method('isCatalogIngestionEnabled')->willReturn(true);
@@ -458,6 +467,13 @@ class ProductEventProcessorTest extends BoltTestCase
      */
     public function testProcessProductEvent_afterPlacingOrderUpdatedStatus()
     {
+        //prevent bug in magento 2.2.* for item with quantity 1, caused by incorrect QuoteItemQtyList qty calculation
+        if (version_compare($this->configHelper->getStoreVersion(), '2.3.0', '<')) {
+            $stockItemValidator = $this->objectManager->get(StockItem::class);
+            $quoteItemList = $this->createMock(QuoteItemQtyList::class);
+            $quoteItemList->method('getQty')->willReturn(1);
+            TestHelper::setProperty($stockItemValidator, 'quoteItemQtyList', $quoteItemList);
+        }
         $this->setCatalogIngestionInstantUpdateConfig(1);
         $this->apiHelper->method('sendRequest')->willReturn(true);
         $this->apiHelper->expects(self::once())->method('sendRequest');

@@ -26,12 +26,16 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventRequestBuilder;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product;
+use Magento\Catalog\Model\Product\Type as ProductType;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\Module\Manager;
 use Magento\Store\Model\ScopeInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
+use Vertex\Tax\Model\ModuleManager;
 
 /**
  * Class ProductEventRequestBuilderTest
@@ -74,6 +78,16 @@ class ProductEventRequestBuilderTest extends BoltTestCase
     private $resource;
 
     /**
+     * @var Manager
+     */
+    private $moduleManger;
+
+    /**
+     * @var ProductRepositoryInterface
+     */
+    private $productRepository;
+
+    /**
      * @inheritDoc
      */
     protected function setUpInternal()
@@ -81,9 +95,11 @@ class ProductEventRequestBuilderTest extends BoltTestCase
         $this->objectManager = Bootstrap::getObjectManager();
         $this->productEventRequestBuilder =$this->objectManager->get(ProductEventRequestBuilder::class);
         $this->resource = $this->objectManager->get(ResourceConnection::class);
+        $this->moduleManger = $this->objectManager->get(ModuleManager::class);
         $this->storeManager = $this->objectManager->get(StoreManagerInterface::class);
         $this->productEventRepository = $this->objectManager->get(ProductEventRepositoryInterface::class);
         $productEventProcessor = $this->objectManager->get(ProductEventProcessor::class);
+        $this->productRepository = $this->objectManager->get(ProductRepositoryInterface::class);
         $featureSwitches = $this->createMock(Decider::class);
         $featureSwitches->method('isCatalogIngestionEnabled')->willReturn(true);
         TestHelper::setProperty($productEventProcessor, 'featureSwitches', $featureSwitches);
@@ -117,6 +133,8 @@ class ProductEventRequestBuilderTest extends BoltTestCase
         $productEvent = $this->productEventRepository->getByProductId($product->getId());
         $request = $this->productEventRequestBuilder->getRequest($productEvent, $this->storeManager->getWebsite()->getId());
         $apiData = $request->getApiData();
+        $fulfillmentCenterID = ($this->moduleManger->isEnabled('Magento_InventoryCatalog')) ?
+            'Default Stock' : 'default';
         $expectedApiData = [
             'operation' => $productEvent->getType(),
             'timestamp' => strtotime($productEvent->getCreatedAt()),
@@ -128,7 +146,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                         'SKU' => 'ci_simple',
                         'URL' => $product->getProductUrl(),
                         'Name' => 'Catalog Ingestion Simple Product',
-                        'ManageInventory' => false,
+                        'ManageInventory' => true,
                         'Visibility' => 'visible',
                         'Backorder' => 'no',
                         'Availability' => 'in_stock',
@@ -144,8 +162,8 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                         ],
                         'Inventories' => [
                             [
-                                'FulfillmentCenterID' => 'Default Stock',
-                                'InventoryLevel' => 0
+                                'FulfillmentCenterID' => $fulfillmentCenterID,
+                                'InventoryLevel' => self::PRODUCT_QTY
                             ]
                         ],
                         'Media' => [],
@@ -192,17 +210,32 @@ class ProductEventRequestBuilderTest extends BoltTestCase
      */
     private function createProduct(): ProductInterface
     {
-        $product = TestUtils::createSimpleProduct();
-        $productRepository = $this->objectManager->create(ProductRepositoryInterface::class);
-
-        $product->setName(self::PRODUCT_NAME)
+        $product = Bootstrap::getObjectManager()->create(Product::class);
+        $product->setTypeId(ProductType::TYPE_SIMPLE)
+            ->setAttributeSetId(4)
+            ->setName(self::PRODUCT_NAME)
             ->setSku(self::PRODUCT_SKU)
             ->setPrice(self::PRODUCT_PRICE)
+            ->setDescription('Product Description')
+            ->setMetaTitle('meta title')
+            ->setMetaKeyword('meta keyword')
+            ->setMetaDescription('meta description')
+            ->setVisibility(\Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH)
+            ->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED)
+            ->setCategoryIds([2])
             ->setStoreId($this->storeManager->getStore()->getId())
-            ->setIsObjectNew(true);
-
-        TestUtils::createStockItemForProduct($product, self::PRODUCT_QTY);
-
-        return $productRepository->save($product);
+            ->setWebsiteIds([$this->storeManager->getStore()->getWebsiteId()])
+            ->setStockData(
+                [
+                    'qty' => self::PRODUCT_QTY,
+                    'is_in_stock' => 1,
+                    'manage_stock' => 1,
+                ]
+            )
+            ->setTaxClassId(0)
+            ->setCanSaveCustomOptions(true)
+            ->setHasOptions(true)
+            ->setUrlKey('test-simple-product-'.round(microtime(true) * 1000));
+        return $this->productRepository->save($product);
     }
 }
