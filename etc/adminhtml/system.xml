@@ -468,7 +468,7 @@
                             <field id="catalog_ingestion_instant_enabled">1</field>
                             <field id="catalog_ingestion_enabled">1</field>
                         </depends>
-                        <comment><![CDATA[Enable async mode for instant catalog synchronisation by "async.operations.all" consumer <a target="_blank" href="https://devdocs.magento.com/guides/v2.3/config-guide/mq/manage-message-queues.html#configuration">https://devdocs.magento.com/guides/v2.3/config-guide/mq/manage-message-queues.html</a>]]></comment>
+                        <comment><![CDATA[Enable async mode for instant catalog synchronisation by "async.operations.all" consumer. Do not enable this for magento version below 2.3.x. And be sure your amqp job is configured: <a target="_blank" href="https://devdocs.magento.com/guides/v2.3/config-guide/mq/manage-message-queues.html#configuration">https://devdocs.magento.com/guides/v2.3/config-guide/mq/manage-message-queues.html</a>]]></comment>
                     </field>
                     <field id="catalog_ingestion_instant_events" translate="label" type="multiselect" sortOrder="60" showInDefault="0" showInWebsite="0" showInStore="0" canRestore="1">
                         <label>Instant Events</label>
