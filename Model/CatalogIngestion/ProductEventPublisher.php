@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Model\CatalogIngestion;
 
+use Bolt\Boltpay\Helper\Config as BoltConfig;
 use Magento\Framework\DataObject\IdentityGeneratorInterface;
 use Magento\Authorization\Model\UserContextInterface;
 use Magento\Framework\Module\Manager as ModuleManager;
@@ -33,6 +34,8 @@ use Magento\AsynchronousOperations\Model\BulkManagement;
 class ProductEventPublisher
 {
     private const TOPIC_NAME = 'async.bolt.boltpay.api.producteventmanagerinterface.sendproductevent.post';
+
+    private const TOPIC_NAME_V1 = 'async.V1.bolt.boltpay.producteventrequest.POST';
 
     /**
      * @var ObjectManager
@@ -70,21 +73,29 @@ class ProductEventPublisher
     private $operationFactory;
 
     /**
+     * @var BoltConfig
+     */
+    private $boltConfig;
+
+    /**
      * @param IdentityGeneratorInterface $identityGenerator
      * @param UserContextInterface $userContext
      * @param Json $jsonSerializer
+     * @param BoltConfig $boltConfig
      * @param ModuleManager $moduleManager
      */
     public function __construct(
         IdentityGeneratorInterface $identityGenerator,
         UserContextInterface $userContext,
         Json $jsonSerializer,
+        BoltConfig $boltConfig,
         ModuleManager $moduleManager
     ) {
         $this->objectManager = ObjectManager::getInstance();
         $this->identityGenerator = $identityGenerator;
         $this->userContext = $userContext;
         $this->jsonSerializer = $jsonSerializer;
+        $this->boltConfig = $boltConfig;
         $this->moduleManager = $moduleManager;
         if ($this->moduleManager->isEnabled('Magento_AsynchronousOperations')) {
             $this->operationFactory = $this->objectManager
@@ -122,6 +133,9 @@ class ProductEventPublisher
                 )
             );
         }
+        $topicName = (version_compare($this->boltConfig->getStoreVersion(), '2.4.0', '<')) ?
+            self::TOPIC_NAME_V1 : self::TOPIC_NAME;
+
         $description = __('Publish product event, product_id: %1', $productId);
         $userId = $this->userContext->getUserId();
         $bulkId = $this->identityGenerator->generateId();
@@ -153,7 +167,7 @@ class ProductEventPublisher
                 'data' => [
                     OperationInterface::ID => 0,
                     OperationInterface::BULK_ID => $bulkId,
-                    OperationInterface::TOPIC_NAME => self::TOPIC_NAME,
+                    OperationInterface::TOPIC_NAME => $topicName,
                     OperationInterface::SERIALIZED_DATA => $this->jsonSerializer->serialize($serializedData),
                     OperationInterface::STATUS => OperationInterface::STATUS_TYPE_OPEN,
                 ]
