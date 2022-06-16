@@ -18,13 +18,8 @@ namespace Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command;
 
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
-use Magento\Catalog\Model\ProductFactory;
-use Magento\Catalog\Model\ResourceModel\Product\Website\Link as ProductWebsiteLink;
-use Magento\Framework\App\ObjectManager;
-use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\Inventory\Model\SourceItem\Command\DecrementSourceItemQty;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterDecrementSourceItemQty;
 
 /**
  * Catalog ingestion product event processor after source items decrement
@@ -32,24 +27,9 @@ use Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterDecrementSourceItem
 class DecrementSourceItemQtyPlugin
 {
     /**
-     * @var ObjectManager
-     */
-    private $objectManager;
-
-    /**
      * @var ProductEventProcessor
      */
     private $productEventProcessor;
-
-    /**
-     * @var ProductFactory
-     */
-    private $productFactory;
-
-    /**
-     * @var ProductWebsiteLink
-     */
-    private $productWebsiteLink;
 
     /**
      * @var Decider
@@ -57,79 +37,71 @@ class DecrementSourceItemQtyPlugin
     private $featureSwitches;
 
     /**
-     * @var ModuleManager
+     * @var array
      */
-    private $moduleManager;
-
-    /**
-     * @var ReindexAfterDecrementSourceItemQty
-     */
-    private $reindexAfterDecrementSourceItemQty;
+    private $beforeProductStatuses;
 
     /**
      * @param ProductEventProcessor $productEventProcessor
-     * @param ProductFactory $productFactory
-     * @param ProductWebsiteLink $productWebsiteLink
      * @param Decider $featureSwitches
-     * @param ModuleManager $moduleManager
      */
     public function __construct(
         ProductEventProcessor $productEventProcessor,
-        ProductFactory $productFactory,
-        ProductWebsiteLink $productWebsiteLink,
-        Decider $featureSwitches,
-        ModuleManager $moduleManager
+        Decider $featureSwitches
     ) {
-        $this->objectManager = ObjectManager::getInstance();
         $this->productEventProcessor = $productEventProcessor;
-        $this->productFactory = $productFactory;
-        $this->productWebsiteLink = $productWebsiteLink;
         $this->featureSwitches = $featureSwitches;
-        $this->moduleManager = $moduleManager;
-        if ($this->moduleManager->isEnabled('Magento_InventoryIndexer') &&
-            class_exists('Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterDecrementSourceItemQty')
-        ) {
-            //Initialisation of Magento_InventoryIndexer classes for magento > 2.3.*, which are missing in magento  <= 2.2.*
-            //Additional check class_exists related to magento 2.3.*, because Magento_InventoryIndexer doesn't have this class.
-            //To prevent di compilation fails
-            $this->reindexAfterDecrementSourceItemQty = $this->objectManager
-                ->get('Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterDecrementSourceItemQty');
+    }
+
+    /***
+     * Save product salable statuses before decrement source item qty update
+     *
+     * @param DecrementSourceItemQty $subject
+     * @param array $sourceItemDecrementData
+     * @return array[]
+     * @throws LocalizedException
+     */
+    public function beforeExecute(
+        DecrementSourceItemQty $subject,
+        array $sourceItemDecrementData
+    ): array
+    {
+        $sourceItems = array_column($sourceItemDecrementData, 'source_item');
+        if (!$this->featureSwitches->isCatalogIngestionEnabled() || empty($sourceItems)) {
+            return [$sourceItemDecrementData];
         }
+        $this->beforeProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
+        return [$sourceItemDecrementData];
     }
 
     /**
-     * Publish bolt catalog product event after source items decrement update
+     * Process catalog ingestion product event after decrement source item qty update
      *
      * @param DecrementSourceItemQty $subject
-     * @param callable $proceed
+     * @param $result
      * @param array $sourceItemDecrementData
      * @return void
      * @throws LocalizedException
      */
-    public function aroundExecute(
+    public function afterExecute(
         DecrementSourceItemQty $subject,
-        callable $proceed,
+        $result,
         array $sourceItemDecrementData
     ): void
     {
-        if (!$this->featureSwitches->isCatalogIngestionEnabled()) {
-            $proceed($sourceItemDecrementData);
+        if (!$this->featureSwitches->isCatalogIngestionEnabled() ||
+            empty($sourceItems) ||
+            empty($this->beforeProductStatuses)
+        ) {
             return;
         }
 
         $sourceItems = array_column($sourceItemDecrementData, 'source_item');
-        if (!empty($sourceItems)) {
-            $beforeProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
-            $proceed($sourceItemDecrementData);
-            if ($this->reindexAfterDecrementSourceItemQty) {
-                $this->reindexAfterDecrementSourceItemQty->afterExecute($subject, null, $sourceItemDecrementData);
-            }
-            $afterProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
-            $this->productEventProcessor->processProductEventSourceItemsBased(
-                $beforeProductStatuses,
-                $afterProductStatuses,
-                $sourceItems
-            );
-        }
+        $afterProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
+        $this->productEventProcessor->processProductEventSourceItemsBased(
+            $this->beforeProductStatuses,
+            $afterProductStatuses,
+            $sourceItems
+        );
     }
 }

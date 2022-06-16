@@ -304,16 +304,20 @@
     </type>
     <type name="Magento\InventoryApi\Api\SourceItemsSaveInterface">
         <plugin name="publishProductEventAfterSourceItemsSave"
-                type="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\SourceItemSavePlugin"/>
+                type="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\SourceItemSavePlugin"
+                sortOrder="100"
+        />
     </type>
     <type name="Magento\InventoryApi\Api\SourceItemsDeleteInterface">
         <plugin name="publishProductEventAfterSourceItemsDelete"
                 type="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\SourceItemsDeletePlugin"
-                sortOrder="1" />
+                sortOrder="100" />
     </type>
     <type name="Magento\Inventory\Model\SourceItem\Command\DecrementSourceItemQty">
         <plugin name="publishProductEventAfterSourceItemsDecrementQty"
-                type="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\DecrementSourceItemQtyPlugin"/>
+                type="Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command\DecrementSourceItemQtyPlugin"
+                sortOrder="100"
+        />
     </type>
     <type name="Magento\CatalogInventory\Model\ResourceModel\Stock">
         <plugin name="publishProductEventAfterCatalogInventorySave"
@@ -323,7 +327,10 @@
         <plugin name="boltCatalogEventPublisher" type="Bolt\Boltpay\Plugin\Magento\CatalogInventory\Api\StockItemRepositoryPlugin" />
     </type>
     <type name="Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventInterface">
-        <plugin name="publishBoltProductEventAfterPlacingReservation" type="Bolt\Boltpay\Plugin\Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventPlugin" />
+        <plugin name="publishBoltProductEventAfterPlacingReservation"
+                type="Bolt\Boltpay\Plugin\Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventPlugin"
+                sortOrder="100"
+        />
     </type>
     <type name="Magento\Config\Model\Config">
         <plugin name="boltRequestAfterConfigurationChange" type="Bolt\Boltpay\Plugin\Magento\Config\Model\ConfigPlugin" />

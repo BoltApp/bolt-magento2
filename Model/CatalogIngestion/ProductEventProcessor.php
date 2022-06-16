@@ -36,7 +36,6 @@ use Magento\Catalog\Api\Data\ProductAttributeInterface;
 use Magento\Eav\Api\Data\AttributeInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
-use Magento\InventorySalesApi\Api\Data\IsProductSalableResultInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\InventorySalesApi\Api\IsProductSalableInterface;;
 use Magento\InventorySalesApi\Api\StockResolverInterface;
@@ -154,9 +153,9 @@ class ProductEventProcessor
         $this->featureSwitches = $featureSwitches;
         $this->logger = $logger;
         $this->moduleManager = $moduleManager;
+        // Initialisation of Magento_InventorySalesApi classes for magento >= 2.3.*, which are missing in magento  <= 2.2.*
+        // To prevent di compilation fails
         if ($this->moduleManager->isEnabled('Magento_InventorySalesApi')) {
-            //Initialisation of Magento_InventorySalesApi classes for magento > 2.3.*, which are missing in magento  <= 2.2.*
-            //To prevent di compilation fails
             $this->stockResolver = $this->objectManager
                 ->get('Magento\InventorySalesApi\Api\StockResolverInterface');
             $this->isProductSalable = $this->objectManager

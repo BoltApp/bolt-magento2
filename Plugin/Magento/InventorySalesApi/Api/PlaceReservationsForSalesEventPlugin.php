@@ -64,6 +64,11 @@ class PlaceReservationsForSalesEventPlugin
     private $isProductsSalable;
 
     /**
+     * @var array
+     */
+    private $beforeStatuses;
+
+    /**
      * @param ProductEventProcessor $productEventProcessor
      * @param ModuleManager $moduleManager
      * @param Decider $featureSwitches
@@ -77,6 +82,8 @@ class PlaceReservationsForSalesEventPlugin
         $this->productEventProcessor = $productEventProcessor;
         $this->moduleManager = $moduleManager;
         $this->featureSwitches = $featureSwitches;
+        // Initialisation of Magento_InventorySalesApi classes for magento >= 2.3.*, which are missing in magento  <= 2.2.*
+        // To prevent di compilation fails
         if ($this->moduleManager->isEnabled('Magento_InventorySalesApi')) {
             $this->getStockBySalesChannel = $this->objectManager
                 ->get('Magento\InventorySalesApi\Api\GetStockBySalesChannelInterface');
@@ -86,10 +93,34 @@ class PlaceReservationsForSalesEventPlugin
     }
 
     /**
-     * Process catalog ingestion after reservation update
+     * Save product salable statuses before placing inventory reservation
      *
      * @param PlaceReservationsForSalesEventInterface $subject
-     * @param callable $proceed
+     * @param array $items
+     * @param SalesChannelInterface $salesChannel
+     * @param SalesEventInterface $salesEvent
+     * @return array
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     */
+    public function beforeExecute(
+        PlaceReservationsForSalesEventInterface $subject,
+        array $items,
+        SalesChannelInterface $salesChannel,
+        SalesEventInterface $salesEvent
+    ): array {
+        if (!$this->featureSwitches->isCatalogIngestionEnabled() || empty($items)) {
+            return [$items, $salesChannel, $salesEvent];
+        }
+        $stockId = $this->getStockBySalesChannel->execute($salesChannel)->getStockId();
+        $this->beforeStatuses = $this->getProductStatusesByItems($items, (int)$stockId);
+    }
+
+    /**
+     * Process catalog ingestion product event after placing inventory reservation
+     *
+     * @param PlaceReservationsForSalesEventInterface $subject
+     * @param $result
      * @param array $items
      * @param SalesChannelInterface $salesChannel
      * @param SalesEventInterface $salesEvent
@@ -97,24 +128,24 @@ class PlaceReservationsForSalesEventPlugin
      * @throws LocalizedException
      * @throws NoSuchEntityException
      */
-    public function aroundExecute(
+    public function afterExecute(
         PlaceReservationsForSalesEventInterface $subject,
-        callable $proceed,
+        $result,
         array $items,
         SalesChannelInterface $salesChannel,
         SalesEventInterface $salesEvent
     ): void {
-        if (empty($items) || !$this->featureSwitches->isCatalogIngestionEnabled()) {
-            $proceed($items, $salesChannel, $salesEvent);
+        if (!$this->featureSwitches->isCatalogIngestionEnabled() ||
+            empty($items) ||
+            empty($this->beforeProductStatuses)
+        ) {
             return;
         }
         $stockId = $this->getStockBySalesChannel->execute($salesChannel)->getStockId();
-        $beforeStatuses = $this->getProductStatusesByItems($items, (int)$stockId);
-        $proceed($items, $salesChannel, $salesEvent);
         $afterStatuses = $this->getProductStatusesByItems($items, (int)$stockId);
         $this->productEventProcessor->processProductEventSalableItemsBased(
             $afterStatuses,
-            $beforeStatuses
+            $this->beforeStatuses
         );
     }
 

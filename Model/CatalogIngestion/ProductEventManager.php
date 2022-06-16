@@ -142,16 +142,12 @@ class ProductEventManager implements ProductEventManagerInterface
             $productEvent->setProductId($productId);
             $productEvent->setType($type);
             $this->productEventRepository->save($productEvent);
-        }
-
-        //create product have more priority than update
-        if ($productEvent->getId() && $type == ProductEventInterface::TYPE_CREATE) {
+        } elseif ($type == ProductEventInterface::TYPE_CREATE) {
+            //create product have more priority than update
             $productEvent->setType($type);
             $this->productEventRepository->save($productEvent);
-        }
-
-        //delete product have more priority than create/update
-        if ($productEvent->getId() && $type == ProductEventInterface::TYPE_DELETE) {
+        } elseif ($type == ProductEventInterface::TYPE_DELETE) {
+            //delete product have more priority than create/update
             $productEvent->setType($type);
             $this->productEventRepository->save($productEvent);
         }

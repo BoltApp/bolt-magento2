@@ -18,13 +18,8 @@ namespace Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command;
 
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
-use Magento\Catalog\Model\ProductFactory;
-use Magento\Catalog\Model\ResourceModel\Product\Website\Link as ProductWebsiteLink;
-use Magento\Framework\App\ObjectManager;
-use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterSourceItemsSavePlugin;
 
 /**
  * Catalog ingestion product event processor after source items update
@@ -32,29 +27,9 @@ use Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterSourceItemsSavePlug
 class SourceItemSavePlugin
 {
     /**
-     * @var ObjectManager
-     */
-    private $objectManager;
-
-    /**
-     * @var ModuleManager
-     */
-    private $moduleManager;
-
-    /**
      * @var ProductEventProcessor
      */
     private $productEventProcessor;
-
-    /**
-     * @var ProductFactory
-     */
-    private $productFactory;
-
-    /**
-     * @var ProductWebsiteLink
-     */
-    private $productWebsiteLink;
 
     /**
      * @var Decider
@@ -62,66 +37,66 @@ class SourceItemSavePlugin
     private $featureSwitches;
 
     /**
-     * @var ReindexAfterSourceItemsSavePlugin
+     * @var array
      */
-    private $reindexAfterSourceItemsSavePlugin;
+    private $beforeProductStatuses;
 
     /**
      * @param ProductEventProcessor $productEventProcessor
-     * @param ProductFactory $productFactory
-     * @param ProductWebsiteLink $productWebsiteLink
      * @param Decider $featureSwitches
-     * @param ModuleManager $moduleManager
      */
     public function __construct(
         ProductEventProcessor $productEventProcessor,
-        ProductFactory $productFactory,
-        ProductWebsiteLink $productWebsiteLink,
-        Decider $featureSwitches,
-        ModuleManager $moduleManager
+        Decider $featureSwitches
     ) {
-        $this->objectManager = ObjectManager::getInstance();
-        $this->moduleManager = $moduleManager;
         $this->productEventProcessor = $productEventProcessor;
-        $this->productFactory = $productFactory;
-        $this->productWebsiteLink = $productWebsiteLink;
         $this->featureSwitches = $featureSwitches;
-        if ($this->moduleManager->isEnabled('Magento_InventoryIndexer')) {
-            //Initialisation of Magento_InventoryIndexer classes for magento > 2.3.*, which are missing in magento  <= 2.2.*
-            //To prevent di compilation fails
-            $this->reindexAfterSourceItemsSavePlugin = $this->objectManager
-                ->get('Magento\InventoryIndexer\Plugin\InventoryApi\ReindexAfterSourceItemsSavePlugin');
-        }
     }
 
-    /***
-     * Publish bolt catalog product event after source items update
+    /**
+     * Save product salable statuses before source items save
      *
      * @param SourceItemsSaveInterface $subject
-     * @param callable $proceed
+     * @param array $sourceItems
+     * @return array[]
+     * @throws LocalizedException
+     */
+    public function beforeExecute(
+        SourceItemsSaveInterface $subject,
+        array $sourceItems
+    ): array
+    {
+        if (!$this->featureSwitches->isCatalogIngestionEnabled() || empty($sourceItems)) {
+            return [$sourceItems];
+        }
+        $this->beforeProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
+        return [$sourceItems];
+    }
+
+    /**
+     * Process catalog ingestion product event after source items save
+     *
+     * @param SourceItemsSaveInterface $subject
+     * @param $result
      * @param array $sourceItems
      * @return void
      * @throws LocalizedException
      */
-    public function aroundExecute(
+    public function afterExecute(
         SourceItemsSaveInterface $subject,
-        callable $proceed,
+        $result,
         array $sourceItems
     ): void
     {
-        if (empty($sourceItems) || !$this->featureSwitches->isCatalogIngestionEnabled()) {
-            $proceed($sourceItems);
+        if (!$this->featureSwitches->isCatalogIngestionEnabled() ||
+            empty($sourceItems) ||
+            empty($this->beforeProductStatuses)
+        ) {
             return;
-        }
-
-        $beforeProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
-        $proceed($sourceItems);
-        if ($this->reindexAfterSourceItemsSavePlugin) {
-            $this->reindexAfterSourceItemsSavePlugin->afterExecute($subject, null, $sourceItems);
         }
         $afterProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
         $this->productEventProcessor->processProductEventSourceItemsBased(
-            $beforeProductStatuses,
+            $this->beforeProductStatuses,
             $afterProductStatuses,
             $sourceItems
         );
