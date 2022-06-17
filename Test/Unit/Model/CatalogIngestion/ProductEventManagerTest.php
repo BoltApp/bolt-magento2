@@ -18,7 +18,6 @@
 namespace Bolt\Boltpay\Test\Unit\Model\CatalogIngestion;
 
 use Bolt\Boltpay\Helper\Api as ApiHelper;
-use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\Amqp\Config as AmqpConfig;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
@@ -40,7 +39,6 @@ use Magento\Framework\App\DeploymentConfig;
 /**
  * Class ProductEventManagerTest
  * @coversDefaultClass \Bolt\Boltpay\Model\CatalogIngestion\ProductEventManager
- * @magentoDbIsolation disabled
  */
 class ProductEventManagerTest extends BoltTestCase
 {
@@ -94,6 +92,11 @@ class ProductEventManagerTest extends BoltTestCase
     private $deploymentConfig;
 
     /**
+     * @var BoltConfig
+     */
+    private $boltConfig;
+
+    /**
      * @inheritDoc
      */
     protected function setUpInternal()
@@ -105,6 +108,7 @@ class ProductEventManagerTest extends BoltTestCase
         $this->moduleManger = $this->objectManager->get(Manager::class);
         $this->resource = $this->objectManager->get(ResourceConnection::class);
         $this->deploymentConfig = $this->objectManager->get(DeploymentConfig::class);;
+        $this->boltConfig = $this->objectManager->get(BoltConfig::class);;
         $websiteId = $this->storeManager->getWebsite()->getId();
         $configData = [
             [
@@ -188,7 +192,19 @@ class ProductEventManagerTest extends BoltTestCase
         );
 
         if ($this->moduleManger->isEnabled('Magento_AsynchronousOperations') && $amqpConfigExist) {
+            $amqpConfig = $this->objectManager->get(AmqpConfig::class);
+            $channel = $amqpConfig->getChannel();
+            $latestMsg = $channel->basic_get('async.operations.all', true);
+
+            $topicName = (version_compare($this->boltConfig->getStoreVersion(), '2.4.0', '<'))
+                ? 'async.V1.bolt.boltpay.producteventrequest.POST'
+                : 'async.bolt.boltpay.api.producteventmanagerinterface.sendproductevent.post';
+
             $this->assertNotEmpty($bulkId);
+            $this->assertStringContainsString('"bulk_uuid":"'.$bulkId.'"', $latestMsg->getBody());
+            $this->assertStringContainsString('"topic_name":"'.$topicName.'"', $latestMsg->getBody());
+            $this->assertStringContainsString('{\\\\\\"productEvent\\\\\\":{\\\\\\"product_id\\\\\\":'.self::PRODUCT_ID.',\\\\\\"type\\\\\\":\\\\\\"update\\\\\\"', $latestMsg->getBody());
+            $this->assertStringContainsString('"status":4,"result_message":null,"error_code":null', $latestMsg->getBody());
         }
     }
 
@@ -199,6 +215,31 @@ class ProductEventManagerTest extends BoltTestCase
     {
         $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
         $apiHelper->expects(self::once())->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
+        TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
+        $product = $this->createProduct();
+
+        $this->productEventManager->publishProductEvent($product->getId(), ProductEventInterface::TYPE_UPDATE);
+        $productEvent = $this->productEventRepository->getByProductId($product->getId());
+        $this->productEventManager->sendProductEvent($productEvent);
+    }
+
+    /**
+     * @test
+     */
+    public function testSendProductEvent_withDisabledCatalogIngestion()
+    {
+        $configData = [
+            [
+                'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED,
+                'value' => 0,
+                'scope' => ScopeInterface::SCOPE_WEBSITES,
+                'scopeId' => $this->storeManager->getWebsite()->getId(),
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
+        $apiHelper->expects(self::never())->method('sendRequest');
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
         $product = $this->createProduct();
 
@@ -234,6 +275,45 @@ class ProductEventManagerTest extends BoltTestCase
         $apiHelper->expects(self::once())->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
         $product = $this->createProduct();
+
+        $this->productEventManager->runInstantProductEvent(
+            $product->getId(),
+            ProductEventInterface::TYPE_UPDATE
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function testRunInstantProductEvent_withTwiceCallsSendingOne_withoutAsync()
+    {
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $websiteId = $store->getWebsite()->getId();
+        $configData = [
+            [
+                'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_INSTANT_ENABLED,
+                'value' => 1,
+                'scope' => ScopeInterface::SCOPE_WEBSITES,
+                'scopeId' => $websiteId,
+            ],
+            [
+                'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_INSTANT_ASYNC_ENABLED,
+                'value' => 0,
+                'scope' => ScopeInterface::SCOPE_WEBSITES,
+                'scopeId' => $websiteId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
+        $apiHelper->expects(self::once())->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
+        TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
+        $product = $this->createProduct();
+
+        $this->productEventManager->runInstantProductEvent(
+            $product->getId(),
+            ProductEventInterface::TYPE_UPDATE
+        );
 
         $this->productEventManager->runInstantProductEvent(
             $product->getId(),
@@ -284,6 +364,19 @@ class ProductEventManagerTest extends BoltTestCase
             $product->getId(),
             ProductEventInterface::TYPE_UPDATE
         );
+
+        if ($this->moduleManger->isEnabled('Magento_AsynchronousOperations') && $amqpConfigExist) {
+            $amqpConfig = $this->objectManager->get(AmqpConfig::class);
+            $channel = $amqpConfig->getChannel();
+            $latestMsg = $channel->basic_get('async.operations.all', true);
+            $topicName = (version_compare($this->boltConfig->getStoreVersion(), '2.4.0', '<'))
+                ? 'async.V1.bolt.boltpay.producteventrequest.POST'
+                : 'async.bolt.boltpay.api.producteventmanagerinterface.sendproductevent.post';
+
+            $this->assertStringContainsString('"topic_name":"'.$topicName.'"', $latestMsg->getBody());
+            $this->assertStringContainsString('{\\\\\\"productEvent\\\\\\":{\\\\\\"product_id\\\\\\":'.$product->getId().',\\\\\\"type\\\\\\":\\\\\\"update\\\\\\"', $latestMsg->getBody());
+            $this->assertStringContainsString('"status":4,"result_message":null,"error_code":null', $latestMsg->getBody());
+        }
     }
 
     /**

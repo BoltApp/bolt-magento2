@@ -40,7 +40,6 @@ use Vertex\Tax\Model\ModuleManager;
 /**
  * Class ProductEventRequestBuilderTest
  * @coversDefaultClass \Bolt\Boltpay\Model\CatalogIngestion\ProductEventRequestBuilder
- * @magentoDbIsolation disabled
  */
 class ProductEventRequestBuilderTest extends BoltTestCase
 {

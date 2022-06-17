@@ -83,7 +83,6 @@ use PHPUnit\Framework\MockObject\MockObject;
 /**
  * Class ProductEventManagerTest
  * @coversDefaultClass \Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor
- * @magentoDbIsolation disabled
  */
 class ProductEventProcessorTest extends BoltTestCase
 {

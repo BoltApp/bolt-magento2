@@ -38,7 +38,6 @@ use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
 /**
  * Class CatalogIngestionTest
  * @coversDefaultClass \Bolt\Boltpay\Cron\CatalogIngestion
- * @magentoDbIsolation disabled
  */
 class CatalogIngestionTest extends BoltTestCase
 {
