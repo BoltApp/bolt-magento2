@@ -120,15 +120,14 @@ class CatalogIngestionTest extends BoltTestCase
      */
     public function testExecute_sendCorrectRequestsCountEventsRemovedAfterSuccessCalls_withDefaultCronMaxItemsParam()
     {
-        $this->expectExceptionMessage("The bolt product event that was requested doesn't exist.");
         $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
         $apiHelper->expects(self::exactly(2))->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
         $product1 = TestUtils::createSimpleProduct();
         $product2 = TestUtils::createSimpleProduct();
         $this->catalogIngestionCron->execute();
-        $this->productEventRepository->getByProductId($product1->getId());
-        $this->productEventRepository->getByProductId($product2->getId());
+        $this->assertFalse($this->isProductEventExist($product1->getId()));
+        $this->assertFalse($this->isProductEventExist($product2->getId()));
     }
 
     /**
@@ -136,7 +135,6 @@ class CatalogIngestionTest extends BoltTestCase
      */
     public function testExecute_sendCorrectRequestsCountEventsRemovedAfterSuccessCalls_withCronMaxItemsParam()
     {
-        $this->expectExceptionMessage("The bolt product event that was requested doesn't exist.");
         $configData = [
             [
                 'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_CRON_MAX_ITEMS,
@@ -154,10 +152,10 @@ class CatalogIngestionTest extends BoltTestCase
         $product3 = TestUtils::createSimpleProduct();
         $product4 = TestUtils::createSimpleProduct();
         $this->catalogIngestionCron->execute();
-        $productEvent = $this->productEventRepository->getByProductId($product4->getId());
-        $this->assertEquals($product4->getId(), $productEvent->getProductId());
-        $this->assertEquals(ProductEventInterface::TYPE_CREATE, $productEvent->getType());
-        $this->productEventRepository->getByProductId($product3->getId());
+        $this->assertFalse($this->isProductEventExist($product1->getId()));
+        $this->assertFalse($this->isProductEventExist($product2->getId()));
+        $this->assertFalse($this->isProductEventExist($product3->getId()));
+        $this->assertTrue($this->isProductEventExist($product4->getId()));
     }
 
     /**
@@ -170,9 +168,7 @@ class CatalogIngestionTest extends BoltTestCase
         $apiHelper->expects(self::exactly(1))->method('sendRequest')->willReturn(self::RESPONSE_FAIL_STATUS);
         $product1 = TestUtils::createSimpleProduct();
         $this->catalogIngestionCron->execute();
-        $productEvent = $this->productEventRepository->getByProductId($product1->getId());
-        $this->assertEquals($product1->getId(), $productEvent->getProductId());
-        $this->assertEquals(ProductEventInterface::TYPE_CREATE, $productEvent->getType());
+        $this->assertTrue($this->isProductEventExist($product1->getId()));
     }
 
     /**
@@ -185,5 +181,21 @@ class CatalogIngestionTest extends BoltTestCase
         $connection = $this->resource->getConnection('default');
         $connection->truncateTable($this->resource->getTableName('bolt_product_event'));
         $connection->delete($connection->getTableName('catalog_product_entity'));
+    }
+
+    /**
+     * Checking if product event for product id is exist
+     *
+     * @param int $productId
+     * @return bool
+     */
+    private function isProductEventExist(int $productId): bool
+    {
+        try {
+            $this->productEventRepository->getByProductId($productId);
+        } catch (\Exception $e) {
+            return false;
+        }
+        return true;
     }
 }

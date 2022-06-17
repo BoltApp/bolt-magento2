@@ -140,22 +140,24 @@ class ProductEventManagerTest extends BoltTestCase
 
     /**
      * @test
+     * @dataProvider productEventTypes
      */
-    public function testPublishProductEvent()
+    public function testPublishProductEvent($productEventType)
     {
-        $this->productEventManager->publishProductEvent(self::PRODUCT_ID, ProductEventInterface::TYPE_UPDATE);
+        $this->productEventManager->publishProductEvent(self::PRODUCT_ID, $productEventType);
         $productEvent = $this->productEventRepository->getByProductId(self::PRODUCT_ID);
         $this->assertEquals(self::PRODUCT_ID, $productEvent->getProductId());
-        $this->assertEquals(ProductEventInterface::TYPE_UPDATE, $productEvent->getType());
+        $this->assertEquals($productEventType, $productEvent->getType());
         $this->assertNotEmpty($productEvent->getCreatedAt());
     }
 
     /**
      * @test
+     * @dataProvider productEventTypes
      */
-    public function testDeleteProductEvent()
+    public function testDeleteProductEvent($productEventType)
     {
-        $this->productEventManager->publishProductEvent(self::PRODUCT_ID, ProductEventInterface::TYPE_UPDATE);
+        $this->productEventManager->publishProductEvent(self::PRODUCT_ID, $productEventType);
         $result = $this->productEventManager->deleteProductEvent(self::PRODUCT_ID);
         $this->assertTrue($result);
     }
@@ -185,7 +187,7 @@ class ProductEventManagerTest extends BoltTestCase
             ProductEventInterface::TYPE_UPDATE
         );
 
-        if (!$this->moduleManger->isEnabled('Magento_AsynchronousOperations') && $amqpConfigExist) {
+        if ($this->moduleManger->isEnabled('Magento_AsynchronousOperations') && $amqpConfigExist) {
             $this->assertNotEmpty($bulkId);
         }
     }
@@ -315,5 +317,19 @@ class ProductEventManagerTest extends BoltTestCase
         $connection = $this->resource->getConnection('default');
         $connection->truncateTable($this->resource->getTableName('bolt_product_event'));
         $connection->delete($connection->getTableName('catalog_product_entity'));
+    }
+
+    /**
+     * Available product event types data provider
+     *
+     * @return array
+     */
+    public function productEventTypes(): array
+    {
+        return [
+            [ProductEventInterface::TYPE_CREATE],
+            [ProductEventInterface::TYPE_UPDATE],
+            [ProductEventInterface::TYPE_DELETE],
+        ];
     }
 }
