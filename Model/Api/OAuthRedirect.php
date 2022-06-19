@@ -24,6 +24,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Bolt\Boltpay\Helper\Log as LogHelper;
+use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Helper\SSOHelper;
 use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
@@ -68,6 +69,11 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @var CartHelper
      */
     private $cartHelper;
+
+    /**
+     * @var SessionHelper
+    */
+    private $sessionHelper;
 
     /**
      * @var ExternalCustomerEntityRepository
@@ -145,6 +151,7 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param SSOHelper                        $ssoHelper
      * @param LogHelper                        $logHelper
      * @param CartHelper                       $cartHelper
+     * @param SessionHelper                    $sessionHelper
      * @param ExternalCustomerEntityRepository $externalCustomerEntityRepository
      * @param CustomerRepository               $customerRepository
      * @param StoreManagerInterface            $storeManager
@@ -164,6 +171,7 @@ class OAuthRedirect implements OAuthRedirectInterface
         SSOHelper $ssoHelper,
         LogHelper $logHelper,
         CartHelper $cartHelper,
+        SessionHelper $sessionHelper,
         ExternalCustomerEntityRepository $externalCustomerEntityRepository,
         CustomerRepository $customerRepository,
         StoreManagerInterface $storeManager,
@@ -182,6 +190,7 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->ssoHelper = $ssoHelper;
         $this->logHelper = $logHelper;
         $this->cartHelper = $cartHelper;
+        $this->sessionHelper = $sessionHelper;
         $this->externalCustomerEntityRepository = $externalCustomerEntityRepository;
         $this->customerRepository = $customerRepository;
         $this->storeManager = $storeManager;
@@ -348,6 +357,20 @@ class OAuthRedirect implements OAuthRedirectInterface
                 } else {
                     $this->bugsnag->notifyError("Cannot find quote", "ID: {$reference}");
                 }
+            } else {
+                // user logs in outside of bolt modal but we still need to update quote
+                // if it exists
+                $checkoutSession = $this->sessionHelper->getCheckoutSession();
+                if ($checkoutSession) {
+                    $quote = $checkoutSession->getQuote();
+                    if ($quote) {
+                        $quote->setCustomer($customer);
+                        $quote->setCustomerIsGuest(false);
+                        $this->cartHelper->saveQuote($quote);
+
+                        $this->updateImmutableQuotes($quote, $customer);
+                    }
+                }
             }
 
             $this->linkLoginAndRedirect($externalID, $customer->getId());
@@ -384,6 +407,7 @@ class OAuthRedirect implements OAuthRedirectInterface
             $immutableQuote = $this->quoteFactory->create();
             $immutableQuote->setData($data);
             $immutableQuote->setCustomer($customer);
+            $immutableQuote->setCustomerIsGuest(false);
             $this->cartHelper->saveQuote($immutableQuote);
         }
     }
