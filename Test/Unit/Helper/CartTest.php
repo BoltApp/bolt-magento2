@@ -3932,16 +3932,7 @@ ORDER
         $quote->method('getTotals')->willReturn([]);
         $quote->expects(static::any())->method('getCouponCode')->willReturn(self::COUPON_CODE);
         $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
-        $this->discountHelper->expects(static::exactly(5))
-            ->method('getBoltDiscountType')
-            ->withConsecutive(
-                ['by_fixed'],
-                ['by_fixed'],
-                ['by_fixed'],
-                ['by_fixed'],
-                ['by_fixed']
-            )
-            ->willReturnOnConsecutiveCalls('fixed_amount', 'fixed_amount', 'fixed_amount', 'fixed_amount', 'fixed_amount');
+        $this->discountHelper->expects(static::exactly(5))->method('getBoltDiscountType')->willReturn('fixed_amount');
         $quote->expects(static::once())->method('getUseCustomerBalance')->willReturn(false);
         $quote->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
         $this->discountHelper->expects(static::never())->method('getAmastyPayForEverything');
@@ -4390,7 +4381,7 @@ ORDER
         $giftVoucher = "12345";
         $quote->expects(static::any())->method('getCouponCode')->willReturn($giftVoucher);
         $shippingAddress->expects(static::any())->method('getDiscountDescription')->willReturn(self::COUPON_DESCRIPTION);
-        $this->discountHelper->expects(static::exactly(1))->method('getBoltDiscountType')->with('by_fixed')->willReturn('fixed_amount');
+        $this->discountHelper->expects(static::exactly(1))->method('getBoltDiscountType')->willReturn('fixed_amount');
         $this->quoteAddressTotal->expects(static::once())->method('getValue')->willReturn($giftVoucherDiscount);
         $this->quoteAddressTotal->expects(static::once())->method('getTitle')->willReturn("Gift Voucher");
         $quote->expects(static::any())->method('getTotals')->willReturn(

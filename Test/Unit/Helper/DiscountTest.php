@@ -43,6 +43,7 @@ use Magento\SalesRule\Model\Rule;
 use Magento\SalesRule\Model\RuleRepository;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class DiscountTest
@@ -497,35 +498,18 @@ class DiscountTest extends BoltTestCase
         $types,
         $expectedResult
     ) {
-        $couponCode = 'testcoupon';
-        $this->initCurrentMock(['loadCouponCodeData']);
+        $objectManager = Bootstrap::getObjectManager();
+        $discountHelper = $objectManager->create(Discount::class);
+        $discountRule = $objectManager->create(\Magento\SalesRule\Model\Rule::class);
+        $discountRule->setSimpleAction($types);
+        $discountRule->save();
+        $coupon = $objectManager->create(\Magento\SalesRule\Model\Coupon::class);
+        $coupon->setRuleId($discountRule->getId());
+        $couponCode = "mock" . $discountRule->getId();
+        $coupon->setCode($couponCode);
+        $coupon->save();
 
-        $couponMock = $this->getMockBuilder(\Magento\SalesRule\Model\Coupon::class)
-            ->setMethods(
-                [
-                    'getRuleId'
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
-        $couponMock->expects(static::once())->method('getRuleId')->willReturn(6);
-
-        $this->currentMock->expects(static::once())->method('loadCouponCodeData')->with($couponCode)->willReturn($couponMock);
-
-        $ruleMock = $this->getMockBuilder(Rule::class)
-            ->setMethods(
-                [
-                    'getSimpleAction',
-                ]
-            )
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $ruleMock->expects(self::once())->method('getSimpleAction')->willReturn($types);
-
-        $this->ruleRepositoryMock->expects(static::once())->method('getById')->with(6)->willReturn($ruleMock);
-
-        static::assertEquals($expectedResult, $this->currentMock->convertToBoltDiscountType($couponCode));
+        static::assertEquals($expectedResult, $discountHelper->convertToBoltDiscountType($couponCode));
     }
 
     /**
@@ -542,6 +526,30 @@ class DiscountTest extends BoltTestCase
             ['types' => 'none_list', 'expectedResult' => 'fixed_amount'],
             ['types' => '', 'expectedResult' => 'fixed_amount'],
         ];
+    }
+
+    /**
+     * @test
+     * that convertToBoltDiscountType returns proper bolt discount type for free shipping coupon
+     *
+     * @covers ::convertToBoltDiscountType
+     *
+     */
+    public function convertToBoltDiscountType_withFreeShippintCoupon_returnsBoltDiscountTypeValue()
+    {
+        $objectManager = Bootstrap::getObjectManager();
+        $discountHelper = $objectManager->create(Discount::class);
+        $discountRule = $objectManager->create(\Magento\SalesRule\Model\Rule::class);
+        $discountRule->setSimpleAction('by_fixed');
+        $discountRule->setSimpleFreeShipping(true);
+        $discountRule->save();
+        $coupon = $objectManager->create(\Magento\SalesRule\Model\Coupon::class);
+        $coupon->setRuleId($discountRule->getId());
+        $couponCode = "mock" . $discountRule->getId();
+        $coupon->setCode($couponCode);
+        $coupon->save();
+
+        static::assertEquals("free_shipping", $discountHelper->convertToBoltDiscountType($couponCode));
     }
 
     /**

@@ -2242,7 +2242,7 @@ class Cart extends AbstractHelper
             foreach ($ruleDiscountDetails as $salesruleId => $ruleDiscountAmount) {
                 $rule = $this->ruleRepository->getById($salesruleId);
                 $roundedAmount = CurrencyUtils::toMinor($ruleDiscountAmount, $currencyCode);
-                $discountType = $this->discountHelper->getBoltDiscountType($rule->getSimpleAction());
+                $discountType = $this->discountHelper->getBoltDiscountType($rule);
                 switch ($rule->getCouponType()) {
                     case RuleInterface::COUPON_TYPE_SPECIFIC_COUPON:
                     case RuleInterface::COUPON_TYPE_AUTO:
