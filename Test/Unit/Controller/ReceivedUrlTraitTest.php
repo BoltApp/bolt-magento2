@@ -27,6 +27,9 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
+use Bolt\Boltpay\Controller\ReceivedUrlInterface;
+use Magento\Framework\App\CacheInterface;
+use Magento\Framework\Serialize\SerializerInterface as Serialize;
 
 /**
  * Class ReceivedUrlTraitTest
@@ -95,6 +98,16 @@ class ReceivedUrlTraitTest extends BoltTestCase
      * @var \Magento\Sales\Model\Order\Payment|\PHPUnit\Framework\MockObject\MockObject|\PHPUnit_Framework_MockObject_MockObject
      */
     private $paymentMock;
+    
+    /**
+     * @var CacheInterface
+     */
+    private $cache;
+
+    /**
+     * @var Serialize
+     */
+    private $serialize;
 
     public function setUpInternal()
     {
@@ -116,10 +129,14 @@ class ReceivedUrlTraitTest extends BoltTestCase
         $this->quote = $this->createPartialMock(Quote::class, ['getId']);
         $this->order = $this->createPartialMock(Order::class, ['getId', 'getIncrementId', 'getStatus', 'getState', 'getPayment', 'addStatusHistoryComment', 'save']);
         $this->paymentMock = $this->createMock(\Magento\Sales\Model\Order\Payment::class);
+        $this->cache = $this->createMock(CacheInterface::class);
+        $this->serialize = $this->createMock(Serialize::class);
         TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);
         TestHelper::setProperty($this->currentMock, 'checkoutSession', $this->checkoutSession);
         TestHelper::setProperty($this->currentMock, 'orderHelper', $this->orderHelper);
         TestHelper::setProperty($this->currentMock, 'configHelper', $this->configHelper);
+        TestHelper::setProperty($this->currentMock, 'cache', $this->cache);
+        TestHelper::setProperty($this->currentMock, 'serialize', $this->serialize);
     }
 
     /**

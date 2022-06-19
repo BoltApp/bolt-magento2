@@ -28,8 +28,11 @@ use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Controller\ReceivedUrlTrait;
 use Magento\Backend\Model\UrlInterface as BackendUrl;
+use Magento\Framework\App\CacheInterface;
+use Magento\Framework\Serialize\SerializerInterface as Serialize;
+use Bolt\Boltpay\Controller\ReceivedUrlInterface;
 
-class ReceivedUrl extends Action
+class ReceivedUrl extends Action implements ReceivedUrlInterface
 {
     use ReceivedUrlTrait;
 
@@ -49,6 +52,8 @@ class ReceivedUrl extends Action
      * @param CheckoutSession $checkoutSession
      * @param OrderHelper     $orderHelper
      * @param BackendUrl      $backendUrl
+     * @param CacheInterface  $cache
+     * @param Serialize       $serialize
      */
     public function __construct(
         Context $context,
@@ -58,7 +63,9 @@ class ReceivedUrl extends Action
         LogHelper $logHelper,
         CheckoutSession $checkoutSession,
         OrderHelper $orderHelper,
-        BackendUrl $backendUrl
+        BackendUrl $backendUrl,
+        CacheInterface $cache,
+        Serialize $serialize
     ) {
         parent::__construct($context);
         $this->configHelper = $configHelper;
@@ -68,6 +75,8 @@ class ReceivedUrl extends Action
         $this->checkoutSession = $checkoutSession;
         $this->orderHelper = $orderHelper;
         $this->backendUrl = $backendUrl;
+        $this->cache = $cache;
+        $this->serialize = $serialize;
     }
 
     /**
