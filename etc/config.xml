@@ -30,7 +30,6 @@
                 <custom_merchant_dash></custom_merchant_dash>
                 <custom_cdn></custom_cdn>
                 <custom_public_key></custom_public_key>
-                <custom_integration></custom_integration>
                 <debug>0</debug>
                 <product_page_checkout>0</product_page_checkout>
                 <order_management>0</order_management>

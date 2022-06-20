@@ -221,11 +221,6 @@ class Config extends AbstractHelper
      * Path for custom public key, used only for dev mode.
      */
     const XML_PATH_CUSTOM_PUBLIC_KEY = 'payment/boltpay/custom_public_key';
-    
-    /**
-     * Path for custom integration url, used only for dev mode.
-     */
-    const XML_PATH_CUSTOM_INTEGRATION = 'payment/boltpay/custom_integration';
 
     /**
      * Bolt sandbox url
@@ -2526,7 +2521,7 @@ class Config extends AbstractHelper
     {
         //Check for sandbox mode
         if ($this->isSandboxModeSet($storeId)) {
-            return $this->getMerchantDashboardUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_INTEGRATION, self::API_URL_SANDBOX);
+            return $this->getMerchantDashboardUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_API, self::API_URL_SANDBOX);
         }
         return self::API_URL_PRODUCTION;
     }
