@@ -2525,21 +2525,4 @@ class Config extends AbstractHelper
         }
         return self::API_URL_PRODUCTION;
     }
-    
-    /**
-     * Get Bolt additional configuration for integration base URL, stored in the following format:
-     *
-     * {
-     *   "integrationBaseURL": "https://api-sandbox.bolt.com/"
-     * }
-     * defaults to empty string if not set
-     *
-     * @param int|string $storeId
-     *
-     * @return string
-     */
-    public function getIntegrationBaseUrlFromAdditionalConfig($storeId = null)
-    {
-        return $this->getAdditionalConfigProperty('integrationBaseURL', $storeId);
-    }
 }
