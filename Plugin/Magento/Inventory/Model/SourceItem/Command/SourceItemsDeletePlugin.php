@@ -16,8 +16,10 @@
  */
 namespace Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command;
 
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
 use Magento\InventoryApi\Api\SourceItemsDeleteInterface;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Catalog ingestion product event processor after source items removing
@@ -30,21 +32,55 @@ class SourceItemsDeletePlugin
     private $productEventProcessor;
 
     /**
-     * @param ProductEventProcessor $productEventProcessor
+     * @var Decider
      */
-    public function __construct(ProductEventProcessor $productEventProcessor)
-    {
+    private $featureSwitches;
+
+    /**
+     * @var array
+     */
+    private $beforeProductStatuses;
+
+    /**
+     * @param ProductEventProcessor $productEventProcessor
+     * @param Decider $featureSwitches
+     */
+    public function __construct(
+        ProductEventProcessor $productEventProcessor,
+        Decider $featureSwitches
+    ) {
         $this->productEventProcessor = $productEventProcessor;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
-     * Publish bolt catalog product event after source items removing
+     * Save product salable statuses before source items delete
+     *
+     * @param SourceItemsDeleteInterface $subject
+     * @param array $sourceItems
+     * @return array
+     * @throws LocalizedException
+     */
+    public function beforeExecute(
+        SourceItemsDeleteInterface $subject,
+        array $sourceItems
+    ): array
+    {
+        if (!$this->featureSwitches->isCatalogIngestionEnabled() || empty($sourceItems)) {
+            return [$sourceItems];
+        }
+        $this->beforeProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
+        return [$sourceItems];
+    }
+
+    /**
+     * Process catalog ingestion product event after source items delete
      *
      * @param SourceItemsDeleteInterface $subject
      * @param $result
      * @param array $sourceItems
      * @return void
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @throws LocalizedException
      */
     public function afterExecute(
         SourceItemsDeleteInterface $subject,
@@ -52,8 +88,21 @@ class SourceItemsDeletePlugin
         array $sourceItems
     ): void
     {
-        if (!empty($sourceItems)) {
-            $this->productEventProcessor->processProductEventSourceItemsBased($sourceItems, true);
+        if (!$this->featureSwitches->isCatalogIngestionEnabled() ||
+            empty($sourceItems) ||
+            empty($this->beforeProductStatuses)
+        ) {
+            return;
         }
+        $afterProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
+        foreach ($sourceItems as $sourceItem) {
+            //set quantity to 0, because we are removing the source item
+            $sourceItem->setData('quantity', 0);
+        }
+        $this->productEventProcessor->processProductEventSourceItemsBased(
+            $this->beforeProductStatuses,
+            $afterProductStatuses,
+            $sourceItems
+        );
     }
 }

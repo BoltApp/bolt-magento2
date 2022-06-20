@@ -87,6 +87,11 @@ class ProductEventManager implements ProductEventManagerInterface
     private $logger;
 
     /**
+     * @var array
+     */
+    private $alreadySentInstantProductIds = [];
+
+    /**
      * @param ProductEventInterfaceFactory $productEventFactory
      * @param ProductEventRepositoryInterface $productEventRepository
      * @param ProductEventPublisher $productEventPublisher
@@ -135,6 +140,14 @@ class ProductEventManager implements ProductEventManagerInterface
 
         if (!$productEvent->getId()) {
             $productEvent->setProductId($productId);
+            $productEvent->setType($type);
+            $this->productEventRepository->save($productEvent);
+        } elseif ($type == ProductEventInterface::TYPE_CREATE) {
+            //create product have more priority than update
+            $productEvent->setType($type);
+            $this->productEventRepository->save($productEvent);
+        } elseif ($type == ProductEventInterface::TYPE_DELETE) {
+            //delete product have more priority than create/update
             $productEvent->setType($type);
             $this->productEventRepository->save($productEvent);
         }
@@ -193,6 +206,10 @@ class ProductEventManager implements ProductEventManagerInterface
      */
     public function runInstantProductEvent(int $productId, string $type, int $websiteId = null): void
     {
+        if (in_array($productId, $this->alreadySentInstantProductIds)) {
+            return;
+        }
+
         if ($this->config->getIsCatalogIngestionInstantAsyncEnabled($websiteId)) {
             $this->publishProductEventAsyncJob($productId, $type);
         } else {
@@ -202,5 +219,7 @@ class ProductEventManager implements ProductEventManagerInterface
             $productEvent->setCreatedAt($this->dateTime->formatDate(true));
             $this->sendProductEvent($productEvent);
         }
+
+        $this->alreadySentInstantProductIds[] = $productId;
     }
 }

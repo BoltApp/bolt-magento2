@@ -16,8 +16,10 @@
  */
 namespace Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command;
 
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
 use Magento\Inventory\Model\SourceItem\Command\DecrementSourceItemQty;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Catalog ingestion product event processor after source items decrement
@@ -30,21 +32,56 @@ class DecrementSourceItemQtyPlugin
     private $productEventProcessor;
 
     /**
-     * @param ProductEventProcessor $productEventProcessor
+     * @var Decider
      */
-    public function __construct(ProductEventProcessor $productEventProcessor)
-    {
+    private $featureSwitches;
+
+    /**
+     * @var array
+     */
+    private $beforeProductStatuses;
+
+    /**
+     * @param ProductEventProcessor $productEventProcessor
+     * @param Decider $featureSwitches
+     */
+    public function __construct(
+        ProductEventProcessor $productEventProcessor,
+        Decider $featureSwitches
+    ) {
         $this->productEventProcessor = $productEventProcessor;
+        $this->featureSwitches = $featureSwitches;
+    }
+
+    /***
+     * Save product salable statuses before decrement source item qty update
+     *
+     * @param DecrementSourceItemQty $subject
+     * @param array $sourceItemDecrementData
+     * @return array[]
+     * @throws LocalizedException
+     */
+    public function beforeExecute(
+        DecrementSourceItemQty $subject,
+        array $sourceItemDecrementData
+    ): array
+    {
+        $sourceItems = array_column($sourceItemDecrementData, 'source_item');
+        if (!$this->featureSwitches->isCatalogIngestionEnabled() || empty($sourceItems)) {
+            return [$sourceItemDecrementData];
+        }
+        $this->beforeProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
+        return [$sourceItemDecrementData];
     }
 
     /**
-     * Publish bolt catalog product event after source items decrement update
+     * Process catalog ingestion product event after decrement source item qty update
      *
      * @param DecrementSourceItemQty $subject
      * @param $result
      * @param array $sourceItemDecrementData
      * @return void
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @throws LocalizedException
      */
     public function afterExecute(
         DecrementSourceItemQty $subject,
@@ -52,9 +89,19 @@ class DecrementSourceItemQtyPlugin
         array $sourceItemDecrementData
     ): void
     {
-        $sourceItems = array_column($sourceItemDecrementData, 'source_item');
-        if (!empty($sourceItems)) {
-            $this->productEventProcessor->processProductEventSourceItemsBased($sourceItems);
+        if (!$this->featureSwitches->isCatalogIngestionEnabled() ||
+            empty($sourceItems) ||
+            empty($this->beforeProductStatuses)
+        ) {
+            return;
         }
+
+        $sourceItems = array_column($sourceItemDecrementData, 'source_item');
+        $afterProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
+        $this->productEventProcessor->processProductEventSourceItemsBased(
+            $this->beforeProductStatuses,
+            $afterProductStatuses,
+            $sourceItems
+        );
     }
 }

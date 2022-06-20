@@ -16,8 +16,10 @@
  */
 namespace Bolt\Boltpay\Plugin\Magento\Inventory\Model\SourceItem\Command;
 
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Catalog ingestion product event processor after source items update
@@ -30,21 +32,55 @@ class SourceItemSavePlugin
     private $productEventProcessor;
 
     /**
-     * @param ProductEventProcessor $productEventProcessor
+     * @var Decider
      */
-    public function __construct(ProductEventProcessor $productEventProcessor)
-    {
+    private $featureSwitches;
+
+    /**
+     * @var array
+     */
+    private $beforeProductStatuses;
+
+    /**
+     * @param ProductEventProcessor $productEventProcessor
+     * @param Decider $featureSwitches
+     */
+    public function __construct(
+        ProductEventProcessor $productEventProcessor,
+        Decider $featureSwitches
+    ) {
         $this->productEventProcessor = $productEventProcessor;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
-     * Publish bolt catalog product event after source items update
+     * Save product salable statuses before source items save
+     *
+     * @param SourceItemsSaveInterface $subject
+     * @param array $sourceItems
+     * @return array[]
+     * @throws LocalizedException
+     */
+    public function beforeExecute(
+        SourceItemsSaveInterface $subject,
+        array $sourceItems
+    ): array
+    {
+        if (!$this->featureSwitches->isCatalogIngestionEnabled() || empty($sourceItems)) {
+            return [$sourceItems];
+        }
+        $this->beforeProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
+        return [$sourceItems];
+    }
+
+    /**
+     * Process catalog ingestion product event after source items save
      *
      * @param SourceItemsSaveInterface $subject
      * @param $result
      * @param array $sourceItems
      * @return void
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @throws LocalizedException
      */
     public function afterExecute(
         SourceItemsSaveInterface $subject,
@@ -52,8 +88,17 @@ class SourceItemSavePlugin
         array $sourceItems
     ): void
     {
-        if (!empty($sourceItems)) {
-            $this->productEventProcessor->processProductEventSourceItemsBased($sourceItems);
+        if (!$this->featureSwitches->isCatalogIngestionEnabled() ||
+            empty($sourceItems) ||
+            empty($this->beforeProductStatuses)
+        ) {
+            return;
         }
+        $afterProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
+        $this->productEventProcessor->processProductEventSourceItemsBased(
+            $this->beforeProductStatuses,
+            $afterProductStatuses,
+            $sourceItems
+        );
     }
 }
