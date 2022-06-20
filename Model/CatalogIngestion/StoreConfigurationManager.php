@@ -22,6 +22,7 @@ use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Logger\Logger;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Model\CatalogIngestion\StoreConfigurationRequestBuilder;
+use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Store configuration manager
@@ -73,8 +74,19 @@ class StoreConfigurationManager implements StoreConfigurationManagerInterface
     {
         try {
             $request = $this->storeConfigurationRequestBuilder->getRequest($storeCode);
-            $this->apiHelper->sendRequest($request);
-            return true;
+            $responseStatus = $this->apiHelper->sendRequest($request);
+            if ($this->storeConfigurationRequestBuilder->isSuccessfulResponseStatus((int)$responseStatus)) {
+                return true;
+            } else {
+                throw new LocalizedException(
+                    __(
+                        'Error response status during %1 request, status: %2',
+                        StoreConfigurationRequestBuilder::API_REQUEST_API_URL,
+                        $responseStatus
+                        )
+                    );
+            }
+
         } catch (\Exception $e) {
             $this->logger->critical($e);
             return false;

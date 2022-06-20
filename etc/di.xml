@@ -350,6 +350,16 @@
             <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionLogger</argument>
         </arguments>
     </type>
+    <type name="Bolt\Boltpay\Plugin\Magento\Config\Model\ConfigPlugin">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionLogger</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Model\Cron\CatalogIngestion">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionLogger</argument>
+        </arguments>
+    </type>
     <virtualType name="Bolt\Boltpay\Logger\CatalogIngestionLogger"
                  type="Bolt\Boltpay\Logger\Logger">
         <arguments>
