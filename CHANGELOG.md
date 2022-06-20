@@ -238,3 +238,5 @@
 - Users can now check out with a fixed amount shipping discount.
 - Fixed issue in order view that prevented users from filtering by Bolt Payments.
 - Merchants will now see fully refunded orders that have shipped with `Processing` status instead of `Closed`.
+## [v2.26.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.0) 2022-06-27
+TBD
