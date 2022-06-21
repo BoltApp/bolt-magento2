@@ -92,6 +92,8 @@ use Magento\SalesRule\Model\RuleRepository;
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Magento\Msrp\Helper\Data as MsrpHelper;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
+use Magento\Framework\App\Http\Context as HttpContext;
+use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
@@ -316,6 +318,12 @@ class CartTest extends BoltTestCase
     
     /** @var MockObject|PriceHelper */
     private $priceHelper;
+    
+    /** @var MockObject|HttpContext */
+    private $httpContext;
+    
+    /** @var MockObject|StoreManagerInterface */
+    private $storeManager;
 
     /**
      * Setup test dependencies, called before each test
@@ -463,6 +471,8 @@ class CartTest extends BoltTestCase
         );
         $this->msrpHelper = $this->createPartialMock(MsrpHelper::class, ['canApplyMsrp']);
         $this->priceHelper = $this->createPartialMock(PriceHelper::class, ['currency']);
+        $this->httpContext = $this->createMock(HttpContext::class);
+        $this->storeManager = $this->createMock(StoreManagerInterface::class);
         $this->currentMock = $this->getCurrentMock(null);
         $this->objectsToClean = [];
     }
@@ -517,7 +527,9 @@ class CartTest extends BoltTestCase
                     $this->eventsForThirdPartyModules,
                     $this->ruleRepository,
                     $this->msrpHelper,
-                    $this->priceHelper
+                    $this->priceHelper,
+                    $this->httpContext,
+                    $this->storeManager
                 ]
             )
             ->getMock();
@@ -724,7 +736,9 @@ class CartTest extends BoltTestCase
             $this->eventsForThirdPartyModules,
             $this->ruleRepository,
             $this->msrpHelper,
-            $this->priceHelper
+            $this->priceHelper,
+            $this->httpContext,
+            $this->storeManager
         );
         static::assertAttributeEquals($this->checkoutSession, 'checkoutSession', $instance);
         static::assertAttributeEquals($this->productRepository, 'productRepository', $instance);
@@ -755,6 +769,8 @@ class CartTest extends BoltTestCase
         static::assertAttributeEquals($this->ruleRepository, 'ruleRepository', $instance);
         static::assertAttributeEquals($this->msrpHelper, 'msrpHelper', $instance);
         static::assertAttributeEquals($this->priceHelper, 'priceHelper', $instance);
+        static::assertAttributeEquals($this->httpContext, 'httpContext', $instance);
+        static::assertAttributeEquals($this->storeManager, 'storeManager', $instance);
     }
 
     /**

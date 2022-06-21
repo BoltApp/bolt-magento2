@@ -66,6 +66,8 @@ use Magento\SalesRule\Model\RuleRepository;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
+use Magento\Framework\App\Http\Context as HttpContext;
+use Magento\Store\Model\StoreManagerInterface;
 use Zend_Http_Client_Exception;
 
 /**
@@ -273,6 +275,16 @@ class Cart extends AbstractHelper
      * @var PriceHelper
      */
     private $priceHelper;
+    
+    /**
+     * @var HttpContext
+     */
+    private $httpContext;
+    
+    /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
 
     /**
      * @param Context                    $context
@@ -307,6 +319,8 @@ class Cart extends AbstractHelper
      * @param RuleRepository             $ruleRepository
      * @param MsrpHelper                 $msrpHelper
      * @param PriceHelper                $priceHelper
+     * @param HttpContext                $httpContext
+     * @param StoreManagerInterface      $storeManager
      */
     public function __construct(
         Context $context,
@@ -340,7 +354,9 @@ class Cart extends AbstractHelper
         EventsForThirdPartyModules $eventsForThirdPartyModules,
         RuleRepository $ruleRepository,
         MsrpHelper $msrpHelper,
-        PriceHelper $priceHelper
+        PriceHelper $priceHelper,
+        HttpContext $httpContext,
+        StoreManagerInterface $storeManager
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -374,6 +390,8 @@ class Cart extends AbstractHelper
         $this->ruleRepository = $ruleRepository;
         $this->msrpHelper = $msrpHelper;
         $this->priceHelper = $priceHelper;
+        $this->httpContext = $httpContext;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -2554,7 +2572,7 @@ class Cart extends AbstractHelper
             }
         }
 
-        $cart = $this->createCart($request['items'], $request['metadata']);
+        $cart = $this->createCart($request['items'], $request['metadata'], $request['currency'], $storeId);
 
         // cache and return
         if ($isBoltOrderCachingEnabled) {
@@ -2572,11 +2590,17 @@ class Cart extends AbstractHelper
      * Create a cart with the provided items
      * @param $items - cart items
      * @param $metadata - cart metadata
+     * @param $currencyCode
+     * @param $storeId
      * @return array cart_data in bolt format
      * @throws BoltException
      */
-    public function createCart($items, $metadata = null)
+    public function createCart($items, $metadata = null, $currencyCode = null, $storeId = null)
     {
+        if ($currencyCode) {
+            $defaultCurrencyCode = $this->storeManager->getStore($storeId)->getDefaultCurrency()->getCode();
+            $this->httpContext->setValue(HttpContext::CONTEXT_CURRENCY, $currencyCode, $defaultCurrencyCode);
+        }
         $quoteId = $this->quoteManagement->createEmptyCart();
         $quote = $this->quoteFactory->create()->load($quoteId);
 
