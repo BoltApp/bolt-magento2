@@ -36,7 +36,8 @@ $customSSOSelectors = $block->getCustomSSOSelectors();
 ?>
 <script>
     var boltSSOCustomClass = 'bolt-sso-custom';
-    window.whenDefined(window, 'BoltAccount', function () {
+    require(['Bolt_Boltpay/js/utils/when-defined'], function (whenDefined) {
+    whenDefined(window, 'BoltAccount', function () {
         var selectors = <?php echo json_encode($customSSOSelectors); ?>;
 
         /**
@@ -100,5 +101,6 @@ $customSSOSelectors = $block->getCustomSSOSelectors();
                 }
             });
         });
+    });
     });
 </script>

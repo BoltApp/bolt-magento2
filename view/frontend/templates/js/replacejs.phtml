@@ -286,10 +286,11 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
         'jquery',
         'Magento_Customer/js/model/authentication-popup',
         'Magento_Customer/js/customer-data',
+        'Bolt_Boltpay/js/utils/when-defined',
         'mage/validation/validation',
         'mage/cookies',
         'domReady!'
-    ], function ($, authenticationPopup, customerData) {
+    ], function ($, authenticationPopup, customerData, whenDefined) {
         var sectionDataIds = $.cookieStorage.get('section_data_ids');
         if (sectionDataIds && sectionDataIds.b  !== undefined) {
             $.cookieStorage.set('section_data_ids','');
