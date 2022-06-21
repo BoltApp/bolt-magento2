@@ -335,6 +335,47 @@
     <type name="Magento\Config\Model\Config">
         <plugin name="boltRequestAfterConfigurationChange" type="Bolt\Boltpay\Plugin\Magento\Config\Model\ConfigPlugin" />
     </type>
+    <virtualType name="Bolt\Boltpay\Logger\CatalogIngestion"
+                 type="Bolt\Boltpay\Logger\Logger">
+        <arguments>
+            <argument name="name" xsi:type="string">BoltProductEvents</argument>
+            <argument name="handlers"  xsi:type="array">
+                <item name="system" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestionHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Bolt\Boltpay\Logger\CatalogIngestionHandler"
+                 type="Bolt\Boltpay\Logger\Handler">
+        <arguments>
+            <argument name="fileName" xsi:type="string">/var/log/bolt-catalog-ingestion.log</argument>
+            <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>
+        </arguments>
+    </virtualType>
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\ProductEventManager">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestion</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\StoreConfigurationManager">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestion</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestion</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Plugin\Magento\Config\Model\ConfigPlugin">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestion</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Model\Cron\CatalogIngestion">
+        <arguments>
+            <argument name="logger" xsi:type="object">Bolt\Boltpay\Logger\CatalogIngestion</argument>
+        </arguments>
+    </type>
     <type name="Magento\Sales\Model\InvoiceOrder">
         <plugin name="BoltBoltpayInvoiceOrderPlugin" type="Bolt\Boltpay\Plugin\Magento\Sales\Model\InvoiceOrderPlugin" sortOrder="1"/>
     </type>
