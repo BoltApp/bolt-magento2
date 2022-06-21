@@ -5233,6 +5233,9 @@ ORDER
                     'sku'          => self::PRODUCT_SKU,
                     'type'         => 'physical',
                     'description'  => 'Product description',
+                    'options'      => json_encode(
+                        ['storeId' => self::STORE_ID, 'form_key' => 'Ai6JseqGStjryljF']
+                    ),
                 ],
             ],
             'discounts'       => [],
@@ -5254,7 +5257,16 @@ ORDER
         $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
             ->willReturn($this->productMock);
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
-
+        
+        $currencyMock = $this->getMockBuilder(\Magento\Directory\Model\Currency::class)
+                                            ->setMethods(['getCode'])
+                                            ->disableOriginalConstructor()
+                                            ->getMock();
+        $this->httpContext->expects(static::once())->method('setValue');
+        $this->storeManager->expects(static::once())->method('getStore')->with(self::STORE_ID)
+                           ->willReturn($currencyMock);
+        $currencyMock->expects(static::once())->method('getCode')->willReturn(self::CURRENCY_CODE);
+                           
         static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }
 
@@ -5374,6 +5386,15 @@ ORDER
         $this->productRepository->expects(static::exactly(2))->method('getById')->with(self::PRODUCT_ID)
             ->willReturn($this->productMock);
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
+        
+        $currencyMock = $this->getMockBuilder(\Magento\Directory\Model\Currency::class)
+                                            ->setMethods(['getCode'])
+                                            ->disableOriginalConstructor()
+                                            ->getMock();
+        $this->httpContext->expects(static::once())->method('setValue');
+        $this->storeManager->expects(static::once())->method('getStore')->with(CartTest::STORE_ID)
+                           ->willReturn($currencyMock);
+        $currencyMock->expects(static::once())->method('getCode')->willReturn(self::CURRENCY_CODE);
 
         static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }
@@ -5455,6 +5476,15 @@ ORDER
         $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
         ->willReturn($this->productMock);
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
+        
+        $currencyMock = $this->getMockBuilder(\Magento\Directory\Model\Currency::class)
+                                            ->setMethods(['getCode'])
+                                            ->disableOriginalConstructor()
+                                            ->getMock();
+        $this->httpContext->expects(static::once())->method('setValue');
+        $this->storeManager->expects(static::once())->method('getStore')->with(self::STORE_ID)
+                           ->willReturn($currencyMock);
+        $currencyMock->expects(static::once())->method('getCode')->willReturn(self::CURRENCY_CODE);
 
         static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }
@@ -5480,6 +5510,15 @@ ORDER
         $customer = $this->createMock(CustomerInterface::class);
         $this->customerRepository->method('getById')->willReturn($customer);
         $this->quoteMock->expects(static::once())->method('assignCustomer')->with($customer);
+        
+        $currencyMock = $this->getMockBuilder(\Magento\Directory\Model\Currency::class)
+                                            ->setMethods(['getCode'])
+                                            ->disableOriginalConstructor()
+                                            ->getMock();
+        $this->httpContext->expects(static::once())->method('setValue');
+        $this->storeManager->expects(static::once())->method('getStore')->with(CartTest::STORE_ID)
+                           ->willReturn($currencyMock);
+        $currencyMock->expects(static::once())->method('getCode')->willReturn(self::CURRENCY_CODE);
 
         static::assertEquals($expectedCartData, $currentMock->createCartByRequest($request));
     }
@@ -5504,6 +5543,15 @@ ORDER
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(BoltErrorResponse::ERR_PPC_OUT_OF_STOCK);
         $this->expectExceptionMessage('Product that you are trying to add is not available.');
+        
+        $currencyMock = $this->getMockBuilder(\Magento\Directory\Model\Currency::class)
+                                            ->setMethods(['getCode'])
+                                            ->disableOriginalConstructor()
+                                            ->getMock();
+        $this->httpContext->expects(static::once())->method('setValue');
+        $this->storeManager->expects(static::once())->method('getStore')->with(CartTest::STORE_ID)
+                           ->willReturn($currencyMock);
+        $currencyMock->expects(static::once())->method('getCode')->willReturn(self::CURRENCY_CODE);
 
         static::assertEquals($expectedCartData, $currentMock->createCartByRequest($request));
     }
@@ -5528,6 +5576,15 @@ ORDER
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(BoltErrorResponse::ERR_PPC_INVALID_QUANTITY);
         $this->expectExceptionMessage('The requested qty is not available');
+        
+        $currencyMock = $this->getMockBuilder(\Magento\Directory\Model\Currency::class)
+                                            ->setMethods(['getCode'])
+                                            ->disableOriginalConstructor()
+                                            ->getMock();
+        $this->httpContext->expects(static::once())->method('setValue');
+        $this->storeManager->expects(static::once())->method('getStore')->with(CartTest::STORE_ID)
+                           ->willReturn($currencyMock);
+        $currencyMock->expects(static::once())->method('getCode')->willReturn(self::CURRENCY_CODE);
 
         static::assertEquals($expectedCartData, $currentMock->createCartByRequest($request));
     }
