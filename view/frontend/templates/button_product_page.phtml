@@ -53,10 +53,11 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
             'jquery',
             'Magento_Customer/js/model/authentication-popup',
             'Magento_Customer/js/customer-data',
+            'Bolt_Boltpay/js/utils/when-defined',
             'mage/validation/validation',
             'mage/cookies',
             'domReady!'
-        ], function ($, authenticationPopup, customerData) {
+        ], function ($, authenticationPopup, customerData, whenDefined) {
 
             var customer = customerData.get('customer');
             var isGuestCheckoutAllowed = <?= /* @noEscape */ $block->isGuestCheckoutAllowed(); ?>;

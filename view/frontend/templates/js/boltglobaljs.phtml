@@ -26,6 +26,15 @@ if ($block->shouldDisableBoltCheckout()) { return;
 }
 ?>
 <script type="text/javascript">
+
+    ////////////////////////////////////////////////////////////////////////
+    // Wait for an object to be defined and
+    // execute a callback when it becomes available
+    ////////////////////////////////////////////////////////////////////////
+    require(['Bolt_Boltpay/js/utils/when-defined'], function (whenDefined) {
+        window['whenDefined'] = whenDefined;
+    });
+
     <?= /* @noEscape */ $block->getGlobalJS(); ?>
 </script>
 <?php
@@ -56,42 +65,5 @@ $onSuccessCode = $block->getJavascriptSuccess() . $trackCallbackCode['success'];
         onClose: <?= /* @noEscape */ $block->wrapWithCatch($trackCallbackCode['close']); ?>,
     };
 
-    ////////////////////////////////////////////////////////////////////////
-    // Wait for an object to be defined and
-    // execute a callback when it becomes available
-    ////////////////////////////////////////////////////////////////////////
-    window.whenDefinedCallbacks = new Map([]);
-    window.whenDefined = function(obj, property, callback, key) {
-        if (obj[property]) {
-            callback();
-        } else {
-            let prop = '_'+property;
-            if (!window.whenDefinedCallbacks.has(property)) {
-                window.whenDefinedCallbacks.set(property, new Map([]))
-            }
-            let propertyCallbacks = window.whenDefinedCallbacks.get(property);
-            if (key) {
-                propertyCallbacks.set(key, callback);
-            }
-            Object.defineProperty(obj, property, {
-                configurable: true,
-                enumerable: true,
-                writeable: true,
-                get: function() {
-                    return this[prop];
-                },
-                // calls callback when variable is set
-                set: function(value) {
-                    this[prop] = value;
-                    for (let propertyCallback of propertyCallbacks.values()) {
-                        propertyCallback();
-                    }
-                    if (!key) {
-                        callback();
-                    }
-                }
-            });
-        }
-    };
 </script>
 <?= $block->getAdditionalHtml() ?>
