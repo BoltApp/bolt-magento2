@@ -792,6 +792,13 @@ class Order extends AbstractHelper
      */
     public function setOrderPaymentInfoData($payment, $transaction)
     {
+        if (!empty($transaction->from_credit_card->expiration)) {
+            $paymentData = [
+                'expiration' => $transaction->from_credit_card->expiration
+            ];
+            $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        }
+
         if (empty($payment->getCcLast4()) && ! empty($transaction->from_credit_card->last4)) {
             $payment->setCcLast4($transaction->from_credit_card->last4);
         }
