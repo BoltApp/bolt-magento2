@@ -808,6 +808,25 @@ class Order extends AbstractHelper
         if (!empty($transaction->from_credit_card->token_type) && $transaction->from_credit_card->token_type == "applepay") {
             $payment->setAdditionalData($transaction->from_credit_card->token_type);
         }
+
+        if (!empty($transaction->authorization_id)){
+            $paymentData = [
+                'payment_processor_authorization_id' => $transaction->authorization_id,
+            ];
+            $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        }
+
+        if (
+            !empty($transaction->processor)
+            && $transaction->processor == 'adyen_gateway'
+            && !empty($transaction->authorization->metadata->processor_token_alias)
+        ){
+            $paymentData = [
+                'adyen_processor_token_alias' => $transaction->authorization->metadata->processor_token_alias,
+            ];
+            $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        }
+
         $payment->save();
     }
 
