@@ -58,6 +58,7 @@ use Magento\Quote\Api\PaymentMethodManagementInterface;
 use Magento\Quote\Api\Data\PaymentInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Api\InvoiceRepositoryInterface;
 use Magento\Sales\Model\ResourceModel\Order\Collection as OrderCollection;
 use Magento\Sales\Model\Order\Address as OrderAddress;
 use Magento\Sales\Model\Order\Payment as OrderPayment;
@@ -1939,6 +1940,55 @@ class OrderManagementTest extends BoltTestCase
 
         $this->assertTrue($noSuchEntity);
         $this->assertTrue($this->isOrderExists($orderId));
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::createInvoice
+     */
+    public function testCreateInvoice_createFullInvoiceWithItems()
+    {
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+        $invoiceRepository = $this->objectManager->create(InvoiceRepositoryInterface::class);
+        $order = TestUtils::createDumpyOrder(['state' => Order::STATE_PROCESSING]);
+        $orderId = $order->getId();
+
+        $invoiceId = $boltOrderManagement->createInvoice($orderId, 100, true);
+
+        $invoice = $invoiceRepository->get($invoiceId);
+        self::assertEquals(100, $invoice->getSubtotal());
+        self::assertEquals($invoiceId, $invoice->getEntityId());
+        self::assertEquals($orderId, $invoice->getOrderId());
+        self::assertEquals(1, count($invoice->getAllItems()));
+    }
+
+    /**
+     * @test
+     *
+     * @covers ::createInvoice
+     */
+    public function testCreateInvoice_createTwoInvoices_onlySecondContainsItems()
+    {
+        $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
+        $invoiceRepository = $this->objectManager->create(InvoiceRepositoryInterface::class);
+        $order = TestUtils::createDumpyOrder(['state' => Order::STATE_PROCESSING]);
+        $orderId = $order->getId();
+
+        $invoiceId1 = $boltOrderManagement->createInvoice($orderId, 30, true);
+        $invoiceId2 = $boltOrderManagement->createInvoice($orderId, 70, true);
+
+        $invoice1 = $invoiceRepository->get($invoiceId1);
+        self::assertEquals(30, $invoice1->getSubtotal());
+        self::assertEquals($invoiceId1, $invoice1->getEntityId());
+        self::assertEquals($orderId, $invoice1->getOrderId());
+        self::assertEquals(0, count($invoice1->getAllItems()));
+
+        $invoice2 = $invoiceRepository->get($invoiceId2);
+        self::assertEquals(70, $invoice2->getSubtotal());
+        self::assertEquals($invoiceId2, $invoice2->getEntityId());
+        self::assertEquals($orderId, $invoice2->getOrderId());
+        self::assertEquals(1, count($invoice2->getAllItems()));
     }
 }
 
