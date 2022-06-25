@@ -2277,7 +2277,11 @@ class Order extends AbstractHelper
         if (!$this->featureSwitches->isIgnoreHookForInvoiceCreationEnabled() && ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState))) {
             $currencyCode = $order->getOrderCurrencyCode();
             $this->validateCaptureAmount($order, CurrencyUtils::toMajor($amount, $currencyCode));
-            $invoice = $this->createOrderInvoice($order, $realTransactionId, CurrencyUtils::toMajor($amount, $currencyCode));
+            $notify = $this->scopeConfig->isSetFlag(
+                InvoiceEmailIdentity::XML_PATH_EMAIL_ENABLED,
+                ScopeInterface::SCOPE_STORE,
+                $order->getStoreId());
+            $invoice = $this->createOrderInvoice($order, CurrencyUtils::toMajor($amount, $currencyCode), $notify, $realTransactionId);
             $payment->setAdditionalInformation(
                 array_merge((array)$payment->getAdditionalInformation(), ['captures' => implode(',', $processedCaptures)])
             );
@@ -2330,14 +2334,15 @@ class Order extends AbstractHelper
      * Create an invoice for the order.
      *
      * @param OrderModel $order
-     * @param string $transactionId
+     * @param string|null $transactionId
      * @param float $amount
+     * @param bool $notify
      *
      * @return bool
      * @throws \Exception
      * @throws LocalizedException
      */
-    protected function createOrderInvoice($order, $transactionId, $amount)
+    public function createOrderInvoice($order, $amount, $notify = false, $transactionId = null)
     {
         $currencyCode = $order->getOrderCurrencyCode();
         try {
@@ -2355,6 +2360,7 @@ class Order extends AbstractHelper
         $invoice->setBaseGrandTotal($amount);
         $invoice->setGrandTotal($amount);
         $invoice->register();
+        $invoice->save();
 
         $order->addRelatedObject($invoice);
 
@@ -2368,12 +2374,12 @@ class Order extends AbstractHelper
             } catch (\Exception $e) {
                 $this->bugsnag->notifyException($e);
             }
-        }
 
-        //Add notification comment to order
-        $order->addStatusHistoryComment(
-            __('Invoice #%1 is created. Notification email is sent to customer.', $invoice->getId())
-        )->setIsCustomerNotified(true);
+            //Add notification comment to order
+            $order->addStatusHistoryComment(
+                __('Invoice #%1 is created. Notification email is sent to customer.', $invoice->getId())
+            )->setIsCustomerNotified(true);
+        }
 
         return $invoice;
     }

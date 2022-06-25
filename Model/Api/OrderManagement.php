@@ -393,4 +393,22 @@ class OrderManagement implements OrderManagementInterface
         }
 
     }
+
+    /**
+     * Creates invoice by order ID.
+     * We need this endpoing because magento API is not able to create
+     * partial invoice without settings specific items
+     *
+     * @param int $id The order ID.
+     * @param float $amount
+     * @return bool $notify
+     * @throws NoSuchEntityException
+     * @throws WebapiException
+     */
+    public function createInvoice($id, $amount, $notify = false) {
+        $order = $this->orderHelper->getOrderById($id);
+        $invoice = $this->orderHelper->createOrderInvoice($order, $amount, $notify);
+        $order->save();
+        return $invoice->getEntityId();
+    }
 }
