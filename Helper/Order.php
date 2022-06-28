@@ -808,6 +808,18 @@ class Order extends AbstractHelper
             ];
             $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
         }
+
+        if (
+            !empty($transaction->processor)
+            && $transaction->processor == 'adyen_gateway'
+            && !empty($transaction->authorization->metadata->processor_token_alias)
+        ){
+            $paymentData = [
+                'adyen_processor_token_alias' => $transaction->authorization->metadata->processor_token_alias,
+            ];
+            $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        }
+
         $payment->save();
     }
 
