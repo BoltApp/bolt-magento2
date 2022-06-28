@@ -71,4 +71,18 @@ interface OrderManagementInterface
      * @throws WebapiException
      */
     public function deleteById($id);
+
+    /**
+     * Creates invoice by order ID.
+     * We need this endpoing because magento API is not able to create
+     * partial invoice without settings specific items
+     *
+     * @param int $id The order ID.
+     * @param float $amount
+     * @param bool $notify
+     * @return int
+     * @throws NoSuchEntityException
+     * @throws WebapiException
+     */
+    public function createInvoice($id, $amount, $notify = false);
 }

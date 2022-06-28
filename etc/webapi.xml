@@ -177,4 +177,11 @@
             <resource ref="Magento_Catalog::products" />
         </resources>
     </route>
+    <!--Create partial invoice -->
+    <route url="/V1/bolt/boltpay/order/:id/invoice" method="POST">
+        <service class="Bolt\Boltpay\Api\OrderManagementInterface" method="createInvoice"/>
+        <resources>
+            <resource ref="Magento_Sales::invoice" />
+        </resources>
+    </route>
 </routes>

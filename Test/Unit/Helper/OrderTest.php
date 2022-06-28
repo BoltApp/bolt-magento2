@@ -3373,7 +3373,7 @@ class OrderTest extends BoltTestCase
         TestHelper::invokeMethod(
             $this->orderHelper,
             'createOrderInvoice',
-            [$order, self::TRANSACTION_ID, 50]
+            [$order, 50, true, self::TRANSACTION_ID]
         );
 
         self::assertTrue(count($order->getInvoiceCollection()->getItems()) > 0);
@@ -3402,7 +3402,7 @@ class OrderTest extends BoltTestCase
             Invoice::class,
             [
                 'setRequestedCaptureCase', 'setTransactionId',
-                'setBaseGrandTotal', 'setGrandTotal', 'register','getEmailSent'
+                'setBaseGrandTotal', 'setGrandTotal', 'register', 'getEmailSent', 'save'
             ]
         );
 
@@ -3434,7 +3434,7 @@ class OrderTest extends BoltTestCase
         TestHelper::invokeMethod(
             $orderHelper ,
             'createOrderInvoice',
-            [$order, self::TRANSACTION_ID, $amount]
+            [$order, $amount, true, self::TRANSACTION_ID]
         );
     }
 
@@ -3497,7 +3497,7 @@ class OrderTest extends BoltTestCase
         TestHelper::invokeMethod(
             $orderHelper,
             'createOrderInvoice',
-            [$order, self::TRANSACTION_ID, 0]
+            [$order, 0, true, self::TRANSACTION_ID]
         );
     }
 
@@ -3516,7 +3516,7 @@ class OrderTest extends BoltTestCase
             Invoice::class,
             [
                 'setRequestedCaptureCase', 'setTransactionId', 'setBaseGrandTotal',
-                'setGrandTotal', 'register',
+                'setGrandTotal', 'register', 'save'
             ]
         );
 
@@ -3559,7 +3559,7 @@ class OrderTest extends BoltTestCase
         TestHelper::invokeMethod(
             $orderHelper,
             'createOrderInvoice',
-            [$order, self::TRANSACTION_ID, 0]
+            [$order, 0, true, self::TRANSACTION_ID]
         );
     }
 
@@ -3652,7 +3652,7 @@ class OrderTest extends BoltTestCase
             Invoice::class,
             [
                 'setRequestedCaptureCase', 'setTransactionId', 'setBaseGrandTotal',
-                'setGrandTotal', 'register',
+                'setGrandTotal', 'register', 'save'
             ]
         );
 
@@ -3696,7 +3696,7 @@ class OrderTest extends BoltTestCase
         TestHelper::invokeMethod(
             $orderHelper,
             'createOrderInvoice',
-            [$order, self::TRANSACTION_ID, 0]
+            [$order, 0, true, self::TRANSACTION_ID]
         );
     }
 
