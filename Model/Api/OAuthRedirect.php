@@ -23,6 +23,7 @@ use Bolt\Boltpay\Api\OAuthRedirectInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
+use Bolt\Boltpay\Helper\Hook;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\SSOHelper;
 use Exception;
@@ -244,6 +245,7 @@ class OAuthRedirect implements OAuthRedirectInterface
      */
     public function login($code = '', $scope = '', $state = '', $reference = '')
     {
+        Hook::$fromBolt = true;
         if (!$this->deciderHelper->isBoltSSOEnabled()) {
             $this->bugsnag->notifyError('OAuthRedirect', 'BoltSSO feature is disabled');
             throw new NoSuchEntityException(__('Request does not match any route.'));
