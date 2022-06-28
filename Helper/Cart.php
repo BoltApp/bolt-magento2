@@ -1883,6 +1883,7 @@ class Cart extends AbstractHelper
         // order API, otherwise skip this step
         ////////////////////////////////////////////////////////
         if ($this->deciderHelper->isAPIDrivenIntegrationEnabled()) {
+            $quote->setBoltParentQuoteId($quote->getId());
             if ($this->isBackendSession() && $quote->getBoltCheckoutType() != self::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
                 $quote->setBoltCheckoutType(self::BOLT_CHECKOUT_TYPE_BACKOFFICE);
                 $quote->save();
