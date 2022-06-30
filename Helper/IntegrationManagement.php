@@ -75,13 +75,9 @@ class IntegrationManagement extends AbstractHelper
     
     const BOLT_INTEGRATION_NAME = 'boltIntegration';
     
-    const BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL_SANDBOX = 'https://api-sandbox.bolt.com/v1/magento2/bolt-checkout/authorize';
-    const BOLT_INTEGRATION_IDENTITY_LINKING_URL_SANDBOX = 'https://status.bolt.com/';
-    const BOLT_INTEGRATION_TOKEN_EXCHANGE_URL_SANDBOX = 'https://api-sandbox.bolt.com/v1/magento2/bolt-checkout/exchange';
-    
-    const BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL_PRODUCTION = 'https://api.bolt.com/v1/magento2/bolt-checkout/authorize';
-    const BOLT_INTEGRATION_IDENTITY_LINKING_URL_PRODUCTION = 'https://status.bolt.com/';
-    const BOLT_INTEGRATION_TOKEN_EXCHANGE_URL_PRODUCTION = 'https://api.bolt.com/v1/magento2/bolt-checkout/exchange';
+    const BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL = '/v1/magento2/bolt-checkout/authorize';
+    const BOLT_INTEGRATION_IDENTITY_LINKING_URL = 'https://status.bolt.com/';
+    const BOLT_INTEGRATION_TOKEN_EXCHANGE_URL = '/v1/magento2/bolt-checkout/exchange';
     
     /**
      * @var \Magento\Integration\Model\ConfigBasedIntegrationManager
@@ -410,11 +406,7 @@ class IntegrationManagement extends AbstractHelper
      */
     public function getEndpointUrl($storeId = null)
     {
-        //Check for sandbox mode
-        if ($this->configHelper->isSandboxModeSet($storeId)) {
-            return self::BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL_SANDBOX;
-        }
-        return self::BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL_PRODUCTION;
+        return rtrim($this->configHelper->getIntegrationBaseUrl($storeId), '/') . self::BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL;
     }
     
     /**
@@ -426,11 +418,7 @@ class IntegrationManagement extends AbstractHelper
      */
     public function getIdentityLinkUrl($storeId = null)
     {
-        //Check for sandbox mode
-        if ($this->configHelper->isSandboxModeSet($storeId)) {
-            return self::BOLT_INTEGRATION_IDENTITY_LINKING_URL_SANDBOX;
-        }
-        return self::BOLT_INTEGRATION_IDENTITY_LINKING_URL_PRODUCTION;
+        return self::BOLT_INTEGRATION_IDENTITY_LINKING_URL;
     }
     
     /**
@@ -442,11 +430,7 @@ class IntegrationManagement extends AbstractHelper
      */
     public function getTokensExchangeUrl($storeId = null)
     {
-        //Check for sandbox mode
-        if ($this->configHelper->isSandboxModeSet($storeId)) {
-            return self::BOLT_INTEGRATION_TOKEN_EXCHANGE_URL_SANDBOX;
-        }
-        return self::BOLT_INTEGRATION_TOKEN_EXCHANGE_URL_PRODUCTION;
+        return rtrim($this->configHelper->getIntegrationBaseUrl($storeId), '/') . self::BOLT_INTEGRATION_TOKEN_EXCHANGE_URL;
     }
 
     /**

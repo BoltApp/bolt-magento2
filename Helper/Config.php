@@ -2638,4 +2638,20 @@ class Config extends AbstractHelper
             $websiteId
         );
     }
+    
+    /**
+     * Get Integration base URL
+     *
+     * @param null|string $storeId
+     *
+     * @return string
+     */
+    public function getIntegrationBaseUrl($storeId = null)
+    {
+        //Check for sandbox mode
+        if ($this->isSandboxModeSet($storeId)) {
+            return $this->getMerchantDashboardUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_API, self::API_URL_SANDBOX);
+        }
+        return self::API_URL_PRODUCTION;
+    }
 }
