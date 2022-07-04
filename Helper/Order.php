@@ -1975,7 +1975,7 @@ class Order extends AbstractHelper
      * @param string $state
      * @param bool $saveOrder
      */
-    public function setOrderState($order, $state, $saveOrder = false)
+    public function setOrderState($order, $state, $saveOrder = true)
     {
         $prevState = $order->getState();
         if ($state == OrderModel::STATE_HOLDED) {
