@@ -55,6 +55,7 @@
             <resource name="Magento_Backend::store" />
             <resource name="Magento_CatalogRule::promo" />
             <resource name="Magento_SalesRule::quote"/>
+            <resource name="Magento_GiftCardAccount::customer_giftcardaccount"/>
         </resources>
     </integration>
 </integrations>
