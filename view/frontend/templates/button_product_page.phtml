@@ -257,7 +257,12 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                             if (!(compositeAttribute in options)) {
                                 options[compositeAttribute] = {};
                             }
-                            options[compositeAttribute][matchResult[1]] = value;
+                            if (matchResult[1] in options[compositeAttribute]
+                                && options[compositeAttribute][matchResult[1]]) {
+                                options[compositeAttribute][matchResult[1]] += ',' + value;
+                            } else {
+                                options[compositeAttribute][matchResult[1]] = value;
+                            }
                             return;
                         }
                     }
@@ -351,10 +356,12 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                 if (data) {
                     // the name of the property that holds the price data
                     // varies depending on the product type, eg. prices, options
-                    var key = Object.keys(data)[0];
-                    if (key) {
-                        var finalPrice = data[key].finalPrice;
-                        itemPrices[key] =
+                    for (var index in data) {
+                        if (!data.hasOwnProperty(index) || !data[index].hasOwnProperty('finalPrice')) {
+                            continue;
+                        }
+                        var finalPrice = data[index].finalPrice;
+                        itemPrices[index] =
                             finalPrice && typeof finalPrice === 'object' && finalPrice.amount ? finalPrice.amount : 0;
                         itemPrice = sum(itemPrices);
                     }

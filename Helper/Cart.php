@@ -2623,6 +2623,13 @@ class Cart extends AbstractHelper
             unset($options['storeId']);
             unset($options['form_key']);
             $options['qty'] = $item['quantity'];
+            if (!empty($options['bundle_option'])) {
+                foreach ($options['bundle_option'] as $id => $bundleOption) {
+                    if (strpos($bundleOption, ',') !== false) {
+                        $options['bundle_option'][$id] = explode(',', $bundleOption);
+                    }
+                }
+            }
             $options = new \Magento\Framework\DataObject($options);
 
             try {
