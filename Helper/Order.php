@@ -827,6 +827,13 @@ class Order extends AbstractHelper
             $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
         }
 
+        if (!empty($transaction->from_credit_card->bin)) {
+            $paymentData = [
+                'bin' => $transaction->from_credit_card->bin
+            ];
+            $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        }
+
         $payment->save();
     }
 
