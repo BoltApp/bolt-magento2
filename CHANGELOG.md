@@ -239,4 +239,21 @@
 - Fixed issue in order view that prevented users from filtering by Bolt Payments.
 - Merchants will now see fully refunded orders that have shipped with `Processing` status instead of `Closed`.
 ## [v2.26.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.0) 2022-06-27
-TBD
+- Bolt now ingests Magento product catalog to ensure product availability within Bolt checkout. Inventory syncs between the two platforms for the following events:
+    - Updating product inventory in Magento
+    - Setting products to "Out of Stock"
+    - Completed/shipped orders
+    - Refunded orders
+    - Add product
+    - Delete a product
+- Administrators can now place backoffice guest orders via the Magento Admin Dashboard.
+- Plugin is now fully compatible with [PHP 8.1](https://www.php.net/releases/8.1/en.php).
+- Resolved an issue where incorrect amounts were displayed at checkout when their currency was chosen.
+- Fixed issue that caused a dependency to fail to load when Bolt minicart was disabled.
+- Resolved issue where customers logged in via Single-Sign-On received incorrect quote for shipping costs at checkout.
+- Fixed issue with Free Shipping discount not applying to orders.
+- Resolved issue where customers were intermittently not redirected to order confirmation page at checkout.
+- Resolved issue where customers could not add discounts created with [Tiered Coupons](https://marketplace.magento.com/mexbs-module-tieredcoupon.html) plugin to orders.
+- Fixed issue where customers' loyalty points created via the [Reward Points Subscription by Aheadworks](https://marketplace.magento.com/aheadworks-module-reward-points-subscription.html) plugin were not added to the users' accounts.
+- Resolved issue with Gift Cards via [Gift Card by Aheadworks](https://marketplace.magento.com/aheadworks-module-giftcard.html) plugin not applying to orders.
+- Fixed issue where users could not filter via `Bolt-Visa` payment method in order grid view.
