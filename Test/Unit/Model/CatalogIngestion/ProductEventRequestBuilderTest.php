@@ -152,8 +152,8 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                         'ShippingRequired' => true,
                         'Prices' => [
                             [
-                                'ListPrice' => 100.0,
-                                'SalePrice' => 100.0,
+                                'ListPrice' => 10000,
+                                'SalePrice' => 10000,
                                 'Currency' => 'USD',
                                 'Locale' => 'en_US',
                                 'Unit' => ''
