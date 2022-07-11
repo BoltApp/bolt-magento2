@@ -1980,8 +1980,9 @@ class Order extends AbstractHelper
      *
      * @param OrderModel $order
      * @param string $state
+     * @param bool $saveOrder
      */
-    public function setOrderState($order, $state)
+    public function setOrderState($order, $state, $saveOrder = true)
     {
         $prevState = $order->getState();
         if ($state == OrderModel::STATE_HOLDED) {
@@ -2011,7 +2012,9 @@ class Order extends AbstractHelper
             $order->setState($state);
             $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
         }
-        $order->save();
+        if ($saveOrder) {
+           $order->save(); 
+        }
     }
 
     /**
@@ -2287,8 +2290,10 @@ class Order extends AbstractHelper
             $this->resetOrderState($order);
         }
         $orderState = $this->transactionToOrderState($transactionState, $order);
-
-        $this->setOrderState($order, $orderState);
+        
+        // If the action is not triggered by Bolt API request and transaction type is credit, there is not need to save order.
+        $ifSaveOrder = Hook::$fromBolt || ($transactionState != self::TS_CREDIT_IN_PROGRESS && $transactionState != self::TS_CREDIT_COMPLETED);      
+        $this->setOrderState($order, $orderState, $ifSaveOrder);
 
         // Send order confirmation email to customer.
         if (! $order->getEmailSent()) {
@@ -2345,7 +2350,9 @@ class Order extends AbstractHelper
 
         // save payment and order
         $payment->save();
-        $order->save();
+        if ($ifSaveOrder) {
+            $order->save();
+        }
 
         $this->eventsForThirdPartyModules->dispatchEvent(
             'afterUpdateOrderPayment',
