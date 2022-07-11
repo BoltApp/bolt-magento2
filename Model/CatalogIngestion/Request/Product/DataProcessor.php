@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Model\CatalogIngestion\Request\Product;
 
 use Bolt\Boltpay\Api\Data\ProductEventInterface;
 use Bolt\Boltpay\Helper\Config;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Catalog\Model\Product\Visibility;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Catalog\Api\ProductRepositoryInterface;
@@ -229,7 +230,6 @@ class DataProcessor
         //using env. emulation for correct store view stock data
         $this->emulation->startEnvironmentEmulation($storeId);
         $product = $this->productRepository->getById($productId, false, $storeId);
-        $storeView = $this->storeManager->getStore($storeId);
         $this->galleryReadHandler->execute($product);
         $productData = [
             'MerchantProductID' => (string)$product->getId(),
@@ -482,12 +482,14 @@ class DataProcessor
      */
     private function getPrices(ProductInterface $product): array
     {
+        $currencyCode = $this->storeManager->getStore()->getCurrentCurrency()->getCode();
+        $price = CurrencyUtils::toMinor($product->getPriceInfo()->getPrice('final_price')->getValue(), $currencyCode);
         $prices = [
             [
-                'ListPrice' => $product->getPriceInfo()->getPrice('final_price')->getValue(),
-                'SalePrice' => $product->getPriceInfo()->getPrice('final_price')->getValue(),
-                'Currency' => $this->storeManager->getDefaultStoreView()->getCurrentCurrency()->getCode(),
-                'Locale' => $this->localeResolver->emulate($this->storeManager->getDefaultStoreView()->getId()),
+                'ListPrice' => $price,
+                'SalePrice' => $price,
+                'Currency' => $currencyCode,
+                'Locale' => $this->localeResolver->emulate($this->storeManager->getStore()->getId()),
                 'Unit' => '',
             ]
         ];
