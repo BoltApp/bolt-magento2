@@ -53,6 +53,8 @@ class DataProcessor
 
     private const PRODUCT_VISIBILITY_NOT_VISIBLE = 'not_visible';
 
+    private const PRODUCT_IMAGE_SIZENAME = 'standard';
+
     /**
      * @var ObjectManager
      */
@@ -414,7 +416,7 @@ class DataProcessor
                     'MediaFile' => $mediaImage->getPath(),
                     'MediaType' => $this->mime->getMimeType($mediaImage->getPath()),
                     'URL' => $mediaImage->getUrl(),
-                    'SizeName' => implode(',', $this->getMediaImageEntry($product, $imageId)->getTypes()),
+                    'SizeName' => self::PRODUCT_IMAGE_SIZENAME,
                     'Width' => $imageSize[0],
                     'Height' => $imageSize[1],
                     'Length' => null,
