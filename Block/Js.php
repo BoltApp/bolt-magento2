@@ -564,6 +564,18 @@ class Js extends Template
     }
 
     /**
+     * If feature switch M2_ENABLE_SHOPPER_ASSISTANT is enabled
+     */
+    public function isShopperAssistantEnabled()
+    {
+        if ($this->featureSwitches->isShopperAssistantEnabled()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Return CSS styles for bolt button
      *
      * @return string
