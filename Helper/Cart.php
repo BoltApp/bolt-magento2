@@ -1372,16 +1372,23 @@ class Cart extends AbstractHelper
         $total = $quote->getTotals();
         if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
             $giftWrapping = $total['giftwrapping'];
+
+
             $totalPrice = $giftWrapping->getGwPrice() + $giftWrapping->getGwItemsPrice() + $quote->getGwCardPrice();
             $product = [];
-            $product['reference']    = $giftWrapping->getGwId();
+            $gwId = $giftWrapping->getGwId();
+            $product['reference']    = $gwId;
             $product['name']         = $giftWrapping->getTitle()->getText();
             $product['total_amount'] = CurrencyUtils::toMinor($totalPrice, $currencyCode);
             $product['unit_price']   = CurrencyUtils::toMinor($totalPrice, $currencyCode);
             $product['quantity']     = 1;
             $product['sku']          = trim($giftWrapping->getCode());
             $product['type']         = self::ITEM_TYPE_PHYSICAL;
-
+            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+            $giftWrappingModel = $objectManager->create('Magento\GiftWrapping\Model\Wrapping')->load($gwId);
+            if ($giftWrappingModel->getImageUrl()){
+                $product['image_url']    = $giftWrappingModel->getImageUrl();
+            }
             $totalAmount += $product['total_amount'];
             $products[] = $product;
         }

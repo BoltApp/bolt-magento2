@@ -4844,7 +4844,15 @@ ORDER
             ->disableOriginalConstructor()
             ->setMethods(['getGwId','getGwItemsPrice','getGwCardPrice','getGwPrice','getText','getTitle','getCode'])
             ->getMock();
-
+        ObjectManager::setInstance($this->objectManagerMock);
+        $giftWrappingModel = $this->getMockBuilder('Magento\GiftWrapping\Model\Wrapping')
+            ->disableOriginalConstructor()
+            ->setMethods(['load','getImageUrl'])
+            ->getMock();
+        $giftWrappingModel->method('load')->willReturnSelf();
+        $giftWrappingModel->method('getImageUrl')->willReturn('https://gift-wrap-image.url');
+        $this->objectManagerMock->expects(static::once())->method('create')
+            ->with('Magento\GiftWrapping\Model\Wrapping')->willReturn($giftWrappingModel);
         $this->giftwrapping->method('getGwId')->willReturn(1);
         $this->giftwrapping->method('getGwItemsPrice')->willReturn('10');
         $this->giftwrapping->method('getGwCardPrice')->willReturn('0');
@@ -4878,6 +4886,7 @@ ORDER
                     'quantity' => 1,
                     'sku' => 'gift_id',
                     'type' => 'physical',
+                    'image_url' => 'https://gift-wrap-image.url',
                 ]
             ],
             $products
