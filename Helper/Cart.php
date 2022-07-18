@@ -2985,10 +2985,27 @@ class Cart extends AbstractHelper
      */
     public function isCollectDiscountsByPlugin($quote)
     {
+        // For bundle product, there is a bug in M2 core (https://github.com/magento/magento2/commit/5dabdb6a104159458fd9c0847447d641e75daa0e, fixed in M2 v2.4.4),
+        // as a result, if the cart contains any bundle product, $address->getExtensionAttributes()->getDiscounts() returns incomplete discounts data.
+        // Then we have to use plugin methods to collect discounts details if M2 version of merchant's store is older than v2.4.4
+        $toFixBundleProductDiscountBug = false;
+        if (version_compare($this->configHelper->getStoreVersion(), '2.4.4', '<')) {
+            $items = $quote->getAllVisibleItems();
+            foreach ($items as $item) {
+                $_product = $item->getProduct();
+                if (!$_product) {
+                    continue;
+                }
+                if ($item->getProductType() == \Magento\Bundle\Model\Product\Type::TYPE_CODE) {
+                    $toFixBundleProductDiscountBug = true;
+                    break;
+                }
+            }
+        }
         //By default this feature switch is disabled.
         return $this->deciderHelper->isCollectDiscountsByPlugin()
             || ($this->configHelper->isActive($quote->getStore()->getId())
-            && version_compare($this->configHelper->getStoreVersion(), '2.3.4', '<'));
+            && (version_compare($this->configHelper->getStoreVersion(), '2.3.4', '<') || $toFixBundleProductDiscountBug));
     }
     
     /**
