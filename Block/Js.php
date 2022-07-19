@@ -112,6 +112,16 @@ class Js extends Template
         return $this->configHelper->getCdnUrl() . '/track.js';
     }
 
+     /**
+     * Get shopper widget js url
+     *
+     * @return  string
+     */
+    public function getShopperWidgetJsUrl()
+    {
+        return $this->configHelper->getCdnUrl() . '/embedded/shopper-widget/embed-shopper-widget.js';
+    }
+
     /**
      * Get open replay js url
      *
@@ -331,6 +341,7 @@ class Js extends Template
             'account_url'                           => $this->getAccountJsUrl(),
             'order_management_selector'             => $this->getOrderManagementSelector(),
             'api_integration'                       => $this->featureSwitches->isAPIDrivenIntegrationEnabled(),
+            'shopper_widget_url'                    => $this->getShopperWidgetJsUrl(),
         ]);
     }
 
@@ -549,6 +560,18 @@ class Js extends Template
             return true;
         }
         
+        return false;
+    }
+
+    /**
+     * If feature switch M2_ENABLE_SHOPPER_ASSISTANT is enabled
+     */
+    public function isShopperAssistantEnabled()
+    {
+        if ($this->featureSwitches->isShopperAssistantEnabled()) {
+            return true;
+        }
+
         return false;
     }
 
