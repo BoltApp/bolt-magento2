@@ -595,9 +595,9 @@ class Definitions
         ],
         self::M2_ENABLE_SHOPPER_ASSISTANT => [
             self::NAME_KEY        => self::M2_ENABLE_SHOPPER_ASSISTANT,
-            self::VAL_KEY         => false,
+            self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
-            self::ROLLOUT_KEY     => 100
+            self::ROLLOUT_KEY     => 0
         ]
     ];
 }
