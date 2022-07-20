@@ -66,8 +66,6 @@ use Magento\SalesRule\Model\RuleRepository;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
-use Magento\Framework\App\Http\Context as HttpContext;
-use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Model\Store;
 use Zend_Http_Client_Exception;
 
@@ -278,16 +276,6 @@ class Cart extends AbstractHelper
     private $priceHelper;
     
     /**
-     * @var HttpContext
-     */
-    private $httpContext;
-    
-    /**
-     * @var StoreManagerInterface
-     */
-    private $storeManager;
-    
-    /**
      * @var Store
      */
     private $store;
@@ -325,8 +313,6 @@ class Cart extends AbstractHelper
      * @param RuleRepository             $ruleRepository
      * @param MsrpHelper                 $msrpHelper
      * @param PriceHelper                $priceHelper
-     * @param HttpContext                $httpContext
-     * @param StoreManagerInterface      $storeManager
      * @param Store                      $store
      */
     public function __construct(
@@ -362,8 +348,6 @@ class Cart extends AbstractHelper
         RuleRepository $ruleRepository,
         MsrpHelper $msrpHelper,
         PriceHelper $priceHelper,
-        HttpContext $httpContext,
-        StoreManagerInterface $storeManager,
         Store $store
     ) {
         parent::__construct($context);
@@ -398,8 +382,6 @@ class Cart extends AbstractHelper
         $this->ruleRepository = $ruleRepository;
         $this->msrpHelper = $msrpHelper;
         $this->priceHelper = $priceHelper;
-        $this->httpContext = $httpContext;
-        $this->storeManager = $storeManager;
         $this->store = $store;
     }
 
