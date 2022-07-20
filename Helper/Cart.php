@@ -68,6 +68,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Magento\Framework\App\Http\Context as HttpContext;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Store\Model\Store;
 use Zend_Http_Client_Exception;
 
 /**
@@ -285,6 +286,11 @@ class Cart extends AbstractHelper
      * @var StoreManagerInterface
      */
     private $storeManager;
+    
+    /**
+     * @var Store
+     */
+    private $store;
 
     /**
      * @param Context                    $context
@@ -321,6 +327,7 @@ class Cart extends AbstractHelper
      * @param PriceHelper                $priceHelper
      * @param HttpContext                $httpContext
      * @param StoreManagerInterface      $storeManager
+     * @param Store                      $store
      */
     public function __construct(
         Context $context,
@@ -356,7 +363,8 @@ class Cart extends AbstractHelper
         MsrpHelper $msrpHelper,
         PriceHelper $priceHelper,
         HttpContext $httpContext,
-        StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        Store $store
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -392,6 +400,7 @@ class Cart extends AbstractHelper
         $this->priceHelper = $priceHelper;
         $this->httpContext = $httpContext;
         $this->storeManager = $storeManager;
+        $this->store = $store;
     }
 
     /**
@@ -2579,8 +2588,10 @@ class Cart extends AbstractHelper
                 }
             }
         }
-
-        $cart = $this->createCart($request['items'], $request['metadata'], $request['currency'], $storeId);
+        if (isset($request['currency'])) {
+            $this->setCurrentCurrencyCode($request['currency']);
+        }
+        $cart = $this->createCart($request['items'], $request['metadata'], $storeId);
 
         // cache and return
         if ($isBoltOrderCachingEnabled) {
@@ -2598,17 +2609,12 @@ class Cart extends AbstractHelper
      * Create a cart with the provided items
      * @param $items - cart items
      * @param $metadata - cart metadata
-     * @param $currencyCode
      * @param $storeId
      * @return array cart_data in bolt format
      * @throws BoltException
      */
-    public function createCart($items, $metadata = null, $currencyCode = null, $storeId = null)
+    public function createCart($items, $metadata = null, $storeId = null)
     {
-        if ($currencyCode) {
-            $defaultCurrencyCode = $this->storeManager->getStore($storeId)->getDefaultCurrency()->getCode();
-            $this->httpContext->setValue(HttpContext::CONTEXT_CURRENCY, $currencyCode, $defaultCurrencyCode);
-        }
         $quoteId = $this->quoteManagement->createEmptyCart();
         $quote = $this->quoteFactory->create()->load($quoteId);
 
@@ -3019,5 +3025,19 @@ class Cart extends AbstractHelper
         }
         
         return trim($item->getSku());
+    }
+    
+    /**
+     * Set current store currency code
+     *
+     * @param string $code
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
+     */
+    public function setCurrentCurrencyCode($code)
+    {
+        if ($code) {
+            $this->store->setCurrentCurrencyCode($code);
+        }
     }
 }

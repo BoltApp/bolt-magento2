@@ -211,6 +211,8 @@ class CreateOrder implements CreateOrderInterface
                     self::E_BOLT_GENERAL_ERROR
                 );
             }
+            
+            $this->cartHelper->setCurrentCurrencyCode($currency);
 
             $immutableQuoteId = $this->getQuoteIdFromPayloadOrder($order);
             /** @var Quote $immutableQuote */
