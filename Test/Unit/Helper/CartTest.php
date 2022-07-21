@@ -761,7 +761,7 @@ class CartTest extends BoltTestCase
         static::assertAttributeEquals($this->ruleRepository, 'ruleRepository', $instance);
         static::assertAttributeEquals($this->msrpHelper, 'msrpHelper', $instance);
         static::assertAttributeEquals($this->priceHelper, 'priceHelper', $instance);
-        static::assertAttributeEquals($this->store, 'Store', $instance);
+        static::assertAttributeEquals($this->store, 'store', $instance);
     }
 
     /**
