@@ -92,7 +92,6 @@ use Magento\SalesRule\Model\RuleRepository;
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Magento\Msrp\Helper\Data as MsrpHelper;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
-use Magento\Store\Model\Store;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
