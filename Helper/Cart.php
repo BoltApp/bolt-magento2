@@ -1397,27 +1397,21 @@ class Cart extends AbstractHelper
 
         // getTotals is only available on a quote
         $total = $quote->getTotals();
-        if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
+        if (isset($total['giftwrapping'])) {
             $giftWrapping = $total['giftwrapping'];
-
-
-            $totalPrice = $giftWrapping->getGwPrice() + $giftWrapping->getGwItemsPrice() + $quote->getGwCardPrice();
-            $product = [];
-            $gwId = $giftWrapping->getGwId();
-            $product['reference']    = $gwId;
-            $product['name']         = $giftWrapping->getTitle()->getText();
-            $product['total_amount'] = CurrencyUtils::toMinor($totalPrice, $currencyCode);
-            $product['unit_price']   = CurrencyUtils::toMinor($totalPrice, $currencyCode);
-            $product['quantity']     = 1;
-            $product['sku']          = trim($giftWrapping->getCode());
-            $product['type']         = self::ITEM_TYPE_PHYSICAL;
-            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-            $giftWrappingModel = $objectManager->create('Magento\GiftWrapping\Model\Wrapping')->load($gwId);
-            if ($giftWrappingModel->getImageUrl()){
-                $product['image_url']    = $giftWrappingModel->getImageUrl();
+            if ($gwId = $giftWrapping->getGwId()) {
+                $product = $this->getItemDataFromGiftWrappingId($gwId, $currencyCode, $giftWrapping);
+                $totalAmount += $product['total_amount'];
+                $products[] = $product;
             }
-            $totalAmount += $product['total_amount'];
-            $products[] = $product;
+
+            if ($gwItemIds = $giftWrapping->getGwItemIds()) {
+                foreach ($gwItemIds as $gwItemId) {
+                    $product = $this->getItemDataFromGiftWrappingId($gwItemId['gw_id'], $currencyCode, $giftWrapping);
+                    $totalAmount += $product['total_amount'];
+                    $products[] = $product;
+                }
+            }
         }
 
         return $this->eventsForThirdPartyModules->runFilter(
@@ -1427,6 +1421,34 @@ class Cart extends AbstractHelper
             $storeId
         );
     }
+
+    /**
+     * @param $gwId
+     * @param $currencyCode
+     * @param $giftWrapping
+     * @return array
+     * @throws \Exception
+     */
+    public function getItemDataFromGiftWrappingId($gwId, $currencyCode, $giftWrapping) {
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $giftWrappingModel = $objectManager->create('Magento\GiftWrapping\Model\Wrapping')->load($gwId);
+        $price = $giftWrappingModel->getBasePrice();
+        $product = [];
+        $product['reference']    = $gwId;
+        $product['name']         = $giftWrapping->getTitle()->getText().' ['.$giftWrappingModel->getDesign().']';
+        $product['total_amount'] = CurrencyUtils::toMinor($price, $currencyCode);
+        $product['unit_price']   = CurrencyUtils::toMinor($price, $currencyCode);
+        $product['quantity']     = 1;
+        $product['sku']          = trim($giftWrapping->getCode());
+        $product['type']         = self::ITEM_TYPE_PHYSICAL;
+
+        if ($giftWrappingModel->getImageUrl()){
+            $product['image_url']    = $giftWrappingModel->getImageUrl();
+        }
+
+        return $product;
+    }/**
+
 
     /**
      * Create cart data items array, given an order
