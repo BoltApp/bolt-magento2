@@ -95,6 +95,10 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
     {
         try {
             $this->cartRequest = $cart;
+            
+            if (isset($cart['currency'])) {
+                $this->cartHelper->setCurrentCurrencyCode($cart['currency']);
+            }
 
             // Bolt server sends immutableQuoteId as order reference
             $immutableQuoteId = $cart['order_reference'];

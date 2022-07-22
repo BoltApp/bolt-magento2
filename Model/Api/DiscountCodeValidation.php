@@ -119,6 +119,10 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         if (isset($requestArray['data'])) {
             $requestArray = $requestArray['data'];
         }
+        
+        if (isset($requestArray['cart']['currency'])) {
+            $this->cartHelper->setCurrentCurrencyCode($requestArray['cart']['currency']);
+        }
 
         if (isset($requestArray['cart']['order_reference'])) {
             $parentQuoteId = $requestArray['cart']['order_reference'];
