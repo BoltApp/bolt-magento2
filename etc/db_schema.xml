@@ -2,15 +2,15 @@
 <schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
     <table name="quote" resource="default" engine="innodb">
-        <column name="bolt_parent_quote_id" xsi:type="int" unsigned="true" nullable="true" default="NULL" identity="false"
+        <column name="bolt_parent_quote_id" xsi:type="int" unsigned="true" nullable="true" identity="false"
                  comment="Original quote ID"/>
-        <column name="bolt_reserved_order_id" xsi:type="varchar" length="64" nullable="true" identity="false"
+        <column name="bolt_reserved_order_id" xsi:type="varchar" length="64" nullable="true"
                  comment="Bolt reserved order Id"/>
         <column name="bolt_checkout_type" xsi:type="smallint" unsigned="true" nullable="false" default="1" identity="false"
                  comment="1 - multi-step, 2 - PPC, 3 - back office, 4 - PPC complete"/>
-        <column name="bolt_dispatched" xsi:type="boolean" nullable="true" identity="false"
+        <column name="bolt_dispatched" xsi:type="boolean" nullable="true"
                  comment="Order dispatched flag"/>
-        <column name="bolt_reserved_order_id" disabled="true"/>
+        <column name="bolt_is_backend_order" disabled="true"/>
         <index referenceId="BOLT_PARENT_QUOTE_ID" indexType="btree">
             <column name="bolt_parent_quote_id"/>
         </index>
