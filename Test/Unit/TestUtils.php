@@ -247,6 +247,7 @@ class TestUtils
     public static function createSimpleProduct()
     {
         $product = Bootstrap::getObjectManager()->create(Product::class);
+        // phpcs:ignore
         $product->setTypeId(ProductType::TYPE_SIMPLE)
             ->setAttributeSetId(4)
             ->setWebsiteIds([1])
@@ -274,6 +275,7 @@ class TestUtils
     public static function createVirtualProduct()
     {
         $product = Bootstrap::getObjectManager()->create(Product::class);
+        // phpcs:ignore
         $product->setTypeId(ProductType::TYPE_VIRTUAL)
             ->setAttributeSetId(4)
             ->setWebsiteIds([1])
@@ -302,6 +304,7 @@ class TestUtils
     public static function createConfigurableProduct()
     {
         $product = Bootstrap::getObjectManager()->create(Product::class);
+        // phpcs:ignore
         $product->setTypeId(\Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE)
             ->setAttributeSetId(4)
             ->setWebsiteIds([1])
@@ -329,6 +332,7 @@ class TestUtils
     public static function createDownloadableProduct()
     {
         $product = Bootstrap::getObjectManager()->create(Product::class);
+        // phpcs:ignore
         $product->setTypeId(\Magento\Downloadable\Model\Product\Type::TYPE_DOWNLOADABLE)
             ->setAttributeSetId(4)
             ->setWebsiteIds([1])
@@ -356,6 +360,7 @@ class TestUtils
     public static function createGroupProduct()
     {
         $product = Bootstrap::getObjectManager()->create(Product::class);
+        // phpcs:ignore
         $product->setTypeId(\Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE)
             ->setAttributeSetId(4)
             ->setWebsiteIds([1])

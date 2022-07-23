@@ -6969,7 +6969,7 @@ ORDER
      */
     public function convertExternalFieldsToCacheIdentifier_always_appendsCustomerGroupIdToCacheIdentifier()
     {
-        $groupId = mt_rand();
+        $groupId = random_int();
         $this->immutableQuoteMock->expects(static::once())->method('getCustomerGroupId')->willReturn($groupId);
         $result = TestHelper::invokeMethod(
             $this->currentMock,
@@ -6987,7 +6987,7 @@ ORDER
      */
     public function convertExternalFieldsToCacheIdentifier_always_appendsCustomerIdToCacheIdentifier()
     {
-        $customerId = mt_rand();
+        $customerId = random_int();
         $this->immutableQuoteMock->expects(static::once())->method('getCustomerId')->willReturn($customerId);
         $result = TestHelper::invokeMethod(
             $this->currentMock,

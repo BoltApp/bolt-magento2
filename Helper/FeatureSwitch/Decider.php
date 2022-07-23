@@ -105,7 +105,9 @@ class Decider extends AbstractHelper
         $hash = hash('md5', $saltedString);
         $hexStr = substr($hash, 0, 6);
         $decEquivalent = hexdec($hexStr);
-
+        // PHPCS complains about hex numbers as strings in PHP 7.
+        // We actually want a string here so need to ignore it.
+        // phpcs:ignore
         $hexMax = hexdec("0xffffff");
         $position = $decEquivalent / (float) $hexMax * 100;
         return $position < $rolloutPercentage;
