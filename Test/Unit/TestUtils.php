@@ -247,12 +247,11 @@ class TestUtils
     public static function createSimpleProduct()
     {
         $product = Bootstrap::getObjectManager()->create(Product::class);
-        // phpcs:ignore
         $product->setTypeId(ProductType::TYPE_SIMPLE)
             ->setAttributeSetId(4)
             ->setWebsiteIds([1])
             ->setName('Test Product')
-            ->setSku(md5(uniqid(rand(), true)))
+            ->setSku(hash('sha256', uniqid(rand(), true)))
             ->setPrice(100)
             ->setDescription('Product Description')
             ->setMetaTitle('meta title')
@@ -275,12 +274,11 @@ class TestUtils
     public static function createVirtualProduct()
     {
         $product = Bootstrap::getObjectManager()->create(Product::class);
-        // phpcs:ignore
         $product->setTypeId(ProductType::TYPE_VIRTUAL)
             ->setAttributeSetId(4)
             ->setWebsiteIds([1])
             ->setName('Test Virtual Product')
-            ->setSku(md5(uniqid(rand(), true)))
+            ->setSku(hash('sha256', uniqid(rand(), true)))
             ->setPrice(100)
             ->setDescription('Product Description')
             ->setMetaTitle('meta title')
@@ -304,12 +302,11 @@ class TestUtils
     public static function createConfigurableProduct()
     {
         $product = Bootstrap::getObjectManager()->create(Product::class);
-        // phpcs:ignore
         $product->setTypeId(\Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE)
             ->setAttributeSetId(4)
             ->setWebsiteIds([1])
             ->setName('Test Configurable Product')
-            ->setSku(md5(uniqid(rand(), true)))
+            ->setSku(hash('sha256', uniqid(rand(), true)))
             ->setPrice(100)
             ->setDescription('Product Description')
             ->setMetaTitle('meta title')
@@ -332,12 +329,11 @@ class TestUtils
     public static function createDownloadableProduct()
     {
         $product = Bootstrap::getObjectManager()->create(Product::class);
-        // phpcs:ignore
         $product->setTypeId(\Magento\Downloadable\Model\Product\Type::TYPE_DOWNLOADABLE)
             ->setAttributeSetId(4)
             ->setWebsiteIds([1])
             ->setName('Test Downloadable Product')
-            ->setSku(md5(uniqid(rand(), true)))
+            ->setSku(hash('sha256', uniqid(rand(), true)))
             ->setPrice(100)
             ->setDescription('Product Description')
             ->setMetaTitle('meta title')
@@ -360,12 +356,11 @@ class TestUtils
     public static function createGroupProduct()
     {
         $product = Bootstrap::getObjectManager()->create(Product::class);
-        // phpcs:ignore
         $product->setTypeId(\Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE)
             ->setAttributeSetId(4)
             ->setWebsiteIds([1])
             ->setName('Test Group Product')
-            ->setSku(md5(uniqid(rand(), true)))
+            ->setSku(hash('sha256', uniqid(rand(), true)))
             ->setPrice(100)
             ->setDescription('Product Description')
             ->setMetaTitle('meta title')

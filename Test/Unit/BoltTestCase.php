@@ -235,6 +235,7 @@ if (PHPUnitVersion::id() < 9) {
 }
 
 if (!class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
+    // phpcs:ignore
     class ArraySubset extends \PHPUnit\Framework\Constraint\Constraint
     {
         /**
