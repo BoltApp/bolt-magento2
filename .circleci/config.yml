@@ -233,7 +233,7 @@ jobs:
       - run:
           name: Magento Coding Standard Test
           command: |
-            Test/scripts/phpcs_mcs.sh
+            Test/scripts/phpcs_meqp2.sh
 
 workflows:
   version: 2
