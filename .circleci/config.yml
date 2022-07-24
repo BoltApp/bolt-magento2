@@ -231,9 +231,9 @@ jobs:
     steps:
       - checkout
       - run:
-          name: phpcs MEQP2 standard test
+          name: Magento Coding Standard Test
           command: |
-            Test/scripts/phpcs_meqp2.sh
+            Test/scripts/phpcs_mcs.sh
 
 workflows:
   version: 2
@@ -243,6 +243,7 @@ workflows:
       - integration-magento-php74-magento24
       - integration-magento-php72-magento23
       - integration-magento-php71-magento22
+      - phpcs
   integration-tests:
     triggers:
       - schedule:
