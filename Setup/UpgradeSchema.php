@@ -1,4 +1,6 @@
 <?php
+// The declarative schema is unavaliable before M2 v2.3.0 and the Bolt plugin still need to be compatible with M2 v2.2.x
+// So we make this file to be skipped.
 // phpcs:ignoreFile
 /**
  * Bolt magento2 plugin
