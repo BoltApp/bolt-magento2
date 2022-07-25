@@ -90,12 +90,12 @@ class ConfigPlugin
      *
      * @param Config $subject
      * @param mixed $result
-     * @return Config
+     * @return mixed
      */
     public function afterSave(
         Config $subject,
         $result
-    ): Config {
+    ) {
         if (!$this->featureSwitches->isStoreConfigurationWebhookEnabled()) {
             return $result;
         }
