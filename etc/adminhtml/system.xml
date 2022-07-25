@@ -386,7 +386,7 @@
                         <label>Bolt Authentication</label>
                         <config_path>payment/boltpay/connect_magento_integration_mode</config_path>
                         <frontend_model>Bolt\Boltpay\Block\System\Config\IntegrationConnection</frontend_model>
-                        <comment>This will create an integration with the required permissions for your Magento installation to be used by Bolt.</comment>
+                        <comment><![CDATA[ This will create an integration with the required permissions for your Magento installation to be used by Bolt.<br><a target="_blank" href="https://docs.bolt.com/developers/guides/checkout-guides/managed-checkout/adobe-commerce-setup-guide/adobe-installation/#why-do-i-need-to-send-my-magento-2-api-keys-to-bolt">Why does Bolt need my Magento API keys?</a>]]></comment>
                     </field>
                 </group>
                 <group id="third_party_modules" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
