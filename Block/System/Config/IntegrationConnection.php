@@ -120,7 +120,7 @@ class IntegrationConnection extends Field
                 $label = __('Delete API keys');
                 break;
             default:
-                $label = __('Create and send API keys to Bolt');
+                $label = __('Authenticate with Bolt');
                 break;
         }
         $button = $this->getLayout()->createBlock(
