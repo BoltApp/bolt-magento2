@@ -89,18 +89,18 @@ class ConfigPlugin
      * Send request to bolt after magento configuration update
      *
      * @param Config $subject
-     * @param $result
+     * @param mixed $result
      * @return Config
      */
     public function afterSave(
         Config $subject,
-        Config $result
+        $result
     ): Config {
         if (!$this->featureSwitches->isStoreConfigurationWebhookEnabled()) {
             return $result;
         }
         try {
-            if ($result->getScope() == AppScopeInterface::SCOPE_DEFAULT) {
+            if ($subject->getScope() == AppScopeInterface::SCOPE_DEFAULT) {
                 $websites = $this->websiteRepository->getList();
                 foreach ($websites as $website) {
                     if ($website->getWebsiteId() == 0) {
@@ -115,17 +115,17 @@ class ConfigPlugin
                 }
             }
 
-            if ($result->getScope() == ScopeInterface::SCOPE_WEBSITES &&
-                $this->boltConfig->getIsSystemConfigurationUpdateRequestEnabled($result->getWebsite())
+            if ($subject->getScope() == ScopeInterface::SCOPE_WEBSITES &&
+                $this->boltConfig->getIsSystemConfigurationUpdateRequestEnabled($subject->getWebsite())
             ) {
-                $website = $this->websiteRepository->getById((int)$result->getWebsite());
+                $website = $this->websiteRepository->getById((int)$subject->getWebsite());
                 foreach ($website->getStores() as $store) {
                     $this->storeConfigurationManager->requestStoreConfigurationUpdated($store->getCode());
                 }
             }
 
-            if ($result->getScope() == ScopeInterface::SCOPE_STORES) {
-                $this->storeConfigurationManager->requestStoreConfigurationUpdated($result->getScopeCode());
+            if ($subject->getScope() == ScopeInterface::SCOPE_STORES) {
+                $this->storeConfigurationManager->requestStoreConfigurationUpdated($subject->getScopeCode());
             }
         } catch (\Exception $e) {
             $this->logger->critical($e);
