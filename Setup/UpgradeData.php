@@ -104,11 +104,11 @@ class UpgradeData implements UpgradeDataInterface
     {
         $setup->startSetup();
 
-        if (version_compare($context->getVersion(), '2.24.2', '<')) {
+        if (version_compare($context->getVersion(), '2.24.3', '<')) {
             $this->createProductAttributesAndGroup($setup);
         }
         
-        if (version_compare($context->getVersion(), '2.24.2', '<')) {
+        if (version_compare($context->getVersion(), '2.24.3', '<')) {
             $this->createCategoryAttributes($setup);
         }
 
@@ -201,7 +201,7 @@ class UpgradeData implements UpgradeDataInterface
                 'required'   => false,
                 'sort_order' => 10,
                 'global'     => \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_STORE,
-                'source'     => \Bolt\Boltpay\Model\Config\Source\ShipmentTypeCategory::class,
+                'source'     => \Bolt\Boltpay\Model\Config\Source\ShipmentType::class,
                 'group'      => __('General Information'),
             ]
         );

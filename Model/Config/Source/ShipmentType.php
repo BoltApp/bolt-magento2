@@ -18,60 +18,58 @@
 namespace Bolt\Boltpay\Model\Config\Source;
 
 use Magento\Eav\Model\Entity\Attribute\Source\AbstractSource;
-use Magento\Framework\Data\OptionSourceInterface;
 
-class ShipmentType implements OptionSourceInterface
+class ShipmentType extends AbstractSource
 {
-    const PICKINSTORE = 'pick_in_store';
+    const SHIPTOSTORE = 'ship_to_store';
+    const SHIPTOHOMEONLY = 'ship_to_home_only';
 
     /**
-     * Available shipment types
+     * Get custom options
      *
-     * @var array
+     * @return array
      */
-    private $options = [];
-    
-    public function toOptionArray()
+    public function getOptionArray()
     {
-        $options = [
-            [
-                'value' => self::PICKINSTORE,
-                'label' => __('Pick in Store')
-            ]
-        ];
-
+        $options[self::SHIPTOSTORE] =  __('Ship to Store');
+        $options[self::SHIPTOHOMEONLY] =  __('Ship to Home Only');
+        
         return $options;
     }
 
     /**
-     * Return available HS regions
+     * Get all options
      *
      * @return array
      */
     public function getAllOptions()
     {
-        if (empty($this->options)) {
-            $this->options[] = [
-                'value' => '',
-                'label' => __('--Please Select--')
-            ];
-            
-            $this->options[] = [
-                'value' => self::PICKINSTORE,
-                'label' => __('Pick in Store')
-            ];
-        }
-
-        return $this->options;
+        $res = $this->getOptions();
+        array_unshift($res, ['value' => '', 'label' => __('--Please Select--')]);
+        return $res;
     }
-    
+
     /**
-     * Rewrite method for using in mass update attribute
-     * @param $attribute
-     * @return $this
+     * Get options function
+     *
+     * @return array
      */
-    public function setAttribute($attribute)
+    public function getOptions()
     {
-        return $this;
+        $res = [];
+        foreach ($this->getOptionArray() as $index => $value) {
+            $res[] = ['value' => $index, 'label' => $value];
+        }
+        return $res;
+    }
+
+    /**
+     * To option array function
+     *
+     * @return array
+     */
+    public function toOptionArray()
+    {
+        return $this->getOptions();
     }
 }

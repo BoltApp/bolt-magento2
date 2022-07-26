@@ -117,12 +117,12 @@ class Rossignol
         $storeId
     ) {
         try {
-            if ($result !== 'pick_in_store') {
+            if ($result !== 'ship_to_store') {
                 $itemGroups = $this->configHelper->getRossignolExcludeItemAttributesFromPPCConfig($storeId);
                 if (!empty($itemGroups)) {
                     $attributeSet = $this->attributeSetRepository->get($product->getAttributeSetId());
                     if (in_array($attributeSet->getAttributeSetName(), $itemGroups)) {
-                        $result = 'pick_in_store';
+                        $result = 'ship_to_store';
                     }
                 }    
             }

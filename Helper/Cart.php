@@ -265,7 +265,7 @@ class Cart extends AbstractHelper
     /**
      * @var array
      */
-    private $matchedPickInStoreCategories;
+    private $boltShipmentTypeCategories;
     
     /**
      * @var CollectionFactory
@@ -369,7 +369,7 @@ class Cart extends AbstractHelper
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         $this->ruleRepository = $ruleRepository;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
-        $this->matchedPickInStoreCategories = null;
+        $this->boltShipmentTypeCategories = null;
     }
 
     /**
@@ -1408,37 +1408,32 @@ class Cart extends AbstractHelper
         return $this->getCartItemsFromItems($items, true, $currencyCode, $storeId, $totalAmount, $diff);
     }
     
-    protected function getPickInStoreProduct($product, $storeId)
+    protected function getProductBoltShipmentType($product, $storeId)
     {
+        $product = $this->productRepository->getById($product->getId());
         $boltShipmentType = $this->eventsForThirdPartyModules->runFilter('filterCartItemShipmentType', $product->getData('bolt_shipment_type'), $product, $storeId);
-
-        if ($boltShipmentType === 'pick_in_store') {
-            return true;
+        if (!empty($boltShipmentType)) {
+            return $boltShipmentType;
         }
-
-        return false;
-    }
-    
-    protected function getPickInStoreCategories($product)
-    {
-        $productCategories = $product->getCategoryIds();
-        if ($this->matchedPickInStoreCategories === null) {
+        
+        if ($this->boltShipmentTypeCategories === null) {
             /* get categories only with not empty attributes customer_gr_cat and mode_cat */
             $collection =  $this->categoryCollectionFactory->create()
                 ->addAttributeToSelect('bolt_shipment_type_cat')
-                ->addAttributeToFilter('bolt_shipment_type_cat', ['eq' => 'pick_in_store']);
-            $this->matchedPickInStoreCategories = $collection->getData();
+                ->addAttributeToFilter('bolt_shipment_type_cat', ['neq' => 'NULL']);
+            $this->boltShipmentTypeCategories = $collection->getData() ?: [];
         }
         
-        if (!empty($this->matchedPickInStoreCategories)) {
-            foreach ($this->matchedPickInStoreCategories as $category) {
+        if (!empty($this->boltShipmentTypeCategories)) {
+            $productCategories = $product->getCategoryIds();
+            foreach ($this->boltShipmentTypeCategories as $category) {
                 if (in_array($category['entity_id'], $productCategories)) {
-                    return true;
+                    return $category['bolt_shipment_type_cat'];
                 }
             }
         }
-
-        return false;
+        
+        return 'unknown';
     }
 
     /**
@@ -1542,8 +1537,8 @@ class Cart extends AbstractHelper
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = $quantity;
                 $product['sku']          = trim($item->getSku());
-                $product['shipment_type']= $this->getPickInStoreCategories($_product) || $this->getPickInStoreProduct($_product, $storeId) ? 'ship_to_store' : 'unknown';
-
+                $product['shipment_type']= $this->getProductBoltShipmentType($_product, $storeId);
+                
                 // In current Bolt checkout flow, the shipping and tax endpoint is not called for virtual carts,
                 // It means we don't support taxes for virtual product and should handle all products as physical
                 // TODO: Remove the feature switch check when issue will be solved https://boltpay.atlassian.net/browse/DC-181
