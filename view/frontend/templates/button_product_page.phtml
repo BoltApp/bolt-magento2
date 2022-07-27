@@ -289,23 +289,35 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                 <?php if ($block->isGrouped()): ?>
                     <?php foreach ($block->getGroupedProductChildren() as $childProduct):?>
                         var childProductQty = getGroupedProductChildQty(<?= /* @noEscape */ $childProduct->getId(); ?>);
+                        <?php if ($childProduct->getTypeInstance()->isVirtual($childProduct)): ?>
+                            var productType = 'digital';
+                        <?php else: ?>
+                            var productType = 'physical';
+                        <?php endif; ?>
                         if (childProductQty > 0) {
                             items.push({
                                 reference: '<?= /* @noEscape */ $childProduct->getId(); ?>',
                                 price: '<?= /* @noEscape */ $childProduct->getPrice() ?>',
                                 name: '<?= /* @noEscape */ addcslashes($childProduct->getName(), "'"); ?>',
                                 quantity: childProductQty,
-                                options: JSON.stringify(options)
+                                options: JSON.stringify(options),
+                                type: productType
                             });
                         }
                     <?php endforeach; ?>
                 <?php else: ?>
+                    <?php if ($block->getProduct()->getTypeInstance()->isVirtual($block->getProduct())): ?>
+                        var productType = 'digital';
+                    <?php else: ?>
+                        var productType = 'physical';
+                    <?php endif; ?>
                     items.push({
                         reference: '<?= /* @noEscape */ $block->getProduct()->getId(); ?>',
                         price: itemPrice,
                         name: '<?= /* @noEscape */ addcslashes($block->getProduct()->getName(), "'"); ?>',
                         quantity: getQty(),
-                        options: JSON.stringify(options)
+                        options: JSON.stringify(options),
+                        type: productType
                     });
                 <?php endif; ?>
 
