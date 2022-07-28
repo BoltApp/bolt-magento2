@@ -33,7 +33,6 @@ class InvoiceService extends \Magento\Sales\Model\Service\InvoiceService
     public function prepareInvoiceWithoutItems(OrderInterface $order, $amount)
     {
         $invoice = $this->orderConverter->toInvoice($order);
-        $invoice->setBaseGrandTotal($amount);
         $invoice->setSubtotal($amount);
         $invoice->setBaseSubtotal($amount);
         $invoice->setGrandTotal($amount);
