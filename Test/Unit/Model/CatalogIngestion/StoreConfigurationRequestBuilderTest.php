@@ -66,13 +66,13 @@ class StoreConfigurationRequestBuilderTest extends BoltTestCase
             [
                 'path'    => BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
                 'value'   => 'publish_key',
-                'scope'   => ScopeInterface::SCOPE_WEBSITES,
+                'scope'   => ScopeInterface::SCOPE_STORES,
                 'scopeId' => $websiteId,
             ],
             [
                 'path'    => BoltConfig::XML_PATH_API_KEY,
                 'value'   => 'api_key',
-                'scope'   => ScopeInterface::SCOPE_WEBSITES,
+                'scope'   => ScopeInterface::SCOPE_STORES,
                 'scopeId' => $websiteId,
             ]
         ];
@@ -103,7 +103,7 @@ class StoreConfigurationRequestBuilderTest extends BoltTestCase
             [
                 'path'    => BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
                 'value'   => '',
-                'scope'   => ScopeInterface::SCOPE_WEBSITES,
+                'scope'   => ScopeInterface::SCOPE_STORES,
                 'scopeId' => $websiteId,
             ]
         ];
