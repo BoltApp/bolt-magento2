@@ -109,6 +109,18 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                 'value' => 1,
                 'scope' => ScopeInterface::SCOPE_WEBSITES,
                 'scopeId' => $websiteId,
+            ],
+            [
+                'path'    => BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
+                'value'   => 'publish_key',
+                'scope'   => ScopeInterface::SCOPE_WEBSITES,
+                'scopeId' => $websiteId,
+            ],
+            [
+                'path'    => BoltConfig::XML_PATH_API_KEY,
+                'value'   => 'api_key',
+                'scope'   => ScopeInterface::SCOPE_WEBSITES,
+                'scopeId' => $websiteId,
             ]
         ];
         TestUtils::setupBoltConfig($configData);
@@ -188,6 +200,28 @@ class ProductEventRequestBuilderTest extends BoltTestCase
             ]
         ];
         $this->assertEquals($apiData, $expectedApiData);
+    }
+
+    /**
+     * @test
+     */
+    public function testGetRequest_WithoutApiKeys()
+    {
+        $this->expectExceptionMessage('Bolt API Key or Publishable Key - Multi Step is not configured');
+        $websiteId = $this->storeManager->getWebsite()->getId();
+        $configData = [
+            [
+                'path'    => BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
+                'value'   => '',
+                'scope'   => ScopeInterface::SCOPE_WEBSITES,
+                'scopeId' => $websiteId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $product = $this->createProduct();
+        $productEvent = $this->productEventRepository->getByProductId($product->getId());
+        $this->productEventRequestBuilder->getRequest($productEvent, $this->storeManager->getWebsite()->getId());
     }
 
     /**
