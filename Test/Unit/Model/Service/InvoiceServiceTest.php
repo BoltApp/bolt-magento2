@@ -61,8 +61,6 @@ class InvoiceServiceTest extends BoltTestCase
         $invoice = $this->currentMock->prepareInvoiceWithoutItems($order, self::AMOUNT);
         self::assertEquals(self::AMOUNT, $invoice->getGrandTotal());
         self::assertEquals(self::AMOUNT, $invoice->getSubtotal());
-        self::assertEquals(self::AMOUNT, $invoice->getBaseGrandTotal());
-        self::assertEquals(self::AMOUNT, $invoice->getBaseSubtotal());
         TestUtils::cleanupSharedFixtures([$order]);
     }
 }
