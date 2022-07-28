@@ -15,7 +15,7 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\Test\Unit\Helper;
+namespace Bolt\Boltpay\Test\Unit\Cron;
 
 use Bolt\Boltpay\Api\Data\ProductEventInterface;
 use Bolt\Boltpay\Api\ProductEventRepositoryInterface;
