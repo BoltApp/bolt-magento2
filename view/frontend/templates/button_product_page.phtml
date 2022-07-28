@@ -289,12 +289,12 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                 <?php if ($block->isGrouped()): ?>
                     <?php foreach ($block->getGroupedProductChildren() as $childProduct):?>
                         var childProductQty = getGroupedProductChildQty(<?= /* @noEscape */ $childProduct->getId(); ?>);
-                        <?php if ($childProduct->getTypeInstance()->isVirtual($childProduct)): ?>
-                            var productType = 'digital';
-                        <?php else: ?>
-                            var productType = 'physical';
-                        <?php endif; ?>
                         if (childProductQty > 0) {
+                            <?php if ($childProduct->isVirtual($childProduct)): ?>
+                                var productType = 'digital';
+                            <?php else: ?>
+                                var productType = 'physical';
+                            <?php endif; ?>
                             items.push({
                                 reference: '<?= /* @noEscape */ $childProduct->getId(); ?>',
                                 price: '<?= /* @noEscape */ $childProduct->getPrice() ?>',
@@ -306,7 +306,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                         }
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <?php if ($block->getProduct()->getTypeInstance()->isVirtual($block->getProduct())): ?>
+                    <?php if ($block->getProduct()->isVirtual($block->getProduct())): ?>
                         var productType = 'digital';
                     <?php else: ?>
                         var productType = 'physical';
