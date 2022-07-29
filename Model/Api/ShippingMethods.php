@@ -301,7 +301,6 @@ class ShippingMethods implements ShippingMethodsInterface
             if ($total['giftwrapping']->getGwItemIds()) {
                 $quoteItems['quantity'][$sku] += count($total['giftwrapping']->getGwItemIds());
             }
-            $quoteItems['quantity'][$sku] += 1;
             $quoteItems['total'][$sku] += CurrencyUtils::toMinor($giftWrapping->getGwPrice() + $giftWrapping->getGwItemsPrice() + $giftWrapping->getGwCardPrice(), $this->quote->getQuoteCurrencyCode());
         }
 
