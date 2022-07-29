@@ -48,6 +48,10 @@ class CatalogIngestionTest extends BoltTestCase
 
     private const RESPONSE_FAIL_STATUS = 404;
 
+    private const API_KEY = '3c2d5104e7f9d99b66e1c9c550f6566677bf81de0d6f25e121fdb57e47c2eafc';
+
+    private const PUBLISH_KEY = 'ifssM6pxV64H.FXY3JhSL7w9f.c243fecf459ed259019ea58d7a30307edf2f65442c305f086105b2f66fe6c006';
+
     /**
      * @var ObjectManagerInterface
      */
@@ -77,10 +81,6 @@ class CatalogIngestionTest extends BoltTestCase
      * @var ResourceConnection
      */
     private $resource;
-
-    private const API_KEY = '3c2d5104e7f9d99b66e1c9c550f6566677bf81de0d6f25e121fdb57e47c2eafc';
-
-    private const PUBLISH_KEY = 'ifssM6pxV64H.FXY3JhSL7w9f.c243fecf459ed259019ea58d7a30307edf2f65442c305f086105b2f66fe6c006';
 
     /**
      * @inheritDoc
