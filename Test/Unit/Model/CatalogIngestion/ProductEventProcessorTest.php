@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Model\CatalogIngestion;
 
 use Bolt\Boltpay\Api\ProductEventRepositoryInterface;
+use Magento\Config\Model\ResourceModel\Config as ResourceConfig;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -693,6 +694,11 @@ class ProductEventProcessorTest extends BoltTestCase
      */
     private function cleanDataBase(): void
     {
+        $websiteId = $this->storeManager->getWebsite()->getId();
+        $configResource = $this->objectManager->get(ResourceConfig::class);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED, ScopeInterface::SCOPE_WEBSITES, $websiteId);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, ScopeInterface::SCOPE_STORES, $websiteId);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_API_KEY, ScopeInterface::SCOPE_STORES, $websiteId);
         $connection = $this->resource->getConnection('default');
         $connection->truncateTable($this->resource->getTableName('bolt_product_event'));
         $connection->delete($connection->getTableName('catalog_product_entity'));

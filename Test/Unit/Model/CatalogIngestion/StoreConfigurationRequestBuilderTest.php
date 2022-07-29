@@ -21,6 +21,7 @@ use Bolt\Boltpay\Model\CatalogIngestion\StoreConfigurationRequestBuilder;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Config as BoltConfig;
 use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\Config\Model\ResourceModel\Config as ResourceConfig;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\ObjectManagerInterface;
@@ -85,6 +86,19 @@ class StoreConfigurationRequestBuilderTest extends BoltTestCase
             ]
         ];
         TestUtils::setupBoltConfig($configData);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function tearDownInternal(): void
+    {
+        $websiteId = $this->storeManager->getWebsite()->getId();
+        $configResource = $this->objectManager->get(ResourceConfig::class);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED, ScopeInterface::SCOPE_WEBSITES, $websiteId);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, ScopeInterface::SCOPE_STORES, $websiteId);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_API_KEY, ScopeInterface::SCOPE_STORES, $websiteId);
+        parent::tearDownInternal();
     }
 
     /**

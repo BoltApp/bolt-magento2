@@ -27,6 +27,7 @@ use Bolt\Boltpay\Model\CatalogIngestion\ProductEventManager;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\Config\Model\ResourceModel\Config as ResourceConfig;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\ObjectManagerInterface;
@@ -197,6 +198,11 @@ class CatalogIngestionTest extends BoltTestCase
      */
     private function cleanDataBase(): void
     {
+        $websiteId = $this->storeManager->getWebsite()->getId();
+        $configResource = $this->objectManager->get(ResourceConfig::class);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED, ScopeInterface::SCOPE_WEBSITES, $websiteId);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, ScopeInterface::SCOPE_STORES, $websiteId);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_API_KEY, ScopeInterface::SCOPE_STORES, $websiteId);
         $connection = $this->resource->getConnection('default');
         $connection->truncateTable($this->resource->getTableName('bolt_product_event'));
         $connection->delete($connection->getTableName('catalog_product_entity'));

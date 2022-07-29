@@ -30,6 +30,7 @@ use Magento\Framework\ObjectManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Config\Model\Config;
+use Magento\Config\Model\ResourceModel\Config as ResourceConfig;
 
 /**
  * Class StoreConfigurationManagerTest
@@ -103,6 +104,19 @@ class StoreConfigurationManagerTest extends BoltTestCase
             ]
         ];
         TestUtils::setupBoltConfig($configData);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function tearDownInternal(): void
+    {
+        $websiteId = $this->storeManager->getWebsite()->getId();
+        $configResource = $this->objectManager->get(ResourceConfig::class);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED, ScopeInterface::SCOPE_WEBSITES, $websiteId);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, ScopeInterface::SCOPE_STORES, $websiteId);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_API_KEY, ScopeInterface::SCOPE_STORES, $websiteId);
+        parent::tearDownInternal();
     }
 
     /**
