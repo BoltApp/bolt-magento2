@@ -116,7 +116,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
             [
                 'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED,
                 'value' => 1,
-                'scope' => ScopeInterface::SCOPE_STORES,
+                'scope' => ScopeInterface::SCOPE_WEBSITES,
                 'scopeId' => $websiteId,
             ],
             [
