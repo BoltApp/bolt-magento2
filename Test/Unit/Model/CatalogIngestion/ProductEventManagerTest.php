@@ -35,6 +35,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Framework\Module\Manager;
 use Magento\Framework\App\DeploymentConfig;
+use Magento\Framework\Encryption\EncryptorInterface;
 
 /**
  * Class ProductEventManagerTest
@@ -55,6 +56,10 @@ class ProductEventManagerTest extends BoltTestCase
     private const RESPONSE_SUCCESS_STATUS = 200;
 
     private const RESPONSE_FAIL_STATUS = 404;
+
+    private const API_KEY = '3c2d5104e7f9d99b66e1c9c550f6566677bf81de0d6f25e121fdb57e47c2eafc';
+
+    private const PUBLISH_KEY = 'ifssM6pxV64H.FXY3JhSL7w9f.c243fecf459ed259019ea58d7a30307edf2f65442c305f086105b2f66fe6c006';
 
     /**
      * @var ObjectManagerInterface
@@ -110,6 +115,10 @@ class ProductEventManagerTest extends BoltTestCase
         $this->deploymentConfig = $this->objectManager->get(DeploymentConfig::class);;
         $this->boltConfig = $this->objectManager->get(BoltConfig::class);;
         $websiteId = $this->storeManager->getWebsite()->getId();
+
+        $encryptor = $this->objectManager->get(EncryptorInterface::class);
+        $apikey = $encryptor->encrypt(self::API_KEY);
+        $publishKey = $encryptor->encrypt(self::PUBLISH_KEY);
         $configData = [
             [
                 'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED,
@@ -131,13 +140,13 @@ class ProductEventManagerTest extends BoltTestCase
             ],
             [
                 'path'    => BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
-                'value'   => 'publish_key',
+                'value'   => $publishKey,
                 'scope'   => ScopeInterface::SCOPE_STORES,
                 'scopeId' => $websiteId,
             ],
             [
                 'path'    => BoltConfig::XML_PATH_API_KEY,
-                'value'   => 'api_key',
+                'value'   => $apikey,
                 'scope'   => ScopeInterface::SCOPE_STORES,
                 'scopeId' => $websiteId,
             ]

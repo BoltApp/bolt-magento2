@@ -28,6 +28,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -77,6 +78,10 @@ class CatalogIngestionTest extends BoltTestCase
      */
     private $resource;
 
+    private const API_KEY = '3c2d5104e7f9d99b66e1c9c550f6566677bf81de0d6f25e121fdb57e47c2eafc';
+
+    private const PUBLISH_KEY = 'ifssM6pxV64H.FXY3JhSL7w9f.c243fecf459ed259019ea58d7a30307edf2f65442c305f086105b2f66fe6c006';
+
     /**
      * @inheritDoc
      */
@@ -94,6 +99,9 @@ class CatalogIngestionTest extends BoltTestCase
         TestHelper::setProperty($productEventProcessor, 'featureSwitches', $featureSwitches);
         $featureSwitches->method('isCatalogIngestionEnabled')->willReturn(true);
         $websiteId = $this->storeManager->getWebsite()->getId();
+        $encryptor = $this->objectManager->get(EncryptorInterface::class);
+        $apikey = $encryptor->encrypt(self::API_KEY);
+        $publishKey = $encryptor->encrypt(self::PUBLISH_KEY);
         $configData = [
             [
                 'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED,
@@ -103,13 +111,13 @@ class CatalogIngestionTest extends BoltTestCase
             ],
             [
                 'path'    => BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
-                'value'   => 'publish_key',
+                'value'   => $publishKey,
                 'scope'   => ScopeInterface::SCOPE_STORES,
                 'scopeId' => $websiteId,
             ],
             [
                 'path'    => BoltConfig::XML_PATH_API_KEY,
-                'value'   => 'api_key',
+                'value'   => $apikey,
                 'scope'   => ScopeInterface::SCOPE_STORES,
                 'scopeId' => $websiteId,
             ]
