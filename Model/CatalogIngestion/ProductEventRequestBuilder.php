@@ -123,14 +123,21 @@ class ProductEventRequestBuilder
     {
         try {
             $defaultStore = $this->storeManager->getWebsite($websiteId)->getDefaultStore();;
+            $apiKey = $this->config->getApiKey($defaultStore->getId());
+            $publishKey = $this->config->getPublishableKeyCheckout($defaultStore->getId());
+            if (!$apiKey || !$publishKey) {
+                throw new LocalizedException(
+                    __('Bolt API Key or Publishable Key - Multi Step is not configured')
+                );
+            }
             $requestData = $this->dataObjectFactory->create();
             $requestData->setDynamicApiUrl(self::API_REQUEST_API_URL);
-            $requestData->setApiKey($this->config->getApiKey($defaultStore->getId()));
+            $requestData->setApiKey($apiKey);
             $requestData->setRequestMethod(self::API_REQUEST_METHOD_TYPE);
             $requestData->setStatusOnly(true);
             $requestData->setHeaders(
                 [
-                    'X-Publishable-Key' => $this->config->getPublishableKeyCheckout($defaultStore->getId())
+                    'X-Publishable-Key' => $publishKey
                 ]
             );
             $requestProductData = $this->productDataProcessor->getRequestProductData(

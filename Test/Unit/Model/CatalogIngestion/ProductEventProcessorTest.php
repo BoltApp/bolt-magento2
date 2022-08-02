@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Model\CatalogIngestion;
 
 use Bolt\Boltpay\Api\ProductEventRepositoryInterface;
+use Magento\Config\Model\ResourceModel\Config as ResourceConfig;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
@@ -35,6 +36,7 @@ use Bolt\Boltpay\Plugin\Magento\InventorySalesApi\Api\PlaceReservationsForSalesE
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product;
 use Magento\Catalog\Model\Product\Type as ProductType;
+use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Model\Quote\Address as QuoteAddress;
 use Magento\TestFramework\Helper\Bootstrap;
@@ -97,6 +99,10 @@ class ProductEventProcessorTest extends BoltTestCase
     private const RESPONSE_SUCCESS_STATUS = 200;
 
     private const RESPONSE_FAIL_STATUS = 404;
+
+    private const API_KEY = '3c2d5104e7f9d99b66e1c9c550f6566677bf81de0d6f25e121fdb57e47c2eafc';
+
+    private const PUBLISH_KEY = 'ifssM6pxV64H.FXY3JhSL7w9f.c243fecf459ed259019ea58d7a30307edf2f65442c305f086105b2f66fe6c006';
 
     /**
      * @var array
@@ -260,6 +266,9 @@ class ProductEventProcessorTest extends BoltTestCase
             TestHelper::setProperty($placeReservationsForSalesEventPlugin, 'featureSwitches', $featureSwitches);
         }
         $websiteId = $this->storeManager->getWebsite()->getId();
+        $encryptor = $this->objectManager->get(EncryptorInterface::class);
+        $apikey = $encryptor->encrypt(self::API_KEY);
+        $publishKey = $encryptor->encrypt(self::PUBLISH_KEY);
         $configData = [
             [
                 'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED,
@@ -277,6 +286,18 @@ class ProductEventProcessorTest extends BoltTestCase
                 'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_INSTANT_ASYNC_ENABLED,
                 'value' => 0,
                 'scope' => ScopeInterface::SCOPE_WEBSITES,
+                'scopeId' => $websiteId,
+            ],
+            [
+                'path'    => BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
+                'value'   => $publishKey,
+                'scope'   => ScopeInterface::SCOPE_STORES,
+                'scopeId' => $websiteId,
+            ],
+            [
+                'path'    => BoltConfig::XML_PATH_API_KEY,
+                'value'   => $apikey,
+                'scope'   => ScopeInterface::SCOPE_STORES,
                 'scopeId' => $websiteId,
             ]
         ];
@@ -673,6 +694,11 @@ class ProductEventProcessorTest extends BoltTestCase
      */
     private function cleanDataBase(): void
     {
+        $websiteId = $this->storeManager->getWebsite()->getId();
+        $configResource = $this->objectManager->get(ResourceConfig::class);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED, ScopeInterface::SCOPE_WEBSITES, $websiteId);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, ScopeInterface::SCOPE_STORES, $websiteId);
+        $configResource->deleteConfig(BoltConfig::XML_PATH_API_KEY, ScopeInterface::SCOPE_STORES, $websiteId);
         $connection = $this->resource->getConnection('default');
         $connection->truncateTable($this->resource->getTableName('bolt_product_event'));
         $connection->delete($connection->getTableName('catalog_product_entity'));

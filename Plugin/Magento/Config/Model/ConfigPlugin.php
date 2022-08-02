@@ -124,7 +124,9 @@ class ConfigPlugin
                 }
             }
 
-            if ($subject->getScope() == ScopeInterface::SCOPE_STORES) {
+            if ($subject->getScope() == ScopeInterface::SCOPE_STORES &&
+                $this->boltConfig->getIsSystemConfigurationUpdateRequestEnabled($subject->getScopeId())
+            ) {
                 $this->storeConfigurationManager->requestStoreConfigurationUpdated($subject->getScopeCode());
             }
         } catch (\Exception $e) {
