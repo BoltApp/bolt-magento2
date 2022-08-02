@@ -71,7 +71,7 @@ commands:
                   - run:
                       name: << parameters.php_version >> << parameters.m2_version >> Magento integration
                       command: |
-                        export COMPOSER_MEMORY_LIMIT=3G
+                        export COMPOSER_MEMORY_LIMIT=4G
                         Test/scripts/ci-magento-integration.sh
             - unless:
                 condition: << parameters.is_magento_integration >>
