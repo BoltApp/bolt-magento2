@@ -159,7 +159,7 @@ class DataTest extends BoltTestCase
         $json = $this->getMockBuilder(Json::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $json->expects($this->at(0))
+        $json->expects(static::once())
             ->method('setData')
             ->with($expected);
         $jsonFactoryMock = $this->getMockBuilder(JsonFactory::class)

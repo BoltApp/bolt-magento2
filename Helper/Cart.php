@@ -2031,7 +2031,7 @@ class Cart extends AbstractHelper
 
         // additional data sent, i.e. billing address from checkout page
         if ($placeOrderPayload) {
-            $placeOrderPayload = json_decode((string)$placeOrderPayload);
+            $placeOrderPayload = json_decode($placeOrderPayload);
 
             $billAddress          = $placeOrderPayload->billingAddress ?? null;
             $billingStreetAddress = $billAddress->street ?? [];

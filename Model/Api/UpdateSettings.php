@@ -101,7 +101,7 @@ class UpdateSettings implements UpdateSettingsInterface
 
         try {
             # parse debug_info into array
-            $debug_info_decoded = json_decode($debug_info, true);
+            $debug_info_decoded = json_decode((string)$debug_info, true);
 
             # extract bolt config data
             $config_data = $debug_info_decoded['division']['pluginIntegrationInfo']['pluginConfigSettings'];

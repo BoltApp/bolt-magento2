@@ -134,7 +134,7 @@ class Hook extends AbstractHelper
     {
         //Request Data
         $requestData = $this->dataObjectFactory->create();
-        $requestData->setApiData(json_decode($payload));
+        $requestData->setApiData(json_decode((string)$payload));
         $requestData->setDynamicApiUrl(ApiHelper::API_VERIFY_SIGNATURE);
         $requestData->setApiKey($this->configHelper->getApiKey($this->getStoreId()));
 

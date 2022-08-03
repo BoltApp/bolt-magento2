@@ -147,7 +147,7 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
      */
     public function getCardInfoObject()
     {
-        $cardInfoArray = json_decode($this->getCardInfo(), true);
+        $cardInfoArray = json_decode((string)$this->getCardInfo(), true);
         $cartInfo = $this->dataObjectFactory->create();
         $cartInfo->setData($cardInfoArray);
 

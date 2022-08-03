@@ -128,10 +128,12 @@ class CheckSettingsUpdateTest extends BoltTestCase
      */
     public function callBeforeSaveAndAfterSave_whenKeyChanged_updateSwitches()
     {
-        $this->configHelper->expects($this->at(0))
-            ->method('getApiKey')->willReturn(self::OLD_KEY);
-        $this->configHelper->expects($this->at(1))
-            ->method('getApiKey')->willReturn(self::NEW_KEY);
+        $this->configHelper->expects($this->exactly(2))
+                           ->method('getApiKey')
+                           ->willReturnMap(
+                                [self::OLD_KEY],
+                                [self::NEW_KEY]
+                            );
         $this->fsManager->expects($this->once())
             ->method('updateSwitchesFromBolt');
         $this->callBeforeSaveAndAfterSave();
@@ -142,10 +144,12 @@ class CheckSettingsUpdateTest extends BoltTestCase
      */
     public function callBeforeSaveAndAfterSave_whenKeyChangedToEmpty_doNothing()
     {
-        $this->configHelper->expects($this->at(0))
-            ->method('getApiKey')->willReturn(self::OLD_KEY);
-        $this->configHelper->expects($this->at(1))
-            ->method('getApiKey')->willReturn('');
+        $this->configHelper->expects($this->exactly(2))
+                           ->method('getApiKey')
+                           ->willReturnMap(
+                                [self::OLD_KEY],
+                                ['']
+                            );
         $this->fsManager->expects($this->never())
             ->method('updateSwitchesFromBolt');
         $this->callBeforeSaveAndAfterSave();
@@ -156,10 +160,12 @@ class CheckSettingsUpdateTest extends BoltTestCase
      */
     public function callBeforeSaveAndAfterSave_whenKeyChangedAnfUpdateSwitchesThrowException_callBugsnag()
     {
-        $this->configHelper->expects($this->at(0))
-            ->method('getApiKey')->willReturn(self::OLD_KEY);
-        $this->configHelper->expects($this->at(1))
-            ->method('getApiKey')->willReturn(self::NEW_KEY);
+        $this->configHelper->expects($this->exactly(2))
+                           ->method('getApiKey')
+                           ->willReturnMap(
+                                [self::OLD_KEY],
+                                [self::NEW_KEY]
+                            );
         $e = new \Exception('test exception');
         $this->fsManager->expects($this->once())
             ->method('updateSwitchesFromBolt')->willThrowException($e);

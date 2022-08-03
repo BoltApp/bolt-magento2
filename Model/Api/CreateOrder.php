@@ -218,7 +218,7 @@ class CreateOrder implements CreateOrderInterface
 
             $this->preProcessWebhook($immutableQuote->getStoreId());
 
-            $transaction = json_decode($payload);
+            $transaction = json_decode((string)$payload);
             // V2 webhooks send requests as {"event": ... "data":{requestContent}} so we need to extract the data we want
             $isUniversal = false;
             if (isset($transaction->data)) {

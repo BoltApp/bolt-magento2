@@ -255,7 +255,7 @@ class JWT
              * to specify that large ints (like Steam Transaction IDs) should be treated as
              * strings, rather than the PHP default behaviour of converting them to floats.
              */
-            $obj = \json_decode($input, false, 512, JSON_BIGINT_AS_STRING);
+            $obj = \json_decode((string)$input, false, 512, JSON_BIGINT_AS_STRING);
         } else {
             /** Not all servers will support that, however, so for older versions we must
              * manually detect large ints in the JSON string and quote them (thus converting
