@@ -104,12 +104,12 @@ class RewardPoints
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 $amount = $aheadworksConfig->isApplyingPointsToShipping($quote->getStore()->getWebsiteId())
                     ? abs(
-                        $aheadworksCustomerRewardPointsManagement->getCustomerRewardPointsBalanceBaseCurrency(
+                        (float)$aheadworksCustomerRewardPointsManagement->getCustomerRewardPointsBalanceBaseCurrency(
                             $quote->getCustomerId()
                         )
                     )
                     : abs(
-                        $quote->getData('base_aw_reward_points_amount')
+                        (float)$quote->getData('base_aw_reward_points_amount')
                     );
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                 $discounts[] = [

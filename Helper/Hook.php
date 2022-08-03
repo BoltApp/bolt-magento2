@@ -192,7 +192,7 @@ class Hook extends AbstractHelper
     public function computeSignature($payload)
     {
         $signing_secret = $this->configHelper->getSigningSecret($this->getStoreId());
-        $computed_signature = base64_encode(hash_hmac('sha256', $payload, $signing_secret, true));
+        $computed_signature = base64_encode(hash_hmac('sha256', (string)$payload, $signing_secret, true));
         return $computed_signature;
     }
 

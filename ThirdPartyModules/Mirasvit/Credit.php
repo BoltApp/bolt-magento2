@@ -105,7 +105,7 @@ class Credit
         try {
             // Check whether the Mirasvit Store Credit is allowed for quote
             if ($quote->getCreditAmountUsed() > 0 && $this->getMirasvitStoreCreditUsedAmount($quote) > 0) {
-                $amount = abs($this->getMirasvitStoreCreditAmount($quote, $paymentOnly));
+                $amount = abs((float)$this->getMirasvitStoreCreditAmount($quote, $paymentOnly));
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
     

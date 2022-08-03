@@ -813,7 +813,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 $service = html_entity_decode($service);
             }
 
-            if (abs($diff) >= $this->threshold) {
+            if (abs((float)$diff) >= $this->threshold) {
                 $this->taxAdjusted = true;
                 $this->bugsnag->registerCallback(function ($report) use (
                     $method,

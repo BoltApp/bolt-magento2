@@ -67,7 +67,7 @@ class StoreCredit
 
         try {
             if (array_key_exists(self::AMASTY_STORECREDIT, $totals)) {
-                $amount = abs($totals[self::AMASTY_STORECREDIT]->getValue());
+                $amount = abs((float)$totals[self::AMASTY_STORECREDIT]->getValue());
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 $roundedDiscountAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                 $discounts[] = [

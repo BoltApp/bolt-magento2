@@ -99,7 +99,7 @@ class ReceivedUrl extends Action implements ReceivedUrlInterface
     {
         $refererUrl = $this->getRequest()->getServer('HTTP_REFERER');
         $cdnUrl = $this->configHelper->getCdnUrl();
-        return substr($refererUrl, 0, strlen($cdnUrl)) === $cdnUrl;
+        return substr($refererUrl, 0, strlen((string)$cdnUrl)) === $cdnUrl;
     }
 
     /**

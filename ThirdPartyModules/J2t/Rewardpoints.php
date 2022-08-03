@@ -96,7 +96,7 @@ class Rewardpoints
                     $pointsUsed = $this->getMaxPointUsage($quote, $pointsUsed);    
                 }
                 $pointsValue = $rewardHelper->getPointMoneyEquivalence($pointsUsed, true, $quote, $storeId);
-                $discountAmount = abs($this->priceCurrency->convert($pointsValue));        
+                $discountAmount = abs((float)$this->priceCurrency->convert($pointsValue));        
                 $currencyCode = $quote->getQuoteCurrencyCode();                
                 $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
                 $discounts[] = [

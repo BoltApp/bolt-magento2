@@ -1609,7 +1609,7 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 // Get product description and image
                 ////////////////////////////////////
-                $product['description'] = str_replace(["\r\n", "\n", "\r"], ' ', strip_tags($_product->getDescription()));
+                $product['description'] = str_replace(["\r\n", "\n", "\r"], ' ', strip_tags((string)$_product->getDescription()));
                 $variantProductToGetImage = $_product;
 
                 // This will override the $_product with the variant product to get the variant image rather than the main product image.
@@ -2031,7 +2031,7 @@ class Cart extends AbstractHelper
 
         // additional data sent, i.e. billing address from checkout page
         if ($placeOrderPayload) {
-            $placeOrderPayload = json_decode($placeOrderPayload);
+            $placeOrderPayload = json_decode((string)$placeOrderPayload);
 
             $billAddress          = $placeOrderPayload->billingAddress ?? null;
             $billingStreetAddress = $billAddress->street ?? [];
@@ -2190,7 +2190,7 @@ class Cart extends AbstractHelper
         $cart['total_amount'] = $totalAmount;
         $cart['tax_amount']   = $taxAmount;
 
-        if (abs($diff) >= $this->threshold) {
+        if (abs((float)$diff) >= $this->threshold) {
             $this->bugsnag->registerCallback(function ($report) use ($diff, $cart) {
                 $report->setMetaData([
                     'TOTALS_DIFF' => [
@@ -2262,7 +2262,7 @@ class Cart extends AbstractHelper
         // selecting specific shipping option, so the conditional statement should also
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
-        if (($amount = abs($address->getDiscountAmount())) || $quote->getCouponCode()) {
+        if (($amount = abs((float)$address->getDiscountAmount())) || $quote->getCouponCode()) {
             $ruleDiscountDetails = $this->getSaleRuleDiscounts($quote);     
             list($ruleDiscountDetails, $discounts, $totalAmount) = $this->eventsForThirdPartyModules->runFilter('filterQuoteDiscountDetails', [$ruleDiscountDetails, $discounts, $totalAmount], $quote);
             foreach ($ruleDiscountDetails as $salesruleId => $ruleDiscountAmount) {
@@ -2311,7 +2311,7 @@ class Cart extends AbstractHelper
         // Process Store Credit
         /////////////////////////////////////////////////////////////////////////////////
         if ($quote->getUseCustomerBalance()) {
-            if ($paymentOnly && $amount = abs($quote->getCustomerBalanceAmountUsed())) {
+            if ($paymentOnly && $amount = abs((float)$quote->getCustomerBalanceAmountUsed())) {
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                 $discounts[] = [
@@ -2335,7 +2335,7 @@ class Cart extends AbstractHelper
                 );
                 $balanceModel->loadByCustomer();
 
-                if ($amount = abs($balanceModel->getAmount())) {
+                if ($amount = abs((float)$balanceModel->getAmount())) {
                     $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                     $discounts[] = [
@@ -2358,7 +2358,7 @@ class Cart extends AbstractHelper
         // Process Reward Points
         /////////////////////////////////////////////////////////////////////////////////
         if ($quote->getUseRewardPoints()) {
-            if ($paymentOnly && $amount = abs($quote->getRewardCurrencyAmount())) {
+            if ($paymentOnly && $amount = abs((float)$quote->getRewardCurrencyAmount())) {
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                 $discounts[] = [
@@ -2382,7 +2382,7 @@ class Cart extends AbstractHelper
                 );
                 $rewardModel->loadByCustomer();
 
-                if ($amount = abs($rewardModel->getCurrencyAmount())) {
+                if ($amount = abs((float)$rewardModel->getCurrencyAmount())) {
                     $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                     $discounts[] = [
@@ -2421,7 +2421,7 @@ class Cart extends AbstractHelper
                     if ($giftCertBalance > 0) {
                         $amount = $giftCertBalance;
                     }
-                    $discountAmount = abs($amount);
+                    $discountAmount = abs((float)$amount);
                     $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
                     $gcDescription = $description . $totalDiscount->getTitle();
                     $discountItem = [
@@ -2435,7 +2435,7 @@ class Cart extends AbstractHelper
                     $this->logEmptyDiscountCode($gcCode, $gcDescription);
                     $discounts[] = $discountItem;
                 } else {
-                    $discountAmount = abs($amount);
+                    $discountAmount = abs((float)$amount);
                     $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
 
                     $discountItem = [
@@ -2563,7 +2563,7 @@ class Cart extends AbstractHelper
      */
     public function createCartByRequest($request)
     {
-        $options = json_decode($request['items'][0]['options'], true);
+        $options = json_decode((string)$request['items'][0]['options'], true);
         $storeId = $options['storeId'];
 
         // try returning from cache
@@ -2623,7 +2623,7 @@ class Cart extends AbstractHelper
         foreach ($items as $item) {
             $product = $this->productRepository->getById($item['reference']);
 
-            $options = json_decode($item['options'], true);
+            $options = json_decode((string)$item['options'], true);
             if (isset($options['storeId']) && $options['storeId']) {
                 $quote->setStoreId($options['storeId']);
             }
@@ -2682,7 +2682,7 @@ class Cart extends AbstractHelper
      */
     private function assignQuoteCustomerByEncryptedUserId($quote, $encrypted_user_id)
     {
-        $metadata = json_decode($encrypted_user_id);
+        $metadata = json_decode((string)$encrypted_user_id);
         if (! $metadata || ! isset($metadata->user_id) || ! isset($metadata->timestamp) || ! isset($metadata->signature)) {
             throw new WebapiException(__('Incorrect encrypted_user_id'), 6306, 422);
         }
@@ -2814,7 +2814,7 @@ class Cart extends AbstractHelper
      */
     protected function encryptMetadataValue($data)
     {
-        return base64_encode($this->configHelper->encrypt($data));
+        return base64_encode((string)$this->configHelper->encrypt($data));
     }
 
     /**

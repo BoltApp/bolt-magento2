@@ -632,7 +632,7 @@ class CreateOrder implements CreateOrderInterface
             $transactionUnitPrice = $this->getUnitPriceFromTransaction($transactionItem);
 
             if ($transactionItemSku === $itemSku &&
-                abs($itemPrice - $transactionUnitPrice) <= $priceFaultTolerance
+                abs((int)$itemPrice - $transactionUnitPrice) <= $priceFaultTolerance
             ) {
                 unset($transactionItems[$index]);
                 return true;
