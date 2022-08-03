@@ -25,6 +25,7 @@ use Bolt\Boltpay\ThirdPartyModules\IDme\GroupVerification as IDme_GroupVerificat
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Rewards as Amasty_Rewards;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\GiftCardAccount as Amasty_GiftCardAccount;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\GiftCard as Amasty_GiftCard;
+use Bolt\Boltpay\ThirdPartyModules\Amasty\Extrafee as Amasty_Extrafee;
 use Bolt\Boltpay\ThirdPartyModules\MageWorld\RewardPoints as MW_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\Bss\StoreCredit as Bss_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\Listrak\Remarketing as Listrak_Remarketing;
@@ -174,6 +175,15 @@ class EventsForThirdPartyModules
                                       "Amasty\Rewards\Model\Quote"],
                     "boltClass" => Amasty_Rewards::class,
                 ],
+                'Amasty_Extrafee' => [
+                    'module'      => 'Amasty_Extrafee',
+                    'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
+                    'sendClasses' => [
+                        'Amasty\Extrafee\Model\ResourceModel\ExtrafeeQuote\CollectionFactory',
+                        'Amasty\Extrafee\Model\TotalsInformationManagement'
+                    ],
+                    'boltClass'   => Amasty_Extrafee::class,
+                ]
             ]
         ],
         'applyExternalDiscountData' => [
@@ -1068,6 +1078,16 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        "filterCart" => [
+            'listeners' => [
+                'Amasty_Extrafee' => [
+                    'module'      => 'Amasty_Extrafee',
+                    'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
+                    'sendClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
+                    'boltClass'   => Amasty_Extrafee::class,
+                ]
+            ]
+        ],
         "filterCartItems" => [
             'listeners' => [
                 'Magecomp_Extrafee' => [
@@ -1084,6 +1104,15 @@ class EventsForThirdPartyModules
                     'sendClasses' => ['Route\Route\Helper\Data'],
                     'boltClass'   => Route_Route::class,
                 ],
+                'Amasty_Extrafee' => [
+                    'module'      => 'Amasty_Extrafee',
+                    'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
+                    'sendClasses' => [
+                        'Amasty\Extrafee\Model\ResourceModel\ExtrafeeQuote\CollectionFactory',
+                        'Amasty\Extrafee\Model\TotalsInformationManagement'
+                    ],
+                    'boltClass'   => Amasty_Extrafee::class,
+                ]
             ],
         ],
         "filterTransactionBeforeOrderCreateValidation" => [
@@ -1113,6 +1142,11 @@ class EventsForThirdPartyModules
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
                     'boltClass'   => Route_Route::class,
                 ],
+                'Amasty_Extrafee' => [
+                    'module'      => 'Amasty_Extrafee',
+                    'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
+                    'boltClass'   => Amasty_Extrafee::class,
+                ]
             ],
         ],
         "filterCartBeforeSplitShippingAndTax" => [
@@ -1122,6 +1156,11 @@ class EventsForThirdPartyModules
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
                     'boltClass'   => Route_Route::class,
                 ],
+                'Amasty_Extrafee' => [
+                    'module'      => 'Amasty_Extrafee',
+                    'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
+                    'boltClass'   => Amasty_Extrafee::class,
+                ]
             ],
         ],
         "filterCartBeforeCreateOrder" => [
@@ -1131,6 +1170,11 @@ class EventsForThirdPartyModules
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
                     'boltClass'   => Route_Route::class,
                 ],
+                'Amasty_Extrafee' => [
+                    'module'      => 'Amasty_Extrafee',
+                    'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
+                    'boltClass'   => Amasty_Extrafee::class,
+                ]
             ],
         ],
         "isInStorePickupShipping" => [
@@ -1167,6 +1211,15 @@ class EventsForThirdPartyModules
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
                     'boltClass'   => Route_Route::class,
                 ],
+                'Amasty_Extrafee' => [
+                    'module'      => 'Amasty_Extrafee',
+                    'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
+                    'sendClasses' => [
+                        'Amasty\Extrafee\Model\TotalsInformationManagement',
+                        'Amasty\Extrafee\Model\ResourceModel\ExtrafeeQuote\CollectionFactory'
+                    ],
+                    'boltClass'   => Amasty_Extrafee::class,
+                ]
             ],
         ],
         'filterRemoveItemBeforeUpdateCart' => [
@@ -1176,6 +1229,15 @@ class EventsForThirdPartyModules
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
                     'boltClass'   => Route_Route::class,
                 ],
+                'Amasty_Extrafee' => [
+                    'module'      => 'Amasty_Extrafee',
+                    'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
+                    'sendClasses' => [
+                        'Amasty\Extrafee\Model\TotalsInformationManagement',
+                        'Amasty\Extrafee\Model\ResourceModel\ExtrafeeQuote\CollectionFactory'
+                    ],
+                    'boltClass'   => Amasty_Extrafee::class,
+                ]
             ],
         ],
         'loadCouponCodeData' => [

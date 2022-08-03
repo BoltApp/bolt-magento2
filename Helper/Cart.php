@@ -2202,7 +2202,7 @@ class Cart extends AbstractHelper
             $this->bugsnag->notifyError('Cart Totals Mismatch', "Totals adjusted by $diff.");
         }
 
-        return $cart;
+        return $this->eventsForThirdPartyModules->runFilter('filterCart', $cart, $quote);
     }
 
     /**
