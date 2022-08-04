@@ -129,6 +129,9 @@ class MetricsClientTest extends BoltTestCase
      */
     public function setUpInternal()
     {
+        if( !class_exists( 'vfsStream' ) ){
+            $this->markTestSkipped(' vfsStream class not available.' );
+        }
         // common values
         $this->timeStamp = 1567541470604;
         $this->countKey = "test_count";

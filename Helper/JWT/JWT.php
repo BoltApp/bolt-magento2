@@ -222,7 +222,7 @@ class JWT
         $signature = '';
         switch ($function) {
             case 'hash_hmac':
-                $signature = \hash_hmac($algorithm, $msg, $key, true);
+                $signature = \hash_hmac($algorithm, (string)$msg, $key, true);
                 break;
             case 'openssl':
                 $success = \openssl_sign($msg, $signature, $key, $algorithm);
@@ -357,7 +357,7 @@ class JWT
                 );
             case 'hash_hmac':
             default:
-                $hash = \hash_hmac($algorithm, $msg, $key, true);
+                $hash = \hash_hmac($algorithm, (string)$msg, $key, true);
                 if (\function_exists('hash_equals')) {
                     return \hash_equals($signature, $hash);
                 }
