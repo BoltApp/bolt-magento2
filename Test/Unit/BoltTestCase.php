@@ -27,6 +27,7 @@ use ReflectionObject;
 use ReflectionProperty;
 
 if (PHPUnitVersion::id() < 9) {
+    // phpcs:ignore
     class BoltTestCase extends TestCase
     {
         protected function setUp()
@@ -64,6 +65,7 @@ if (PHPUnitVersion::id() < 9) {
         }
     }
 } else {
+    // phpcs:ignore
     class BoltTestCase extends TestCase
     {
         protected function setUp(): void
@@ -233,6 +235,7 @@ if (PHPUnitVersion::id() < 9) {
 }
 
 if (!class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
+    // phpcs:ignore
     class ArraySubset extends \PHPUnit\Framework\Constraint\Constraint
     {
         /**
@@ -314,7 +317,7 @@ if (!class_exists('\PHPUnit\Framework\Constraint\ArraySubset')) {
             if (\is_array($other)) {
                 return $other;
             }
-
+            // phpcs:ignore
             if ($other instanceof \ArrayObject) {
                 return $other->getArrayCopy();
             }

@@ -141,4 +141,3 @@ class ProcessIntegrationToken extends Action
         }      
     }
 }
-?>
