@@ -130,7 +130,7 @@ class CheckSettingsUpdateTest extends BoltTestCase
     {
         $this->configHelper->expects($this->exactly(2))
                            ->method('getApiKey')
-                           ->willReturnMap(
+                           ->willReturnOnConsecutiveCalls(
                                 [self::OLD_KEY],
                                 [self::NEW_KEY]
                             );
@@ -146,7 +146,7 @@ class CheckSettingsUpdateTest extends BoltTestCase
     {
         $this->configHelper->expects($this->exactly(2))
                            ->method('getApiKey')
-                           ->willReturnMap(
+                           ->willReturnOnConsecutiveCalls(
                                 [self::OLD_KEY],
                                 ['']
                             );
@@ -162,7 +162,7 @@ class CheckSettingsUpdateTest extends BoltTestCase
     {
         $this->configHelper->expects($this->exactly(2))
                            ->method('getApiKey')
-                           ->willReturnMap(
+                           ->willReturnOnConsecutiveCalls(
                                 [self::OLD_KEY],
                                 [self::NEW_KEY]
                             );
