@@ -4861,21 +4861,21 @@ ORDER
 
         $this->giftwrapping = $this->getMockBuilder('\Magento\GiftWrapping\Model\Total\Quote\Giftwrapping')
             ->disableOriginalConstructor()
-            ->setMethods(['getGwId','getGwItemsPrice','getGwCardPrice','getGwPrice','getText','getTitle','getCode'])
+            ->setMethods(['getGwId','getGwItemsPrice','getGwCardPrice','getGwPrice','getText','getTitle','getCode','getGwItemIds'])
             ->getMock();
         ObjectManager::setInstance($this->objectManagerMock);
         $giftWrappingModel = $this->getMockBuilder('Magento\GiftWrapping\Model\Wrapping')
             ->disableOriginalConstructor()
-            ->setMethods(['load','getImageUrl'])
+            ->setMethods(['load','getImageUrl','getBasePrice', 'getDesign'])
             ->getMock();
         $giftWrappingModel->method('load')->willReturnSelf();
         $giftWrappingModel->method('getImageUrl')->willReturn('https://gift-wrap-image.url');
+        $giftWrappingModel->method('getBasePrice')->willReturn('15');
+        $giftWrappingModel->method('getDesign')->willReturn('Design');
         $this->objectManagerMock->expects(static::once())->method('create')
             ->with('Magento\GiftWrapping\Model\Wrapping')->willReturn($giftWrappingModel);
         $this->giftwrapping->method('getGwId')->willReturn(1);
-        $this->giftwrapping->method('getGwItemsPrice')->willReturn('10');
-        $this->giftwrapping->method('getGwCardPrice')->willReturn('0');
-        $this->giftwrapping->method('getGwPrice')->willReturn('5');
+        $this->giftwrapping->method('getGwItemIds')->willReturn(null);
         $this->giftwrapping->method('getTitle')->willReturnSelf();
         $this->giftwrapping->method('getText')->willReturn('Gift Wrapping');
         $this->giftwrapping->method('getCode')->willReturn('gift_id');
@@ -4900,7 +4900,7 @@ ORDER
                 ],
                 [
                     'reference' => 1,
-                    'name' => 'Gift Wrapping',
+                    'name' => 'Gift Wrapping [Design]',
                     'total_amount' => 1500,
                     'unit_price' => 1500,
                     'quantity' => 1,
