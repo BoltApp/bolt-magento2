@@ -131,8 +131,8 @@ class CheckSettingsUpdateTest extends BoltTestCase
         $this->configHelper->expects($this->exactly(2))
                            ->method('getApiKey')
                            ->willReturnOnConsecutiveCalls(
-                                [self::OLD_KEY],
-                                [self::NEW_KEY]
+                                self::OLD_KEY,
+                                self::NEW_KEY
                             );
         $this->fsManager->expects($this->once())
             ->method('updateSwitchesFromBolt');
@@ -147,8 +147,8 @@ class CheckSettingsUpdateTest extends BoltTestCase
         $this->configHelper->expects($this->exactly(2))
                            ->method('getApiKey')
                            ->willReturnOnConsecutiveCalls(
-                                [self::OLD_KEY],
-                                ['']
+                                self::OLD_KEY,
+                                ''
                             );
         $this->fsManager->expects($this->never())
             ->method('updateSwitchesFromBolt');
@@ -163,8 +163,8 @@ class CheckSettingsUpdateTest extends BoltTestCase
         $this->configHelper->expects($this->exactly(2))
                            ->method('getApiKey')
                            ->willReturnOnConsecutiveCalls(
-                                [self::OLD_KEY],
-                                [self::NEW_KEY]
+                                self::OLD_KEY,
+                                self::NEW_KEY
                             );
         $e = new \Exception('test exception');
         $this->fsManager->expects($this->once())
