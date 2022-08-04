@@ -1,4 +1,5 @@
 <?php
+// phpcs:ignoreFile
 /**
  * Bolt magento2 plugin
  *
