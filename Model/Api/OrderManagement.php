@@ -342,7 +342,7 @@ class OrderManagement implements OrderManagementInterface
             );
         }
         
-        $storeId = isset($request['items'][0]['options']) ? (json_decode($request['items'][0]['options'], true))['storeId'] : null;
+        $storeId = isset($request['items'][0]['options']) ? (json_decode((string)$request['items'][0]['options'], true))['storeId'] : null;
         $this->logHelper->addInfoLog('StoreId: ' . $storeId);
         $this->hookHelper->preProcessWebhook($storeId);
 

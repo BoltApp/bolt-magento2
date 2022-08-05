@@ -68,7 +68,7 @@ class MethodPlugin
         if (!empty($this->_restRequest)) {
             $payload = $this->_restRequest->getContent();
             if (!empty($payload)) {
-                $transaction = json_decode($payload);
+                $transaction = json_decode((string)$payload);
                 if (isset($transaction->order->cart->shipments[0]->reference)
                     && $transaction->order->cart->shipments[0]->reference == 'freeshippingadmin_freeshippingadmin'
                 ) {

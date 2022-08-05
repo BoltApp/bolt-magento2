@@ -818,7 +818,7 @@ class ShippingMethods implements ShippingMethodsInterface
                 $service = html_entity_decode($service);
             }
 
-            if (abs($diff) >= $this->threshold) {
+            if (abs((float)$diff) >= $this->threshold) {
                 $this->taxAdjusted = true;
                 $this->bugsnag->registerCallback(function ($report) use (
                     $method,
@@ -964,7 +964,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $ignoredShippingAddressCoupons = $this->configHelper->getIgnoredShippingAddressCoupons($this->quote->getStoreId());
 
         return $parentQuoteCoupon &&
-                in_array(strtolower($parentQuoteCoupon), $ignoredShippingAddressCoupons) &&
+                in_array(strtolower((string)$parentQuoteCoupon), $ignoredShippingAddressCoupons) &&
                 !$this->quote->setTotalsCollectedFlag(false)->collectTotals()->getCouponCode();
     }
 

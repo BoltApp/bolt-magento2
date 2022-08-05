@@ -70,13 +70,13 @@ class StoreCredit
         list ($discounts, $totalAmount, $diff) = $result;
 
         $this->teamworkStoreCreditStorage = $teamworkStoreCreditStorage;
-        $storeCredit = abs($quote->getTeamworkStorecredit());
+        $storeCredit = abs((float)$quote->getTeamworkStorecredit());
 
         try {
             // Check whether the Teamwork Store Credit is allowed for quote
             if ($storeCredit > 0) {
                 $currencyCode = $quote->getQuoteCurrencyCode();
-                $amount = abs($this->teamworkStoreCreditStorage->getStoreCredits($this->currentCustomer->getCustomer()));
+                $amount = abs((float)$this->teamworkStoreCreditStorage->getStoreCredits($this->currentCustomer->getCustomer()));
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                 $discounts[] = [

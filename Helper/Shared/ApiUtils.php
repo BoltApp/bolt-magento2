@@ -54,7 +54,7 @@ class ApiUtils
 
     public static function getJSONFromResponseBody($responseBody)
     {
-        $resultFromJSON = json_decode($responseBody);
+        $resultFromJSON = json_decode((string)$responseBody);
         $jsonError = self::handleJsonParseError();
         if ($jsonError != null) {
             throw new LocalizedException(__('JSON Parse Error: ' . $jsonError));

@@ -140,7 +140,7 @@ class GiftCard
                     ->getGiftCardsByQuoteId($quote->getId());
                 /** @var \Amasty\GiftCard\Model\Quote|\Amasty\GiftCard\Model\Account $giftcard */
                 foreach ($giftcardQuotes->getItems() as $giftcard) {
-                    $amount = abs($giftcard->getCurrentValue());
+                    $amount = abs((float)$giftcard->getCurrentValue());
                     $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                     $giftCardCode = $giftcard->getCode();
                     $discountItem = [

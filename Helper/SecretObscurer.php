@@ -32,7 +32,7 @@ class SecretObscurer
      */
     public static function obscure($input)
     {
-        if (strlen($input) == 0) {
+        if (strlen((string)$input) == 0) {
             return '';
         }
         if (strlen($input) < 6) {

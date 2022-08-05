@@ -304,7 +304,7 @@ abstract class UpdateCartCommon
     {
         $content = $this->request->getContent();
         $this->logHelper->addInfoLog($content);
-        return json_decode($content);
+        return json_decode((string)$content);
     }
 
     /**

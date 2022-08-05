@@ -222,7 +222,7 @@ class JWT
         $signature = '';
         switch ($function) {
             case 'hash_hmac':
-                $signature = \hash_hmac($algorithm, $msg, $key, true);
+                $signature = \hash_hmac($algorithm, (string)$msg, $key, true);
                 break;
             case 'openssl':
                 $success = \openssl_sign($msg, $signature, $key, $algorithm);
@@ -255,7 +255,7 @@ class JWT
              * to specify that large ints (like Steam Transaction IDs) should be treated as
              * strings, rather than the PHP default behaviour of converting them to floats.
              */
-            $obj = \json_decode($input, false, 512, JSON_BIGINT_AS_STRING);
+            $obj = \json_decode((string)$input, false, 512, JSON_BIGINT_AS_STRING);
         } else {
             /** Not all servers will support that, however, so for older versions we must
              * manually detect large ints in the JSON string and quote them (thus converting
@@ -303,7 +303,7 @@ class JWT
      */
     public static function urlsafeB64Decode($input)
     {
-        $remainder = \strlen($input) % 4;
+        $remainder = \strlen((string)$input) % 4;
         if ($remainder) {
             $padlen = 4 - $remainder;
             $input .= \str_repeat('=', $padlen);
@@ -320,7 +320,7 @@ class JWT
      */
     public static function urlsafeB64Encode($input)
     {
-        return \str_replace('=', '', \strtr(\base64_encode($input), '+/', '-_'));
+        return \str_replace('=', '', \strtr(\base64_encode((string)$input), '+/', '-_'));
     }
 
     /**
@@ -357,7 +357,7 @@ class JWT
                 );
             case 'hash_hmac':
             default:
-                $hash = \hash_hmac($algorithm, $msg, $key, true);
+                $hash = \hash_hmac($algorithm, (string)$msg, $key, true);
                 if (\function_exists('hash_equals')) {
                     return \hash_equals($signature, $hash);
                 }
@@ -406,9 +406,9 @@ class JWT
     private static function safeStrlen($str)
     {
         if (\function_exists('mb_strlen')) {
-            return \mb_strlen($str, '8bit');
+            return \mb_strlen((string)$str, '8bit');
         }
-        return \strlen($str);
+        return \strlen((string)$str);
     }
 
     /**
@@ -421,7 +421,7 @@ class JWT
     private static function signatureToDER($sig)
     {
         // Separate the signature into r-value and s-value
-        list($r, $s) = \str_split($sig, (int) (\strlen($sig) / 2));
+        list($r, $s) = \str_split($sig, (int) (\strlen((string)$sig) / 2));
 
         // Trim leading zeros
         $r = \ltrim($r, "\x00");
@@ -462,7 +462,7 @@ class JWT
         $der = \chr($tag_header | $type);
 
         // Length
-        $der .= \chr(\strlen($value));
+        $der .= \chr(\strlen((string)$value));
 
         return $der . $value;
     }
@@ -506,7 +506,7 @@ class JWT
     private static function readDER($der, $offset = 0)
     {
         $pos = $offset;
-        $size = \strlen($der);
+        $size = \strlen((string)$der);
         $constructed = (\ord($der[$pos]) >> 5) & 0x01;
         $type = \ord($der[$pos++]) & 0x1f;
 

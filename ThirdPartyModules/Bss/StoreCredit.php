@@ -106,7 +106,7 @@ class StoreCredit
             $isAppliedToShippingAndTax = $this->bssStoreCreditHelper->getGeneralConfig('used_shipping') ||
                 $this->bssStoreCreditHelper->getGeneralConfig('used_tax');
 
-            $storeCreditAmount = $immutableQuote->getBaseBssStorecreditAmountInput();
+            $storeCreditAmount = (float)$immutableQuote->getBaseBssStorecreditAmountInput();
             if ($isAppliedToShippingAndTax && abs($storeCreditAmount) >= $immutableQuote->getSubtotal()) {
                 $storeCreditAmount = $this->getBssStoreCreditBalanceAmount($parentQuote);
                 $parentQuote->setBaseBssStorecreditAmountInput($storeCreditAmount)->save();

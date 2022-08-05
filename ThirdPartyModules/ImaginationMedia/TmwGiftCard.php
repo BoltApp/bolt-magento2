@@ -64,7 +64,7 @@ class TmwGiftCard
     {
         $this->tmwGiftCardHelper = $tmwGiftCardHelper;
         list ($discounts, $totalAmount, $diff) = $result;
-        $giftCard = abs($tmwGiftCardHelper->getTotalCardsAmount($parentQuote));
+        $giftCard = abs((float)$tmwGiftCardHelper->getTotalCardsAmount($parentQuote));
 
         try {
             if ($giftCard > 0) {

@@ -662,7 +662,7 @@ class Payment extends AbstractMethod
             $result = $this->apiHelper->sendRequest($request);
             $response = $result->getResponse();
 
-            if (strlen($response->reference) == 0) {
+            if (strlen((string)$response->reference) == 0) {
                 throw new LocalizedException(__('Bad review response. Empty transaction reference'));
             }
 

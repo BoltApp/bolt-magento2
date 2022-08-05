@@ -33,6 +33,7 @@ use Bolt\Boltpay\Model\FeatureSwitch;
 use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Model\Request;
 use Bolt\Boltpay\Model\Service\InvoiceService;
+use Bolt\Boltpay\Helper\ArrayHelper;
 use Bugsnag\Report;
 use Exception;
 use Magento\Customer\Model\Customer;
@@ -4812,12 +4813,18 @@ class OrderTest extends BoltTestCase
     public function addCustomerDetails_ifNoCustomerId_assignsFirstAndLastNameFromTransaction()
     {
         $quote = TestUtils::createQuote();
-
-        $transaction = new stdClass();
-        // phpcs:ignore
-        @$transaction->order->cart->billing_address->first_name = 'Bolt';
-        // phpcs:ignore
-        @$transaction->order->cart->billing_address->last_name = 'Team';
+        
+        $transaction = [
+            'order' => [
+                'cart' => [
+                    'billing_address' => [
+                        'first_name' => 'Bolt',
+                        'last_name'  => 'Team'
+                    ]
+                ]
+            ]
+        ];
+        $transaction = ArrayHelper::arrayToObject($transaction);
         $featureSwitch = TestUtils::saveFeatureSwitch(
             \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_SET_CUSTOMER_NAME_TO_ORDER_FOR_GUESTS,
             true
@@ -4839,11 +4846,17 @@ class OrderTest extends BoltTestCase
     {
         $quote = TestUtils::createQuote();
         $quote->setData('bolt_checkout_type', CartHelper::BOLT_CHECKOUT_TYPE_MULTISTEP);
-        $transaction = new stdClass();
-        // phpcs:ignore
-        @$transaction->order->cart->billing_address->first_name = 'Bolt';
-        // phpcs:ignore
-        @$transaction->order->cart->billing_address->last_name = 'Team';
+        $transaction = [
+            'order' => [
+                'cart' => [
+                    'billing_address' => [
+                        'first_name' => 'Bolt',
+                        'last_name'  => 'Team'
+                    ]
+                ]
+            ]
+        ];
+        $transaction = ArrayHelper::arrayToObject($transaction);
         $featureSwitch = TestUtils::saveFeatureSwitch(
             \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_SET_CUSTOMER_NAME_TO_ORDER_FOR_GUESTS,
             true

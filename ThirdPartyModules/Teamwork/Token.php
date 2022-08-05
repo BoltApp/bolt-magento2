@@ -57,7 +57,7 @@ class Token
     {
         list ($discounts, $totalAmount, $diff) = $result;
 
-        $amount = abs($quote->getTeamworkToken());
+        $amount = abs((float)$quote->getTeamworkToken());
         try {
             if ($amount > 0) {
                 $currencyCode = $quote->getQuoteCurrencyCode();

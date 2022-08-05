@@ -182,7 +182,7 @@ class Rewards
         
         list ($discounts, $totalAmount, $diff) = $result;
         try {
-            if ($amount = abs($this->getMirasvitRewardsAmount($parentQuote))) {
+            if ($amount = abs((float)$this->getMirasvitRewardsAmount($parentQuote))) {
                 $currencyCode = $parentQuote->getQuoteCurrencyCode();
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                 $discounts[] = [
@@ -234,7 +234,7 @@ class Rewards
         $this->mirasvitRewardsModelConfig = $mirasvitRewardsModelConfig;
         $this->mirasvitRewardsRuleQuoteSubtotalCalc = $mirasvitRewardsRuleQuoteSubtotalCalc;
 
-        if ($rewardsAmount = abs($this->getMirasvitRewardsAmount($quote))) {
+        if ($rewardsAmount = abs((float)$this->getMirasvitRewardsAmount($quote))) {
             $result .= $rewardsAmount;
         }
 
@@ -267,7 +267,7 @@ class Rewards
         }
         
         try {
-            if (abs($this->getMirasvitRewardsAmount($parentQuote)) > 0) {
+            if (abs((float)$this->getMirasvitRewardsAmount($parentQuote)) > 0) {
                 $parentPurchase = $this->mirasvitRewardsPurchaseHelper->getByQuote($parentQuoteId);
                
                 $this->mirasvitRewardsPurchaseHelper->getByQuote($immutableQuoteId)
@@ -582,7 +582,7 @@ class Rewards
         $this->mirasvitRewardsRuleQuoteSubtotalCalc = $mirasvitRewardsRuleQuoteSubtotalCalc;
         
         try {
-            $appliedMirasvitRewardsAmount = abs($this->getMirasvitRewardsAmount($quote));
+            $appliedMirasvitRewardsAmount = abs((float)$this->getMirasvitRewardsAmount($quote));
             if ($this->appliedRewardsMode == self::MIRASVIT_REWARDS_APPLY_MODE_ALL
                && $appliedMirasvitRewardsAmount > 0
                && $this->mirasvitRewardsModelConfig->getGeneralIsSpendShipping()) {
@@ -674,7 +674,7 @@ class Rewards
             $this->mirasvitRewardsRuleQuoteSubtotalCalc = $mirasvitRewardsRuleQuoteSubtotalCalc;
             
             try {
-                if (abs($this->getMirasvitRewardsAmount($quote)) > 0) {
+                if (abs((float)$this->getMirasvitRewardsAmount($quote)) > 0) {
                     $result[] = $couponCode;
                 }
             } catch (\Exception $e) {
