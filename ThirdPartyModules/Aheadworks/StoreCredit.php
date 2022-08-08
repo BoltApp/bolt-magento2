@@ -93,7 +93,7 @@ class StoreCredit
         $totals = $quote->getTotals();
         try {
             if (array_key_exists(Discount::AHEADWORKS_STORE_CREDIT, $totals)) {
-                $amount = abs($this->aheadworksCustomerStoreCreditManagement
+                $amount = abs((float)$this->aheadworksCustomerStoreCreditManagement
                     ->getCustomerStoreCreditBalance($quote->getCustomerId()));
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);

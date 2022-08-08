@@ -127,7 +127,7 @@ class TestHelper extends TestCase
             //get binary representation of the number
             $binaryRepresentation = decbin($i);
             //pad binary representation to $length by adding 0s at the beginning
-            $binaryRepresentation = str_repeat(0, $length - strlen($binaryRepresentation)) . $binaryRepresentation;
+            $binaryRepresentation = str_repeat(0, $length - strlen((string)$binaryRepresentation)) . $binaryRepresentation;
             //split each bit of the binary representation, cast to boolean and add to output
             $result[$binaryRepresentation] = array_map('boolval', str_split($binaryRepresentation, 1));
         }

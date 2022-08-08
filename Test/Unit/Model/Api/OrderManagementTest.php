@@ -1991,7 +1991,7 @@ class OrderManagementTest extends BoltTestCase
         self::assertEquals(1, count($invoice2->getAllItems()));
     }
 }
-
+// phpcs:ignore
 class stubBoltApiHelper
 {
     public function __construct()

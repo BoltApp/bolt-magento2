@@ -92,7 +92,7 @@ class GiftCard
                 $giftCardCodes = $this->getMageplazaGiftCardCodes($quote);
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 foreach ($giftCardCodes as $giftCardCode) {
-                    $amount = abs($this->getMageplazaGiftCardCodesCurrentValue([$giftCardCode]));
+                    $amount = abs((float)$this->getMageplazaGiftCardCodesCurrentValue([$giftCardCode]));
                     $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                     $discountItem = [
                         'description' => self::MAGEPLAZA_GIFTCARD_TITLE . $giftCardCode,

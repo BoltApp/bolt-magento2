@@ -79,7 +79,7 @@ trait ReceivedUrlTrait
 
         $signingSecret = $this->configHelper->getSigningSecret($storeId);
 
-        $hashBoltPayloadWithKey = hash_hmac('sha256', $boltPayload, $signingSecret, true);
+        $hashBoltPayloadWithKey = hash_hmac('sha256', (string)$boltPayload, $signingSecret, true);
         $hash = base64_encode($hashBoltPayloadWithKey);
 
         if ($signature === $hash) {

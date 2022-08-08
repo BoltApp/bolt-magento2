@@ -97,7 +97,7 @@ class DataProviderPlugin
             }
             if ($showCcTypeInOrderGrid && ! empty($ccType = $payment->getCcType()) &&
                 key_exists(
-                    $ccType = strtolower($ccType),
+                    $ccType = strtolower((string)$ccType),
                     Order::SUPPORTED_CC_TYPES
                 )
             ) {

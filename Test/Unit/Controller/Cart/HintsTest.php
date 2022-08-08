@@ -126,7 +126,7 @@ class HintsTest extends BoltTestCase
         $json = $this->getMockBuilder(Json::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $json->expects($this->at(0))
+        $json->expects(static::once())
             ->method('setData')
             ->with($expected);
         $this->resultJsonFactory->method('create')
@@ -151,7 +151,7 @@ class HintsTest extends BoltTestCase
         $json = $this->getMockBuilder(Json::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $json->expects($this->at(0))
+        $json->expects(static::once())
             ->method('setData')
             ->with($expected);
         $this->resultJsonFactory->method('create')

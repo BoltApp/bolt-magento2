@@ -71,7 +71,7 @@ commands:
                   - run:
                       name: << parameters.php_version >> << parameters.m2_version >> Magento integration
                       command: |
-                        export COMPOSER_MEMORY_LIMIT=3G
+                        export COMPOSER_MEMORY_LIMIT=4G
                         Test/scripts/ci-magento-integration.sh
             - unless:
                 condition: << parameters.is_magento_integration >>
@@ -231,7 +231,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: phpcs MEQP2 standard test
+          name: Magento Coding Standard Test
           command: |
             Test/scripts/phpcs_meqp2.sh
 
@@ -243,6 +243,7 @@ workflows:
       - integration-magento-php74-magento24
       - integration-magento-php72-magento23
       - integration-magento-php71-magento22
+      - phpcs
   integration-tests:
     triggers:
       - schedule:

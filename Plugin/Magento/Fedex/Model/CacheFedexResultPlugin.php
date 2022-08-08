@@ -145,6 +145,8 @@ class CacheFedexResultPlugin
         if ($response !== null) {
             $quoteId = $this->sessionHelper->getCheckoutSession()->getQuote()->getId();
             $cacheId = crc32(self::BOLT_CACHE_FEDEX_PREFIX . $quoteId . $requestString);
+            // Only the native PHP method `serialize` can implement proper convert
+            // phpcs:ignore Magento2.Security.InsecureFunction
             $this->cache->save(serialize($response), $cacheId, [], self::CACHE_LIFE_TIME);
         }
     }
@@ -162,6 +164,8 @@ class CacheFedexResultPlugin
         $cacheId = crc32(self::BOLT_CACHE_FEDEX_PREFIX . $quoteId . $requestString);
         $fedexCache = $this->cache->load($cacheId);
         if (!empty($fedexCache)) {
+            // Only the native PHP method `unserialize` can implement proper convert
+            // phpcs:ignore Magento2.Security.InsecureFunction
             $fedexCache = unserialize($fedexCache);
             $this->methodCaller->call($subject, '_setCachedQuotes', $requestString, $fedexCache);
         }

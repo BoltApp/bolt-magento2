@@ -418,7 +418,7 @@ class JsTest extends BoltTestCase
 
         $result = $block->getCheckoutKey();
         static::assertStringStartsWith('pKv_', $result, 'Publishable Key doesn\'t work properly');
-        static::assertEquals(strlen($expectedResult), strlen($result), 'Publishable Key has an invalid length');
+        static::assertEquals(strlen((string)$expectedResult), strlen((string)$result), 'Publishable Key has an invalid length');
         static::assertEquals($expectedResult, $result, 'Publishable Key has an invalid length');
     }
 

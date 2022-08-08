@@ -1397,27 +1397,21 @@ class Cart extends AbstractHelper
 
         // getTotals is only available on a quote
         $total = $quote->getTotals();
-        if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
+        if (isset($total['giftwrapping'])) {
             $giftWrapping = $total['giftwrapping'];
-
-
-            $totalPrice = $giftWrapping->getGwPrice() + $giftWrapping->getGwItemsPrice() + $quote->getGwCardPrice();
-            $product = [];
-            $gwId = $giftWrapping->getGwId();
-            $product['reference']    = $gwId;
-            $product['name']         = $giftWrapping->getTitle()->getText();
-            $product['total_amount'] = CurrencyUtils::toMinor($totalPrice, $currencyCode);
-            $product['unit_price']   = CurrencyUtils::toMinor($totalPrice, $currencyCode);
-            $product['quantity']     = 1;
-            $product['sku']          = trim($giftWrapping->getCode());
-            $product['type']         = self::ITEM_TYPE_PHYSICAL;
-            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-            $giftWrappingModel = $objectManager->create('Magento\GiftWrapping\Model\Wrapping')->load($gwId);
-            if ($giftWrappingModel->getImageUrl()){
-                $product['image_url']    = $giftWrappingModel->getImageUrl();
+            if ($gwId = $giftWrapping->getGwId()) {
+                $product = $this->getItemDataFromGiftWrappingId($gwId, $currencyCode, $giftWrapping);
+                $totalAmount += $product['total_amount'];
+                $products[] = $product;
             }
-            $totalAmount += $product['total_amount'];
-            $products[] = $product;
+
+            if ($gwItemIds = $giftWrapping->getGwItemIds()) {
+                foreach ($gwItemIds as $gwItemId) {
+                    $product = $this->getItemDataFromGiftWrappingId($gwItemId['gw_id'], $currencyCode, $giftWrapping);
+                    $totalAmount += $product['total_amount'];
+                    $products[] = $product;
+                }
+            }
         }
 
         return $this->eventsForThirdPartyModules->runFilter(
@@ -1427,6 +1421,34 @@ class Cart extends AbstractHelper
             $storeId
         );
     }
+
+    /**
+     * @param $gwId
+     * @param $currencyCode
+     * @param $giftWrapping
+     * @return array
+     * @throws \Exception
+     */
+    public function getItemDataFromGiftWrappingId($gwId, $currencyCode, $giftWrapping) {
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $giftWrappingModel = $objectManager->create('Magento\GiftWrapping\Model\Wrapping')->load($gwId);
+        $price = $giftWrappingModel->getBasePrice();
+        $product = [];
+        $product['reference']    = $gwId;
+        $product['name']         = $giftWrapping->getTitle()->getText().' ['.$giftWrappingModel->getDesign().']';
+        $product['total_amount'] = CurrencyUtils::toMinor($price, $currencyCode);
+        $product['unit_price']   = CurrencyUtils::toMinor($price, $currencyCode);
+        $product['quantity']     = 1;
+        $product['sku']          = trim($giftWrapping->getCode());
+        $product['type']         = self::ITEM_TYPE_PHYSICAL;
+
+        if ($giftWrappingModel->getImageUrl()){
+            $product['image_url']    = $giftWrappingModel->getImageUrl();
+        }
+
+        return $product;
+    }/**
+
 
     /**
      * Create cart data items array, given an order
@@ -1609,7 +1631,7 @@ class Cart extends AbstractHelper
                 ////////////////////////////////////
                 // Get product description and image
                 ////////////////////////////////////
-                $product['description'] = str_replace(["\r\n", "\n", "\r"], ' ', strip_tags($_product->getDescription()));
+                $product['description'] = str_replace(["\r\n", "\n", "\r"], ' ', strip_tags((string)$_product->getDescription()));
                 $variantProductToGetImage = $_product;
 
                 // This will override the $_product with the variant product to get the variant image rather than the main product image.
@@ -2190,7 +2212,7 @@ class Cart extends AbstractHelper
         $cart['total_amount'] = $totalAmount;
         $cart['tax_amount']   = $taxAmount;
 
-        if (abs($diff) >= $this->threshold) {
+        if (abs((float)$diff) >= $this->threshold) {
             $this->bugsnag->registerCallback(function ($report) use ($diff, $cart) {
                 $report->setMetaData([
                     'TOTALS_DIFF' => [
@@ -2262,7 +2284,7 @@ class Cart extends AbstractHelper
         // selecting specific shipping option, so the conditional statement should also
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
-        if (($amount = abs($address->getDiscountAmount())) || $quote->getCouponCode()) {
+        if (($amount = abs((float)$address->getDiscountAmount())) || $quote->getCouponCode()) {
             $ruleDiscountDetails = $this->getSaleRuleDiscounts($quote);     
             list($ruleDiscountDetails, $discounts, $totalAmount) = $this->eventsForThirdPartyModules->runFilter('filterQuoteDiscountDetails', [$ruleDiscountDetails, $discounts, $totalAmount], $quote);
             foreach ($ruleDiscountDetails as $salesruleId => $ruleDiscountAmount) {
@@ -2311,7 +2333,7 @@ class Cart extends AbstractHelper
         // Process Store Credit
         /////////////////////////////////////////////////////////////////////////////////
         if ($quote->getUseCustomerBalance()) {
-            if ($paymentOnly && $amount = abs($quote->getCustomerBalanceAmountUsed())) {
+            if ($paymentOnly && $amount = abs((float)$quote->getCustomerBalanceAmountUsed())) {
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                 $discounts[] = [
@@ -2335,7 +2357,7 @@ class Cart extends AbstractHelper
                 );
                 $balanceModel->loadByCustomer();
 
-                if ($amount = abs($balanceModel->getAmount())) {
+                if ($amount = abs((float)$balanceModel->getAmount())) {
                     $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                     $discounts[] = [
@@ -2358,7 +2380,7 @@ class Cart extends AbstractHelper
         // Process Reward Points
         /////////////////////////////////////////////////////////////////////////////////
         if ($quote->getUseRewardPoints()) {
-            if ($paymentOnly && $amount = abs($quote->getRewardCurrencyAmount())) {
+            if ($paymentOnly && $amount = abs((float)$quote->getRewardCurrencyAmount())) {
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                 $discounts[] = [
@@ -2382,7 +2404,7 @@ class Cart extends AbstractHelper
                 );
                 $rewardModel->loadByCustomer();
 
-                if ($amount = abs($rewardModel->getCurrencyAmount())) {
+                if ($amount = abs((float)$rewardModel->getCurrencyAmount())) {
                     $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
 
                     $discounts[] = [
@@ -2421,7 +2443,7 @@ class Cart extends AbstractHelper
                     if ($giftCertBalance > 0) {
                         $amount = $giftCertBalance;
                     }
-                    $discountAmount = abs($amount);
+                    $discountAmount = abs((float)$amount);
                     $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
                     $gcDescription = $description . $totalDiscount->getTitle();
                     $discountItem = [
@@ -2435,7 +2457,7 @@ class Cart extends AbstractHelper
                     $this->logEmptyDiscountCode($gcCode, $gcDescription);
                     $discounts[] = $discountItem;
                 } else {
-                    $discountAmount = abs($amount);
+                    $discountAmount = abs((float)$amount);
                     $roundedDiscountAmount = CurrencyUtils::toMinor($discountAmount, $currencyCode);
 
                     $discountItem = [
@@ -2563,7 +2585,7 @@ class Cart extends AbstractHelper
      */
     public function createCartByRequest($request)
     {
-        $options = json_decode($request['items'][0]['options'], true);
+        $options = json_decode((string)$request['items'][0]['options'], true);
         $storeId = $options['storeId'];
 
         // try returning from cache
@@ -2623,7 +2645,7 @@ class Cart extends AbstractHelper
         foreach ($items as $item) {
             $product = $this->productRepository->getById($item['reference']);
 
-            $options = json_decode($item['options'], true);
+            $options = json_decode((string)$item['options'], true);
             if (isset($options['storeId']) && $options['storeId']) {
                 $quote->setStoreId($options['storeId']);
             }
@@ -2682,7 +2704,7 @@ class Cart extends AbstractHelper
      */
     private function assignQuoteCustomerByEncryptedUserId($quote, $encrypted_user_id)
     {
-        $metadata = json_decode($encrypted_user_id);
+        $metadata = json_decode((string)$encrypted_user_id);
         if (! $metadata || ! isset($metadata->user_id) || ! isset($metadata->timestamp) || ! isset($metadata->signature)) {
             throw new WebapiException(__('Incorrect encrypted_user_id'), 6306, 422);
         }
@@ -2814,7 +2836,7 @@ class Cart extends AbstractHelper
      */
     protected function encryptMetadataValue($data)
     {
-        return base64_encode($this->configHelper->encrypt($data));
+        return base64_encode((string)$this->configHelper->encrypt($data));
     }
 
     /**
@@ -2993,9 +3015,31 @@ class Cart extends AbstractHelper
     public function isCollectDiscountsByPlugin($quote)
     {
         //By default this feature switch is disabled.
-        return $this->deciderHelper->isCollectDiscountsByPlugin()
-            || ($this->configHelper->isActive($quote->getStore()->getId())
-            && version_compare($this->configHelper->getStoreVersion(), '2.3.4', '<'));
+        if ($this->deciderHelper->isCollectDiscountsByPlugin()) {
+            return true;
+        }
+        if (!$this->configHelper->isActive($quote->getStore()->getId())) {
+            return false;
+        }
+        if (version_compare($this->configHelper->getStoreVersion(), '2.3.4', '<')) {
+            return true;
+        }
+        // For bundle product, there is a bug in M2 core (https://github.com/magento/magento2/commit/5dabdb6a104159458fd9c0847447d641e75daa0e, fixed in M2 v2.4.4),
+        // as a result, if the cart contains any bundle product, $address->getExtensionAttributes()->getDiscounts() returns incomplete discounts data.
+        // Then we have to use plugin methods to collect discounts details if M2 version of merchant's store is older than v2.4.4
+        if (version_compare($this->configHelper->getStoreVersion(), '2.4.4', '<')) {
+            $items = $quote->getAllVisibleItems();
+            foreach ($items as $item) {
+                $_product = $item->getProduct();
+                if (!$_product) {
+                    continue;
+                }
+                if ($item->getProductType() == \Magento\Bundle\Model\Product\Type::TYPE_CODE) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     
     /**

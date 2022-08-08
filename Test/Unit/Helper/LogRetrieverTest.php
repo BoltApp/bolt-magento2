@@ -50,6 +50,9 @@ class LogRetrieverTest extends BoltTestCase
 
     protected function setUpInternal()
     {
+        if( !class_exists( 'vfsStream' ) ){
+            $this->markTestSkipped(' vfsStream class not available.' );
+        }
         $structure = [
             'log' => [
                 'exception.log' => "Line 1 of log\nLine 2 of log\nLine 3 of log"

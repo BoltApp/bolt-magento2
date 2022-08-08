@@ -106,7 +106,7 @@ class OrderPluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
      */
     public function aroundExportOrder_withNonBoltOrder_proceedsToOriginal()
     {
-        $odooId = mt_rand();
+        $odooId = random_int(1,10000);
         $this->payment->setMethod('checkmo');
         $this->orderModel->setPayment($this->payment);
         $this->proceedMock->expects(static::once())->method('proceed')->withAnyParameters()->willReturn($odooId);
@@ -128,7 +128,7 @@ class OrderPluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
      */
     public function aroundExportOrder_withNonPendingBoltOrder_proceedsToOriginal()
     {
-        $odooId = mt_rand();
+        $odooId = random_int(1,10000);
         $this->payment->setMethod(Payment::METHOD_CODE);
         $this->orderModel->setPayment($this->payment);
         $this->orderModel->setState(\Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATE_NEW);

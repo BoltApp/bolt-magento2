@@ -87,7 +87,7 @@ class RewardPoints
                 ) {
                     $rewardPoints = $this->mwRewardPointsModelCustomer->create()
                         ->load($quote->getCustomerId())->getMwRewardPoint();
-                    $amount = abs($this->mwRewardPointsHelperData->exchangePointsToMoneys($rewardPoints, $storeCode));
+                    $amount = abs((float)$this->mwRewardPointsHelperData->exchangePointsToMoneys($rewardPoints, $storeCode));
                 } else {
                     $amount = $quote->getMwRewardpointDiscount();
                 }
@@ -165,7 +165,7 @@ class RewardPoints
                 ) {
                     $rewardPoints = $this->mwRewardPointsModelCustomer->create()
                         ->load($quote->getCustomerId())->getMwRewardPoint();
-                    $amount = abs($this->mwRewardPointsHelperData->exchangePointsToMoneys($rewardPoints, $storeCode));
+                    $amount = abs((float)$this->mwRewardPointsHelperData->exchangePointsToMoneys($rewardPoints, $storeCode));
                     $this->mwRewardPointsHelperData->setPointToCheckOut($rewardPoints);
                     $quote->setSpendRewardpointCart($rewardPoints);
 
@@ -268,7 +268,7 @@ class RewardPoints
                 ) {
                     $rewardPoints = $this->mwRewardPointsModelCustomer->create()
                         ->load($quote->getCustomerId())->getMwRewardPoint();
-                    $maximumAmount = CurrencyUtils::toMinor(abs($this->mwRewardPointsHelperData->exchangePointsToMoneys($rewardPoints, $storeCode)), $currencyCode);
+                    $maximumAmount = CurrencyUtils::toMinor(abs((float)$this->mwRewardPointsHelperData->exchangePointsToMoneys($rewardPoints, $storeCode)), $currencyCode);
                     $quoteSubtotal = CurrencyUtils::toMinor($quote->getSubtotal(), $currencyCode);
 
                     $quoteSubtotalIncludeShippingAndDiscount = $quoteSubtotal - $discountedAmount + $result;
@@ -370,7 +370,7 @@ class RewardPoints
     public function getDiscountedAmount($quote, $currencyCode) {
         $amastyGift = 0;
         if (isset($quote->getTotals()['amasty_giftcard'])) {
-            $amastyGift = CurrencyUtils::toMinor(abs($quote->getTotals()['amasty_giftcard']->getValue()), $currencyCode);
+            $amastyGift = CurrencyUtils::toMinor(abs((float)$quote->getTotals()['amasty_giftcard']->getValue()), $currencyCode);
         }
 
         $discountedAmount = CurrencyUtils::toMinor($quote->getSubtotal(), $currencyCode) -  CurrencyUtils::toMinor($quote->getSubtotalWithDiscount(), $currencyCode);

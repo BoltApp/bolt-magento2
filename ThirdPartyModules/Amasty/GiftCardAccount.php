@@ -138,7 +138,7 @@ class GiftCardAccount
                     $giftcardQuote = $giftcardQuoteRepository->getByQuoteId($quote->getId());
                     foreach ($giftcardQuote->getGiftCards() as $appliedGiftcardData) {
                         $giftcard = $giftcardAccountRepository->getById($appliedGiftcardData['id']);
-                        $amount = abs($giftcard->getCurrentValue());               
+                        $amount = abs((float)$giftcard->getCurrentValue());               
                         $giftCardCode = $giftcard->getCodeModel()->getCode();
                         $appliedGiftCardItems[] = [
                             'code' => $giftCardCode,
@@ -149,7 +149,7 @@ class GiftCardAccount
                     $extension = $quote->getExtensionAttributes();
                     $appliedGiftCards = $extension->getAmAppliedGiftCards();
                     foreach ($appliedGiftCards as $appliedGiftCard) {
-                        $amount = abs($appliedGiftCard[\Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardCartProcessor::GIFT_CARD_AMOUNT]);               
+                        $amount = abs((float)$appliedGiftCard[\Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardCartProcessor::GIFT_CARD_AMOUNT]);               
                         $giftCardCode = $appliedGiftCard[\Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardCartProcessor::GIFT_CARD_CODE];
                         $appliedGiftCardItems[] = [
                             'code' => $giftCardCode,

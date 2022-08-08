@@ -81,13 +81,20 @@ class StoreConfigurationRequestBuilder
     public function getRequest(string $storeCode): Request
     {
         $store = $this->storeRepository->get($storeCode);
+        $apiKey = $this->config->getApiKey($store->getId());
+        $publishKey = $this->config->getPublishableKeyCheckout($store->getId());
+        if (!$apiKey || !$publishKey) {
+            throw new LocalizedException(
+                __('Bolt API Key or Publishable Key - Multi Step is not configured')
+            );
+        }
         $requestData = $this->dataObjectFactory->create();
         $requestData->setDynamicApiUrl(self::API_REQUEST_API_URL);
-        $requestData->setApiKey($this->config->getApiKey($store->getId()));
+        $requestData->setApiKey($apiKey);
         $requestData->setStatusOnly(true);
         $requestData->setHeaders(
             [
-                'X-Publishable-Key' => $this->config->getPublishableKeyCheckout($store->getId())
+                'X-Publishable-Key' => $publishKey
             ]
         );
         $requestData->setRequestMethod(self::API_REQUEST_METHOD_TYPE);

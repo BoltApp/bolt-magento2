@@ -93,7 +93,7 @@ class GiftCardAccount
             $currencyCode = $quote->getQuoteCurrencyCode();
 
             foreach ($giftCardCodes as $giftCardCode => $giftCardAmount) {
-                $amount = abs($giftCardAmount);
+                $amount = abs((float)$giftCardAmount);
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                 $discountItem = [
                     'description'       => 'Gift Card: ' . $giftCardCode,
