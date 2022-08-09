@@ -4663,7 +4663,6 @@ class OrderTest extends BoltTestCase
 
         if ($recordMismatch) {
             self::assertEquals(CurrencyUtils::toMajor($cartTotalAmount, 'USD'), $order->getGrandTotal());
-            self::assertEquals(CurrencyUtils::toMajor($cartTotalAmount, 'USD'), $order->getBaseGrandTotal());
             self::assertEquals($taxAmountBeforeAdjustingPriceMismatch + CurrencyUtils::toMajor($totalMismatch, 'USD'), $order->getTaxAmount());
             self::assertEquals($baseTaxAmountBeforeAdjustingPriceMismatch + CurrencyUtils::toMajor($totalMismatch, 'USD'), $order->getBaseTaxAmount());
         } else {

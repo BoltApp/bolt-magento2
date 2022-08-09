@@ -170,6 +170,8 @@ class OrderManagement implements OrderManagementInterface
                 $this->metricsClient->processMetric("webhooks.success", 1, "webhooks.latency", $startTime);
                 return;
             }
+            
+            $this->cartHelper->setCurrentCurrencyCode($currency);
 
             // get the store id. try fetching from quote first,
             // otherwise load it from order if there's one created

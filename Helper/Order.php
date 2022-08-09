@@ -612,7 +612,6 @@ class Order extends AbstractHelper
 
         if ($boltTaxAmount != $orderTaxAmount) {
             $order->setTaxAmount($boltTaxAmount);
-            $order->setBaseGrandTotal($boltTotalAmount);
             $order->setGrandTotal($boltTotalAmount);
 
             $this->bugsnag->registerCallback(function ($report) use ($quote, $boltTaxAmount, $orderTaxAmount) {
@@ -765,7 +764,7 @@ class Order extends AbstractHelper
                     ->setBaseTaxAmount($order->getBaseTaxAmount() + CurrencyUtils::toMajor($totalMismatch, $currencyCode));
             }
 
-            $order->setBaseGrandTotal($boltGrandTotal)->setGrandTotal($boltGrandTotal);
+            $order->setGrandTotal($boltGrandTotal);
 
             $this->bugsnag->registerCallback(function ($report) use ($quote, $boltTotalAmount, $magentoTotalAmount) {
 
@@ -2390,7 +2389,6 @@ class Order extends AbstractHelper
         }
         $invoice->setRequestedCaptureCase(Invoice::CAPTURE_OFFLINE);
         $invoice->setTransactionId($transactionId);
-        $invoice->setBaseGrandTotal($amount);
         $invoice->setGrandTotal($amount);
         $invoice->register();
         $invoice->save();

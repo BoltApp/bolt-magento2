@@ -419,6 +419,9 @@ class ShippingMethods implements ShippingMethodsInterface
      */
     public function getShippingAndTax($cart, $shipping_address)
     {
+        if (isset($cart['currency'])) {
+            $this->cartHelper->setCurrentCurrencyCode($cart['currency']);
+        }
         $cart = $this->eventsForThirdPartyModules->runFilter('filterCartBeforeLegacyShippingAndTax', $cart);
         // get immutable quote id stored with transaction
         $immutableQuoteId = $this->cartHelper->getImmutableQuoteIdFromBoltCartArray($cart);
