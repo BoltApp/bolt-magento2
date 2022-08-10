@@ -87,6 +87,7 @@ class Extrafee
         list($products, $totalAmount, $diff) = $result;
         $totals = $quote->getTotals();
         if ($totals && key_exists(self::AMASTY_EXTRAFEE, $totals) && $totals[self::AMASTY_EXTRAFEE]['value'] > 0) {
+            $this->_extrafeeCollectionFactory = $extrafeeCollectionFactory;
             $feeDatas = $this->getFeesDataFromQuote($quote)->addFieldToFilter('option_id', ['neq' => '0'])->getItems();
             foreach ($feeDatas as $feeOption) {
                 $currencyCode = $quote->getQuoteCurrencyCode();
