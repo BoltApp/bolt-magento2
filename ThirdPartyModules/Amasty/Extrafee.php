@@ -64,7 +64,7 @@ class Extrafee
                     "name" => $option['label'],
                     "description" => $option['label'],
                     "productId" => self::AMASTY_EXTRAFEE_PREFIX . '_' . $feeId . '_' . $optionId,
-                    "imageUrl" => "https://cdn.routeapp.io/route-widget/images/RouteLogoIcon.png",
+                    "imageUrl" => "",
                     "price" => CurrencyUtils::toMinor($option['price'], $currencyCode),
                 ];
             }
