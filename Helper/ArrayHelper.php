@@ -85,4 +85,71 @@ class ArrayHelper
         }
         return $obj;
     }
+    
+    /**
+     * Save the structure of mixed array&object, so the serialized data can be restored properly.
+     *
+     * @param mixed $data
+     * @param bool  $child
+     * 
+     * @return array
+     */
+    public static function saveStructureMixedArrayObject($data, $child = false)
+    {
+        $result = [];
+        foreach ($data as $k => $v) {
+            if (is_object($v)) {
+                $result[$k]['type'] = 'object';
+            } else {
+                $result[$k]['type'] = 'normal';
+            }
+            if (is_array($v) || is_object($v)) {
+                $result[$k]['content'] = self::saveStructureMixedArrayObject($v, true);
+            } else {
+                $result[$k]['content'] = 'normal';
+            }
+        }
+        if (!$child) {
+            $finalResult = [];
+            if (is_object($data)) {
+                $finalResult['type'] = 'object';
+            } else {
+                $finalResult['type'] = 'normal';
+            }
+            $finalResult['content'] = $result;
+            $result = $finalResult;
+        }
+        return $result;
+    }
+    
+    /**
+     * Restore the serialized data to mixed array&objects properly.
+     *
+     * @param array $data
+     * @param array $mixedStructure
+     * @param bool  $child
+     * 
+     * @return mixed
+     */
+    public static function restoreMixedArrayObject($data, $mixedStructure, $child = false)
+    {
+        if (!empty($data) && !empty($mixedStructure) && is_array($mixedStructure)) {
+            $mixedChildStructure = $child ? $mixedStructure : $mixedStructure['content'];
+            foreach ($data as $k => &$v) {
+                if (array_key_exists($k, $mixedChildStructure)) {
+                    if (is_array($v) || is_object($v)) {
+                        $v = self::restoreMixedArrayObject($v, $mixedChildStructure[$k]['content'], true);
+                    }
+                    if ($mixedChildStructure[$k]['type'] == 'object') {
+                        $v = (object)$v;
+                    }
+                }
+            }
+        }
+        if (!$child && $mixedStructure['type'] == 'object') {
+            $data = (object)$data;
+        }
+        return $data;
+    }
+
 }

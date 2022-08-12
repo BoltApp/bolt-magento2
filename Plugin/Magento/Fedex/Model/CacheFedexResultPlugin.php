@@ -16,6 +16,7 @@
  */
 namespace Bolt\Boltpay\Plugin\Magento\Fedex\Model;
 
+use Bolt\Boltpay\Helper\ArrayHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
@@ -58,10 +59,10 @@ class CacheFedexResultPlugin
     private $methodCaller;
     
     /**
-     * @param Bugsnag         $bugsnag
-     * @param SessionHelper   $sessionHelper
-     * @param CacheInterface  $cache
-     * @param Serialize|null  $serializer
+     * @param Bugsnag          $bugsnag
+     * @param SessionHelper    $sessionHelper
+     * @param CacheInterface   $cache
+     * @param Json|null        $json
      */
     public function __construct(
         Bugsnag $bugsnag,
@@ -145,9 +146,9 @@ class CacheFedexResultPlugin
         if ($response !== null) {
             $quoteId = $this->sessionHelper->getCheckoutSession()->getQuote()->getId();
             $cacheId = crc32(self::BOLT_CACHE_FEDEX_PREFIX . $quoteId . $requestString);
-            // Only the native PHP method `serialize` can implement proper convert
-            // phpcs:ignore Magento2.Security.InsecureFunction
-            $this->cache->save(serialize($response), $cacheId, [], self::CACHE_LIFE_TIME);
+            $this->cache->save($this->json->serialize($response), $cacheId, [], self::CACHE_LIFE_TIME);
+            $responseStructure = ArrayHelper::saveStructureMixedArrayObject($response);
+            $this->cache->save($this->json->serialize($responseStructure), $cacheId . 'structure', [], self::CACHE_LIFE_TIME);
         }
     }
     
@@ -163,10 +164,11 @@ class CacheFedexResultPlugin
         $quoteId = $this->sessionHelper->getCheckoutSession()->getQuote()->getId();
         $cacheId = crc32(self::BOLT_CACHE_FEDEX_PREFIX . $quoteId . $requestString);
         $fedexCache = $this->cache->load($cacheId);
-        if (!empty($fedexCache)) {
-            // Only the native PHP method `unserialize` can implement proper convert
-            // phpcs:ignore Magento2.Security.InsecureFunction
-            $fedexCache = unserialize($fedexCache);
+        $fedexStructureCache = $this->cache->load($cacheId . 'structure');
+        if (!empty($fedexCache) && !empty($fedexStructureCache)) {
+            $fedexCache = $this->json->unserialize($fedexCache);
+            $fedexStructureCache = $this->json->unserialize($fedexStructureCache);
+            $fedexCache = ArrayHelper::restoreMixedArrayObject($fedexCache, $fedexStructureCache);
             $this->methodCaller->call($subject, '_setCachedQuotes', $requestString, $fedexCache);
         }
     }
