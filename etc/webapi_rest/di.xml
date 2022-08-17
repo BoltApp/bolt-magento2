@@ -32,4 +32,18 @@
                 type="Bolt\Boltpay\Plugin\WebapiRest\Magento\Quote\Model\QuotePlugin"
                 sortOrder="1"/>
     </type>
+
+    <!-- ShipperHQ admin custom shipping rate api driven integration support -->
+    <type name="Magento\Checkout\Api\ShippingInformationManagementInterface">
+        <plugin name="Bolt_BoltPay_Checkout_Api_ShippingInformationManagement"
+                type="Bolt\Boltpay\Plugin\Magento\Checkout\Model\ShippingInformationManagementPlugin"/>
+    </type>
+    <type name="Magento\Quote\Api\PaymentMethodManagementInterface">
+        <plugin name="Bolt_BoltPay_Checkout_Api_PaymentMethodManagement"
+                type="Bolt\Boltpay\Plugin\Magento\Quote\Model\PaymentMethodManagementPlugin"/>
+    </type>
+    <type name="Magento\Quote\Model\Quote">
+        <plugin name="Bolt_BoltPay_Quote_Model_Quote"
+                type="Bolt\Boltpay\Plugin\Magento\Quote\Model\QuotePlugin"/>
+    </type>
 </config>
