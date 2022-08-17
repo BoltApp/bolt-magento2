@@ -55,7 +55,9 @@ class PaymentMethodManagementPlugin
         PaymentInterface $method
     ) {
         $quote = $this->cartRepository->get($cartId);
-        $quote->setData(Cart::SHIPPER_HQ_SKIP_QUOTE_COLLECT_TOTALS, true);
+        if ($quote->getShippingAddress()->getShippingMethod() === Cart::SHIPPER_HQ_ADMIN_SHIPPING_METHOD) {
+            $quote->setData(Cart::SHIPPER_HQ_SKIP_QUOTE_COLLECT_TOTALS, true);
+        }
         return [$cartId, $method];
     }
 }
