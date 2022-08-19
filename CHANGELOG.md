@@ -257,7 +257,7 @@
 - Fixed issue where customers' loyalty points created via the [Reward Points Subscription by Aheadworks](https://marketplace.magento.com/aheadworks-module-reward-points-subscription.html) plugin were not added to the users' accounts.
 - Resolved issue with Gift Cards via [Gift Card by Aheadworks](https://marketplace.magento.com/aheadworks-module-giftcard.html) plugin not applying to orders.
 - Fixed issue where users could not filter via `Bolt-Visa` payment method in order grid view.
-## [v2.26.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.1) 2022-08-17
+## [v2.26.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.1) 2022-08-22
 - Plugin now compatible with Magento version 2.4.5 & PHP 8.1.
 - [Amasty Extra Fee](https://amasty.com/magento-extra-fee.html) plugin now supported.
 - Fixes intermittent issue with using multiple currencies at checkout.
