@@ -238,7 +238,7 @@
 - Users can now check out with a fixed amount shipping discount.
 - Fixed issue in order view that prevented users from filtering by Bolt Payments.
 - Merchants will now see fully refunded orders that have shipped with `Processing` status instead of `Closed`.
-## [v2.26.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.0) 2022-06-27
+## [v2.26.0](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.0) 2022-07-11
 - Bolt now ingests Magento product catalog to ensure product availability within Bolt checkout. Inventory syncs between the two platforms for the following events:
     - Updating product inventory in Magento
     - Setting products to "Out of Stock"
@@ -257,3 +257,8 @@
 - Fixed issue where customers' loyalty points created via the [Reward Points Subscription by Aheadworks](https://marketplace.magento.com/aheadworks-module-reward-points-subscription.html) plugin were not added to the users' accounts.
 - Resolved issue with Gift Cards via [Gift Card by Aheadworks](https://marketplace.magento.com/aheadworks-module-giftcard.html) plugin not applying to orders.
 - Fixed issue where users could not filter via `Bolt-Visa` payment method in order grid view.
+## [v2.26.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.1) 2022-08-22
+- Plugin now compatible with Magento version 2.4.5 & PHP 8.1.
+- [Amasty Extra Fee](https://amasty.com/magento-extra-fee.html) plugin now supported.
+- Fixes intermittent issue with using multiple currencies at checkout.
+- Discounts for bundle products now supported on Magento versions < 2.4.4.
