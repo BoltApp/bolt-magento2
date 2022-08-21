@@ -1839,6 +1839,9 @@ JS;
         $configHelper = $this->objectManager->create(Config::class);
         TestHelper::setProperty($currentMock, 'configHelper', $configHelper);
         $currentMock->method('isEnabled')->willReturn($isEnabled);
+        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
+        TestHelper::setProperty($currentMock, 'eventsForThirdPartyModules', $eventsForThirdPartyModules);
 
         // stub \Bolt\Boltpay\Block\BlockTrait::isPageRestricted start
         $currentMock->method('getRequest')->willReturnSelf();
