@@ -21,8 +21,10 @@ namespace Bolt\Boltpay\Block\Checkout;
 use Bolt\Boltpay\Block\BlockTrait;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
+use Magento\Framework\Session\SessionManager as CheckoutSession;
 
 class Success extends Template
 {
@@ -31,19 +33,25 @@ class Success extends Template
     /**
      * Success constructor.
      *
-     * @param Config  $configHelper
-     * @param Context $context
-     * @param Decider $featureSwitches
+     * @param Config                     $configHelper
+     * @param Context                    $context
+     * @param Decider                    $featureSwitches
+     * @param CheckoutSession            $checkoutSession
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      * @param array   $data
      */
     public function __construct(
         Config $configHelper,
         Context $context,
         Decider $featureSwitches,
+        CheckoutSession $checkoutSession,
+        EventsForThirdPartyModules $eventsForThirdPartyModules,
         array $data = []
     ) {
         parent::__construct($context, $data);
         $this->configHelper = $configHelper;
         $this->featureSwitches = $featureSwitches;
+        $this->checkoutSession = $checkoutSession;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
 }

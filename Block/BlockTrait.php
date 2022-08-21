@@ -18,6 +18,8 @@ namespace Bolt\Boltpay\Block;
 
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Framework\Session\SessionManager as CheckoutSession;
 
 trait BlockTrait
 {
@@ -29,6 +31,16 @@ trait BlockTrait
 
     /** @var Decider */
     public $featureSwitches;
+    
+    /**
+     * @var EventsForThirdPartyModules
+     */
+    public $eventsForThirdPartyModules;
+
+    /**
+     * @var CheckoutSession
+     */
+    public $checkoutSession;
 
     /**
      * @return mixed
@@ -156,7 +168,8 @@ trait BlockTrait
         if (!$this->featureSwitches->isBoltEnabled()) {
             return true;
         }
-        return !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted() || $this->isKeyMissing();
+        $result = !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted() || $this->isKeyMissing();
+        return $this->eventsForThirdPartyModules->runFilter('filterShouldDisableBoltCheckout', $result, $this->getQuoteFromCheckoutSession());
     }
 
     /**
@@ -173,5 +186,13 @@ trait BlockTrait
     public function isInstantCheckoutButton()
     {
         return $this->featureSwitches->isInstantCheckoutButton();
+    }
+
+    /**
+     * @return Quote
+     */
+    public function getQuoteFromCheckoutSession()
+    {
+        return $this->checkoutSession->getQuote();
     }
 }

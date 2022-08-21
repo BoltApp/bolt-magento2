@@ -89,4 +89,7 @@
         <plugin sortOrder="1" name="boltBoltpaySuccessValidatorPlugin"
                 type="Bolt\Boltpay\Plugin\Magento\Checkout\Model\Session\SuccessValidatorPlugin"/>
     </type>
+    <type name="Magento\Framework\App\Action\AbstractAction">
+    	<plugin name="boltBoltpayAbstractActionPlugin" type="Bolt\Boltpay\Plugin\Magento\Framework\App\Action\AbstractActionPlugin"/>
+    </type>
 </config>
