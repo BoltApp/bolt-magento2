@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="quote" resource="default" engine="innodb">
+        <column name="bolt_parent_quote_id" xsi:type="int" unsigned="true" nullable="true" default="NULL" identity="false"
+                 comment="Original quote ID"/>
+        <column name="bolt_reserved_order_id" xsi:type="varchar" length="64" nullable="true" identity="false"
+                 comment="Bolt reserved order Id"/>
+        <column name="bolt_checkout_type" xsi:type="smallint" unsigned="true" nullable="false" default="1" identity="false"
+                 comment="1 - multi-step, 2 - PPC, 3 - back office, 4 - PPC complete"/>
+        <column name="bolt_dispatched" xsi:type="boolean" nullable="true" identity="false"
+                 comment="Order dispatched flag"/>
+        <column name="bolt_reserved_order_id" disabled="true"/>
+        <index referenceId="BOLT_PARENT_QUOTE_ID" indexType="btree">
+            <column name="bolt_parent_quote_id"/>
+        </index>
+    </table>
+    
+    <table name="sales_order" resource="default" engine="innodb">
+        <column name="bolt_transaction_reference" xsi:type="varchar" length="64" nullable="true"
+                 comment="Bolt Transaction Reference"/>
+    </table>
+    
+    <table name="bolt_customer_credit_cards" resource="default" engine="innodb" comment="Bolt customer credit cards">
+        <column name="id" xsi:type="int" identity="true" unsigned="true" nullable="false" comment="ID" />
+        <column name="card_info" xsi:type="text" nullable="false" comment="Card info" />
+        <column name="customer_id" xsi:type="int" identity="false" unsigned="true" nullable="false" comment="Customer ID" />
+        <column name="consumer_id" xsi:type="text" nullable="false" comment="Consumer ID" />
+        <column name="credit_card_id" xsi:type="text" nullable="false" comment="Credit Card ID" />
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="BOLT_CUSTOMER_CREDIT_CUSTOMER_ID_CUSOMTER_ENTITY_ID"
+                    table="bolt_customer_credit_cards" column="customer_id"
+                    referenceTable="customer_entity" referenceColumn="entity_id" onDelete="CASCADE"/>
+        <index referenceId="BOLT_CUSTOMER_CREDIT_CUSTOMER_ID" indexType="btree">
+            <column name="customer_id"/>
+        </index>
+    </table>
+    
+    <table name="bolt_webhook_log" resource="default" engine="innodb" comment="Bolt Webhook Log table">
+        <column name="id" xsi:type="int" identity="true" unsigned="true" nullable="false" comment="ID" />
+        <column name="transaction_id" xsi:type="varchar" length="255" nullable="false" comment="Transaction ID" />
+        <column name="hook_type" xsi:type="varchar" length="255" nullable="false" comment="Hook type" />
+        <column name="number_of_missing_quote_failed_hooks" xsi:type="int" default="0" nullable="false" comment="Number of the missing quote failed hooks" />
+        <column name="updated_at" xsi:type="timestamp" comment="Updated at"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="id"/>
+        </constraint>
+    </table>
+    
+    <table name="bolt_external_customer_entity" resource="default" engine="innodb" comment="Bolt External Customer Entity table">
+        <column name="id" xsi:type="int" identity="true" unsigned="true" nullable="false" comment="ID" />
+        <column name="external_id" xsi:type="varchar" length="255" nullable="false" comment="External ID" />
+        <column name="customer_id" xsi:type="int" nullable="false" comment="Customer ID" />
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="id"/>
+        </constraint>
+    </table>
+    
+    <table name="bolt_product_event" resource="default" engine="innodb" comment="Bolt Product Event table">
+        <column name="id" xsi:type="int" identity="true" unsigned="true" nullable="false" comment="ID" />
+        <column name="product_id" xsi:type="int" unsigned="true" nullable="false" comment="Product ID" />
+        <column name="type" xsi:type="varchar" length="255" nullable="false" comment="Operation type" />
+        <column name="created_at" xsi:type="timestamp" default="CURRENT_TIMESTAMP" on_update="false" comment="Created At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="BOLT_PRODUCT_EVENT_PRODUCT_ID">
+            <column name="product_id"/>
+        </constraint>
+        <index referenceId="BOLT_PRODUCT_EVENT_TYPE" indexType="btree">
+            <column name="type"/>
+        </index>
+        <index referenceId="BOLT_PRODUCT_EVENT_CREATE" indexType="btree">
+            <column name="created_at"/>
+        </index>
+    </table>
+</schema>
