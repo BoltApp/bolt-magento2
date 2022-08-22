@@ -1,8 +1,72 @@
 {
-    "plugin_version_notification": {
+    "quote": {
         "column": {
-            "latest_version": true,
-            "description": true
+            "bolt_parent_quote_id": true,
+            "bolt_reserved_order_id": true,
+            "bolt_checkout_type": true,
+            "bolt_dispatched": true
+        },
+        "index": {
+            "QUOTE_BOLT_PARENT_QUOTE_ID": true
+        }
+    },
+    "sales_order": {
+        "column": {
+            "bolt_transaction_reference": true
+        }
+    },
+    "bolt_customer_credit_cards": {
+        "column": {
+            "id": true,
+            "card_info": true,
+            "customer_id": true,
+            "consumer_id": true,
+            "credit_card_id": true
+        },
+        "index": {
+            "BOLT_CUSTOMER_CREDIT_CARDS_CUSTOMER_ID": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "BOLT_CUSTOMER_CREDIT_CARDS_CUSTOMER_ID_CUSTOMER_ENTITY_ENTITY_ID": true
+        }
+    },
+    "bolt_webhook_log": {
+        "column": {
+            "id": true,
+            "transaction_id": true,
+            "hook_type": true,
+            "number_of_missing_quote_failed_hooks": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "bolt_external_customer_entity": {
+        "column": {
+            "id": true,
+            "external_id": true,
+            "customer_id": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "bolt_product_event": {
+        "column": {
+            "id": true,
+            "product_id": true,
+            "type": true,
+            "created_at": true
+        },
+        "index": {
+            "BOLT_PRODUCT_EVENT_TYPE": true,
+            "BOLT_PRODUCT_EVENT_CREATED_AT": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "BOLT_PRODUCT_EVENT_PRODUCT_ID": true
         }
     }
 }
