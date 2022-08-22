@@ -24,11 +24,11 @@ commands:
       m2_version:
         type: enum
         default: "2.3.0"
-        enum: ["2.2.8", "2.3.0", "2.4.2"]
+        enum: ["2.3.0", "2.4.2"]
       php_version:
         type: enum
         default: "php72"
-        enum: ["php71", "php72", "php74"]
+        enum: ["php72", "php74"]
       is_integration:
         type: boolean
         default: false
@@ -155,20 +155,6 @@ jobs:
           php_version: "php72"
           is_magento_integration: true
 
-  integration-magento-php71-magento22:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php71:2.2.8
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-      - image: cimg/mysql:5.7
-    steps:
-      - m2-php-test:
-          cache_key_separator: php71mag22installed
-          m2_version: "2.2.8"
-          php_version: "php71"
-          is_magento_integration: true
-
   integration-php72-magento23:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v2
@@ -242,7 +228,6 @@ workflows:
     jobs:
       - integration-magento-php74-magento24
       - integration-magento-php72-magento23
-      - integration-magento-php71-magento22
       - phpcs
   integration-tests:
     triggers:
