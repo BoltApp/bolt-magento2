@@ -23,7 +23,7 @@
     
     <table name="bolt_customer_credit_cards" resource="default" engine="innodb" comment="Bolt customer credit cards">
         <column name="id" xsi:type="int" identity="true" unsigned="true" nullable="false" comment="ID" />
-        <column name="card_info" xsi:type="text" nullable="false" comment="Card info" />
+        <column name="card_info" xsi:type="longtext" nullable="false" comment="Card info" />
         <column name="customer_id" xsi:type="int" identity="false" unsigned="true" nullable="false" comment="Customer ID" />
         <column name="consumer_id" xsi:type="text" nullable="false" comment="Consumer ID" />
         <column name="credit_card_id" xsi:type="text" nullable="false" comment="Credit Card ID" />
@@ -62,7 +62,7 @@
         <column name="id" xsi:type="int" identity="true" unsigned="true" nullable="false" comment="ID" />
         <column name="product_id" xsi:type="int" unsigned="true" nullable="false" comment="Product ID" />
         <column name="type" xsi:type="varchar" length="255" nullable="false" comment="Operation type" />
-        <column name="created_at" xsi:type="timestamp" default="CURRENT_TIMESTAMP" on_update="false" comment="Created At"/>
+        <column name="created_at" xsi:type="timestamp" default="CURRENT_TIMESTAMP" nullable="false" on_update="false" comment="Created At"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="id"/>
         </constraint>
