@@ -20,7 +20,7 @@
     <table name="bolt_customer_credit_cards" resource="default" engine="innodb" comment="Bolt customer credit cards">
         <column name="id" xsi:type="int" identity="true" unsigned="true" nullable="false" comment="ID" />
         <column name="card_info" xsi:type="longtext" nullable="false" comment="Card info" />
-        <column name="customer_id" xsi:type="int" identity="false" unsigned="true" nullable="false" comment="Customer ID" />
+        <column name="customer_id" xsi:type="int" padding="10" identity="false" unsigned="true" nullable="false" comment="Customer ID" />
         <column name="consumer_id" xsi:type="text" nullable="false" comment="Consumer ID" />
         <column name="credit_card_id" xsi:type="text" nullable="false" comment="Credit Card ID" />
         <constraint xsi:type="primary" referenceId="PRIMARY">
