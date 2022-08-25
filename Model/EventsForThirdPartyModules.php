@@ -26,6 +26,7 @@ use Bolt\Boltpay\ThirdPartyModules\Amasty\Rewards as Amasty_Rewards;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\GiftCardAccount as Amasty_GiftCardAccount;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\GiftCard as Amasty_GiftCard;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Extrafee as Amasty_Extrafee;
+use Bolt\Boltpay\ThirdPartyModules\MageWorx\Donations as MageWorx_Donations;
 use Bolt\Boltpay\ThirdPartyModules\MageWorld\RewardPoints as MW_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\Bss\StoreCredit as Bss_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\Listrak\Remarketing as Listrak_Remarketing;
@@ -46,6 +47,7 @@ use Bolt\Boltpay\ThirdPartyModules\BagRiders\StoreCredit as BagRiders_StoreCredi
 use Bolt\Boltpay\ThirdPartyModules\Teamwork\Token as Teamwork_Token;
 use Bolt\Boltpay\ThirdPartyModules\Teamwork\StoreCredit as Teamwork_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\SomethingDigital\InStorePickupBoltIntegration as SomethingDigital_InStorePickupBoltIntegration;
+use Bolt\Boltpay\ThirdPartyModules\Grabagun\InStorePickup as Grabagun_InStorePickup;
 use Bolt\Boltpay\ThirdPartyModules\Route\Route as Route_Route;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMedia_TmwGiftCard;
@@ -93,6 +95,11 @@ class EventsForThirdPartyModules
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
                     'boltClass'   => Route_Route::class,
                 ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'boltClass'   => MageWorx_Donations::class,
+                ]
             ],
         ],
         "beforeFailedPaymentOrderSave" => [
@@ -379,7 +386,15 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker"],
                     "checkClasses" => ["Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
-                ]
+                ],
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "checkClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                    ],
+                    "sendClasses" => ["Grabagun\Shipping\Model\ShippingMethodManagement"],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
             ],
         ],
         "setInStoreShippingAddressForPrepareQuote" => [
@@ -402,7 +417,14 @@ class EventsForThirdPartyModules
                         "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver",
                     ],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
-                ]
+                ],
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "checkClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
             ],
         ],
         'afterUpdateOrderPayment' => [
@@ -1057,6 +1079,18 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
                 ],
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "sendClasses" => [
+                        "Grabagun\DealerLocator\Api\DealerRepositoryInterface",
+                        "Grabagun\DealerLocator\Model\Resolver\Formatter",
+                        "Grabagun\Shipping\Helper\ShippingMethodHelper"
+                    ],
+                    "checkClasses" => [
+                        "Grabagun\DealerLocator\Api\Data\DealerInterface",
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
             ],
         ],
         "getShipToStoreCarrierMethodCodes" => [
@@ -1076,6 +1110,16 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
                 ],
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "sendClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                    ],
+                    "checkClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
             ],
         ],
         "filterCart" => [
@@ -1085,6 +1129,15 @@ class EventsForThirdPartyModules
                     'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
                     'sendClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
                     'boltClass'   => Amasty_Extrafee::class,
+                ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'sendClasses' => [
+                        'MageWorx\Donations\Helper\Donation',
+                        'MageWorx\Donations\Model\ResourceModel\Charity\CollectionFactory'
+                    ],
+                    'boltClass'   => MageWorx_Donations::class,
                 ]
             ]
         ],
@@ -1112,6 +1165,12 @@ class EventsForThirdPartyModules
                         'Amasty\Extrafee\Model\TotalsInformationManagement'
                     ],
                     'boltClass'   => Amasty_Extrafee::class,
+                ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'sendClasses' => ['MageWorx\Donations\Helper\Donation'],
+                    'boltClass'   => MageWorx_Donations::class,
                 ]
             ],
         ],
@@ -1146,6 +1205,11 @@ class EventsForThirdPartyModules
                     'module'      => 'Amasty_Extrafee',
                     'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
                     'boltClass'   => Amasty_Extrafee::class,
+                ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'boltClass'   => MageWorx_Donations::class,
                 ]
             ],
         ],
@@ -1160,6 +1224,11 @@ class EventsForThirdPartyModules
                     'module'      => 'Amasty_Extrafee',
                     'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
                     'boltClass'   => Amasty_Extrafee::class,
+                ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'boltClass'   => MageWorx_Donations::class,
                 ]
             ],
         ],
@@ -1174,6 +1243,11 @@ class EventsForThirdPartyModules
                     'module'      => 'Amasty_Extrafee',
                     'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
                     'boltClass'   => Amasty_Extrafee::class,
+                ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'boltClass'   => MageWorx_Donations::class,
                 ]
             ],
         ],
@@ -1183,6 +1257,13 @@ class EventsForThirdPartyModules
                     "module" => "Magento_InventoryInStorePickup",
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "checkClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
                 ],
             ],
         ],
@@ -1219,6 +1300,15 @@ class EventsForThirdPartyModules
                         'Amasty\Extrafee\Model\ResourceModel\ExtrafeeQuote\CollectionFactory'
                     ],
                     'boltClass'   => Amasty_Extrafee::class,
+                ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'sendClasses' => [
+                        'MageWorx\Donations\Helper\Donation',
+                        'MageWorx\Donations\Model\ResourceModel\Charity\CollectionFactory'
+                    ],
+                    'boltClass'   => MageWorx_Donations::class,
                 ]
             ],
         ],
@@ -1237,6 +1327,12 @@ class EventsForThirdPartyModules
                         'Amasty\Extrafee\Model\ResourceModel\ExtrafeeQuote\CollectionFactory'
                     ],
                     'boltClass'   => Amasty_Extrafee::class,
+                ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'sendClasses' => ['\MageWorx\Donations\Helper\Donation'],
+                    'boltClass'   => MageWorx_Donations::class,
                 ]
             ],
         ],
