@@ -51,11 +51,6 @@ class Js extends Template
     protected $httpContext;
 
     /**
-     * @var CheckoutSession
-     */
-    private $checkoutSession;
-
-    /**
      * @var CartHelper
      */
     private $cartHelper;
@@ -64,11 +59,6 @@ class Js extends Template
      * @var Bugsnag
      */
     private $bugsnag;
-
-    /**
-     * @var EventsForThirdPartyModules
-     */
-    private $eventsForThirdPartyModules;
 
     /**
      * @param Context                    $context
@@ -786,14 +776,6 @@ function($argName) {
     protected function getOnClose()
     {
         return $this->configHelper->getOnClose();
-    }
-
-    /**
-     * @return Quote
-     */
-    protected function getQuoteFromCheckoutSession()
-    {
-        return $this->checkoutSession->getQuote();
     }
 
     /**

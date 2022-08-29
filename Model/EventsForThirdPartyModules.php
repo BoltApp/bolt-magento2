@@ -54,6 +54,7 @@ use Bolt\Boltpay\ThirdPartyModules\MageWorx\RewardPoints as MageWorx_RewardPoint
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\ShippingRules as MageWorx_ShippingRules;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Promo as Amasty_Promo;
 use Bolt\Boltpay\ThirdPartyModules\Mexbs\Tieredcoupon as Mexbs_Tieredcoupon;
+use Bolt\Boltpay\ThirdPartyModules\Magento\CompanyPayment as Magento_CompanyPayment;
 use Exception;
 
 class EventsForThirdPartyModules
@@ -442,6 +443,15 @@ class EventsForThirdPartyModules
                     'sendClasses'  => ['Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardAccountTransactionProcessor',
                                        'Amasty\GiftCardAccount\Model\GiftCardAccount\Repository'],
                     "boltClass"    => Amasty_GiftCardAccount::class,
+                ],
+            ],
+        ],
+        'shouldDisableBoltCheckout' => [
+            "listeners" => [
+                'Magento_CompanyPayment' => [
+                    'module'      => 'Magento_CompanyPayment',
+                    'checkClasses' => ['Magento\CompanyPayment\Model\Payment\Checks\CanUseForCompany'],
+                    'boltClass'   => Magento_CompanyPayment::class,
                 ],
             ],
         ],
@@ -1298,6 +1308,15 @@ class EventsForThirdPartyModules
                     'module'      => 'Mexbs_Tieredcoupon',
                     'sendClasses' => ['Mexbs\Tieredcoupon\Helper\Data'],
                     'boltClass'   => Mexbs_Tieredcoupon::class,
+                ],
+            ],
+        ],
+        'filterShouldDisableBoltCheckout' => [
+            "listeners" => [
+                'Magento_CompanyPayment' => [
+                    'module'      => 'Magento_CompanyPayment',
+                    'sendClasses' => ['Magento\CompanyPayment\Model\Payment\Checks\CanUseForCompany'],
+                    'boltClass'   => Magento_CompanyPayment::class,
                 ],
             ],
         ],
