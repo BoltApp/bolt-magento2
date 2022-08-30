@@ -62,6 +62,11 @@ class ShipToStoreOption implements ShipToStoreOptionInterface, \JsonSerializable
     private $taxAmount;
 
     /**
+     * @var string
+     */
+    private $description;
+
+    /**
      * Get shipping reference.
      *
      * @api
@@ -231,7 +236,21 @@ class ShipToStoreOption implements ShipToStoreOptionInterface, \JsonSerializable
         $this->taxAmount = $taxAmount;
         return $this;
     }
-    
+
+    /**
+     * Set description.
+     *
+     * @api
+     * @param string $description
+     *
+     * @return $this
+     */
+    public function setDescription($description)
+    {
+        $this->description = $description;
+        return $this;
+    }
+
     /**
      * @inheritDoc
      */
@@ -244,7 +263,8 @@ class ShipToStoreOption implements ShipToStoreOptionInterface, \JsonSerializable
             'address' => $this->address,
             'distance' => $this->distance,
             'distance_unit' => $this->distanceUnit,
-            'tax_amount' => $this->taxAmount
+            'tax_amount' => $this->taxAmount,
+            'description' => $this->description
         ];
     }
 }

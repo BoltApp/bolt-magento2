@@ -143,4 +143,13 @@ interface ShipToStoreOptionInterface
      * @return $this
      */
     public function setTaxAmount($taxAmount);
+
+    /**
+     * Set description
+     * @api
+     * @param $description
+     *
+     * @return $this
+     */
+    public function setDescription($description);
 }

@@ -159,6 +159,12 @@ class InStorePickup
                     break;
                 }
             }
+            $shipToStoreDescription = '';
+            foreach ($shippingOptions as $shippingOption) {
+                if ($shippingOption->getReference() == 'firearmshipping_firearmshipping_standard') {
+                    $shipToStoreDescription = $shippingOption->getService();
+                }
+            }
             if ($fflOnlyQuote) {
                 $this->dealerFormatter = $dealerFormatter;
                 $this->dealerRepository = $dealerRepository;
@@ -207,6 +213,7 @@ class InStorePickup
                     $shipToStoreOption->setAddress($storeAddress);
                     $shipToStoreOption->setDistance($defaultRadius);
                     $shipToStoreOption->setDistanceUnit('mile');
+                    $shipToStoreOption->setDescription($shipToStoreDescription);
                     $shipToStoreOptions[] = $shipToStoreOption;
                 }
 
