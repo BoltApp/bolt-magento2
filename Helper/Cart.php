@@ -1411,10 +1411,6 @@ class Cart extends AbstractHelper
     protected function getProductBoltShipmentType($product, $storeId)
     {
         $product = $this->productRepository->getById($product->getId());
-        $boltShipmentType = $this->eventsForThirdPartyModules->runFilter('filterCartItemShipmentType', $product->getData('bolt_shipment_type'), $product, $storeId);
-        if (!empty($boltShipmentType)) {
-            return $boltShipmentType;
-        }
         
         if ($this->boltShipmentTypeCategories === null) {
             /* get categories only with not empty attributes customer_gr_cat and mode_cat */
