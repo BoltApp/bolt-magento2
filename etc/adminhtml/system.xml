@@ -148,6 +148,12 @@
                         <config_path>payment/boltpay/show_cc_type_in_order_grid</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
+                    <field id="new_plugin_version_notification" translate="label" type="select" sortOrder="115" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>New plugin version notification</label>
+                        <comment>Enable new Bolt plugin version notifications on admin dashboard</comment>
+                        <config_path>payment/boltpay/new_plugin_version_notification</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
                 </group>
                 <group id="boltpay_advanced" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Advanced options</label>

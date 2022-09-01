@@ -103,6 +103,11 @@ class Config extends AbstractHelper
     const XML_PATH_SHOW_CC_TYPE_IN_ORDER_GRID = 'payment/boltpay/show_cc_type_in_order_grid';
 
     /**
+     * Path for new plugin version notification enabling
+     */
+    const XML_PATH_NEW_PLUGIN_VERSION_NOTIFICATION = 'payment/boltpay/new_plugin_version_notification';
+
+    /**
      * Path for Additional Checkout Button Class
      */
     const XML_PATH_ADDITIONAL_CHECKOUT_BUTTON_CLASS = 'payment/boltpay/additional_checkout_button_class';
@@ -923,6 +928,16 @@ class Config extends AbstractHelper
     public function getShowCcTypeInOrderGrid()
     {
         return $this->getScopeConfig()->getValue(self::XML_PATH_SHOW_CC_TYPE_IN_ORDER_GRID) ?: '';
+    }
+
+    /**
+     * Get new plugin version notification enabled
+     *
+     * @return string
+     */
+    public function getNewPluginVersionNotificationEnabled()
+    {
+        return $this->getScopeConfig()->getValue(self::XML_PATH_NEW_PLUGIN_VERSION_NOTIFICATION) ?: '';
     }
 
     /**
@@ -2572,7 +2587,7 @@ class Config extends AbstractHelper
             $websiteId
         );
     }
-    
+
     /**
      * Returns if catalog ingestion by instant job.
      *
@@ -2638,7 +2653,7 @@ class Config extends AbstractHelper
             $websiteId
         );
     }
-    
+
     /**
      * Get Integration base URL
      *

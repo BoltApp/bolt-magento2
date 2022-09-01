@@ -1,0 +1,8 @@
+{
+    "plugin_version_notification": {
+        "column": {
+            "latest_version": true,
+            "description": true
+        }
+    }
+}

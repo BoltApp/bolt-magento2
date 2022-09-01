@@ -14,4 +14,9 @@
             <config_path>payment/boltpay/catalog_ingestion_cron_expr</config_path>
         </job>
     </group>
+    <group id="bolt_version_notifier">
+        <job name="bolt_version_notifier" instance="Bolt\Boltpay\Cron\VersionNotifier" method="execute">
+            <schedule>0 0 * * *</schedule>
+        </job>
+    </group>
 </config>

@@ -55,6 +55,7 @@ tr.shipping.totals td.amount span.price,
 .payment-method-boltpay .payment-method-title img.payment-icon {padding: 8px; border: 1px solid #cccccc; width: 200px;}</global_css>
                 <global_js></global_js>
                 <show_cc_type_in_order_grid>0</show_cc_type_in_order_grid>
+                <new_plugin_version_notification>1</new_plugin_version_notification>
                 <additional_checkout_button_class>with-cards</additional_checkout_button_class>
                 <success_page>checkout/onepage/success</success_page>
                 <prefetch_shipping>0</prefetch_shipping>
