@@ -267,6 +267,9 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                         }
                         var compositeAttribute = compositeAttributes[index];
                         if (matchResult = name.match(compositeAttribute+'\\[(\\d+)\\]')) {
+                            if (('checked' in input) && !input.checked) {
+                                continue;
+                            }
                             if (!(compositeAttribute in options)) {
                                 options[compositeAttribute] = {};
                             }
