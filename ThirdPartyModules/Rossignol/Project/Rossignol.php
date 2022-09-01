@@ -117,7 +117,8 @@ class Rossignol
         $storeId
     ) {
         try {
-            if ($result !== 'ship_to_store') {
+            // We do need this feature now.
+            if (0 && $result !== 'ship_to_store') {
                 $itemGroups = $this->configHelper->getRossignolExcludeItemAttributesFromPPCConfig($storeId);
                 if (!empty($itemGroups)) {
                     $attributeSet = $this->attributeSetRepository->get($product->getAttributeSetId());
