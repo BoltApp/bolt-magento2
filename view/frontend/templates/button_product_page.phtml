@@ -260,6 +260,9 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                 var checkboxAttributes = ['links'];
                 Array.from(addToCartForm.elements).forEach( ( input, key ) => {
                     var name = input.name, value = input.value;
+                    if (name == '') {
+                        return;
+                    }
                     var matchResult;
                     for (var index in compositeAttributes) {
                         if (!compositeAttributes.hasOwnProperty(index)) {
@@ -267,8 +270,8 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                         }
                         var compositeAttribute = compositeAttributes[index];
                         if (matchResult = name.match(compositeAttribute+'\\[(\\d+)\\]')) {
-                            if (('checked' in input) && !input.checked) {
-                                continue;
+                            if (compositeAttribute != 'bundle_option_qty' && ('checked' in input) && !input.checked) {
+                                return;
                             }
                             if (!(compositeAttribute in options)) {
                                 options[compositeAttribute] = {};
@@ -343,7 +346,8 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
             setupProductPage();
 
             addToCartForm.elements['qty'].addEventListener('change', setupProductPage);
-            Array.from(addToCartForm.querySelectorAll('input[name^="super_group"]'))
+            window.addEventListener('update-bundle-option-prices', setupProductPage);
+            Array.from(addToCartForm.querySelectorAll('input[name^="super_"]'))
                 .forEach(
                     element => element.addEventListener('change', setupProductPage)
                 )
