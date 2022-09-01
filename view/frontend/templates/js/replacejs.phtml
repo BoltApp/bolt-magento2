@@ -41,7 +41,7 @@ $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConne
 $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
 ?>
 
-<script type="text/javascript">
+<script>
     ///////////////////////
     // String.trim Polyfill
     ///////////////////////
@@ -112,7 +112,7 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
             if (!attribute_observer) {
                 // Watch for attribut changes in the document
                 attribute_observer = new MutationObserver(check_attributes);
-                var config = {
+                const config = {
                     attributes: true,
                     subtree: true
                 };
@@ -282,21 +282,11 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
     // DI: Inserting required Magento objects
     // the code below is dependant on.
     ////////////////////////////////////////////////////
-    require([
-        'jquery',
-        'Magento_Customer/js/model/authentication-popup',
-        'Magento_Customer/js/customer-data',
-        'Bolt_Boltpay/js/utils/when-defined',
-        'mage/validation/validation',
-        'mage/cookies',
-        'domReady!'
-    ], function ($, authenticationPopup, customerData, whenDefined) {
-        var sectionDataIds = $.cookieStorage.get('section_data_ids');
-        if (sectionDataIds && sectionDataIds.b  !== undefined) {
-            $.cookieStorage.set('section_data_ids','');
-            storageInvalidation = $.initNamespaceStorage('mage-cache-storage-section-invalidation').localStorage;
-            storageInvalidation.removeAll();
-        }
+    const initBoltPay = (event) => {
+        
+        window.removeEventListener("private-content-loaded", initBoltPay);
+
+        const sectionData = event.detail.data;
 
         ////////////////////////////////////////////////////
 
@@ -522,21 +512,22 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
             }
             var boltRestricted = BoltState.globalRestricted || BoltState.cartRestricted;
 
-            // Show DOM nodes hidden by Global CSS. Usually buttons parent element, containter.
-            $.each(toggleCheckoutConfig.showElementsOnLoad, function( index, element ) {
-                $(element).show();
+            Array.from(
+                document.querySelectorAll(toggleCheckoutConfig.showElementsOnLoad.join(','))
+            ).forEach( buttonElement => {
+                buttonElement.style.setProperty('display', 'inline-block', 'important');
             });
-
-            // Show Bolt buttons if bolt checkout is allowed, otherwise hide it
-            $(bolt_button_selector).toggle(!boltRestricted);
+            
+            document.querySelector(bolt_button_selector) &&
+                document.querySelector(bolt_button_selector)
+                    .style
+                    .setProperty('display', !boltRestricted ? 'inline-block' : 'none', 'important');
 
             // Show magento buttons if bolt checkout is restricted, otherwise hide it
-            $.each(toggleCheckoutConfig.magentoButtons, function( index, buttonSelector ) {
-                var buttons = document.querySelectorAll(buttonSelector);
-                for (var i = 0; i < buttons.length; i++) {
-                    buttons[i].style.removeProperty('display');
-                    buttons[i].style.setProperty('display', boltRestricted ? 'inline-block' : 'none', 'important');
-                };
+            Array.from(
+                document.querySelectorAll(toggleCheckoutConfig.magentoButtons.join(','))
+            ).forEach( buttonElement => {
+                buttonElement.style.setProperty('display', boltRestricted ? 'inline-block' : 'none', 'important');
             });
         };
         ////////////////////////////////////////////////////////
@@ -548,19 +539,19 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
         // On multiple checkout open/close actions the success event remains registered
         // resulting in making the success call multiple times. This variable stores
         // the last request to be aborted before new one is sent.
-        var save_request;
+        var controller = null;
 
         //////////////////////////////////////////////
         // Checkout auto-open flag setters and getter
         //////////////////////////////////////////////
         var setInitiateCheckoutCookie = function () {
-            $.cookie('bolt_initiate_checkout', true, {path: '/', domain: window.location.hostname});
+            hyva.setCookie('bolt_initiate_checkout', true);
         };
         var unsetInitiateCheckoutCookie = function () {
-            $.cookie('bolt_initiate_checkout', null, {path: '/', domain: window.location.hostname});
+            hyva.setCookie('bolt_initiate_checkout', null);
         };
         var getInitiateCheckoutCookie = function () {
-            return $.cookie('bolt_initiate_checkout');
+            return hyva.getCookie('bolt_initiate_checkout');
         };
         //////////////////////////////////////////////
 
@@ -597,7 +588,7 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                     // after order was changed from inside the checkout,
                     // i.e. the discount was applied
                     invalidateBoltCart();
-                    customerData.reload(['cart'], true);
+                    window.dispatchEvent(new CustomEvent('request-cart-data', {}));
                 }
             },
 
@@ -630,7 +621,8 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                  * return void
                  */
                 var processSuccess = function (data) {
-                    customerData.invalidate(['cart','boltcart','bolthints']);
+                    // Invalidate existing private content
+                    hyva.setCookie('mage-cache-sessid', '', -1, true);
                     try {
                         if (typeof data !== 'undefined') {
                             callbacks.success_url = data.success_url;
@@ -647,10 +639,15 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                 }
 
                 // abort previously sent save order request.
-                if (save_request) save_request.abort();
+                if (controller) {
+                    controller.abort();
+                }
+
+                controller = new AbortController();
+                var signal = controller.signal;
                 // get thr transaction reference
                 var parameters = [];
-                parameters.push('form_key=' + $('[name="form_key"]').val());
+                parameters.push('form_key=' + hyva.getFormKey());
                 parameters.push('reference=' + transaction.reference);
                 parameters = parameters.join('&');
                 // update order ajax request callback
@@ -659,13 +656,15 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                 var onSuccess = function(data){
                     if (data.status !== 'success') {
                         if (data.message) {
-                            showError();
+                            showBoltErrorMessage(data.message, transaction.reference);
+                            callback();
                         }
                         return;
                     }
                     processSuccess(data);
                 };
-                var showError = function() {
+                var showError = function(error) {
+                    console.error(error);
                     showBoltErrorMessage('', transaction.reference);
                     // pretend order creation was success...
                     // we need to call this; otherwise bolt modal show infinte spinner.
@@ -673,9 +672,18 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                 };
                 // ajax call to the update order transaction data endpoint.
                 // passes the bolt transaction reference
-                save_request = $.post(settings.save_order_url, parameters)
-                                .done(onSuccess)
-                                .fail(showError);
+                window.fetch(settings.save_order_url, {
+                    signal,
+                    "headers": {
+                        "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    },
+                    "body": parameters,
+                    "method": "POST",
+                    "mode": "cors",
+                    "credentials": "include"
+                })
+                .then(onSuccess)
+                .catch(showError);
             },
 
             check: function () {
@@ -685,6 +693,9 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                  * trigger click on boltpay radio if the button clicked is
                  * in minicart panel or other (voluntary) location
                  * and trigger email validation.
+                 *
+                 * We're skipping this for Hyvä right now since Luma checkout falls back
+                 * to the default Bolt module anyway, so this is obsolete.
                  */
                 if (getCheckoutType() === 'payment') {
                     // trigger click on boltpay radio
@@ -733,7 +744,15 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
             onEmailEnter: function(email) {
                 trackCallbacks.onEmailEnter(email);
                 if (callbacks.email !== email) {
-                    $.post(settings.save_email_url, 'email='+encodeURIComponent(email));
+                    window.fetch(settings.save_email_url, {
+                        "headers": {
+                            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                        },
+                        "body": 'email='+encodeURIComponent(email) + '&form_key=' + hyva.getFormKey(),
+                        "method": "POST",
+                        "mode": "cors",
+                        "credentials": "include"
+                    });
                     callbacks.email = email;
                 }
             }
@@ -750,13 +769,14 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
 
             var params = [];
 
-            params.push('form_key=' + $('[name="form_key"]').val());
+            params.push('form_key=' + hyva.getFormKey());
             params.push('cartReference=' + BoltState.boltCart.cartReference);
 
             // parse Estimate Shipping and Tax location fields
-            var country  = $('select[name=country_id]').val(),
-                region   = $('select[name=region_id] option:selected').text(),
-                postcode = $('input[name=postcode]').val();
+            var country  = document.querySelector('select[name=country_id]').value,
+                regionElement = document.querySelector('select[name=region_id]'),
+                region   = regionElement.options[regionElement.selectedIndex].innerText,
+                postcode = document.querySelector('input[name=postcode]').value;
 
             if (country && region && postcode) {
                 params.push('country=' + country);
@@ -767,7 +787,9 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
             // do not run the same request twice
             if (prefetch_list.indexOf(params) == -1) {
                 prefetch_list.push(params);
-                $.get(settings.shipping_prefetch_url, params);
+                window.fetch(settings.shipping_prefetch_url + '?' + params, {
+                    method: 'GET'
+                })
             }
         };
 
@@ -823,17 +845,15 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
             // invalidate bolt cart if we didn't resolve promises for some reasons
             setTimeout(function () {
                 if (waitingForResolvingPromises && (localCallNumber === countConfigureCalls)) {
-                    customerData.reload(['boltcart'], true);
+                    hyva.setCookie('mage-cache-sessid', '', -1, true);
+                    window.dispatchEvent(new CustomEvent("reload-customer-section-data"));
                 }
             }, 10000);
         }
 
         var invalidateBoltCart = function() {
-            if (getCheckoutType() === 'payment') {
-                updateCartPaymentOnly();
-                return;
-            }
-            customerData.reload(['boltcart'], true);
+            hyva.setCookie('mage-cache-sessid', '', -1, true);
+            window.dispatchEvent(new CustomEvent("reload-customer-section-data"));
             callConfigureWithPromises();
         }
 
@@ -903,7 +923,16 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
         var showAuthenticationPopup = function() {
             // set a cookie for auto opening Bolt checkout after login
             setInitiateCheckoutCookie();
-            authenticationPopup.showModal();
+            window.dispatchEvent(
+                new CustomEvent(
+                    "toggle-authentication",
+                    {
+                        detail: {
+                            url: window.location.href
+                        }
+                    }
+                )
+            );
         }
 
         var resolveCheckPromise = function() {
@@ -924,10 +953,8 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
             if (!BoltState.initiateCheckout && !BoltState.magentoCart.isGuestCheckoutAllowed) {
                 if (BoltState.isUserLoggedIn === null) {
                     // initiate magento customer module to know if user logged in or not
-                    require(['Magento_Customer/js/model/customer'], function (customer) {
-                        BoltState.isUserLoggedIn = customer.isLoggedIn();
-                        resolveCheckPromise();
-                    });
+                    BoltState.isUserLoggedIn = sectionData.customer && sectionData.customer.firstname;
+                    resolveCheckPromise();
                     return;
                 }
                 if (!BoltState.isUserLoggedIn) {
@@ -1000,7 +1027,7 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                         }
                         // if no position is specified remove the selector element
                         if (!position) {
-                            $(element).hide();
+                            element.style.setProperty('visibility','hidden');
                         }
                         // if the replacement takes place after BoltCheckout.configure call
                         // call it again to set up the button. Skip if BoltCheckout is not available,
@@ -1015,6 +1042,7 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
             }
         };
 
+        <?php /* We don't need Luma checkout features in Hyvä
         var updateCartPaymentOnly = function() {
             if (getCheckoutType() !== 'payment') {
                 return;
@@ -1127,6 +1155,7 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                 });
                 boltCheckoutConfigure(BoltState.boltCart, hintBarrier.promise, callbacks);
         }
+        */ ?>
 
         var boltCheckoutSetup = function (el, dataChanged) {
             // Check if BoltCheckout is defined (connect.js executed).
@@ -1150,27 +1179,33 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                 callConfigureWithPromises();
 
                 magentoCartDataListener = function(data) {
-                    BoltState.magentoCart = data;
+                    const cart = event.detail.data.cart;
+                    const boltCart = event.detail.data.boltcart;
+
+                    if (boltCart.status === 'failure') {
+                        console.error(boltCart.message);
+                        return;
+                    }
+
+                    BoltState.magentoCart = cart;
+
                     if (boltCartDataID === undefined) {
-                        var boltCart = customerData.get('boltcart')();
-                        if (boltCart !== undefined
-                            && boltCart.data_id !== undefined
-                            && data.data_id<=boltCart.data_id
+                        if (
+                            boltCart &&
+                            boltCart.data_id !== undefined &&
+                            cart.data_id <= boltCart.data_id
                         ) {
-                            // If we have bolt cart, haven't processed it before and timestamp is actual we need
-                            // process it now. We haven't done it before because wanted to check if bolt cart is present
-                            boltCartDataListener(boltCart);
+                            // If we have bolt cart, haven't processed it before and timestamp is actual
+                            // we need process it now.
+                            // We haven't done it before because wanted to check if bolt cart is present
+                            boltCartDataListener(event);
                         }
                     }
                     resolveCheckPromise();
-                    // Call invalidateBoltCartIfOutdated with zero delay
-                    // to make sure that it is added into the end of event loop.
-                    // We need it in case when magento updated both 'cart' and 'boltcart' in one call.
-                    // After zero delay boltCartDataID will have actual value anyway.
-                    setTimeout(invalidateBoltCartIfOutdated, 0);
                 }
 
-                boltCartDataListener = function(data) {
+                boltCartDataListener = function(event) {
+                    const data = event.detail.data.boltcart;
                     if (localStorage && localStorage.getItem("bolt_cart_is_invalid") == "true") {
                         localStorage.setItem("bolt_cart_is_invalid", "false");
                         invalidateBoltCart();
@@ -1184,6 +1219,7 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
 
                     if (data.hints === undefined) {
                         // In some contexts, the data only has data_id.
+                        console.warn('data.hints is empty');
                         return;
                     }
 
@@ -1245,15 +1281,10 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                         prefetchShipping();
                 }
 
-                customerData.get('cart').subscribe(magentoCartDataListener);
-                customerData.get('boltcart').subscribe(boltCartDataListener);
-                // check if magento section was initialized before our code execution
-                if (customerData.get('cart')().data_id !== undefined) {
-                    magentoCartDataListener(customerData.get('cart')());
-                }
-                if (customerData.get('boltcart')().data_id !== undefined) {
-                    boltCartDataListener(customerData.get('boltcart')());
-                }
+                window.addEventListener("private-content-loaded", boltCartDataListener);
+                window.addEventListener("private-content-loaded", magentoCartDataListener);
+                
+                magentoCartDataListener(event);
             }
             ////////////////////////////////////////////////
             // process the button when available on the page
@@ -1484,67 +1515,6 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
         monitorDataChange(['fieldset.fieldset.rate'], prefetchShipping, false, false);
         ///////////////////////////////////////////////////////////
 
-        // When we know that cart will be updated soon we call configure with promises
-        // to make sure bolt checkout with outdated cart isn't available for user
-        $(document).on("ajax:addToCart", function () {
-            var callBoltAfterAddToCart = function() {
-                expectCartRendering = true;
-                // If merchant shows popup after add to cart
-                // delay 0 allows to render bolt button before we call configure
-                setTimeout(callConfigureWithPromises, 0);
-                // set flag to animate always present button when we catch cart updating
-                if (boltConfig.always_present_checkout) {
-                    newItemAddedToCart = true;
-                }
-            }
-            <?php
-            if ($isLoadConnectJsDynamic) {
-                if ($isLoadTrackJsDynamic) {
-                ?>
-            insertTrackScript();
-                <?php
-                }
-                ?>
-            <?php
-            if ($isLoadOpenReplayJsDynamic) {
-                ?>
-            insertOpenReplayScript();
-                <?php
-                }
-                ?>
-            if (insertConnectScriptWithoutSrc()) {
-                $.getScript("<?= /* @noEscape */ $connectJsUrl; ?>", function(data, textStatus, jqxhr) {
-                    callBoltAfterAddToCart();
-                });
-            } else {
-                callBoltAfterAddToCart();
-            }
-                <?php
-            } else {
-                ?>
-            callBoltAfterAddToCart();
-                <?php
-            }
-            ?>
-        });
-        $(document).on("ajax:addToCart:error", function () {
-            invalidateBoltCart();
-        });
-        $(document).on("ajax:updateCartItemQty", function () {
-            expectCartRendering = true;
-            callConfigureWithPromises();
-        });
-        $(document).on("ajax:removeFromCart", function () {
-            expectCartRendering = true;
-            callConfigureWithPromises();
-        });
-
-        // globally register createOrder to be called from all templates,
-        // which is triggered by invalidating the customer section
-        $(document).on('bolt:createOrder', function () {
-            invalidateBoltCart();
-        });
-
         // insert Bolt order managenent button into DOM
         if (settings.order_management_selector) {
             var insertAccountScript = function () {
@@ -1608,75 +1578,7 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
             <?php
         }
         ?>
-    });
-
-    if ((trim(location.pathname, '/') === 'checkout/cart') || (trim(location.pathname, '/') === 'checkout')) {
-        define("boltRequireOptional", [], {
-            load : function (moduleName, parentRequire, onload, config){
-                var onLoadSuccess = function(moduleInstance){
-                    // Module successfully loaded, call the onload callback so that
-                    // RequireJS can work its internal magic.
-                    onload(moduleInstance);
-                }
-                var onLoadFailure = function(err){
-                    // Module failed to load.
-                    if (err.requireModules) {
-                        var failedId = err.requireModules[0];
-                        console.warn("Could not load module: " + failedId);
-                        // Undefine the module to cleanup internal stuff in RequireJS
-                        requirejs.undef(failedId);
-                        // Now define the module instance as a simple empty object
-                        define(failedId, [], function(){return {};});
-                        // Now require the module make sure that RequireJS thinks
-                        // that is it loaded. Since we've just defined it, RequireJS
-                        // will not attempt to download any more script files and
-                        // will just call the onLoadSuccess handler immediately
-                        parentRequire([failedId], onLoadSuccess);
-                    }
-                }
-                parentRequire([moduleName], onLoadSuccess, onLoadFailure);
-            }
-        });
-        require(['domReady!'], function() {
-            require([
-            'jquery',
-            'boltRequireOptional!Magento_Checkout/js/model/quote',
-            ], function ($, quote) {
-                // If quote is not empty and quote total was changed through a method we didn't create,
-                // we should reload the bolt cart since totals are probably now out of sync.
-                if (!jQuery.isEmptyObject(quote)) {
-                    quote.totals.subscribe(function (totals) {
-                        if (waitingForResolvingPromises) {
-                            return;
-                        }
-                        if (expectCartRendering) {
-                            expectCartRendering = false;
-                            try {
-                                if ((totals.base_subtotal+totals.base_discount_amount) * 100 == BoltState.boltCart.total_amount.amount
-                                    <?= /* @noEscape */ $block->getAdditionalQuoteTotalsConditions(); ?>) {
-                                    return;
-                                }
-                            } catch(err) {}
-                        }
-
-                        expectCartRendering = false;
-                        $(document).trigger('bolt:createOrder');
-                    });
-                }
-            }, function (err) {
-                //The errback, error callback
-                var errLog = 'Error details: ' + err.message;
-                if (err.requireModules) {
-                    var failedIds = '';
-                    for (var key in err.requireModules) {
-                        if (err.requireModules.hasOwnProperty(key) && err.requireModules[key]) {
-                            failedIds = failedIds ? failedIds + ', ' + err.requireModules[key] : err.requireModules[key];
-                        }
-                    }
-                    errLog = 'Fails to load module(s): ' + failedIds + '. ' + errLog;
-                }
-                console.log(errLog);
-            })
-       })
-    }
+    };
+    
+    window.addEventListener("private-content-loaded", initBoltPay);
 </script>

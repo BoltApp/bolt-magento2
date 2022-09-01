@@ -49,19 +49,12 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
     </div>
 <?php endif; ?>
     <script>
-        require([
-            'jquery',
-            'Magento_Customer/js/model/authentication-popup',
-            'Magento_Customer/js/customer-data',
-            'Bolt_Boltpay/js/utils/when-defined',
-            'mage/validation/validation',
-            'mage/cookies',
-            'domReady!'
-        ], function ($, authenticationPopup, customerData, whenDefined) {
-
-            var customer = customerData.get('customer');
-            var isGuestCheckoutAllowed = <?= /* @noEscape */ $block->isGuestCheckoutAllowed(); ?>;
-            var itemPrice = <?= /* @noEscape */ $block->getProduct()->getFinalPrice(); ?>;
+        const initBoltProductButton = (event) => {
+            window.removeEventListener("private-content-loaded", initBoltProductButton);
+            const sectionData = event.detail.data;
+            const customer = sectionData.customer;
+            const isGuestCheckoutAllowed = <?= /* @noEscape */ $block->isGuestCheckoutAllowed(); ?>;
+            const itemPrice = <?= /* @noEscape */ $block->getProduct()->getFinalPrice(); ?>;
 
             var settings = window.boltConfig;
             var trackCallbacks = settings.trackCallbacks;
@@ -69,8 +62,9 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
             // On multiple checkout open/close actions the success event remains registered
             // resulting in making the success call multiple times. This variable stores
             // the last request to be aborted before new one is sent.
-            var save_request;
-
+            var controller = new AbortController();
+            var signal = controller.signal;
+            const addToCartForm = document.querySelector('#product_addtocart_form');
             var callbacks = {
 
                 close: function () {
@@ -112,7 +106,10 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                      * return void
                      */
                     var processSuccess = function (data) {
-                        customerData.invalidate(['bolthints']);
+                        const browserStorage = hyva.getBrowserStorage();
+                        if (browserStorage) {
+                            browserStorage.removeItem('mage-cache-storage');
+                        }
                         try {
                             if (typeof data !== 'undefined') {
                                 callbacks.success_url = data.success_url;
@@ -129,7 +126,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                     }
 
                     // abort previously sent save order request.
-                    if (save_request) save_request.abort();
+                    controller.abort();
                     // get thr transaction reference
                     var parameters = [];
                     parameters.push('form_key=' + $('[name="form_key"]').val());
@@ -152,8 +149,18 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                     };
                     // ajax call to the update order transaction data endpoint.
                     // passes the bolt transaction reference
-                    save_request = $.post(settings.save_order_url, parameters)
-                                    .done(onSuccess);
+                    window.fetch(settings.save_order_url, {
+                        signal,
+                        "headers": {
+                            "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                        },
+                        "body": parameters,
+                        "method": "POST",
+                        "mode": "cors",
+                        "credentials": "include"
+                    })
+                    .then(onSuccess)
+                    .catch(showError);
                 },
 
                 check: function () {
@@ -164,20 +171,24 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                      * used.
                      */
                     // check if login is required
-                    if ( !customer().firstname && !isGuestCheckoutAllowed) {
+                    if ( !customer.firstname && !isGuestCheckoutAllowed) {
                         // if authentication is required for checkout set a cookie
                         // for auto opening Bolt checkout after login
-                        authenticationPopup.showModal();
+                        window.dispatchEvent(
+                            new CustomEvent(
+                                "toggle-authentication",
+                                {
+                                    detail: {
+                                        url: window.location.href
+                                    }
+                                }
+                            )
+                        );
                         return false;
                     }
                     // wait for validation module init
-                    try {
-                        $('#product_addtocart_form').validation('isValid');
-                    } catch (e) {
-                        return false;
-                    }
-                    // validate form and show error messages
-                    if ( ! $('#product_addtocart_form').validate().form()) {
+                    if (!addToCartForm.checkValidity()) {
+                        addToCartForm.reportValidity();
                         return false;
                     }
 
@@ -199,26 +210,33 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                 onEmailEnter: function(email) {
                     trackCallbacks.onEmailEnter(email);
                     if (callbacks.email !== email) {
-                        $.post(settings.save_email_url, 'email='+encodeURIComponent(email));
+                        window.fetch(settings.save_email_url, {
+                            "headers": {
+                                "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+                            },
+                            "body": 'email='+encodeURIComponent(email) + '&form_key=' + hyva.getFormKey(),
+                            "method": "POST",
+                            "mode": "cors",
+                            "credentials": "include"
+                        });
                         callbacks.email = email;
                     }
                 }
             };
 
             var getQty = function() {
-                var quantity = Number($('#qty').val());
+                var quantity = Number(addToCartForm.elements['qty'].value);
                 return quantity > 0 ? quantity : 1;
             };
 
             var getGroupedProductChildQty = function(productId) {
-                return Number($('input[name="super_group['+productId+']').val());
+                return Number(addToCartForm.elements['super_group['+productId+']'].value);
             };
 
             <?php if ($block->isSaveHintsInSections()): ?>
-            var hintsSection = customerData.get('bolthints');
-            var hints = hintsSection.data !== undefined ? hintsSection.data : {};
-            customerData.get('bolthints').subscribe(function(newValue) {
-                var newHints = newValue.data !== undefined ? newValue.data : {};
+            var hints = sectionData.bolthints || {};
+            window.addEventListener('private-content-loaded', function(event) {
+                var newHints = event.detail.data.bolthints || {};
                 if (JSON.stringify(newHints) !== JSON.stringify(hints)) {
                     hints = newHints;
                     setupProductPage();
@@ -226,17 +244,13 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
             });
             <?php else: ?>
             var hints = new Promise(function (resolve, reject) {
-                $.get(settings.get_hints_url)
-                    .done(function(data) {
-                        resolve(data.hints);
-                    })
-                    .fail(function() {
-                        resolve({prefill:{}});
-                    })
-                    .always(function() {
-                        // dispatch event when required data is ready
-                        $(document).trigger('ppc-hints-set');
-                    });
+                window.fetch(settings.get_hints_url).then(
+                    data => resolve(data.hints)
+                ).catch(
+                    () => resolve({ prefill: {} })
+                ).finally(
+                    () => window.dispatchEvent(new CustomEvent('ppc-hints-set'));
+                )
             });
             <?php endif; ?>
 
@@ -244,8 +258,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                 var options = {};
                 var compositeAttributes = ['super_attribute', 'options', 'bundle_option', 'bundle_option_qty'];
                 var checkboxAttributes = ['links'];
-                formData = $("#product_addtocart_form").serializeArray();
-                $.each( formData, function( key, input ) {
+                Array.from(addToCartForm.elements).forEach( ( input, key ) => {
                     var name = input.name, value = input.value;
                     var matchResult;
                     for (var index in compositeAttributes) {
@@ -266,24 +279,11 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                             return;
                         }
                     }
-                    for (var index in checkboxAttributes) {
-                        if (!checkboxAttributes.hasOwnProperty(index)) {
-                            continue;
-                        }
-                        var checkboxAttribute = checkboxAttributes[index];
-                        if (name === checkboxAttribute+'[]') {
-                            if (!(checkboxAttribute in options)) {
-                                options[checkboxAttribute] = [];
-                            }
-                            options[checkboxAttribute].push(value);
-                            return;
-                        }
-                    }
 
                     options[name] = value;
                 });
                 options['storeId'] = '<?= /* @noEscape */ $block->getStoreId(); ?>';
-                options['form_key'] = $.mage.cookies.get('form_key');
+                options['form_key'] = hyva.getFormKey();
 
                 var items = [];
                 <?php if ($block->isGrouped()): ?>
@@ -339,8 +339,11 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
 
             setupProductPage();
 
-            $('#qty').on('change', setupProductPage);
-            $('.table-wrapper.grouped .input-text.qty').on('change', setupProductPage);
+            addToCartForm.elements['qty'].addEventListener('change', setupProductPage);
+            Array.from(addToCartForm.querySelectorAll('input[name^="super_group"]'))
+                .forEach(
+                    element => element.addEventListener('change', setupProductPage)
+                )
 
             // Object holding the base item price
             // and price deltas for every custom option selected.
@@ -363,29 +366,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                     }, 0
                 );
             };
-
-            $(document).on( 'updatePrice', function (event, data) {
-                if (data) {
-                    // the name of the property that holds the price data
-                    // varies depending on the product type, eg. prices, options
-                    for (var index in data) {
-                        if (!data.hasOwnProperty(index) || !data[index].hasOwnProperty('finalPrice')) {
-                            continue;
-                        }
-                        var finalPrice = data[index].finalPrice;
-                        itemPrices[index] =
-                            finalPrice && typeof finalPrice === 'object' && finalPrice.amount ? finalPrice.amount : 0;
-                        itemPrice = sum(itemPrices);
-                    }
-                    setupProductPage();
-                }
-            });
-
-            /**
-             * Wait for the form_key cookie and reconfigure BoltCheckout.
-             * @see mage.formKey._create
-             * @see https://api.jqueryui.com/jQuery.widget/ (widgetEventPrefix)
-             */
-            $('body').on('formkeycreate formkey:create', setupProductPage);
-        });
+        };
+        
+        window.addEventListener('private-content-loaded', initBoltProductButton);
     </script>
