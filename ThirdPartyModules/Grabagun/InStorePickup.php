@@ -322,6 +322,25 @@ class InStorePickup
         return false;
     }
 
+    public function filterCartItemShipmentType(
+        $result,
+        \Grabagun\Shipping\Helper\ShippingMethodHelper $grabagunShippingMethodHelper,
+        $product,
+        $storeId
+    ) {
+        try {
+            if ($grabagunShippingMethodHelper->itemShippedToFflDealer($product->getSku())){
+                $result = 'ship_to_store';
+            } else {
+                $result = 'ship_to_home_only';
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        } finally {
+            return $result;
+        }
+    }
+    
     /**
      * Filters out dealers that are configured to be blocked
      *

@@ -1397,6 +1397,15 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        "filterCartItemShipmentType" => [
+            'listeners' => [
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    'sendClasses' => ['Grabagun\Shipping\Helper\ShippingMethodHelper'],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
+            ],
+        ],
     ];
 
     /**

@@ -1564,7 +1564,7 @@ class Cart extends AbstractHelper
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = $quantity;
                 $product['sku']          = $this->getSkuFromQuoteItem($item);
-                
+                $product['shipment_type']= $this->getProductBoltShipmentType($item, $storeId);
                 if ($this->msrpHelper->canApplyMsrp($_product) && $_product->getMsrp() !== null) {
                     $product['msrp']     = CurrencyUtils::toMinor($_product->getMsrp(), $currencyCode);
                 }
@@ -1666,6 +1666,10 @@ class Cart extends AbstractHelper
         return [$products, $totalAmount, $diff];
     }
 
+    public function getProductBoltShipmentType($product, $storeId) {
+        return $this->eventsForThirdPartyModules->runFilter('filterCartItemShipmentType', 'unknown', $product, $storeId);
+
+    }
     /**
      * Return the selected customizable options of quote item.
      *
