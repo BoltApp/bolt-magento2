@@ -23,9 +23,20 @@ class NewVersionNotification implements MessageInterface
 {
     const MESSAGE_IDENTITY = 'pluginVersionNotifier';
 
-    private \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder;
-    private \Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotificationRepository $versionNotificationRepository;
-    private \Bolt\Boltpay\Helper\Config $config;
+    /**
+     * @var \Magento\Framework\Api\SearchCriteriaBuilder
+     */
+    private $searchCriteriaBuilder;
+
+    /**
+     * @var \Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotificationRepository
+     */
+    private $versionNotificationRepository;
+
+    /**
+     * @var \Bolt\Boltpay\Helper\Config
+     */
+    private $config;
 
     public function __construct(
         \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder,

@@ -23,12 +23,35 @@ class VersionValidator
 {
     private const PLUGIN_NAME = 'Bolt_Boltpay';
 
-    private \Bolt\Boltpay\Service\GitApiService $gitApiService;
-    private \Magento\Framework\Module\ResourceInterface $moduleResource;
-    private \Bolt\Boltpay\Logger\Logger $logger;
-    private \Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotification $versionNotifier;
-    private \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder;
-    private \Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotificationRepository $versionNotificationRepository;
+    /**
+     * @var \Bolt\Boltpay\Service\GitApiService
+     */
+    private $gitApiService;
+
+    /**
+     * @var \Magento\Framework\Module\ResourceInterface
+     */
+    private $moduleResource;
+
+    /**
+     * @var \Bolt\Boltpay\Logger\Logger
+     */
+    private $logger;
+
+    /**
+     * @var PluginVersionNotification
+     */
+    private $versionNotifier;
+
+    /**
+     * @var \Magento\Framework\Api\SearchCriteriaBuilder
+     */
+    private $searchCriteriaBuilder;
+
+    /**
+     * @var PluginVersionNotificationRepository
+     */
+    private $versionNotificationRepository;
 
     public function __construct(
         \Bolt\Boltpay\Service\GitApiService $gitApiService,

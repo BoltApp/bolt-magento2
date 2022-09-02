@@ -22,7 +22,10 @@ namespace Bolt\Boltpay\Cron;
  */
 class VersionNotifier
 {
-    private \Bolt\Boltpay\Model\VersionNotifier\VersionValidator $versionValidator;
+    /**
+     * @var \Bolt\Boltpay\Model\VersionNotifier\VersionValidator
+     */
+    private $versionValidator;
 
     public function __construct(
         \Bolt\Boltpay\Model\VersionNotifier\VersionValidator $versionValidator
