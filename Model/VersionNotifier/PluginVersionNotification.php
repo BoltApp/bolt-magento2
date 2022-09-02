@@ -37,7 +37,7 @@ class PluginVersionNotification extends AbstractExtensibleModel implements Plugi
     /**
      * @inheritDoc
      */
-    public function getLetestVersion()
+    public function getLatestVersion()
     {
         return $this->getData(self::LATEST_VERSION);
     }
@@ -45,7 +45,7 @@ class PluginVersionNotification extends AbstractExtensibleModel implements Plugi
     /**
      * @inheritDoc
      */
-    public function setLetestVersion($version): PluginVersionNotificationInterface
+    public function setLatestVersion($version): PluginVersionNotificationInterface
     {
         return $this->setData(self::LATEST_VERSION, $version);
     }

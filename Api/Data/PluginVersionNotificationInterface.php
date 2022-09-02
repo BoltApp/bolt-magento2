@@ -25,7 +25,6 @@ use Magento\Framework\Api\ExtensibleDataInterface;
 interface PluginVersionNotificationInterface extends ExtensibleDataInterface
 {
     public const LATEST_VERSION = 'latest_version';
-
     public const DESCRIPTION = 'description';
 
     /**
@@ -34,7 +33,7 @@ interface PluginVersionNotificationInterface extends ExtensibleDataInterface
      * @api
      * @return string
      */
-    public function getLetestVersion();
+    public function getLatestVersion();
 
     /**
      * Set latest version.
@@ -44,7 +43,7 @@ interface PluginVersionNotificationInterface extends ExtensibleDataInterface
      *
      * @return PluginVersionNotificationInterface
      */
-    public function setLetestVersion($version): PluginVersionNotificationInterface;
+    public function setLatestVersion($version): PluginVersionNotificationInterface;
 
     /**
      * Get release description.
