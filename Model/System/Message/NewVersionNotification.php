@@ -75,7 +75,7 @@ class NewVersionNotification implements MessageInterface
         $newVersionInfo = $this->getNewVersionInfo();
         if ($newVersionInfo) {
             $description = str_replace("\n", '<br>', $newVersionInfo->getDescription());
-            return __(sprintf("New %s version of Boltpay module is available! <br>%s", $newVersionInfo->getLatestVersion(), $description));
+            return __(sprintf("New %s version of Bolt module is available! <br>%s", $newVersionInfo->getLatestVersion(), $description));
         }
         return '';
     }
