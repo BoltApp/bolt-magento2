@@ -71,11 +71,10 @@ class VersionValidator
 
     public function checkVersions(): void
     {
-        if ($this->getLatestVersion() && $this->getCurrentVersion() !== $this->getLatestVersion()) {
-            $this->cleanOldNotificationData();
+        $this->cleanOldNotificationData();
+        $latestVersion = $this->getLatestVersion();
+        if ($latestVersion && $this->getCurrentVersion() !== $latestVersion) {
             $this->versionNotificationRepository->save($this->versionNotifier);
-        } elseif ($this->getCurrentVersion() == $this->getLatestVersion()) {
-            $this->cleanOldNotificationData();
         }
     }
 
