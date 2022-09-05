@@ -148,12 +148,6 @@
                         <config_path>payment/boltpay/show_cc_type_in_order_grid</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
-                    <field id="new_plugin_version_notification" translate="label" type="select" sortOrder="115" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>New plugin version notification</label>
-                        <comment>Enable new Bolt plugin version notifications on admin dashboard</comment>
-                        <config_path>payment/boltpay/new_plugin_version_notification</config_path>
-                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    </field>
                 </group>
                 <group id="boltpay_advanced" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Advanced options</label>
@@ -393,6 +387,12 @@
                         <config_path>payment/boltpay/connect_magento_integration_mode</config_path>
                         <frontend_model>Bolt\Boltpay\Block\System\Config\IntegrationConnection</frontend_model>
                         <comment><![CDATA[ This will create an integration with the required permissions for your Magento installation to be used by Bolt.<br><a target="_blank" href="https://docs.bolt.com/developers/guides/checkout-guides/managed-checkout/adobe-commerce-setup-guide/adobe-installation/#why-do-i-need-to-send-my-magento-2-api-keys-to-bolt">Why does Bolt need my Magento API keys?</a>]]></comment>
+                    </field>
+                    <field id="new_plugin_version_notification" translate="label" type="select" sortOrder="115" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>New plugin version notification</label>
+                        <comment>Enable new Bolt plugin version notifications on admin dashboard</comment>
+                        <config_path>payment/boltpay/new_plugin_version_notification</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
                 </group>
                 <group id="third_party_modules" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
