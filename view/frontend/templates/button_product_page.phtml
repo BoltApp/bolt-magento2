@@ -347,10 +347,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
 
             addToCartForm.elements['qty'].addEventListener('change', setupProductPage);
             window.addEventListener('update-bundle-option-prices', setupProductPage);
-            Array.from(addToCartForm.querySelectorAll('input[name^="super_"]'))
-                .forEach(
-                    element => element.addEventListener('change', setupProductPage)
-                )
+            window.addEventListener('update-prices-<?= /* @noEscape */ $block->getProduct()->getId(); ?>', setupProductPage);
 
             // Object holding the base item price
             // and price deltas for every custom option selected.
