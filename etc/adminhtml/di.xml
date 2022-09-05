@@ -47,4 +47,11 @@
                 name="Bolt_BoltPay_Ui_Component_DataProvider_RegularFilter"
                 type="Bolt\Boltpay\Plugin\Magento\Framework\View\Element\UiComponent\DataProvider\RegularFilterPlugin"/>
     </type>
+    <type name="Magento\Framework\Notification\MessageList">
+        <arguments>
+            <argument name="messages" xsi:type="array">
+                <item name="pluginVersionNotifier" xsi:type="string">Bolt\Boltpay\Model\System\Message\NewVersionNotification</item>
+            </argument>
+        </arguments>
+    </type>
 </config>

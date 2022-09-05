@@ -338,4 +338,7 @@
     <type name="Magento\Sales\Model\InvoiceOrder">
         <plugin name="BoltBoltpayInvoiceOrderPlugin" type="Bolt\Boltpay\Plugin\Magento\Sales\Model\InvoiceOrderPlugin" sortOrder="1"/>
     </type>
+
+    <preference for="Bolt\Boltpay\Api\Data\PluginVersionNotificationInterface" type="Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotification" />
+    <preference for="Bolt\Boltpay\Api\PluginVersionNotificationRepositoryInterface" type="Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotificationRepository" />
 </config>
