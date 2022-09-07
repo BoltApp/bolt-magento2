@@ -281,7 +281,7 @@ class Order extends AbstractHelper
      * @var Create|null
      */
     private $adminOrderCreateModel;
-    
+
     /**
      * @var GiftOptionsHandler
      */
@@ -323,7 +323,7 @@ class Order extends AbstractHelper
      * @param GiftOptionsHandler                  $giftOptionsHandler
      * @param OrderManagementInterface|null       $orderManagement
      * @param OrderIncrementIdChecker|null        $orderIncrementIdChecker
-     * @param Create|null                         $adminOrderCreateModel 
+     * @param Create|null                         $adminOrderCreateModel
      */
     public function __construct(
         Context $context,
@@ -970,7 +970,7 @@ class Order extends AbstractHelper
             });
         }
         ///////////////////////////////////////////////////////////////
-        
+
         // check if the order exists
         $order = $this->getExistingOrder($incrementId, $parentQuoteId);
 
@@ -1440,6 +1440,15 @@ class Order extends AbstractHelper
     public function deleteOrder($order)
     {
         $this->eventsForThirdPartyModules->dispatchEvent("beforeFailedPaymentOrderSave", $order);
+        $parentQuoteId = $order->getQuoteId();
+        $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
+        $this->_eventManager->dispatch(
+            'sales_model_service_quote_submit_failure',
+            [
+                'order' => $order,
+                'quote' => $parentQuote
+            ]
+        );
         try {
             $order->cancel()->save();
             $this->orderRepository->delete($order);
@@ -2012,7 +2021,7 @@ class Order extends AbstractHelper
             $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
         }
         if ($saveOrder) {
-           $order->save(); 
+           $order->save();
         }
     }
 
@@ -2289,9 +2298,9 @@ class Order extends AbstractHelper
             $this->resetOrderState($order);
         }
         $orderState = $this->transactionToOrderState($transactionState, $order);
-        
+
         // If the action is not triggered by Bolt API request and transaction type is credit, there is not need to save order.
-        $ifSaveOrder = Hook::$fromBolt || ($transactionState != self::TS_CREDIT_IN_PROGRESS && $transactionState != self::TS_CREDIT_COMPLETED);      
+        $ifSaveOrder = Hook::$fromBolt || ($transactionState != self::TS_CREDIT_IN_PROGRESS && $transactionState != self::TS_CREDIT_COMPLETED);
         $this->setOrderState($order, $orderState, $ifSaveOrder);
 
         // Send order confirmation email to customer.
