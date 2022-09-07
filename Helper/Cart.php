@@ -882,7 +882,10 @@ class Cart extends AbstractHelper
             $this->deactivateSessionQuote($quote);
             return;
         }
-
+        
+        if (version_compare($this->configHelper->getStoreVersion(), '2.3.6', '<') && $this->deciderHelper->isAPIDrivenIntegrationEnabled()) {
+            $this->saveQuote($quote);
+        }
 
         // If storeId was missed through request, then try to get it from the session quote.
         if ($storeId === null) {
