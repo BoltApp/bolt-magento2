@@ -1435,20 +1435,23 @@ class Order extends AbstractHelper
      * Cancel and delete the order
      *
      * @param OrderModel $order
-     * @throws \Exception
+     * @param bool $failureEventDispatched
+     * @return void
      */
-    public function deleteOrder($order)
+    public function deleteOrder($order, $failureEventDispatched = false)
     {
         $this->eventsForThirdPartyModules->dispatchEvent("beforeFailedPaymentOrderSave", $order);
-        $parentQuoteId = $order->getQuoteId();
-        $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
-        $this->_eventManager->dispatch(
-            'sales_model_service_quote_submit_failure',
-            [
-                'order' => $order,
-                'quote' => $parentQuote
-            ]
-        );
+        if ($failureEventDispatched) {
+            $quoteId = $order->getQuoteId();
+            $quote = $this->cartHelper->getQuoteById($quoteId);
+            $this->_eventManager->dispatch(
+                'sales_model_service_quote_submit_failure',
+                [
+                    'order' => $order,
+                    'quote' => $quote
+                ]
+            );
+        }
         try {
             $order->cancel()->save();
             $this->orderRepository->delete($order);
@@ -1538,7 +1541,7 @@ class Order extends AbstractHelper
                 'quote' => $parentQuote
             ]
         );
-        $this->deleteOrder($order);
+        $this->deleteOrder($order, true);
         // reactivate session quote - the condition excludes PPC quotes
         if ($parentQuoteId != $immutableQuoteId) {
             $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(true));
