@@ -56,6 +56,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
             'Bolt_Boltpay/js/utils/when-defined',
             'mage/validation/validation',
             'mage/cookies',
+            'jquery/jquery.cookie',
             'domReady!'
         ], function ($, authenticationPopup, customerData, whenDefined) {
 
@@ -283,7 +284,11 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                     options[name] = value;
                 });
                 options['storeId'] = '<?= /* @noEscape */ $block->getStoreId(); ?>';
-                options['form_key'] = $.mage.cookies.get('form_key');
+                var formKey = $.mage.cookies.get('form_key');
+                if (!formKey && $('[name="form_key"]').length) {
+                    formKey = $('[name="form_key"]').val();
+                }
+                options['form_key'] = formKey;
 
                 var items = [];
                 <?php if ($block->isGrouped()): ?>
