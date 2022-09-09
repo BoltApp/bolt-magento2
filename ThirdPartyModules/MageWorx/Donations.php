@@ -126,7 +126,8 @@ class Donations
         $this->donationHelper = $donationHelper;
         list($products, $totalAmount, $diff) = $result;
 
-        $shippingAddress = $this->boltSessionHelper->getCheckoutSession()->getQuote()->getShippingAddress();
+        $checkoutSession = $this->boltSessionHelper->getCheckoutSession();
+        $shippingAddress = $checkoutSession->getQuote()->getShippingAddress();
 
         $mageworxDonationDetail = json_decode($shippingAddress->getMageworxDonationDetails(), true);
         if (isset($mageworxDonationDetail['option']) && $mageworxDonationDetail['option'] && $mageworxDonationDetail['global_donation'] > 0) {
@@ -152,6 +153,29 @@ class Donations
             }
         }
 
+        if ($checkoutSession instanceof \Magento\Backend\Model\Session\Quote) {
+            if (isset($mageworxDonationDetail['global_donation']) && $mageworxDonationDetail['global_donation'] > 0) {
+                $currencyCode = $quote->getQuoteCurrencyCode();
+                $unitPrice = @$mageworxDonationDetail['global_donation'];
+                $itemTotalAmount = $unitPrice * 1;
+                $roundedTotalAmount = CurrencyUtils::toMinor($itemTotalAmount, $currencyCode);
+                $diff += CurrencyUtils::toMinorWithoutRounding($itemTotalAmount, $currencyCode) - $roundedTotalAmount;
+                $totalAmount += $roundedTotalAmount;
+
+                $product = [
+                    'reference' => self::MAGEWORX_DONATION . '_' . $unitPrice,
+                    'name' => 'Donation for charity: ' . $mageworxDonationDetail['charity_title'],
+                    'sku' => self::MAGEWORX_DONATION . '_' . $unitPrice,
+                    'description' => '',
+                    'total_amount' => $roundedTotalAmount,
+                    'unit_price' => CurrencyUtils::toMinor($unitPrice, $currencyCode),
+                    'quantity' => 1,
+                    'type' => 'physical'
+                ];
+                $products[] = $product;
+            }
+
+        }
 
         return [$products, $totalAmount, $diff];
     }

@@ -191,6 +191,7 @@ class Extrafee
                 $optionIds = array_column($feeOptions, 'option_id');
                 $extrafeeTotalsInformationManagement->proceedQuoteOptions($destinationQuote, $feeId, $optionIds);
             }
+            $extrafeeTotalsInformationManagement->updateQuoteFees($destinationQuote);
         }
     }
 
