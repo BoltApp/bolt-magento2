@@ -133,8 +133,15 @@ class Store
                     if (!empty($collectionResultSearch)) {
                         $validStores = [];
                         foreach ($collectionResultSearch as $resultStore) {
-                            $distance = $this->vincentyGreatCircleDistance($coordinates['lat'], $coordinates['lng'], $resultStore->getLatitude(), $resultStore->getLongitude());         
+                            // Only show stores from the shipping country
+                            if(!is_null($resultStore->getCountry()) && $resultStore->getCountry() !== $addressData['country_code']) {
+                                continue;
+                            }
 
+                            $distance = $this->vincentyGreatCircleDistance($coordinates['lat'], $coordinates['lng'], $resultStore->getLatitude(), $resultStore->getLongitude());      
+                            // Convert Kilometer to Mile
+                            $distance = $distance * 0.6213711922;
+                            
                             if ($distance < $searchRadius) {
                                 $validStores[$distance * 100] = $resultStore;                       
                             }
@@ -156,7 +163,7 @@ class Store
                             $shipToStoreOption->setStoreName(is_null($store->getName()) ? '' : $store->getName());
                             $shipToStoreOption->setAddress($storeAddress);
                             $shipToStoreOption->setDistance(round($distance / 100, 2));
-                            $shipToStoreOption->setDistanceUnit('km');
+                            $shipToStoreOption->setDistanceUnit('mi');
 
                             $shipToStoreOptions[] = $shipToStoreOption;
                         }    
