@@ -169,9 +169,9 @@ class InStorePickup
                 $this->dealerFormatter = $dealerFormatter;
                 $this->dealerRepository = $dealerRepository;
                 $getGeoCodesForAddress = $this->getGeoCodesForAddress($addressData);
-                // set default to 10 miles
-
-                $defaultRadius = $this->scopeConfig->getValue('dealerlocator/dealerlocator/default_radius', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+                // set default to 100 miles
+                $defaultRadius = $this->scopeConfig->getValue('payment/boltpay/grab_gun_default_maximum_number_of_instance', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+                $defaultPageSize = $this->scopeConfig->getValue('payment/boltpay/grab_gun_default_maximum_number_of_results', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
                 $args = [
                     'currentPage' => 1,
                     'distance' => [
@@ -179,7 +179,7 @@ class InStorePickup
                         'lat' => $getGeoCodesForAddress['lat'],
                         'lng' => $getGeoCodesForAddress['lng']
                     ],
-                    'pageSize' => 25,
+                    'pageSize' => $defaultPageSize,
                 ];
                 $searchCriteria = $this->searchCriteriaBuilder->build('dealers', $args);
                 $searchCriteria->setCurrentPage($args['currentPage']);
@@ -200,6 +200,8 @@ class InStorePickup
                 $dealers = $this->dealerRepository->getList($searchCriteria);
                 $shipToStoreOptions = [];
                 foreach ($dealers->getItems() as $dealer) {
+
+                    $distance = $this->vincentyGreatCircleDistance($getGeoCodesForAddress['lat'], $getGeoCodesForAddress['lng'], $dealer->getLat(), $dealer->getLng());
                     $storeAddress = $this->storeAddressFactory->create();
                     $storeAddress->setStreetAddress1($dealer->getAddress());
                     $storeAddress->setLocality($dealer->getCity());
@@ -211,7 +213,7 @@ class InStorePickup
                     $shipToStoreOption->setReference($dealer->getId());
                     $shipToStoreOption->setStoreName($dealer->getDealerName());
                     $shipToStoreOption->setAddress($storeAddress);
-                    $shipToStoreOption->setDistance($defaultRadius);
+                    $shipToStoreOption->setDistance($distance);
                     $shipToStoreOption->setDistanceUnit('mile');
                     $shipToStoreOption->setDescription($shipToStoreDescription);
                     $shipToStoreOptions[] = $shipToStoreOption;
@@ -529,5 +531,39 @@ class InStorePickup
         }
 
         return $result;
+    }
+
+    /**
+     * Calculates the great-circle distance between two points, with the Vincenty formula.
+     * http://en.wikipedia.org/wiki/Great-circle_distance#Formulas
+     *
+     * @param float $latitudeFrom Latitude of start point in [deg decimal]
+     * @param float $longitudeFrom Longitude of start point in [deg decimal]
+     * @param float $latitudeTo Latitude of target point in [deg decimal]
+     * @param float $longitudeTo Longitude of target point in [deg decimal]
+     * @param float $earthRadius Mean earth radius in [m]
+     * @return float Distance between points in [mile] (same as earthRadius)
+     */
+    public function vincentyGreatCircleDistance(
+        $latitudeFrom,
+        $longitudeFrom,
+        $latitudeTo,
+        $longitudeTo,
+        $earthRadius = 6371000
+    ) {
+        // convert from degrees to radians
+        $latFrom = deg2rad($latitudeFrom);
+        $lonFrom = deg2rad($longitudeFrom);
+        $latTo = deg2rad($latitudeTo);
+        $lonTo = deg2rad($longitudeTo);
+
+        $lonDelta = $lonTo - $lonFrom;
+        $a = pow(cos($latTo) * sin($lonDelta), 2) +
+            pow(cos($latFrom) * sin($latTo) - sin($latFrom) * cos($latTo) * cos($lonDelta), 2);
+        $b = sin($latFrom) * sin($latTo) + cos($latFrom) * cos($latTo) * cos($lonDelta);
+
+        $angle = atan2(sqrt($a), $b);
+        $km =  round($angle * $earthRadius / 1000, 2);
+        return $km/1.609344;
     }
 }

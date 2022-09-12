@@ -87,6 +87,8 @@ tr.shipping.totals td.amount span.price,
                 <catalog_ingestion_instant_async_enabled>0</catalog_ingestion_instant_async_enabled>
                 <catalog_ingestion_instant_events>product_stock_status</catalog_ingestion_instant_events>
                 <catalog_ingestion_system_configuration_update_request_enabled>1</catalog_ingestion_system_configuration_update_request_enabled>
+                <grab_gun_default_maximum_number_of_instance>100</grab_gun_default_maximum_number_of_instance>
+                <grab_gun_default_maximum_number_of_results>20</grab_gun_default_maximum_number_of_results>
             </boltpay>
         </payment>
     </default>
