@@ -1441,7 +1441,7 @@ class Order extends AbstractHelper
     public function deleteOrder($order, $failureEventDispatched = false)
     {
         $this->eventsForThirdPartyModules->dispatchEvent("beforeFailedPaymentOrderSave", $order);
-        if ($failureEventDispatched) {
+        if (!$failureEventDispatched) {
             $quoteId = $order->getQuoteId();
             $quote = $this->cartHelper->getQuoteById($quoteId);
             $this->_eventManager->dispatch(
