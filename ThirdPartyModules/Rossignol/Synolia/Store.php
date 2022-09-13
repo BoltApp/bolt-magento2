@@ -139,8 +139,6 @@ class Store
                             }
 
                             $distance = $this->vincentyGreatCircleDistance($coordinates['lat'], $coordinates['lng'], $resultStore->getLatitude(), $resultStore->getLongitude());      
-                            // Convert Kilometer to Mile
-                            $distance = $distance * 0.6213711922;
                             
                             if ($distance < $searchRadius) {
                                 $validStores[$distance * 100] = $resultStore;                       
@@ -163,7 +161,7 @@ class Store
                             $shipToStoreOption->setStoreName(is_null($store->getName()) ? '' : $store->getName());
                             $shipToStoreOption->setAddress($storeAddress);
                             $shipToStoreOption->setDistance(round($distance / 100, 2));
-                            $shipToStoreOption->setDistanceUnit('mi');
+                            $shipToStoreOption->setDistanceUnit('km');
 
                             $shipToStoreOptions[] = $shipToStoreOption;
                         }    
