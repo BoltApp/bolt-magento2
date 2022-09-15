@@ -501,4 +501,16 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_ENABLE_SHOPPER_ASSISTANT);
     }
+    
+    /**
+     * Checks whether the feature switch for skipping cart discount total mismatch
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isSkipCartDiscountTotalMismatch()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_SKIP_CART_DISCOUNT_TOTAL_MISMATCH);
+    }
 }
