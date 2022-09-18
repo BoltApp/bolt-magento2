@@ -147,9 +147,17 @@ interface ShipToStoreOptionInterface
     /**
      * Set description
      * @api
-     * @param $description
+     * @param string $description
      *
      * @return $this
      */
     public function setDescription($description);
+
+    /**
+     * Get description
+     *
+     * @api
+     * @return string
+     */
+    public function getDescription();
 }

@@ -153,19 +153,19 @@ class InStorePickup
 
             $fflOnlyQuote = true;
             $quoteItems = $quote->getAllItems();
-            foreach ($quoteItems as $item) {
-                if (!$grabgunShippingMethodHelper->itemShippedToFflDealer($item->getSku())) {
-                    $fflOnlyQuote = false;
-                    break;
+            $typeOfShipment = $this->getTypeOfShipment($grabgunShippingMethodHelper, $quote);
+
+            if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::NON_FFL_SHIPPING_ITEMS_ONLY){
+                $result = [$tmpShippingOptions, $shippingOptions];
+            }else {
+                $shipToStoreDescription = '';
+                $shipToStoreCost = 0;
+                foreach ($shippingOptions as $shippingOption) {
+                    if ($shippingOption->getReference() == 'firearmshipping_firearmshipping_standard') {
+                        $shipToStoreDescription = $shippingOption->getService();
+                        $shipToStoreCost = $shippingOption->getCost();
+                    }
                 }
-            }
-            $shipToStoreDescription = '';
-            foreach ($shippingOptions as $shippingOption) {
-                if ($shippingOption->getReference() == 'firearmshipping_firearmshipping_standard') {
-                    $shipToStoreDescription = $shippingOption->getService();
-                }
-            }
-            if ($fflOnlyQuote) {
                 $this->dealerFormatter = $dealerFormatter;
                 $this->dealerRepository = $dealerRepository;
                 $getGeoCodesForAddress = $this->getGeoCodesForAddress($addressData);
@@ -208,6 +208,7 @@ class InStorePickup
                     $storeAddress->setRegion($dealer->getState());
                     $storeAddress->setPostalCode($dealer->getZipcode());
                     $storeAddress->setCountryCode('US');
+                    /** @var \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface $shipToStoreOption */
                     $shipToStoreOption = $this->shipToStoreOptionFactory->create();
 
                     $shipToStoreOption->setReference($dealer->getId());
@@ -216,12 +217,14 @@ class InStorePickup
                     $shipToStoreOption->setDistance($distance);
                     $shipToStoreOption->setDistanceUnit('mile');
                     $shipToStoreOption->setDescription($shipToStoreDescription);
+                    $shipToStoreOption->setCost($shipToStoreCost);
                     $shipToStoreOptions[] = $shipToStoreOption;
                 }
-
-                $result = [$shipToStoreOptions, []];
-            } else {
-                $result = [$tmpShippingOptions, $shippingOptions];
+                if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::FFL_SHIPPING_ITEMS_ONLY) {
+                    $result = [$shipToStoreOptions, []];
+                } else if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::MIXED_SHIPPING_ITEMS) {
+                    $result = [$shipToStoreOptions, $shippingOptions];
+                }
             }
 
         } catch (\Exception $e) {
@@ -229,6 +232,37 @@ class InStorePickup
             return [];
         }
         return $result;
+    }
+
+    /**
+     * @param \Grabagun\Shipping\Helper\ShippingMethodHelper $grabgunShippingMethodHelper
+     * @param $quote
+     * @return string
+     */
+    public function getTypeOfShipment($grabgunShippingMethodHelper, $quote): string
+    {
+        $items = $quote->getAllItems();
+        $countNonFflItems = 0;
+        $countFflItems = 0;
+
+        foreach ($items as $item) {
+            if ($grabgunShippingMethodHelper->itemShippedToFflDealer($item->getSku())) {
+                $countFflItems++;
+            } else {
+                $countNonFflItems++;
+            }
+        }
+
+        $shippingType = '';
+        if ($countFflItems > 0 && $countNonFflItems > 0) {
+            $shippingType = \Grabagun\Shipping\Model\Shipping\Config::MIXED_SHIPPING_ITEMS;
+        } elseif ($countNonFflItems === 0) {
+            $shippingType = \Grabagun\Shipping\Model\Shipping\Config::FFL_SHIPPING_ITEMS_ONLY;
+        } else {
+            $shippingType = \Grabagun\Shipping\Model\Shipping\Config::NON_FFL_SHIPPING_ITEMS_ONLY;
+        }
+
+        return $shippingType;
     }
 
     /**

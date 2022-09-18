@@ -252,6 +252,17 @@ class ShipToStoreOption implements ShipToStoreOptionInterface, \JsonSerializable
     }
 
     /**
+     * Get Description
+     *
+     * @api
+     * @return string
+     */
+    public function getDescription()
+    {
+        return $this->description;
+    }
+
+    /**
      * @inheritDoc
      */
     public function jsonSerialize(): array
