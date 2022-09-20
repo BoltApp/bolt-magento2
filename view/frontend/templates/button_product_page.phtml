@@ -39,11 +39,12 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
         . '" ';
 }
 ?>
-<style>.bolt-product-checkout-button-disabled{opacity:.5;cursor:default;pointer-events:none;}</style>
 <?php if(!$block->isInstantCheckoutButton()): ?>
+    <style>.bolt-product-checkout-button-disabled{opacity:.5;cursor:default;pointer-events:none;}</style>
     <div class="bolt-product-checkout-button bolt-product-checkout-button-disabled bolt-multi-step-checkout <?= /* @noEscape */ $additionalClass;?>"
          style="<?= /* @noEscape */ $block->getButtonCssStyles(); ?>" <?= /* @noEscape */ $additionalCheckoutButtonAttributes; ?>></div>
 <?php else: ?>
+    <style>.bolt-product-checkout-button-disabled svg[class*="__bolt"] rect.brect{opacity:.5 !important;cursor:default!important;pointer-events:none!important;}</style>
     <div data-tid="instant-bolt-checkout-button" class="bolt-product-checkout-button-disabled <?= /* @noEscape */ $additionalClass;?>">
         <object data="<?=$block->getCheckoutCdnUrl();?>/v1/checkout_button?publishable_key=<?=$block->getCheckoutKey();?>" class="bolt-product-checkout-button">
         </object>
