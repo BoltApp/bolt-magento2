@@ -39,8 +39,8 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
         . '" ';
 }
 ?>
+<style>.bolt-product-checkout-button-disabled{opacity:.5;cursor: default;pointer-events: none;}</style>
 <?php if(!$block->isInstantCheckoutButton()): ?>
-    <style>.bolt-product-checkout-button-disabled {opacity:.5;cursor: default;pointer-events: none;}</style>
     <div class="bolt-product-checkout-button bolt-product-checkout-button-disabled bolt-multi-step-checkout <?= /* @noEscape */ $additionalClass;?>"
          style="<?= /* @noEscape */ $block->getButtonCssStyles(); ?>" <?= /* @noEscape */ $additionalCheckoutButtonAttributes; ?>></div>
 <?php else: ?>
@@ -394,7 +394,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
             $('body').on('formkeycreate formkey:create', setupProductPage);
             // wait for add to cart validation form initialization
             $(document).on('validationcreate', '#product_addtocart_form', function () {
-                $(".bolt-product-checkout-button").removeClass("bolt-product-checkout-button-disabled")
+                $(".bolt-product-checkout-button-disabled").removeClass("bolt-product-checkout-button-disabled")
             });
         });
     </script>
