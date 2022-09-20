@@ -39,7 +39,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
         . '" ';
 }
 ?>
-<style>.bolt-product-checkout-button-disabled{opacity:.5;cursor: default;pointer-events: none;}</style>
+<style>.bolt-product-checkout-button-disabled{opacity:.5;cursor:default;pointer-events:none;}</style>
 <?php if(!$block->isInstantCheckoutButton()): ?>
     <div class="bolt-product-checkout-button bolt-product-checkout-button-disabled bolt-multi-step-checkout <?= /* @noEscape */ $additionalClass;?>"
          style="<?= /* @noEscape */ $block->getButtonCssStyles(); ?>" <?= /* @noEscape */ $additionalCheckoutButtonAttributes; ?>></div>
