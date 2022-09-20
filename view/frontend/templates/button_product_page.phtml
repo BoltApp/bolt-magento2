@@ -40,7 +40,8 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
 }
 ?>
 <?php if(!$block->isInstantCheckoutButton()): ?>
-    <div class="bolt-product-checkout-button bolt-multi-step-checkout <?= /* @noEscape */ $additionalClass;?>"
+    <style>.bolt-product-checkout-button-disabled {opacity:.5;cursor: default;pointer-events: none;}</style>
+    <div class="bolt-product-checkout-button bolt-product-checkout-button-disabled bolt-multi-step-checkout <?= /* @noEscape */ $additionalClass;?>"
          style="<?= /* @noEscape */ $block->getButtonCssStyles(); ?>" <?= /* @noEscape */ $additionalCheckoutButtonAttributes; ?>></div>
 <?php else: ?>
     <div data-tid="instant-bolt-checkout-button" class="<?= /* @noEscape */ $additionalClass;?>">
@@ -289,7 +290,6 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                     formKey = $('[name="form_key"]').val();
                 }
                 options['form_key'] = formKey;
-
                 var items = [];
                 <?php if ($block->isGrouped()): ?>
                     <?php foreach ($block->getGroupedProductChildren() as $childProduct):?>
@@ -392,5 +392,9 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
              * @see https://api.jqueryui.com/jQuery.widget/ (widgetEventPrefix)
              */
             $('body').on('formkeycreate formkey:create', setupProductPage);
+            // wait for add to cart validation form initialization
+            $(document).on('validationcreate', '#product_addtocart_form', function () {
+                $(".bolt-product-checkout-button").removeClass("bolt-product-checkout-button-disabled")
+            });
         });
     </script>
