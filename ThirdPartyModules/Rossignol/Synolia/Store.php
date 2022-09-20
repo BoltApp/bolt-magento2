@@ -133,8 +133,13 @@ class Store
                     if (!empty($collectionResultSearch)) {
                         $validStores = [];
                         foreach ($collectionResultSearch as $resultStore) {
-                            $distance = $this->vincentyGreatCircleDistance($coordinates['lat'], $coordinates['lng'], $resultStore->getLatitude(), $resultStore->getLongitude());         
+                            // Only show stores from the shipping country
+                            if(!is_null($resultStore->getCountry()) && $resultStore->getCountry() !== $addressData['country_code']) {
+                                continue;
+                            }
 
+                            $distance = $this->vincentyGreatCircleDistance($coordinates['lat'], $coordinates['lng'], $resultStore->getLatitude(), $resultStore->getLongitude());      
+                            
                             if ($distance < $searchRadius) {
                                 $validStores[$distance * 100] = $resultStore;                       
                             }
