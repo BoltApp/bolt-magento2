@@ -464,7 +464,7 @@ class EventsForThirdPartyModules
                     'sendClasses'  => ['Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardAccountTransactionProcessor',
                                        'Amasty\GiftCardAccount\Model\GiftCardAccount\Repository'],
                     "boltClass"    => Amasty_GiftCardAccount::class,
-                ],
+                ]
             ],
         ],
     ];
@@ -852,6 +852,17 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        "getOnSuccess" => [
+            "listeners" => [
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "checkClasses" => [
+                        "Grabagun\DealerLocator\Api\Data\DealerInterface",
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
+            ],
+        ],
         "filterApplyExternalQuoteData" => [
             "listeners" => [
                 [
@@ -1084,7 +1095,8 @@ class EventsForThirdPartyModules
                     "sendClasses" => [
                         "Grabagun\DealerLocator\Api\DealerRepositoryInterface",
                         "Grabagun\DealerLocator\Model\Resolver\Formatter",
-                        "Grabagun\Shipping\Helper\ShippingMethodHelper"
+                        "Grabagun\Shipping\Helper\ShippingMethodHelper",
+                        "Grabagun\DealerLocator\Model\ResourceModel\Dealer\CollectionFactory"
                     ],
                     "checkClasses" => [
                         "Grabagun\DealerLocator\Api\Data\DealerInterface",
@@ -1397,7 +1409,7 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
-        "filterCartItemShipmentType" => [
+            "filterCartItemShipmentType" => [
             'listeners' => [
                 "Grabagun_DealerLocator" => [
                     "module" => "Grabagun_DealerLocator",

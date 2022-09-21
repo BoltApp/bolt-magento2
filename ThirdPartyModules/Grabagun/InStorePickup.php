@@ -95,6 +95,14 @@ class InStorePickup
     private $orderHelper;
 
     /**
+     * @var \Magento\Customer\Model\Session
+     */
+    private $customerSession;
+
+    /** @var \Magento\Framework\UrlInterface $urlInterface */
+    private $urlInterface;
+
+    /**
      * InStorePickup constructor.
      * @param Bugsnag $bugsnagHelper
      * @param Builder $searchCriteriaBuilder
@@ -103,6 +111,12 @@ class InStorePickup
      * @param DateTimeFactory $dateTimeFactory
      * @param StoreAddressInterfaceFactory $storeAddressFactory
      * @param ShipToStoreOptionInterfaceFactory $shipToStoreOptionFactory
+     * @param ClientInterface $client
+     * @param Json $json
+     * @param ScopeConfigInterface $scopeConfig
+     * @param OrderHelper $orderHelper
+     * @param \Magento\Customer\Model\Session $customerSession
+     * @param \Magento\Framework\UrlInterface $urlInterface
      */
     public function __construct(
         Bugsnag $bugsnagHelper,
@@ -115,7 +129,9 @@ class InStorePickup
         ClientInterface $client,
         Json $json,
         ScopeConfigInterface $scopeConfig,
-        OrderHelper $orderHelper
+        OrderHelper $orderHelper,
+        \Magento\Customer\Model\Session $customerSession,
+        \Magento\Framework\UrlInterface $urlInterface
     )
     {
         $this->bugsnagHelper = $bugsnagHelper;
@@ -129,6 +145,8 @@ class InStorePickup
         $this->json = $json;
         $this->scopeConfig = $scopeConfig;
         $this->orderHelper = $orderHelper;
+        $this->customerSession = $customerSession;
+        $this->urlInterface = $urlInterface;
     }
 
     /**
@@ -143,6 +161,7 @@ class InStorePickup
         \Grabagun\DealerLocator\Api\DealerRepositoryInterface $dealerRepository,
         \Grabagun\DealerLocator\Model\Resolver\Formatter $dealerFormatter,
         \Grabagun\Shipping\Helper\ShippingMethodHelper $grabgunShippingMethodHelper,
+        \Grabagun\DealerLocator\Model\ResourceModel\Dealer\CollectionFactory $grabagunCollectionFactory,
         $quote,
         $shippingOptions,
         $addressData
@@ -219,6 +238,38 @@ class InStorePickup
                     $shipToStoreOption->setDescription($shipToStoreDescription);
                     $shipToStoreOption->setCost($shipToStoreCost);
                     $shipToStoreOptions[] = $shipToStoreOption;
+                }
+
+
+                if ($this->customerSession->isLoggedIn()){
+                    $preferredStoreIds = (int)$this->customerSession->getCustomer()->getData(\Grabagun\DealerLocator\Model\CustomerAttributes::PREFERRED_DEALER_ATTR_CODE);
+                    if ($preferredStoreIds) {
+                        $collection = $grabagunCollectionFactory->create()->addFieldToFilter('id', ['in' => $preferredStoreIds]);
+                        $preferredStoreOptions = [];
+                        $items = $collection->getItems();
+                        foreach ($items as $item) {
+                            $storeAddress = $this->storeAddressFactory->create();
+                            $storeAddress->setStreetAddress1($item->getAddress());
+                            $storeAddress->setLocality($item->getCity());
+                            $storeAddress->setRegion($item->getState());
+                            $storeAddress->setPostalCode($item->getZipcode());
+                            $storeAddress->setCountryCode('US');
+                            $shipToStoreOption = $this->shipToStoreOptionFactory->create();
+
+                            $distance = $this->vincentyGreatCircleDistance($getGeoCodesForAddress['lat'], $getGeoCodesForAddress['lng'], $item->getLat(), $item->getLng());
+                            $shipToStoreOption->setReference($item->getId());
+                            $shipToStoreOption->setStoreName('Preferred FFL dealer: ' . $item->getDealerName());
+                            $shipToStoreOption->setAddress($storeAddress);
+                            $shipToStoreOption->setDistance($distance);
+                            $shipToStoreOption->setDescription($shipToStoreDescription);
+                            $shipToStoreOption->setDistanceUnit('mile');
+                            $shipToStoreOption->setCost($shipToStoreCost);
+                            $preferredStoreOptions[] = $shipToStoreOption;
+                        }
+
+                        $shipToStoreOptions = array_merge($preferredStoreOptions, $shipToStoreOptions);
+                    }
+
                 }
                 if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::FFL_SHIPPING_ITEMS_ONLY) {
                     $result = [$shipToStoreOptions, []];
@@ -599,5 +650,46 @@ class InStorePickup
         $angle = atan2(sqrt($a), $b);
         $km =  round($angle * $earthRadius / 1000, 2);
         return $km/1.609344;
+    }
+
+    /**
+     *
+     * @param string $result
+     * @return string
+     */
+    public function getOnSuccess($result)
+    {
+        try {
+            $url = $this->urlInterface->getUrl('ffl-locator/preferred/index');
+            $result .= "var set_selected_store_as_default = false;
+               var preferred_store_id = false;
+               var customFieldResponses = transaction.custom_field_responses;
+               if (customFieldResponses) {
+                   customFieldResponses.forEach(
+                       function (item, index) {
+                           if (item.public_id == 'set_selected_store_as_default' && item.response) {
+                               set_selected_store_as_default = true;
+                               preferred_store_id = transaction.shipping_option.value.reference;
+                               return;
+                           }
+                        }
+                   );
+                   if (set_selected_store_as_default && preferred_store_id) {
+                       jQuery.ajax({
+                           type: 'POST',
+                           url: '$url',
+                           data: JSON.stringify({
+                               id: preferred_store_id
+                           }),
+                           contentType: 'application/json',
+                           dataType: 'json'
+                       })
+                   }
+               }";
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        } finally {
+            return $result;
+        }
     }
 }
