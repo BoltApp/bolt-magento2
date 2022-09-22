@@ -660,31 +660,28 @@ class InStorePickup
     public function getOnSuccess($result)
     {
         try {
-            $url = $this->urlInterface->getUrl('ffl-locator/preferred/index');
-            $result .= "var set_selected_store_as_default = false;
+            $url = $this->urlInterface->getUrl('bolt-ffl-locator/preferred/index');
+            $result .= "debugger;
+            var set_selected_store_as_default = false;
                var preferred_store_id = false;
-               var customFieldResponses = transaction.custom_field_responses;
+               var customFieldResponses = data.custom_field_responses;
                if (customFieldResponses) {
                    customFieldResponses.forEach(
                        function (item, index) {
                            if (item.public_id == 'set_selected_store_as_default' && item.response) {
-                               set_selected_store_as_default = true;
-                               preferred_store_id = transaction.shipping_option.value.reference;
+                               jQuery.ajax({
+                                   type: 'POST',
+                                   url: '$url',
+                                   data: JSON.stringify({
+                                       reference: data.reference
+                                   }),
+                                   contentType: 'application/json',
+                                   dataType: 'json'
+                               })
                                return;
                            }
                         }
                    );
-                   if (set_selected_store_as_default && preferred_store_id) {
-                       jQuery.ajax({
-                           type: 'POST',
-                           url: '$url',
-                           data: JSON.stringify({
-                               id: preferred_store_id
-                           }),
-                           contentType: 'application/json',
-                           dataType: 'json'
-                       })
-                   }
                }";
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
