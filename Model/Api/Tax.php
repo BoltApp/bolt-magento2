@@ -212,6 +212,7 @@ class Tax extends ShippingTax implements TaxInterface
         $storeAddress->setLocality($ship_to_store_option['address']['locality']);
         $storeAddress->setRegion($ship_to_store_option['address']['region']);
         $storeAddress->setPostalCode($ship_to_store_option['address']['postal_code']);
+        $storeAddress->setCountryCode('US');
 
         $ship_to_store_option = $this->getShippingDiscount($totalsInformation, $currencyCode, $ship_to_store_option);
 
