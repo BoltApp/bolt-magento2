@@ -17,15 +17,12 @@
 
 namespace Bolt\Boltpay\Helper;
 
-use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\Module\FullModuleList;
 use Bolt\Boltpay\Model\Api\Data\PluginVersionFactory;
 
 class ModuleRetriever
 {
-    /**
-     * @var ResourceConnection $resource
-     */
-    private $resource;
+    private const UNDEFINED_MODULE_VERSION = 'undefined';
 
     /**
      * @var PluginVersionFactory
@@ -33,37 +30,41 @@ class ModuleRetriever
     private $pluginVersionFactory;
 
     /**
+     * @var FullModuleList
+     */
+    private $fullModuleList;
+
+    /**
      * @var Bugsnag
      */
     private $bugsnag;
 
     /**
-     *
-     * @param ResourceConnection $resource
      * @param PluginVersionFactory $pluginVersionFactory
+     * @param FullModuleList $fullModuleList
      * @param Bugsnag $bugsnag
-     *
      */
     public function __construct(
-        ResourceConnection $resource,
         PluginVersionFactory $pluginVersionFactory,
+        FullModuleList $fullModuleList,
         Bugsnag $bugsnag
     ) {
-        $this->resource = $resource;
         $this->pluginVersionFactory = $pluginVersionFactory;
+        $this->fullModuleList = $fullModuleList;
         $this->bugsnag = $bugsnag;
     }
 
     public function getInstalledModules()
     {
-        $connection = $this->resource->getConnection();
         $installedModules = [];
         try {
-            $rows = $connection->fetchAll('SELECT module, schema_version FROM setup_module');
-            foreach ($rows as $row) {
-                $installedModules[] = $this->pluginVersionFactory->create()
-                                                                 ->setName($row['module'])
-                                                                 ->setVersion($row['schema_version']);
+            foreach ($this->fullModuleList->getAll() as $module) {
+                $pluginName = $module['name'];
+                $pluginVersion = ($module['setup_version']) ?: self::UNDEFINED_MODULE_VERSION;
+                $plugin = $this->pluginVersionFactory->create()
+                    ->setName($pluginName)
+                    ->setVersion($pluginVersion);
+                $installedModules[] = $plugin;
             }
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
