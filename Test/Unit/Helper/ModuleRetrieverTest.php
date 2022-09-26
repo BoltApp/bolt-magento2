@@ -18,8 +18,10 @@
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Bolt\Boltpay\Helper\ModuleRetriever;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
@@ -50,7 +52,7 @@ class ModuleRetrieverTest extends BoltTestCase
     /**
      * @test
      */
-    public function getInstalledModules_success()
+    public function getInstalledModules_success_using_core_methods()
     {
         $actual = $this->moduleRetriever->getInstalledModules();
         $this->assertGreaterThan(1, count($actual));
@@ -59,8 +61,19 @@ class ModuleRetrieverTest extends BoltTestCase
     /**
      * @test
      */
-    public function getInstalledModules_fail()
+    public function getInstalledModules_success_using_database()
     {
+        TestUtils::saveFeatureSwitch(Definitions::M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE, true);
+        $actual = $this->moduleRetriever->getInstalledModules();
+        $this->assertGreaterThan(1, count($actual));
+    }
+
+    /**
+     * @test
+     */
+    public function getInstalledModules_fail_using_database()
+    {
+        TestUtils::saveFeatureSwitch(Definitions::M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE, true);
         $dbConnection = $this->createMock(AdapterInterface::class);
         $dbConnection->method('fetchAll')->willThrowException(new \Exception());
         $resource = $this->createMock(ResourceConnection::class);
