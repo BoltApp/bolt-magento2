@@ -272,11 +272,7 @@ class OrderTest extends BoltTestCase
 
         $quote = TestUtils::createQuote();
         $quoteAddress = $quote->getShippingAddress();
-        TestHelper::invokeMethod(
-            $this->orderHelper,
-            'setAddress',
-            [$quoteAddress, $addressObject]
-        );
+        $this->orderHelper->setAddress($quoteAddress,$addressObject);
         self::assertEquals($quote->getShippingAddress()->getCity(), 'Beverly Hills');
         self::assertEquals($quote->getShippingAddress()->getCountryId(), 'US');
         self::assertEquals($quote->getShippingAddress()->getCompany(), 'Bolt');
