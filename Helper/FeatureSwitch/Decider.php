@@ -503,7 +503,7 @@ class Decider extends AbstractHelper
     }
     
     /**
-     * Checks whether the feature switch for skipping cart discount total mismatch
+     * Checks whether the feature switch for module retriever fetching from setup_module m2 table is enabled
      *
      * @return bool whether the feature switch is enabled
      *
@@ -512,5 +512,17 @@ class Decider extends AbstractHelper
     public function isSkipCartDiscountTotalMismatch()
     {
         return $this->isSwitchEnabled(Definitions::M2_SKIP_CART_DISCOUNT_TOTAL_MISMATCH);
+    }
+
+    /**
+     * Checks whether the feature switch for module retriever fetching from setup_module m2 table is enabled
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isEnabledModuleRetrieverFromSetupModuleTable()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE);
     }
 }
