@@ -32,4 +32,9 @@
                 type="Bolt\Boltpay\Plugin\WebapiRest\Magento\Quote\Model\QuotePlugin"
                 sortOrder="1"/>
     </type>
+    <type name="Route\Route\Helper\Data">
+        <plugin name="bolt_boltpay_webapirest_override_route_is_enabled_helper_function"
+                type="Bolt\Boltpay\Plugin\WebapiRest\Route\Route\Helper\DataPlugin"
+                sortOrder="1"/>
+    </type>
 </config>
