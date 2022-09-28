@@ -200,6 +200,10 @@ class InStorePickup
                     ],
                     'pageSize' => $defaultPageSize,
                 ];
+                $doesNfaItemExistInCart = $this->doesNfaItemExistInCart($quote);
+                if ($doesNfaItemExistInCart) {
+                    $args['sotOnly'] = 1;
+                }
                 $searchCriteria = $this->searchCriteriaBuilder->build('dealers', $args);
                 $searchCriteria->setCurrentPage($args['currentPage']);
                 $searchCriteria->setPageSize($args['pageSize']);
@@ -216,8 +220,10 @@ class InStorePickup
                 $this->addBlockedFilter($searchCriteria);
                 $this->addExpiredFilter($searchCriteria);
 
+
                 $dealers = $this->dealerRepository->getList($searchCriteria);
                 $shipToStoreOptions = [];
+
                 foreach ($dealers->getItems() as $dealer) {
 
                     $distance = $this->vincentyGreatCircleDistance($getGeoCodesForAddress['lat'], $getGeoCodesForAddress['lng'], $dealer->getLat(), $dealer->getLng());
@@ -248,6 +254,9 @@ class InStorePickup
                         $preferredStoreOptions = [];
                         $items = $collection->getItems();
                         foreach ($items as $item) {
+                            if ($doesNfaItemExistInCart && !$item->getIsClass3()) {
+                                continue;
+                            }
                             $storeAddress = $this->storeAddressFactory->create();
                             $storeAddress->setStreetAddress1($item->getAddress());
                             $storeAddress->setLocality($item->getCity());
@@ -314,6 +323,21 @@ class InStorePickup
         }
 
         return $shippingType;
+    }
+
+    /**
+     * @param $quote
+     */
+    public function doesNfaItemExistInCart($quote) {
+        foreach ($quote->getAllItems() as $item) {
+            $productType = strtolower(
+                $item->getProduct()->getAttributeText(\Grabagun\Shipping\Model\Shipping\Config::SHIPPING_RESTRICTION_TYPE_ATTRIBUTE_CODE)
+            );
+            if ($productType === strtolower(\Grabagun\Shipping\Model\Shipping\Config::SHIPPING_RESTRICTION_TYPE_SOT)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -661,8 +685,7 @@ class InStorePickup
     {
         try {
             $url = $this->urlInterface->getUrl('bolt-ffl-locator/preferred/index');
-            $result .= "debugger;
-            var set_selected_store_as_default = false;
+            $result .= "var set_selected_store_as_default = false;
                var preferred_store_id = false;
                var customFieldResponses = data.custom_field_responses;
                if (customFieldResponses) {
