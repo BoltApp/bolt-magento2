@@ -513,4 +513,16 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE);
     }
+
+    /**
+     * Checks whether the feature switch for api driven cart integration is enabled
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isAPIDrivenCartIntegrationEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_ENABLE_API_DRIVEN_CART_INTEGRATION);
+    }
 }

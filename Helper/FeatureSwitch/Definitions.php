@@ -297,6 +297,11 @@ class Definitions
      */
     const M2_ENABLE_SHOPPER_ASSISTANT = 'M2_ENABLE_SHOPPER_ASSISTANT';
 
+    /**
+     * Enable API driven cart integration
+     */
+    const M2_ENABLE_API_DRIVEN_CART_INTEGRATION = 'M2_ENABLE_API_DRIVEN_CART_INTEGRATION';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -606,6 +611,12 @@ class Definitions
         ],
         self::M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE => [
             self::NAME_KEY        => self::M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_ENABLE_API_DRIVEN_CART_INTEGRATION => [
+            self::NAME_KEY        => self::M2_ENABLE_API_DRIVEN_CART_INTEGRATION,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
