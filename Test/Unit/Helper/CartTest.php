@@ -455,8 +455,11 @@ class CartTest extends BoltTestCase
             DeciderHelper::class,
             ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical',
              'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata', 'isCustomizableOptionsSupport',
-             'isPreventBoltCartForQuotesWithError','isAPIDrivenIntegrationEnabled','isUseRuleNameIfDescriptionEmpty']
+             'isPreventBoltCartForQuotesWithError','isAPIDrivenIntegrationEnabled','isUseRuleNameIfDescriptionEmpty',
+             'isAPIDrivenCartIntegrationEnabled'
+            ]
         );
+        $this->deciderHelper->method('isAPIDrivenCartIntegrationEnabled')->willReturn(false);
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
         $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
@@ -469,7 +472,6 @@ class CartTest extends BoltTestCase
         $this->store = $this->createMock(Store::class);
         $this->currentMock = $this->getCurrentMock(null);
         $this->objectsToClean = [];
-        TestUtils::saveFeatureSwitch(Definitions::M2_ENABLE_API_DRIVEN_CART_INTEGRATION, false);
     }
 
     protected function tearDownInternal()
