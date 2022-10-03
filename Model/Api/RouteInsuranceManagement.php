@@ -122,7 +122,8 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
 
         return $this->serializer->serialize(
             [
-                'message' => $this->getResponseMessage($routeIsInsured)
+                'message' => $this->getResponseMessage($routeIsInsured),
+                'grand_total' => $quote->getGrandTotal()
             ]
         );
     }
