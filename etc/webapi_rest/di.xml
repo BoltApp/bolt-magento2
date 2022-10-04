@@ -51,7 +51,7 @@
     </type>
     <type name="Bolt\Boltpay\Plugin\WebapiRest\Route\Route\Helper\DataPlugin">
         <arguments>
-            <argument>boltRouteQuoteClient</argument>
+            <argument name="boltRouteQuoteClient" xsi:type="object">boltRouteQuoteClient</argument>
         </arguments>
     </type>
 </config>
