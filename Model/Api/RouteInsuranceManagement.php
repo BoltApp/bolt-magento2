@@ -92,13 +92,12 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
     {
         try {
             if (!$this->isModuleEnabled()) {
-                $responseBody = $this->serializer->serialize(
-                    [
-                        'message' => sprintf("%s is not installed on merchant's site", self::ROUTE_MODULE_NAME)
-                    ]);
+                $responseBody = [
+                    'message' => sprintf("%s is not installed on merchant's site", self::ROUTE_MODULE_NAME)
+                ];
                 $httpResponseCode = self::RESPONSE_FAIL_STATUS;
             } else {
-                $responseBody = $this->setRouteIsInsuredToQuote($routeIsInsured, $cartId);
+                $responseBody = $this->collectTotalsAndSaveQuote($routeIsInsured, $cartId);
                 $httpResponseCode = self::RESPONSE_SUCCESS_STATUS;
             }
             $this->responseBuilder($responseBody, $httpResponseCode);
@@ -111,7 +110,7 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
         }
     }
 
-    private function setRouteIsInsuredToQuote($routeIsInsured, $cartId) {
+    private function collectTotalsAndSaveQuote($routeIsInsured, $cartId) {
         $quote = $this->cartHelper->getQuoteById($cartId);
         if (!$quote)
         {
@@ -120,12 +119,10 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
         $quote->collectTotals();
         $this->quoteRepository->save($quote);
 
-        return $this->serializer->serialize(
-            [
-                'message' => $this->getResponseMessage($routeIsInsured),
-                'grand_total' => $quote->getGrandTotal()
-            ]
-        );
+        return [
+            'message' => $this->getResponseMessage($routeIsInsured),
+            'grand_total' => $quote->getGrandTotal()
+        ];
     }
 
     private function getResponseMessage($routeIsInsured) {
@@ -142,7 +139,7 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
     {
         $this->response->setHeader('Content-Type', 'application/json');
         $this->response->setHttpResponseCode($httpResponseCode);
-        $this->response->setBody($responseBody);
+        $this->response->setBody($this->serializer->serialize($responseBody));
         $this->response->sendResponse();
     }
 }

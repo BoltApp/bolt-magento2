@@ -17,13 +17,13 @@
 
 namespace Bolt\Boltpay\Plugin\WebapiRest\Route\Route\Helper;
 
+use \Bolt\Boltpay\Api\RouteInsuranceManagementInterface;
+
 /**
  * Plugin for {@see \Route\Route\Helper\Data}
  */
 class DataPlugin
 {
-    public const CART_ID_PARAM = 'cartId';
-    public const IS_INSURED_PARAM = 'route_is_insured';
     /**
      * @var \Magento\Framework\Webapi\Rest\Request
      */
@@ -51,18 +51,18 @@ class DataPlugin
 
     public function afterIsInsured(\Route\Route\Helper\Data $subject, $result): bool
     {
-        $requestParams = $this->request->getParams();
-        if (array_key_exists(self::IS_INSURED_PARAM, $requestParams)) {
-            return filter_var($requestParams[self::IS_INSURED_PARAM], FILTER_VALIDATE_BOOLEAN);
+        $routeIsInsured = $this->getRouteIsInsuredFromRequest();
+        if ($routeIsInsured !== null) {
+            return $routeIsInsured;
         }
         return $result;
     }
 
     public function afterGetQuoteResponse(\Route\Route\Helper\Data $subject, $result): bool
     {
-        $requestParams = $this->request->getParams();
-        if (array_key_exists(self::IS_INSURED_PARAM, $requestParams)) {
-            $cartId = $requestParams[self::CART_ID_PARAM];
+        $routeIsInsured = $this->getRouteIsInsuredFromRequest();
+        if ($routeIsInsured !== null) {
+            $cartId = $this->getCartIdFromRequest();
             $quote = $this->quoteRepository->get($cartId);
 
             if (!$quote) {
@@ -70,20 +70,38 @@ class DataPlugin
             }
 
             $subtotal = $quote->getSubtotal() ? $quote->getSubtotal() : 0;
-            $amountCovered = $this->getShippableItemsSubtotal($quote);
+            $amountCovered = $subject->getShippableItemsSubtotal($quote);
             if (!$subtotal || $subtotal==0 || !$amountCovered || $amountCovered==0) {
                 return true;
             }
 
             $quoteClient = $this->boltRouteQuoteClient->getInstance();
-
-            return $quoteClient->getQuote(
-                $subtotal,
-                $amountCovered,
-                filter_var($requestParams[self::IS_INSURED_PARAM], FILTER_VALIDATE_BOOLEAN),
-                $quote->getQuoteCurrencyCode()
-            );
+            if ($quoteClient) {
+                return $quoteClient->getQuote(
+                    $subtotal,
+                    $amountCovered,
+                    $routeIsInsured,
+                    $quote->getQuoteCurrencyCode()
+                );
+            }
         }
         return $result;
+    }
+
+    private function getCartIdFromRequest()
+    {
+        if ($this->request->getParam(RouteInsuranceManagementInterface::ROUTE_IS_INSURED_PARAM)) {
+            return $this->request->getParam(RouteInsuranceManagementInterface::CART_ID_PARAM);
+        }
+        return null;
+    }
+
+    private function getRouteIsInsuredFromRequest()
+    {
+        $routeIsInsured = $this->request->getParam(RouteInsuranceManagementInterface::ROUTE_IS_INSURED_PARAM);
+        if ($routeIsInsured !== null) {
+            return filter_var($routeIsInsured, FILTER_VALIDATE_BOOLEAN);
+        }
+        return null;
     }
 }
