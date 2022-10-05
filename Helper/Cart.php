@@ -2325,9 +2325,14 @@ class Cart extends AbstractHelper
             if ($this->deciderHelper->isAPIDrivenIntegrationEnabled()
                 && $this->deciderHelper->isSkipCartDiscountTotalMismatch()
                 && $amount) {
-                $discounts[0]['amount'] += $amount;
+                uasort($discounts, function ($a, $b) {
+                    return $b['amount'] <=> $a['amount'];
+                });
+                $firstKey = array_key_first($discounts);
+                $discounts[$firstKey]['amount'] += $amount;
+                ksort($discounts);
                 $totalAmount -= $amount;
-                $this->bugsnag->notifyError('Cart discount total mismatch', "Skip cart discount total mismatch. Actual Mismatch {$amount}. Discounts details: " . var_export($discounts, true));
+                $this->bugsnag->notifyError('Cart discount total mismatch', "Skip cart discount total mismatch. Actual Mismatch {$amount}. Discounts details: (before rounding)" . var_export($ruleDiscountDetails, true) . " (after rounding) " .var_export($discounts, true));
             }
         }
         /////////////////////////////////////////////////////////////////////////////////
