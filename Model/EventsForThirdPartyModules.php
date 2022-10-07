@@ -371,6 +371,12 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
                 ],
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "checkClasses" => ["Grabagun\Shipping\Model\ShippingMethodManagement"],
+                    "sendClasses" => ["Grabagun\Shipping\Helper\ShippingMethodHelper"],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
             ],
         ],
         "setInStoreShippingMethodForPrepareQuote" => [
@@ -392,7 +398,7 @@ class EventsForThirdPartyModules
                     "checkClasses" => [
                         "Grabagun\Shipping\Model\ShippingMethodManagement",
                     ],
-                    "sendClasses" => ["Grabagun\Shipping\Model\ShippingMethodManagement"],
+                    "sendClasses" => ["Grabagun\Shipping\Model\ShippingMethodManagement","Grabagun\Shipping\Helper\ShippingMethodHelper"],
                     "boltClass" => Grabagun_InStorePickup::class,
                 ],
             ],
@@ -420,6 +426,9 @@ class EventsForThirdPartyModules
                 ],
                 "Grabagun_DealerLocator" => [
                     "module" => "Grabagun_DealerLocator",
+                    "sendClasses" => [
+                        "Grabagun\Shipping\Helper\ShippingMethodHelper"
+                    ],
                     "checkClasses" => [
                         "Grabagun\Shipping\Model\ShippingMethodManagement",
                     ],
@@ -467,6 +476,17 @@ class EventsForThirdPartyModules
                 ]
             ],
         ],
+        'afterHandleCustomField' => [
+            "listeners" => [
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "checkClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
+            ],
+        ]
     ];
 
     const filterListeners = [
@@ -852,17 +872,6 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
-        "getOnSuccess" => [
-            "listeners" => [
-                "Grabagun_DealerLocator" => [
-                    "module" => "Grabagun_DealerLocator",
-                    "checkClasses" => [
-                        "Grabagun\DealerLocator\Api\Data\DealerInterface",
-                    ],
-                    "boltClass" => Grabagun_InStorePickup::class,
-                ],
-            ],
-        ],
         "filterApplyExternalQuoteData" => [
             "listeners" => [
                 [
@@ -1093,6 +1102,7 @@ class EventsForThirdPartyModules
                 "Grabagun_DealerLocator" => [
                     "module" => "Grabagun_DealerLocator",
                     "sendClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
                         "Grabagun\DealerLocator\Api\DealerRepositoryInterface",
                         "Grabagun\DealerLocator\Model\Resolver\Formatter",
                         "Grabagun\Shipping\Helper\ShippingMethodHelper",
@@ -1126,6 +1136,7 @@ class EventsForThirdPartyModules
                     "module" => "Grabagun_DealerLocator",
                     "sendClasses" => [
                         "Grabagun\Shipping\Model\ShippingMethodManagement",
+                        "Grabagun\Shipping\Helper\ShippingMethodHelper"
                     ],
                     "checkClasses" => [
                         "Grabagun\Shipping\Model\ShippingMethodManagement",
@@ -1275,6 +1286,7 @@ class EventsForThirdPartyModules
                     "checkClasses" => [
                         "Grabagun\Shipping\Model\ShippingMethodManagement",
                     ],
+                    "sendClasses" => ["Grabagun\Shipping\Helper\ShippingMethodHelper"],
                     "boltClass" => Grabagun_InStorePickup::class,
                 ],
             ],
@@ -1409,11 +1421,20 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
-            "filterCartItemShipmentType" => [
+        "filterCartItemShipmentType" => [
             'listeners' => [
                 "Grabagun_DealerLocator" => [
                     "module" => "Grabagun_DealerLocator",
                     'sendClasses' => ['Grabagun\Shipping\Helper\ShippingMethodHelper'],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
+            ],
+        ],
+        "filterTaxResult" => [
+            'listeners' => [
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "sendClasses" => ["Grabagun\Shipping\Helper\ShippingMethodHelper"],
                     "boltClass" => Grabagun_InStorePickup::class,
                 ],
             ],
