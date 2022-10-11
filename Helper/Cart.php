@@ -1566,6 +1566,8 @@ class Cart extends AbstractHelper
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = $quantity;
                 $product['sku']          = $this->getSkuFromQuoteItem($item);
+                $product['shipment_type'] = $this->eventsForThirdPartyModules->runFilter('filterCartItemShipmentType', 'unknown', $product, $storeId);
+
 
                 if ($this->msrpHelper->canApplyMsrp($_product) && $_product->getMsrp() !== null) {
                     $product['msrp']     = CurrencyUtils::toMinor($_product->getMsrp(), $currencyCode);
