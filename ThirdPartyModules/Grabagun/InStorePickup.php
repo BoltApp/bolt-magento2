@@ -114,6 +114,11 @@ class InStorePickup
     protected $shippingOptionFactory;
 
     /**
+     * @var \Magento\Framework\App\State
+     */
+    protected $appState;
+
+    /**
      * InStorePickup constructor.
      * @param Bugsnag $bugsnagHelper
      * @param Builder $searchCriteriaBuilder
@@ -146,7 +151,8 @@ class InStorePickup
         \Magento\Customer\Model\Session $customerSession,
         \Magento\Framework\UrlInterface $urlInterface,
         CustomerFactory $customerFactory,
-        ShippingOptionInterfaceFactory $shippingOptionFactory
+        ShippingOptionInterfaceFactory $shippingOptionFactory,
+        \Magento\Framework\App\State $appState
     )
     {
         $this->bugsnagHelper = $bugsnagHelper;
@@ -164,6 +170,7 @@ class InStorePickup
         $this->urlInterface = $urlInterface;
         $this->customerFactory = $customerFactory;
         $this->shippingOptionFactory = $shippingOptionFactory;
+        $this->appState = $appState;
     }
 
     /**
@@ -482,6 +489,9 @@ class InStorePickup
         $storeId
     ) {
         try {
+            if ($this->appState->getAreaCode() == \Magento\Framework\App\Area::AREA_ADMINHTML) {
+                return $result;
+            }
             if ($grabagunShippingMethodHelper->itemShippedToFflDealer($product->getSku())){
                 $result = 'ship_to_store';
             } else {
