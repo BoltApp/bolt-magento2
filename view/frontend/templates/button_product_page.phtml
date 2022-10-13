@@ -40,10 +40,12 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
 }
 ?>
 <?php if(!$block->isInstantCheckoutButton()): ?>
-    <div class="bolt-product-checkout-button bolt-multi-step-checkout <?= /* @noEscape */ $additionalClass;?>"
+    <style>.bolt-product-checkout-button-disabled{opacity:.5;cursor:default;pointer-events:none;}</style>
+    <div class="bolt-product-checkout-button bolt-product-checkout-button-disabled bolt-multi-step-checkout <?= /* @noEscape */ $additionalClass;?>"
          style="<?= /* @noEscape */ $block->getButtonCssStyles(); ?>" <?= /* @noEscape */ $additionalCheckoutButtonAttributes; ?>></div>
 <?php else: ?>
-    <div data-tid="instant-bolt-checkout-button" class="<?= /* @noEscape */ $additionalClass;?>">
+    <style>.bolt-product-checkout-button-disabled svg[class*="__bolt"] rect.brect{opacity:.5 !important;cursor:default!important;pointer-events:none!important;}</style>
+    <div data-tid="instant-bolt-checkout-button" class="bolt-product-checkout-button-disabled <?= /* @noEscape */ $additionalClass;?>">
         <object data="<?=$block->getCheckoutCdnUrl();?>/v1/checkout_button?publishable_key=<?=$block->getCheckoutKey();?>" class="bolt-product-checkout-button">
         </object>
     </div>
@@ -56,6 +58,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
             'Bolt_Boltpay/js/utils/when-defined',
             'mage/validation/validation',
             'mage/cookies',
+            'jquery/jquery.cookie',
             'domReady!'
         ], function ($, authenticationPopup, customerData, whenDefined) {
 
@@ -283,8 +286,11 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                     options[name] = value;
                 });
                 options['storeId'] = '<?= /* @noEscape */ $block->getStoreId(); ?>';
-                options['form_key'] = $.mage.cookies.get('form_key');
-
+                var formKey = $.mage.cookies.get('form_key');
+                if (!formKey && $('[name="form_key"]').length) {
+                    formKey = $('[name="form_key"]').val();
+                }
+                options['form_key'] = formKey;
                 var items = [];
                 <?php if ($block->isGrouped()): ?>
                     <?php foreach ($block->getGroupedProductChildren() as $childProduct):?>
@@ -387,5 +393,9 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
              * @see https://api.jqueryui.com/jQuery.widget/ (widgetEventPrefix)
              */
             $('body').on('formkeycreate formkey:create', setupProductPage);
+            // wait for add to cart validation form initialization
+            $(document).on('validationcreate', '#product_addtocart_form', function () {
+                $(".bolt-product-checkout-button-disabled").removeClass("bolt-product-checkout-button-disabled")
+            });
         });
     </script>

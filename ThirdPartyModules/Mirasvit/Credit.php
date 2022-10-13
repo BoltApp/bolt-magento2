@@ -111,8 +111,9 @@ class Credit
     
                 $discounts[] = [
                     'description'       => 'Store Credit',
-                    'reference'         => self::MIRASVIT_STORECREDIT,
+                    'reference'         => 'Store Credit',
                     'amount'            => $roundedAmount,
+                    'code'              => self::MIRASVIT_STORECREDIT,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                     // For v1/discounts.code.apply and v2/cart.update
                     'discount_type'     => Discount::BOLT_DISCOUNT_TYPE_FIXED,

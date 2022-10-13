@@ -2279,6 +2279,7 @@ class Cart extends AbstractHelper
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
         if (($amount = abs((float)$address->getDiscountAmount())) || $quote->getCouponCode()) {
+            $amount = CurrencyUtils::toMinor($amount, $currencyCode);
             $ruleDiscountDetails = $this->getSaleRuleDiscounts($quote);     
             list($ruleDiscountDetails, $discounts, $totalAmount) = $this->eventsForThirdPartyModules->runFilter('filterQuoteDiscountDetails', [$ruleDiscountDetails, $discounts, $totalAmount], $quote);
             foreach ($ruleDiscountDetails as $salesruleId => $ruleDiscountAmount) {
@@ -2318,7 +2319,20 @@ class Cart extends AbstractHelper
 
                         break;
                 }
+                $amount -= $roundedAmount;
                 $totalAmount -= $roundedAmount;
+            }
+            if ($this->deciderHelper->isAPIDrivenIntegrationEnabled()
+                && $this->deciderHelper->isSkipCartDiscountTotalMismatch()
+                && $amount) {
+                uasort($discounts, function ($a, $b) {
+                    return $b['amount'] <=> $a['amount'];
+                });
+                $firstKey = array_key_first($discounts);
+                $discounts[$firstKey]['amount'] += $amount;
+                ksort($discounts);
+                $totalAmount -= $amount;
+                $this->bugsnag->notifyError('Cart discount total mismatch', "Skip cart discount total mismatch. Actual Mismatch {$amount}. Discounts details: (before rounding)" . var_export($ruleDiscountDetails, true) . " (after rounding) " .var_export($discounts, true));
             }
         }
         /////////////////////////////////////////////////////////////////////////////////
