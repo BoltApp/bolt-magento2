@@ -288,9 +288,19 @@ class Definitions
     const M2_STORE_CONFIGURATION_WEBHOOK = 'M2_STORE_CONFIGURATION_WEBHOOK';
 
     /**
+     * Enable fetching data from magento setup_module table instead of using core methods
+     */
+    const M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE = 'M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE';
+
+    /**
      * Enable shopper assistant
      */
     const M2_ENABLE_SHOPPER_ASSISTANT = 'M2_ENABLE_SHOPPER_ASSISTANT';
+    
+    /**
+     * Skip cart discount total mismatch
+     */
+    const M2_SKIP_CART_DISCOUNT_TOTAL_MISMATCH = 'M2_SKIP_CART_DISCOUNT_TOTAL_MISMATCH';
 
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
@@ -595,6 +605,18 @@ class Definitions
         ],
         self::M2_ENABLE_SHOPPER_ASSISTANT => [
             self::NAME_KEY        => self::M2_ENABLE_SHOPPER_ASSISTANT,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_SKIP_CART_DISCOUNT_TOTAL_MISMATCH => [
+            self::NAME_KEY        => self::M2_SKIP_CART_DISCOUNT_TOTAL_MISMATCH,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE => [
+            self::NAME_KEY        => self::M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
