@@ -296,7 +296,7 @@ class InStorePickup
                         $preferredStoreOptions = [];
                         $items = $collection->getItems();
                         foreach ($items as $item) {
-                            if ($doesNfaItemExistInCart && !$item->getIsClass3()) {
+                            if ($doesNfaItemExistInCart && !$item->getData('is_class3')) {
                                 continue;
                             }
                             $storeAddress = $this->storeAddressFactory->create();
