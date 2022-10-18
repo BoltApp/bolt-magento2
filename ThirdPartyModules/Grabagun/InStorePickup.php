@@ -105,7 +105,7 @@ class InStorePickup
     /** @var \Magento\Framework\UrlInterface $urlInterface */
     private $urlInterface;
 
-    /** @var CustomerFactory  */
+    /** @var CustomerFactory */
     private $customerFactory;
 
     /**
@@ -204,17 +204,12 @@ class InStorePickup
             $quoteItems = $quote->getAllItems();
             $typeOfShipment = $this->getTypeOfShipment($grabgunShippingMethodHelper, $quote);
 
-            if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::NON_FFL_SHIPPING_ITEMS_ONLY){
+            if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::NON_FFL_SHIPPING_ITEMS_ONLY) {
                 $result = [$tmpShippingOptions, $shippingOptions];
             } else {
                 $shipToStoreDescription = '';
                 $shipToStoreCost = 0;
-                foreach ($shippingOptions as $shippingOption) {
-                    if ($shippingOption->getReference() == 'firearmshipping_firearmshipping_standard') {
-                        $shipToStoreDescription = $shippingOption->getService();
-                        $shipToStoreCost = $shippingOption->getCost();
-                    }
-                }
+                $shipToStoreMethod = '';
 
                 $this->dealerFormatter = $dealerFormatter;
                 $this->dealerRepository = $dealerRepository;
@@ -255,19 +250,21 @@ class InStorePickup
                 $dealers = $this->dealerRepository->getList($searchCriteria);
                 $shipToStoreOptions = [];
 
-                if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::MIXED_SHIPPING_ITEMS){
-                    foreach ($dealers->getItems() as $dealer) {
-                        $shippingMethods = $shippingMethodManagement->estimateByDealerId($quote->getId(), $dealer->getId());
-                        if ($shippingMethods) {
-                            $dealerShipingMethod = $shippingMethods[0];
-                            $shipToStoreDescription = $dealerShipingMethod->getMethodTitle();
-                            $shipToStoreCost = \Bolt\Boltpay\Helper\Shared\CurrencyUtils::toMinor($dealerShipingMethod->getAmount(), $quote->getBaseCurrencyCode());
-                        }
-                        break;
-                    }
+                $preferredStoreId = false;
+                if ($this->customerSession->isLoggedIn()) {
+                    $preferredStoreId = (int)$this->customerSession->getCustomer()->getData(\Grabagun\DealerLocator\Model\CustomerAttributes::PREFERRED_DEALER_ATTR_CODE);
                 }
-
                 foreach ($dealers->getItems() as $dealer) {
+                    if ($dealer->getId() == $preferredStoreId) {
+                        continue;
+                    }
+                    $shippingMethods = $shippingMethodManagement->estimateByDealerId($quote->getId(), $dealer->getId());
+                    if ($shippingMethods) {
+                        $dealerShipingMethod = $shippingMethods[0];
+                        $shipToStoreDescription = $dealerShipingMethod->getMethodTitle();
+                        $shipToStoreMethod = $dealerShipingMethod->getMethodCode();
+                        $shipToStoreCost = \Bolt\Boltpay\Helper\Shared\CurrencyUtils::toMinor($dealerShipingMethod->getAmount(), $quote->getBaseCurrencyCode());
+                    }
                     $distance = $this->vincentyGreatCircleDistance($getGeoCodesForAddress['lat'], $getGeoCodesForAddress['lng'], $dealer->getLat(), $dealer->getLng());
                     $storeAddress = $this->storeAddressFactory->create();
                     $storeAddress->setStreetAddress1($dealer->getAddress());
@@ -278,7 +275,7 @@ class InStorePickup
                     /** @var \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface $shipToStoreOption */
                     $shipToStoreOption = $this->shipToStoreOptionFactory->create();
 
-                    $shipToStoreOption->setReference($dealer->getId());
+                    $shipToStoreOption->setReference($shipToStoreMethod.'+'.$dealer->getId());
                     $shipToStoreOption->setStoreName($dealer->getDealerName());
                     $shipToStoreOption->setAddress($storeAddress);
                     $shipToStoreOption->setDistance($distance);
@@ -289,39 +286,45 @@ class InStorePickup
                 }
 
 
-                if ($this->customerSession->isLoggedIn()){
-                    $preferredStoreIds = (int)$this->customerSession->getCustomer()->getData(\Grabagun\DealerLocator\Model\CustomerAttributes::PREFERRED_DEALER_ATTR_CODE);
-                    if ($preferredStoreIds) {
-                        $collection = $grabagunCollectionFactory->create()->addFieldToFilter('id', ['in' => $preferredStoreIds]);
-                        $preferredStoreOptions = [];
-                        $items = $collection->getItems();
-                        foreach ($items as $item) {
-                            if ($doesNfaItemExistInCart && !$item->getData('is_class3')) {
-                                continue;
-                            }
-                            $storeAddress = $this->storeAddressFactory->create();
-                            $storeAddress->setStreetAddress1($item->getAddress());
-                            $storeAddress->setLocality($item->getCity());
-                            $storeAddress->setRegion($item->getState());
-                            $storeAddress->setPostalCode($item->getZipcode());
-                            $storeAddress->setCountryCode('US');
-                            $shipToStoreOption = $this->shipToStoreOptionFactory->create();
-
-                            $distance = $this->vincentyGreatCircleDistance($getGeoCodesForAddress['lat'], $getGeoCodesForAddress['lng'], $item->getLat(), $item->getLng());
-                            $shipToStoreOption->setReference($item->getId());
-                            $shipToStoreOption->setStoreName('Preferred FFL dealer: ' . $item->getDealerName());
-                            $shipToStoreOption->setAddress($storeAddress);
-                            $shipToStoreOption->setDistance($distance);
-                            $shipToStoreOption->setDescription($shipToStoreDescription);
-                            $shipToStoreOption->setDistanceUnit('mile');
-                            $shipToStoreOption->setCost($shipToStoreCost);
-                            $preferredStoreOptions[] = $shipToStoreOption;
+                if ($preferredStoreId) {
+                    $collection = $grabagunCollectionFactory->create()->addFieldToFilter('id', ['eq' => $preferredStoreId]);
+                    $preferredStoreOptions = [];
+                    $items = $collection->getItems();
+                    foreach ($items as $item) {
+                        if ($doesNfaItemExistInCart && !$item->getData('is_class3')) {
+                            continue;
+                        }
+                        $shippingMethods = $shippingMethodManagement->estimateByDealerId($quote->getId(), $preferredStoreId);
+                        if ($shippingMethods) {
+                            $dealerShipingMethod = $shippingMethods[0];
+                            $shipToStoreDescription = $dealerShipingMethod->getMethodTitle();
+                            $shipToStoreCost = \Bolt\Boltpay\Helper\Shared\CurrencyUtils::toMinor($dealerShipingMethod->getAmount(), $quote->getBaseCurrencyCode());
+                            $shipToStoreMethod = $dealerShipingMethod->getMethodCode();
                         }
 
-                        $shipToStoreOptions = array_merge($preferredStoreOptions, $shipToStoreOptions);
+                        $storeAddress = $this->storeAddressFactory->create();
+                        $storeAddress->setStreetAddress1($item->getAddress());
+                        $storeAddress->setLocality($item->getCity());
+                        $storeAddress->setRegion($item->getState());
+                        $storeAddress->setPostalCode($item->getZipcode());
+                        $storeAddress->setCountryCode('US');
+                        $shipToStoreOption = $this->shipToStoreOptionFactory->create();
+
+                        $distance = $this->vincentyGreatCircleDistance($getGeoCodesForAddress['lat'], $getGeoCodesForAddress['lng'], $item->getLat(), $item->getLng());
+                        $shipToStoreOption->setReference($shipToStoreMethod.'+'.$item->getId());
+                        $shipToStoreOption->setStoreName('Preferred FFL dealer: ' . $item->getDealerName());
+                        $shipToStoreOption->setAddress($storeAddress);
+                        $shipToStoreOption->setDistance($distance);
+                        $shipToStoreOption->setDescription($shipToStoreDescription);
+                        $shipToStoreOption->setDistanceUnit('mile');
+                        $shipToStoreOption->setCost($shipToStoreCost);
+                        $preferredStoreOptions[] = $shipToStoreOption;
                     }
 
+                    $shipToStoreOptions = array_merge($preferredStoreOptions, $shipToStoreOptions);
                 }
+
+
                 if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::FFL_SHIPPING_ITEMS_ONLY) {
                     $result = [$shipToStoreOptions, []];
                 } else if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::MIXED_SHIPPING_ITEMS) {
@@ -370,7 +373,8 @@ class InStorePickup
     /**
      * @param $quote
      */
-    public function doesNfaItemExistInCart($quote) {
+    public function doesNfaItemExistInCart($quote)
+    {
         foreach ($quote->getAllItems() as $item) {
             $productType = strtolower(
                 $item->getProduct()->getAttributeText(\Grabagun\Shipping\Model\Shipping\Config::SHIPPING_RESTRICTION_TYPE_ATTRIBUTE_CODE)
@@ -487,12 +491,13 @@ class InStorePickup
         \Grabagun\Shipping\Helper\ShippingMethodHelper $grabagunShippingMethodHelper,
         $product,
         $storeId
-    ) {
+    )
+    {
         try {
             if ($this->appState->getAreaCode() == \Magento\Framework\App\Area::AREA_ADMINHTML) {
                 return $result;
             }
-            if ($grabagunShippingMethodHelper->itemShippedToFflDealer($product->getSku())){
+            if ($grabagunShippingMethodHelper->itemShippedToFflDealer($product->getSku())) {
                 $result = 'ship_to_store';
             } else {
                 $result = 'ship_to_home_only';
@@ -610,7 +615,7 @@ class InStorePickup
         $addressData
     )
     {
-        $dealerStoreId = $ship_to_store_option['reference'];
+        $dealerStoreId = $this->getDealerInfoFromReference($ship_to_store_option['reference'])['dealer_id'];
         $typeOfShipment = $this->getTypeOfShipment($grabgunShippingMethodHelper, $quote);
         if ($dealerStoreId && $typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::FFL_SHIPPING_ITEMS_ONLY) {
             $shippingMethods = $grabgunShippingMethodManagement->estimateByDealerId($quote->getId(), $dealerStoreId);
@@ -620,6 +625,14 @@ class InStorePickup
                 return [$dealerShipingMethod->getCarrierCode(), $dealerShipingMethod->getMethodCode()];
             }
         }
+    }
+
+    public function getDealerInfoFromReference($shipToStoreReference) {
+        $dealerInfo = explode( '+', $shipToStoreReference);
+        return [
+            'dealer_shipping_method' => $dealerInfo[0],
+            'dealer_id' => $dealerInfo[1]
+        ];
     }
 
     /**
@@ -665,7 +678,8 @@ class InStorePickup
         try {
             if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::FFL_SHIPPING_ITEMS_ONLY && isset($transaction->order->cart->in_store_shipments[0]->shipment)) {
                 $shipment = $transaction->order->cart->in_store_shipments[0]->shipment;
-                $shippingMethods = $shippingMethodManagement->estimateByDealerId($quote->getId(), $shipment->reference);
+                $dealerStoreId = $this->getDealerInfoFromReference($shipment->reference)['dealer_id'];
+                $shippingMethods = $shippingMethodManagement->estimateByDealerId($quote->getId(), $dealerStoreId);
                 if ($shippingMethods) {
                     $dealerShipingMethod = $shippingMethods[0];
                     $shippingAddress = $quote->getShippingAddress();
@@ -679,8 +693,12 @@ class InStorePickup
                 $shippingAddress->setCollectShippingRates(true);
                 $shippingMethod = $transaction->order->cart->shipments[0]->reference;
                 $shippingAddress->setShippingMethod($shippingMethod)->save();
-                $quote->setData('ffl_dealer_address', $transaction->order->cart->in_store_shipments[0]->shipment->reference);
-                $quote->setData(\Grabagun\Shipping\Model\Shipping\Config::SALES_ORDER_ATTRIBUTE_FFL_SHIPPING_ADDRESS_DESCRIPTION, 'firearmshipping_standard');
+                $dealerInfo = $this->getDealerInfoFromReference($transaction->order->cart->in_store_shipments[0]->shipment->reference);
+                $dealerId = $dealerInfo['dealer_id'];
+                $dealerShippingMethod = $dealerInfo['dealer_shipping_method'];
+
+                $quote->setData('ffl_dealer_address', $dealerId);
+                $quote->setData(\Grabagun\Shipping\Model\Shipping\Config::SALES_ORDER_ATTRIBUTE_FFL_SHIPPING_ADDRESS_DESCRIPTION, $dealerShippingMethod);
                 $quote->save();
             }
         } catch (\Exception $e) {
@@ -728,7 +746,8 @@ class InStorePickup
         $latitudeTo,
         $longitudeTo,
         $earthRadius = 6371000
-    ) {
+    )
+    {
         // convert from degrees to radians
         $latFrom = deg2rad($latitudeFrom);
         $lonFrom = deg2rad($longitudeFrom);
@@ -741,8 +760,8 @@ class InStorePickup
         $b = sin($latFrom) * sin($latTo) + cos($latFrom) * cos($latTo) * cos($lonDelta);
 
         $angle = atan2(sqrt($a), $b);
-        $km =  round($angle * $earthRadius / 1000, 2);
-        return $km/1.609344;
+        $km = round($angle * $earthRadius / 1000, 2);
+        return $km / 1.609344;
     }
 
     /**
@@ -751,11 +770,13 @@ class InStorePickup
      * @param $transaction
      * @throws \Exception
      */
-    public function afterHandleCustomField($order, $customFields, $transaction) {
+    public function afterHandleCustomField($order, $customFields, $transaction)
+    {
         if ($customerId = $order->getCustomerId()) {
             foreach ($customFields as $customField) {
                 if ($customField['external_id'] == 'set_selected_store_as_default' && $customField['value'] && isset($transaction->order->cart->in_store_shipments[0]->shipment->reference)) {
-                    $id = (int)$transaction->order->cart->in_store_shipments[0]->shipment->reference;
+                    $dealerInfo = $this->getDealerInfoFromReference($transaction->order->cart->in_store_shipments[0]->shipment->reference);
+                    $id = (int)$dealerInfo['dealer_id'];
                     if ($id) {
                         $customer = $this->customerFactory->create()->load($customerId);
                         $customer->setData(\Grabagun\DealerLocator\Model\CustomerAttributes::PREFERRED_DEALER_ATTR_CODE, $id);
@@ -824,11 +845,15 @@ class InStorePickup
      * @param $ship_to_store_option
      * @param $addressData
      */
-    public function setExtraAddressInformation(\Grabagun\Shipping\Helper\ShippingMethodHelper $shippingMethodHelper, $addressInformation, $quote, $shipping_option, $ship_to_store_option, $addressData) {
+    public function setExtraAddressInformation(\Grabagun\Shipping\Helper\ShippingMethodHelper $shippingMethodHelper, $addressInformation, $quote, $shipping_option, $ship_to_store_option, $addressData)
+    {
         $typeOfShipment = $shippingMethodHelper->getTypeOfShipment($quote);
         if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::MIXED_SHIPPING_ITEMS) {
-            $quote->setData('ffl_dealer_address', $ship_to_store_option['reference']);
-            $quote->setData(\Grabagun\Shipping\Model\Shipping\Config::SALES_ORDER_ATTRIBUTE_FFL_SHIPPING_ADDRESS_DESCRIPTION, 'firearmshipping_standard');
+            $dealerInfo = $this->getDealerInfoFromReference($ship_to_store_option['reference']);
+            $dealerId = $dealerInfo['dealer_id'];
+            $dealerShippingMethod = $dealerInfo['dealer_shipping_method'];
+            $quote->setData('ffl_dealer_address', $dealerId);
+            $quote->setData(\Grabagun\Shipping\Model\Shipping\Config::SALES_ORDER_ATTRIBUTE_FFL_SHIPPING_ADDRESS_DESCRIPTION, $dealerShippingMethod);
             $quote->save();
         }
     }
