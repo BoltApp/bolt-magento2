@@ -32,26 +32,4 @@
                 type="Bolt\Boltpay\Plugin\WebapiRest\Magento\Quote\Model\QuotePlugin"
                 sortOrder="1"/>
     </type>
-    <virtualType name="boltRouteQuoteClient" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
-        <arguments>
-            <argument name="moduleName" xsi:type="string">Route_Route</argument>
-            <argument name="className" xsi:type="string">Route\Route\Model\Route\Quote</argument>
-        </arguments>
-    </virtualType>
-
-    <type name="Route\Route\Helper\Data">
-        <plugin name="bolt_boltpay_webapirest_override_route_is_enabled_helper_function"
-                type="Bolt\Boltpay\Plugin\WebapiRest\Route\Route\Helper\DataPlugin"
-                sortOrder="1"/>
-    </type>
-    <type name="Route\Route\Helper\Data">
-        <plugin name="bolt_boltpay_webapirest_override_quote_getter_function"
-                type="Bolt\Boltpay\Plugin\WebapiRest\Route\Route\Helper\DataPlugin"
-                sortOrder="1"/>
-    </type>
-    <type name="Bolt\Boltpay\Plugin\WebapiRest\Route\Route\Helper\DataPlugin">
-        <arguments>
-            <argument name="boltRouteQuoteClient" xsi:type="object">boltRouteQuoteClient</argument>
-        </arguments>
-    </type>
 </config>

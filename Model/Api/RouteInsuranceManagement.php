@@ -25,6 +25,7 @@ use Magento\Framework\Module\Manager;
 use Magento\Framework\Serialize\SerializerInterface as Serialize;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\QuoteRepository;
+use Magento\Checkout\Model\Session as CheckoutSession;
 
 class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManagementInterface
 {
@@ -59,6 +60,11 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
     private $quoteRepository;
 
     /**
+     * @var CheckoutSession
+     */
+    private $checkoutSession;
+
+    /**
      * @param Response $response
      * @param Bugsnag $bugsnag
      * @param Manager $moduleManager
@@ -72,7 +78,8 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
         Manager $moduleManager,
         Serialize $serializer,
         CartHelper $cartHelper,
-        QuoteRepository $quoteRepository
+        QuoteRepository $quoteRepository,
+        CheckoutSession $checkoutSession
     ) {
         $this->response = $response;
         $this->bugsnag = $bugsnag;
@@ -80,6 +87,7 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
         $this->serializer = $serializer;
         $this->cartHelper = $cartHelper;
         $this->quoteRepository = $quoteRepository;
+        $this->checkoutSession = $checkoutSession;
     }
 
     /**
@@ -116,6 +124,7 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
         {
             throw new WebapiException(__('Quote does not found by given ID'), 0, WebapiException::HTTP_NOT_FOUND);
         }
+        $this->setRouteAndQuoteDataToSession($cartId, $quote, $routeIsInsured);
         $quote->collectTotals();
         $this->quoteRepository->save($quote);
 
@@ -123,6 +132,15 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
             'message' => $this->getResponseMessage($routeIsInsured),
             'grand_total' => $quote->getGrandTotal()
         ];
+    }
+
+    private function setRouteAndQuoteDataToSession($cartId, $quote, $routeIsInsured)
+    {
+        $this->checkoutSession->setQuoteId($cartId);
+        $this->checkoutSession->setQuote($quote);
+        $this->checkoutSession->setInsured(
+            filter_var($routeIsInsured, FILTER_VALIDATE_BOOLEAN)
+        );
     }
 
     private function getResponseMessage($routeIsInsured) {
