@@ -31,7 +31,6 @@ interface RouteInsuranceManagementInterface
     const RESPONSE_SUCCESS_STATUS = 200;
     const RESPONSE_FAIL_STATUS = 404;
     public const CART_ID_PARAM = 'cartId';
-    public const ROUTE_IS_INSURED_PARAM = 'route_is_insured';
 
     /**
      * Enable or disable route insurance.

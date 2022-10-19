@@ -154,23 +154,6 @@ class RouteInsuranceManagementTest extends BoltTestCase
         TestUtils::setupBoltConfig($configData);
     }
 
-    protected function initCurrentMock()
-    {
-        $this->currentMock = $this->getMockBuilder(RouteInsuranceManagement::class)
-            ->disableOriginalConstructor()
-            ->disableProxyingToOriginalMethods()
-            ->setMethods(['isModuleEnabled', 'setRouteIsInsuredToQuote', 'responseBuilder']);
-        $this->currentMock = $this->currentMock->getMock();
-
-        TestHelper::setProperty($this->currentMock, 'response', $this->response);
-        TestHelper::setProperty($this->currentMock, 'bugsnag', $this->bugsnag);
-        TestHelper::setProperty($this->currentMock, 'moduleManager', $this->moduleManager);
-        TestHelper::setProperty($this->currentMock, 'serializer', $this->serializer);
-        TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);
-        TestHelper::setProperty($this->currentMock, 'quoteRepository', $this->quoteRepository);
-        TestHelper::setProperty($this->currentMock, 'checkoutSession', $this->checkoutSession);
-    }
-
     protected function tearDownInternal()
     {
         if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
@@ -239,12 +222,16 @@ class RouteInsuranceManagementTest extends BoltTestCase
     {
         $this->createRequest([]);
         $quote = TestUtils::createQuote();
-        $this->initCurrentMock();
-        $this->moduleManager->expects(self::once())->method('isEnabled')
-            ->with(RouteInsuranceManagementInterface::ROUTE_MODULE_NAME)
-            ->willReturn(true);
-        $this->currentMock->execute($quote->getID(), true);
-        $response = json_decode(TestHelper::getProperty($this->currentMock, 'response')->getBody(), true);
+        $moduleManager = $this->createMock(Manager::class);
+        $moduleManager->method('isEnabled')->willReturn(true);
+
+        TestHelper::setProperty($this->routeInsuranceManagement, 'moduleManager', $moduleManager);
+        $this->routeInsuranceManagement->execute($quote->getID(), true);
+        $response = json_decode(TestHelper::getProperty($this->routeInsuranceManagement, 'response')->getBody(), true);
+        $this->assertEquals(
+            RouteInsuranceManagementInterface::RESPONSE_FAIL_STATUS,
+            $response->getHttpResponseCode()
+        );
         $this->assertEquals(
             [
                 'message' => sprintf("%s is not installed on merchant's site", RouteInsuranceManagement::ROUTE_MODULE_NAME)
@@ -260,12 +247,12 @@ class RouteInsuranceManagementTest extends BoltTestCase
     public function execute_willThroughException_ifQuoteIsNotFound()
     {
         $this->createRequest([]);
-        $this->initCurrentMock();
-        $this->moduleManager->expects(self::once())->method('isEnabled')
-            ->with(RouteInsuranceManagementInterface::ROUTE_MODULE_NAME)
-            ->willReturn(true);
+        $module = $this->createMock(Manager::class);
+        $module->method('isEnabled')->willReturn(true);
+
+        TestHelper::setProperty($this->routeInsuranceManagement, 'moduleManager', $module);
+        $this->routeInsuranceManagement->execute('11111', true);
         $this->expectException(WebApiException::class);
-        $this->currentMock->execute('11111', true);
     }
 
     /**
@@ -280,12 +267,12 @@ class RouteInsuranceManagementTest extends BoltTestCase
             ]
         );
         $this->createRequest([]);
-        $this->initCurrentMock();
-        $this->moduleManager->expects(self::once())->method('isEnabled')
-            ->with(RouteInsuranceManagementInterface::ROUTE_MODULE_NAME)
-            ->willReturn(true);
-        $this->currentMock->execute($quote->getID(), true);
-        $response = json_decode(TestHelper::getProperty($this->currentMock, 'response')->getBody(), true);
+        $module = $this->createMock(Manager::class);
+        $module->method('isEnabled')->willReturn(true);
+
+        TestHelper::setProperty($this->routeInsuranceManagement, 'moduleManager', $module);
+        $this->routeInsuranceManagement->execute($quote->getID(), true);
+        $response = json_decode(TestHelper::getProperty($this->routeInsuranceManagement, 'response')->getBody(), true);
         $this->assertEquals(
             [
                 'message' => 'Route insurance is enabled for quote',
