@@ -230,7 +230,7 @@ class RouteInsuranceManagementTest extends BoltTestCase
         $response = json_decode(TestHelper::getProperty($this->routeInsuranceManagement, 'response')->getBody(), true);
         $this->assertEquals(
             RouteInsuranceManagementInterface::RESPONSE_FAIL_STATUS,
-            $response->getHttpResponseCode()
+            TestHelper::getProperty($this->routeInsuranceManagement, 'response')->getHttpResponseCode()
         );
         $this->assertEquals(
             [
@@ -251,8 +251,9 @@ class RouteInsuranceManagementTest extends BoltTestCase
         $module->method('isEnabled')->willReturn(true);
 
         TestHelper::setProperty($this->routeInsuranceManagement, 'moduleManager', $module);
-        $this->routeInsuranceManagement->execute('11111', true);
         $this->expectException(WebApiException::class);
+        $this->expectExceptionMessage('Quote does not found by given ID');
+        $this->routeInsuranceManagement->execute('11111', true);
     }
 
     /**
@@ -261,11 +262,7 @@ class RouteInsuranceManagementTest extends BoltTestCase
      */
     public function execute_returnsSuccessMessageWithGrandTotal_ifEverythingSucceeds()
     {
-        $quote = TestUtils::createQuote(
-            [
-                'grand_total' => 100
-            ]
-        );
+        $quote = TestUtils::createQuote();
         $this->createRequest([]);
         $module = $this->createMock(Manager::class);
         $module->method('isEnabled')->willReturn(true);
@@ -276,7 +273,7 @@ class RouteInsuranceManagementTest extends BoltTestCase
         $this->assertEquals(
             [
                 'message' => 'Route insurance is enabled for quote',
-                'grand_total' => 100
+                'grand_total' => 0
             ],
             $response
         );
