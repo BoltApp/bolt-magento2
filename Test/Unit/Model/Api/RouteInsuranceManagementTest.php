@@ -247,9 +247,10 @@ class RouteInsuranceManagementTest extends BoltTestCase
      */
     public function execute_willReturnHttpNotFoundCode_ifRouteModuleIsNotInstalled()
     {
+        $this->createRequest([]);
         $quote = TestUtils::createQuote();
         $this->initCurrentMock();
-        $this->currentMock->expects(self::once())->method('isModuleEnabled')->willReturn(false);
+        $this->currentMock->method('isModuleEnabled')->willReturn(false);
         $this->routeInsuranceManagement->execute($quote->getID(), true);
         $response = json_decode(TestHelper::getProperty($this->routeInsuranceManagement, 'response')->getBody(), true);
         $this->assertEquals(
@@ -268,10 +269,9 @@ class RouteInsuranceManagementTest extends BoltTestCase
     {
         $this->createRequest([]);
         $this->initCurrentMock();
-        $this->currentMock->expects(self::once())->method('isModuleEnabled')->willReturn(true);
+        $this->currentMock->method('isModuleEnabled')->willReturn(true);
         $this->expectException(WebApiException::class);
-        $this->expectExceptionMessage('Quote does not found by given ID');
-        $this->routeInsuranceManagement->execute('123', true);
+        $this->routeInsuranceManagement->execute('11111', true);
     }
 
     /**
@@ -287,7 +287,7 @@ class RouteInsuranceManagementTest extends BoltTestCase
         );
         $this->createRequest([]);
         $this->initCurrentMock();
-        $this->currentMock->expects(self::once())->method('isModuleEnabled')->willReturn(true);
+        $this->currentMock->method('isModuleEnabled')->willReturn(true);
         $this->routeInsuranceManagement->execute($quote->getID(), true);
         $response = json_decode(TestHelper::getProperty($this->routeInsuranceManagement, 'response')->getBody(), true);
         $this->assertEquals(
