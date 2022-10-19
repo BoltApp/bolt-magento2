@@ -36,6 +36,7 @@ use Magento\Framework\Serialize\SerializerInterface as Serialize;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\QuoteRepository;
 use PHPUnit\Framework\MockObject\MockObject;
+use Magento\Checkout\Model\Session as CheckoutSession;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\RouteInsuranceManagement
@@ -90,6 +91,11 @@ class RouteInsuranceManagementTest extends BoltTestCase
      * @var Request
      */
     private $request;
+
+    /**
+     * @var CheckoutSession
+     */
+    private $checkoutSession;
 
     /**
      * @var RouteInsuranceManagement
@@ -158,6 +164,7 @@ class RouteInsuranceManagementTest extends BoltTestCase
                     $this->createMock(Serialize::class),
                     $this->createMock(CartHelper::class),
                     $this->createMock(QuoteRepository::class),
+                    $this->createMock(CheckoutSession::class),
                 ]
             )
             ->enableOriginalConstructor()
@@ -171,6 +178,7 @@ class RouteInsuranceManagementTest extends BoltTestCase
         TestHelper::setProperty($this->currentMock, 'serializer', $this->serializer);
         TestHelper::setProperty($this->currentMock, 'cartHelper', $this->cartHelper);
         TestHelper::setProperty($this->currentMock, 'quoteRepository', $this->quoteRepository);
+        TestHelper::setProperty($this->currentMock, 'checkoutSession', $this->checkoutSession);
     }
 
     protected function tearDownInternal()
