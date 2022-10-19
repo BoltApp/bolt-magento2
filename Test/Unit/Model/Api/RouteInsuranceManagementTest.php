@@ -156,18 +156,7 @@ class RouteInsuranceManagementTest extends BoltTestCase
     protected function initCurrentMock()
     {
         $this->currentMock = $this->getMockBuilder(RouteInsuranceManagement::class)
-            ->setConstructorArgs(
-                [
-                    $this->createMock(Response::class),
-                    $this->createMock(Bugsnag::class),
-                    $this->createMock(Manager::class),
-                    $this->createMock(Serialize::class),
-                    $this->createMock(CartHelper::class),
-                    $this->createMock(QuoteRepository::class),
-                    $this->createMock(CheckoutSession::class),
-                ]
-            )
-            ->enableOriginalConstructor()
+            ->disableOriginalConstructor()
             ->disableProxyingToOriginalMethods()
             ->setMethods(['isModuleEnabled', 'setRouteIsInsuredToQuote', 'responseBuilder']);
         $this->currentMock = $this->currentMock->getMock();
