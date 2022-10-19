@@ -251,8 +251,8 @@ class RouteInsuranceManagementTest extends BoltTestCase
         $quote = TestUtils::createQuote();
         $this->initCurrentMock();
         $this->currentMock->method('isModuleEnabled')->willReturn(false);
-        $this->routeInsuranceManagement->execute($quote->getID(), true);
-        $response = json_decode(TestHelper::getProperty($this->routeInsuranceManagement, 'response')->getBody(), true);
+        $this->currentMock->execute($quote->getID(), true);
+        $response = json_decode(TestHelper::getProperty($this->currentMock, 'response')->getBody(), true);
         $this->assertEquals(
             [
                 'message' => sprintf("%s is not installed on merchant's site", RouteInsuranceManagement::ROUTE_MODULE_NAME)
@@ -271,7 +271,7 @@ class RouteInsuranceManagementTest extends BoltTestCase
         $this->initCurrentMock();
         $this->currentMock->method('isModuleEnabled')->willReturn(true);
         $this->expectException(WebApiException::class);
-        $this->routeInsuranceManagement->execute('11111', true);
+        $this->currentMock->execute('11111', true);
     }
 
     /**
@@ -288,8 +288,8 @@ class RouteInsuranceManagementTest extends BoltTestCase
         $this->createRequest([]);
         $this->initCurrentMock();
         $this->currentMock->method('isModuleEnabled')->willReturn(true);
-        $this->routeInsuranceManagement->execute($quote->getID(), true);
-        $response = json_decode(TestHelper::getProperty($this->routeInsuranceManagement, 'response')->getBody(), true);
+        $this->currentMock->execute($quote->getID(), true);
+        $response = json_decode(TestHelper::getProperty($this->currentMock, 'response')->getBody(), true);
         $this->assertEquals(
             [
                 'message' => 'Route insurance is enabled for quote',
