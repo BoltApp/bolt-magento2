@@ -162,7 +162,7 @@ class RouteInsuranceManagementTest extends BoltTestCase
             )
             ->enableOriginalConstructor()
             ->disableProxyingToOriginalMethods()
-            ->onlyMethods(['isModuleEnabled', 'setRouteIsInsuredToQuote', 'responseBuilder']);
+            ->setMethods(['isModuleEnabled', 'setRouteIsInsuredToQuote', 'responseBuilder']);
         $this->currentMock = $this->currentMock->getMock();
 
         TestHelper::setProperty($this->currentMock, 'response', $this->response);
@@ -242,7 +242,7 @@ class RouteInsuranceManagementTest extends BoltTestCase
         $quote = TestUtils::createQuote();
         $this->initCurrentMock();
         $this->currentMock->expects(self::once())->method('isModuleEnabled')->willReturn(false);
-        $this->routeInsuranceManagement->execute($quote, true);
+        $this->routeInsuranceManagement->execute($quote->getID(), true);
         $response = json_decode(TestHelper::getProperty($this->routeInsuranceManagement, 'response')->getBody(), true);
         $this->assertEquals(
             [
@@ -278,8 +278,9 @@ class RouteInsuranceManagementTest extends BoltTestCase
             ]
         );
         $this->createRequest([]);
+        $this->initCurrentMock();
         $this->currentMock->expects(self::once())->method('isModuleEnabled')->willReturn(true);
-        $this->routeInsuranceManagement->execute($quote, true);
+        $this->routeInsuranceManagement->execute($quote->getID(), true);
         $response = json_decode(TestHelper::getProperty($this->routeInsuranceManagement, 'response')->getBody(), true);
         $this->assertEquals(
             [
