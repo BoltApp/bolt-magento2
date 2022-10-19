@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
+use Bolt\Boltpay\Api\RouteInsuranceManagementInterface;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\Webapi\Rest\Response;
@@ -239,7 +240,9 @@ class RouteInsuranceManagementTest extends BoltTestCase
         $this->createRequest([]);
         $quote = TestUtils::createQuote();
         $this->initCurrentMock();
-        $this->currentMock->method('isModuleEnabled')->willReturn(false);
+        $this->moduleManager->expects(self::once())->method('isEnabled')
+            ->with(RouteInsuranceManagementInterface::ROUTE_MODULE_NAME)
+            ->willReturn(true);
         $this->currentMock->execute($quote->getID(), true);
         $response = json_decode(TestHelper::getProperty($this->currentMock, 'response')->getBody(), true);
         $this->assertEquals(
@@ -258,7 +261,9 @@ class RouteInsuranceManagementTest extends BoltTestCase
     {
         $this->createRequest([]);
         $this->initCurrentMock();
-        $this->currentMock->method('isModuleEnabled')->willReturn(true);
+        $this->moduleManager->expects(self::once())->method('isEnabled')
+            ->with(RouteInsuranceManagementInterface::ROUTE_MODULE_NAME)
+            ->willReturn(true);
         $this->expectException(WebApiException::class);
         $this->currentMock->execute('11111', true);
     }
@@ -276,7 +281,9 @@ class RouteInsuranceManagementTest extends BoltTestCase
         );
         $this->createRequest([]);
         $this->initCurrentMock();
-        $this->currentMock->method('isModuleEnabled')->willReturn(true);
+        $this->moduleManager->expects(self::once())->method('isEnabled')
+            ->with(RouteInsuranceManagementInterface::ROUTE_MODULE_NAME)
+            ->willReturn(true);
         $this->currentMock->execute($quote->getID(), true);
         $response = json_decode(TestHelper::getProperty($this->currentMock, 'response')->getBody(), true);
         $this->assertEquals(
