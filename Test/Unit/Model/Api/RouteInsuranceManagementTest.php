@@ -223,7 +223,7 @@ class RouteInsuranceManagementTest extends BoltTestCase
         $this->createRequest([]);
         $quote = TestUtils::createQuote();
         $moduleManager = $this->createMock(Manager::class);
-        $moduleManager->method('isEnabled')->willReturn(true);
+        $moduleManager->method('isEnabled')->willReturn(false);
 
         TestHelper::setProperty($this->routeInsuranceManagement, 'moduleManager', $moduleManager);
         $this->routeInsuranceManagement->execute($quote->getID(), true);
