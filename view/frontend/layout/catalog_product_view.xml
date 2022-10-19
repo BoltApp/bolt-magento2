@@ -13,5 +13,9 @@
         <referenceBlock name="product.info.addtocart.additional">
             <block class="Bolt\Boltpay\Block\JsProductPage" name="bolt.button.additional" template="Bolt_Boltpay::button_product_page.phtml" before="-" />
         </referenceBlock>
+        <!-- add new block here -->
+        <referenceBlock name="product.info.subscriptionFrequency">
+            <block class="Bolt\Boltpay\Block\JsProductPage" name="bolt.frequencySelector" template="Bolt_Boltpay::subscription_freq_selector_product_page.phtml" before="-" />
+        </referenceBlock>
     </body>
 </page>

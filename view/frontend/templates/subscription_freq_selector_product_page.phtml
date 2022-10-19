@@ -1,0 +1,45 @@
+<?php
+    // return if PPC option is disabled or we aren't on product page
+    if (!$block->isBoltProductPage()) { return;
+    }
+    ?>
+<div class="bolt-freq-selector"></div>
+<script>
+    require([
+        'jquery',
+        'Bolt_Boltpay/js/utils/when-defined',
+        'domReady!'
+    ], function ($, whenDefined) {
+        var callbacks = {
+            onSubscriptionChanged: function(reference, frequency) {
+                console.log("subscription frequency changed! ", reference, frequency);
+            }
+        }
+
+        var getQty = function () {
+           // copy from button_product_page.phtml getQty()
+        }
+
+        var getGroupedProductChildQty = function () {
+           // copy from button_product_page.phtml getGroupedProductChildQty()
+        }
+    
+        var getItemsData = function () {
+           // copy from button_product_page.phtml getItemsData()
+        };
+    
+        var cart;
+        var setupProductPage = function () {
+            cart = {
+                items: getItemsData()
+            };
+        
+            // if connect.js is not loaded postpone until it is
+            whenDefined(window, 'BoltCheckout', function(){
+                BoltCheckout.configureProductFrequencySelector(cart, callbacks);
+            }, 'configureProductFrequencySelector');
+        };
+        
+        setupProductPage();
+    });
+</script>
