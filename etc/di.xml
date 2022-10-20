@@ -106,6 +106,8 @@
     <preference for="Bolt\Boltpay\Api\Data\DefaultOrderStatusInterface"   type="Bolt\Boltpay\Model\Api\Data\DefaultOrderStatus" />
     <!-- Order transactions endpoint -->
     <preference for="Bolt\Boltpay\Api\OrderTransactionsInterface" type="Bolt\Boltpay\Model\Api\OrderTransactions" />
+    <!-- For enable or disable route insurance  -->
+    <preference for="Bolt\Boltpay\Api\RouteInsuranceManagementInterface" type="Bolt\Boltpay\Model\Api\RouteInsuranceManagement" />
 
     <virtualType name="boltUnirgyGiftCert" type="Bolt\Boltpay\Model\ThirdPartyModuleFactory">
         <arguments>
