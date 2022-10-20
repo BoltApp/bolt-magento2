@@ -153,7 +153,7 @@ class JsTest extends BoltTestCase
      * @var MockObject|EventsForThirdPartyModules
      */
     private $eventsForThirdPartyModules;
-    
+
     /** @var State */
     private $_appState;
 
@@ -725,7 +725,7 @@ class JsTest extends BoltTestCase
 
         static::assertEquals($value, $result, 'getGlobalCSS() method: not working properly');
     }
-    
+
     /**
      * @test
      * that getGlobalJS returns global javascript from config to be added to any page
@@ -738,7 +738,7 @@ class JsTest extends BoltTestCase
     {
         $value = 'require([
             "jquery"
-        ], function ($) {       
+        ], function ($) {
         });';
 
         $configData = [
@@ -1398,7 +1398,7 @@ class JsTest extends BoltTestCase
      */
     public function getModuleVersion_always_returnsModuleVersion()
     {
-        $moduleVersion = '2.26.1';
+        $moduleVersion = '2.26.2';
         static::assertEquals($moduleVersion, $this->block->getModuleVersion());
     }
 
@@ -2420,7 +2420,7 @@ function(arg) {
         TestHelper::setInaccessibleProperty($block,'eventsForThirdPartyModules', $eventsForThirdPartyModules);
         $this->assertEquals('test additional js', $block->getAdditionalInvalidateBoltCartJavascript());
     }
-    
+
     /**
      * @test
      */
@@ -2449,7 +2449,7 @@ function(arg) {
         $store = $this->objectManager->get(StoreManagerInterface::class);
         $this->storeId = $store->getStore()->getId();
     }
-    
+
     /**
      * @test
      *c
@@ -2559,7 +2559,7 @@ function(arg) {
             ],
         ];
     }
-    
+
     /**
      * @test
      *
@@ -2607,7 +2607,7 @@ function(arg) {
         static::assertEquals($expectedResult, $block->isLoadConnectJsDynamic());
         TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
-    
+
     /**
      * Data provider for
      *
@@ -2704,7 +2704,7 @@ function(arg) {
             ],
         ];
     }
-    
+
     /**
      * @test
      *
@@ -2719,7 +2719,7 @@ function(arg) {
         static::assertEquals($expectedResult, $this->block->isDisableTrackJsOnHomePage());
         TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
-    
+
     /**
      * Data provider for
      *
@@ -2740,7 +2740,7 @@ function(arg) {
             ],
         ];
     }
-    
+
     /**
      * @test
      *
@@ -2755,7 +2755,7 @@ function(arg) {
         static::assertEquals($expectedResult, $this->block->isDisableTrackJsOnNonBoltPages());
         TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
-    
+
     /**
      * Data provider for
      *
@@ -2791,7 +2791,7 @@ function(arg) {
         static::assertEquals($expectedResult, $this->block->isDisableOpenReplayJs());
         TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
-    
+
     /**
      * Data provider for
      *
@@ -2818,7 +2818,7 @@ function(arg) {
      * @covers ::getCustomSSOSelectors
      */
     public function getCustomSSOSelectors_withVariousAdditionalConfigs_returnsCustomSSOSelectors(
-        $additionalConfig, 
+        $additionalConfig,
         $expectedCustomSSOSelectors
     ) {
         TestUtils::setupBoltConfig(
