@@ -540,7 +540,7 @@ class Config extends AbstractHelper
         \Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE,
         \Magento\Downloadable\Model\Product\Type::TYPE_DOWNLOADABLE,
         \Magento\Catalog\Model\Product\Type::TYPE_BUNDLE,
-        \Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE
+        'grouped'
     ];
 
     /**

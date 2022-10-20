@@ -34,6 +34,7 @@ class ShipToStoreOptionTest extends BoltTestCase
     const STORE_NAME = 'INSTOREPICKUP_STORE';
     const DISTANCE = 6.6;
     const DISTANCE_UNIT = 'km';
+    const DESCRIPTION = '3 to 5 BUSINESS DAYS';
 
     /**
      * @var ShipToStoreOption
@@ -56,6 +57,7 @@ class ShipToStoreOptionTest extends BoltTestCase
         $this->shipToStoreOption->setDistance(self::DISTANCE);
         $this->shipToStoreOption->setDistanceUnit(self::DISTANCE_UNIT);
         $this->shipToStoreOption->setTaxAmount(self::TAX_AMOUNT);
+        $this->shipToStoreOption->setDescription(self::DESCRIPTION);
     }
 
     /**
@@ -130,6 +132,16 @@ class ShipToStoreOptionTest extends BoltTestCase
 
     /**
      * @test
+     * that getTaxAmount would return tax amount
+     * @covers ::getDescription
+     */
+    public function getDescription_always_returnsDescription()
+    {
+        $this->assertEquals(self::DESCRIPTION, $this->shipToStoreOption->getDescription());
+    }
+
+    /**
+     * @test
      * that jsonSerialize would return an associative array of values
      * @covers ::jsonSerialize
      */
@@ -143,7 +155,8 @@ class ShipToStoreOptionTest extends BoltTestCase
             'address' => $this->storeAddress,
             'distance' => self::DISTANCE,
             'distance_unit' => self::DISTANCE_UNIT,
-            'tax_amount' =>self::TAX_AMOUNT
+            'tax_amount' =>self::TAX_AMOUNT,
+            'description' =>self::DESCRIPTION
         ], $result);
     }
 }
