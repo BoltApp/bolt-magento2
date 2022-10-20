@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Section\CustomerData;
 
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Customer\CustomerData\SectionSourceInterface;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 class BoltCart implements SectionSourceInterface
 {
@@ -28,13 +29,26 @@ class BoltCart implements SectionSourceInterface
      */
     private $cartHelper;
 
-    public function __construct(CartHelper $cartHelper)
-    {
+    /**
+     * @var Decider
+     */
+    private $featureSwitches;
+
+    /**
+     * @param CartHelper $cartHelper
+     * @param Decider $featureSwitches
+     */
+    public function __construct(
+        CartHelper $cartHelper,
+        Decider $featureSwitches
+    ) {
         $this->cartHelper = $cartHelper;
+        $this->featureSwitches = $featureSwitches;
     }
 
     public function getSectionData()
     {
-        return $this->cartHelper->calculateCartAndHints();
+        return (!$this->featureSwitches->isAPIDrivenCartIntegrationEnabled())
+            ? $this->cartHelper->calculateCartAndHints() : [];
     }
 }
