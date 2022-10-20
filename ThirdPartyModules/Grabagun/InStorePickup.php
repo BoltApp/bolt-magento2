@@ -649,11 +649,17 @@ class InStorePickup
         try {
             $typeOfShipment = $this->getTypeOfShipment($grabgunShippingMethodHelper, $quote);
             if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::FFL_SHIPPING_ITEMS_ONLY && isset($transaction->order->cart->in_store_shipments[0]->shipment)) {
-                $shipment = $transaction->order->cart->in_store_shipments[0]->shipment;
-                $address = $transaction->order->cart->in_store_shipments[0]->address ?? null;
+                $transactionInStoreShipment = $transaction->order->cart->in_store_shipments[0];
+                $shipment = $transactionInStoreShipment->shipment;
+                $address = $transactionInStoreShipment->address ?? null;
                 if ($address) {
                     $address->country_code = 'US';
                     $this->orderHelper->setAddress($quote->getShippingAddress(), $address);
+                    $quote->getShippingAddress()
+                        ->setFirstName($shipment->shipping_address->first_name)
+                        ->setLastName($shipment->shipping_address->last_name)
+                        ->setCompany($transactionInStoreShipment->store_name)
+                        ->save();
                 }
             }
         } catch (\Exception $e) {
