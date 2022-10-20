@@ -154,6 +154,7 @@ class Donations
         }
 
         if ($checkoutSession instanceof \Magento\Backend\Model\Session\Quote) {
+            $mageworxDonationDetail = $checkoutSession->getMageworxDonationDetails();
             if (isset($mageworxDonationDetail['global_donation']) && $mageworxDonationDetail['global_donation'] > 0) {
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 $unitPrice = @$mageworxDonationDetail['global_donation'];
