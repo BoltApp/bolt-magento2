@@ -281,7 +281,7 @@ class Order extends AbstractHelper
      * @var Create|null
      */
     private $adminOrderCreateModel;
-    
+
     /**
      * @var GiftOptionsHandler
      */
@@ -323,7 +323,7 @@ class Order extends AbstractHelper
      * @param GiftOptionsHandler                  $giftOptionsHandler
      * @param OrderManagementInterface|null       $orderManagement
      * @param OrderIncrementIdChecker|null        $orderIncrementIdChecker
-     * @param Create|null                         $adminOrderCreateModel 
+     * @param Create|null                         $adminOrderCreateModel
      */
     public function __construct(
         Context $context,
@@ -970,7 +970,7 @@ class Order extends AbstractHelper
             });
         }
         ///////////////////////////////////////////////////////////////
-        
+
         // check if the order exists
         $order = $this->getExistingOrder($incrementId, $parentQuoteId);
 
@@ -1435,11 +1435,23 @@ class Order extends AbstractHelper
      * Cancel and delete the order
      *
      * @param OrderModel $order
-     * @throws \Exception
+     * @param bool $failureEventDispatched
+     * @return void
      */
-    public function deleteOrder($order)
+    public function deleteOrder($order, $failureEventDispatched = false)
     {
         $this->eventsForThirdPartyModules->dispatchEvent("beforeFailedPaymentOrderSave", $order);
+        if (!$failureEventDispatched) {
+            $quoteId = $order->getQuoteId();
+            $quote = $this->cartHelper->getQuoteById($quoteId);
+            $this->_eventManager->dispatch(
+                'sales_model_service_quote_submit_failure',
+                [
+                    'order' => $order,
+                    'quote' => $quote
+                ]
+            );
+        }
         try {
             $order->cancel()->save();
             $this->orderRepository->delete($order);
@@ -1529,7 +1541,7 @@ class Order extends AbstractHelper
                 'quote' => $parentQuote
             ]
         );
-        $this->deleteOrder($order);
+        $this->deleteOrder($order, true);
         // reactivate session quote - the condition excludes PPC quotes
         if ($parentQuoteId != $immutableQuoteId) {
             $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(true));
@@ -2012,7 +2024,7 @@ class Order extends AbstractHelper
             $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
         }
         if ($saveOrder) {
-           $order->save(); 
+           $order->save();
         }
     }
 
@@ -2289,9 +2301,9 @@ class Order extends AbstractHelper
             $this->resetOrderState($order);
         }
         $orderState = $this->transactionToOrderState($transactionState, $order);
-        
+
         // If the action is not triggered by Bolt API request and transaction type is credit, there is not need to save order.
-        $ifSaveOrder = Hook::$fromBolt || ($transactionState != self::TS_CREDIT_IN_PROGRESS && $transactionState != self::TS_CREDIT_COMPLETED);      
+        $ifSaveOrder = Hook::$fromBolt || ($transactionState != self::TS_CREDIT_IN_PROGRESS && $transactionState != self::TS_CREDIT_COMPLETED);
         $this->setOrderState($order, $orderState, $ifSaveOrder);
 
         // Send order confirmation email to customer.
