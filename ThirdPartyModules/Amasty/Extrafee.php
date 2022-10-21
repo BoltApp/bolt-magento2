@@ -98,7 +98,7 @@ class Extrafee
                 $totalAmount += $roundedTotalAmount;
                 $product = [
                     'reference' => self::AMASTY_EXTRAFEE_PREFIX . '_' . $feeOption->getFeeId() . '_' . $feeOption->getOptionId(),
-                    'image_url' => 'https://cdn.routeapp.io/route-widget/images/RouteLogoIcon.png',
+                    'image_url' => '',
                     'name' => $feeOption->getLabel(),
                     'sku' => self::AMASTY_EXTRAFEE_PREFIX . '_' . $feeOption->getFeeId() . '_' . $feeOption->getOptionId(),
                     'description' => '',
