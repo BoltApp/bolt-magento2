@@ -310,13 +310,13 @@ class CartTest extends BoltTestCase
 
     /** @var MockObject|ObjectManager */
     private $originalObjectManager;
-    
+
     /** @var MockObject|MsrpHelper */
     private $msrpHelper;
-    
+
     /** @var MockObject|PriceHelper */
     private $priceHelper;
-    
+
     /** @var MockObject|Store */
     private $store;
 
@@ -455,8 +455,11 @@ class CartTest extends BoltTestCase
             DeciderHelper::class,
             ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical',
              'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata', 'isCustomizableOptionsSupport',
-             'isPreventBoltCartForQuotesWithError','isAPIDrivenIntegrationEnabled','isUseRuleNameIfDescriptionEmpty']
+             'isPreventBoltCartForQuotesWithError','isAPIDrivenIntegrationEnabled','isUseRuleNameIfDescriptionEmpty',
+             'isAPIDrivenCartIntegrationEnabled'
+            ]
         );
+        $this->deciderHelper->method('isAPIDrivenCartIntegrationEnabled')->willReturn(false);
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
         $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
@@ -3988,7 +3991,7 @@ ORDER
         $rule5->expects(static::once())->method('getDescription')
         ->willReturn('');
         $rule5->method('getSimpleAction')->willReturn('by_fixed');
-        
+
         $rule6 = $this->getMockBuilder(DataObject::class)
             ->setMethods(['getCouponType', 'getDescription','getName','getSimpleAction'])
             ->disableOriginalConstructor()
@@ -4526,7 +4529,7 @@ ORDER
         $this->productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
         $this->productMock->method('getDescription')->willReturn('Product Description');
         $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
-        
+
         $this->msrpHelper->method('canApplyMsrp')->with($this->productMock)->willReturn(true);
 
         $quoteItemMock = $this->getQuoteItemMock();
@@ -4594,7 +4597,7 @@ ORDER
         $this->productMock->method('getDescription')->willReturn('Product Description');
         $this->productMock->method('getTypeInstance')->willReturn($productTypeConfigurableMock);
         $this->productMock->method('getCustomOption')->with('option_ids')->willReturn([]);
-        
+
         $this->msrpHelper->method('canApplyMsrp')->with($this->productMock)->willReturn(false);
 
         $quoteItemMock = $this->getQuoteItemMock();
@@ -4667,7 +4670,7 @@ ORDER
         $quoteItem->method('getOptionByCode')->with('option_ids')->willReturn([]);
         $quoteItem->method('getProductType')->willReturn('simple');
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
-        
+
         $this->msrpHelper->method('canApplyMsrp')->with($productMock)->willReturn(false);
 
         $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
@@ -4768,7 +4771,7 @@ ORDER
         $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
         $quoteItem->method('getProduct')->willReturn($productMock);
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
-        
+
         $this->msrpHelper->method('canApplyMsrp')->with($productMock)->willReturn(false);
 
         $this->imageHelper->method('init')
@@ -4838,7 +4841,7 @@ ORDER
         $quoteItem->method('getProductId')->willReturn(self::PRODUCT_ID);
         $quoteItem->method('getProduct')->willReturn($productMock);
         $productMock->expects(static::once())->method('getTypeInstance')->willReturnSelf();
-        
+
         $this->msrpHelper->method('canApplyMsrp')->with($productMock)->willReturn(false);
 
         $this->imageHelper->method('init')
@@ -4934,7 +4937,7 @@ ORDER
 
         TestUtils::cleanupSharedFixtures([$order]);
     }
-    
+
     /**
      * @test
      * that getCartItemsForOrder returns expected data and attributes
@@ -5257,9 +5260,9 @@ ORDER
         $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
             ->willReturn($this->productMock);
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
-        
+
         $this->store->expects(static::once())->method('setCurrentCurrencyCode')->with(self::CURRENCY_CODE);
-                           
+
         static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
     }
 
@@ -5379,7 +5382,7 @@ ORDER
         $this->productRepository->expects(static::exactly(2))->method('getById')->with(self::PRODUCT_ID)
             ->willReturn($this->productMock);
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
-        
+
         $this->store->expects(static::once())->method('setCurrentCurrencyCode')->with(CartTest::CURRENCY_CODE);
 
         static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
@@ -5462,7 +5465,7 @@ ORDER
         $this->productRepository->expects(static::once())->method('getById')->with(self::PRODUCT_ID)
         ->willReturn($this->productMock);
         $this->quoteMock->expects(static::once())->method('setIsActive')->with(false);
-        
+
         $this->store->expects(static::once())->method('setCurrentCurrencyCode')->with(self::CURRENCY_CODE);
 
         static::assertEquals($expectedCartData, $cartMock->createCartByRequest($request));
@@ -5489,7 +5492,7 @@ ORDER
         $customer = $this->createMock(CustomerInterface::class);
         $this->customerRepository->method('getById')->willReturn($customer);
         $this->quoteMock->expects(static::once())->method('assignCustomer')->with($customer);
-        
+
         $this->store->expects(static::once())->method('setCurrentCurrencyCode')->with(CartTest::CURRENCY_CODE);
 
         static::assertEquals($expectedCartData, $currentMock->createCartByRequest($request));
@@ -5515,7 +5518,7 @@ ORDER
         $this->expectException(BoltException::class);
         $this->expectExceptionCode(BoltErrorResponse::ERR_PPC_OUT_OF_STOCK);
         $this->expectExceptionMessage('Product that you are trying to add is not available.');
-        
+
         $this->store->expects(static::once())->method('setCurrentCurrencyCode')->with(CartTest::CURRENCY_CODE);
 
         static::assertEquals($expectedCartData, $currentMock->createCartByRequest($request));
@@ -6963,14 +6966,14 @@ ORDER
     public function getSaleRuleDiscounts_withFreeShippingCouponSpecificCoupon_collectsCoupon()
     {
         $currentMock = $this->getCurrentMock(['getCalculationAddress', 'isCollectDiscountsByPlugin']);
-        
+
         $shippingAddress = $this->getAddressMock();
         $shippingAddress->expects(static::once())->method('getAppliedRuleIds')->willReturn('2');
-        
+
         $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
         $currentMock->expects(static::once())->method('isCollectDiscountsByPlugin')->with($quote)->willReturn(true);
-    
+
         $checkoutSession = $this->createPartialMock(
             CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts']
@@ -6981,7 +6984,7 @@ ORDER
         $this->sessionHelper->expects(static::once())
             ->method('getCheckoutSession')
             ->willReturn($checkoutSession);
-        
+
         $rule2 = $this->getMockBuilder(DataObject::class)
             ->setMethods(['getCouponType'])
             ->disableOriginalConstructor()
@@ -6997,7 +7000,7 @@ ORDER
         $ruleDiscountDetails = $currentMock->getSaleRuleDiscounts($quote);
         static::assertEquals([2 => 0], $ruleDiscountDetails);
     }
-    
+
         /**
          * @test
          * that getSaleRuleDiscounts properly handles free shipping promotion (no coupon code)
@@ -7009,14 +7012,14 @@ ORDER
     public function getSaleRuleDiscounts_withFreeShippingCouponNoCoupon_collectsCoupon()
     {
         $currentMock = $this->getCurrentMock(['getCalculationAddress', 'isCollectDiscountsByPlugin']);
-        
+
         $shippingAddress = $this->getAddressMock();
         $shippingAddress->expects(static::once())->method('getAppliedRuleIds')->willReturn('2');
-        
+
         $quote = $this->getQuoteMock($this->getAddressMock(), $shippingAddress);
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
         $currentMock->expects(static::once())->method('isCollectDiscountsByPlugin')->with($quote)->willReturn(true);
-    
+
         $checkoutSession = $this->createPartialMock(
             CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts']
@@ -7027,7 +7030,7 @@ ORDER
         $this->sessionHelper->expects(static::once())
             ->method('getCheckoutSession')
             ->willReturn($checkoutSession);
-        
+
         $rule2 = $this->getMockBuilder(DataObject::class)
             ->setMethods(['getCouponType'])
             ->disableOriginalConstructor()
@@ -7043,10 +7046,10 @@ ORDER
         $ruleDiscountDetails = $currentMock->getSaleRuleDiscounts($quote);
         static::assertEquals([], $ruleDiscountDetails);
     }
-    
+
     /**
      * @test
-     * 
+     *
      * @covers ::getSkuFromQuoteItem
      */
     public function getSkuFromQuoteItem_withBundleItem()
