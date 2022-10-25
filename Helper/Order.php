@@ -2295,6 +2295,7 @@ class Order extends AbstractHelper
 
             if (isset($hookPayload['custom_fields']) && $hookPayload['custom_fields']) {
                 $this->customFieldsHandler->handle($order, $hookPayload['custom_fields']);
+                $this->eventsForThirdPartyModules->dispatchEvent("afterHandleCustomField", $order, $hookPayload['custom_fields'], $transaction);
             }
 
             // set order state and status
