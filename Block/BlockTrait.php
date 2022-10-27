@@ -195,15 +195,4 @@ trait BlockTrait
     {
         return $this->checkoutSession->getQuote();
     }
-
-    /**
-     * Return if api driven cart integration is enabled
-     *
-     * @return bool
-     * @throws \Magento\Framework\Exception\LocalizedException
-     */
-    public function isAPIDrivenCartIntegrationEnabled()
-    {
-        return $this->featureSwitches->isAPIDrivenCartIntegrationEnabled();
-    }
 }
