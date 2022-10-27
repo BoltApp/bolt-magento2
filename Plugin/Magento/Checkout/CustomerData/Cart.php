@@ -9,6 +9,7 @@ use Magento\Quote\Model\QuoteIdToMaskedQuoteIdInterface;
 use Magento\Quote\Model\ResourceModel\Quote\QuoteIdMask as QuoteIdMaskResourceModel;
 use Magento\Quote\Model\QuoteIdMaskFactory;
 use Magento\Quote\Model\Quote;
+use Bolt\Boltpay\Helper\Cart as BoltHelperCart;
 use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
@@ -17,6 +18,8 @@ use Bolt\Boltpay\Helper\Bugsnag;
  */
 class Cart
 {
+    private const HINTS_TYPE = 'cart';
+
     /**
      * @var CheckoutSession
      */
@@ -38,6 +41,11 @@ class Cart
     private $quoteIdMaskResourceModel;
 
     /**
+     * @var BoltHelperCart
+     */
+    private $boltHelperCart;
+
+    /**
      * @var Bugsnag
      */
     private $bugsnag;
@@ -47,6 +55,7 @@ class Cart
      * @param QuoteIdToMaskedQuoteIdInterface $quoteIdToMaskedQuoteId
      * @param QuoteIdMaskResourceModel $quoteIdMaskResourceModel
      * @param QuoteIdMaskFactory $quoteIdMaskFactory
+     * @param BoltHelperCart $boltHelperCart
      * @param Bugsnag $bugsnag
      */
     public function __construct(
@@ -54,13 +63,14 @@ class Cart
         QuoteIdToMaskedQuoteIdInterface $quoteIdToMaskedQuoteId,
         QuoteIdMaskResourceModel $quoteIdMaskResourceModel,
         QuoteIdMaskFactory $quoteIdMaskFactory,
+        BoltHelperCart $boltHelperCart,
         Bugsnag $bugsnag
-
     ) {
         $this->checkoutSession = $checkoutSession;
         $this->quoteIdToMaskedQuoteId = $quoteIdToMaskedQuoteId;
         $this->quoteIdMaskResourceModel = $quoteIdMaskResourceModel;
         $this->quoteIdMaskFactory = $quoteIdMaskFactory;
+        $this->boltHelperCart = $boltHelperCart;
         $this->bugsnag = $bugsnag;
     }
 
@@ -75,9 +85,12 @@ class Cart
     public function afterGetSectionData(CustomerDataCart $subject, array $result)
     {
         $quote = $this->getQuote();
+        $result['quoteMaskedId'] = null;
+        $result['boltCartHints'] = null;
         if ($quote->getId()) {
             try {
                 $result['quoteMaskedId'] = $this->getQuoteMaskedId((int)$quote->getId());
+                $result['boltCartHints'] = $this->boltHelperCart->getHints($quote->getId(), self::HINTS_TYPE);
             } catch (\Exception $e) {
                 $this->bugsnag->notifyException($e);
             }
