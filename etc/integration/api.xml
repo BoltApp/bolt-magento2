@@ -52,9 +52,11 @@
             <resource name="Magento_Sales::emails" />
             <resource name="Magento_Sales::sales_creditmemo" />
             <resource name="Magento_Backend::marketing" />
-            <resource name="Magento_Backend::store" />
             <resource name="Magento_CatalogRule::promo" />
             <resource name="Magento_SalesRule::quote"/>
+            <resource name="Magento_Backend::stores" />
+            <resource name="Magento_Backend::stores_settings" />
+            <resource name="Magento_Backend::store" />
             <resource name="Magento_GiftCardAccount::customer_giftcardaccount"/>
         </resources>
     </integration>
