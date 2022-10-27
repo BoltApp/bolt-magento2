@@ -18,13 +18,14 @@
 namespace Bolt\Boltpay\Block;
 
 /**
- * MinifiedJs Block. The block class used in replace.phtml and boltglobaljs blocks.
+ * Block is used for js bolt checkout initialization with
+ * 'M2_ENABLE_API_DRIVEN_CART_INTEGRATION' feature switcher enabled parameter
  */
-class MinifiedJs extends Js
+class MinifiedJsCartApiDriven extends Js
 {
     protected function _toHtml()
     {
-        if (!$this->featureSwitches->isAPIDrivenCartIntegrationEnabled()) {
+        if ($this->featureSwitches->isAPIDrivenCartIntegrationEnabled()) {
             return $this->minifyJs(parent::_toHtml());
         }
         return '';
