@@ -17,16 +17,28 @@
 
 namespace Bolt\Boltpay\Block;
 
+use Magento\Framework\Exception\LocalizedException;
+
 /**
  * Block is used for js bolt checkout initialization with
  * 'M2_ENABLE_API_DRIVEN_CART_INTEGRATION' feature switcher enabled parameter
  */
 class MinifiedJsCartApiDriven extends Js
 {
+    /**
+     * @inheritDoc
+     */
     protected function _toHtml()
     {
-        if ($this->featureSwitches->isAPIDrivenCartIntegrationEnabled()) {
-            return $this->minifyJs(parent::_toHtml());
+        try {
+            if ($this->featureSwitches->isAPIDrivenCartIntegrationEnabled() &&
+                !$this->shouldDisableBoltCheckout() &&
+                !$this->isBoltDisabledOnCurrentPage()
+            ) {
+                return $this->minifyJs(parent::_toHtml());
+            }
+        } catch (\Exception $e) {
+            return '';
         }
         return '';
     }

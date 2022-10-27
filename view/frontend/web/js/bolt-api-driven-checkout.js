@@ -1,4 +1,3 @@
-<?php
 /**
  * Bolt magento2 plugin
  *
@@ -14,14 +13,20 @@
  * @copyright  Copyright (c) 2017-2022 Bolt Financial, Inc (https://www.bolt.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-/**
- * @var \Bolt\Boltpay\Block\MinifiedJsCartApiDriven $block
- */
-?>
-<script type="text/x-magento-init">
+define([
+    'jquery',
+    'Magento_Customer/js/customer-data',
+    'Bolt_Boltpay/js/utils/when-defined',
+    'domReady!'
+], function ($, customerData, whenDefined) {
+    'use strict';
+
+    function initBoltCheckout(magentoBoltConfig)
     {
-        "*": {
-            "Bolt_Boltpay/js/bolt-api-driven-checkout":{}
-        }
+        console.log('init bolt checkout');
     }
-</script>
+
+    return function (magentoBoltConfig) {
+        initBoltCheckout(magentoBoltConfig);
+    };
+});
