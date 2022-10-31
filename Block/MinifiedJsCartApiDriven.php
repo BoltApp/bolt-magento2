@@ -33,7 +33,8 @@ class MinifiedJsCartApiDriven extends Js
         try {
             if ($this->featureSwitches->isAPIDrivenCartIntegrationEnabled() &&
                 !$this->shouldDisableBoltCheckout() &&
-                !$this->isBoltDisabledOnCurrentPage()
+                !$this->isBoltDisabledOnCurrentPage() &&
+                !(!$this->isOnPageFromWhiteList() && !$this->isMinicartEnabled())
             ) {
                 return $this->minifyJs(parent::_toHtml());
             }
