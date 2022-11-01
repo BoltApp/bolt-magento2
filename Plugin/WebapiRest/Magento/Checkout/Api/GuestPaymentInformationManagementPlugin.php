@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Plugin\WebapiRest\Magento\Checkout\Api;
 
 use Magento\Checkout\Api\GuestPaymentInformationManagementInterface;
+use Bolt\Boltpay\Api\RouteInsuranceManagementInterface;
 
 /**
  * Plugin for {@see \GuestPaymentInformationManagementInterface}
@@ -40,18 +41,26 @@ class GuestPaymentInformationManagementPlugin
     private $maskedQuoteIdToQuoteId;
 
     /**
+     * @var \Magento\Framework\Module\Manager
+     */
+    private $moduleManager;
+
+    /**
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Bolt\Boltpay\Helper\Cart $cartHelper
      * @param \Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId
+     * @param \Magento\Framework\Module\Manager $moduleManager
      */
     public function __construct(
         \Magento\Checkout\Model\Session $checkoutSession,
         \Bolt\Boltpay\Helper\Cart $cartHelper,
-        \Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId
+        \Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId,
+        \Magento\Framework\Module\Manager $moduleManager
     ) {
         $this->checkoutSession = $checkoutSession;
         $this->cartHelper = $cartHelper;
         $this->maskedQuoteIdToQuoteId = $maskedQuoteIdToQuoteId;
+        $this->moduleManager = $moduleManager;
     }
 
     public function beforeSavePaymentInformationAndPlaceOrder(
@@ -61,12 +70,15 @@ class GuestPaymentInformationManagementPlugin
         \Magento\Quote\Api\Data\PaymentInterface $paymentMethod,
         \Magento\Quote\Api\Data\AddressInterface $billingAddress
     ) {
-        $unmasckedCardId = $this->maskedQuoteIdToQuoteId->execute($cartId);
-        $quote = $this->cartHelper->getQuoteById($unmasckedCardId);
-        $routeIsInsured = $quote->getRouteIsInsured();
-        if ($routeIsInsured) {
-            $this->checkoutSession->setQuoteId($unmasckedCardId);
-            $this->checkoutSession->setInsured($routeIsInsured);
+        if ($this->moduleManager->isEnabled(RouteInsuranceManagementInterface::ROUTE_MODULE_NAME))
+        {
+            $unmasckedCardId = $this->maskedQuoteIdToQuoteId->execute($cartId);
+            $quote = $this->cartHelper->getQuoteById($unmasckedCardId);
+            $routeIsInsured = $quote->getRouteIsInsured();
+            if ($routeIsInsured) {
+                $this->checkoutSession->setQuoteId($unmasckedCardId);
+                $this->checkoutSession->setInsured($routeIsInsured);
+            }
         }
 
         return [$cartId, $email, $paymentMethod, $billingAddress];
