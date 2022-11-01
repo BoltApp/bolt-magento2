@@ -22,9 +22,21 @@ namespace Bolt\Boltpay\Block;
  */
 class MinifiedJs extends Js
 {
+    /**
+     * Blocks name in layouts list which available for rendering whether the feature switch is on or not
+     *
+     * @var string[]
+     */
+    private $allowedBlocksToRender = ['boltglobaljs'];
+
+    /**
+     * @inheriDoc
+     */
     protected function _toHtml()
     {
-        if (!$this->featureSwitches->isAPIDrivenCartIntegrationEnabled()) {
+        if (!$this->featureSwitches->isAPIDrivenCartIntegrationEnabled() ||
+            in_array($this->getNameInLayout(), $this->allowedBlocksToRender)
+        ) {
             return $this->minifyJs(parent::_toHtml());
         }
         return '';

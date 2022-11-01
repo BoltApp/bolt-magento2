@@ -16,12 +16,15 @@
  */
 /**
  * @var \Bolt\Boltpay\Block\MinifiedJsCartApiDriven $block
+ * @var \Magento\Framework\Escaper $escaper
  */
 ?>
 <script type="text/x-magento-init">
     {
         "*": {
-            "Bolt_Boltpay/js/bolt-api-driven-checkout":{}
+            "Bolt_Boltpay/js/bolt-api-driven-checkout":{
+                "boltConfig": {}
+            }
         }
     }
 </script>

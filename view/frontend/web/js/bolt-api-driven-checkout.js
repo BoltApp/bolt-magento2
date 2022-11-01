@@ -42,7 +42,7 @@ define([
          *
          * @param {Object} magentoBoltConfig
          */
-        init: function(magentoBoltConfig) {
+        init: function(config) {
             //wait while BoltCheckout will be initialized
             if (!window.BoltCheckout) {
                 whenDefined(window, 'BoltCheckout', this.init, 'BoltCheckoutApiDrivenInit');
@@ -180,7 +180,7 @@ define([
      *
      * @param {Object|Promise} magentoBoltConfig
      */
-    return function (magentoBoltConfig) {
-        BoltCheckoutApiDriven.init(magentoBoltConfig);
+    return function (config) {
+        BoltCheckoutApiDriven.init(config);
     };
 });
