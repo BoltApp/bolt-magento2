@@ -30,20 +30,41 @@ class PaymentInformationManagementPlugin
     private $checkoutSession;
 
     /**
-     * @param \Magento\Checkout\Model\Session $checkoutSession
+     * @var \Bolt\Boltpay\Helper\Cart
      */
-    public function __construct(\Magento\Checkout\Model\Session $checkoutSession)
-    {
+    private $cartHelper;
+
+    /**
+     * @var \Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface
+     */
+    private $maskedQuoteIdToQuoteId;
+
+    /**
+     * @param \Magento\Checkout\Model\Session $checkoutSession
+     * @param \Bolt\Boltpay\Helper\Cart $cartHelper
+     * @param \Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId
+     */
+    public function __construct(
+        \Magento\Checkout\Model\Session $checkoutSession,
+        \Bolt\Boltpay\Helper\Cart $cartHelper,
+        \Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId
+    ) {
         $this->checkoutSession = $checkoutSession;
+        $this->cartHelper = $cartHelper;
+        $this->maskedQuoteIdToQuoteId = $maskedQuoteIdToQuoteId;
     }
 
     public function beforeSavePaymentInformationAndPlaceOrder(
         PaymentInformationManagementInterface $subject,
         $cartId,
         \Magento\Quote\Api\Data\PaymentInterface $paymentMethod,
-        \Magento\Quote\Api\Data\AddressInterface $billingAddress)
-    {
-        $this->checkoutSession->setQuoteId($cartId);
+        \Magento\Quote\Api\Data\AddressInterface $billingAddress
+    ) {
+        $unmasckedCardId = $this->maskedQuoteIdToQuoteId->execute($cartId);
+        $this->checkoutSession->setQuoteId($unmasckedCardId);
+        $quote = $this->cartHelper->getQuoteById($unmasckedCardId);
+        $this->checkoutSession->setInsured($quote->getRouteIsInsured());
+
         return [$cartId, $paymentMethod, $billingAddress];
     }
 }
