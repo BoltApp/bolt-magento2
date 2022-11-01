@@ -62,9 +62,12 @@ class GuestPaymentInformationManagementPlugin
         \Magento\Quote\Api\Data\AddressInterface $billingAddress
     ) {
         $unmasckedCardId = $this->maskedQuoteIdToQuoteId->execute($cartId);
-        $this->checkoutSession->setQuoteId($unmasckedCardId);
         $quote = $this->cartHelper->getQuoteById($unmasckedCardId);
-        $this->checkoutSession->setInsured($quote->getRouteIsInsured());
+        $routeIsInsured = $quote->getRouteIsInsured();
+        if ($routeIsInsured) {
+            $this->checkoutSession->setQuoteId($unmasckedCardId);
+            $this->checkoutSession->setInsured($routeIsInsured);
+        }
 
         return [$cartId, $email, $paymentMethod, $billingAddress];
     }
