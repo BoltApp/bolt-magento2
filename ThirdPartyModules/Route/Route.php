@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\ThirdPartyModules\Route;
 
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\ArrayHelper;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Helper\Session as BoltSession;
 use Magento\Quote\Model\Quote;
@@ -57,21 +58,29 @@ class Route
     private $bugsnagHelper;
 
     /**
+     * @var DeciderHelper
+     */
+    private $deciderHelper;
+
+    /**
      * @param CacheInterface  $cache
      * @param BoltSession     $boltSessionHelper
      * @param State           $appState
      * @param Bugsnag         $bugsnagHelper
+     * @param DeciderHelper   $deciderHelper
      */
     public function __construct(
         CacheInterface  $cache,
         BoltSession     $boltSessionHelper,
         State           $appState,
-        Bugsnag         $bugsnagHelper
+        Bugsnag         $bugsnagHelper,
+        DeciderHelper   $deciderHelper
     ) {
         $this->cache = $cache;
         $this->boltSessionHelper = $boltSessionHelper;
         $this->appState = $appState;
         $this->bugsnagHelper = $bugsnagHelper;
+        $this->deciderHelper = $deciderHelper;
     }
 
     /**
@@ -266,11 +275,17 @@ class Route
      */
     public function beforeGetCartDataForCreateCart($merchantClient, $routeDataHelper, $quote, $checkoutSession)
     {
-        if (!$routeDataHelper->isRouteModuleEnable() || (!$routeDataHelper->isFullCoverage() && !$merchantClient->isOptOut())) {
+        if (!$routeDataHelper->isRouteModuleEnable()) {
             return false;
         }
-        
-        $checkoutSession->setInsured(true);
+
+        if ($routeDataHelper->isFullCoverage() || $merchantClient->isOptOut()) {
+            $checkoutSession->setInsured(true);
+        }
+
+        if ($this->deciderHelper->isAPIDrivenIntegrationEnabled()) {
+            $quote->collectTotals();
+        }
     }
     
     private function saveRouteFeeEnabledBeforeUpdateCart($flag, $item, $checkoutSession, $routeFeeEnabled)
