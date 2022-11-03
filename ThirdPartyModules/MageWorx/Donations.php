@@ -91,6 +91,9 @@ class Donations
         $charityData = $charityCollectionFactory->create()->addFilter('is_active', 1)->getFirstItem();
 
         foreach ($predefinedValuesDonations as $key => $donation) {
+            if ($key == 0) {
+                continue;
+            }
             $roundUpName = '';
             
             if ($key == 0) {
