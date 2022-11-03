@@ -262,4 +262,7 @@
 - [Amasty Extra Fee](https://amasty.com/magento-extra-fee.html) plugin now supported.
 - Fixes intermittent issue with using multiple currencies at checkout.
 - Discounts for bundle products now supported on Magento versions < 2.4.4.
-## [v2.26.2](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.2) 2022-10-31
+## [v2.26.2](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.2) 2022-11-03
+- [Route Shipping insurance](/merchants/references/integrations/route/) is now supported for M2.
+- Fixed issue with [Amasty Rewards Points](https://amasty.com/reward-points-for-magento-2.html) that caused points to appear at checkout after being removed.
+- Fixed issue that allowed discount codes to be applied after checkout reload in some rare instances.
