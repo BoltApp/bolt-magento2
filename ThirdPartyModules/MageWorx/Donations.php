@@ -92,6 +92,7 @@ class Donations
 
         foreach ($predefinedValuesDonations as $key => $donation) {
             $roundUpName = '';
+            
             if ($key == 0) {
                 $roundUpName = '[Round Up To ' . $donation . ']';
             }
@@ -147,7 +148,7 @@ class Donations
                     'total_amount' => $roundedTotalAmount,
                     'unit_price' => CurrencyUtils::toMinor($unitPrice, $currencyCode),
                     'quantity' => 1,
-                    'type' => 'physical'
+                    'type' => 'digital'
                 ];
                 $products[] = $product;
             }
@@ -171,7 +172,7 @@ class Donations
                     'total_amount' => $roundedTotalAmount,
                     'unit_price' => CurrencyUtils::toMinor($unitPrice, $currencyCode),
                     'quantity' => 1,
-                    'type' => 'physical'
+                    'type' => 'digital'
                 ];
                 $products[] = $product;
             }
