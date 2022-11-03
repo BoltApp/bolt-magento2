@@ -219,7 +219,7 @@ class Store
                 if ($this->checkIfRossignolSynoliaInStorePickupByCode($referenceCodes)) {
                     $address = $transaction->order->cart->in_store_shipments[0]->address ?? null;
                     if ($address) {
-                        $address->country_code = 'US'; 
+                        $address->country_code = $transaction->order->cart->in_store_shipments[0]->shipment->shipping_address->country_code;
                         $this->orderHelper->setAddress($quote->getShippingAddress(), $address);
                     }
                 }
