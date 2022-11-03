@@ -71,11 +71,10 @@ class PaymentInformationManagementPlugin
     ) {
         if ($this->moduleManager->isEnabled(RouteInsuranceManagementInterface::ROUTE_MODULE_NAME))
         {
-            $unmaskedCardId = $this->maskedQuoteIdToQuoteId->execute($cartId);
-            $quote = $this->cartHelper->getQuoteById($unmaskedCardId);
+            $quote = $this->cartHelper->getQuoteById($cartId);
             $routeIsInsured = $quote->getRouteIsInsured();
             if ($routeIsInsured) {
-                $this->checkoutSession->setQuoteId($unmaskedCardId);
+                $this->checkoutSession->setQuoteId($cartId);
                 $this->checkoutSession->setInsured($routeIsInsured);
             }
         }
