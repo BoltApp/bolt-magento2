@@ -18,8 +18,10 @@ define([
     'underscore',
     'Magento_Customer/js/customer-data',
     'Bolt_Boltpay/js/utils/when-defined',
+    'Magento_Customer/js/model/customer',
+    'Magento_Customer/js/model/authentication-popup',
     'domReady!'
-], function ($, _, customerData, whenDefined) {
+], function ($, _, customerData, whenDefined, customer, authenticationPopup) {
     'use strict';
 
     /**
@@ -36,9 +38,224 @@ define([
         magentoCartTimeStamp: null,
         cartBarrier: null,
         hintsBarrier: null,
+        elementBarrier: null,
+        isPromisesResolved: false,
+        isUserLoggedIn: null,
+        isGuestCheckoutAllowed: null,
+        initiateCheckout: null,
+        //**** all about mutation
+        mutationObserver: window.MutationObserver || window.WebKitMutationObserver,
+        elementListeners: [],
+        elementReadyObserver: null,
+        elementAttrelementListeners: [],
+        elementAttrObserver: null,
+        elementDataListeners: [],
+        elementDataObserver: null,
+        boltButtonCssClass: 'bolt-checkout-button',
+        additionalButtonClass: window.boltConfig.additional_checkout_button_class,
+        additionalButtonAttributes: window.boltConfig.additional_checkout_button_attributes,
+        boltButtonCssStyles: window.boltConfig.button_css_styles,
+        boltButtonSelector: '.bolt-checkout-button,[data-tid="instant-bolt-checkout-button"]',
+        multiStepCssClass: 'bolt-multi-step-checkout',
+        billingAddressSelector: '#bolt-billing-address',
+        placeOrderPayloadId: 'bolt-place-order-payload',
+        customerEmailSelector: '#checkoutSteps #customer-email',
+        trackCallbacks: window.boltConfig.trackCallbacks,
+        popUpOpen: false,
+        save_request: null,
+
+        resolveElementPromise: function () {
+            if (BoltCheckoutApiDriven.elementBarrier.isResolved() === true) {
+                BoltCheckoutApiDriven.elementBarrier = BoltCheckoutApiDriven.initBarrier();
+            }
+            if (BoltCheckoutApiDriven.customerCart === null) {
+                return;
+            }
+            if (!BoltCheckoutApiDriven.initiateCheckout && !BoltCheckoutApiDriven.customerCart().isGuestCheckoutAllowed) {
+                if (BoltCheckoutApiDriven.isUserLoggedIn === null) {
+                    BoltCheckoutApiDriven.isUserLoggedIn = customer.isLoggedIn();
+                    BoltCheckoutApiDriven.resolveElementPromise();
+                    return;
+                }
+                if (!BoltCheckoutApiDriven.isUserLoggedIn) {
+                    if (BoltCheckoutApiDriven.popUpOpen) {
+                        // If we resolve promises after user clicked checkout button
+                        // we should show authentication popup
+                        BoltCheckoutApiDriven.showAuthenticationPopup();
+                    }
+                    BoltCheckoutApiDriven.resolveElementPromiseToValue(false);
+                    return;
+                }
+            }
+
+            BoltCheckoutApiDriven.resolveElementPromiseToValue(true);
+        },
+
+        resolveElementPromiseToValue: function (value) {
+            BoltCheckoutApiDriven.elementBarrier.resolve(value);
+            if (!value) {
+                BoltCheckoutApiDriven.popUpOpen = false;
+            }
+        },
+
+        showAuthenticationPopup: function () {
+            // set a cookie for auto opening Bolt checkout after login
+            BoltCheckoutApiDriven.setInitiateCheckoutCookie();
+            authenticationPopup.showModal();
+        },
+
+        setInitiateCheckoutCookie: function () {
+            $.cookie('bolt_initiate_checkout', true, {path: '/', domain: window.location.hostname});
+        },
+
+        unsetInitiateCheckoutCookie: function () {
+            $.cookie('bolt_initiate_checkout', null, {path: '/', domain: window.location.hostname});
+        },
+
+        getInitiateCheckoutCookie: function () {
+            return $.cookie('bolt_initiate_checkout');
+        },
+
+        initElementReadyCallback: function (selector, fn) {
+            // Store the selector and callback to be monitored
+            BoltCheckoutApiDriven.elementListeners.push({
+                selector: selector,
+                fn: fn
+            });
+            if (!BoltCheckoutApiDriven.elementReadyObserver) {
+                // Watch for changes in the document
+                BoltCheckoutApiDriven.elementReadyObserver = new BoltCheckoutApiDriven.mutationObserver(BoltCheckoutApiDriven.elementsCheckExisting);
+                BoltCheckoutApiDriven.elementReadyObserver.observe(window.document.documentElement, {
+                    childList: true,
+                    subtree: true
+                });
+            }
+            // Check if the element is currently in the DOM
+            BoltCheckoutApiDriven.elementsCheckExisting();
+        },
+
+        elementsCheckExisting: function () {
+            // Check the DOM for elements matching a stored selector
+            for (let i = 0, len = BoltCheckoutApiDriven.elementListeners.length, listener, elements; i < len; i++) {
+                listener = BoltCheckoutApiDriven.elementListeners[i];
+                // Query for elements matching the specified selector
+                elements = window.document.querySelectorAll(listener.selector);
+                for (let j = 0, jLen = elements.length, element; j < jLen; j++) {
+                    element = elements[j];
+                    // Make sure the callback isn't invoked with the
+                    // same element more than once
+                    if (!element.ready) {
+                        element.ready = true;
+                        // Invoke the callback with the element
+                        listener.fn.call(element, element);
+                    }
+                }
+            }
+        },
+
+        initElementAttributesObserver: function (selector, fn) {
+            // Store the selector and callback to be monitored
+            BoltCheckoutApiDriven.elementAttrelementListeners.push({
+                selector: selector,
+                fn: fn
+            });
+            if (!BoltCheckoutApiDriven.elementAttrObserver) {
+                // Watch for attribute changes in the document
+                BoltCheckoutApiDriven.elementAttrObserver = new BoltCheckoutApiDriven.mutationObserver(this.elementAttributesUpdateHandler);
+                let config = {
+                    attributes: true,
+                    subtree: true
+                };
+                BoltCheckoutApiDriven.elementAttrObserver.observe(window.document.documentElement, config);
+            }
+        },
+
+        elementAttributesUpdateHandler: function (){
+            // Check the DOM for elements matching a stored selector
+            for (let i = 0, len = BoltCheckoutApiDriven.elementAttrelementListeners.length, listener, elements; i < len; i++) {
+                listener = BoltCheckoutApiDriven.elementAttrelementListeners[i];
+                // Query for elements matching the specified selector
+                elements = window.document.querySelectorAll(listener.selector);
+                for (let j = 0, jLen = elements.length, element; j < jLen; j++) {
+                    element = elements[j];
+                    // Invoke the callback with the element
+                    listener.fn.call(element, element);
+                }
+            }
+        },
+
+        initElementDataObserver: function (selector, fn) {
+            // Store the selector and callback to be monitored
+            BoltCheckoutApiDriven.elementDataListeners.push({
+                selector: selector,
+                fn: fn
+            });
+            if (!BoltCheckoutApiDriven.elementDataObserver) {
+                // Watch for data changes in the document
+                BoltCheckoutApiDriven.elementDataObserver = new BoltCheckoutApiDriven.mutationObserver(BoltCheckoutApiDriven.elementDataUpdateHandler);
+                let config = {
+                    characterData: true,
+                    subtree: true
+                };
+                BoltCheckoutApiDriven.elementDataObserver.observe(window.document.documentElement, config);
+            }
+        },
+
+        elementDataUpdateHandler: function () {
+            // Check the DOM for elements matching a stored selector
+            for (let i = 0, len = BoltCheckoutApiDriven.elementDataListeners.length, listener, elements; i < len; i++) {
+                listener = BoltCheckoutApiDriven.elementDataListeners[i];
+                // Query for elements matching the specified selector
+                elements = window.document.querySelectorAll(listener.selector);
+                for (let j = 0, jLen = elements.length, element; j < jLen; j++) {
+                    element = elements[j];
+                    // Invoke the callback with the element
+                    listener.fn.call(element, element);
+                }
+            }
+        },
+
+        showBoltErrorMessage: function (msg, order_reference) {
+            let boltModal = $('#bolt-modal'),
+                errorMsg = msg
+                    || window.boltConfig.default_error_message + " Order reference: " + order_reference;
+
+            boltModal.find('.bolt-modal-content').html(errorMsg);
+            boltModal.modal("openModal");
+        },
+
+        getCheckoutKey: function () {
+            let checkoutType = BoltCheckoutApiDriven.getCheckoutType();
+            BoltCheckoutApiDriven.boltCartHints.paymentonly = checkoutType === 'payment';
+            let key = 'publishable_key_' + checkoutType;
+            return window.boltConfig[key];
+        },
+
+        getCheckoutType: function () {
+            return this.trim(location.pathname, '/') === 'checkout' ? 'payment' : 'checkout';
+        },
+
+        escapeRegex: function (string) {
+            return string.replace(/[\[\](){}?*+\^$\\.|\-]/g, "\\$&");
+        },
+
+        trim: function (str, characters, flags) {
+            flags = flags || "g";
+            if (typeof str !== "string" || typeof characters !== "string" || typeof flags !== "string") {
+                throw new TypeError("argument must be string");
+            }
+
+            if (!/^[gi]*$/.test(flags)) {
+                throw new TypeError("Invalid flags supplied '" + flags.match(new RegExp("[^gi]*")) + "'");
+            }
+
+            characters = this.escapeRegex(characters);
+
+            return str.replace(new RegExp("^[" + characters + "]+|[" + characters + "]+$", flags), '');
+        },
 
         /**
-         * Main init method. Preparing bolt connection config data, events/listeners/promises
+         * Main init method. Preparing bolt connection config data, events/elementListeners/promises
          *
          * @param {Object} magentoBoltConfig
          */
@@ -51,11 +268,17 @@ define([
             //init new barriers
             this.cartBarrier = this.initBarrier();
             this.hintsBarrier = this.initBarrier();
-            //call bolt checkout configure immediately with promise parameters
-            this.boltCheckoutConfigureCall(this.cartBarrier.promise, this.hintsBarrier.promise);
+            this.elementBarrier = this.initBarrier();
+            this.initiateCheckout = window.boltConfig.initiate_checkout && this.getInitiateCheckoutCookie();
             this.customerCart = customerData.get('cart');
             //subscription of 'customer-data' cart
             this.customerCart.subscribe(BoltCheckoutApiDriven.magentoCartDataListener);
+
+            //call bolt checkout configure immediately with promise parameters
+            this.boltCheckoutConfigureCall(this.cartBarrier.promise, this.hintsBarrier.promise);
+            this.resolveElementPromise();
+            this.initBoltCallbacks();
+            this.initUIElements();
 
             if (!this.customerCart()) {
                 return;
@@ -69,6 +292,7 @@ define([
             ) {
                 this.quoteMaskedId = this.customerCart().quoteMaskedId;
                 this.cartBarrier.resolve({"quoteMaskedId": this.quoteMaskedId})
+                BoltCheckoutApiDriven.isPromisesResolved = true;
             }
 
             //trying to resolve hints promise if data is existed
@@ -77,6 +301,234 @@ define([
             ) {
                 this.boltCartHints = this.customerCart().boltCartHints;
                 this.hintsBarrier.resolve({"hints": this.boltCartHints})
+                BoltCheckoutApiDriven.isPromisesResolved = true;
+            }
+        },
+
+        initUIElements: function () {
+            for (let i = 0, length = window.boltConfig.selectors.length; i < length; i++) {
+                let selector = window.boltConfig.selectors[i];
+                ! function(selector) {
+                    let parts = selector.split('|');
+                    // the CSS selector
+                    let identifier = parts[0].trim();
+                    // button placement regarding the selector element, prepend, append
+                    let position =  parts[1];
+                    /////////////////////////////////////////////////////
+                    // replace the selectors with bolt button identifiers
+                    // if / when selectors are in the DOM
+                    /////////////////////////////////////////////////////
+                    BoltCheckoutApiDriven.initElementReadyCallback(identifier, function(element) {
+                        if (BoltCheckoutApiDriven.getCheckoutKey() === '') return;
+                        let bolt_button = document.createElement('div');
+                        if(window.boltConfig.is_instant_checkout_button){
+                            bolt_button.setAttribute('data-tid','instant-bolt-checkout-button');
+                            let button_object = document.createElement('object');
+                            let checkout_button_url = window.boltConfig.cdn_url
+                                + '/v1/checkout_button?publishable_key='
+                                + window.boltConfig.publishable_key_checkout
+                            button_object.setAttribute('data',checkout_button_url);
+                            bolt_button.appendChild(button_object);
+                        } else {
+                            bolt_button.setAttribute('class', BoltCheckoutApiDriven.boltButtonCssClass);
+                            if (BoltCheckoutApiDriven.boltButtonCssStyles.length) {
+                                bolt_button.setAttribute('style', BoltCheckoutApiDriven.boltButtonCssStyles);
+                            }
+                            if (BoltCheckoutApiDriven.getCheckoutType() === 'checkout') {
+                                bolt_button.classList.add(BoltCheckoutApiDriven.multiStepCssClass);
+                            }
+
+                            for (let attribute_name in BoltCheckoutApiDriven.additionalButtonAttributes) {
+                                if (BoltCheckoutApiDriven.additionalButtonAttributes.hasOwnProperty(attribute_name)) {
+                                    bolt_button.setAttribute(
+                                        attribute_name, BoltCheckoutApiDriven.additionalButtonAttributes[attribute_name]
+                                    );
+                                }
+                            }
+                        }
+                        // place the button before or after selector element
+                        if (position && position.trim().toLowerCase() === 'append') {
+                            element.parentNode.insertBefore(bolt_button, element.nextSibling);
+                        } else {
+                            element.parentNode.insertBefore(bolt_button, element);
+                        }
+                        // if no position is specified remove the selector element
+                        if (!position) {
+                            $(element).hide();
+                        }
+                        // if the replacement takes place after BoltCheckout.configure call
+                        // call it again to set up the button. Skip if BoltCheckout is not available,
+                        // ie. connect.js not loaded / executed yet,
+                        // the button will be processed after connect.js loads.
+                        if (window.BoltCheckout && BoltCheckoutApiDriven.isPromisesResolved) {
+                            BoltCheckoutApiDriven.boltCheckoutConfigureCall(
+                                {"quoteMaskedId": BoltCheckoutApiDriven.quoteMaskedId},
+                                {"hints": BoltCheckoutApiDriven.boltCartHints}
+                            );
+                        }
+                    });
+                    /////////////////////////////////////////////////////
+                }(selector);
+            }
+        },
+
+        initBoltCallbacks: function () {
+            BoltCheckoutApiDriven.boltCallbacks = {
+                close: function () {
+                    BoltCheckoutApiDriven.popUpOpen = false;
+                    window.boltConfig.trackCallbacks.onClose();
+
+                    if (BoltCheckoutApiDriven.boltCallbacks.success_url) {
+                        // redirect on success order save
+                        location.href = BoltCheckoutApiDriven.boltCallbacks.success_url;
+                    } else {
+                        // Checkout was closed without success. I.e. user exited the modal via pressing ESC
+                        // or clicking the X-close button on the top right of the modal.
+
+                        // re-create order in case checkout was closed
+                        // after order was changed from inside the checkout,
+                        // i.e. the discount was applied
+                        // invalidateBoltCart();
+                        customerData.reload(['cart'], true);
+                    }
+                },
+
+                onCheckoutStart: function() {
+                    window.boltConfig.trackCallbacks.onCheckoutStart();
+                },
+
+                onShippingDetailsComplete: function(address) {
+                    window.boltConfig.trackCallbacks.onShippingDetailsComplete(address);
+                },
+
+                onShippingOptionsComplete: function() {
+                    window.boltConfig.trackCallbacks.onShippingOptionsComplete();
+                },
+
+                onPaymentSubmit: function() {
+                    window.boltConfig.trackCallbacks.onPaymentSubmit();
+                },
+
+                success: function (transaction, callback) {
+                    /**
+                     * Success transaction handler.
+                     * Sets the success url for the non-preauth flow.
+                     * Calls additional javascript if defined in configuration.
+                     * Triggers on success track event handler.
+                     * Finally, calls the callback function
+                     * that finishes the checkout modal operation.
+                     *
+                     * param object data    response from the non-preauth order/save controller, optional
+                     * return void
+                     */
+                    let processSuccess = function (data) {
+                        customerData.invalidate(['cart','bolthints']);
+                        try {
+                            if (typeof data !== 'undefined') {
+                                BoltCheckoutApiDriven.boltCallbacks.success_url = data.success_url;
+                            }
+                            window.boltConfig.trackCallbacks.onSuccess(data);
+                        } finally {
+                            callback();
+                        }
+                    };
+
+                    if (window.boltConfig.is_pre_auth) {
+                        processSuccess();
+                        return;
+                    }
+
+                    // abort previously sent save order request.
+                    if (BoltCheckoutApiDriven.save_request) BoltCheckoutApiDriven.save_request.abort();
+                    // get thr transaction reference
+                    let parameters = [];
+                    parameters.push('form_key=' + $('[name="form_key"]').val());
+                    parameters.push('reference=' + transaction.reference);
+                    parameters = parameters.join('&');
+                    // update order ajax request callback
+                    // sets the success order page redirect url from received data
+                    // and calls the final Bolt defined callback
+                    let onSuccess = function(data){
+                        if (data.status !== 'success') {
+                            if (data.message) {
+                                showError();
+                            }
+                            return;
+                        }
+                        processSuccess(data);
+                    };
+                    let showError = function() {
+                        BoltCheckoutApiDriven.showBoltErrorMessage('', transaction.reference);
+                        // pretend order creation was success...
+                        // we need to call this; otherwise bolt modal show infinte spinner.
+                        callback();
+                    };
+                    // ajax call to the update order transaction data endpoint.
+                    // passes the bolt transaction reference
+                    BoltCheckoutApiDriven.save_request = $.post(window.boltConfig.save_order_url, parameters)
+                        .done(onSuccess)
+                        .fail(showError);
+                },
+
+                check: function () {
+
+                    /**
+                     * On Magento checkout page - Bolt payment only checkout
+                     * trigger click on boltpay radio if the button clicked is
+                     * in minicart panel or other (voluntary) location
+                     * and trigger email validation.
+                     */
+                    if (BoltCheckoutApiDriven.getCheckoutType() === 'payment') {
+                        // trigger click on boltpay radio
+                        if ($('#boltpay').prop('checked') === false) $('#boltpay').click();
+
+                        // stop if customer email field exists and is not valid on paymtnt only page
+                        var customer_email = $(customerEmailSelector);
+                        if (customer_email.get(0)) {
+                            var form = customer_email.closest('form');
+                            if (form.validation() && form.validation('isValid') === false) {
+                                customer_email.get(0).scrollIntoView();
+                                return false;
+                            }
+                        }
+                        BoltCheckoutApiDriven.popUpOpen = true;
+                        return true;
+                    }
+
+                    /**
+                     * On Bolt button click check if guest checkout is allowed.
+                     * Display login popup to guest customers if it is not. The
+                     * Magento customer, customerData, authenticationPopup objects are
+                     * used.
+                     */
+                    if (BoltCheckoutApiDriven.elementBarrier.isResolved() === false) {
+                        BoltCheckoutApiDriven.popUpOpen = true;
+                        return BoltCheckoutApiDriven.elementBarrier.promise;
+                    }
+                    if (!BoltCheckoutApiDriven.elementBarrier.value()) {
+                        // If check resolved to false, guest checkout is disallowed, and user isn't logged in
+                        // show authentication popup
+                        if (!BoltCheckoutApiDriven.initiateCheckout
+                            && !BoltCheckoutApiDriven.customerCart.isGuestCheckoutAllowed
+                            && !BoltCheckoutApiDriven.isUserLoggedIn
+                        ) {
+                            BoltCheckoutApiDriven.showAuthenticationPopup();
+                        }
+                        BoltCheckoutApiDriven.popUpOpen = false;
+                        return false;
+                    }
+
+                    BoltCheckoutApiDriven.popUpOpen = true;
+                    return true;
+                },
+
+                onEmailEnter: function(email) {
+                    window.boltConfig.trackCallbacks.onEmailEnter(email);
+                    if (BoltCheckoutApiDriven.boltCallbacks.email !== email) {
+                        $.post(window.boltConfig.save_email_url, 'email=' + encodeURIComponent(email));
+                        BoltCheckoutApiDriven.boltCallbacks.email = email;
+                    }
+                }
             }
         },
 
@@ -86,6 +538,7 @@ define([
          * @param {Object} magentoCart
          */
         magentoCartDataListener: function (magentoCart) {
+            BoltCheckoutApiDriven.resolveElementPromise();
             //if timestamp is the same no checks needed
             if (magentoCart.data_id === this.magentoCartTimeStamp) {
                 return;
@@ -106,7 +559,8 @@ define([
                 BoltCheckoutApiDriven.quoteMaskedId = magentoCart.quoteMaskedId;
                 cart = {"quoteMaskedId": BoltCheckoutApiDriven.quoteMaskedId};
                 if (!BoltCheckoutApiDriven.cartBarrier.isResolved()) {
-                    BoltCheckoutApiDriven.cartBarrier.resolve(cart)
+                    BoltCheckoutApiDriven.cartBarrier.resolve(cart);
+                    BoltCheckoutApiDriven.isPromisesResolved = true;
                 } else {
                     isBoltCheckoutConfigureCallRequired = true;
                 }
@@ -120,7 +574,8 @@ define([
                 BoltCheckoutApiDriven.boltCartHints = magentoCart.boltCartHints;
                 hints = {"hints": BoltCheckoutApiDriven.boltCartHints};
                 if (!BoltCheckoutApiDriven.hintsBarrier.isResolved()) {
-                    BoltCheckoutApiDriven.hintsBarrier.resolve(hints)
+                    BoltCheckoutApiDriven.hintsBarrier.resolve(hints);
+                    BoltCheckoutApiDriven.isPromisesResolved = true;
                 } else {
                     isBoltCheckoutConfigureCallRequired = true;
                 }
