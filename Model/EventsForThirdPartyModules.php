@@ -55,6 +55,7 @@ use Bolt\Boltpay\ThirdPartyModules\MageWorx\ShippingRules as MageWorx_ShippingRu
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Promo as Amasty_Promo;
 use Bolt\Boltpay\ThirdPartyModules\Mexbs\Tieredcoupon as Mexbs_Tieredcoupon;
 use Bolt\Boltpay\ThirdPartyModules\Magento\CompanyPayment as Magento_CompanyPayment;
+use Bolt\Boltpay\ThirdPartyModules\Funandfunction\WebkulQuotesystem as Funandfunction_WebkulQuotesystem;
 use Exception;
 
 class EventsForThirdPartyModules
@@ -150,6 +151,13 @@ class EventsForThirdPartyModules
                         "J2t\Rewardpoints\Helper\Data",
                     ],
                     "boltClass" => J2t_Rewardpoints::class,
+                ],
+                [
+                    "module" => "Funandfunction_WebkulQuotesystem",
+                    "sendClasses" => [
+                        "Funandfunction\WebkulQuotesystem\Model\WkQuoteSession",
+                    ],
+                    "boltClass" => Funandfunction_WebkulQuotesystem::class,
                 ],
             ]
         ],

@@ -1630,6 +1630,12 @@ class Order extends AbstractHelper
         $this->setShippingMethod($quote, $transaction);
         $this->quoteAfterChange($quote);
 
+        $isShippingMethodValid = $this->validateShippingMethod($quote, $immutableQuote, $transaction);
+        if (!$isShippingMethodValid) {
+            $this->updateShippingMethod($quote, $transaction);
+            $this->quoteAfterChange($quote);
+        }
+
         if ($this->cartHelper->checkIfQuoteHasCartFixedAmountAndApplyToShippingRuleAndTableRateShippingMethod($quote, $quote->getShippingAddress()->getShippingMethod())) {
             // If a customer applies a cart rule (fixed amount for whole cart and apply to shipping) and the table rate shipping method,
             // we must re-set FreeMethodWeight of the parent quote from the immutable quote to get the correct shipping amount
@@ -1673,6 +1679,24 @@ class Order extends AbstractHelper
         }
 
         return $quote;
+    }
+
+    private function validateShippingMethod($quote, $immutableQuote, $transaction)
+    {
+        if ($immutableQuote->getShippingAddress()->getShippingAmount() !== $quote->getShippingAddress()->getShippingAmount()) {
+            return false;
+        }
+        return true;
+    }
+
+    private function updateShippingMethod($quote, $transaction)
+    {
+        $quoteAddress = $quote->getShippingAddress();
+        $quoteAddress->setCollectShippingRates(true);
+        $shippingMethod = $transaction->order->cart->shipments[0]->reference;
+        $quoteAddress->setShippingMethod($shippingMethod);
+        $quote->collectTotals();
+        $quoteAddress->save();
     }
 
     /**
