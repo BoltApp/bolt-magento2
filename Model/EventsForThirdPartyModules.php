@@ -152,13 +152,6 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass" => J2t_Rewardpoints::class,
                 ],
-                [
-                    "module" => "Funandfunction_WebkulQuotesystem",
-                    "sendClasses" => [
-                        "Funandfunction\WebkulQuotesystem\Model\WkQuoteSession",
-                    ],
-                    "boltClass" => Funandfunction_WebkulQuotesystem::class,
-                ],
             ]
         ],
         'replicateQuoteData' => [
@@ -192,7 +185,14 @@ class EventsForThirdPartyModules
                         'Amasty\Extrafee\Model\TotalsInformationManagement'
                     ],
                     'boltClass'   => Amasty_Extrafee::class,
-                ]
+                ],
+                'Funandfunction_WebkulQuotesystem' => [
+                    "module" => "Funandfunction_WebkulQuotesystem",
+                    "sendClasses" => [
+                        "Funandfunction\WebkulQuotesystem\Model\WkQuoteSession",
+                    ],
+                    "boltClass" => Funandfunction_WebkulQuotesystem::class,
+                ],
             ]
         ],
         'applyExternalDiscountData' => [

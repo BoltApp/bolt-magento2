@@ -2,7 +2,7 @@
 
 namespace Bolt\Boltpay\ThirdPartyModules\Funandfunction;
 
-use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Magento\Checkout\Model\Session as CheckoutSession;
 use Funandfunction\WebkulQuotesystem\Model\WkQuoteSession;
 
 class WebkulQuotesystem
@@ -13,18 +13,19 @@ class WebkulQuotesystem
     protected $wkQuoteSession;
 
     /**
-     * @var SessionHelper
+     * @var CheckoutSession
      */
-    protected $sessionHelper;
+    protected $checkoutSession;
 
     public function __construct(
-        SessionHelper $sessionHelper
+        CheckoutSession $checkoutSession
     ) {
-        $this->sessionHelper   = $sessionHelper;
+        $this->checkoutSession = $checkoutSession;
     }
 
-    public function beforePrepareQuote($quote)
+    public function replicateQuoteData($source, $destination)
     {
-        $this->wkQuoteSession->setWkQuoteId($quote->getId());
+        $this->wkQuoteSession->setWkQuoteId($destination->getId());
+        $this->checkoutSession->replaceQuote($destination);
     }
 }
