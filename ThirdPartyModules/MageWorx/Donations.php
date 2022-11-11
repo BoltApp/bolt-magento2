@@ -30,6 +30,7 @@ use Bolt\Boltpay\Helper\Session as BoltSession;
 class Donations
 {
     const MAGEWORX_DONATION = 'MageWorxDonation';
+    const BOLT_DYNAMIC_USER_INPUT_DONATION_ID = 5;
 
     protected $_extrafeeCollectionFactory;
 
@@ -137,7 +138,14 @@ class Donations
         if (isset($mageworxDonationDetail['option']) && $mageworxDonationDetail['option'] && $mageworxDonationDetail['global_donation'] > 0) {
             foreach (array_unique($mageworxDonationDetail['option']) as $option) {
                 $currencyCode = $quote->getQuoteCurrencyCode();
-                $unitPrice = ($option == 0) ? @$mageworxDonationDetail['bolt_round_up'] : $this->getPredefinedValuesDonation()[$option];
+                $unitPrice = 0;
+                if ($option == 0) {
+                    $unitPrice = @$mageworxDonationDetail['bolt_round_up'];
+                } else if ($option == self::BOLT_DYNAMIC_USER_INPUT_DONATION_ID) {
+                    $unitPrice = @$mageworxDonationDetail['bolt_dynamic_user_inputed'];
+                }else {
+                    $unitPrice = $this->getPredefinedValuesDonation()[$option];
+                }
 
                 $itemTotalAmount = $unitPrice * 1;
                 $roundedTotalAmount = CurrencyUtils::toMinor($itemTotalAmount, $currencyCode);
@@ -283,6 +291,7 @@ class Donations
                         'charity_title' => $charityData->getName(),
                         'option' => array_unique($mageworxDonationDetails['option']),
                         'bolt_round_up' => @$mageworxDonationDetails['bolt_round_up'],
+                        'bolt_dynamic_user_inputed' => @$mageworxDonationDetails['bolt_dynamic_user_inputed'],
                     ];
 
             } else {
@@ -294,12 +303,17 @@ class Donations
                     'charity_id' => $charityData->getId(),
                     'charity_title' => $charityData->getName(),
                     'option' => [$donationId],
-                    'bolt_round_up' => 0
+                    'bolt_round_up' => 0,
+                    'bolt_dynamic_user_inputed' => 0
                 ];
 
             }
             if ($donationId == 0 && $amount > 0) {
                 $mageworxDonationDetailsData['bolt_round_up'] = $amount;
+            }
+
+            if ($donationId == self::BOLT_DYNAMIC_USER_INPUT_DONATION_ID && $amount > 0) {
+                $mageworxDonationDetailsData['bolt_dynamic_user_inputed'] = $amount;
             }
             $checkoutSession->setMageworxDonationDetails($mageworxDonationDetailsData);
             $checkoutSession->setTotalsCollectedFlag(false)->getQuote()->collectTotals();
@@ -332,7 +346,10 @@ class Donations
             if ($donationId == 0 && isset($mageworxDonationDetails['bolt_round_up'])) {
                 $removeAmount = $mageworxDonationDetails['bolt_round_up'];
                 $mageworxDonationDetails['bolt_round_up'] = 0;
-            } else {
+            } elseif ($donationId == self::BOLT_DYNAMIC_USER_INPUT_DONATION_ID && isset($mageworxDonationDetails['bolt_dynamic_user_inputed'])) {
+                $removeAmount = $mageworxDonationDetails['bolt_dynamic_user_inputed'];
+                $mageworxDonationDetails['bolt_dynamic_user_inputed'] = 0;
+            }else {
                 $removeAmount = $this->getPredefinedValuesDonation()[$donationId];
             }
 
