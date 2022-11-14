@@ -36,22 +36,20 @@ class MinifiedJsTest extends BoltTestCase
      */
     private $block;
 
-    /** @var MockObject|DeciderHelper */
-    private $deciderHelper;
-
     /**
      * @inheritdoc
      */
     protected function setUpInternal()
     {
         $this->block = $this->createPartialMock(MinifiedJs::class, ['minifyJs']);
-        $this->deciderHelper = $this->createPartialMock(
+        $featureSwitches = $this->createPartialMock(
             DeciderHelper::class,
             [
                 'isAPIDrivenCartIntegrationEnabled'
             ]
         );
-        $this->deciderHelper->method('isAPIDrivenCartIntegrationEnabled')->willReturn(false);
+        $featureSwitches->method('isAPIDrivenCartIntegrationEnabled')->willReturn(false);
+        TestHelper::setProperty($this->block, 'featureSwitches', $featureSwitches);
     }
 
     /**
