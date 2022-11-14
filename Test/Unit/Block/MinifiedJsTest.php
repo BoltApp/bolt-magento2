@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Block;
 
 use Bolt\Boltpay\Block\MinifiedJs;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 
@@ -35,12 +36,22 @@ class MinifiedJsTest extends BoltTestCase
      */
     private $block;
 
+    /** @var MockObject|DeciderHelper */
+    private $deciderHelper;
+
     /**
      * @inheritdoc
      */
     protected function setUpInternal()
     {
         $this->block = $this->createPartialMock(MinifiedJs::class, ['minifyJs']);
+        $this->deciderHelper = $this->createPartialMock(
+            DeciderHelper::class,
+            [
+                'isAPIDrivenCartIntegrationEnabled'
+            ]
+        );
+        $this->deciderHelper->method('isAPIDrivenCartIntegrationEnabled')->willReturn(false);
     }
 
     /**
