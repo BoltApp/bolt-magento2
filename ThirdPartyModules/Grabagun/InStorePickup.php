@@ -500,7 +500,7 @@ class InStorePickup
             if ($grabagunShippingMethodHelper->itemShippedToFflDealer($product->getSku())) {
                 $result = 'ship_to_store';
             } else {
-                $result = 'ship_to_home_only';
+                $result = 'door_delivery';
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
