@@ -527,14 +527,14 @@ class Decider extends AbstractHelper
     }
 
     /**
-     * Checks whether the feature switch for api driven cart integration is enabled
+     * Checks whether the feature switch for fetching cart via api is enabled
      *
      * @return bool whether the feature switch is enabled
      *
      * @throws LocalizedException if the feature switch key is unknown
      */
-    public function isAPIDrivenCartIntegrationEnabled()
+    public function isEnabledFetchCartViaApi()
     {
-        return $this->isSwitchEnabled(Definitions::M2_ENABLE_API_DRIVEN_CART_INTEGRATION);
+        return $this->isSwitchEnabled(Definitions::M2_FETCH_CART_VIA_API);
     }
 }

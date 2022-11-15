@@ -48,7 +48,7 @@ class BoltCart implements SectionSourceInterface
 
     public function getSectionData()
     {
-        return (!$this->featureSwitches->isAPIDrivenCartIntegrationEnabled())
+        return (!$this->featureSwitches->isEnabledFetchCartViaApi())
             ? $this->cartHelper->calculateCartAndHints() : [];
     }
 }
