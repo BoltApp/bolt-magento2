@@ -45,10 +45,10 @@ class MinifiedJsTest extends BoltTestCase
         $featureSwitches = $this->createPartialMock(
             DeciderHelper::class,
             [
-                'isAPIDrivenCartIntegrationEnabled'
+                'isEnabledFetchCartViaApi'
             ]
         );
-        $featureSwitches->method('isAPIDrivenCartIntegrationEnabled')->willReturn(false);
+        $featureSwitches->method('isEnabledFetchCartViaApi')->willReturn(false);
         TestHelper::setProperty($this->block, 'featureSwitches', $featureSwitches);
     }
 

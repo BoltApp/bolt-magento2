@@ -31,7 +31,7 @@ class MinifiedJsCartApiDriven extends Js
     protected function _toHtml()
     {
         try {
-            if ($this->featureSwitches->isAPIDrivenCartIntegrationEnabled() &&
+            if ($this->featureSwitches->isEnabledFetchCartViaApi() &&
                 !$this->shouldDisableBoltCheckout() &&
                 !$this->isBoltDisabledOnCurrentPage() &&
                 !(!$this->isOnPageFromWhiteList() && !$this->isMinicartEnabled())

@@ -34,7 +34,7 @@ class MinifiedJs extends Js
      */
     protected function _toHtml()
     {
-        if (!$this->featureSwitches->isAPIDrivenCartIntegrationEnabled() ||
+        if (!$this->featureSwitches->isEnabledFetchCartViaApi() ||
             in_array($this->getNameInLayout(), $this->allowedBlocksToRender)
         ) {
             return $this->minifyJs(parent::_toHtml());
