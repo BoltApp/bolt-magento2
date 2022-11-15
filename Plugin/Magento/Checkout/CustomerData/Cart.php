@@ -11,6 +11,7 @@ use Magento\Quote\Model\QuoteIdMaskFactory;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Helper\Cart as BoltHelperCart;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Process quote bolt data
@@ -51,12 +52,18 @@ class Cart
     private $bugsnag;
 
     /**
+     * @var Decider
+     */
+    private $featureSwitches;
+
+    /**
      * @param CheckoutSession $checkoutSession
      * @param QuoteIdToMaskedQuoteIdInterface $quoteIdToMaskedQuoteId
      * @param QuoteIdMaskResourceModel $quoteIdMaskResourceModel
      * @param QuoteIdMaskFactory $quoteIdMaskFactory
      * @param BoltHelperCart $boltHelperCart
      * @param Bugsnag $bugsnag
+     * @param Decider $featureSwitches
      */
     public function __construct(
         CheckoutSession $checkoutSession,
@@ -64,7 +71,8 @@ class Cart
         QuoteIdMaskResourceModel $quoteIdMaskResourceModel,
         QuoteIdMaskFactory $quoteIdMaskFactory,
         BoltHelperCart $boltHelperCart,
-        Bugsnag $bugsnag
+        Bugsnag $bugsnag,
+        Decider $featureSwitches
     ) {
         $this->checkoutSession = $checkoutSession;
         $this->quoteIdToMaskedQuoteId = $quoteIdToMaskedQuoteId;
@@ -72,6 +80,7 @@ class Cart
         $this->quoteIdMaskFactory = $quoteIdMaskFactory;
         $this->boltHelperCart = $boltHelperCart;
         $this->bugsnag = $bugsnag;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
@@ -84,6 +93,9 @@ class Cart
      */
     public function afterGetSectionData(CustomerDataCart $subject, array $result)
     {
+        if (!$this->featureSwitches->isEnabledFetchCartViaApi()) {
+            return $result;
+        }
         $quote = $this->getQuote();
         $result['quoteMaskedId'] = null;
         $result['boltCartHints'] = null;
