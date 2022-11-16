@@ -1577,8 +1577,8 @@ class OrderTest extends BoltTestCase
      */
     public function deleteOrder()
     {
-
-        $order = TestUtils::createDumpyOrder();
+        $quote = TestUtils::createQuote();
+        $order = TestUtils::createDumpyOrder(['quote_id' => $quote->getId()]);
         $orderId = $order->getId();
         TestHelper::invokeMethod($this->orderHelper, 'deleteOrder', [$order]);
         self::assertFalse(TestUtils::getOrderById($orderId));

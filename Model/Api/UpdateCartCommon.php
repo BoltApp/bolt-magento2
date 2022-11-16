@@ -333,6 +333,7 @@ abstract class UpdateCartCommon
         foreach ($items as $item) {
             $product = [];
 
+            $itemReference = $item->getProductId();
             //By default this feature switch is enabled.
             if ($this->featureSwitches->isCustomizableOptionsSupport()) {
                 $itemProduct = $item->getProduct();
@@ -343,10 +344,12 @@ abstract class UpdateCartCommon
                     $itemSku = $this->cartHelper->getProductActualSkuByCustomizableOptions($itemSku, $customizableOptions);
                 }
 
-                $_product = $this->productRepository->get($itemSku);
-                $itemReference = $_product->getId();
-            } else {
-                $itemReference = $item->getProductId();
+                try {
+                    $_product = $this->productRepository->get($itemSku);
+                    $itemReference = $_product->getId();
+                } catch (\Exception $e) {
+                    $this->bugsnag->notifyException($e);
+                }
             }
 
             $product['reference']    = $itemReference;

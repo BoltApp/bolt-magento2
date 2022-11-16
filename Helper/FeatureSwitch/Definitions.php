@@ -297,6 +297,16 @@ class Definitions
      */
     const M2_ENABLE_SHOPPER_ASSISTANT = 'M2_ENABLE_SHOPPER_ASSISTANT';
 
+    /**
+     * Skip cart discount total mismatch
+     */
+    const M2_SKIP_CART_DISCOUNT_TOTAL_MISMATCH = 'M2_SKIP_CART_DISCOUNT_TOTAL_MISMATCH';
+
+    /**
+     * Enable M2 fetch cart via api
+     */
+    const M2_FETCH_CART_VIA_API = 'M2_FETCH_CART_VIA_API';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -604,11 +614,23 @@ class Definitions
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
         ],
+        self::M2_SKIP_CART_DISCOUNT_TOTAL_MISMATCH => [
+            self::NAME_KEY        => self::M2_SKIP_CART_DISCOUNT_TOTAL_MISMATCH,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
         self::M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE => [
             self::NAME_KEY        => self::M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
         ],
+        self::M2_FETCH_CART_VIA_API => [
+            self::NAME_KEY        => self::M2_FETCH_CART_VIA_API,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ]
     ];
 }

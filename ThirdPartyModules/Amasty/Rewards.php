@@ -90,7 +90,7 @@ class Rewards
                 $pointsRate = $rewardData['rateForCurrency'];
                 $amount = floatval($pointsUsed) / $pointsRate;
             }
-            if ($pointsUsed) {
+            if ($pointsUsed && $amount > 0) {
                 $currencyCode = $quote->getQuoteCurrencyCode();
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                 $discounts[] = [

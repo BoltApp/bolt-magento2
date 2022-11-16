@@ -30,6 +30,11 @@ use Bolt\Boltpay\Helper\IntegrationManagement;
 class ProcessIntegrationToken extends Action
 {
     /**
+     * XML Path for Enable Integration as Bearer
+     */
+    const CONFIG_PATH_INTEGRATION_BEARER = 'oauth/consumer/enable_integration_as_bearer';
+    
+    /**
      * @var \Magento\Framework\Controller\Result\JsonFactory
      */
     protected $resultJsonFactory;
@@ -112,6 +117,9 @@ class ProcessIntegrationToken extends Action
                     $boltMode = $this->boltConfigHelper->isSandboxModeSet($storeId) ? IntegrationManagement::BOLT_INTEGRATION_MODE_SANDBOX : IntegrationManagement::BOLT_INTEGRATION_MODE_PRODUCTION;
                     // Update related config.
                     $this->resourceConfig->saveConfig(BoltConfigHelper::XML_PATH_CONNECT_INTEGRATION_MODE, $boltMode);
+                    if (version_compare($this->boltConfigHelper->getStoreVersion(), '2.4.4', '>=')) {
+                        $this->resourceConfig->saveConfig(self::CONFIG_PATH_INTEGRATION_BEARER, true);
+                    }
                     $this->cache->cleanType('config');
                     return $result->setData(['status' => 'success',
                                              'integration_mode' => $boltMode,

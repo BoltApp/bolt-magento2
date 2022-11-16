@@ -184,6 +184,13 @@
             <resource ref="Magento_Sales::invoice" />
         </resources>
     </route>
+    <!--Enable or disable route insurance -->
+    <route url="/V1/bolt/boltpay/cart/:cartId/route" method="POST">
+        <service class="Bolt\Boltpay\Api\RouteInsuranceManagementInterface" method="execute"/>
+        <resources>
+            <resource ref="anonymous" />
+        </resources>
+    </route>
     <!--Get Cart Id by Masked Quote Id -->
     <route url="/V1/bolt/boltpay/carts/:maskedQuoteId/cartid" method="GET">
         <service class="Bolt\Boltpay\Api\CartManagementInterface" method="getCartIdByMaskedId"/>
