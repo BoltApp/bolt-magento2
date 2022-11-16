@@ -101,6 +101,9 @@
     <preference for="Bolt\Boltpay\Api\CartManagementInterface" type="Bolt\Boltpay\Model\Api\CartManagement" />
     <preference for="Bolt\Boltpay\Api\Data\GetMaskedQuoteIDDataInterface"   type="Bolt\Boltpay\Model\Api\Data\GetMaskedQuoteIDData" />
 
+    <!-- For get cart id by masked quote id endpoint -->
+    <preference for="Bolt\Boltpay\Api\Data\GetCartIdByMaskedQuoteIdDataInterface"   type="Bolt\Boltpay\Model\Api\Data\GetCartIdByMaskedQuoteIdData" />
+
     <!-- For get default order statuses endpoint -->
     <preference for="Bolt\Boltpay\Api\GetDefaultOrderStatusesInterface" type="Bolt\Boltpay\Model\Api\GetDefaultOrderStatuses" />
     <preference for="Bolt\Boltpay\Api\Data\DefaultOrderStatusInterface"   type="Bolt\Boltpay\Model\Api\Data\DefaultOrderStatus" />

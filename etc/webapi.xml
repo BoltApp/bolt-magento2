@@ -184,4 +184,11 @@
             <resource ref="Magento_Sales::invoice" />
         </resources>
     </route>
+    <!--Get Cart Id by Masked Quote Id -->
+    <route url="/V1/bolt/boltpay/carts/:maskedQuoteId/cartid" method="GET">
+        <service class="Bolt\Boltpay\Api\CartManagementInterface" method="getCartIdByMaskedId"/>
+        <resources>
+            <resource ref="Magento_Cart::manage" />
+        </resources>
+    </route>
 </routes>

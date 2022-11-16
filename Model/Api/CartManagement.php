@@ -24,6 +24,8 @@ use Bolt\Boltpay\Api\CartManagementInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface;
+use Bolt\Boltpay\Model\Api\Data\GetCartIdByMaskedQuoteIdData;
 use Exception;
 
 
@@ -34,6 +36,10 @@ class CartManagement implements CartManagementInterface
      */
     private $data;
 
+    /**
+     * @var GetCartIdByMaskedQuoteIdData
+     */
+    private $cartIdData;
 
     /**
      * @var integer
@@ -66,6 +72,11 @@ class CartManagement implements CartManagementInterface
     private $cartHelper;
 
     /**
+     * @var MaskedQuoteIdToQuoteIdInterface
+     */
+    private $maskedQuoteIdToQuoteId;
+
+    /**
      * @param QuoteIdMaskFactory $quoteIdMaskFactory
      * @param GetMaskedQuoteIDDataInterface $data
      * @param StoreManagerInterface $storeManager
@@ -77,13 +88,17 @@ class CartManagement implements CartManagementInterface
         GetMaskedQuoteIDDataInterface  $data,
         StoreManagerInterface $storeManager,
         Bugsnag $bugsnag,
-        CartHelper $cartHelper
+        CartHelper $cartHelper,
+        MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId,
+        GetCartIdByMaskedQuoteIdData $cartIdData
     ) {
         $this->quoteIdMaskFactory = $quoteIdMaskFactory;
         $this->data = $data;
         $this->storeManager = $storeManager;
         $this->bugsnag = $bugsnag;
         $this->cartHelper = $cartHelper;
+        $this->maskedQuoteIdToQuoteId = $maskedQuoteIdToQuoteId;
+        $this->cartIdData = $cartIdData;
     }
 
     /**
@@ -149,6 +164,31 @@ class CartManagement implements CartManagementInterface
             }
 
             $quote->setIsActive((bool)$isActive)->save();
+        } catch (WebapiException $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
+        } catch (Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
+        }
+    }
+
+    /**
+     * @param $maskedQuoteId
+     * @return \Bolt\Boltpay\Api\Data\GetCartIdByMaskedQuoteIdDataInterface
+     *
+     * @throws WebapiException
+     */
+    public function getCartIdByMaskedId($maskedQuoteId)
+    {
+        try {
+            $quoteId = $this->maskedQuoteIdToQuoteId->execute($maskedQuoteId);
+            if (!$quoteId) {
+                throw new WebapiException(__('Quote does not found'), 0, WebapiException::HTTP_NOT_FOUND);
+            }
+
+            $this->cartIdData->setCartId($quoteId);
+            return $this->cartIdData;
         } catch (WebapiException $e) {
             $this->bugsnag->notifyException($e);
             throw $e;
