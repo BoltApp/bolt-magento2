@@ -374,8 +374,8 @@ class OAuthRedirect implements OAuthRedirectInterface
                         $customerActiveQuote = $this->cartRepository->getActiveForCustomer($customer->getId());
                         $customerActiveQuote->setIsActive(false);
                         $this->cartHelper->saveQuote($customerActiveQuote);
-                        // phpcs:ignore Magento2.CodeAnalysis.EmptyBlock
                     } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+                        $this->bugsnag->notifyException($e);
                     }
                     $quote->setCustomer($customer);
                     $quote->setCustomerIsGuest(false);
