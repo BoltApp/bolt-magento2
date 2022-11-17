@@ -56,7 +56,7 @@ interface CartManagementInterface
      *
      * @param string $maskedQuoteId
      *
-     * @return \Bolt\Boltpay\Api\Data\GetCartIdByMaskedQuoteIdDataInterface
+     * @return int
      *
      * @throws WebapiException
      */

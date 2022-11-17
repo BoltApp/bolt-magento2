@@ -24,8 +24,7 @@ use Bolt\Boltpay\Api\CartManagementInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
-use Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface;
-use Bolt\Boltpay\Model\Api\Data\GetCartIdByMaskedQuoteIdData;
+use Magento\Quote\Model\ResourceModel\Quote\QuoteIdMask as QuoteIdMaskResource;
 use Exception;
 
 
@@ -35,11 +34,6 @@ class CartManagement implements CartManagementInterface
      * @var GetMaskedQuoteIDDataInterface
      */
     private $data;
-
-    /**
-     * @var GetCartIdByMaskedQuoteIdData
-     */
-    private $cartIdData;
 
     /**
      * @var integer
@@ -72,9 +66,9 @@ class CartManagement implements CartManagementInterface
     private $cartHelper;
 
     /**
-     * @var MaskedQuoteIdToQuoteIdInterface
+     * @var QuoteIdMaskResource
      */
-    private $maskedQuoteIdToQuoteId;
+    private $quoteIdMaskResource;
 
     /**
      * @param QuoteIdMaskFactory $quoteIdMaskFactory
@@ -89,16 +83,14 @@ class CartManagement implements CartManagementInterface
         StoreManagerInterface $storeManager,
         Bugsnag $bugsnag,
         CartHelper $cartHelper,
-        MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId,
-        GetCartIdByMaskedQuoteIdData $cartIdData
+        QuoteIdMaskResource $quoteIdMaskResource
     ) {
         $this->quoteIdMaskFactory = $quoteIdMaskFactory;
         $this->data = $data;
         $this->storeManager = $storeManager;
         $this->bugsnag = $bugsnag;
         $this->cartHelper = $cartHelper;
-        $this->maskedQuoteIdToQuoteId = $maskedQuoteIdToQuoteId;
-        $this->cartIdData = $cartIdData;
+        $this->quoteIdMaskResource = $quoteIdMaskResource;
     }
 
     /**
@@ -175,20 +167,19 @@ class CartManagement implements CartManagementInterface
 
     /**
      * @param $maskedQuoteId
-     * @return \Bolt\Boltpay\Api\Data\GetCartIdByMaskedQuoteIdDataInterface
+     * @return int
      *
      * @throws WebapiException
      */
     public function getCartIdByMaskedId($maskedQuoteId)
     {
         try {
-            $quoteId = $this->maskedQuoteIdToQuoteId->execute($maskedQuoteId);
+            $quoteId = $this->maskedQuoteIdToQuoteId($maskedQuoteId);
             if (!$quoteId) {
                 throw new WebapiException(__('Quote does not found'), 0, WebapiException::HTTP_NOT_FOUND);
             }
 
-            $this->cartIdData->setCartId($quoteId);
-            return $this->cartIdData;
+            return $quoteId;
         } catch (WebapiException $e) {
             $this->bugsnag->notifyException($e);
             throw $e;
@@ -196,5 +187,18 @@ class CartManagement implements CartManagementInterface
             $this->bugsnag->notifyException($e);
             throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
         }
+    }
+
+    private function maskedQuoteIdToQuoteId($maskedQuoteId)
+    {
+        $quoteIdMask = $this->quoteIdMaskFactory->create();
+        $this->quoteIdMaskResource->load($quoteIdMask, $maskedQuoteId, 'masked_id');
+
+        $cart = $this->cartHelper->getQuoteById($quoteIdMask->getQuoteId());
+        if (!$cart) {
+            return null;
+        }
+
+        return (int)$cart->getId();
     }
 }
