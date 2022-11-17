@@ -43,6 +43,8 @@ use Magento\Quote\Model\QuoteFactory;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Customer\Model\EmailNotification;
+use Magento\Quote\Api\CartManagementInterface;
+use Magento\Quote\Api\CartRepositoryInterface;
 
 class OAuthRedirect implements OAuthRedirectInterface
 {
@@ -147,24 +149,36 @@ class OAuthRedirect implements OAuthRedirectInterface
     private $cookieMetadataManager;
 
     /**
-     * @param Response                         $response
-     * @param DeciderHelper                    $deciderHelper
-     * @param SSOHelper                        $ssoHelper
-     * @param LogHelper                        $logHelper
-     * @param CartHelper                       $cartHelper
-     * @param SessionHelper                    $sessionHelper
+     * @var CartManagementInterface
+     */
+    private $cartManagement;
+
+    /**
+     * @var CartRepositoryInterface
+     */
+    private $cartRepository;
+
+    /**
+     * @param Response $response
+     * @param DeciderHelper $deciderHelper
+     * @param SSOHelper $ssoHelper
+     * @param LogHelper $logHelper
+     * @param CartHelper $cartHelper
+     * @param SessionHelper $sessionHelper
      * @param ExternalCustomerEntityRepository $externalCustomerEntityRepository
-     * @param CustomerRepository               $customerRepository
-     * @param StoreManagerInterface            $storeManager
-     * @param CustomerSession                  $customerSession
-     * @param CustomerInterfaceFactory         $customerInterfaceFactory
-     * @param CustomerFactory                  $customerFactory
-     * @param OrderRepository                  $orderRepository
-     * @param ResourceConnection               $resourceConnection
-     * @param QuoteFactory                     $quoteFactory
-     * @param Url                              $url
-     * @param Bugsnag                          $bugsnag
-     * @param EmailNotification                $emailNotification
+     * @param CustomerRepository $customerRepository
+     * @param StoreManagerInterface $storeManager
+     * @param CustomerSession $customerSession
+     * @param CustomerInterfaceFactory $customerInterfaceFactory
+     * @param CustomerFactory $customerFactory
+     * @param OrderRepository $orderRepository
+     * @param ResourceConnection $resourceConnection
+     * @param QuoteFactory $quoteFactory
+     * @param Url $url
+     * @param Bugsnag $bugsnag
+     * @param EmailNotification $emailNotification
+     * @param CartManagementInterface $cartManagement
+     * @param CartRepositoryInterface $cartRepository
      */
     public function __construct(
         Response $response,
@@ -184,7 +198,9 @@ class OAuthRedirect implements OAuthRedirectInterface
         QuoteFactory $quoteFactory,
         Url $url,
         Bugsnag $bugsnag,
-        EmailNotification $emailNotification
+        EmailNotification $emailNotification,
+        CartManagementInterface $cartManagement,
+        CartRepositoryInterface $cartRepository
     ) {
         $this->response = $response;
         $this->deciderHelper = $deciderHelper;
@@ -204,6 +220,8 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->url = $url;
         $this->bugsnag = $bugsnag;
         $this->emailNotification = $emailNotification;
+        $this->cartManagement = $cartManagement;
+        $this->cartRepository = $cartRepository;
     }
 
     /**
@@ -351,10 +369,17 @@ class OAuthRedirect implements OAuthRedirectInterface
                 // The checkout may not have been completed yet, but the user may have logged in via Bolt SSO
                 $quote = $this->cartHelper->getQuoteById($reference);
                 if ($quote !== false) {
+                    try {
+                        // we should make current customer cart as inactive and use guest cart as customer cart if login from bolt modal
+                        $customerActiveQuote = $this->cartRepository->getActiveForCustomer($customer->getId());
+                        $customerActiveQuote->setIsActive(false);
+                        $this->cartHelper->saveQuote($customerActiveQuote);
+                        // phpcs:ignore Magento2.CodeAnalysis.EmptyBlock
+                    } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+                    }
                     $quote->setCustomer($customer);
                     $quote->setCustomerIsGuest(false);
                     $this->cartHelper->saveQuote($quote);
-
                     $this->updateImmutableQuotes($quote, $customer);
                 } else {
                     $this->bugsnag->notifyError("Cannot find quote", "ID: {$reference}");
@@ -365,11 +390,9 @@ class OAuthRedirect implements OAuthRedirectInterface
                 $checkoutSession = $this->sessionHelper->getCheckoutSession();
                 if ($checkoutSession) {
                     $quote = $checkoutSession->getQuote();
-                    if ($quote) {
-                        $quote->setCustomer($customer);
-                        $quote->setCustomerIsGuest(false);
-                        $this->cartHelper->saveQuote($quote);
-
+                    if ($quote->getId()) {
+                        // we should merge guest customer cart with customer cart if login is not from bolt modal
+                        $this->cartManagement->assignCustomer($quote->getId(),$customer->getId(),$customer->getStoreId());
                         $this->updateImmutableQuotes($quote, $customer);
                     }
                 }
@@ -442,8 +465,8 @@ class OAuthRedirect implements OAuthRedirectInterface
     private function linkLoginAndRedirect($externalID, $customerID)
     {
         $this->externalCustomerEntityRepository->upsert($externalID, $customerID);
-        $customerModel = $this->customerFactory->create()->load($customerID);
-        $this->customerSession->setCustomerAsLoggedIn($customerModel);
+        $customer = $this->customerRepository->getById($customerID);
+        $this->customerSession->setCustomerDataAsLoggedIn($customer);
 
         if ($this->getCookieManager()->getCookie('mage-cache-sessid')) {
             $metadata = $this->getCookieMetadataFactory()->createCookieMetadata();
