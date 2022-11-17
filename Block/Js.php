@@ -428,6 +428,22 @@ class Js extends Template
         return $this->configHelper->getMinicartSupport();
     }
 
+     /**
+     * Return true if pdp frequency selector is enabled
+     */
+    public function isPDPFrequencySelectorEnabled()
+    {
+        return $this->configHelper->GetPDPFrequencySelectorFlag();
+    }
+
+    /**
+     * Return true if we are on product page, and bolt on product page is enabled
+     */
+    public function isBoltProductPageForFrequencySelector()
+    {
+        return $this->isOnProductPage() && $this->isPDPFrequencySelectorEnabled();
+    }
+
     /**
      * Return true if bolt product page checkout is enabled
      */
@@ -486,7 +502,7 @@ class Js extends Template
     public function isLoadConnectJs()
     {
         if ($this->featureSwitches->isLoadConnectJsOnSpecificPage()) {
-            if ($this->isOnCartPage() || $this->isBoltProductPage()) {
+            if ($this->isOnCartPage() || $this->isBoltProductPage() || $this->isBoltProductPageForFrequencySelector()) {
                 return true;
             } else {
                 return false;
