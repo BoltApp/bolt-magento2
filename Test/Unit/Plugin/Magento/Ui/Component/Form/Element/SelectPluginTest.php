@@ -106,6 +106,11 @@ class SelectPluginTest extends BoltTestCase
                 '__disableTmpl' => true,
             ],
             [
+                'value'         => 'boltpay_amazon_pay',
+                'label'         => 'Bolt-AmazonPay',
+                '__disableTmpl' => true,
+            ],
+            [
                 'value'         => 'boltpay_amex',
                 'label'         => 'Bolt-Amex',
                 '__disableTmpl' => true,
@@ -124,7 +129,7 @@ class SelectPluginTest extends BoltTestCase
                 'value'         => 'boltpay_visa',
                 'label'         => 'Bolt-Visa',
                 '__disableTmpl' => true,
-            ],
+            ]
         ];
         return [
             'Order grid, payment method column - appends options' => [
