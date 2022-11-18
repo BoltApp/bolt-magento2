@@ -391,7 +391,7 @@ class OAuthRedirect implements OAuthRedirectInterface
                 if ($checkoutSession) {
                     $quote = $checkoutSession->getQuote();
                     if ($quote->getId()) {
-                        // we should merge guest customer cart with customer cart if login is not from bolt modal
+                        // call the function that merge 2 carts: guest cart and customer cart
                         $this->cartManagement->assignCustomer($quote->getId(),$customer->getId(),$customer->getStoreId());
                         $this->updateImmutableQuotes($quote, $customer);
                     }
