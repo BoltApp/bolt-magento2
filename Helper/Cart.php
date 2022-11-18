@@ -210,7 +210,6 @@ class Cart extends AbstractHelper
         'last_name',
         'street_address1',
         'locality',
-        'region',
         'postal_code',
         'country_code',
         'email'
@@ -269,12 +268,12 @@ class Cart extends AbstractHelper
      * @var MsrpHelper
      */
     private $msrpHelper;
-    
+
     /**
      * @var PriceHelper
      */
     private $priceHelper;
-    
+
     /**
      * @var Store
      */
@@ -882,7 +881,7 @@ class Cart extends AbstractHelper
             $this->deactivateSessionQuote($quote);
             return;
         }
-        
+
         if (version_compare($this->configHelper->getStoreVersion(), '2.3.6', '<') && $this->deciderHelper->isAPIDrivenIntegrationEnabled()) {
             $this->saveQuote($quote);
         }
@@ -1520,7 +1519,7 @@ class Cart extends AbstractHelper
                 $itemSku = trim($item->getSku());
                 $itemReference = $item->getProductId();
                 $itemName = $item->getName();
-                
+
                 //By default this feature switch is enabled.
                 if ($this->deciderHelper->isCustomizableOptionsSupport()) {
                     try {
@@ -1567,7 +1566,7 @@ class Cart extends AbstractHelper
                 $product['unit_price']   = CurrencyUtils::toMinor($unitPrice, $currencyCode);
                 $product['quantity']     = $quantity;
                 $product['sku']          = $this->getSkuFromQuoteItem($item);
-                
+
                 if ($this->msrpHelper->canApplyMsrp($_product) && $_product->getMsrp() !== null) {
                     $product['msrp']     = CurrencyUtils::toMinor($_product->getMsrp(), $currencyCode);
                 }
@@ -2108,13 +2107,13 @@ class Cart extends AbstractHelper
                     );
                     return [];
                 }
-                
+
                 if (!$this->isBackendSession()) {
                     $address->setCollectShippingRates(true);
                     $this->collectAddressTotals($quote, $address);
                     $address->save();
                 }
-                
+
                 // Shipping address
                 $shipAddress = [
                     'first_name' => $address->getFirstname(),
@@ -2132,7 +2131,7 @@ class Cart extends AbstractHelper
 
                 if ($this->isAddressComplete($shipAddress)) {
                     $cost = $address->getShippingAmount();
-                    $shippingService = $address->getShippingDescription();                    
+                    $shippingService = $address->getShippingDescription();
                     $shippingDiscountAmount = $this->eventsForThirdPartyModules->runFilter("collectShippingDiscounts", $address->getShippingDiscountAmount(), $quote, $address);
                     if ($shippingDiscountAmount >= DiscountHelper::MIN_NONZERO_VALUE && !$this->ignoreAdjustingShippingAmount($quote)) {
                         $cost = $cost - $shippingDiscountAmount;
@@ -2280,7 +2279,7 @@ class Cart extends AbstractHelper
         /////////////////////////////////////////////////////////////////////////////////
         if (($amount = abs((float)$address->getDiscountAmount())) || $quote->getCouponCode()) {
             $amount = CurrencyUtils::toMinor($amount, $currencyCode);
-            $ruleDiscountDetails = $this->getSaleRuleDiscounts($quote);     
+            $ruleDiscountDetails = $this->getSaleRuleDiscounts($quote);
             list($ruleDiscountDetails, $discounts, $totalAmount) = $this->eventsForThirdPartyModules->runFilter('filterQuoteDiscountDetails', [$ruleDiscountDetails, $discounts, $totalAmount], $quote);
             foreach ($ruleDiscountDetails as $salesruleId => $ruleDiscountAmount) {
                 $rule = $this->ruleRepository->getById($salesruleId);
@@ -2930,7 +2929,7 @@ class Cart extends AbstractHelper
 
         return $this->checkIfQuoteHasCartFixedAmountAndApplyToShippingRule($quote);
     }
-    
+
     /**
      * @param $quote
      * @param $shippingMethod
@@ -2957,7 +2956,7 @@ class Cart extends AbstractHelper
 
         return false;
     }
-    
+
     /**
      * Collect discount amount from each applied sale rules.
      *
@@ -2997,7 +2996,7 @@ class Cart extends AbstractHelper
                 }
             }
         }
-        
+
         $ruleDiscountDetails = [];
         foreach ($salesRuleIds as $salesRuleId) {
             $rule = $this->ruleRepository->getById($salesRuleId);
@@ -3009,7 +3008,7 @@ class Cart extends AbstractHelper
         }
         return $ruleDiscountDetails;
     }
-    
+
     /**
      * If the Magento version < 2.3.4, we still collect discounts details via plugin methods.
      *
@@ -3046,7 +3045,7 @@ class Cart extends AbstractHelper
         }
         return false;
     }
-    
+
     /**
      * Get SKU of quote item
      *
@@ -3066,10 +3065,10 @@ class Cart extends AbstractHelper
             $product->setData('sku_type', $oldSkuType);
             return $itemSku;
         }
-        
+
         return trim($item->getSku());
     }
-    
+
     /**
      * Set current store currency code
      *
