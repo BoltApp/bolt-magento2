@@ -31,6 +31,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\Webapi\Exception as WebApiException;
+use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Sales\Model\Order as OrderModel;
 
 /**
@@ -92,6 +93,11 @@ class OrderManagement implements OrderManagementInterface
     private $decider;
 
     /**
+     * @var SubscriberFactory
+     */
+    private $subscriberFactory;
+
+    /**
      * @param HookHelper $hookHelper
      * @param OrderHelper $orderHelper
      * @param LogHelper $logHelper
@@ -102,6 +108,7 @@ class OrderManagement implements OrderManagementInterface
      * @param ConfigHelper $configHelper
      * @param CartHelper $cartHelper
      * @param Decider $decider
+     * @param SubscriberFactory $subscriberFactory
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -113,7 +120,8 @@ class OrderManagement implements OrderManagementInterface
         Response $response,
         ConfigHelper $configHelper,
         CartHelper $cartHelper,
-        Decider $decider
+        Decider $decider,
+        SubscriberFactory $subscriberFactory
     ) {
         $this->hookHelper   = $hookHelper;
         $this->orderHelper  = $orderHelper;
@@ -125,6 +133,7 @@ class OrderManagement implements OrderManagementInterface
         $this->configHelper = $configHelper;
         $this->cartHelper   = $cartHelper;
         $this->decider = $decider;
+        $this->subscriberFactory = $subscriberFactory;
     }
 
     /**
@@ -393,7 +402,6 @@ class OrderManagement implements OrderManagementInterface
             $this->bugsnag->notifyException($e);
             throw $e;
         }
-
     }
 
     /**
@@ -412,5 +420,34 @@ class OrderManagement implements OrderManagementInterface
         $invoice = $this->orderHelper->createOrderInvoice($order, $amount, $notify);
         $order->save();
         return $invoice->getEntityId();
+    }
+
+    /**
+     * Subscribe an user / email to newsletter
+     *
+     * @param int $id The order ID.
+     * @return bool
+     * @throws NoSuchEntityException
+     * @throws WebapiException
+     */
+    public function subscribeToNewsletter($id) {
+        try {
+            $order = $this->orderHelper->getOrderById($id);
+            $customerId = $order->getCustomerId();
+            if ($customerId) {
+                $this->subscriberFactory->create()->subscribeCustomerById($customerId);
+            } else {
+                $email = $order->getBillingAddress()->getEmail();
+                $this->subscriberFactory->create()->subscribe($email);
+            }
+            return true;
+        } catch (WebapiException $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
+        } catch (\Exception $e) {
+            // // We are here if we are unable to send confirmation email, for example don't have transport
+            $this->bugsnag->notifyException($e);
+            throw $e;
+        }
     }
 }
