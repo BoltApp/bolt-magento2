@@ -18,10 +18,9 @@ define([
     'underscore',
     'Magento_Customer/js/customer-data',
     'Bolt_Boltpay/js/utils/when-defined',
-    'Magento_Customer/js/model/customer',
     'Magento_Customer/js/model/authentication-popup',
     'domReady!'
-], function ($, _, customerData, whenDefined, customer, authenticationPopup) {
+], function ($, _, customerData, whenDefined, authenticationPopup) {
     'use strict';
 
     /**
@@ -38,7 +37,7 @@ define([
         magentoCartTimeStamp: null,
         cartBarrier: null,
         hintsBarrier: null,
-        elementBarrier: null,
+        readyStatusBarrier: null,
         isPromisesResolved: false,
         isUserLoggedIn: null,
         isGuestCheckoutAllowed: null,
@@ -64,19 +63,20 @@ define([
         save_request: null,
 
         /**
-         * Resolving element promise
+         * Resolving ready status promise
          */
-        resolveElementPromise: function () {
-            if (BoltCheckoutApiDriven.elementBarrier.isResolved() === true) {
-                BoltCheckoutApiDriven.elementBarrier = BoltCheckoutApiDriven.initBarrier();
+        resolveReadyStatusPromise: function () {
+            let customer = customerData.get('customer');
+            if (BoltCheckoutApiDriven.readyStatusBarrier.isResolved() === true) {
+                BoltCheckoutApiDriven.readyStatusBarrier = BoltCheckoutApiDriven.initBarrier();
             }
             if (BoltCheckoutApiDriven.customerCart === null) {
                 return;
             }
             if (!BoltCheckoutApiDriven.initiateCheckout && !BoltCheckoutApiDriven.customerCart().isGuestCheckoutAllowed) {
                 if (BoltCheckoutApiDriven.isUserLoggedIn === null) {
-                    BoltCheckoutApiDriven.isUserLoggedIn = customer.isLoggedIn();
-                    BoltCheckoutApiDriven.resolveElementPromise();
+                    BoltCheckoutApiDriven.isUserLoggedIn = customer().isLoggedIn;
+                    BoltCheckoutApiDriven.resolveReadyStatusPromise();
                     return;
                 }
                 if (!BoltCheckoutApiDriven.isUserLoggedIn) {
@@ -85,20 +85,20 @@ define([
                         // we should show authentication popup
                         BoltCheckoutApiDriven.showAuthenticationPopup();
                     }
-                    BoltCheckoutApiDriven.resolveElementPromiseToValue(false);
+                    BoltCheckoutApiDriven.resolveReadyStatusPromiseToValue(false);
                     return;
                 }
             }
 
-            BoltCheckoutApiDriven.resolveElementPromiseToValue(true);
+            BoltCheckoutApiDriven.resolveReadyStatusPromiseToValue(true);
         },
 
         /**
-         * Resolve element promise to value
+         * Resolve ready status promise to value
          * @param value
          */
-        resolveElementPromiseToValue: function (value) {
-            BoltCheckoutApiDriven.elementBarrier.resolve(value);
+        resolveReadyStatusPromiseToValue: function (value) {
+            BoltCheckoutApiDriven.readyStatusBarrier.resolve(value);
             if (!value) {
                 BoltCheckoutApiDriven.popUpOpen = false;
             }
@@ -247,7 +247,7 @@ define([
          * @param {Object} magentoCart
          */
         magentoCartDataListener: function (magentoCart) {
-            BoltCheckoutApiDriven.resolveElementPromise();
+            BoltCheckoutApiDriven.resolveReadyStatusPromise();
             //if timestamp is the same no checks needed
             if (magentoCart.data_id === this.magentoCartTimeStamp) {
                 return;
@@ -503,7 +503,7 @@ define([
                         // trigger click on boltpay radio
                         if ($('#boltpay').prop('checked') === false) $('#boltpay').click();
 
-                        // stop if customer email field exists and is not valid on paymtnt only page
+                        // stop if customer email field exists and is not valid on payment only page
                         let customerEmail = $(BoltCheckoutApiDriven.customerEmailSelector);
                         if (customerEmail.get(0)) {
                             let form = customerEmail.closest('form');
@@ -522,11 +522,11 @@ define([
                      * Magento customer, customerData, authenticationPopup objects are
                      * used.
                      */
-                    if (BoltCheckoutApiDriven.elementBarrier.isResolved() === false) {
+                    if (BoltCheckoutApiDriven.readyStatusBarrier.isResolved() === false) {
                         BoltCheckoutApiDriven.popUpOpen = true;
-                        return BoltCheckoutApiDriven.elementBarrier.promise;
+                        return BoltCheckoutApiDriven.readyStatusBarrier.promise;
                     }
-                    if (!BoltCheckoutApiDriven.elementBarrier.value()) {
+                    if (!BoltCheckoutApiDriven.readyStatusBarrier.value()) {
                         // If check resolved to false, guest checkout is disallowed, and user isn't logged in
                         // show authentication popup
                         if (!BoltCheckoutApiDriven.initiateCheckout
@@ -585,7 +585,7 @@ define([
             //init new barriers
             this.cartBarrier = this.initBarrier();
             this.hintsBarrier = this.initBarrier();
-            this.elementBarrier = this.initBarrier();
+            this.readyStatusBarrier = this.initBarrier();
             this.initiateCheckout = window.boltConfig.initiate_checkout && this.getInitiateCheckoutCookie();
             this.customerCart = customerData.get('cart');
             //subscription of 'customer-data' cart
@@ -593,7 +593,7 @@ define([
 
             //call bolt checkout configure immediately with promise parameters
             this.boltCheckoutConfigureCall(this.cartBarrier.promise, this.hintsBarrier.promise);
-            this.resolveElementPromise();
+            this.resolveReadyStatusPromise();
             this.initBoltCallbacks();
             this.initUIElements();
 
