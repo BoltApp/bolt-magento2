@@ -267,3 +267,5 @@
 - Fixed issue with [Amasty Rewards Points](https://amasty.com/reward-points-for-magento-2.html) that caused points to appear at checkout after being removed.
 - Fixed issue that allowed discount codes to be applied after checkout reload in some rare instances.
 ## [v2.26.3](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.3) 2022-11-21
+- Amazon Pay transactions are now displayed in the dashboard.
+- Fixes issue preventing international shoppers from checking out without a state/province.
