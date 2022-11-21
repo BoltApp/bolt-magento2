@@ -32,6 +32,10 @@ sed -i '/amqp/d' etc/install-config-mysql.php
 sudo chmod -R 777 ../../..
 
 echo "Starting Bolt Integration Tests"
+if [ "${MAGENTO_VERSION}" == "2.4.2" ]; then
+    echo "Restarting Elastic Search..."
+    sudo service elasticsearch restart
+fi
 ../../../vendor/bin/phpunit -d memory_limit=5G -c bolt_phpunit.xml --coverage-clover=/home/circleci/project/artifacts/coverage.xml
 cd ../../../..
 cp -r magento/app/code/Bolt/Boltpay .

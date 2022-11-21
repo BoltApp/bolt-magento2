@@ -32,4 +32,12 @@
                 type="Bolt\Boltpay\Plugin\WebapiRest\Magento\Quote\Model\QuotePlugin"
                 sortOrder="1"/>
     </type>
+    <type name="Magento\Checkout\Api\GuestPaymentInformationManagementInterface">
+        <plugin name="bolt_boltpay_webapirest_magento_checkout_api_guest_payment_information_management_plugin"
+            type="Bolt\Boltpay\Plugin\WebapiRest\Magento\Checkout\Api\GuestPaymentInformationManagementPlugin"/>
+    </type>
+    <type name="Magento\Checkout\Api\PaymentInformationManagementInterface">
+        <plugin name="bolt_boltpay_webapirest_magento_checkout_api_payment_information_management_plugin"
+                type="Bolt\Boltpay\Plugin\WebapiRest\Magento\Checkout\Api\PaymentInformationManagementPlugin"/>
+    </type>
 </config>

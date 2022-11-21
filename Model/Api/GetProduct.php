@@ -26,6 +26,7 @@ use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\CatalogInventory\Api\Data\StockItemInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
@@ -38,15 +39,16 @@ use Magento\Bundle\Model\Product\Type as Bundle;
 use Magento\Bundle\Api\ProductOptionRepositoryInterface as BundleOptionRepository;
 use Magento\Bundle\Model\ResourceModel\Selection as BundleSelection;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-
+use Magento\Framework\Module\Manager as ModuleManager;
 
 class GetProduct implements GetProductInterface
 {
+    private const BUNDLE_PRODUCT_TYPE_CODE = 'bundle';
+
     /**
      * @var GetProductDataInterface
      */
     private $productData;
-
 
     /**
      * @var integer
@@ -97,12 +99,12 @@ class GetProduct implements GetProductInterface
      * @var \Magento\Eav\Model\Config
      */
     private $eavConfig;
-    
+
     /**
      * @var BundleOptionRepository
      */
     private $bundleOptionRepository;
-    
+
     /**
      * @var BundleSelection
      */
@@ -114,6 +116,11 @@ class GetProduct implements GetProductInterface
     protected $featureSwitches;
 
     /**
+     * @var ModuleManager
+     */
+    private $moduleManager;
+
+    /**
      * @param ProductRepositoryInterface $productRepositoryInterface
      * @param StockRegistryProviderInterface $stockRegistry
      * @param StockConfigurationInterface $stockConfiguration
@@ -123,9 +130,8 @@ class GetProduct implements GetProductInterface
      * @param Config $eavConfig
      * @param HookHelper $hookHelper
      * @param Bugsnag $bugsnag
-     * @param BundleOptionRepository $bundleOptionRepository
-     * @param BundleSelection $bundleSelection
      * @param Decider $featureSwitches
+     * @param ModuleManager $moduleManager
      */
     public function __construct(
         ProductRepositoryInterface  $productRepositoryInterface,
@@ -137,9 +143,8 @@ class GetProduct implements GetProductInterface
         Config $eavConfig,
         HookHelper $hookHelper,
         Bugsnag $bugsnag,
-        BundleOptionRepository $bundleOptionRepository,
-        BundleSelection $bundleSelection,
-        Decider $featureSwitches
+        Decider $featureSwitches,
+        ModuleManager $moduleManager
     ) {
         $this->productRepositoryInterface = $productRepositoryInterface;
         $this->stockRegistry = $stockRegistry;
@@ -150,9 +155,15 @@ class GetProduct implements GetProductInterface
         $this->bugsnag = $bugsnag;
         $this->configurable = $configurable;
         $this->eavConfig = $eavConfig;
-        $this->bundleOptionRepository = $bundleOptionRepository;
-        $this->bundleSelection = $bundleSelection;
         $this->featureSwitches = $featureSwitches;
+        $this->moduleManager = $moduleManager;
+        if ($this->moduleManager->isEnabled('Magento_Bundle')) {
+            $objectManager = ObjectManager::getInstance();
+            $this->bundleOptionRepository = $objectManager
+                ->get('Magento\Bundle\Api\ProductOptionRepositoryInterface');
+            $this->bundleSelection = $objectManager
+                ->get('Magento\Bundle\Model\ResourceModel\Selection');
+        }
     }
 
     private function getStockStatus($product){
@@ -180,7 +191,9 @@ class GetProduct implements GetProductInterface
     private function getProductFamily(){
         $product = $this->productData->getProductInventory()->getProduct();
         $configurableParent = $this->configurable->getParentIdsByChild($product->getId());
-        $bundleParents = $this->bundleSelection->getParentIdsByChild($product->getId());
+        $bundleParents = ($this->bundleSelection != null)
+            ? $this->bundleSelection->getParentIdsByChild($product->getId())
+            : [];
         if (isset($configurableParent[0])){
             $parentProductInventory = new ProductInventoryInfo();
             $parentProduct = $this->productRepositoryInterface->getById($configurableParent[0], false, $this->storeID, false);
@@ -224,9 +237,9 @@ class GetProduct implements GetProductInterface
             $this->productData->setChildren($childrenStockArray);
 
             $this->collectConfigurableProductOptions($product);
-        } elseif ($product->getTypeId() == Bundle::TYPE_CODE) {
+        } elseif ($product->getTypeId() == self::BUNDLE_PRODUCT_TYPE_CODE) {
             $bundleOptions = $this->bundleOptionRepository->getList($product->getSku());
-            $this->productData->setBundleOptions($bundleOptions);   
+            $this->productData->setBundleOptions($bundleOptions);
         }
     }
 
