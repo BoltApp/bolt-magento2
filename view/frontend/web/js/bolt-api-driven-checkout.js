@@ -557,39 +557,40 @@ define([
          * Init order management
          */
         initOrderManagement: function () {
-            if (window.boltConfig.order_management_selector) {
-                let insertAccountScript = function () {
-                    let scriptTag = document.getElementById('bolt-account');
-                    if (scriptTag) {
-                        return;
-                    }
-                    let publishableKey = this.getCheckoutKey();
-                    scriptTag = document.createElement('script');
-                    scriptTag.setAttribute('type', 'text/javascript');
-                    scriptTag.setAttribute('async', '');
-                    scriptTag.setAttribute('src', window.boltConfig.account_url);
-                    scriptTag.setAttribute('id', 'bolt-account');
-                    scriptTag.setAttribute('data-publishable-key', publishableKey);
-                    document.head.appendChild(scriptTag);
-                }
-                let insertManagementButtonDivAfterElement = function(element) {
-                    let orderManagementButton = document.createElement('div');
-                    orderManagementButton.setAttribute('class', 'bolt-account-login');
-                    element.parentNode.insertBefore(orderManagementButton, element.nextSibling);
-                    insertAccountScript();
-                }
-                let setupOrderManagementReplacement = function() {
-                    let element = document.querySelector(window.boltConfig.order_management_selector);
-                    if (element) {
-                        insertManagementButtonDivAfterElement(element);
-                    } else {
-                        onElementReady(window.boltConfig.order_management_selector, function(element) {
-                            insertManagementButtonDivAfterElement(element);
-                        });
-                    }
-                }
-                setupOrderManagementReplacement();
+            if (!window.boltConfig.order_management_selector) {
+                return;
             }
+            let insertAccountScript = function () {
+                let scriptTag = document.getElementById('bolt-account');
+                if (scriptTag) {
+                    return;
+                }
+                let publishableKey = this.getCheckoutKey();
+                scriptTag = document.createElement('script');
+                scriptTag.setAttribute('type', 'text/javascript');
+                scriptTag.setAttribute('async', '');
+                scriptTag.setAttribute('src', window.boltConfig.account_url);
+                scriptTag.setAttribute('id', 'bolt-account');
+                scriptTag.setAttribute('data-publishable-key', publishableKey);
+                document.head.appendChild(scriptTag);
+            }
+            let insertManagementButtonDivAfterElement = function(element) {
+                let orderManagementButton = document.createElement('div');
+                orderManagementButton.setAttribute('class', 'bolt-account-login');
+                element.parentNode.insertBefore(orderManagementButton, element.nextSibling);
+                insertAccountScript();
+            }
+            let setupOrderManagementReplacement = function() {
+                let element = document.querySelector(window.boltConfig.order_management_selector);
+                if (element) {
+                    insertManagementButtonDivAfterElement(element);
+                } else {
+                    onElementReady(window.boltConfig.order_management_selector, function(element) {
+                        insertManagementButtonDivAfterElement(element);
+                    });
+                }
+            }
+            setupOrderManagementReplacement();
         },
 
         /**
