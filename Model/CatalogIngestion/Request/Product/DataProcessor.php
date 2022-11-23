@@ -543,7 +543,7 @@ class DataProcessor
             if ($values = $option->getValues()) {
                 foreach ($values as $valueId => $value) {
                     $optionData['Values'][] = [
-                        'Value' => $valueId,
+                        'Value' => string($valueId),
                         'DisplayValue' => $value->getTitle(),
                         'SortOrder' => (int)$value->getSortOrder()
                     ];
