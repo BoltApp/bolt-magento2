@@ -48,4 +48,17 @@ interface CartManagementInterface
      * @throws WebapiException
      */
     public function update($cartId = null, $isActive = null);
+
+    /**
+     * Get Cart Id from Masked Quote Id
+     *
+     * @api
+     *
+     * @param string $maskedQuoteId
+     *
+     * @return int
+     *
+     * @throws WebapiException
+     */
+    public function getCartIdByMaskedId($maskedQuoteId);
 }
