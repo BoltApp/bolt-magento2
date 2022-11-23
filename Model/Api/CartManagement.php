@@ -166,6 +166,8 @@ class CartManagement implements CartManagementInterface
     }
 
     /**
+     * Get Cart Id from Masked Quote Id
+     *
      * @param $maskedQuoteId
      * @return int
      *
