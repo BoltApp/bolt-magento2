@@ -536,7 +536,6 @@ class DataProcessor
                 'Name' => $option->getDefaultTitle(),
                 'DisplayType' => $option->getType(),
                 'DisplayName' => $option->getTitle(),
-                'Values' => [],
                 'Visibility' => 'true',
                 'SortOrder' => (int)$option->getSortOrder(),
             ];
