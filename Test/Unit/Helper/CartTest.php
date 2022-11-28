@@ -2807,6 +2807,7 @@ ORDER
                     'type'                => 'physical',
                     'description'         => 'Product Description',
                     'merchant_product_id' => $product->getId(),
+                    'shipment_type' => 'unknown',
                 ]
             ],
             'discounts'       => [],
@@ -2863,6 +2864,7 @@ ORDER
                     'type'                => 'physical',
                     'description'         => 'Product Description',
                     'merchant_product_id' => $product->getId(),
+                    'shipment_type' => 'unknown',
                 ]
             ],
             'discounts'       => [],
@@ -3019,6 +3021,7 @@ ORDER
                     'type'                => 'physical',
                     'description'         => 'Product Description',
                     'merchant_product_id' => $product->getId(),
+                    'shipment_type' => 'unknown',
                 ]
             ],
             'discounts' => [],
@@ -3167,6 +3170,7 @@ ORDER
                     'type'                => 'digital',
                     'description'         => 'Product Description',
                     'merchant_product_id' => $product->getId(),
+                    'shipment_type' => 'unknown',
                 ]
             ],
             'billing_address' =>
@@ -4727,6 +4731,7 @@ ORDER
                 'type'                => 'physical',
                 'description'         => '',
                 'merchant_product_id' => 20102,
+                'shipment_type' => 'unknown'
             ],
             ],
             $products
@@ -4797,6 +4802,7 @@ ORDER
                     'type'                => 'physical',
                     'description'         => '',
                     'merchant_product_id' => 20102,
+                    'shipment_type' => 'unknown'
                 ],
             ],
             $products
@@ -4890,6 +4896,7 @@ ORDER
                     'type'                => 'physical',
                     'description'         => '',
                     'merchant_product_id' => 20102,
+                    'shipment_type' => 'unknown'
                 ],
                 [
                     'reference' => 1,
