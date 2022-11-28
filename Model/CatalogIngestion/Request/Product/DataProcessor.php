@@ -163,7 +163,7 @@ class DataProcessor
         $website = $this->storeManager->getWebsite($websiteId);
         $defaultStore = $website->getDefaultStore();
         if ($productEventType != ProductEventInterface::TYPE_DELETE) {
-            $defaultStoreViewBoltProductData = $this->getBoltProductData($productId, (int)$defaultStore->getId());
+            $defaultStoreViewBoltProductData = $this->getBoltProductData($productId, null, (int)$defaultStore->getId());
             $requestProductData['product'] = $defaultStoreViewBoltProductData;
             $requestProductData['variants'] = $this->getVariants($productId, $website);
         } else {
@@ -201,17 +201,12 @@ class DataProcessor
                 $variantProductIds = $product->getTypeInstance()->getUsedProductIds($product);
             }
 
-            //adds main product data into variants for non-default store view
-            if ($storeView->getId() != $defaultStore->getId()) {
-                $variants[] = $this->getBoltProductData($productId, (int)$storeView->getId());
-            }
-
             if (empty($variantProductIds)) {
                 continue;
             }
 
             foreach ($variantProductIds as $variantProductId) {
-                $variants[] = $this->getBoltProductData($variantProductId, (int)$storeView->getId());
+                $variants[] = $this->getBoltProductData($productId, $variantProductId, (int)$storeView->getId());
             }
         }
 
@@ -227,14 +222,17 @@ class DataProcessor
      * @throws LocalizedException
      * @throws FileSystemException
      */
-    private function getBoltProductData(int $productId, int $storeId): array
+    private function getBoltProductData(int $productId, int $variantId, int $storeId): array
     {
+        $objectToGet = is_null($variantId)? $productId:$variantId;
+
         //using env. emulation for correct store view stock data
         $this->emulation->startEnvironmentEmulation($storeId);
-        $product = $this->productRepository->getById($productId, false, $storeId);
+        $product = $this->productRepository->getById($objectToGet, false, $storeId);
         $this->galleryReadHandler->execute($product);
         $productData = [
-            'MerchantProductID' => (string)$product->getId(),
+            'MerchantProductID' => (string)$productId,
+            'MerchantVariantID' => (string)$variantId,
             'ProductType' => $product->getTypeId(),
             'SKU' => $product->getSku(),
             'URL' => $product->getProductUrl(),
