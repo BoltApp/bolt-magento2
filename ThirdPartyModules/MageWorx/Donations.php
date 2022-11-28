@@ -95,14 +95,9 @@ class Donations
             if ($key == 0) {
                 continue;
             }
-            $roundUpName = '';
-            
-            if ($key == 0) {
-                $roundUpName = '[Round Up To ' . $donation . ']';
-            }
 
             $cart['add_ons'][] = [
-                "name" => 'Donation for charity ' . $roundUpName,
+                "name" => 'Donation for charity ',
                 "description" => $charityData->getName(),
                 "productId" => self::MAGEWORX_DONATION . '_' . $key,
                 "price" => CurrencyUtils::toMinor($donation, $currencyCode),

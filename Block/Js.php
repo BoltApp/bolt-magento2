@@ -777,7 +777,7 @@ function($argName) {
      */
     protected function getOnSuccess()
     {
-        return $this->eventsForThirdPartyModules->runFilter('getOnSuccess', $this->configHelper->getOnSuccess());
+        return $this->configHelper->getOnSuccess();
     }
 
     /**
