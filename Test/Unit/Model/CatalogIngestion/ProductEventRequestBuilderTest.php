@@ -37,6 +37,15 @@ use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\Catalog\Api\Data\ProductAttributeInterface;
+use Magento\Catalog\Api\Data\ProductAttributeInterfaceFactory;
+use Magento\Catalog\Api\ProductAttributeRepositoryInterface;
+use Magento\Eav\Api\Data\AttributeOptionInterface;
+use Magento\Eav\Model\Config;
+use Magento\Eav\Setup\EavSetup;
+use Magento\Catalog\Setup\CategorySetup;
+use Magento\ConfigurableProduct\Helper\Product\Options\Factory;
 use Vertex\Tax\Model\ModuleManager;
 
 /**
@@ -47,7 +56,11 @@ class ProductEventRequestBuilderTest extends BoltTestCase
 {
     private const PRODUCT_SKU = 'ci_simple';
 
+    private const PRODUCT_SKU_CONFIGURABLE = 'ci_configurable';
+
     private const PRODUCT_NAME = 'Catalog Ingestion Simple Product';
+
+    private const PRODUCT_NAME_CONFIGURABLE = 'Catalog Ingestion Configurable Product';
 
     private const PRODUCT_PRICE = 100;
 
@@ -91,6 +104,26 @@ class ProductEventRequestBuilderTest extends BoltTestCase
      * @var ProductRepositoryInterface
      */
     private $productRepository;
+
+    /**
+     * @var int
+     */
+    private $configurableAttributeId;
+
+    /**
+     * @var array
+     */
+    private $childProductSkuPostfix = [10, 20];
+
+    /**
+     * @var array
+     */
+    private $associatedProductIds = [];
+
+    /**
+     * @var array
+     */
+    private $associatedProducts = [];
 
     /**
      * @inheritDoc
@@ -214,6 +247,147 @@ class ProductEventRequestBuilderTest extends BoltTestCase
     /**
      * @test
      */
+    public function testGetRequest_WithConfigurableProduct()
+    {
+        $product = $this->createConfigurableProduct();
+        $productEvent = $this->productEventRepository->getByProductId($product->getId());
+        $request = $this->productEventRequestBuilder->getRequest($productEvent, $this->storeManager->getWebsite()->getId());
+        $apiData = $request->getApiData();
+        $fulfillmentCenterID = ($this->moduleManger->isEnabled('Magento_InventoryCatalog')) ?
+            'Default Stock' : 'default';
+        $expectedApiData = [
+            'operation' => $productEvent->getType(),
+            'timestamp' => strtotime($productEvent->getCreatedAt()),
+            'product' => [
+                'product' =>
+                    [
+                        'MerchantProductID' => $product->getId(),
+                        'ProductType' => 'configurable',
+                        'SKU' => self::PRODUCT_SKU_CONFIGURABLE,
+                        'URL' => $product->getProductUrl(),
+                        'Name' => self::PRODUCT_NAME_CONFIGURABLE,
+                        'ManageInventory' => true,
+                        'Visibility' => 'visible',
+                        'Backorder' => 'no',
+                        'Availability' => 'in_stock',
+                        'ShippingRequired' => true,
+                        'Prices' => [
+                            [
+                                'ListPrice' => 10000,
+                                'SalePrice' => 10000,
+                                'Currency' => 'USD',
+                                'Locale' => 'en_US',
+                                'Unit' => ''
+                            ]
+                        ],
+                        'Inventories' => [
+                            [
+                                'FulfillmentCenterID' => 'default',
+                                'InventoryLevel' => 0
+                            ]
+                        ],
+                        'Media' => [],
+                        'Options' => [],
+                        'Properties' => [
+                            [
+                                'Name' => 'test_configurable',
+                                'NameID' => $this->configurableAttributeId,
+                                'Value' => NULL,
+                                'ValueID' => NULL,
+                                'DisplayType' => 'select',
+                                'DisplayName' => 'test_configurable',
+                                'DisplayValue' => '',
+                                'Visibility' => 'visible',
+                                'TextLabel' => 'Test Configurable',
+                                'ImageURL' => NULL,
+                                'Position' => 0
+                            ],
+                            [
+                                'Name' => 'cost',
+                                'NameID' => 81,
+                                'Value' => NULL,
+                                'ValueID' => NULL,
+                                'DisplayType' => 'price',
+                                'DisplayName' => 'cost',
+                                'DisplayValue' => NULL,
+                                'Visibility' => 'visible',
+                                'TextLabel' => 'Cost',
+                                'ImageURL' => NULL,
+                                'Position' => 0
+                            ]
+                        ],
+                        'Description' => 'Product Description'
+                    ],
+                'variants' => []
+            ]
+        ];
+        foreach ($this->associatedProducts as $index => $associatedProduct) {
+            $expectedApiData['product']['variants'][] = [
+                'MerchantProductID' => $product->getId(),
+                'MerchantVariantID' => $associatedProduct->getId(),
+                'ProductType' => 'simple',
+                'SKU' => self::PRODUCT_SKU . '_' . $this->childProductSkuPostfix[$index],
+                'URL' => $associatedProduct->getProductUrl(),
+                'Name' => self::PRODUCT_NAME,
+                'ManageInventory' => true,
+                'Visibility' => 'not_visible',
+                'Backorder' => 'no',
+                'Availability' => 'in_stock',
+                'ShippingRequired' => true,
+                'Prices' => [
+                    [
+                        'ListPrice' => 10000,
+                        'SalePrice' => 10000,
+                        'Currency' => 'USD',
+                        'Locale' => 'en_US',
+                        'Unit' => ''
+                    ]
+                ],
+                'Inventories' => [
+                    [
+                        'FulfillmentCenterID' => $fulfillmentCenterID,
+                        'InventoryLevel' => self::PRODUCT_QTY
+                    ]
+                ],
+                'Media' => [],
+                'Options' => [],
+                'Properties' => [
+                    [
+                        'Name' => 'test_configurable',
+                        'NameID' => $this->configurableAttributeId,
+                        'DisplayType' => 'select',
+                        'DisplayName' => 'test_configurable',
+                        'Visibility' => 'visible',
+                        'TextLabel' => 'Test Configurable',
+                        'ImageURL' => NULL,
+                        'Position' => 0
+                    ],
+                    [
+                        'Name' => 'cost',
+                        'NameID' => 81,
+                        'Value' => NULL,
+                        'ValueID' => NULL,
+                        'DisplayType' => 'price',
+                        'DisplayName' => 'cost',
+                        'DisplayValue' => NULL,
+                        'Visibility' => 'visible',
+                        'TextLabel' => 'Cost',
+                        'ImageURL' => NULL,
+                        'Position' => 0
+                    ]
+                ],
+                'Description' => 'Product Description'
+            ];
+            unset($apiData['product']['variants'][$index]['Properties'][0]['Value']);
+            unset($apiData['product']['variants'][$index]['Properties'][0]['ValueID']);
+            unset($apiData['product']['variants'][$index]['Properties'][0]['DisplayValue']);
+        }
+        $this->assertEquals($apiData, $expectedApiData);
+    }
+
+    /**
+     * @test
+     */
     public function testGetRequest_WithoutApiKeys()
     {
         $this->expectExceptionMessage('Bolt API Key or Publishable Key - Multi Step is not configured');
@@ -248,6 +422,9 @@ class ProductEventRequestBuilderTest extends BoltTestCase
         $connection = $this->resource->getConnection('default');
         $connection->truncateTable($this->resource->getTableName('bolt_product_event'));
         $connection->delete($connection->getTableName('catalog_product_entity'));
+        $connection->delete($connection->getTableName('url_rewrite'), ['entity_type = ?' => 'product']);
+        $connection->delete($connection->getTableName('eav_attribute'), ['attribute_code = ?' => 'test_configurable']);
+
     }
 
     /**
@@ -284,5 +461,167 @@ class ProductEventRequestBuilderTest extends BoltTestCase
             ->setHasOptions(true)
             ->setUrlKey('test-simple-product-'.round(microtime(true) * 1000));
         return $this->productRepository->save($product);
+    }
+
+    /**
+     * Create simple product
+     *
+     * @return ProductInterface
+     */
+    private function createConfigurableProduct(): ProductInterface
+    {
+        $this->createConfigurableProductAttribute();
+        $installer = $this->objectManager->create(CategorySetup::class);
+        $eavConfig = $this->objectManager->get(Config::class);
+        $attribute = $eavConfig->getAttribute(Product::ENTITY, 'test_configurable');
+        /* Create simple products per each option value*/
+        /** @var AttributeOptionInterface[] $options */
+        $options = $attribute->getOptions();
+        $attributeSetId = $installer->getAttributeSetId(Product::ENTITY, 'Default');
+        $attributeValues = [];
+        $this->associatedProductIds = [];
+        $this->associatedProducts = [];
+        foreach ($options as $index => $option) {
+            if (!$option->getValue()) {
+                continue;
+            }
+            $product = Bootstrap::getObjectManager()->create(Product::class);
+            $product->setTypeId(ProductType::TYPE_SIMPLE)
+                ->setAttributeSetId($attributeSetId)
+                ->setName(self::PRODUCT_NAME)
+                ->setSku(self::PRODUCT_SKU . '_' . $this->childProductSkuPostfix[$index - 1])
+                ->setPrice(self::PRODUCT_PRICE)
+                ->setDescription('Product Description')
+                ->setMetaTitle('meta title')
+                ->setMetaKeyword('meta keyword')
+                ->setMetaDescription('meta description')
+                ->setTestConfigurable($option->getValue())
+                ->setVisibility(\Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE)
+                ->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED)
+                ->setCategoryIds([2])
+                ->setStoreId($this->storeManager->getStore()->getId())
+                ->setWebsiteIds([$this->storeManager->getStore()->getWebsiteId()])
+                ->setStockData(
+                    [
+                        'qty' => self::PRODUCT_QTY,
+                        'is_in_stock' => 1,
+                        'manage_stock' => 1,
+                    ]
+                )
+                ->setTaxClassId(0)
+                ->setCanSaveCustomOptions(true)
+                ->setHasOptions(true)
+                ->setUrlKey('test-simple-product-'.round(microtime(true) * 1000));
+            $product = $this->productRepository->save($product);
+            $attributeValues[] = [
+                'label' => 'test',
+                'attribute_id' => $attribute->getId(),
+                'value_index' => $option->getValue(),
+            ];
+            $this->associatedProductIds[] = $product->getId();
+            $this->associatedProducts[] = $product;
+        }
+
+        $configurableProduct = Bootstrap::getObjectManager()->create(Product::class);
+
+        /** @var Factory $optionsFactory */
+        $optionsFactory = Bootstrap::getObjectManager()->create(Factory::class);
+
+        $configurableAttributesData = [
+            [
+                'attribute_id' => $attribute->getId(),
+                'code' => $attribute->getAttributeCode(),
+                'label' => $attribute->getStoreLabel(),
+                'position' => '0',
+                'values' => $attributeValues,
+            ],
+        ];
+
+        $configurableOptions = $optionsFactory->create($configurableAttributesData);
+
+        $configurableProduct->setTypeId(Configurable::TYPE_CODE)
+            ->setAttributeSetId(4)
+            ->setName(self::PRODUCT_NAME_CONFIGURABLE)
+            ->setSku(self::PRODUCT_SKU_CONFIGURABLE)
+            ->setPrice(self::PRODUCT_PRICE)
+            ->setDescription('Product Description')
+            ->setMetaTitle('meta title')
+            ->setMetaKeyword('meta keyword')
+            ->setMetaDescription('meta description')
+            ->setVisibility(\Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH)
+            ->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED)
+            ->setCategoryIds([2])
+            ->setStoreId($this->storeManager->getStore()->getId())
+            ->setWebsiteIds([$this->storeManager->getStore()->getWebsiteId()])
+            ->setStockData(['use_config_manage_stock' => 1, 'is_in_stock' => 1])
+            ->setTaxClassId(0)
+            ->setCanSaveCustomOptions(true)
+            ->setHasOptions(true)
+            ->setUrlKey('test-configurable-product-'.round(microtime(true) * 1000));
+
+        $extensionConfigurableAttributes = $configurableProduct->getExtensionAttributes();
+        $extensionConfigurableAttributes->setConfigurableProductOptions($configurableOptions);
+        $extensionConfigurableAttributes->setConfigurableProductLinks($this->associatedProductIds);
+        $configurableProduct->setExtensionAttributes($extensionConfigurableAttributes);
+        return $this->productRepository->save($configurableProduct);
+    }
+
+    /**
+     * Create required configurable product attribute with options
+     *
+     * @return void
+     * @throws \Magento\Framework\Exception\InputException
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
+     * @throws \Magento\Framework\Exception\StateException
+     */
+    private function createConfigurableProductAttribute()
+    {
+        /** @var ProductAttributeRepositoryInterface $attributeRepository */
+        $attributeRepository = $this->objectManager->get(ProductAttributeRepositoryInterface::class);
+        /** @var ProductAttributeInterfaceFactory $attributeFactory */
+        $attributeFactory = $this->objectManager->get(ProductAttributeInterfaceFactory::class);
+
+        $eavConfig = $this->objectManager->get(Config::class);
+
+        /** @var $installer EavSetup */
+        $installer = $this->objectManager->get(EavSetup::class);
+        $attributeSetId = $installer->getAttributeSetId(Product::ENTITY, 'Default');
+        $groupId = $installer->getDefaultAttributeGroupId(Product::ENTITY, $attributeSetId);
+        /** @var ProductAttributeInterface $attributeModel */
+        $attributeModel = $attributeFactory->create();
+        $attributeModel->setData(
+            [
+                'attribute_code' => 'test_configurable',
+                'entity_type_id' => $installer->getEntityTypeId(Product::ENTITY),
+                'is_global' => 1,
+                'is_user_defined' => 1,
+                'frontend_input' => 'select',
+                'is_unique' => 0,
+                'is_required' => 0,
+                'is_searchable' => 0,
+                'is_visible_in_advanced_search' => 0,
+                'is_comparable' => 0,
+                'is_filterable' => 0,
+                'is_filterable_in_search' => 0,
+                'is_used_for_promo_rules' => 0,
+                'is_html_allowed_on_front' => 1,
+                'is_visible_on_front' => 0,
+                'used_in_product_listing' => 0,
+                'used_for_sort_by' => 0,
+                'frontend_label' => ['Test Configurable'],
+                'backend_type' => 'int',
+                'option' => [
+                    'value' => ['option_0' => ['Option 1'], 'option_1' => ['Option 2']],
+                    'order' => ['option_0' => 1, 'option_1' => 2],
+                ],
+            ]
+        );
+
+        $attribute = $attributeRepository->save($attributeModel);
+        $this->configurableAttributeId = $attribute->getAttributeId();
+
+        $installer->addAttributeToGroup(Product::ENTITY, $attributeSetId, $groupId, $attribute->getId());
+        $eavConfig->clear();
     }
 }

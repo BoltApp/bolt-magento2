@@ -211,7 +211,7 @@ class DataProcessor
             }
 
             foreach ($variantProductIds as $variantProductId) {
-                $variants[] = $this->getBoltProductData($variantProductId, (int)$storeView->getId());
+                $variants[] = $this->getBoltProductData($variantProductId, (int)$storeView->getId(), (int)$productId);
             }
         }
 
@@ -223,18 +223,19 @@ class DataProcessor
      *
      * @param int $productId
      * @param int $storeId
+     * @param int|null $parentProductId
      * @return array
      * @throws LocalizedException
      * @throws FileSystemException
      */
-    private function getBoltProductData(int $productId, int $storeId): array
+    private function getBoltProductData(int $productId, int $storeId, int $parentProductId = null): array
     {
         //using env. emulation for correct store view stock data
         $this->emulation->startEnvironmentEmulation($storeId);
         $product = $this->productRepository->getById($productId, false, $storeId);
         $this->galleryReadHandler->execute($product);
         $productData = [
-            'MerchantProductID' => (string)$product->getId(),
+            'MerchantProductID' => ($parentProductId) ? (string)$parentProductId : (string)$productId,
             'ProductType' => $product->getTypeId(),
             'SKU' => $product->getSku(),
             'URL' => $product->getProductUrl(),
@@ -251,8 +252,8 @@ class DataProcessor
             'Properties' => $this->getProperties($product)
         ];
 
-        if ($merchantVariantId = $product->getMerchantVariantId()) {
-            $productData['MerchantVariantID'] = $merchantVariantId;
+        if ($parentProductId) {
+            $productData['MerchantVariantID'] = $product->getId();
         }
 
         if ($weight = $product->getWeight()) {
