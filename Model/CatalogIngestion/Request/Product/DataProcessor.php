@@ -640,8 +640,10 @@ class DataProcessor
                     'SizeName' => self::PRODUCT_IMAGE_SIZENAME,
                     'Width' => $imageSize[0],
                     'Height' => $imageSize[1],
-                    'Description' => ($mediaImage->getVideoDescription()) ?: '',
                 ];
+                if ($mediaImage->getVideoDescription()) {
+                    $mediaData['Description'] = $mediaImage->getVideoDescription();
+                }
                 $media[] = $mediaData;
             }
         }
@@ -712,7 +714,6 @@ class DataProcessor
                 'SalePrice' => $price,
                 'Currency' => $currencyCode,
                 'Locale' => $this->localeResolver->emulate($this->storeManager->getStore()->getId()),
-                'Unit' => '',
             ]
         ];
         return $prices;
