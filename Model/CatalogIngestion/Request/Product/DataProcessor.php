@@ -189,29 +189,18 @@ class DataProcessor
         $variants = [];
         $variantProductIds = [];
         $defaultStore = $website->getDefaultStore();
-        $storeViewCollection = $website->getStoreCollection();
-        foreach ($storeViewCollection as $storeView) {
-            $product = $this->productRepository->getById(
-                $productId,
-                false,
-                $storeView->getId()
-            );
 
-            if ($product->getTypeId() === Configurable::TYPE_CODE && empty($variantProductIds)) {
-                $variantProductIds = $product->getTypeInstance()->getUsedProductIds($product);
-            }
+        $product = $this->productRepository->getById(
+            $productId,
+            false,
+            $defaultStore->getId()
+        );
 
-            //adds main product data into variants for non-default store view
-            if ($storeView->getId() != $defaultStore->getId()) {
-                $variants[] = $this->getBoltProductData($productId, (int)$storeView->getId());
-            }
-
-            if (empty($variantProductIds)) {
-                continue;
-            }
+        if ($product->getTypeId() === Configurable::TYPE_CODE && empty($variantProductIds)) {
+            $variantProductIds = $product->getTypeInstance()->getUsedProductIds($product);
 
             foreach ($variantProductIds as $variantProductId) {
-                $variants[] = $this->getBoltProductData($variantProductId, (int)$storeView->getId());
+                $variants[] = $this->getBoltProductData($variantProductId, (int)$defaultStore->getId());
             }
         }
 
