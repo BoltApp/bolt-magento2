@@ -106,9 +106,24 @@ class ProductEventRequestBuilderTest extends BoltTestCase
     private $productRepository;
 
     /**
+     * @var ProductAttributeRepositoryInterface
+     */
+    private $attributeRepository;
+
+    /**
+     * @var Config
+     */
+    private $eavConfig;
+
+    /**
      * @var int
      */
     private $configurableAttributeId;
+
+    /**
+     * @var array
+     */
+    private $productAttributes = [];
 
     /**
      * @var array
@@ -138,6 +153,8 @@ class ProductEventRequestBuilderTest extends BoltTestCase
         $this->productEventRepository = $this->objectManager->get(ProductEventRepositoryInterface::class);
         $productEventProcessor = $this->objectManager->get(ProductEventProcessor::class);
         $this->productRepository = $this->objectManager->get(ProductRepositoryInterface::class);
+        $this->attributeRepository = $this->objectManager->get(ProductAttributeRepositoryInterface::class);
+        $this->eavConfig = $this->objectManager->get(Config::class);
         $featureSwitches = $this->createMock(Decider::class);
         $featureSwitches->method('isCatalogIngestionEnabled')->willReturn(true);
         TestHelper::setProperty($productEventProcessor, 'featureSwitches', $featureSwitches);
@@ -421,10 +438,19 @@ class ProductEventRequestBuilderTest extends BoltTestCase
         $configResource->deleteConfig(BoltConfig::XML_PATH_API_KEY, ScopeInterface::SCOPE_STORES, $websiteId);
         $connection = $this->resource->getConnection('default');
         $connection->truncateTable($this->resource->getTableName('bolt_product_event'));
+        if (!empty($this->productAttributes)) {
+            foreach ($this->productAttributes as $attribute) {
+                try {
+                    $this->attributeRepository->delete($attribute);
+                } catch (\Exception $e) {
+                    //do nothing, attribute already removed
+                }
+            }
+        }
         $connection->delete($connection->getTableName('catalog_product_entity'));
         $connection->delete($connection->getTableName('url_rewrite'), ['entity_type = ?' => 'product']);
         $connection->delete($connection->getTableName('eav_attribute'), ['attribute_code = ?' => 'test_configurable']);
-
+        $this->eavConfig->clear();
     }
 
     /**
@@ -464,7 +490,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
     }
 
     /**
-     * Create simple product
+     * Create configurable product
      *
      * @return ProductInterface
      */
@@ -577,12 +603,8 @@ class ProductEventRequestBuilderTest extends BoltTestCase
      */
     private function createConfigurableProductAttribute()
     {
-        /** @var ProductAttributeRepositoryInterface $attributeRepository */
-        $attributeRepository = $this->objectManager->get(ProductAttributeRepositoryInterface::class);
         /** @var ProductAttributeInterfaceFactory $attributeFactory */
         $attributeFactory = $this->objectManager->get(ProductAttributeInterfaceFactory::class);
-
-        $eavConfig = $this->objectManager->get(Config::class);
 
         /** @var $installer EavSetup */
         $installer = $this->objectManager->get(EavSetup::class);
@@ -618,10 +640,11 @@ class ProductEventRequestBuilderTest extends BoltTestCase
             ]
         );
 
-        $attribute = $attributeRepository->save($attributeModel);
+        $attribute = $this->attributeRepository->save($attributeModel);
+        $this->productAttributes[] = $attribute;
         $this->configurableAttributeId = $attribute->getAttributeId();
 
         $installer->addAttributeToGroup(Product::ENTITY, $attributeSetId, $groupId, $attribute->getId());
-        $eavConfig->clear();
+        $this->eavConfig->clear();
     }
 }
