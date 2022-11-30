@@ -451,6 +451,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
         $connection->delete($connection->getTableName('url_rewrite'), ['entity_type = ?' => 'product']);
         $connection->delete($connection->getTableName('eav_attribute'), ['attribute_code = ?' => 'test_configurable']);
         $this->eavConfig->clear();
+        $this->productRepository->cleanCache();
     }
 
     /**
