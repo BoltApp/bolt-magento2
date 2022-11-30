@@ -363,14 +363,9 @@ class DataProcessor
             $productData['Description'] = $description;
         }
 
-        if ($primaryImageId = $this->getProductPrimaryImageId($product)) {
-            $productData['PrimaryImageID'] = $primaryImageId;
-        }
-
         if ($weight = $product->getWeight()) {
             $productData['Weight'] = $weight;
         }
-
 
         // Magento don't have default properties for GTIN, Width, Depth and Height
         // but if there are custom ones we will set them
@@ -717,30 +712,6 @@ class DataProcessor
             ]
         ];
         return $prices;
-    }
-
-    /**
-     * Returns product primary image id
-     *
-     * @param ProductInterface $product
-     * @return int|null
-     */
-    private function getProductPrimaryImageId(ProductInterface $product): ?int
-    {
-        $mediaGallery = $product->getMediaGalleryEntries();
-        if (empty($mediaGallery)) {
-            return null;
-        }
-        $imageId = null;
-        foreach ($mediaGallery as $image) {
-            if (in_array(self::PRIMARY_IMAGE_TYPE_CODE, $image->getTypes())) {
-                $imageId = $image->getId();
-            }
-        }
-        if (!$imageId) {
-            $imageId = $mediaGallery[0]->getId();
-        }
-        return (int)$imageId;
     }
 
     /**
