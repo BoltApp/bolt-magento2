@@ -549,11 +549,12 @@ class DataProcessor
     private function getPrices(ProductInterface $product): array
     {
         $currencyCode = $this->storeManager->getStore()->getCurrentCurrency()->getCode();
-        $price = CurrencyUtils::toMinor($product->getPriceInfo()->getPrice('final_price')->getValue(), $currencyCode);
+        $finalPrice = CurrencyUtils::toMinor($product->getPriceInfo()->getPrice('final_price')->getValue(), $currencyCode);
+        $regularPrice = CurrencyUtils::toMinor($product->getPriceInfo()->getPrice('regular_price')->getValue(), $currencyCode);
         $prices = [
             [
-                'ListPrice' => $price,
-                'SalePrice' => $price,
+                'ListPrice' => $regularPrice,
+                'SalePrice' => $finalPrice,
                 'Currency' => $currencyCode,
                 'Locale' => $this->localeResolver->emulate($this->storeManager->getStore()->getId()),
                 'Unit' => '',

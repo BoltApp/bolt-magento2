@@ -64,6 +64,8 @@ class ProductEventRequestBuilderTest extends BoltTestCase
 
     private const PRODUCT_PRICE = 100;
 
+    private const PRODUCT_SPECIAL_PRICE = 50;
+
     private const PRODUCT_QTY = 100;
 
     private const API_KEY = '3c2d5104e7f9d99b66e1c9c550f6566677bf81de0d6f25e121fdb57e47c2eafc';
@@ -230,6 +232,75 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                             [
                                 'ListPrice' => 10000,
                                 'SalePrice' => 10000,
+                                'Currency' => 'USD',
+                                'Locale' => 'en_US',
+                                'Unit' => ''
+                            ]
+                        ],
+                        'Inventories' => [
+                            [
+                                'FulfillmentCenterID' => $fulfillmentCenterID,
+                                'InventoryLevel' => self::PRODUCT_QTY
+                            ]
+                        ],
+                        'Media' => [],
+                        'Options' => [],
+                        'Properties' => [
+                            [
+                                'Name' => 'cost',
+                                'NameID' => 81,
+                                'Value' => NULL,
+                                'ValueID' => NULL,
+                                'DisplayType' => 'price',
+                                'DisplayName' => 'cost',
+                                'DisplayValue' => NULL,
+                                'Visibility' => 'visible',
+                                'TextLabel' => 'Cost',
+                                'ImageURL' => NULL,
+                                'Position' => 0
+                            ]
+                        ],
+                        'Description' => 'Product Description'
+                    ],
+                'variants' => []
+            ]
+        ];
+        $this->assertEquals($apiData, $expectedApiData);
+    }
+
+    /**
+     * @test
+     */
+    public function testGetRequest_WithSpecialPrice()
+    {
+        $product = $this->createProduct();
+        $product = $product->setSpecialPrice(self::PRODUCT_SPECIAL_PRICE);
+        $this->productRepository->save($product);
+        $productEvent = $this->productEventRepository->getByProductId($product->getId());
+        $request = $this->productEventRequestBuilder->getRequest($productEvent, $this->storeManager->getWebsite()->getId());
+        $apiData = $request->getApiData();
+        $fulfillmentCenterID = ($this->moduleManger->isEnabled('Magento_InventoryCatalog')) ?
+            'Default Stock' : 'default';
+        $expectedApiData = [
+            'operation' => $productEvent->getType(),
+            'timestamp' => strtotime($productEvent->getCreatedAt()),
+            'product' => [
+                'product' =>
+                    [
+                        'MerchantProductID' => $product->getId(),
+                        'ProductType' => 'simple',
+                        'SKU' => 'ci_simple',
+                        'URL' => $product->getProductUrl(),
+                        'Name' => 'Catalog Ingestion Simple Product',
+                        'ManageInventory' => true,
+                        'Visibility' => 'visible',
+                        'Backorder' => 'no',
+                        'Availability' => 'in_stock',
+                        'ShippingRequired' => true,
+                        'Prices' => [
+                            [
+                                'ListPrice' => 10000,
+                                'SalePrice' => 5000,
                                 'Currency' => 'USD',
                                 'Locale' => 'en_US',
                                 'Unit' => ''
@@ -436,7 +507,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                         'ShippingRequired' => true,
                         'Prices' => [
                             [
-                                'ListPrice' => 1275,
+                                'ListPrice' => 1000,
                                 'SalePrice' => 1275,
                                 'Currency' => 'USD',
                                 'Locale' => 'en_US',
