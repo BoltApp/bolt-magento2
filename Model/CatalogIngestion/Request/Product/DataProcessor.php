@@ -240,10 +240,6 @@ class DataProcessor
             'Properties' => $this->getProperties($product)
         ];
 
-        if ($merchantVariantId = $product->getMerchantVariantId()) {
-            $productData['MerchantVariantID'] = $merchantVariantId;
-        }
-
         if ($weight = $product->getWeight()) {
             $productData['Weight'] = $weight;
         }
