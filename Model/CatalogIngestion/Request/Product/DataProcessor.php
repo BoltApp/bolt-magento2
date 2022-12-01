@@ -405,8 +405,8 @@ class DataProcessor
     private function getParentProductIds(ProductInterface $product): array
     {
         $configParentIds = $this->configurableProductType->getParentIdsByChild($product->getId());
-        $bundleParentIds =  $this->bundleProductType->getParentIdsByChild($product->getId());
-        $groupedParentIds =  $this->groupedProductType->getParentIdsByChild($product->getId());
+        $bundleParentIds = $this->bundleProductType->getParentIdsByChild($product->getId());
+        $groupedParentIds = $this->groupedProductType->getParentIdsByChild($product->getId());
         return array_merge($configParentIds, $bundleParentIds, $groupedParentIds);
     }
 
