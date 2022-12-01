@@ -32,6 +32,7 @@ use Magento\Config\Model\ResourceModel\Config as ResourceConfig;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\Manager;
+use Magento\GroupedProduct\Model\Product\Type\Grouped;
 use Magento\Store\Model\ScopeInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\ObjectManagerInterface;
@@ -144,6 +145,11 @@ class ProductEventRequestBuilderTest extends BoltTestCase
      * @var ProductInterface|null
      */
     private $bundleChildProduct;
+
+    /**
+     * @var ProductInterface|null
+     */
+    private $groupedChildProduct;
 
     /**
      * @inheritDoc
@@ -539,6 +545,118 @@ class ProductEventRequestBuilderTest extends BoltTestCase
     /**
      * @test
      */
+    public function testGetRequest_WithGroupedProduct()
+    {
+        $product = $this->createGroupedProduct();
+        $productEvent = $this->productEventRepository->getByProductId($product->getId());
+        $request = $this->productEventRequestBuilder->getRequest($productEvent, $this->storeManager->getWebsite()->getId());
+        $apiData = $request->getApiData();
+        $fulfillmentCenterID = ($this->moduleManger->isEnabled('Magento_InventoryCatalog')) ?
+            'Default Stock' : 'default';
+        $expectedApiData = [
+            'operation' => $productEvent->getType(),
+            'timestamp' => strtotime($productEvent->getCreatedAt()),
+            'product' => [
+                'product' =>
+                    [
+                        'MerchantProductID' => $product->getId(),
+                        'ProductType' => Grouped::TYPE_CODE,
+                        'SKU' => 'grouped-product',
+                        'URL' => $product->getProductUrl(),
+                        'Name' => 'Grouped Product',
+                        'ManageInventory' => true,
+                        'Visibility' => 'visible',
+                        'Backorder' => 'no',
+                        'Availability' => 'in_stock',
+                        'ShippingRequired' => true,
+                        'Prices' => [
+                            [
+                                'ListPrice' => 10000,
+                                'SalePrice' => 10000,
+                                'Currency' => 'USD',
+                                'Locale' => 'en_US',
+                                'Unit' => ''
+                            ]
+                        ],
+                        'Inventories' => [
+                            [
+                                'FulfillmentCenterID' => 'default',
+                                'InventoryLevel' => 0
+                            ]
+                        ],
+                        'Media' => [],
+                        'Options' => [],
+                        'Properties' => [
+                            [
+                                'Name' => 'cost',
+                                'NameID' => 81,
+                                'Value' => NULL,
+                                'ValueID' => NULL,
+                                'DisplayType' => 'price',
+                                'DisplayName' => 'cost',
+                                'DisplayValue' => NULL,
+                                'Visibility' => 'visible',
+                                'TextLabel' => 'Cost',
+                                'ImageURL' => NULL,
+                                'Position' => 0
+                            ]
+                        ],
+                    ],
+                'variants' => [
+                    [
+                        'MerchantProductID' => $this->groupedChildProduct->getId(),
+                        'ProductType' => 'simple',
+                        'SKU' => 'ci_simple',
+                        'URL' => $this->groupedChildProduct->getProductUrl(),
+                        'Name' => 'Catalog Ingestion Simple Product',
+                        'ManageInventory' => true,
+                        'Visibility' => 'visible',
+                        'Backorder' => 'no',
+                        'Availability' => 'in_stock',
+                        'ShippingRequired' => true,
+                        'Prices' => [
+                            [
+                                'ListPrice' => 10000,
+                                'SalePrice' => 10000,
+                                'Currency' => 'USD',
+                                'Locale' => 'en_US',
+                                'Unit' => ''
+                            ]
+                        ],
+                        'Inventories' => [
+                            [
+                                'FulfillmentCenterID' => $fulfillmentCenterID,
+                                'InventoryLevel' => self::PRODUCT_QTY
+                            ]
+                        ],
+                        'Media' => [],
+                        'Options' => [],
+                        'Properties' => [
+                            [
+                                'Name' => 'cost',
+                                'NameID' => 81,
+                                'Value' => NULL,
+                                'ValueID' => NULL,
+                                'DisplayType' => 'price',
+                                'DisplayName' => 'cost',
+                                'DisplayValue' => NULL,
+                                'Visibility' => 'visible',
+                                'TextLabel' => 'Cost',
+                                'ImageURL' => NULL,
+                                'Position' => 0
+                            ]
+                        ],
+                        'Description' => 'Product Description'
+                    ]
+                ]
+            ]
+        ];
+        $this->assertEquals($apiData, $expectedApiData);
+    }
+
+    /**
+     * @test
+     */
     public function testGetRequest_WithoutApiKeys()
     {
         $this->expectExceptionMessage('Bolt API Key or Publishable Key - Multi Step is not configured');
@@ -812,6 +930,38 @@ class ProductEventRequestBuilderTest extends BoltTestCase
             $bundleProduct->setExtensionAttributes($extension);
         }
         return $this->productRepository->save($bundleProduct, true);
+    }
+
+    /**
+     * Create grouped product
+     *
+     * @return ProductInterface
+     */
+    private function createGroupedProduct(): ProductInterface
+    {
+        $this->groupedChildProduct = $this->createProduct();
+        $groupedProduct = $this->objectManager->create(Product::class);
+        $groupedProduct->setTypeId(Grouped::TYPE_CODE)
+            ->setAttributeSetId(4)
+            ->setWebsiteIds([1])
+            ->setName('Grouped Product')
+            ->setSku('grouped-product')
+            ->setVisibility(\Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH)
+            ->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED)
+            ->setStockData(['use_config_manage_stock' => 1, 'qty' => 100, 'is_qty_decimal' => 0, 'is_in_stock' => 1])
+            ->setPrice(10.0);
+
+        $productLinkFactory = $this->objectManager->get(\Magento\Catalog\Api\Data\ProductLinkInterfaceFactory::class);
+        $productLink = $productLinkFactory->create();
+        $productLink->setSku($groupedProduct->getSku())
+            ->setLinkType('associated')
+            ->setLinkedProductSku($this->groupedChildProduct->getSku())
+            ->setLinkedProductType($this->groupedChildProduct->getTypeId())
+            ->setPosition(1)
+            ->getExtensionAttributes()
+            ->setQty(1);
+        $groupedProduct->setProductLinks([$productLink]);
+        return $this->productRepository->save($groupedProduct, true);
     }
 
     /**

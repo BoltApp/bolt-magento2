@@ -43,6 +43,7 @@ use Magento\Framework\App\ObjectManager;
 use Magento\Catalog\Model\ResourceModel\Eav\Attribute as EavAttribute;
 use Magento\InventorySalesAdminUi\Model\GetSalableQuantityDataBySku;
 use Magento\Bundle\Api\ProductLinkManagementInterface;
+use Magento\GroupedProduct\Model\Product\Type\Grouped;
 
 /**
  * Product event product data processor to collect product data for bolt request
@@ -122,7 +123,8 @@ class DataProcessor
      */
     private $availableProductTypesForVariants = [
         Configurable::TYPE_CODE,
-        ProductType::TYPE_BUNDLE
+        ProductType::TYPE_BUNDLE,
+        Grouped::TYPE_CODE
     ];
 
     /**
@@ -242,6 +244,9 @@ class DataProcessor
             case ProductType::TYPE_BUNDLE:
                 $childProductIds = $this->getBundleChildProductIds($product);
                 break;
+            case Grouped::TYPE_CODE:
+                $childProductIds = $this->getGroupedChildProductIds($product);
+                break;
         }
         return $childProductIds;
     }
@@ -269,6 +274,28 @@ class DataProcessor
         return $childProductIds;
     }
 
+    /**
+     * Get grouped product type child products
+     *
+     * @param ProductInterface $product
+     * @return array
+     * @throws NoSuchEntityException
+     * @throws InputException
+     */
+    private function getGroupedChildProductIds(ProductInterface $product): array
+    {
+        if ($product->getTypeId() != Grouped::TYPE_CODE) {
+            return [];
+        }
+        $childProductIds = [];
+        $associatedProducts =  $product->getTypeInstance()->getAssociatedProducts($product);
+        if (!empty($associatedProducts)) {
+            foreach ($associatedProducts as $associatedProduct) {
+                $childProductIds[] = $associatedProduct->getEntityId();
+            }
+        }
+        return $childProductIds;
+    }
     /**
      * Returns base product data for bolt request
      *
