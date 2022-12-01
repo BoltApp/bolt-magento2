@@ -566,7 +566,6 @@ class DataProcessor
             $productAttributeData = [
                 'Name' => $productAttribute->getAttributeCode(),
                 'Value' => $product->getData($productAttribute->getAttributeCode()),
-                'ValueID' => $this->getAttributeValueId($product, $productAttribute),
                 'DisplayType' => $productAttribute->getFrontendInput(),
                 'DisplayName' => $productAttribute->getAttributeCode(),
                 'DisplayValue' => ($this->getAttributeDisplayValue($product, $productAttribute)),
