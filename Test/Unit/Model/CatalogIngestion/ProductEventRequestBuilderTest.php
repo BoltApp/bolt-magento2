@@ -124,7 +124,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
     /**
      * @var array
      */
-    private $productAttributes = [];
+    private $confProductAttributes = [];
 
     /**
      * @var array
@@ -315,7 +315,6 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                             ]
                         ],
                         'Media' => [],
-                        'Options' => [],
                         'Properties' => [
                             [
                                 'Name' => 'test_configurable',
@@ -408,6 +407,30 @@ class ProductEventRequestBuilderTest extends BoltTestCase
             unset($apiData['product']['variants'][$index]['Properties'][0]['Value']);
             unset($apiData['product']['variants'][$index]['Properties'][0]['ValueID']);
             unset($apiData['product']['variants'][$index]['Properties'][0]['DisplayValue']);
+        }
+        foreach ($product->getExtensionAttributes()->getConfigurableProductOptions() as $confOption) {
+            $optionData = [
+                'Name' => $confOption->getProductAttribute()->getAttributeCode(),
+                'DisplayType' => 'select',
+                'DisplayName' => $confOption->getLabel(),
+                'Values' => [],
+                'Visibility' => 'true',
+                'SortOrder' => (int)$confOption->getPosition(),
+            ];
+
+            if ($options = $confOption->getOptions()) {
+                foreach ($options as $position => $option) {
+                    if (!isset($option['value_index']) || !isset($option['store_label'])) {
+                        continue;
+                    }
+                    $optionData['Values'][] = [
+                        'Value' => $option['value_index'],
+                        'DisplayValue' => $option['store_label'],
+                        'SortOrder' => (int)$position
+                    ];
+                }
+            }
+            $expectedApiData['product']['product']['Options'][] = $optionData;
         }
         $this->assertEquals($apiData, $expectedApiData);
     }
@@ -690,8 +713,8 @@ class ProductEventRequestBuilderTest extends BoltTestCase
         $configResource->deleteConfig(BoltConfig::XML_PATH_API_KEY, ScopeInterface::SCOPE_STORES, $websiteId);
         $connection = $this->resource->getConnection('default');
         $connection->truncateTable($this->resource->getTableName('bolt_product_event'));
-        if (!empty($this->productAttributes)) {
-            foreach ($this->productAttributes as $attribute) {
+        if (!empty($this->confProductAttributes)) {
+            foreach ($this->confProductAttributes as $attribute) {
                 try {
                     $this->attributeRepository->delete($attribute);
                 } catch (\Exception $e) {
@@ -1013,7 +1036,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
         );
 
         $attribute = $this->attributeRepository->save($attributeModel);
-        $this->productAttributes[] = $attribute;
+        $this->confProductAttributes[] = $attribute;
         $this->configurableAttributeId = $attribute->getAttributeId();
 
         $installer->addAttributeToGroup(Product::ENTITY, $attributeSetId, $groupId, $attribute->getId());
