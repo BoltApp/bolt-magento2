@@ -55,9 +55,9 @@ class DataProcessor
 {
     private const PRIMARY_IMAGE_TYPE_CODE = 'image';
 
-    private const PRODUCT_VISIBILITY_VISIBLE = 'visible';
+    private const PRODUCT_VISIBILITY_VISIBLE = 'true';
 
-    private const PRODUCT_VISIBILITY_NOT_VISIBLE = 'not_visible';
+    private const PRODUCT_VISIBILITY_NOT_VISIBLE = 'false';
 
     private const PRODUCT_IMAGE_SIZENAME = 'standard';
 
@@ -581,7 +581,7 @@ class DataProcessor
                 $productAttributeData['NameID'] = (int)$productAttribute->getAttributeId();
             }
             if ($productAttribute->getIsVisible()) {
-                $productAttributeData['Visibility'] = 'visible';
+                $productAttributeData['Visibility'] = 'true';
             }
 
             $properties[] = $productAttributeData;
