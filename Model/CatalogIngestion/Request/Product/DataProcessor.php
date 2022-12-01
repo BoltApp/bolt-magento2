@@ -346,27 +346,86 @@ class DataProcessor
      */
     private function getOptions(ProductInterface $product): array
     {
-        $options = $product->getOptions();
-        if (empty($options)) {
+        $customOptions = $this->getCustomOptions($product);
+        $bundleOptions = $this->getBundleOptions($product);
+        return array_merge($customOptions,$bundleOptions);
+    }
+
+    /**
+     * Returns bundle product options
+     *
+     * @param ProductInterface $product
+     * @return array
+     */
+    private function getBundleOptions(ProductInterface $product): array
+    {
+        if ($product->getTypeId() !== ProductType::TYPE_BUNDLE) {
+            return [];
+        }
+
+        $bundleProductOptions = $product->getExtensionAttributes()->getBundleProductOptions();
+        if (empty($bundleProductOptions)) {
+           return [];
+        }
+
+        $result = [];
+        foreach ($bundleProductOptions as $bundleOption) {
+            $optionData = [
+                'Name' => $bundleOption->getDefaultTitle(),
+                'DisplayType' => $bundleOption->getType(),
+                'DisplayName' => $bundleOption->getTitle(),
+                'BundleValues' => [],
+                'Visibility' => 'true',
+                'SortOrder' => (int)$bundleOption->getPosition(),
+                'IsRequired' => (bool)$bundleOption->getRequired()
+            ];
+
+            if ($productLinks = $bundleOption->getProductLinks()) {
+                foreach ($productLinks as $productLink) {
+                    $optionData['BundleValues'][] = [
+                        'MerchantProductID' => $productLink->getEntityId(),
+                        'SKU' => $productLink->getSku(),
+                        'SortOrder' => (int)$productLink->getPosition(),
+                        'Qty' => (int)$productLink->getQty(),
+                        'SelectionCanChangeQuantity' => (bool)$productLink->getSelectionCanChangeQuantity(),
+                    ];
+                }
+            }
+            $result[] = $optionData;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Returns product custom options
+     *
+     * @param ProductInterface $product
+     * @return array
+     */
+    private function getCustomOptions(ProductInterface $product): array
+    {
+        $customOptions = $product->getOptions();
+        if (empty($customOptions)) {
             return [];
         }
         $result = [];
-        foreach ($options as $option) {
+        foreach ($customOptions as $option) {
             $optionData = [
                 'Name' => $option->getDefaultTitle(),
                 'DisplayType' => $option->getType(),
                 'DisplayName' => $option->getTitle(),
                 'Values' => [],
-                'Visibility' => 'visible',
-                'SortOrder' => $option->getSortOrder(),
+                'Visibility' => 'true',
+                'SortOrder' => (int)$option->getSortOrder(),
             ];
 
             if ($values = $option->getValues()) {
                 foreach ($values as $valueId => $value) {
-                    $optionData['values'][] = [
+                    $optionData['Values'][] = [
                         'Value' => $valueId,
                         'DisplayValue' => $value->getTitle(),
-                        'SortOrder' => $value->getSortOrder()
+                        'SortOrder' => (int)$value->getSortOrder()
                     ];
                 }
             }

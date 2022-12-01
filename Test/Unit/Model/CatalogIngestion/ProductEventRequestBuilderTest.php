@@ -449,7 +449,25 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                             ]
                         ],
                         'Media' => [],
-                        'Options' => [],
+                        'Options' => [
+                            [
+                                'Name' => 'Bundle Product Items',
+                                'DisplayType' => 'select',
+                                'DisplayName' => 'Bundle Product Items',
+                                'BundleValues' => [
+                                    [
+                                        'MerchantProductID' => $this->bundleChildProduct->getId(),
+                                        'SKU' => $this->bundleChildProduct->getSku(),
+                                        'SortOrder' => 0,
+                                        'Qty' => 1,
+                                        'SelectionCanChangeQuantity' => true,
+                                    ]
+                                ],
+                                'Visibility' => 'true',
+                                'SortOrder' => 0,
+                                'IsRequired' => true
+                            ]
+                        ],
                         'Properties' => [
                             [
                                 'Name' => 'cost',
@@ -468,7 +486,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                     ],
                 'variants' => [
                     [
-                        'MerchantProductID' => $product->getId(),
+                        'MerchantProductID' => $this->bundleChildProduct->getId(),
                         'ProductType' => 'simple',
                         'SKU' => 'ci_simple',
                         'URL' => $this->bundleChildProduct->getProductUrl(),
@@ -510,7 +528,6 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 'Position' => 0
                             ]
                         ],
-                        'MerchantVariantID' => $this->bundleChildProduct->getId(),
                         'Description' => 'Product Description'
                     ]
                 ]
