@@ -405,7 +405,8 @@ class DataProcessor
                 'BundleValues' => [],
                 'Visibility' => 'true',
                 'SortOrder' => (int)$bundleOption->getPosition(),
-                'IsRequired' => (bool)$bundleOption->getRequired()
+                'IsRequired' => (bool)$bundleOption->getRequired(),
+                'MagentoOptionType' => 'BundleProductOption',
             ];
 
             if ($productLinks = $bundleOption->getProductLinks()) {
@@ -451,6 +452,7 @@ class DataProcessor
                 'Values' => [],
                 'Visibility' => 'true',
                 'SortOrder' => (int)$confOption->getPosition(),
+                'MagentoOptionType' => 'ConfigurableProductOption',
             ];
 
             if ($options = $confOption->getOptions()) {

@@ -416,6 +416,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                 'Values' => [],
                 'Visibility' => 'true',
                 'SortOrder' => (int)$confOption->getPosition(),
+                'MagentoOptionType' => 'ConfigurableProductOption'
             ];
 
             if ($options = $confOption->getOptions()) {
@@ -494,7 +495,8 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 ],
                                 'Visibility' => 'true',
                                 'SortOrder' => 0,
-                                'IsRequired' => true
+                                'IsRequired' => true,
+                                'MagentoOptionType' => 'BundleProductOption'
                             ]
                         ],
                         'Properties' => [
