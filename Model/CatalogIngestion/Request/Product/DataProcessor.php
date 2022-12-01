@@ -570,6 +570,7 @@ class DataProcessor
                 'DisplayType' => $productAttribute->getFrontendInput(),
                 'DisplayName' => $productAttribute->getAttributeCode(),
                 'DisplayValue' => ($this->getAttributeDisplayValue($product, $productAttribute)),
+                'Visibility' => ($productAttribute->getIsVisibleOnFront()) ? 'true' : 'false',
                 'TextLabel' => $productAttribute->getFrontendLabel(),
                 'Position' => (int)$productAttribute->getPosition(),
             ];
@@ -579,9 +580,6 @@ class DataProcessor
             }
             if ($productAttribute->getAttributeId()) {
                 $productAttributeData['NameID'] = (int)$productAttribute->getAttributeId();
-            }
-            if ($productAttribute->getIsVisible()) {
-                $productAttributeData['Visibility'] = 'true';
             }
 
             $properties[] = $productAttributeData;
