@@ -141,6 +141,11 @@ class ProductEventRequestBuilderTest extends BoltTestCase
     private $associatedProducts = [];
 
     /**
+     * @var ProductInterface|null
+     */
+    private $bundleChildProduct;
+
+    /**
      * @inheritDoc
      */
     protected function setUpInternal()
@@ -404,6 +409,136 @@ class ProductEventRequestBuilderTest extends BoltTestCase
     /**
      * @test
      */
+    public function testGetRequest_WithBundleProduct()
+    {
+        $product = $this->createBundleProduct();
+        $productEvent = $this->productEventRepository->getByProductId($product->getId());
+        $request = $this->productEventRequestBuilder->getRequest($productEvent, $this->storeManager->getWebsite()->getId());
+        $apiData = $request->getApiData();
+        $fulfillmentCenterID = ($this->moduleManger->isEnabled('Magento_InventoryCatalog')) ?
+            'Default Stock' : 'default';
+        $expectedApiData = [
+            'operation' => $productEvent->getType(),
+            'timestamp' => strtotime($productEvent->getCreatedAt()),
+            'product' => [
+                'product' =>
+                    [
+                        'MerchantProductID' => $product->getId(),
+                        'ProductType' => ProductType::TYPE_BUNDLE,
+                        'SKU' => 'bundle-product',
+                        'URL' => $product->getProductUrl(),
+                        'Name' => 'Bundle Product',
+                        'ManageInventory' => true,
+                        'Visibility' => 'visible',
+                        'Backorder' => 'no',
+                        'Availability' => 'in_stock',
+                        'ShippingRequired' => true,
+                        'Prices' => [
+                            [
+                                'ListPrice' => 1275,
+                                'SalePrice' => 1275,
+                                'Currency' => 'USD',
+                                'Locale' => 'en_US',
+                                'Unit' => ''
+                            ]
+                        ],
+                        'Inventories' => [
+                            [
+                                'FulfillmentCenterID' => 'default',
+                                'InventoryLevel' => 0
+                            ]
+                        ],
+                        'Media' => [],
+                        'Options' => [
+                            [
+                                'Name' => 'Bundle Product Items',
+                                'DisplayType' => 'select',
+                                'DisplayName' => 'Bundle Product Items',
+                                'BundleValues' => [
+                                    [
+                                        'MerchantProductID' => $this->bundleChildProduct->getId(),
+                                        'SKU' => $this->bundleChildProduct->getSku(),
+                                        'SortOrder' => 0,
+                                        'Qty' => 1,
+                                        'SelectionCanChangeQuantity' => true,
+                                    ]
+                                ],
+                                'Visibility' => 'true',
+                                'SortOrder' => 0,
+                                'IsRequired' => true
+                            ]
+                        ],
+                        'Properties' => [
+                            [
+                                'Name' => 'cost',
+                                'NameID' => 81,
+                                'Value' => NULL,
+                                'ValueID' => NULL,
+                                'DisplayType' => 'price',
+                                'DisplayName' => 'cost',
+                                'DisplayValue' => NULL,
+                                'Visibility' => 'visible',
+                                'TextLabel' => 'Cost',
+                                'ImageURL' => NULL,
+                                'Position' => 0
+                            ]
+                        ],
+                    ],
+                'variants' => [
+                    [
+                        'MerchantProductID' => $this->bundleChildProduct->getId(),
+                        'ProductType' => 'simple',
+                        'SKU' => 'ci_simple',
+                        'URL' => $this->bundleChildProduct->getProductUrl(),
+                        'Name' => 'Catalog Ingestion Simple Product',
+                        'ManageInventory' => true,
+                        'Visibility' => 'visible',
+                        'Backorder' => 'no',
+                        'Availability' => 'in_stock',
+                        'ShippingRequired' => true,
+                        'Prices' => [
+                            [
+                                'ListPrice' => 10000,
+                                'SalePrice' => 10000,
+                                'Currency' => 'USD',
+                                'Locale' => 'en_US',
+                                'Unit' => ''
+                            ]
+                        ],
+                        'Inventories' => [
+                            [
+                                'FulfillmentCenterID' => $fulfillmentCenterID,
+                                'InventoryLevel' => self::PRODUCT_QTY
+                            ]
+                        ],
+                        'Media' => [],
+                        'Options' => [],
+                        'Properties' => [
+                            [
+                                'Name' => 'cost',
+                                'NameID' => 81,
+                                'Value' => NULL,
+                                'ValueID' => NULL,
+                                'DisplayType' => 'price',
+                                'DisplayName' => 'cost',
+                                'DisplayValue' => NULL,
+                                'Visibility' => 'visible',
+                                'TextLabel' => 'Cost',
+                                'ImageURL' => NULL,
+                                'Position' => 0
+                            ]
+                        ],
+                        'Description' => 'Product Description'
+                    ]
+                ]
+            ]
+        ];
+        $this->assertEquals($apiData, $expectedApiData);
+    }
+
+    /**
+     * @test
+     */
     public function testGetRequest_WithoutApiKeys()
     {
         $this->expectExceptionMessage('Bolt API Key or Publishable Key - Multi Step is not configured');
@@ -590,6 +725,93 @@ class ProductEventRequestBuilderTest extends BoltTestCase
         $extensionConfigurableAttributes->setConfigurableProductLinks($this->associatedProductIds);
         $configurableProduct->setExtensionAttributes($extensionConfigurableAttributes);
         return $this->productRepository->save($configurableProduct);
+    }
+
+    /**
+     * Create bundle product
+     *
+     * @return ProductInterface
+     */
+    private function createBundleProduct(): ProductInterface
+    {
+        $this->bundleChildProduct = $this->createProduct();
+        $bundleProduct = $this->objectManager->create(Product::class);
+        $bundleProduct->setTypeId(ProductType::TYPE_BUNDLE)
+            ->setId(3)
+            ->setAttributeSetId(4)
+            ->setWebsiteIds([1])
+            ->setName('Bundle Product')
+            ->setSku('bundle-product')
+            ->setVisibility(\Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH)
+            ->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED)
+            ->setStockData(['use_config_manage_stock' => 1, 'qty' => 100, 'is_qty_decimal' => 0, 'is_in_stock' => 1])
+            ->setPriceView(1)
+            ->setSkuType(1)
+            ->setPriceType(1)
+            ->setShipmentType(0)
+            ->setPrice(10.0)
+            ->setBundleOptionsData(
+                [
+                    [
+                        'title' => 'Bundle Product Items',
+                        'default_title' => 'Bundle Product Items',
+                        'type' => 'select', 'required' => 1,
+                        'delete' => '',
+                    ],
+                ]
+            )
+            ->setBundleSelectionsData(
+                [
+                    [
+                        [
+                            'product_id' => $this->bundleChildProduct->getId(),
+                            'selection_price_value' => 2.75,
+                            'selection_qty' => 1,
+                            'selection_can_change_qty' => 1,
+                            'delete' => '',
+
+                        ],
+                    ],
+                ]
+            );
+
+        if ($bundleProduct->getBundleOptionsData()) {
+            $options = [];
+            foreach ($bundleProduct->getBundleOptionsData() as $key => $optionData) {
+                if (!(bool)$optionData['delete']) {
+                    $option = $this->objectManager->create(\Magento\Bundle\Api\Data\OptionInterfaceFactory::class)
+                        ->create(['data' => $optionData]);
+                    $option->setSku($bundleProduct->getSku());
+                    $option->setOptionId(null);
+
+                    $links = [];
+                    $bundleLinks = $bundleProduct->getBundleSelectionsData();
+                    if (!empty($bundleLinks[$key])) {
+                        foreach ($bundleLinks[$key] as $linkData) {
+                            if (!(bool)$linkData['delete']) {
+                                /** @var \Magento\Bundle\Api\Data\LinkInterface$link */
+                                $link = $this->objectManager->create(\Magento\Bundle\Api\Data\LinkInterfaceFactory::class)
+                                    ->create(['data' => $linkData]);
+                                $linkProduct = $this->productRepository->getById($linkData['product_id']);
+                                $link->setSku($linkProduct->getSku());
+                                $link->setQty($linkData['selection_qty']);
+                                $link->setPrice($linkData['selection_price_value']);
+                                if (isset($linkData['selection_can_change_qty'])) {
+                                    $link->setCanChangeQuantity($linkData['selection_can_change_qty']);
+                                }
+                                $links[] = $link;
+                            }
+                        }
+                        $option->setProductLinks($links);
+                        $options[] = $option;
+                    }
+                }
+            }
+            $extension = $bundleProduct->getExtensionAttributes();
+            $extension->setBundleProductOptions($options);
+            $bundleProduct->setExtensionAttributes($extension);
+        }
+        return $this->productRepository->save($bundleProduct, true);
     }
 
     /**
