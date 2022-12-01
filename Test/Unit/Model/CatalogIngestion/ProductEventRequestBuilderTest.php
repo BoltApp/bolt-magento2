@@ -341,7 +341,6 @@ class ProductEventRequestBuilderTest extends BoltTestCase
         foreach ($this->associatedProducts as $index => $associatedProduct) {
             $expectedApiData['product']['variants'][] = [
                 'MerchantProductID' => $product->getId(),
-                'MerchantVariantID' => $associatedProduct->getId(),
                 'ProductType' => 'simple',
                 'SKU' => self::PRODUCT_SKU . '_' . $this->childProductSkuPostfix[$index],
                 'URL' => $associatedProduct->getProductUrl(),
