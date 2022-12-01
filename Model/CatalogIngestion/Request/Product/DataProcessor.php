@@ -44,6 +44,9 @@ use Magento\Catalog\Model\ResourceModel\Eav\Attribute as EavAttribute;
 use Magento\InventorySalesAdminUi\Model\GetSalableQuantityDataBySku;
 use Magento\Bundle\Api\ProductLinkManagementInterface;
 use Magento\GroupedProduct\Model\Product\Type\Grouped;
+use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable as ConfigurableProductType;
+use Magento\Bundle\Model\Product\Type as BundleProductType;
+use Magento\GroupedProduct\Model\Product\Type\Grouped as GroupedProductType;
 
 /**
  * Product event product data processor to collect product data for bolt request
@@ -119,6 +122,21 @@ class DataProcessor
     private $productLinkManagement;
 
     /**
+     * @var ConfigurableProductType
+     */
+    private $configurableProductType;
+
+    /**
+     * @var BundleProductType
+     */
+    private $bundleProductType;
+
+    /**
+     * @var GroupedProductType
+     */
+    private $groupedProductType;
+
+    /**
      * @var array
      */
     private $availableProductTypesForVariants = [
@@ -137,6 +155,9 @@ class DataProcessor
      * @param Emulation $emulation
      * @param ModuleManager $moduleManager
      * @param ProductLinkManagementInterface $productLinkManagement
+     * @param ConfigurableProductType $configurableProductType
+     * @param BundleProductType $bundleProductType
+     * @param GroupedProductType $groupedProductType
      */
     public function __construct(
         Config $config,
@@ -147,9 +168,11 @@ class DataProcessor
         Mime $mime,
         Emulation $emulation,
         ModuleManager $moduleManager,
-        ProductLinkManagementInterface $productLinkManagement
-    )
-    {
+        ProductLinkManagementInterface $productLinkManagement,
+        ConfigurableProductType $configurableProductType,
+        BundleProductType $bundleProductType,
+        GroupedProductType $groupedProductType
+    ) {
         $this->objectManager = ObjectManager::getInstance();
         $this->config = $config;
         $this->productRepository = $productRepository;
@@ -160,6 +183,9 @@ class DataProcessor
         $this->emulation = $emulation;
         $this->productLinkManagement = $productLinkManagement;
         $this->moduleManager = $moduleManager;
+        $this->configurableProductType = $configurableProductType;
+        $this->bundleProductType = $bundleProductType;
+        $this->groupedProductType = $groupedProductType;
         if ($this->moduleManager->isEnabled('Magento_InventoryCatalog')) {
             $this->getSalableQuantityDataBySku = $this->objectManager
                 ->get('Magento\InventorySalesAdminUi\Model\GetSalableQuantityDataBySku');
@@ -361,8 +387,27 @@ class DataProcessor
             $productData['Height'] = $height;
         }
 
+        $parentProductIds = $this->getParentProductIds($product);
+        if (!empty($parentProductIds)) {
+            $productData['ParentProductIDs'] = $parentProductIds;
+        }
+
         $this->emulation->stopEnvironmentEmulation();
         return $productData;
+    }
+
+    /**
+     * Get parent product ids
+     *
+     * @param ProductInterface $product
+     * @return array
+     */
+    private function getParentProductIds(ProductInterface $product): array
+    {
+        $configParentIds = $this->configurableProductType->getParentIdsByChild($product->getId());
+        $bundleParentIds =  $this->bundleProductType->getParentIdsByChild($product->getId());
+        $groupedParentIds =  $this->groupedProductType->getParentIdsByChild($product->getId());
+        return array_merge($configParentIds, $bundleParentIds, $groupedParentIds);
     }
 
     /**
