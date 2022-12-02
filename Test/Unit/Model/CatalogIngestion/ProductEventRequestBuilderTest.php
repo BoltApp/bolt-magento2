@@ -402,7 +402,8 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                         'Position' => 0
                     ]
                 ],
-                'Description' => 'Product Description'
+                'Description' => 'Product Description',
+                'ParentProductIDs' => [(string)$product->getId()]
             ];
             unset($apiData['product']['variants'][$index]['Properties'][0]['Value']);
             unset($apiData['product']['variants'][$index]['Properties'][0]['ValueID']);
@@ -559,7 +560,8 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 'Position' => 0
                             ]
                         ],
-                        'Description' => 'Product Description'
+                        'Description' => 'Product Description',
+                        'ParentProductIDs' => [(string)$product->getId()]
                     ]
                 ]
             ]
@@ -671,7 +673,8 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 'Position' => 0
                             ]
                         ],
-                        'Description' => 'Product Description'
+                        'Description' => 'Product Description',
+                        'ParentProductIDs' => [(string)$product->getId()]
                     ]
                 ]
             ]
