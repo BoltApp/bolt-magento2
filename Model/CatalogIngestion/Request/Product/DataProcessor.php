@@ -375,7 +375,8 @@ class DataProcessor
     {
         $customOptions = $this->getCustomOptions($product);
         $bundleOptions = $this->getBundleOptions($product);
-        return array_merge($customOptions,$bundleOptions);
+        $configurableOptions = $this->getConfigurableOptions($product);
+        return array_merge($customOptions, $bundleOptions, $configurableOptions);
     }
 
     /**
@@ -404,7 +405,8 @@ class DataProcessor
                 'BundleValues' => [],
                 'Visibility' => 'true',
                 'SortOrder' => (int)$bundleOption->getPosition(),
-                'IsRequired' => (bool)$bundleOption->getRequired()
+                'IsRequired' => (bool)$bundleOption->getRequired(),
+                'MagentoOptionType' => 'BundleProductOption',
             ];
 
             if ($productLinks = $bundleOption->getProductLinks()) {
@@ -415,6 +417,53 @@ class DataProcessor
                         'SortOrder' => (int)$productLink->getPosition(),
                         'Qty' => (int)$productLink->getQty(),
                         'SelectionCanChangeQuantity' => (bool)$productLink->getSelectionCanChangeQuantity(),
+                    ];
+                }
+            }
+            $result[] = $optionData;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Returns configurable product options
+     *
+     * @param ProductInterface $product
+     * @return array
+     */
+    private function getConfigurableOptions(ProductInterface $product): array
+    {
+        if ($product->getTypeId() !== Configurable::TYPE_CODE) {
+            return [];
+        }
+
+        $configurableProductOptions = $product->getExtensionAttributes()->getConfigurableProductOptions();
+        if (empty($configurableProductOptions)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($configurableProductOptions as $confOption) {
+            $optionData = [
+                'Name' => $confOption->getProductAttribute()->getAttributeCode(),
+                'DisplayType' => 'select',
+                'DisplayName' => $confOption->getLabel(),
+                'Values' => [],
+                'Visibility' => 'true',
+                'SortOrder' => (int)$confOption->getPosition(),
+                'MagentoOptionType' => 'ConfigurableProductOption',
+            ];
+
+            if ($options = $confOption->getOptions()) {
+                foreach ($options as $position => $option) {
+                    if (!isset($option['value_index']) || !isset($option['store_label'])) {
+                        continue;
+                    }
+                    $optionData['Values'][] = [
+                        'Value' => $option['value_index'],
+                        'DisplayValue' => $option['store_label'],
+                        'SortOrder' => (int)$position
                     ];
                 }
             }
