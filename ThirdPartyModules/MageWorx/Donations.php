@@ -70,42 +70,6 @@ class Donations
         $this->boltSessionHelper = $boltSessionHelper;
     }
 
-    /**
-     * @param $cart
-     * @param \MageWorx\Donations\Helper\Donation $donationHelper
-     * @param $quote
-     * @return mixed
-     * @throws \Exception
-     */
-    public function filterCart(
-        $cart,
-        \MageWorx\Donations\Helper\Donation $donationHelper,
-        \MageWorx\Donations\Model\ResourceModel\Charity\CollectionFactory $charityCollectionFactory,
-        $quote
-    )
-    {
-        $this->donationHelper = $donationHelper;
-        $predefinedValuesDonations = $this->getPredefinedValuesDonation();
-        $shippingAddress = $quote->getShippingAddress();
-        $currencyCode = $quote->getQuoteCurrencyCode();
-
-        $charityData = $charityCollectionFactory->create()->addFilter('is_active', 1)->getFirstItem();
-
-        foreach ($predefinedValuesDonations as $key => $donation) {
-            if ($key == 0) {
-                continue;
-            }
-
-            $cart['add_ons'][] = [
-                "name" => 'Donation for charity ',
-                "description" => $charityData->getName(),
-                "productId" => self::MAGEWORX_DONATION . '_' . $key,
-                "price" => CurrencyUtils::toMinor($donation, $currencyCode),
-            ];
-        }
-        return $cart;
-    }
-
     public function getPredefinedValuesDonation()
     {
         $predefinedDonation = json_decode($this->scopeConfig->getValue('mageworx_donations/main/predefined_values_donation', 'store'), true);

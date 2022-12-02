@@ -1152,15 +1152,6 @@ class EventsForThirdPartyModules
                     'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
                     'sendClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
                     'boltClass'   => Amasty_Extrafee::class,
-                ],
-                'MageWorx_Donations' => [
-                    'module'      => 'MageWorx_Donations',
-                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
-                    'sendClasses' => [
-                        'MageWorx\Donations\Helper\Donation',
-                        'MageWorx\Donations\Model\ResourceModel\Charity\CollectionFactory'
-                    ],
-                    'boltClass'   => MageWorx_Donations::class,
                 ]
             ]
         ],
