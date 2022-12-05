@@ -536,7 +536,6 @@ class DataProcessor
                 'Name' => $option->getDefaultTitle(),
                 'DisplayType' => $option->getType(),
                 'DisplayName' => $option->getTitle(),
-                'Values' => [],
                 'Visibility' => 'true',
                 'SortOrder' => (int)$option->getSortOrder(),
             ];
@@ -544,7 +543,7 @@ class DataProcessor
             if ($values = $option->getValues()) {
                 foreach ($values as $valueId => $value) {
                     $optionData['Values'][] = [
-                        'Value' => $valueId,
+                        'Value' => string($valueId),
                         'DisplayValue' => $value->getTitle(),
                         'SortOrder' => (int)$value->getSortOrder()
                     ];
