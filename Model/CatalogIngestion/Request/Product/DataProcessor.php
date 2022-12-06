@@ -792,7 +792,9 @@ class DataProcessor
      */
     private function getProductAvailability(ProductInterface $product): string
     {
-        $isAvailable = $product->isAvailable();
+        $isAvailable = ($this->moduleManager->isEnabled('Magento_InventoryCatalog')) ?
+            $product->isAvailable() : $product->getExtensionAttributes()->getStockItem()->getIsInStock();
+
         if ($product->getTypeId() == Configurable::TYPE_CODE) {
             $stockItem = $product->getExtensionAttributes()->getStockItem();
             $isAvailable = (bool)$stockItem->getIsInStock() && $product->getQuantityAndStockStatus()['is_in_stock'];
