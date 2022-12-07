@@ -93,6 +93,12 @@
                 <group id="additional" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Additional options</label>
                     <attribute type="expanded">1</attribute>
+                    <field id="pdp_frequency_selector" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Product Details Page Frequency Selector</label>
+                        <comment>Show Bolt Subscription frequency selector on product pages</comment>
+                        <config_path>payment/boltpay/pdp_frequency_selector</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
                     <field id="product_page_checkout" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Product page checkout</label>
                         <comment>Enable Bolt Checkout on Product Pages</comment>
