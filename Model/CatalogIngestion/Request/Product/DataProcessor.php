@@ -35,12 +35,18 @@ use Magento\Catalog\Model\Product\Gallery\ReadHandler as GalleryReadHandler;
 use Magento\Framework\File\Mime;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Exception\InputException;
 use Magento\Catalog\Api\Data\ProductAttributeMediaGalleryEntryInterface;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Api\Data\WebsiteInterface;
 use Magento\Framework\App\ObjectManager;
 use Magento\Catalog\Model\ResourceModel\Eav\Attribute as EavAttribute;
 use Magento\InventorySalesAdminUi\Model\GetSalableQuantityDataBySku;
+use Magento\Bundle\Api\ProductLinkManagementInterface;
+use Magento\GroupedProduct\Model\Product\Type\Grouped;
+use Magento\ConfigurableProduct\Model\ResourceModel\Product\Type\Configurable as ConfigurableProductType;
+use Magento\Bundle\Model\Product\Type as BundleProductType;
+use Magento\GroupedProduct\Model\Product\Type\Grouped as GroupedProductType;
 
 /**
  * Product event product data processor to collect product data for bolt request
@@ -111,6 +117,35 @@ class DataProcessor
     private $getSalableQuantityDataBySku;
 
     /**
+     * @var ProductLinkManagementInterface
+     */
+    private $productLinkManagement;
+
+    /**
+     * @var ConfigurableProductType
+     */
+    private $configurableProductType;
+
+    /**
+     * @var BundleProductType
+     */
+    private $bundleProductType;
+
+    /**
+     * @var GroupedProductType
+     */
+    private $groupedProductType;
+
+    /**
+     * @var array
+     */
+    private $availableProductTypesForVariants = [
+        Configurable::TYPE_CODE,
+        ProductType::TYPE_BUNDLE,
+        Grouped::TYPE_CODE
+    ];
+
+    /**
      * @param Config $config
      * @param ProductRepositoryInterface $productRepository
      * @param StoreManagerInterface $storeManager
@@ -119,6 +154,10 @@ class DataProcessor
      * @param Mime $mime
      * @param Emulation $emulation
      * @param ModuleManager $moduleManager
+     * @param ProductLinkManagementInterface $productLinkManagement
+     * @param ConfigurableProductType $configurableProductType
+     * @param BundleProductType $bundleProductType
+     * @param GroupedProductType $groupedProductType
      */
     public function __construct(
         Config $config,
@@ -128,9 +167,12 @@ class DataProcessor
         GalleryReadHandler $galleryReadHandler,
         Mime $mime,
         Emulation $emulation,
-        ModuleManager $moduleManager
-    )
-    {
+        ModuleManager $moduleManager,
+        ProductLinkManagementInterface $productLinkManagement,
+        ConfigurableProductType $configurableProductType,
+        BundleProductType $bundleProductType,
+        GroupedProductType $groupedProductType
+    ) {
         $this->objectManager = ObjectManager::getInstance();
         $this->config = $config;
         $this->productRepository = $productRepository;
@@ -139,7 +181,11 @@ class DataProcessor
         $this->galleryReadHandler = $galleryReadHandler;
         $this->mime = $mime;
         $this->emulation = $emulation;
+        $this->productLinkManagement = $productLinkManagement;
         $this->moduleManager = $moduleManager;
+        $this->configurableProductType = $configurableProductType;
+        $this->bundleProductType = $bundleProductType;
+        $this->groupedProductType = $groupedProductType;
         if ($this->moduleManager->isEnabled('Magento_InventoryCatalog')) {
             $this->getSalableQuantityDataBySku = $this->objectManager
                 ->get('Magento\InventorySalesAdminUi\Model\GetSalableQuantityDataBySku');
@@ -189,35 +235,93 @@ class DataProcessor
         $variants = [];
         $variantProductIds = [];
         $defaultStore = $website->getDefaultStore();
-        $storeViewCollection = $website->getStoreCollection();
-        foreach ($storeViewCollection as $storeView) {
-            $product = $this->productRepository->getById(
-                $productId,
-                false,
-                $storeView->getId()
-            );
 
-            if ($product->getTypeId() === Configurable::TYPE_CODE && empty($variantProductIds)) {
-                $variantProductIds = $product->getTypeInstance()->getUsedProductIds($product);
-            }
+        $product = $this->productRepository->getById(
+            $productId,
+            false,
+            $defaultStore->getId()
+        );
 
-            //adds main product data into variants for non-default store view
-            if ($storeView->getId() != $defaultStore->getId()) {
-                $variants[] = $this->getBoltProductData($productId, (int)$storeView->getId());
-            }
-
-            if (empty($variantProductIds)) {
-                continue;
-            }
-
+        if (in_array($product->getTypeId(), $this->availableProductTypesForVariants) && empty($variantProductIds)) {
+            $variantProductIds = $this->getChildProductIds($product);
             foreach ($variantProductIds as $variantProductId) {
-                $variants[] = $this->getBoltProductData($variantProductId, (int)$storeView->getId());
+                $variants[] = $this->getBoltProductData($variantProductId, (int)$defaultStore->getId());
             }
         }
 
         return $variants;
     }
 
+    /**
+     * Get child product ids from diff product types
+     *
+     * @param ProductInterface $product
+     * @return array
+     * @throws InputException
+     * @throws NoSuchEntityException
+     */
+    private function getChildProductIds(ProductInterface $product): array
+    {
+        $childProductIds = [];
+        switch ($product->getTypeId()) {
+            case Configurable::TYPE_CODE:
+                $childProductIds = $product->getTypeInstance()->getUsedProductIds($product);
+                break;
+            case ProductType::TYPE_BUNDLE:
+                $childProductIds = $this->getBundleChildProductIds($product);
+                break;
+            case Grouped::TYPE_CODE:
+                $childProductIds = $this->getGroupedChildProductIds($product);
+                break;
+        }
+        return $childProductIds;
+    }
+
+    /**
+     * Get bundle product type child products
+     *
+     * @param ProductInterface $product
+     * @return array
+     * @throws NoSuchEntityException
+     * @throws InputException
+     */
+    private function getBundleChildProductIds(ProductInterface $product): array
+    {
+        if ($product->getTypeId() != ProductType::TYPE_BUNDLE) {
+            return [];
+        }
+        $childProductIds = [];
+        $productLinks =  $this->productLinkManagement->getChildren($product->getSku());
+        if (!empty($productLinks)) {
+            foreach ($productLinks as $productLink) {
+                $childProductIds[] = $productLink->getEntityId();
+            }
+        }
+        return $childProductIds;
+    }
+
+    /**
+     * Get grouped product type child products
+     *
+     * @param ProductInterface $product
+     * @return array
+     * @throws NoSuchEntityException
+     * @throws InputException
+     */
+    private function getGroupedChildProductIds(ProductInterface $product): array
+    {
+        if ($product->getTypeId() != Grouped::TYPE_CODE) {
+            return [];
+        }
+        $childProductIds = [];
+        $associatedProducts =  $product->getTypeInstance()->getAssociatedProducts($product);
+        if (!empty($associatedProducts)) {
+            foreach ($associatedProducts as $associatedProduct) {
+                $childProductIds[] = $associatedProduct->getEntityId();
+            }
+        }
+        return $childProductIds;
+    }
     /**
      * Returns base product data for bolt request
      *
@@ -251,10 +355,6 @@ class DataProcessor
             'Properties' => $this->getProperties($product)
         ];
 
-        if ($merchantVariantId = $product->getMerchantVariantId()) {
-            $productData['MerchantVariantID'] = $merchantVariantId;
-        }
-
         if ($weight = $product->getWeight()) {
             $productData['Weight'] = $weight;
         }
@@ -287,8 +387,27 @@ class DataProcessor
             $productData['Height'] = $height;
         }
 
+        $parentProductIds = $this->getParentProductIds($product);
+        if (!empty($parentProductIds)) {
+            $productData['ParentProductIDs'] = $parentProductIds;
+        }
+
         $this->emulation->stopEnvironmentEmulation();
         return $productData;
+    }
+
+    /**
+     * Get parent product ids
+     *
+     * @param ProductInterface $product
+     * @return array
+     */
+    private function getParentProductIds(ProductInterface $product): array
+    {
+        $configParentIds = $this->configurableProductType->getParentIdsByChild($product->getId());
+        $bundleParentIds = $this->bundleProductType->getParentIdsByChild($product->getId());
+        $groupedParentIds = $this->groupedProductType->getParentIdsByChild($product->getId());
+        return array_merge($configParentIds, $bundleParentIds, $groupedParentIds);
     }
 
     /**
@@ -299,27 +418,134 @@ class DataProcessor
      */
     private function getOptions(ProductInterface $product): array
     {
-        $options = $product->getOptions();
-        if (empty($options)) {
+        $customOptions = $this->getCustomOptions($product);
+        $bundleOptions = $this->getBundleOptions($product);
+        $configurableOptions = $this->getConfigurableOptions($product);
+        return array_merge($customOptions, $bundleOptions, $configurableOptions);
+    }
+
+    /**
+     * Returns bundle product options
+     *
+     * @param ProductInterface $product
+     * @return array
+     */
+    private function getBundleOptions(ProductInterface $product): array
+    {
+        if ($product->getTypeId() !== ProductType::TYPE_BUNDLE) {
+            return [];
+        }
+
+        $bundleProductOptions = $product->getExtensionAttributes()->getBundleProductOptions();
+        if (empty($bundleProductOptions)) {
+           return [];
+        }
+
+        $result = [];
+        foreach ($bundleProductOptions as $bundleOption) {
+            $optionData = [
+                'Name' => $bundleOption->getDefaultTitle(),
+                'DisplayType' => $bundleOption->getType(),
+                'DisplayName' => $bundleOption->getTitle(),
+                'BundleValues' => [],
+                'Visibility' => 'true',
+                'SortOrder' => (int)$bundleOption->getPosition(),
+                'IsRequired' => (bool)$bundleOption->getRequired(),
+                'MagentoOptionType' => 'BundleProductOption',
+            ];
+
+            if ($productLinks = $bundleOption->getProductLinks()) {
+                foreach ($productLinks as $productLink) {
+                    $optionData['BundleValues'][] = [
+                        'MerchantProductID' => $productLink->getEntityId(),
+                        'SKU' => $productLink->getSku(),
+                        'SortOrder' => (int)$productLink->getPosition(),
+                        'Qty' => (int)$productLink->getQty(),
+                        'SelectionCanChangeQuantity' => (bool)$productLink->getSelectionCanChangeQuantity(),
+                    ];
+                }
+            }
+            $result[] = $optionData;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Returns configurable product options
+     *
+     * @param ProductInterface $product
+     * @return array
+     */
+    private function getConfigurableOptions(ProductInterface $product): array
+    {
+        if ($product->getTypeId() !== Configurable::TYPE_CODE) {
+            return [];
+        }
+
+        $configurableProductOptions = $product->getExtensionAttributes()->getConfigurableProductOptions();
+        if (empty($configurableProductOptions)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($configurableProductOptions as $confOption) {
+            $optionData = [
+                'Name' => $confOption->getProductAttribute()->getAttributeCode(),
+                'DisplayType' => 'select',
+                'DisplayName' => $confOption->getLabel(),
+                'Values' => [],
+                'Visibility' => 'true',
+                'SortOrder' => (int)$confOption->getPosition(),
+                'MagentoOptionType' => 'ConfigurableProductOption',
+            ];
+
+            if ($options = $confOption->getOptions()) {
+                foreach ($options as $position => $option) {
+                    if (!isset($option['value_index']) || !isset($option['store_label'])) {
+                        continue;
+                    }
+                    $optionData['Values'][] = [
+                        'Value' => $option['value_index'],
+                        'DisplayValue' => $option['store_label'],
+                        'SortOrder' => (int)$position
+                    ];
+                }
+            }
+            $result[] = $optionData;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Returns product custom options
+     *
+     * @param ProductInterface $product
+     * @return array
+     */
+    private function getCustomOptions(ProductInterface $product): array
+    {
+        $customOptions = $product->getOptions();
+        if (empty($customOptions)) {
             return [];
         }
         $result = [];
-        foreach ($options as $option) {
+        foreach ($customOptions as $option) {
             $optionData = [
                 'Name' => $option->getDefaultTitle(),
                 'DisplayType' => $option->getType(),
                 'DisplayName' => $option->getTitle(),
-                'Values' => [],
-                'Visibility' => 'visible',
-                'SortOrder' => $option->getSortOrder(),
+                'Visibility' => 'true',
+                'SortOrder' => (int)$option->getSortOrder(),
             ];
 
             if ($values = $option->getValues()) {
                 foreach ($values as $valueId => $value) {
-                    $optionData['values'][] = [
-                        'Value' => $valueId,
+                    $optionData['Values'][] = [
+                        'Value' => string($valueId),
                         'DisplayValue' => $value->getTitle(),
-                        'SortOrder' => $value->getSortOrder()
+                        'SortOrder' => (int)$value->getSortOrder()
                     ];
                 }
             }
@@ -566,7 +792,10 @@ class DataProcessor
      */
     private function getProductAvailability(ProductInterface $product): string
     {
-        $isAvailable = $product->isAvailable();
+        // for non msi magento configuration we should use data from stock item, otherwise the data will be not actual
+        $isAvailable = ($this->moduleManager->isEnabled('Magento_InventoryCatalog')) ?
+            $product->isAvailable() : $product->getExtensionAttributes()->getStockItem()->getIsInStock();
+
         if ($product->getTypeId() == Configurable::TYPE_CODE) {
             $stockItem = $product->getExtensionAttributes()->getStockItem();
             $isAvailable = (bool)$stockItem->getIsInStock() && $product->getQuantityAndStockStatus()['is_in_stock'];

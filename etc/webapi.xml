@@ -145,6 +145,13 @@
             <resource ref="Magento_Sales::create" />
         </resources>
     </route>
+    <!--Subscribe to newsletter Endpoint-->
+    <route url="/V1/bolt/boltpay/orders/:id/subscribe" method="POST">
+        <service class="Bolt\Boltpay\Api\OrderManagementInterface" method="subscribeToNewsletter"/>
+        <resources>
+            <resource ref="Magento_Cart::manage" />
+        </resources>
+    </route>
     <!-- Place order for logged in user with payment information saving -->
     <route url="/V1/bolt/boltpay/carts/mine/payment-information" method="POST">
         <service class="Magento\Checkout\Api\PaymentInformationManagementInterface" method="savePaymentInformationAndPlaceOrder"/>
@@ -189,6 +196,13 @@
         <service class="Bolt\Boltpay\Api\RouteInsuranceManagementInterface" method="execute"/>
         <resources>
             <resource ref="anonymous" />
+        </resources>
+    </route>
+    <!--Get Cart Id by Masked Quote Id -->
+    <route url="/V1/bolt/boltpay/carts/:maskedQuoteId/cartid" method="GET">
+        <service class="Bolt\Boltpay\Api\CartManagementInterface" method="getCartIdByMaskedId"/>
+        <resources>
+            <resource ref="Magento_Cart::manage" />
         </resources>
     </route>
 </routes>

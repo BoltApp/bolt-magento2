@@ -589,9 +589,12 @@ class ShippingMethods implements ShippingMethodsInterface
             }
 
             // include applied rule ids (discounts) in cache key
-            $ruleIds = str_replace(',', '_', $quote->getAppliedRuleIds());
-            if ($ruleIds) {
-                $cacheIdentifier .= '_'.$ruleIds;
+            $appliedRuleIds = $quote->getAppliedRuleIds();
+            if ($appliedRuleIds) {
+                $ruleIds = str_replace(',', '_', $appliedRuleIds);
+                if ($ruleIds) {
+                    $cacheIdentifier .= '_'.$ruleIds;
+                }
             }
 
             // extend cache identifier with custom address fields

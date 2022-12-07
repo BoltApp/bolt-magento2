@@ -501,7 +501,7 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_ENABLE_SHOPPER_ASSISTANT);
     }
-    
+
     /**
      * Checks whether the feature switch for module retriever fetching from setup_module m2 table is enabled
      *
@@ -524,5 +524,17 @@ class Decider extends AbstractHelper
     public function isEnabledModuleRetrieverFromSetupModuleTable()
     {
         return $this->isSwitchEnabled(Definitions::M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE);
+    }
+
+    /**
+     * Checks whether the feature switch for fetching cart via api is enabled
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isEnabledFetchCartViaApi()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_FETCH_CART_VIA_API);
     }
 }

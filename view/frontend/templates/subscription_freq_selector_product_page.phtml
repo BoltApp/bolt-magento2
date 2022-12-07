@@ -15,60 +15,42 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-// return if PDP FS option is disabled or we aren't on product page
 if (!$block->isBoltProductPageForFrequencySelector()) { return;
 }
 ?>
 
 
-<!--
-    We will potentially embed the frequency selector into this selector.
-    If product is subscribable - it will load the frequency options
-    If not - it will load nothing (empty div)
- -->
 <div class="bolt-freq-selector"></div>
+
 
 <script>
     require([
-        'jquery',
-        'Magento_Customer/js/model/authentication-popup',
-        'Magento_Customer/js/customer-data',
-        'Bolt_Boltpay/js/utils/when-defined',
-        'mage/validation/validation',
-        'mage/cookies',
-        'jquery/jquery.cookie',
-        'domReady!'
-    ], function ($, authenticationPopup, customerData, whenDefined) {
+            'jquery',
+            'Magento_Customer/js/model/authentication-popup',
+            'Magento_Customer/js/customer-data',
+            'Bolt_Boltpay/js/utils/when-defined',
+            'mage/validation/validation',
+            'mage/cookies',
+            'jquery/jquery.cookie',
+            'domReady!'
+        ], function ($, authenticationPopup, customerData, whenDefined) {
+
         var callbacks = {
-            /**
-             * This callback is triggered by the frequency selector's onChange
-             * User has selected a different frequency
-             * 
-             * We update the localStorage value that is accessible when shopper checks out
-             * LocalStorage value is a dictionary with
-             * - key as merchant product id ("reference" here)
-             * - value is the selected frequency (value, unit eg: 2, 'weeks')
-             */
             onSubscriptionChanged: function(reference, frequency) {
-                console.log("subscription frequency changed! ", reference, frequency);
-                const frequencies = JSON.parse(localStorage.getItem("BOLT_SUBSCRIPTION_PDP")) ?? {}
-                if (!frequency) {
-                    delete frequencies[reference]
-                } else {
-                    const { unit, value } = frequency
-                    frequencies[reference] = {
-                        unit,
-                        value
+                const freqs = JSON.parse(localStorage.getItem("BOLT_SUBSCRIPTION_PDP")) ?? {}
+                    if (!frequency) {
+                        delete freqs[reference]
+                    } else {
+                        const { unit, value } = frequency
+                        freqs[reference] = {
+                            unit,
+                            value
+                        }
                     }
-                }
-                localStorage.setItem("BOLT_SUBSCRIPTION_PDP", JSON.stringify(frequencies))
+                localStorage.setItem("BOLT_SUBSCRIPTION_PDP", JSON.stringify(freqs))
             }
         }
 
-        /**
-         * Below are util funcs used to retrieve full product info
-         * referenced from button_product_page.phtml
-         */
         var getQty = function () {
             var quantity = Number($('#qty').val());
             return quantity > 0 ? quantity : 1;

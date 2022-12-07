@@ -230,6 +230,11 @@ class ProductEventManager implements ProductEventManagerInterface
             $productEvent->setType($type);
             $productEvent->setCreatedAt($this->dateTime->formatDate(true));
             $this->sendProductEvent($productEvent);
+            try {
+                $this->deleteProductEvent($productId);
+            } catch (\Exception $e) {
+                // no product event registered in database
+            }
         }
 
         $this->alreadySentInstantProductIds[] = $productId;

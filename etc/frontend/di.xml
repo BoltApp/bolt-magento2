@@ -92,4 +92,7 @@
     <type name="Magento\Framework\App\Action\AbstractAction">
     	<plugin name="boltBoltpayAbstractActionPlugin" type="Bolt\Boltpay\Plugin\Magento\Framework\App\Action\AbstractActionPlugin"/>
     </type>
+    <type name="Magento\Checkout\CustomerData\Cart">
+        <plugin name="boltBoltpayCustomerDataCart" type="Bolt\Boltpay\Plugin\Magento\Checkout\CustomerData\Cart"/>
+    </type>
 </config>
