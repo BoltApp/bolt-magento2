@@ -30,6 +30,8 @@ use Magento\Framework\Webapi\Rest\Response;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
+use Bolt\Boltpay\Model\CatalogIngestion\Debug as CatalogIngestionDebug;
+use Bolt\Boltpay\Helper\FeatureSwitch\Debug as FeatureSwitchDebug;
 
 class Debug implements DebugInterface
 {
@@ -84,16 +86,28 @@ class Debug implements DebugInterface
     private $logHelper;
 
     /**
-     * @param Response                 $response
-     * @param DebugInfoFactory         $debugInfoFactory
-     * @param StoreManagerInterface    $storeManager
-     * @param HookHelper               $hookHelper
+     * @var CatalogIngestionDebug
+     */
+    private $catalogIngestionDebug;
+
+    /**
+     * @var FeatureSwitchDebug
+     */
+    private $featureSwitchDebug;
+
+    /**
+     * @param Response $response
+     * @param DebugInfoFactory $debugInfoFactory
+     * @param StoreManagerInterface $storeManager
+     * @param HookHelper $hookHelper
      * @param ProductMetadataInterface $productMetadata
-     * @param ConfigHelper             $configHelper
-     * @param ModuleRetriever          $moduleRetriever
-     * @param LogRetriever             $logRetriever
-     * @param AutomatedTestingHelper   $automatedTestingHelper
-     * @param LogHelper                $logHelper
+     * @param ConfigHelper $configHelper
+     * @param ModuleRetriever $moduleRetriever
+     * @param LogRetriever $logRetriever
+     * @param AutomatedTestingHelper $automatedTestingHelper
+     * @param LogHelper $logHelper
+     * @param CatalogIngestionDebug $catalogIngestionDebug
+     * @param FeatureSwitchDebug $featureSwitchDebug
      */
     public function __construct(
         Response $response,
@@ -105,7 +119,9 @@ class Debug implements DebugInterface
         ModuleRetriever $moduleRetriever,
         LogRetriever $logRetriever,
         AutomatedTestingHelper $automatedTestingHelper,
-        LogHelper $logHelper
+        LogHelper $logHelper,
+        CatalogIngestionDebug $catalogIngestionDebug,
+        FeatureSwitchDebug $featureSwitchDebug
     ) {
         $this->response = $response;
         $this->debugInfoFactory = $debugInfoFactory;
@@ -117,6 +133,8 @@ class Debug implements DebugInterface
         $this->logRetriever = $logRetriever;
         $this->automatedTestingHelper = $automatedTestingHelper;
         $this->logHelper = $logHelper;
+        $this->catalogIngestionDebug = $catalogIngestionDebug;
+        $this->featureSwitchDebug = $featureSwitchDebug;
     }
 
     /**
@@ -154,6 +172,12 @@ class Debug implements DebugInterface
         # parameters exist for getLog, default to exception.php last 100 lines
         $result->setLogs($this->logRetriever->getLogs());
 
+        # populate catalog ingestion debug data
+        $result->setCatalogIngestionData($this->catalogIngestionDebug->getDebugFullData());
+
+        # populate feauture switcher data
+        $result->setFeatureSwitcherData($this->featureSwitchDebug->getDebugFullData());
+
         # populate automated testing config
         $automatedTestingConfig = $this->automatedTestingHelper->getAutomatedTestingConfig();
         if (is_string($automatedTestingConfig)) {
@@ -178,16 +202,16 @@ class Debug implements DebugInterface
 
     /**
      * This method will handle universal api debug requests based on the type of request it is.
-     * 
+     *
      * @param array $data
      * @return \Bolt\Boltpay\Api\Data\DebugInfo
      * @throws BoltException
      * **/
     public function universalDebug($data){
-        
+
         // Validate Request
         $this->hookHelper->preProcessWebhook($this->storeManager->getStore()->getId());
-        
+
         // If debug v2 is not enabled then throw an error to be returned.
         if (!$this->configHelper->isBoltDebugUniversalEnabled()) {
             throw new BoltException(
