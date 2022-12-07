@@ -28,6 +28,12 @@ use Magento\Sales\Model\ResourceModel\Order\Grid\Collection as OrderGridCollecti
  */
 class RegularFilterPlugin
 {
+    private const PAYMENT_METHOD_FILTER_CODE = 'payment_method';
+
+    private const BOLT_PAYMENT_METHOD_TYPE = 'bolt';
+
+    private const DEFAULT_METHOD_TYPE = 'default';
+
     /**
      * @var ResourceConnection
      */
@@ -58,20 +64,96 @@ class RegularFilterPlugin
         Collection $collection,
         Filter $filter
     ) {
+        $filterValue = $filter->getValue();
         if ($collection instanceof OrderGridCollection &&
-            $filter->getField() == 'payment_method' &&
-            ($filterValue = $filter->getValue()) &&
-            strpos(is_array($filterValue) ? implode(',', $filterValue) : (string)$filterValue, Payment::METHOD_CODE . '_') !== false
+            $filter->getField() == self::PAYMENT_METHOD_FILTER_CODE &&
+            $filterValue &&
+            $this->isFilterHasBoltPaymentMethod($filterValue)
         ) {
             $collectionSelect = $collection->getSelect();
             $collectionAdapter = $collectionSelect->getConnection();
-            $paymentMethod = str_replace(Payment::METHOD_CODE . '_', '', $filter->getValue());
-            $collectionSelect->where(
-                'main_table.payment_method = "'. Payment::METHOD_CODE .'"
-                AND ('. $collectionAdapter->quoteInto('LOWER(payment.additional_data) like ?', '%' . $paymentMethod . '%') .' OR '. $collectionAdapter->quoteInto('LOWER(payment.additional_information) like ?', '%' . $paymentMethod . '%') .' OR '. $collectionAdapter->quoteInto('LOWER(payment.cc_type) = ?', $paymentMethod) .')'
-            );
+            $paymentMethods = $this->getPaymentMethodsWithTypes($filterValue);
+            $where = '';
+            foreach ($paymentMethods as $paymentMethod) {
+                //if where statement already have some statement all next should be as OR
+                if ($where) {
+                    $where .= ' OR ';
+                }
+                if ($paymentMethod['type'] == self::BOLT_PAYMENT_METHOD_TYPE) {
+                    //bolt payment method where statement
+                    $where .= '(main_table.payment_method = "'. Payment::METHOD_CODE .'"
+            AND ('. $collectionAdapter->quoteInto('LOWER(payment.additional_data) like ?', '%' . $paymentMethod['code'] . '%') .' OR '. $collectionAdapter->quoteInto('LOWER(payment.additional_information) like ?', '%' . $paymentMethod['code'] . '%') .' OR '. $collectionAdapter->quoteInto('LOWER(payment.cc_type) = ?', $paymentMethod['code']) .'))';
+                } else {
+                    //default payment method where statement
+                    $where .= '(main_table.payment_method = "'. $paymentMethod['code'] .'")';
+                }
+            }
+            $collectionSelect->where($where);
+
         } else {
             return $proceed($collection, $filter);
         }
     }
+
+    /**
+     * Returns payment methods with types
+     *
+     * @param string|array $paymentFilterValue
+     * @return array
+     */
+    private function getPaymentMethodsWithTypes($paymentFilterValue): array
+    {
+        $paymentMethods = [];
+        if (is_array($paymentFilterValue)) {
+            foreach ($paymentFilterValue as $value) {
+                $paymentMethods[] = [
+                    'type' => $this->getPaymentMethodType($value),
+                    'code' => $this->getPaymentMethodCode($value)
+                ];
+            }
+        } else {
+            $paymentMethods[] = [
+                'type' => $this->getPaymentMethodType($paymentFilterValue),
+                'code' => $this->getPaymentMethodCode($paymentFilterValue)
+            ];
+        }
+        return $paymentMethods;
+    }
+
+    /**
+     * Returns payment method type base on code
+     *
+     * @param string $paymentMethod
+     * @return string
+     */
+    private function getPaymentMethodType(string $paymentMethod): string
+    {
+        return (strpos($paymentMethod, Payment::METHOD_CODE . '_') !== false) ? self::BOLT_PAYMENT_METHOD_TYPE
+            : self::DEFAULT_METHOD_TYPE;
+    }
+
+    /**
+     * Returns filtered payment method code without possible 'bolt' prefix
+     *
+     * @param string $paymentMethod
+     * @return string
+     */
+    private function getPaymentMethodCode(string $paymentMethod): string
+    {
+        return str_replace(Payment::METHOD_CODE . '_', '', $paymentMethod);
+    }
+
+    /**
+     * Checks if payment method filter contains bolt payment
+     *
+     * @param array|string $paymentFilterValue
+     * @return bool
+     */
+    private function isFilterHasBoltPaymentMethod($paymentFilterValue): bool
+    {
+        return strpos(is_array($paymentFilterValue)
+                ? implode(',', $paymentFilterValue)
+                : (string)$paymentFilterValue, Payment::METHOD_CODE . '_') !== false;
+    }
+
 }
