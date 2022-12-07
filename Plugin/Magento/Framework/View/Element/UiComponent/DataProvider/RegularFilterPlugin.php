@@ -60,7 +60,7 @@ class RegularFilterPlugin
     ) {
         if ($collection instanceof OrderGridCollection &&
             $filter->getField() == 'payment_method' &&
-            ! ($filterValue = $filter->getValue()) &&
+            ($filterValue = $filter->getValue()) &&
             strpos(is_array($filterValue) ? implode(',', $filterValue) : (string)$filterValue, Payment::METHOD_CODE . '_') !== false
         ) {
             $collectionSelect = $collection->getSelect();
