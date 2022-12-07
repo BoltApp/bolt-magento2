@@ -39,7 +39,6 @@ if (!$block->isBoltProductPageForFrequencySelector()) { return;
         'jquery/jquery.cookie',
         'domReady!'
     ], function ($, authenticationPopup, customerData, whenDefined) {
-
         var callbacks = {
             /**
              * This callback is triggered by the frequency selector's onChange
@@ -174,7 +173,8 @@ if (!$block->isBoltProductPageForFrequencySelector()) { return;
 
             // if connect.js is not loaded postpone until it is
             whenDefined(window, 'BoltCheckout', function(){
-                BoltCheckout.configureProductFrequencySelector(cart, null, callbacks);
+                const persistedFrequencyValues = JSON.parse(localStorage.getItem("BOLT_SUBSCRIPTION_PDP")) ?? {}
+                BoltCheckout.configureProductFrequencySelector(cart, persistedFrequencyValues, callbacks);
             }, 'configureProductFrequencySelector');
         };
 
