@@ -232,6 +232,8 @@ class Debug implements DebugInterface
                 $result->setPlatformVersion($this->productMetadata->getVersion());
                 $result->setBoltConfigSettings($this->configHelper->getAllConfigSettings());
                 $result->setOtherPluginVersions($this->moduleRetriever->getInstalledModules());
+                $result->setCatalogIngestionData($this->catalogIngestionDebug->getDebugFullData());
+                $result->setFeatureSwitcherData($this->featureSwitchDebug->getDebugFullData());
         }
         return $result;
     }
