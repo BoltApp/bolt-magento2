@@ -155,7 +155,8 @@ if (!$block->isBoltProductPageForFrequencySelector()) { return;
 
             // if connect.js is not loaded postpone until it is
             whenDefined(window, 'BoltCheckout', function(){
-                BoltCheckout.configureProductFrequencySelector(cart, callbacks);
+                const persistedFrequencyValues = JSON.parse(localStorage.getItem("BOLT_SUBSCRIPTION_PDP")) ?? {}
+                BoltCheckout.configureProductFrequencySelector(cart, persistedFrequencyValues, callbacks);
             }, 'configureProductFrequencySelector');
         };
 
