@@ -58,9 +58,32 @@ define([
         billingAddressSelector: '#bolt-billing-address',
         placeOrderPayloadId: 'bolt-place-order-payload',
         customerEmailSelector: '#checkoutSteps #customer-email',
+        paymentOnlyCountrySelectors: ['div[name="billingAddressboltpay.country_id"] select[name=country_id]','div[name="shippingAddress.country_id"] select[name=country_id]','.payment-method-boltpay select[name=country_id]'],
+        paymentOnlyStateSelectors: ['div[name="billingAddressboltpay.region_id"] select[name=region_id]','div[name="shippingAddress.region_id"] select[name=region_id]','.payment-method-boltpay select[name=region_id]'],
+        countrySelectors: ['select[name=country_id]'],
+        stateSelectors: ['select[name=region_id]'],
         trackCallbacks: window.boltConfig.trackCallbacks,
         popUpOpen: false,
-        save_request: null,
+        saveRequest: null,
+        paymentOnlyPromise: null,
+        boltConfigure: null,
+        createRequest: false,
+        cartRestricted: false,
+        allowAutoOpen: true,
+        inputNameToHintsPrefill: {
+            'firstname': 'firstName',
+            'lastname':  'lastName',
+            'username':  'email',
+            'telephone': 'phone',
+            'street[0]': 'addressLine1',
+            'street[1]': 'addressLine2',
+            'city':      'city',
+            'postcode':  'zip'
+        },
+        inputNameToHintsPrefillPrefixes: [
+            '.fieldset.estimate',
+            '#checkout-step-shipping'
+        ],
 
         /**
          * Resolving ready status promise
@@ -135,11 +158,11 @@ define([
          * @param selector
          * @param fn
          */
-        initElementReadyCallback: function (selector, fn) {
+        initElementReadyCallback: function (selector, callback) {
             // Store the selector and callback to be monitored
             BoltCheckoutApiDriven.elementListeners.push({
                 selector: selector,
-                fn: fn
+                fn: callback
             });
             if (!BoltCheckoutApiDriven.elementReadyObserver) {
                 // Watch for changes in the document
@@ -151,6 +174,107 @@ define([
             }
             // Check if the element is currently in the DOM
             BoltCheckoutApiDriven.elementsCheckExisting();
+        },
+
+        /**
+         * Init callbacks for DOM element data changes
+         * @param selector
+         * @param callback
+         */
+        initElementDataChangeCallback: function (selector, callback) {
+            // Store the selector and callback to be monitored
+            BoltCheckoutApiDriven.elementDataListeners.push({
+                selector: selector,
+                fn: callback
+            });
+            if (!BoltCheckoutApiDriven.elementDataObserver) {
+                // Watch for data changes in the document
+                BoltCheckoutApiDriven.elementDataObserver = new MutationObserver(BoltCheckoutApiDriven.callElementDataChangeCallbacks);
+                let config = {
+                    characterData: true,
+                    subtree: true
+                };
+                BoltCheckoutApiDriven.elementDataObserver.observe(window.document.documentElement, config);
+            }
+        },
+
+        /**
+         * call elements change callbacks
+         */
+        callElementDataChangeCallbacks: function () {
+            // Check the DOM for elements matching a stored selector
+            for (let i = 0, len = BoltCheckoutApiDriven.elementDataListeners.length, listener, elements; i < len; i++) {
+                listener = BoltCheckoutApiDriven.elementDataListeners[i];
+                // Query for elements matching the specified selector
+                elements = window.document.querySelectorAll(listener.selector);
+                for (let j = 0, jLen = elements.length, element; j < jLen; j++) {
+                    element = elements[j];
+                    // Invoke the callback with the element
+                    listener.fn.call(element, element);
+                }
+            }
+        },
+
+        /**
+         * Init callbacks for DOM element attributes changes
+         * @param selectors
+         * @param callback
+         * @param onReady
+         * @param visibleOnly
+         */
+        initElementAttrChangeCallback: function (selectors, callback, onReady, visibleOnly){
+            for (let i = 0, length = selectors.length; i < length; i++) {
+
+                let selector = selectors[i];
+
+                ! function(selector) {
+
+                    BoltCheckoutApiDriven.initElementReadyCallback(selector, function(el) {
+                        if (onReady) callback(el);
+                        let value = el.value;
+                        BoltCheckoutApiDriven.initElementReadyCallback(selector, function(element) {
+                            if (visibleOnly && element.offsetParent === null) return;
+                            if (element.value !== value) {
+                                value = element.value;
+                                callback(element);
+                            }
+                        });
+                    });
+
+                }(selector);
+            }
+        },
+
+        /**
+         * Init callbacks for elements list
+         * @param selectors
+         * @param callback
+         * @param nonEmpty
+         * @param visibleOnly
+         */
+        initElementListDataChangeCallback: function(selectors, callback, nonEmpty, visibleOnly){
+            for (let i = 0, length = selectors.length; i < length; i++) {
+
+                let selector = selectors[i];
+
+                ! function(selector) {
+
+                    BoltCheckoutApiDriven.initElementReadyCallback(selector, function(el) {
+                        let value = el.textContent;
+                        onDataChange(selector, function(element) {
+                            if (visibleOnly && element.offsetParent === null) return;
+                            if (element.textContent !== value) {
+                                let originalValue = value;
+                                value = element.textContent;
+                                if (nonEmpty && !value) return;
+                                if (originalValue !== "" && parseInt(originalValue) > -1) return;
+                                callback(element);
+                            }
+                        });
+                    });
+
+                }(selector);
+            }
         },
 
         /**
@@ -239,6 +363,71 @@ define([
             characters = this.escapeRegex(characters);
 
             return str.replace(new RegExp("^[" + characters + "]+|[" + characters + "]+$", flags), '');
+        },
+
+        /**
+         * Is object
+         * @param item
+         * @returns {boolean}
+         */
+        isObject: function (item) {
+            return (item && typeof item === 'object' && !Array.isArray(item));
+        },
+
+        /**
+         * Deep merging of two objects
+         * @returns {{}}
+         */
+        deepMergeObjects: function () {
+
+            // Variables
+            let extended = {};
+            let i = 0;
+
+            // Merge the object into the extended object
+            let merge = function (obj) {
+
+                for (let prop in obj) {
+
+                    if (obj.hasOwnProperty(prop)) {
+                        if (BoltCheckoutApiDriven.isObject(obj[prop])) {
+                            // If the property is an object
+                            extended[prop] = BoltCheckoutApiDriven.deepMergeObjects(extended[prop], obj[prop]);
+                        } else {
+                            // Otherwise, do a regular merge
+                            extended[prop] = obj[prop];
+                        }
+                    }
+                }
+
+            };
+
+            // Loop through each object and conduct a merge
+            for (; i < arguments.length; i++) {
+                merge(arguments[i]);
+            }
+
+            return extended;
+        },
+
+        /**
+         * Update bolt hints
+         */
+        updateHints: function (){
+            // Check if cart exists (orderToken received).
+            // Othervise, do not update hints until it becomes available.
+            if (!BoltCheckoutApiDriven.quoteMaskedId) {
+                whenDefined(BoltCheckoutApiDriven.quoteMaskedId, 'boltQuoteMaskedId', BoltCheckoutApiDriven.updateHints, 'updateHints');
+                return;
+            }
+            let newHints = JSON.stringify(BoltCheckoutApiDriven.boltCartHints);
+            if ((BoltCheckoutApiDriven.boltCartHints !== newHints) && !BoltCheckoutApiDriven.isPromisesResolved) {
+                BoltCheckoutApiDriven.boltCheckoutConfigureCall(
+                    {"quoteMaskedId": BoltCheckoutApiDriven.quoteMaskedId},
+                    {"hints": BoltCheckoutApiDriven.boltCartHints}
+                );
+                BoltCheckoutApiDriven.boltCartHints = newHints;
+            }
         },
 
         /**
@@ -460,7 +649,7 @@ define([
                     }
 
                     // abort previously sent save order request.
-                    if (BoltCheckoutApiDriven.save_request) BoltCheckoutApiDriven.save_request.abort();
+                    if (BoltCheckoutApiDriven.saveRequest) BoltCheckoutApiDriven.saveRequest.abort();
                     // get thr transaction reference
                     let parameters = [];
                     parameters.push('form_key=' + $('[name="form_key"]').val());
@@ -486,7 +675,7 @@ define([
                     };
                     // ajax call to the update order transaction data endpoint.
                     // passes the bolt transaction reference
-                    BoltCheckoutApiDriven.save_request = $.post(window.boltConfig.save_order_url, parameters)
+                    BoltCheckoutApiDriven.saveRequest = $.post(window.boltConfig.save_order_url, parameters)
                         .done(onSuccess)
                         .fail(showError);
                 },
@@ -593,6 +782,222 @@ define([
             setupOrderManagementReplacement();
         },
 
+        initPaymentOnly: function () {
+            if (BoltCheckoutApiDriven.getCheckoutType() !== 'payment') {
+                return;
+            }
+            // define the params sent with the request variable
+            let params = [];
+
+            params.push('form_key=' + $('[name="form_key"]').val());
+
+            // stop if customer email field is present and invalid
+            let customer_email = $(BoltCheckoutApiDriven.customerEmailSelector);
+            let form = customer_email.closest('form');
+            if (typeof customer_email.val() !== 'undefined'
+                && (customer_email.val().trim() === ''
+                    || (form.validation() && form.validation('isValid') === false)
+                )) return;
+
+            if (window.boltConfig && !!window.boltConfig.publishable_key_payment) {
+                params.push('payment_only=true');
+            } else {
+                return;
+            }
+
+            // get additional page data to be sent with the request,
+            // one page checkout billing info, email, ...
+            let place_order_payload = document.getElementById(BoltCheckoutApiDriven.placeOrderPayloadId);
+            if (place_order_payload && place_order_payload.value) {
+
+                // stop if customer billing address is not set
+                if ($(BoltCheckoutApiDriven.billingAddressSelector).val() === 'null') return;
+
+                // decode payload json string
+                let place_order_payload_obj = JSON.parse(place_order_payload.value);
+
+                // delete redundant title property
+                if (place_order_payload_obj.paymentMethod) {
+                    delete place_order_payload_obj.paymentMethod.title;
+                }
+
+                // update payload email, use the value from the page
+                if (customer_email.val()) {
+                    place_order_payload_obj.email = encodeURIComponent(customer_email.val());
+                }
+                place_order_payload.value = JSON.stringify(place_order_payload_obj);
+
+                params.push('place_order_payload=' + place_order_payload.value);
+            }
+            params = params.join('&');
+
+            BoltCheckoutApiDriven.paymentOnlyPromise = new Promise(function (resolve, reject) {
+
+                BoltCheckoutApiDriven.createRequest = true;
+
+                // send create order request
+                $.get(window.boltConfig.create_order_url, params)
+                    .done(function (data) {
+
+                        BoltCheckoutApiDriven.cartRestricted = !!data.restrict;
+
+                        // Stop if Bolt checkout is restricted
+                        if (BoltCheckoutApiDriven.cartRestricted) {
+                            if (BoltCheckoutApiDriven.popUpOpen) reject(new Error(data.message));
+                            BoltCheckoutApiDriven.hintsBarrier.resolve(BoltCheckoutApiDriven.boltCartHints);
+                            return;
+                        }
+
+                        if (data.status !== 'success') {
+                            reject(new Error(data.message || 'Network request failed'));
+                            BoltCheckoutApiDriven.hintsBarrier.resolve(BoltCheckoutApiDriven.boltCartHints);
+                            return;
+                        }
+
+                        if (!data.cart) {
+                            reject(new Error('The cart info is missing.'));
+                            BoltCheckoutApiDriven.hintsBarrier.resolve(BoltCheckoutApiDriven.boltCartHints);
+                            return;
+                        }
+
+                        // if (!data.cart.orderToken) {
+                        //     reject(new Error('The cart is empty.'));
+                        //     BoltCheckoutApiDriven.hintsBarrier.resolve(BoltCheckoutApiDriven.boltCartHints);
+                        //     return;
+                        // }
+
+                        let prefill = BoltCheckoutApiDriven.isObject(data.hints.prefill)
+                            ? BoltCheckoutApiDriven.deepMergeObjects(BoltCheckoutApiDriven.boltCartHints.prefill, data.hints.prefill) : BoltCheckoutApiDriven.boltCartHints.prefill;
+
+                        BoltCheckoutApiDriven.boltCartHints = BoltCheckoutApiDriven.deepMergeObjects(BoltCheckoutApiDriven.boltCartHints, data.hints);
+                        BoltCheckoutApiDriven.boltCartHints.prefill = prefill;
+                        //////////////////////////
+
+                        resolve(data.cart);
+                        BoltCheckoutApiDriven.hintsBarrier.resolve(BoltCheckoutApiDriven.boltCartHints);
+
+                        // open the checkout if auto-open flag is set
+                        // one time only on page load
+                        if (BoltCheckoutApiDriven.initiateCheckout && BoltCheckoutApiDriven.allowAutoOpen) {
+                            BoltCheckoutApiDriven.boltConfigure.open();
+                            BoltCheckoutApiDriven.allowAutoOpen = false;
+                        }
+                    })
+                    .fail(function(jqXHR, textStatus, errorThrown) {
+                        reject(new Error(errorThrown || jqXHR.statusText || 'Network request failed'));
+                    })
+                    .always(function() {
+                        BoltCheckoutApiDriven.createRequest = false;
+                    })
+            });
+            BoltCheckoutApiDriven.boltCheckoutConfigureCall(
+                {"quoteMaskedId": BoltCheckoutApiDriven.quoteMaskedId},
+                {"hints": BoltCheckoutApiDriven.boltCartHints}
+            );
+        },
+
+        initPaymentOnlyObservers: function () {
+            if (this.getCheckoutType() === 'payment') {
+                /////////////////////////////////////////////////////
+                // Call Bolt order creation Magento endpoint on
+                // customer billing address change on payment only page,
+                // storing the live page data in Bolt cart.
+                /////////////////////////////////////////////////////
+                let billing_address_value;
+                this.initElementReadyCallback(this.billingAddressSelector, function(element) {
+                    let address = element.value;
+                    if (address === 'null' || address === '') return;
+
+                    if (address !== billing_address_value) {
+                        billing_address_value = address;
+                        BoltCheckoutApiDriven.initPaymentOnly();
+                    }
+                });
+                /////////////////////////////////////////////////////
+
+                /////////////////////////////////////////////////////
+                // Call Bolt order creation Magento endpoint on
+                // customer email change on payment only page, storing
+                // the live page data in Bolt cart.
+                /////////////////////////////////////////////////////
+                let customer_email_value;
+                this.initElementReadyCallback(this.customerEmailSelector, function(element) {
+
+                    let email = element.value.trim();
+                    if (email === "") return;
+
+                    if (email !== customer_email_value) {
+                        customer_email_value = email;
+                        BoltCheckoutApiDriven.initPaymentOnly();
+                    }
+                });
+            }
+        },
+
+        initHintsObservers: function () {
+            let countrySelectors = (BoltCheckoutApiDriven.getCheckoutType() === "payment") ?
+                BoltCheckoutApiDriven.paymentOnlyCountrySelectors : BoltCheckoutApiDriven.countrySelectors;
+            let stateSelectors = (BoltCheckoutApiDriven.getCheckoutType() === "payment") ?
+                BoltCheckoutApiDriven.paymentOnlyStateSelectors : BoltCheckoutApiDriven.stateSelectors;
+
+            BoltCheckoutApiDriven.initElementAttrChangeCallback(countrySelectors, function(element) {
+                if (!element.value) {
+                    delete BoltCheckoutApiDriven.boltCartHints.prefill.country;
+                }
+                else {
+                    BoltCheckoutApiDriven.boltCartHints.prefill.country = element.value;
+                }
+                delete BoltCheckoutApiDriven.boltCartHints.prefill.state;
+
+                BoltCheckoutApiDriven.updateHints();
+            }, true);
+
+            BoltCheckoutApiDriven.initElementAttrChangeCallback(stateSelectors, function(element) {
+                if (!element.value) {
+                    delete BoltCheckoutApiDriven.boltCartHints.prefill.state;
+                }
+                else {
+                    BoltCheckoutApiDriven.boltCartHints.prefill.state = element.options[element.selectedIndex].text;
+                }
+
+                BoltCheckoutApiDriven.updateHints();
+            });
+
+            // monitor address text input fields and update hints on value change
+            for (let i = 0, length = BoltCheckoutApiDriven.inputNameToHintsPrefillPrefixes.length; i < length; i++) {
+
+                let prefix = BoltCheckoutApiDriven.inputNameToHintsPrefillPrefixes[i];
+
+                ! function (prefix) {
+
+                    for (let inputName in BoltCheckoutApiDriven.inputNameToHintsPrefill) {
+
+                        if (BoltCheckoutApiDriven.inputNameToHintsPrefill.hasOwnProperty(inputName)) {
+
+                            ! function (inputName) {
+
+                                let prefillKey = BoltCheckoutApiDriven.inputNameToHintsPrefill[inputName];
+                                let inputSelectors = [prefix + ' input[name="' + inputName + '"]'];
+
+                                BoltCheckoutApiDriven.initElementAttrChangeCallback(inputSelectors, function(element) {
+                                    if (element.value) {
+                                        // set the hints prefill if the correlated input field value is not an empty string
+                                        BoltCheckoutApiDriven.boltCartHints.prefill[prefillKey] = element.value;
+                                    } else {
+                                        // delete hints prefill key if the value is empty
+                                        delete BoltCheckoutApiDriven.boltCartHints.prefill[prefillKey];
+                                    }
+                                    BoltCheckoutApiDriven.updateHints();
+                                });
+
+                            } (inputName);
+                        }
+                    }
+
+                } (prefix);
+            }
+        },
+
         /**
          * Call BoltCheckout configure
          *
@@ -603,7 +1008,7 @@ define([
             if (window.BoltCheckout === undefined) {
                 throw new Error('BoltCheckout is undefined');
             }
-            window.BoltCheckout.configure(
+            BoltCheckoutApiDriven.boltConfigure = window.BoltCheckout.configure(
                 boltCart,
                 boltHints,
                 this.boltCallbacks,
@@ -637,6 +1042,9 @@ define([
             this.initBoltCallbacks();
             this.initUIElements();
             this.initOrderManagement();
+            this.initPaymentOnlyObservers();
+            this.initPaymentOnly();
+            this.initHintsObservers();
             if (!this.customerCart()) {
                 return;
             }
