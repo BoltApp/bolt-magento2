@@ -199,7 +199,7 @@
         </resources>
     </route>
     <!-- Call order->place() method in order to trigger before & after place events -->
-    <route url="/V1/bolt/boltpay/order/:id/place" method="POST">
+    <route url="/V1/bolt/boltpay/order/:id/triggerOrderEvents" method="POST">
         <service class="Bolt\Boltpay\Api\OrderManagementInterface" method="placeOrder"/>
         <resources>
             <resource ref="Magento_Sales::create" />
