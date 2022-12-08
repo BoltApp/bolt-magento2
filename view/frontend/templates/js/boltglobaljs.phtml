@@ -61,7 +61,7 @@ $onSuccessCode = $block->getJavascriptSuccess() . $trackCallbackCode['success'];
         onShippingOptionsComplete: <?= /* @noEscape */ $block->wrapWithCatch($onShippingOptionsCompleteCode);
         ?>,
         onPaymentSubmit: <?= /* @noEscape */ $block->wrapWithCatch($trackCallbackCode['payment_submit']); ?>,
-        onSuccess: <?= /* @noEscape */ $block->wrapWithCatch($onSuccessCode, 'data') ?>,
+        onSuccess: <?= /* @noEscape */ $block->wrapWithCatch($onSuccessCode, 'transaction') ?>,
         onClose: <?= /* @noEscape */ $block->wrapWithCatch($trackCallbackCode['close']); ?>,
     };
 
