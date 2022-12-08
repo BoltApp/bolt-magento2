@@ -55,9 +55,9 @@ class DataProcessor
 {
     private const PRIMARY_IMAGE_TYPE_CODE = 'image';
 
-    private const PRODUCT_VISIBILITY_VISIBLE = 'visible';
+    private const PRODUCT_VISIBILITY_VISIBLE = 'true';
 
-    private const PRODUCT_VISIBILITY_NOT_VISIBLE = 'not_visible';
+    private const PRODUCT_VISIBILITY_NOT_VISIBLE = 'false';
 
     private const PRODUCT_IMAGE_SIZENAME = 'standard';
 
@@ -359,30 +359,25 @@ class DataProcessor
             $productData['Weight'] = $weight;
         }
 
-        if ($gtin = $product->getGtin()) {
-            $productData['GTIN'] = $gtin;
-        }
-
         if ($description = $product->getDescription()) {
             $productData['Description'] = $description;
-        }
-
-        if ($primaryImageId = $this->getProductPrimaryImageId($product)) {
-            $productData['PrimaryImageID'] = $primaryImageId;
         }
 
         if ($weight = $product->getWeight()) {
             $productData['Weight'] = $weight;
         }
 
+        // Magento don't have default properties for GTIN, Width, Depth and Height
+        // but if there are custom ones we will set them
+        if ($gtin = $product->getGtin()) {
+            $productData['GTIN'] = $gtin;
+        }
         if ($width = $product->getWidth()) {
             $productData['Width'] = $width;
         }
-
         if ($depth = $product->getDepth()) {
             $productData['Depth'] = $depth;
         }
-
         if ($height = $product->getHeight()) {
             $productData['Height'] = $height;
         }
@@ -570,34 +565,26 @@ class DataProcessor
             }
             $productAttributeData = [
                 'Name' => $productAttribute->getAttributeCode(),
-                'NameID' => ($productAttribute->getAttributeId())? (int)$productAttribute->getAttributeId() : null,
                 'Value' => $product->getData($productAttribute->getAttributeCode()),
-                'ValueID' => $this->getAttributeValueId($product, $productAttribute),
                 'DisplayType' => $productAttribute->getFrontendInput(),
                 'DisplayName' => $productAttribute->getAttributeCode(),
                 'DisplayValue' => ($this->getAttributeDisplayValue($product, $productAttribute)),
-                'Visibility' => ($productAttribute->getIsVisible()) ? 'visible' : null,
+                'Visibility' => ($productAttribute->getIsVisibleOnFront()) ? 'true' : 'false',
                 'TextLabel' => $productAttribute->getFrontendLabel(),
-                'ImageURL' => null,
                 'Position' => (int)$productAttribute->getPosition(),
             ];
+            $attributeValue = $product->getData($productAttribute->getAttributeCode());
+            if (is_numeric($attributeValue)) {
+                $productAttributeData["ValueID"] = (int)$attributeValue;
+            }
+            if ($productAttribute->getAttributeId()) {
+                $productAttributeData['NameID'] = (int)$productAttribute->getAttributeId();
+            }
+
             $properties[] = $productAttributeData;
         }
 
         return $properties;
-    }
-
-    /**
-     * Returns attribute value id
-     *
-     * @param ProductInterface $product
-     * @param EavAttribute $attribute
-     * @return int|null
-     */
-    private function getAttributeValueId(ProductInterface $product, EavAttribute $attribute): ?int
-    {
-        $attributeValue = $product->getData($attribute->getAttributeCode());
-        return (is_numeric($attributeValue)) ? (int)$attributeValue : null;
     }
 
     /**
@@ -645,9 +632,10 @@ class DataProcessor
                     'SizeName' => self::PRODUCT_IMAGE_SIZENAME,
                     'Width' => $imageSize[0],
                     'Height' => $imageSize[1],
-                    'Length' => null,
-                    'Description' => ($mediaImage->getVideoDescription()) ?: '',
                 ];
+                if ($mediaImage->getVideoDescription()) {
+                    $mediaData['Description'] = $mediaImage->getVideoDescription();
+                }
                 $media[] = $mediaData;
             }
         }
@@ -718,34 +706,9 @@ class DataProcessor
                 'SalePrice' => $price,
                 'Currency' => $currencyCode,
                 'Locale' => $this->localeResolver->emulate($this->storeManager->getStore()->getId()),
-                'Unit' => '',
             ]
         ];
         return $prices;
-    }
-
-    /**
-     * Returns product primary image id
-     *
-     * @param ProductInterface $product
-     * @return int|null
-     */
-    private function getProductPrimaryImageId(ProductInterface $product): ?int
-    {
-        $mediaGallery = $product->getMediaGalleryEntries();
-        if (empty($mediaGallery)) {
-            return null;
-        }
-        $imageId = null;
-        foreach ($mediaGallery as $image) {
-            if (in_array(self::PRIMARY_IMAGE_TYPE_CODE, $image->getTypes())) {
-                $imageId = $image->getId();
-            }
-        }
-        if (!$imageId) {
-            $imageId = $mediaGallery[0]->getId();
-        }
-        return (int)$imageId;
     }
 
     /**
