@@ -193,9 +193,6 @@ class ProductEventManager implements ProductEventManagerInterface
         }
 
         foreach ($websiteIds as $websiteId) {
-            if (!$this->config->getIsCatalogIngestionEnabled($websiteId)) {
-                continue;
-            }
             $request = $this->productEventRequestBuilder->getRequest($productEvent, (int)$websiteId);
             $responseStatus = $this->apiHelper->sendRequest($request);
             if ($this->productEventRequestBuilder->isSuccessfulResponseStatus((int)$responseStatus) ) {

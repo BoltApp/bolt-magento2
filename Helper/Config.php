@@ -278,11 +278,6 @@ class Config extends AbstractHelper
     const XML_PATH_GEOLOCATION_API_KEY = 'payment/boltpay/geolocation_api_key';
 
     /**
-     * Path for catalog ingestion enabled
-     */
-    const XML_PATH_CATALOG_INGESTION_ENABLED = 'payment/boltpay/catalog_ingestion_enabled';
-
-    /**
      * Path for catalog ingestion cron max items
      */
     const XML_PATH_CATALOG_INGESTION_CRON_MAX_ITEMS = 'payment/boltpay/catalog_ingestion_cron_max_items';
@@ -2576,22 +2571,6 @@ class Config extends AbstractHelper
     public function getMerchantDashboardUrlFromAdditionalConfig($storeId = null)
     {
         return $this->getAdditionalConfigProperty('merchantDashboardURL', $storeId) ?: '';
-    }
-
-    /**
-     * Returns if catalog ingestion enabled.
-     *
-     * @param int|string|null $websiteId
-     *
-     * @return bool
-     */
-    public function getIsCatalogIngestionEnabled($websiteId = null)
-    {
-        return $this->getScopeConfig()->isSetFlag(
-            self::XML_PATH_CATALOG_INGESTION_ENABLED,
-            ScopeInterface::SCOPE_WEBSITES,
-            $websiteId
-        );
     }
 
     /**
