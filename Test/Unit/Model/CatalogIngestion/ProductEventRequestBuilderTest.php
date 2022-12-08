@@ -228,7 +228,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                         'URL' => $product->getProductUrl(),
                         'Name' => 'Catalog Ingestion Simple Product',
                         'ManageInventory' => true,
-                        'Visibility' => 'visible',
+                        'Visibility' => 'true',
                         'Backorder' => 'no',
                         'Availability' => 'in_stock',
                         'ShippingRequired' => true,
@@ -237,8 +237,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 'ListPrice' => 10000,
                                 'SalePrice' => 10000,
                                 'Currency' => 'USD',
-                                'Locale' => 'en_US',
-                                'Unit' => ''
+                                'Locale' => 'en_US'
                             ]
                         ],
                         'Inventories' => [
@@ -254,13 +253,11 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 'Name' => 'cost',
                                 'NameID' => 81,
                                 'Value' => NULL,
-                                'ValueID' => NULL,
                                 'DisplayType' => 'price',
                                 'DisplayName' => 'cost',
                                 'DisplayValue' => NULL,
-                                'Visibility' => 'visible',
+                                'Visibility' => 'false',
                                 'TextLabel' => 'Cost',
-                                'ImageURL' => NULL,
                                 'Position' => 0
                             ]
                         ],
@@ -269,7 +266,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                 'variants' => []
             ]
         ];
-        $this->assertEquals($apiData, $expectedApiData);
+        $this->assertEquals($expectedApiData, $apiData);
     }
 
     /**
@@ -295,7 +292,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                         'URL' => $product->getProductUrl(),
                         'Name' => self::PRODUCT_NAME_CONFIGURABLE,
                         'ManageInventory' => true,
-                        'Visibility' => 'visible',
+                        'Visibility' => 'true',
                         'Backorder' => 'no',
                         'Availability' => 'in_stock',
                         'ShippingRequired' => true,
@@ -305,7 +302,6 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 'SalePrice' => 10000,
                                 'Currency' => 'USD',
                                 'Locale' => 'en_US',
-                                'Unit' => ''
                             ]
                         ],
                         'Inventories' => [
@@ -318,28 +314,24 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                         'Properties' => [
                             [
                                 'Name' => 'test_configurable',
-                                'NameID' => $this->configurableAttributeId,
+                                'NameID' => (int)$this->configurableAttributeId,
                                 'Value' => NULL,
-                                'ValueID' => NULL,
                                 'DisplayType' => 'select',
                                 'DisplayName' => 'test_configurable',
                                 'DisplayValue' => '',
-                                'Visibility' => 'visible',
+                                'Visibility' => 'false',
                                 'TextLabel' => 'Test Configurable',
-                                'ImageURL' => NULL,
                                 'Position' => 0
                             ],
                             [
                                 'Name' => 'cost',
                                 'NameID' => 81,
                                 'Value' => NULL,
-                                'ValueID' => NULL,
                                 'DisplayType' => 'price',
                                 'DisplayName' => 'cost',
                                 'DisplayValue' => NULL,
-                                'Visibility' => 'visible',
+                                'Visibility' => 'false',
                                 'TextLabel' => 'Cost',
-                                'ImageURL' => NULL,
                                 'Position' => 0
                             ]
                         ],
@@ -356,7 +348,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                 'URL' => $associatedProduct->getProductUrl(),
                 'Name' => self::PRODUCT_NAME,
                 'ManageInventory' => true,
-                'Visibility' => 'not_visible',
+                'Visibility' => 'false',
                 'Backorder' => 'no',
                 'Availability' => 'in_stock',
                 'ShippingRequired' => true,
@@ -365,8 +357,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                         'ListPrice' => 10000,
                         'SalePrice' => 10000,
                         'Currency' => 'USD',
-                        'Locale' => 'en_US',
-                        'Unit' => ''
+                        'Locale' => 'en_US'
                     ]
                 ],
                 'Inventories' => [
@@ -380,25 +371,22 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                 'Properties' => [
                     [
                         'Name' => 'test_configurable',
-                        'NameID' => $this->configurableAttributeId,
+                        'NameID' => (int)$this->configurableAttributeId,
                         'DisplayType' => 'select',
                         'DisplayName' => 'test_configurable',
-                        'Visibility' => 'visible',
+                        'Visibility' => 'false',
                         'TextLabel' => 'Test Configurable',
-                        'ImageURL' => NULL,
                         'Position' => 0
                     ],
                     [
                         'Name' => 'cost',
                         'NameID' => 81,
                         'Value' => NULL,
-                        'ValueID' => NULL,
                         'DisplayType' => 'price',
                         'DisplayName' => 'cost',
                         'DisplayValue' => NULL,
-                        'Visibility' => 'visible',
+                        'Visibility' => 'false',
                         'TextLabel' => 'Cost',
-                        'ImageURL' => NULL,
                         'Position' => 0
                     ]
                 ],
@@ -434,7 +422,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
             }
             $expectedApiData['product']['product']['Options'][] = $optionData;
         }
-        $this->assertEquals($apiData, $expectedApiData);
+        $this->assertEquals($expectedApiData, $apiData);
     }
 
     /**
@@ -460,7 +448,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                         'URL' => $product->getProductUrl(),
                         'Name' => 'Bundle Product',
                         'ManageInventory' => true,
-                        'Visibility' => 'visible',
+                        'Visibility' => 'true',
                         'Backorder' => 'no',
                         'Availability' => 'in_stock',
                         'ShippingRequired' => true,
@@ -470,7 +458,6 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 'SalePrice' => 1275,
                                 'Currency' => 'USD',
                                 'Locale' => 'en_US',
-                                'Unit' => ''
                             ]
                         ],
                         'Inventories' => [
@@ -505,13 +492,11 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 'Name' => 'cost',
                                 'NameID' => 81,
                                 'Value' => NULL,
-                                'ValueID' => NULL,
                                 'DisplayType' => 'price',
                                 'DisplayName' => 'cost',
                                 'DisplayValue' => NULL,
-                                'Visibility' => 'visible',
+                                'Visibility' => 'false',
                                 'TextLabel' => 'Cost',
-                                'ImageURL' => NULL,
                                 'Position' => 0
                             ]
                         ],
@@ -524,7 +509,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                         'URL' => $this->bundleChildProduct->getProductUrl(),
                         'Name' => 'Catalog Ingestion Simple Product',
                         'ManageInventory' => true,
-                        'Visibility' => 'visible',
+                        'Visibility' => 'true',
                         'Backorder' => 'no',
                         'Availability' => 'in_stock',
                         'ShippingRequired' => true,
@@ -534,7 +519,6 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 'SalePrice' => 10000,
                                 'Currency' => 'USD',
                                 'Locale' => 'en_US',
-                                'Unit' => ''
                             ]
                         ],
                         'Inventories' => [
@@ -550,13 +534,11 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 'Name' => 'cost',
                                 'NameID' => 81,
                                 'Value' => NULL,
-                                'ValueID' => NULL,
                                 'DisplayType' => 'price',
                                 'DisplayName' => 'cost',
                                 'DisplayValue' => NULL,
-                                'Visibility' => 'visible',
+                                'Visibility' => 'false',
                                 'TextLabel' => 'Cost',
-                                'ImageURL' => NULL,
                                 'Position' => 0
                             ]
                         ],
@@ -566,7 +548,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                 ]
             ]
         ];
-        $this->assertEquals($apiData, $expectedApiData);
+        $this->assertEquals($expectedApiData, $apiData);
     }
 
     /**
@@ -592,7 +574,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                         'URL' => $product->getProductUrl(),
                         'Name' => 'Grouped Product',
                         'ManageInventory' => true,
-                        'Visibility' => 'visible',
+                        'Visibility' => 'true',
                         'Backorder' => 'no',
                         'Availability' => 'in_stock',
                         'ShippingRequired' => true,
@@ -601,8 +583,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 'ListPrice' => 10000,
                                 'SalePrice' => 10000,
                                 'Currency' => 'USD',
-                                'Locale' => 'en_US',
-                                'Unit' => ''
+                                'Locale' => 'en_US'
                             ]
                         ],
                         'Inventories' => [
@@ -618,13 +599,11 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 'Name' => 'cost',
                                 'NameID' => 81,
                                 'Value' => NULL,
-                                'ValueID' => NULL,
                                 'DisplayType' => 'price',
                                 'DisplayName' => 'cost',
                                 'DisplayValue' => NULL,
-                                'Visibility' => 'visible',
+                                'Visibility' => 'false',
                                 'TextLabel' => 'Cost',
-                                'ImageURL' => NULL,
                                 'Position' => 0
                             ]
                         ],
@@ -637,7 +616,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                         'URL' => $this->groupedChildProduct->getProductUrl(),
                         'Name' => 'Catalog Ingestion Simple Product',
                         'ManageInventory' => true,
-                        'Visibility' => 'visible',
+                        'Visibility' => 'true',
                         'Backorder' => 'no',
                         'Availability' => 'in_stock',
                         'ShippingRequired' => true,
@@ -647,7 +626,6 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 'SalePrice' => 10000,
                                 'Currency' => 'USD',
                                 'Locale' => 'en_US',
-                                'Unit' => ''
                             ]
                         ],
                         'Inventories' => [
@@ -663,13 +641,11 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                                 'Name' => 'cost',
                                 'NameID' => 81,
                                 'Value' => NULL,
-                                'ValueID' => NULL,
                                 'DisplayType' => 'price',
                                 'DisplayName' => 'cost',
                                 'DisplayValue' => NULL,
-                                'Visibility' => 'visible',
+                                'Visibility' => 'false',
                                 'TextLabel' => 'Cost',
-                                'ImageURL' => NULL,
                                 'Position' => 0
                             ]
                         ],
@@ -679,7 +655,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                 ]
             ]
         ];
-        $this->assertEquals($apiData, $expectedApiData);
+        $this->assertEquals($expectedApiData, $apiData);
     }
 
     /**
