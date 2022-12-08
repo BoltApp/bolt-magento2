@@ -442,28 +442,19 @@
                 </group>
                 <group id="catalog_ingestion" translate="label" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Catalog Ingestion</label>
-                    <field id="catalog_ingestion_enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
-                        <label>Catalog Ingestion Enabled</label>
-                        <config_path>payment/boltpay/catalog_ingestion_enabled</config_path>
-                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                        <comment>Enable catalog ingestion</comment>
-                    </field>
                     <field id="catalog_ingestion_cron_expr" translate="label" type="text" sortOrder="20" showInDefault="0" showInWebsite="0" showInStore="0">
                         <label>Schedule Sync. Cron Expr</label>
                         <config_path>payment/boltpay/catalog_ingestion_cron_expr</config_path>
-                        <depends><field id="catalog_ingestion_enabled">1</field></depends>
                         <comment>Cron expression for catalog synchronisation</comment>
                     </field>
                     <field id="catalog_ingestion_cron_max_items" translate="label" type="text" sortOrder="30" showInDefault="0" showInWebsite="0" showInStore="0">
                         <label>Cron max items processed</label>
                         <config_path>payment/boltpay/catalog_ingestion_cron_max_items</config_path>
-                        <depends><field id="catalog_ingestion_enabled">1</field></depends>
                         <comment>Maximum items processed by one job</comment>
                     </field>
                     <field id="catalog_ingestion_instant_enabled" translate="label" type="select" sortOrder="40" showInDefault="0" showInWebsite="0" showInStore="0">
                         <label>Instant Sync. Enabled</label>
                         <config_path>payment/boltpay/catalog_ingestion_instant_enabled</config_path>
-                        <depends><field id="catalog_ingestion_enabled">1</field></depends>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Enable instant catalog synchronisation by custom events</comment>
                     </field>
@@ -473,7 +464,6 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <depends>
                             <field id="catalog_ingestion_instant_enabled">1</field>
-                            <field id="catalog_ingestion_enabled">1</field>
                         </depends>
                         <comment><![CDATA[Enable async mode for instant catalog synchronisation by "async.operations.all" consumer. Do not enable this for magento version below 2.3.x. And be sure your amqp job is configured: <a target="_blank" href="https://devdocs.magento.com/guides/v2.3/config-guide/mq/manage-message-queues.html#configuration">https://devdocs.magento.com/guides/v2.3/config-guide/mq/manage-message-queues.html</a>]]></comment>
                     </field>
@@ -483,14 +473,12 @@
                         <source_model>Bolt\Boltpay\Model\Config\Source\Catalog\Ingestion\Events</source_model>
                         <depends>
                             <field id="catalog_ingestion_instant_enabled">1</field>
-                            <field id="catalog_ingestion_enabled">1</field>
                         </depends>
                         <comment>Instant catalog synchronisation custom events</comment>
                     </field>
                     <field id="catalog_ingestion_system_configuration_update_request_enabled" translate="label" type="select" sortOrder="70" showInDefault="0" showInWebsite="0" showInStore="0">
                         <label>System configuration update request</label>
                         <config_path>payment/boltpay/catalog_ingestion_system_configuration_update_request_enabled</config_path>
-                        <depends><field id="catalog_ingestion_enabled">1</field></depends>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <comment>Enable magento system configuration update request to Bolt</comment>
                     </field>
