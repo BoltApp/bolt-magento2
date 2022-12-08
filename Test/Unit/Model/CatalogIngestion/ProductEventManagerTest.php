@@ -122,12 +122,6 @@ class ProductEventManagerTest extends BoltTestCase
         $publishKey = $encryptor->encrypt(self::PUBLISH_KEY);
         $configData = [
             [
-                'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED,
-                'value' => 1,
-                'scope' => ScopeInterface::SCOPE_WEBSITES,
-                'scopeId' => $websiteId,
-            ],
-            [
                 'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_INSTANT_ENABLED,
                 'value' => 1,
                 'scope' => ScopeInterface::SCOPE_WEBSITES,
@@ -237,31 +231,6 @@ class ProductEventManagerTest extends BoltTestCase
     {
         $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
         $apiHelper->expects(self::once())->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
-        TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
-        $product = $this->createProduct();
-
-        $this->productEventManager->publishProductEvent($product->getId(), ProductEventInterface::TYPE_UPDATE);
-        $productEvent = $this->productEventRepository->getByProductId($product->getId());
-        $this->productEventManager->sendProductEvent($productEvent);
-    }
-
-    /**
-     * @test
-     */
-    public function testSendProductEvent_withDisabledCatalogIngestion()
-    {
-        $configData = [
-            [
-                'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED,
-                'value' => 0,
-                'scope' => ScopeInterface::SCOPE_WEBSITES,
-                'scopeId' => $this->storeManager->getWebsite()->getId(),
-            ]
-        ];
-        TestUtils::setupBoltConfig($configData);
-
-        $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
-        $apiHelper->expects(self::never())->method('sendRequest');
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
         $product = $this->createProduct();
 
@@ -431,7 +400,6 @@ class ProductEventManagerTest extends BoltTestCase
     {
         $websiteId = $this->storeManager->getWebsite()->getId();
         $configResource = $this->objectManager->get(ResourceConfig::class);
-        $configResource->deleteConfig(BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED, ScopeInterface::SCOPE_WEBSITES, $websiteId);
         $configResource->deleteConfig(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, ScopeInterface::SCOPE_STORES, $websiteId);
         $configResource->deleteConfig(BoltConfig::XML_PATH_API_KEY, ScopeInterface::SCOPE_STORES, $websiteId);
         $connection = $this->resource->getConnection('default');

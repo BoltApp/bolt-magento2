@@ -271,12 +271,6 @@ class ProductEventProcessorTest extends BoltTestCase
         $publishKey = $encryptor->encrypt(self::PUBLISH_KEY);
         $configData = [
             [
-                'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED,
-                'value' => 1,
-                'scope' => ScopeInterface::SCOPE_WEBSITES,
-                'scopeId' => $websiteId,
-            ],
-            [
                 'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_INSTANT_ENABLED,
                 'value' => 1,
                 'scope' => ScopeInterface::SCOPE_WEBSITES,
@@ -696,7 +690,6 @@ class ProductEventProcessorTest extends BoltTestCase
     {
         $websiteId = $this->storeManager->getWebsite()->getId();
         $configResource = $this->objectManager->get(ResourceConfig::class);
-        $configResource->deleteConfig(BoltConfig::XML_PATH_CATALOG_INGESTION_ENABLED, ScopeInterface::SCOPE_WEBSITES, $websiteId);
         $configResource->deleteConfig(BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT, ScopeInterface::SCOPE_STORES, $websiteId);
         $configResource->deleteConfig(BoltConfig::XML_PATH_API_KEY, ScopeInterface::SCOPE_STORES, $websiteId);
         $connection = $this->resource->getConnection('default');
