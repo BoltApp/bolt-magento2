@@ -22,6 +22,7 @@ use Magento\Framework\Data\Collection;
 use Magento\Framework\Api\Filter;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Sales\Model\ResourceModel\Order\Grid\Collection as OrderGridCollection;
+use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
  * Ui component filter plugin to implement filter sales order grid by bolt payment methods
@@ -40,12 +41,20 @@ class RegularFilterPlugin
     private $resourceConnection;
 
     /**
+     * @var Bugsnag
+     */
+    private $bugsnag;
+
+    /**
      * @param ResourceConnection $resourceConnection
+     * @param Bugsnag $bugsnag
      */
     public function __construct(
-        ResourceConnection $resourceConnection
+        ResourceConnection $resourceConnection,
+        Bugsnag $bugsnag
     ) {
         $this->resourceConnection = $resourceConnection;
+        $this->bugsnag = $bugsnag;
     }
 
     /**
@@ -64,35 +73,41 @@ class RegularFilterPlugin
         Collection $collection,
         Filter $filter
     ) {
-        $filterValue = $filter->getValue();
-        if ($collection instanceof OrderGridCollection &&
-            $filter->getField() == self::PAYMENT_METHOD_FILTER_CODE &&
-            $filterValue &&
-            $this->isFilterHasBoltPaymentMethod($filterValue)
-        ) {
-            $collectionSelect = $collection->getSelect();
-            $collectionAdapter = $collectionSelect->getConnection();
-            $paymentMethods = $this->getPaymentMethodsWithTypes($filterValue);
-            $where = '';
-            foreach ($paymentMethods as $paymentMethod) {
-                //if where statement already have some statement all next should be as OR
-                if ($where) {
-                    $where .= ' OR ';
+        try {
+            $filterValue = $filter->getValue();
+            if ($collection instanceof OrderGridCollection &&
+                $filter->getField() == self::PAYMENT_METHOD_FILTER_CODE &&
+                $filterValue &&
+                $this->isFilterHasBoltPaymentMethod($filterValue)
+            ) {
+                $collectionSelect = $collection->getSelect();
+                $collectionAdapter = $collectionSelect->getConnection();
+                $paymentMethods = $this->getPaymentMethodsWithTypes($filterValue);
+                $where = '';
+                foreach ($paymentMethods as $paymentMethod) {
+                    //if where statement already have some statement all next should be as OR
+                    if ($where) {
+                        $where .= ' OR ';
+                    }
+                    if ($paymentMethod['type'] == self::BOLT_PAYMENT_METHOD_TYPE) {
+                        //bolt payment method where statement
+                        $where .= '(main_table.payment_method = "'. Payment::METHOD_CODE . '"' .
+                            ' AND ('. $collectionAdapter->quoteInto('LOWER(payment.additional_data) like ?', '%' . $paymentMethod['code'] . '%') .
+                            ' OR '. $collectionAdapter->quoteInto('LOWER(payment.additional_information) like ?', '%' . $paymentMethod['code'] . '%') .
+                            ' OR '. $collectionAdapter->quoteInto('LOWER(payment.cc_type) = ?', $paymentMethod['code']) .'))';
+                    } else {
+                        //default payment method where statement
+                        $where .= '(main_table.payment_method = "'. $paymentMethod['code'] .'")';
+                    }
                 }
-                if ($paymentMethod['type'] == self::BOLT_PAYMENT_METHOD_TYPE) {
-                    //bolt payment method where statement
-                    $where .= '(main_table.payment_method = "'. Payment::METHOD_CODE .'"
-            AND ('. $collectionAdapter->quoteInto('LOWER(payment.additional_data) like ?', '%' . $paymentMethod['code'] . '%') .' OR '. $collectionAdapter->quoteInto('LOWER(payment.additional_information) like ?', '%' . $paymentMethod['code'] . '%') .' OR '. $collectionAdapter->quoteInto('LOWER(payment.cc_type) = ?', $paymentMethod['code']) .'))';
-                } else {
-                    //default payment method where statement
-                    $where .= '(main_table.payment_method = "'. $paymentMethod['code'] .'")';
-                }
+                $collectionSelect->where($where);
+                return;
             }
-            $collectionSelect->where($where);
-
-        } else {
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
             return $proceed($collection, $filter);
         }
+        return $proceed($collection, $filter);
     }
 
     /**
