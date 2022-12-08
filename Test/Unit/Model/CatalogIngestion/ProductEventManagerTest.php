@@ -242,21 +242,6 @@ class ProductEventManagerTest extends BoltTestCase
     /**
      * @test
      */
-    public function testSendProductEvent_withDisabledCatalogIngestion()
-    {
-        $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
-        $apiHelper->expects(self::never())->method('sendRequest');
-        TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
-        $product = $this->createProduct();
-
-        $this->productEventManager->publishProductEvent($product->getId(), ProductEventInterface::TYPE_UPDATE);
-        $productEvent = $this->productEventRepository->getByProductId($product->getId());
-        $this->productEventManager->sendProductEvent($productEvent);
-    }
-
-    /**
-     * @test
-     */
     public function testRunInstantProductEvent_withoutAsync()
     {
         $store = $this->objectManager->get(StoreManagerInterface::class);
