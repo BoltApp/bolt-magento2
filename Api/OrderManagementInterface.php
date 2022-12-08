@@ -73,6 +73,16 @@ interface OrderManagementInterface
     public function deleteById($id);
 
     /**
+     * Subscribe an user / email to newsletter
+     *
+     * @param int $id The order ID.
+     * @return bool
+     * @throws NoSuchEntityException
+     * @throws WebapiException
+     */
+    public function subscribeToNewsletter($id);
+
+    /**
      * Creates invoice by order ID.
      * We need this endpoing because magento API is not able to create
      * partial invoice without settings specific items

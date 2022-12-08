@@ -24,6 +24,7 @@
             <block class="Bolt\Boltpay\Block\Js" name="boltcss"   template="Bolt_Boltpay::css/boltcss.phtml" />
             <block class="Bolt\Boltpay\Block\MinifiedJs" name="boltglobaljs" template="Bolt_Boltpay::js/boltglobaljs.phtml"/>
             <block class="Bolt\Boltpay\Block\MinifiedJs" name="replacejs" template="Bolt_Boltpay::js/replacejs.phtml"/>
+            <block class="Bolt\Boltpay\Block\MinifiedJsCartApiDriven" name="replacejs-cart-api-driven" template="Bolt_Boltpay::js/replacejs-cart-api-driven.phtml"/>
             <block class="Bolt\Boltpay\Block\Js" name="bolt_custom_sso_buttons_js"
                    template="Bolt_Boltpay::js/custom_sso_buttons.phtml" after="-"/>
         </referenceBlock>

@@ -19,6 +19,8 @@ namespace Bolt\Boltpay\Plugin\WebapiRest\Magento\Checkout\Api;
 
 use Magento\Checkout\Api\PaymentInformationManagementInterface;
 use \Bolt\Boltpay\Api\RouteInsuranceManagementInterface;
+use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
+use Magento\Customer\Model\Session as CustomerSession;
 
 /**
  * Plugin for {@see \PaymentInformationManagementInterface}
@@ -46,21 +48,37 @@ class PaymentInformationManagementPlugin
     private $moduleManager;
 
     /**
+     * @var CustomerRepository
+     */
+    private $customerRepository;
+
+    /**
+     * @var CustomerSession
+     */
+    private $customerSession;
+
+    /**
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Bolt\Boltpay\Helper\Cart $cartHelper
      * @param \Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId
      * @param \Magento\Framework\Module\Manager $moduleManager
+     * @param CustomerRepository $customerRepository
+     * @param CustomerSession $customerSession
      */
     public function __construct(
         \Magento\Checkout\Model\Session $checkoutSession,
         \Bolt\Boltpay\Helper\Cart $cartHelper,
         \Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId,
-        \Magento\Framework\Module\Manager $moduleManager
+        \Magento\Framework\Module\Manager $moduleManager,
+        CustomerRepository $customerRepository,
+        CustomerSession $customerSession
     ) {
         $this->checkoutSession = $checkoutSession;
         $this->cartHelper = $cartHelper;
         $this->maskedQuoteIdToQuoteId = $maskedQuoteIdToQuoteId;
         $this->moduleManager = $moduleManager;
+        $this->customerRepository = $customerRepository;
+        $this->customerSession = $customerSession;
     }
 
     public function beforeSavePaymentInformationAndPlaceOrder(
@@ -76,6 +94,12 @@ class PaymentInformationManagementPlugin
             if ($routeIsInsured) {
                 $this->checkoutSession->setQuoteId($cartId);
                 $this->checkoutSession->setInsured($routeIsInsured);
+
+                $customerID = (int)$quote->getData('customer_id');
+                if ($customerID) {
+                    $customer = $this->customerRepository->getById($customerID);
+                    $this->customerSession->setCustomerDataAsLoggedIn($customer);
+                }
             }
         }
 

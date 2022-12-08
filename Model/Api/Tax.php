@@ -307,6 +307,10 @@ class Tax extends ShippingTax implements TaxInterface
         $taxData = $this->taxDataFactory->create();
         $taxData->setTaxResult($taxResult);
 
+        if ($this->eventsForThirdPartyModules->runFilter('filterTaxResult', false, $taxData, $totalsInformation, $currencyCode, $shipping_option, $ship_to_store_option, $this->quote)) {
+            return $taxData;
+        }
+
         if (!empty($shipping_option)) {
             $shippingOption = $this->createShippingOption($totalsInformation, $currencyCode, $shipping_option);
             $taxData->setShippingOption($shippingOption);

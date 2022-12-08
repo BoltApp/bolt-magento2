@@ -57,6 +57,16 @@ class DebugInfo implements \JsonSerializable
     private $automatedTestingConfig;
 
     /**
+     * @var array
+     */
+    private $catalogIngestionData;
+
+    /**
+     * @var array
+     */
+    private $featureSwitcherData;
+
+    /**
      * @return string
      */
     public function getPhpVersion()
@@ -191,6 +201,44 @@ class DebugInfo implements \JsonSerializable
     }
 
     /**
+     * @param array $catalogIngestionData
+     *
+     * @return $this
+     */
+    public function setCatalogIngestionData($catalogIngestionData)
+    {
+        $this->catalogIngestionData = $catalogIngestionData;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCatalogIngestionData()
+    {
+        return $this->catalogIngestionData;
+    }
+
+    /**
+     * @param array $featureSwitcherData
+     *
+     * @return $this
+     */
+    public function setFeatureSwitcherData($featureSwitcherData)
+    {
+        $this->featureSwitcherData = $featureSwitcherData;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getFeatureSwitcherData()
+    {
+        return $this->featureSwitcherData;
+    }
+
+    /**
      * @inheritDoc
      */
     public function jsonSerialize(): array
@@ -202,7 +250,9 @@ class DebugInfo implements \JsonSerializable
             'bolt_config_settings'     => $this->boltConfigSettings,
             'other_plugin_versions'    => $this->otherPluginVersions,
             'logs'                     => $this->logs,
-            'automated_testing_config' => $this->automatedTestingConfig
+            'automated_testing_config' => $this->automatedTestingConfig,
+            'catalog_ingestion'        => $this->catalogIngestionData,
+            'feature_switches'         => $this->featureSwitcherData
         ]);
     }
 }
