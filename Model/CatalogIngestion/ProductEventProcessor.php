@@ -279,22 +279,16 @@ class ProductEventProcessor
         if (!$this->featureSwitches->isCatalogIngestionEnabled()) {
             return;
         }
-        $websiteIds = $product->getWebsiteIds();
-        foreach ($websiteIds as $websiteId) {
-            try {
-                if ($this->config->getIsCatalogIngestionEnabled($websiteId) &&
-                    ($forcePublish || $this->hasProductChanged($product, $product->getOrigData()))
-                ) {
-                    $this->productEventManager->publishProductEvent(
-                        (int)$product->getId(),
-                        $this->getProductEventType($product)
-                    );
-                    //break, because product event already created and future websites check is not needed
-                    break;
-                }
-            } catch (\Exception $e) {
-                $this->logger->critical($e);
+        try {
+            if (($forcePublish || $this->hasProductChanged($product, $product->getOrigData()))
+            ) {
+                $this->productEventManager->publishProductEvent(
+                    (int)$product->getId(),
+                    $this->getProductEventType($product)
+                );
             }
+        } catch (\Exception $e) {
+            $this->logger->critical($e);
         }
     }
 
@@ -316,9 +310,6 @@ class ProductEventProcessor
                 $productId = $this->productFactory->create()->getIdBySku($sku);
                 $websiteIds = $this->productWebsiteLink->getWebsiteIdsByProductId($productId);
                 foreach ($websiteIds as $websiteId) {
-                    if (!$this->config->getIsCatalogIngestionEnabled($websiteId)) {
-                        continue;
-                    }
                     if ($this->isCatalogIngestionInstantUpdateByStockStatusAvailable(
                         $salableStatus,
                         $websiteId,
@@ -363,9 +354,6 @@ class ProductEventProcessor
         bool $oldStatus = null,
         int $oldQty = null
     ): void {
-        if (!$this->config->getIsCatalogIngestionEnabled($websiteId)) {
-            return;
-        }
         if ($this->isCatalogIngestionInstantUpdateByStockStatusAvailable($newStatus, $websiteId, $oldStatus)) {
             $this->productEventManager->runInstantProductEvent(
                 $productId,
