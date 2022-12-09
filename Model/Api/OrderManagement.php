@@ -33,6 +33,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\Webapi\Exception as WebApiException;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Sales\Model\Order as OrderModel;
+use \Magento\Sales\Model\Service\OrderService;
 
 /**
  * Class OrderManagement
@@ -93,6 +94,11 @@ class OrderManagement implements OrderManagementInterface
     private $decider;
 
     /**
+     * @var OrderService
+     */
+    private $orderService;
+
+    /**
      * @var SubscriberFactory
      */
     private $subscriberFactory;
@@ -108,6 +114,7 @@ class OrderManagement implements OrderManagementInterface
      * @param ConfigHelper $configHelper
      * @param CartHelper $cartHelper
      * @param Decider $decider
+     * @param OrderService $orderService
      * @param SubscriberFactory $subscriberFactory
      */
     public function __construct(
@@ -121,6 +128,7 @@ class OrderManagement implements OrderManagementInterface
         ConfigHelper $configHelper,
         CartHelper $cartHelper,
         Decider $decider,
+        OrderService $orderService,
         SubscriberFactory $subscriberFactory
     ) {
         $this->hookHelper   = $hookHelper;
@@ -133,6 +141,7 @@ class OrderManagement implements OrderManagementInterface
         $this->configHelper = $configHelper;
         $this->cartHelper   = $cartHelper;
         $this->decider = $decider;
+        $this->orderService = $orderService;
         $this->subscriberFactory = $subscriberFactory;
     }
 
@@ -173,13 +182,13 @@ class OrderManagement implements OrderManagementInterface
             HookHelper::$fromBolt = true;
 
             $this->logHelper->addInfoLog($this->request->getContent());
-            
+
             if ($type == 'cart.create') {
                 $this->handleCartCreateApiCall();
                 $this->metricsClient->processMetric("webhooks.success", 1, "webhooks.latency", $startTime);
                 return;
             }
-            
+
             $this->cartHelper->setCurrentCurrencyCode($currency);
 
             // get the store id. try fetching from quote first,
@@ -352,7 +361,7 @@ class OrderManagement implements OrderManagementInterface
                 __('Missing required parameters.')
             );
         }
-        
+
         $storeId = isset($request['items'][0]['options']) ? (json_decode((string)$request['items'][0]['options'], true))['storeId'] : null;
         $this->logHelper->addInfoLog('StoreId: ' . $storeId);
         $this->hookHelper->preProcessWebhook($storeId);
@@ -420,6 +429,24 @@ class OrderManagement implements OrderManagementInterface
         $invoice = $this->orderHelper->createOrderInvoice($order, $amount, $notify);
         $order->save();
         return $invoice->getEntityId();
+    }
+
+    /**
+     * Places an order by order ID.
+     * We need this endpoint because we skip order place during order creation
+     * as transaction might be failed on bolt side
+     * & we don't want to trigger some after events if transaction failed.
+     *
+     * @param int $id The order ID.
+     * @return \Magento\Sales\Api\Data\OrderInterface
+     * @throws NoSuchEntityException
+     * @throws WebapiException
+     * @throws \Exception
+     */
+    public function placeOrder($id)
+    {
+        $order = $this->orderHelper->getOrderById($id);
+        return $this->orderService->place($order);
     }
 
     /**
