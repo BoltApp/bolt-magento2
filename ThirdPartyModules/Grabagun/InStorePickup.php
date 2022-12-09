@@ -263,6 +263,7 @@ class InStorePickup
                         $dealerShipingMethod = $shippingMethods[0];
                         $shipToStoreDescription = $dealerShipingMethod->getMethodTitle();
                         $shipToStoreMethod = $dealerShipingMethod->getMethodCode();
+                        $shipToStoreCarrierCode = $dealerShipingMethod->getCarrierCode();
                         $shipToStoreCost = \Bolt\Boltpay\Helper\Shared\CurrencyUtils::toMinor($dealerShipingMethod->getAmount(), $quote->getBaseCurrencyCode());
                     }
                     $distance = $this->vincentyGreatCircleDistance($getGeoCodesForAddress['lat'], $getGeoCodesForAddress['lng'], $dealer->getLat(), $dealer->getLng());
@@ -275,7 +276,7 @@ class InStorePickup
                     /** @var \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface $shipToStoreOption */
                     $shipToStoreOption = $this->shipToStoreOptionFactory->create();
 
-                    $shipToStoreOption->setReference($shipToStoreMethod.'+'.$dealer->getId());
+                    $shipToStoreOption->setReference($shipToStoreMethod.'+'.$dealer->getId().'+'.$shipToStoreCarrierCode);
                     $shipToStoreOption->setStoreName($dealer->getDealerName());
                     $shipToStoreOption->setAddress($storeAddress);
                     $shipToStoreOption->setDistance($distance);
@@ -300,6 +301,7 @@ class InStorePickup
                             $shipToStoreDescription = $dealerShipingMethod->getMethodTitle();
                             $shipToStoreCost = \Bolt\Boltpay\Helper\Shared\CurrencyUtils::toMinor($dealerShipingMethod->getAmount(), $quote->getBaseCurrencyCode());
                             $shipToStoreMethod = $dealerShipingMethod->getMethodCode();
+                            $shipToStoreCarrierCode = $dealerShipingMethod->getCarrierCode();
                         }
 
                         $storeAddress = $this->storeAddressFactory->create();
@@ -311,7 +313,7 @@ class InStorePickup
                         $shipToStoreOption = $this->shipToStoreOptionFactory->create();
 
                         $distance = $this->vincentyGreatCircleDistance($getGeoCodesForAddress['lat'], $getGeoCodesForAddress['lng'], $item->getLat(), $item->getLng());
-                        $shipToStoreOption->setReference($shipToStoreMethod.'+'.$item->getId());
+                        $shipToStoreOption->setReference($shipToStoreMethod.'+'.$item->getId().'+'.$shipToStoreCarrierCode);
                         $shipToStoreOption->setStoreName('Preferred FFL dealer: ' . $item->getDealerName());
                         $shipToStoreOption->setAddress($storeAddress);
                         $shipToStoreOption->setDistance($distance);
@@ -618,12 +620,8 @@ class InStorePickup
         $dealerStoreId = $this->getDealerInfoFromReference($ship_to_store_option['reference'])['dealer_id'];
         $typeOfShipment = $this->getTypeOfShipment($grabgunShippingMethodHelper, $quote);
         if ($dealerStoreId && $typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::FFL_SHIPPING_ITEMS_ONLY) {
-            $shippingMethods = $grabgunShippingMethodManagement->estimateByDealerId($quote->getId(), $dealerStoreId);
-            if ($shippingMethods) {
-                $dealerShipingMethod = $shippingMethods[0];
-                $quote->getShippingAddress()->setShippingMethod($dealerShipingMethod->getCarrierCode() . '_' . $dealerShipingMethod->getMethodCode());
-                return [$dealerShipingMethod->getCarrierCode(), $dealerShipingMethod->getMethodCode()];
-            }
+            $dealerInfo = $this->getDealerInfoFromReference($ship_to_store_option['reference']);
+            return [$dealerInfo['dealer_carrier_code'], $dealerInfo['dealer_shipping_method']];
         }
     }
 
@@ -631,7 +629,8 @@ class InStorePickup
         $dealerInfo = explode( '+', $shipToStoreReference);
         return [
             'dealer_shipping_method' => $dealerInfo[0],
-            'dealer_id' => $dealerInfo[1]
+            'dealer_id' => $dealerInfo[1],
+            'dealer_carrier_code' => $dealerInfo[2],
         ];
     }
 
