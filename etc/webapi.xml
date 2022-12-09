@@ -212,4 +212,11 @@
             <resource ref="Magento_Cart::manage" />
         </resources>
     </route>
+    <!--Get product image url by product id, imageId can be as parameter -->
+    <route url="/V1/bolt/boltpay/product/:productId/image-url" method="GET">
+        <service class="Bolt\Boltpay\Api\GetProductImageUrlInterface" method="execute"/>
+        <resources>
+            <resource ref="Magento_Catalog::products" />
+        </resources>
+    </route>
 </routes>
