@@ -168,7 +168,8 @@ class GetProductImageUrlTest extends BoltTestCase
             $absolutePath,
             [
                 'image',
-                'thumbnail'
+                'small_image',
+                'thumbnail',
             ],
             false,
             false
