@@ -198,6 +198,13 @@
             <resource ref="anonymous" />
         </resources>
     </route>
+    <!-- Call order->place() method in order to trigger before & after place events -->
+    <route url="/V1/bolt/boltpay/order/:id/triggerOrderEvents" method="POST">
+        <service class="Bolt\Boltpay\Api\OrderManagementInterface" method="placeOrder"/>
+        <resources>
+            <resource ref="Magento_Sales::create" />
+        </resources>
+    </route>
     <!--Get Cart Id by Masked Quote Id -->
     <route url="/V1/bolt/boltpay/carts/:maskedQuoteId/cartid" method="GET">
         <service class="Bolt\Boltpay\Api\CartManagementInterface" method="getCartIdByMaskedId"/>
