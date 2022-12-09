@@ -269,3 +269,5 @@
 ## [v2.26.3](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.3) 2022-11-21
 - Amazon Pay transactions are now displayed in the dashboard.
 - Fixes issue preventing international shoppers from checking out without a state/province.
+## [v2.26.4](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.4) 2022-12-14
+[TODO]
