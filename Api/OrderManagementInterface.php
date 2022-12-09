@@ -93,6 +93,20 @@ interface OrderManagementInterface
      * @return int
      * @throws NoSuchEntityException
      * @throws WebapiException
+     * @throws \Exception
      */
     public function createInvoice($id, $amount, $notify = false);
+
+    /**
+     * Places an order by order ID.
+     * We need this endpoint because we skip order place during order creation
+     * as transaction might be failed on bolt side
+     * & we don't want to trigger some after events if transaction failed.
+     *
+     * @param int $id The order ID.
+     * @return \Magento\Sales\Api\Data\OrderInterface
+     * @throws NoSuchEntityException
+     * @throws WebapiException
+     */
+    public function placeOrder($id);
 }
