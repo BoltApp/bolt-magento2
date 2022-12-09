@@ -114,7 +114,7 @@ class GetProductImageUrlTest extends BoltTestCase
         $imageUrl = $this->getProductImageUrl->execute($product->getId());
         $image = str_replace('/', '\/', $product->getImage());
         $this->assertMatchesRegularExpression(
-            "/https?:\/\/localhost\/media\/catalog\/product\/cache\/[a-f0-9]{32}".$image."/",
+            "/https?:\/\/localhost\/(pub\/)?media\/catalog\/product\/cache\/[a-f0-9]{32}".$image."/",
             $imageUrl
         );
     }
