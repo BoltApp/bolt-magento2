@@ -175,6 +175,6 @@ class GetProductImageUrlTest extends BoltTestCase
         );
 
         $this->images[] = $absolutePath;
-        return $this->productRepository->save($product);
+        return $product->save();
     }
 }
