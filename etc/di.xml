@@ -343,4 +343,5 @@
 
     <preference for="Bolt\Boltpay\Api\Data\PluginVersionNotificationInterface" type="Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotification" />
     <preference for="Bolt\Boltpay\Api\PluginVersionNotificationRepositoryInterface" type="Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotificationRepository" />
+    <preference for="Bolt\Boltpay\Api\GetProductImageUrlInterface" type="Bolt\Boltpay\Model\Api\GetProductImageUrl" />
 </config>
