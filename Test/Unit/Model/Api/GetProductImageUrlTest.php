@@ -127,16 +127,7 @@ class GetProductImageUrlTest extends BoltTestCase
     {
         $product = $this->createSimpleProductWithImage();
         $imageUrl = $this->getProductImageUrl->execute($product->getId(), 'wrong_id');
-        //in magento 2.2.* with wrong image id type magento returns default image type
-        if (version_compare($this->configHelper->getStoreVersion(), '2.3.0', '<')) {
-            $image = str_replace('/', '\/', $product->getImage());
-            $this->assertMatchesRegularExpression(
-                "/https?:\/\/localhost\/(pub\/)?media\/catalog\/product\/cache\/[a-f0-9]{32}".$image."/",
-                $imageUrl
-            );
-        } else {
-            $this->assertStringContainsString('placeholder', $imageUrl);
-        }
+        $this->assertStringContainsString('placeholder', $imageUrl);
     }
 
     /**
