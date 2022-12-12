@@ -423,7 +423,7 @@ define([
             let newHints = JSON.stringify(BoltCheckoutApiDriven.boltCartHints);
             if ((BoltCheckoutApiDriven.boltCartHints !== newHints) && !BoltCheckoutApiDriven.isPromisesResolved) {
                 BoltCheckoutApiDriven.boltCheckoutConfigureCall(
-                    {"quoteMaskedId": BoltCheckoutApiDriven.quoteMaskedId},
+                    {"id": BoltCheckoutApiDriven.quoteMaskedId},
                     {"hints": BoltCheckoutApiDriven.boltCartHints}
                 );
                 BoltCheckoutApiDriven.boltCartHints = newHints;
@@ -455,7 +455,7 @@ define([
                 magentoCart.quoteMaskedId !== BoltCheckoutApiDriven.quoteMaskedId
             ) {
                 BoltCheckoutApiDriven.quoteMaskedId = magentoCart.quoteMaskedId;
-                cart = {"quoteMaskedId": BoltCheckoutApiDriven.quoteMaskedId};
+                cart = {"id": BoltCheckoutApiDriven.quoteMaskedId};
                 if (!BoltCheckoutApiDriven.cartBarrier.isResolved()) {
                     BoltCheckoutApiDriven.cartBarrier.resolve(cart);
                     BoltCheckoutApiDriven.isPromisesResolved = true;
@@ -569,7 +569,7 @@ define([
                         // the button will be processed after connect.js loads.
                         if (window.BoltCheckout && BoltCheckoutApiDriven.isPromisesResolved) {
                             BoltCheckoutApiDriven.boltCheckoutConfigureCall(
-                                {"quoteMaskedId": BoltCheckoutApiDriven.quoteMaskedId},
+                                {"id": BoltCheckoutApiDriven.quoteMaskedId},
                                 {"hints": BoltCheckoutApiDriven.boltCartHints}
                             );
                         }
@@ -891,7 +891,7 @@ define([
                     })
             });
             BoltCheckoutApiDriven.boltCheckoutConfigureCall(
-                {"quoteMaskedId": BoltCheckoutApiDriven.quoteMaskedId},
+                {"id": BoltCheckoutApiDriven.quoteMaskedId},
                 {"hints": BoltCheckoutApiDriven.boltCartHints}
             );
         },
@@ -1056,7 +1056,7 @@ define([
                 this.customerCart().quoteMaskedId !== null
             ) {
                 this.quoteMaskedId = this.customerCart().quoteMaskedId;
-                this.cartBarrier.resolve({"quoteMaskedId": this.quoteMaskedId})
+                this.cartBarrier.resolve({"id": this.quoteMaskedId})
                 BoltCheckoutApiDriven.isPromisesResolved = true;
             }
 
