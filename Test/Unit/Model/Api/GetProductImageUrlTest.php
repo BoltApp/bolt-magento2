@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Framework\App\ResourceConnection;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
@@ -59,6 +60,11 @@ class GetProductImageUrlTest extends BoltTestCase
     private $resource;
 
     /**
+     * @var ConfigHelper
+     */
+    private $configHelper;
+
+    /**
      * @inheritDoc
      */
     protected function setUpInternal()
@@ -66,6 +72,7 @@ class GetProductImageUrlTest extends BoltTestCase
         $this->objectManager = Bootstrap::getObjectManager();
         $this->getProductImageUrl = $this->objectManager->create(GetProductImageUrl::class);
         $this->resource = $this->objectManager->get(ResourceConnection::class);
+        $this->configHelper = $this->objectManager->get(ConfigHelper::class);
 
         /** @var $mediaConfig Config */
         $this->mediaConfig = $this->objectManager->create(Config::class);
@@ -120,7 +127,16 @@ class GetProductImageUrlTest extends BoltTestCase
     {
         $product = $this->createSimpleProductWithImage();
         $imageUrl = $this->getProductImageUrl->execute($product->getId(), 'wrong_id');
-        $this->assertStringContainsString('placeholder', $imageUrl);
+        //in magento 2.2.* with wrong image id type magento returns default image type
+        if (version_compare($this->configHelper->getStoreVersion(), '2.3.0', '<')) {
+            $image = str_replace('/', '\/', $product->getImage());
+            $this->assertMatchesRegularExpression(
+                "/https?:\/\/localhost\/(pub\/)?media\/catalog\/product\/cache\/[a-f0-9]{32}".$image."/",
+                $imageUrl
+            );
+        } else {
+            $this->assertStringContainsString('placeholder', $imageUrl);
+        }
     }
 
     /**
@@ -158,7 +174,7 @@ class GetProductImageUrlTest extends BoltTestCase
             false
         );
 
-        $product->setStoreId(0)
+        $product->setStoreId(1)
             ->setImage('/m/a/magento_image.jpg')
             ->setSmallImage('/m/a/magento_image.jpg')
             ->setThumbnail('/m/a/magento_image.jpg')
@@ -172,6 +188,7 @@ class GetProductImageUrlTest extends BoltTestCase
                 ],
             ]])
             ->setCanSaveCustomOptions(true);
+        $this->objectManager->removeSharedInstance(\Magento\Framework\Config\View::class);
         return $product->save();
     }
 }
