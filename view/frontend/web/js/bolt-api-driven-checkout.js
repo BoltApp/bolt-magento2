@@ -455,7 +455,7 @@ define([
                 magentoCart.quoteMaskedId !== BoltCheckoutApiDriven.quoteMaskedId
             ) {
                 BoltCheckoutApiDriven.quoteMaskedId = magentoCart.quoteMaskedId;
-                cart = {"quoteMaskedId": BoltCheckoutApiDriven.quoteMaskedId};
+                cart = {"id": BoltCheckoutApiDriven.quoteMaskedId};
                 if (!BoltCheckoutApiDriven.cartBarrier.isResolved()) {
                     BoltCheckoutApiDriven.cartBarrier.resolve(cart);
                     BoltCheckoutApiDriven.isPromisesResolved = true;
