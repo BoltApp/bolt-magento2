@@ -23,7 +23,6 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\GetProductImageUrl;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\Product\Media\Config;
 use Magento\Framework\Filesystem\Directory\WriteInterface;
 use Magento\Framework\Filesystem;
@@ -31,6 +30,7 @@ use Magento\Framework\App\Filesystem\DirectoryList;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\GetProductImageUrl
+ * @magentoDbIsolation disabled
  */
 class GetProductImageUrlTest extends BoltTestCase
 {
@@ -38,11 +38,6 @@ class GetProductImageUrlTest extends BoltTestCase
      * @var ObjectManager
      */
     private $objectManager;
-
-    /**
-     * @var ProductRepositoryInterface
-     */
-    private $productRepository;
 
     /**
      * @var GetProductImageUrl
@@ -65,18 +60,12 @@ class GetProductImageUrlTest extends BoltTestCase
     private $resource;
 
     /**
-     * @var array
-     */
-    private $images = [];
-
-    /**
      * @inheritDoc
      */
     protected function setUpInternal()
     {
         $this->objectManager = Bootstrap::getObjectManager();
         $this->getProductImageUrl = $this->objectManager->create(GetProductImageUrl::class);
-        $this->productRepository = $this->objectManager->create(ProductRepositoryInterface::class);
         $this->resource = $this->objectManager->get(ResourceConnection::class);
 
         /** @var $mediaConfig Config */
@@ -95,13 +84,8 @@ class GetProductImageUrlTest extends BoltTestCase
         $connection = $this->resource->getConnection('default');
         $connection->delete($connection->getTableName('catalog_product_entity'));
         $connection->delete($connection->getTableName('url_rewrite'), ['entity_type = ?' => 'product']);
-        foreach ($this->images as $image) {
-            try {
-                unlink($image);
-            } catch (\Exception $e) {
-                // image already removed
-            }
-        }
+        $this->mediaDirectory->delete($this->mediaConfig->getBaseMediaPath());
+        $this->mediaDirectory->delete($this->mediaConfig->getBaseTmpMediaPath());
     }
 
     /**
@@ -175,7 +159,19 @@ class GetProductImageUrlTest extends BoltTestCase
             false
         );
 
-        $this->images[] = $absolutePath;
-        return $this->productRepository->save($product);
+        $product->setImage('/m/a/magento_image.jpg')
+            ->setSmallImage('/m/a/magento_image.jpg')
+            ->setThumbnail('/m/a/magento_image.jpg')
+            ->setData('media_gallery', ['images' => [
+                [
+                    'file' => '/m/a/magento_image.jpg',
+                    'position' => 1,
+                    'label' => 'Image Alt Text',
+                    'disabled' => 0,
+                    'media_type' => 'image'
+                ],
+            ]])
+            ->setCanSaveCustomOptions(true);
+        return $product->save();
     }
 }
