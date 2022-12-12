@@ -30,7 +30,6 @@ use Magento\Framework\App\Filesystem\DirectoryList;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\GetProductImageUrl
- * @magentoDbIsolation disabled
  */
 class GetProductImageUrlTest extends BoltTestCase
 {
@@ -159,7 +158,8 @@ class GetProductImageUrlTest extends BoltTestCase
             false
         );
 
-        $product->setImage('/m/a/magento_image.jpg')
+        $product->setStoreId(0)
+            ->setImage('/m/a/magento_image.jpg')
             ->setSmallImage('/m/a/magento_image.jpg')
             ->setThumbnail('/m/a/magento_image.jpg')
             ->setData('media_gallery', ['images' => [
