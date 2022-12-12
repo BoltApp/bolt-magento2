@@ -189,6 +189,7 @@ class GetProductImageUrlTest extends BoltTestCase
             ]])
             ->setCanSaveCustomOptions(true);
         $this->objectManager->removeSharedInstance(\Magento\Framework\Config\View::class);
+        $this->objectManager->removeSharedInstance(\Magento\Catalog\Helper\Image::class);
         return $product->save();
     }
 }
