@@ -20,6 +20,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\App\ResourceConnection;
 
 /**
  * Catalog ingestion product event processor after source items update
@@ -42,15 +43,23 @@ class SourceItemSavePlugin
     private $beforeProductStatuses;
 
     /**
+     * @var ResourceConnection
+     */
+    private $resourceConnection;
+
+    /**
      * @param ProductEventProcessor $productEventProcessor
      * @param Decider $featureSwitches
+     * @param ResourceConnection $resourceConnection
      */
     public function __construct(
         ProductEventProcessor $productEventProcessor,
-        Decider $featureSwitches
+        Decider $featureSwitches,
+        ResourceConnection $resourceConnection
     ) {
         $this->productEventProcessor = $productEventProcessor;
         $this->featureSwitches = $featureSwitches;
+        $this->resourceConnection = $resourceConnection;
     }
 
     /**
@@ -90,10 +99,12 @@ class SourceItemSavePlugin
     {
         if (!$this->featureSwitches->isCatalogIngestionEnabled() ||
             empty($sourceItems) ||
-            empty($this->beforeProductStatuses)
+            empty($this->beforeProductStatuses) ||
+            $this->resourceConnection->getConnection()->getTransactionLevel() > 0
         ) {
             return;
         }
+
         $afterProductStatuses = $this->productEventProcessor->getProductStatusesSourceItemsBased($sourceItems);
         $this->productEventProcessor->processProductEventSourceItemsBased(
             $this->beforeProductStatuses,
