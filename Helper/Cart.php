@@ -1081,7 +1081,7 @@ class Cart extends AbstractHelper
                     $signRequest,
                     $quote ? $quote->getStoreId() : null
                 )
-                if($signResponse){
+                if ($signResponse) {
                     $signResponse = $signResponse->getResponse();
                 }
 
