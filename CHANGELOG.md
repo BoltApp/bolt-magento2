@@ -269,9 +269,8 @@
 ## [v2.26.3](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.3) 2022-11-21
 - Amazon Pay transactions are now displayed in the dashboard.
 - Fixes issue preventing international shoppers from checking out without a state/province.
-## [v2.26.4](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.4) 2022-12-14
+## [v2.26.4](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.4) 2022-12-15
 ## The New
-- Enables M2 for subscription functionality.
 - Fixes intermittent issue where some logged-in users could not check out if Route was enabled.
 - Merchants can now filter orders by specific Bolt payment method e.g., `bolt-visa`.
 - Fixes intermittent issue where data may not send to third-party integrations.
