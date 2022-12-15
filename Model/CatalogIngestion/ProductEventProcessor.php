@@ -400,7 +400,8 @@ class ProductEventProcessor
         string $oldStatus = null
     ): bool {
         if (!$this->config->getIsCatalogIngestionInstantEnabled($websiteId) ||
-            !in_array(Events::STOCK_STATUS_CHANGES, $this->config->getCatalogIngestionEvents($websiteId))
+            !in_array(Events::STOCK_STATUS_CHANGES, $this->config->getCatalogIngestionEvents($websiteId)) ||
+            $this->featureSwitches->isCatalogIngestionInstancePipelineDisabled()
         ) {
             return false;
         }

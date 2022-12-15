@@ -537,4 +537,16 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_FETCH_CART_VIA_API);
     }
+
+    /**
+     * Checks whether the feature switch for catalog ingestion instance update is disabled
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isCatalogIngestionInstancePipelineDisabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_CATALOG_INGESTION_DISABLE_INSTANCE_PIPELINE);
+    }
 }
