@@ -112,8 +112,8 @@ class SourceItemSavePlugin
          * In this case we should ignore this plugin and actual data will be fetched based on stock item(legacy) in another plugin
          * https://github.com/BoltApp/bolt-magento2/blob/master/Plugin/Magento/CatalogInventory/Api/StockItemRepositoryPlugin.php
          */
-        if (!$this->featureSwitches->isCatalogIngestionInstancePipelineDisabled() &&
-            $this->resourceConnection->getConnection()->getTransactionLevel() > 0
+        if ($this->resourceConnection->getConnection()->getTransactionLevel() > 0 &&
+            !$this->featureSwitches->isCatalogIngestionInstancePipelineDisabled()
         ) {
             return;
         }
