@@ -107,10 +107,10 @@ class SourceItemSavePlugin
         /**
          * Magento use two ways to store the stock data legacy(stock items based) and native(source item based with MSI)
          * In magento 2.4.4 for case when magento updating source items based on legacy stock item in plugin:
-         * https://github.com/magento/inventory/blob/develop/InventoryCatalog/Plugin/CatalogInventory/UpdateSourceItemAtLegacyStockItemSavePlugin.php
+         * https://github.com/magento/inventory/blob/f32b8f5e20627bdbf18e581727e3d5a7ccc17756/InventoryCatalog/Plugin/CatalogInventory/UpdateSourceItemAtLegacyStockItemSavePlugin.php
          * We have issue with non-actual source items data, because of transaction inside plugin above.
          * In this case we should ignore this plugin and actual data will be fetched based on stock item(legacy) in another plugin
-         * https://github.com/BoltApp/bolt-magento2/blob/master/Plugin/Magento/CatalogInventory/Api/StockItemRepositoryPlugin.php
+         * https://github.com/BoltApp/bolt-magento2/blob/21fb4991fba6cadc428e3da6a0725d691f67ce1b/Plugin/Magento/CatalogInventory/Api/StockItemRepositoryPlugin.php
          */
         if ($this->resourceConnection->getConnection()->getTransactionLevel() > 0 &&
             !$this->featureSwitches->isCatalogIngestionInstancePipelineDisabled()
