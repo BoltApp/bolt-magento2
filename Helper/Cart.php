@@ -1080,7 +1080,7 @@ class Cart extends AbstractHelper
                 $signResponse = $this->getSignResponse(
                     $signRequest,
                     $quote ? $quote->getStoreId() : null
-                )
+                );
                 if ($signResponse) {
                     $signResponse = $signResponse->getResponse();
                 }
