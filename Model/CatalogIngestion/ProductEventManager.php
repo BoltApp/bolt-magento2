@@ -226,9 +226,12 @@ class ProductEventManager implements ProductEventManagerInterface
             $productEvent->setProductId($productId);
             $productEvent->setType($type);
             $productEvent->setCreatedAt($this->dateTime->formatDate(true));
-            // publish product event always to avoid possible issues in diff magento versions
-            $this->publishProductEvent($productId, ProductEventInterface::TYPE_UPDATE);
             $this->sendProductEvent($productEvent);
+            try {
+                $this->deleteProductEvent($productId);
+            } catch (\Exception $e) {
+                // no product event registered in database
+            }
         }
 
         $this->alreadySentInstantProductIds[] = $productId;
