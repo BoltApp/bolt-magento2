@@ -274,4 +274,4 @@
 - Enables M2 for subscription functionality.
 - Fixes intermittent issue where some logged-in users could not check out if Route was enabled.
 - Merchants can now filter orders by specific Bolt payment method e.g., `bolt-visa`.
-- Fixes intermittent issue where data may not send to third-part integrations.
+- Fixes intermittent issue where data may not send to third-party integrations.
