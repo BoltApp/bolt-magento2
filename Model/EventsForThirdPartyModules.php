@@ -486,7 +486,22 @@ class EventsForThirdPartyModules
                     "boltClass" => Grabagun_InStorePickup::class,
                 ],
             ],
-        ]
+        ],
+        'afterGetShipToStoreAndShippingOptions' => [
+            "listeners" => [
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "checkClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                    ],
+                    "sendClasses" => [
+                        "Grabagun\Shipping\Helper\ShippingMethodHelper",
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
+            ],
+        ],
+
     ];
 
     const filterListeners = [
@@ -1589,6 +1604,36 @@ class EventsForThirdPartyModules
             }
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
+        }
+    }
+
+    /**
+     * Dispatch event and throw exception if error occurs
+     *
+     * Call all listeners that relates to existing module and if necessary classes exist
+     * and throw exception if error occurs
+     */
+    public function dispatchEventAndThrowException($eventName, ...$arguments)
+    {
+        if (!isset(static::eventListeners[$eventName])) {
+            return;
+        }
+        try {
+            foreach (static::eventListeners[$eventName]["listeners"] as $listener) {
+                list ($active, $sendClasses) = $this->prepareForListenerRun($listener);
+                if (!$active) {
+                    continue;
+                }
+                $boltClass = $this->objectManager->get($listener["boltClass"]);
+                if ($sendClasses) {
+                    $boltClass->$eventName(...$sendClasses, ...$arguments);
+                } else {
+                    $boltClass->$eventName(...$arguments);
+                }
+            }
+        } catch (Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
         }
     }
 

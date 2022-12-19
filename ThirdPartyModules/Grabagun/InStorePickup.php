@@ -276,7 +276,7 @@ class InStorePickup
                     /** @var \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface $shipToStoreOption */
                     $shipToStoreOption = $this->shipToStoreOptionFactory->create();
 
-                    $shipToStoreOption->setReference($shipToStoreMethod.'+'.$dealer->getId().'+'.$shipToStoreCarrierCode);
+                    $shipToStoreOption->setReference($shipToStoreMethod . '+' . $dealer->getId() . '+' . $shipToStoreCarrierCode);
                     $shipToStoreOption->setStoreName($dealer->getDealerName());
                     $shipToStoreOption->setAddress($storeAddress);
                     $shipToStoreOption->setDistance($distance);
@@ -313,7 +313,7 @@ class InStorePickup
                         $shipToStoreOption = $this->shipToStoreOptionFactory->create();
 
                         $distance = $this->vincentyGreatCircleDistance($getGeoCodesForAddress['lat'], $getGeoCodesForAddress['lng'], $item->getLat(), $item->getLng());
-                        $shipToStoreOption->setReference($shipToStoreMethod.'+'.$item->getId().'+'.$shipToStoreCarrierCode);
+                        $shipToStoreOption->setReference($shipToStoreMethod . '+' . $item->getId() . '+' . $shipToStoreCarrierCode);
                         $shipToStoreOption->setStoreName('Preferred FFL dealer: ' . $item->getDealerName());
                         $shipToStoreOption->setAddress($storeAddress);
                         $shipToStoreOption->setDistance($distance);
@@ -328,6 +328,7 @@ class InStorePickup
 
 
                 if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::FFL_SHIPPING_ITEMS_ONLY) {
+
                     $result = [$shipToStoreOptions, []];
                 } else if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::MIXED_SHIPPING_ITEMS) {
                     $result = [$shipToStoreOptions, $shippingOptions];
@@ -338,6 +339,7 @@ class InStorePickup
             $this->bugsnagHelper->notifyException($e);
             return [];
         }
+
         return $result;
     }
 
@@ -625,8 +627,9 @@ class InStorePickup
         }
     }
 
-    public function getDealerInfoFromReference($shipToStoreReference) {
-        $dealerInfo = explode( '+', $shipToStoreReference);
+    public function getDealerInfoFromReference($shipToStoreReference)
+    {
+        $dealerInfo = explode('+', $shipToStoreReference);
         return [
             'dealer_shipping_method' => $dealerInfo[0],
             'dealer_id' => $dealerInfo[1],
@@ -860,6 +863,32 @@ class InStorePickup
             $quote->setData('ffl_dealer_address', $dealerId);
             $quote->setData(\Grabagun\Shipping\Model\Shipping\Config::SALES_ORDER_ATTRIBUTE_FFL_SHIPPING_ADDRESS_DESCRIPTION, $dealerShippingMethod);
             $quote->save();
+        }
+    }
+
+    /**
+     * @param \Grabagun\Shipping\Helper\ShippingMethodHelper $shippingMethodHelper
+     * @param $quote
+     * @param $ship_to_store_option
+     * @param $shipping_option
+     * @throws \Bolt\Boltpay\Exception\BoltException
+     */
+    public function afterGetShipToStoreAndShippingOptions(
+        \Grabagun\Shipping\Helper\ShippingMethodHelper $shippingMethodHelper,
+        $ship_to_store_option,
+        $shipping_option,
+        $quote
+    )
+    {
+        $typeOfShipment = $shippingMethodHelper->getTypeOfShipment($quote);
+        if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::MIXED_SHIPPING_ITEMS || $typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::FFL_SHIPPING_ITEMS_ONLY) {
+            if (!$ship_to_store_option) {
+                throw new \Bolt\Boltpay\Exception\BoltException(
+                    __('No Dealer are found'),
+                    null,
+                    6103
+                );
+            }
         }
     }
 }
