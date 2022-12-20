@@ -819,7 +819,7 @@ class InStorePickup
             $totalShippingAmount = $shipping_option['cost'];
 
             $shippingOption = $this->shippingOptionFactory->create();
-            $shippingOption->setCost($shippingRoundedCost - $ship_to_store_option['cost']);
+            $shippingOption->setCost($totalShippingAmount - $ship_to_store_option['cost']);
             $shippingOption->setTaxAmount($shipping_option['tax_amount']);
             $shippingOption->setService($shipping_option['service'] ?? null);
             $shippingOption->setReference($shipping_option['reference'] ?? null);
