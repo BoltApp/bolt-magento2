@@ -117,6 +117,7 @@ class InStorePickup
      * @var \Magento\Framework\App\State
      */
     protected $appState;
+    protected $boltTax;
 
     /**
      * InStorePickup constructor.
@@ -152,7 +153,8 @@ class InStorePickup
         \Magento\Framework\UrlInterface $urlInterface,
         CustomerFactory $customerFactory,
         ShippingOptionInterfaceFactory $shippingOptionFactory,
-        \Magento\Framework\App\State $appState
+        \Magento\Framework\App\State $appState,
+        \Bolt\Boltpay\Model\Api\Tax $boltTax
     )
     {
         $this->bugsnagHelper = $bugsnagHelper;
@@ -171,6 +173,7 @@ class InStorePickup
         $this->customerFactory = $customerFactory;
         $this->shippingOptionFactory = $shippingOptionFactory;
         $this->appState = $appState;
+        $this->boltTax = $boltTax;
     }
 
     /**
@@ -811,12 +814,13 @@ class InStorePickup
     {
         $typeOfShipment = $shippingMethodHelper->getTypeOfShipment($quote);
         if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::MIXED_SHIPPING_ITEMS) {
-            $shippingRoundedCost = \Bolt\Boltpay\Helper\Shared\CurrencyUtils::toMinor($totalsInformation->getShippingAmount(), $currencyCode);
-            $taxAmount = \Bolt\Boltpay\Helper\Shared\CurrencyUtils::toMinor($totalsInformation->getShippingTaxAmount(), $currencyCode);
+            $shipping_option = $this->boltTax->getShippingDiscount($totalsInformation, $currencyCode, $shipping_option);
+
+            $totalShippingAmount = $shipping_option['cost'];
 
             $shippingOption = $this->shippingOptionFactory->create();
             $shippingOption->setCost($shippingRoundedCost - $ship_to_store_option['cost']);
-            $shippingOption->setTaxAmount($taxAmount);
+            $shippingOption->setTaxAmount($shipping_option['tax_amount']);
             $shippingOption->setService($shipping_option['service'] ?? null);
             $shippingOption->setReference($shipping_option['reference'] ?? null);
 
