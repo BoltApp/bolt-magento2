@@ -7,8 +7,11 @@
 -->
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
-       <referenceBlock name="product.info.form.content">
-            <block class="Bolt\Boltpay\Block\JsProductPage" name="bolt.frequencySelector" template="Bolt_Boltpay::subscription_freq_selector_product_page.phtml" before="product.info.addtocart" />
+        <referenceBlock name="product.info.options.wrapper.bottom">
+            <block class="Bolt\Boltpay\Block\JsProductPage" name="bolt.frequencySelector.additional" template="Bolt_Boltpay::subscription_freq_selector_product_page.phtml" before="-" />
+        </referenceBlock>
+        <referenceBlock name="product.info.form.content">
+            <block class="Bolt\Boltpay\Block\JsProductPage" name="bolt.frequencySelector" template="Bolt_Boltpay::subscription_freq_selector_product_page.phtml" before="-" />
         </referenceBlock>
         <referenceBlock name="product.info.addtocart">
             <block class="Bolt\Boltpay\Block\JsProductPage" name="bolt.button" template="Bolt_Boltpay::button_product_page.phtml" before="-" />
