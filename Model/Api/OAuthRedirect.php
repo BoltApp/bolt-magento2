@@ -408,7 +408,7 @@ class OAuthRedirect implements OAuthRedirectInterface
                     $quote = $checkoutSession->getQuote();
                     if ($quote->getId()) {
                         try {
-                            // we should merge quote here for magento 2.3.0 version, because
+                            // we should merge quote here for magento 2.3.X version and below, because
                             // https://github.com/magento/magento2/blob/44a7b6079bcac5ba92040b16f4f74024b4f34d09/app/code/Magento/Quote/Model/QuoteManagement.php#L297
                             // doesn't have "quote merging part" as we have on magento 2.4.X
                             // https://github.com/magento/magento2/blob/5844ade68b2f9632e3888c81c946068eba6328bb/app/code/Magento/Quote/Model/QuoteManagement.php#L337
@@ -511,7 +511,7 @@ class OAuthRedirect implements OAuthRedirectInterface
             // (we can see the cookie "form_key" there by checking object in browser console: "document.cookie")
             // therefore all future requests is being called without "form_key" which is the reason of  "session expire" issue.
             // By normal flow Magento updates that cookie in file:
-            // 2.3.0 https://github.com/magento/magento2/blob/44a7b6079bcac5ba92040b16f4f74024b4f34d09/app/code/Magento/PageCache/view/frontend/web/js/page-cache.js#L115
+            // 2.2.0 - 2.3.0 https://github.com/magento/magento2/blob/44a7b6079bcac5ba92040b16f4f74024b4f34d09/app/code/Magento/PageCache/view/frontend/web/js/page-cache.js#L115
             // 2.4.0 https://github.com/magento/magento2/blob/5844ade68b2f9632e3888c81c946068eba6328bb/app/code/Magento/PageCache/view/frontend/web/js/form-key-provider.js#L87
             // Magento js above sets new cookie only in case if cookie is not exist
             // but in our issue case magento js file is able to read cookie from document object (because cookie was not removed by safari)
