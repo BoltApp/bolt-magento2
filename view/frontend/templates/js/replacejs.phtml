@@ -39,6 +39,7 @@ $connectJsUrl = $block->getConnectJsUrl();
 $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
 $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConnectJsDynamic;
 $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
+$successPageRedirectUrl = $block->getSuccessPageRedirectUrl();
 ?>
 
 <script type="text/javascript">
@@ -618,6 +619,10 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
             },
 
             success: function (transaction, callback) {
+                // fill success url to transaction object
+                if (!transaction.success_url) {
+                    transaction.success_url = "<?= $successPageRedirectUrl; ?>";
+                }
                 /**
                  * Success transaction handler.
                  * Sets the success url for the non-preauth flow.
@@ -663,7 +668,7 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                         }
                         return;
                     }
-                    processSuccess(transaction);
+                    processSuccess(data);
                 };
                 var showError = function() {
                     showBoltErrorMessage('', transaction.reference);

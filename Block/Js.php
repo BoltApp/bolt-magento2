@@ -874,4 +874,14 @@ function($argName) {
                 : []
         );
     }
+
+    /**
+     * Returns success redirect url
+     *
+     * @return string
+     */
+    public function getSuccessPageRedirectUrl()
+    {
+        return $this->getUrl($this->configHelper->getSuccessPageRedirect());
+    }
 }
