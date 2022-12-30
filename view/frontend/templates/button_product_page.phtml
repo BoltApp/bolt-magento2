@@ -301,8 +301,9 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                                 var productType = 'physical';
                             <?php endif; ?>
                             items.push({
+                                sku: '<?= /* @noEscape */ $childProduct->getSku(); ?>',
                                 reference: '<?= /* @noEscape */ $childProduct->getId(); ?>',
-                                price: '<?= /* @noEscape */ $childProduct->getPrice() ?>',
+                                price: '<?= /* @noEscape */ $childProduct->getFinalPrice() ?>',
                                 name: '<?= /* @noEscape */ addcslashes($childProduct->getName(), "'"); ?>',
                                 quantity: childProductQty,
                                 options: JSON.stringify(options),
@@ -317,6 +318,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                         var productType = 'physical';
                     <?php endif; ?>
                     items.push({
+                        sku: '<?= /* @noEscape */ $block->getProduct()->getSku(); ?>',
                         reference: '<?= /* @noEscape */ $block->getProduct()->getId(); ?>',
                         price: itemPrice,
                         name: '<?= /* @noEscape */ addcslashes($block->getProduct()->getName(), "'"); ?>',
@@ -325,7 +327,6 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                         type: productType
                     });
                 <?php endif; ?>
-
                 return items;
             };
 
