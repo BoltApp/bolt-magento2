@@ -501,6 +501,20 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        'beforeThrowingNoShippingMethodsException' => [
+            "listeners" => [
+                "Amasty_Shiprestriction" => [
+                    "module" => "Amasty_Shiprestriction",
+                    "checkClasses" => [
+                        "\Amasty\Shiprestriction\Model\ResourceModel\Rule\Collection",
+                    ],
+                    "sendClasses" => [
+                        "\Amasty\Shiprestriction\Model\ResourceModel\Rule\CollectionFactory",
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
+            ],
+        ],
 
     ];
 

@@ -204,17 +204,9 @@ class Shipping extends ShippingTax implements ShippingInterface
                     ]
                 ]);
             });
-            if ($errors) {
-                foreach ($errors as $error) {
-                    if ($error['error'] == 'There are items in your cart we can not ship to your state') {
-                        throw new BoltException(
-                            __('There are items in your cart we can not ship to your state'),
-                            null,
-                            6103
-                        );
-                    }
-                }
-            }
+
+
+            $this->eventsForThirdPartyModules->dispatchEventAndThrowException("beforeThrowingNoShippingMethodsException", $errors);
 
             throw new BoltException(
                 __('No Shipping Methods retrieved'),
