@@ -1080,7 +1080,10 @@ class Cart extends AbstractHelper
                 $signResponse = $this->getSignResponse(
                     $signRequest,
                     $quote ? $quote->getStoreId() : null
-                )->getResponse();
+                );
+                if ($signResponse) {
+                    $signResponse = $signResponse->getResponse();
+                }
 
                 if ($signResponse) {
                     $hints['signed_merchant_user_id'] = [
