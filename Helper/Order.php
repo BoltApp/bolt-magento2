@@ -1508,7 +1508,7 @@ class Order extends AbstractHelper
      */
     public function deleteOrderByIncrementId($incrementId, $immutableQuoteId)
     {
-        $order = $this->getExistingOrder($incrementId);
+        $order = $this->getExistingOrder($incrementId, $immutableQuoteId);
 
         if (!$order) {
             $this->bugsnag->notifyError(
@@ -2653,7 +2653,7 @@ class Order extends AbstractHelper
      */
     public function cancelFailedPaymentOrder($displayId, $immutableQuoteId)
     {
-        $order = $this->getExistingOrder($displayId);
+        $order = $this->getExistingOrder($displayId, $immutableQuoteId);
         if (!$order || $order->getState() == OrderModel::STATE_CANCELED) {
             return;
         }
