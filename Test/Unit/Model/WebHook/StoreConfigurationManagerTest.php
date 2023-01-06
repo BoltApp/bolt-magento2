@@ -15,26 +15,26 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\Test\Unit\Model\CatalogIngestion;
+namespace Bolt\Boltpay\Test\Unit\Model\WebHook;
 
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-use Bolt\Boltpay\Model\CatalogIngestion\StoreConfigurationManager;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
+use Bolt\Boltpay\Helper\Config as BoltConfig;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Model\WebHook\StoreConfigurationManager;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Test\Unit\TestUtils;
-use Bolt\Boltpay\Helper\Config as BoltConfig;
-use Magento\Framework\Encryption\EncryptorInterface;
-use Magento\TestFramework\Helper\Bootstrap;
-use Magento\Framework\ObjectManagerInterface;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\Store\Model\ScopeInterface;
 use Magento\Config\Model\Config;
 use Magento\Config\Model\ResourceModel\Config as ResourceConfig;
+use Magento\Framework\Encryption\EncryptorInterface;
+use Magento\Framework\ObjectManagerInterface;
+use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class StoreConfigurationManagerTest
- * @coversDefaultClass \Bolt\Boltpay\Model\CatalogIngestion\StoreConfigurationManager
+ * @coversDefaultClass \Bolt\Boltpay\Model\WebHook\StoreConfigurationManager
  */
 class StoreConfigurationManagerTest extends BoltTestCase
 {
@@ -84,12 +84,6 @@ class StoreConfigurationManagerTest extends BoltTestCase
         $apikey = $encryptor->encrypt(self::API_KEY);
         $publishKey = $encryptor->encrypt(self::PUBLISH_KEY);
         $configData = [
-            [
-                'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_SYSTEM_CONFIGURATION_UPDATE_REQUEST,
-                'value' => 1,
-                'scope' => ScopeInterface::SCOPE_WEBSITES,
-                'scopeId' => $websiteId,
-            ],
             [
                 'path'    => BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
                 'value'   => $publishKey,
