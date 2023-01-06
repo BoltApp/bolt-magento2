@@ -106,27 +106,22 @@ class ConfigPlugin
                     if ($website->getWebsiteId() == 0) {
                         continue;
                     }
-                    if ($this->boltConfig->getIsSystemConfigurationUpdateRequestEnabled($website->getId())
-                    ) {
-                        foreach ($website->getStores() as $store) {
-                            $this->storeConfigurationManager->requestStoreConfigurationUpdated($store->getCode());
-                        }
+
+                    foreach ($website->getStores() as $store) {
+                        $this->storeConfigurationManager->requestStoreConfigurationUpdated($store->getCode());
                     }
+
                 }
             }
 
-            if ($subject->getScope() == ScopeInterface::SCOPE_WEBSITES &&
-                $this->boltConfig->getIsSystemConfigurationUpdateRequestEnabled($subject->getWebsite())
-            ) {
+            if ($subject->getScope() == ScopeInterface::SCOPE_WEBSITES) {
                 $website = $this->websiteRepository->getById((int)$subject->getWebsite());
                 foreach ($website->getStores() as $store) {
                     $this->storeConfigurationManager->requestStoreConfigurationUpdated($store->getCode());
                 }
             }
 
-            if ($subject->getScope() == ScopeInterface::SCOPE_STORES &&
-                $this->boltConfig->getIsSystemConfigurationUpdateRequestEnabled($subject->getScopeId())
-            ) {
+            if ($subject->getScope() == ScopeInterface::SCOPE_STORES) {
                 $this->storeConfigurationManager->requestStoreConfigurationUpdated($subject->getScopeCode());
             }
         } catch (\Exception $e) {

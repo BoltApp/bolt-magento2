@@ -299,7 +299,7 @@
     <preference for="Bolt\Boltpay\Api\Data\ProductEventInterface" type="Bolt\Boltpay\Model\CatalogIngestion\ProductEvent" />
     <preference for="Bolt\Boltpay\Api\ProductEventRepositoryInterface" type="Bolt\Boltpay\Model\CatalogIngestion\ProductEventRepository" />
     <preference for="Bolt\Boltpay\Api\ProductEventManagerInterface" type="Bolt\Boltpay\Model\CatalogIngestion\ProductEventManager" />
-    <preference for="Bolt\Boltpay\Api\StoreConfigurationManagerInterface" type="Bolt\Boltpay\Model\CatalogIngestion\StoreConfigurationManager" />
+    <preference for="Bolt\Boltpay\Api\StoreConfigurationManagerInterface" type="Bolt\Boltpay\Model\WebHook\StoreConfigurationManager" />
     <type name="Magento\Catalog\Api\ProductRepositoryInterface">
         <plugin name="publishProductEventAfterProductDelete"
                 type="Bolt\Boltpay\Plugin\Magento\Catalog\Api\ProductRepositoryPlugin"/>

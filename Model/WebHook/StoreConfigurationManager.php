@@ -15,14 +15,15 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\Model\CatalogIngestion;
+namespace Bolt\Boltpay\Model\WebHook;
 
 use Bolt\Boltpay\Api\StoreConfigurationManagerInterface;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Logger\Logger;
 use Bolt\Boltpay\Helper\Config;
-use Bolt\Boltpay\Model\CatalogIngestion\StoreConfigurationRequestBuilder;
+use Bolt\Boltpay\Model\WebHook\StoreConfigurationRequestBuilder;
 use Magento\Framework\Exception\LocalizedException;
+
 
 /**
  * Store configuration manager

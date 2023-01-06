@@ -482,12 +482,6 @@
                         </depends>
                         <comment>Instant catalog synchronisation custom events</comment>
                     </field>
-                    <field id="catalog_ingestion_system_configuration_update_request_enabled" translate="label" type="select" sortOrder="70" showInDefault="0" showInWebsite="0" showInStore="0">
-                        <label>System configuration update request</label>
-                        <config_path>payment/boltpay/catalog_ingestion_system_configuration_update_request_enabled</config_path>
-                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                        <comment>Enable magento system configuration update request to Bolt</comment>
-                    </field>
                 </group>
             </group>
         </section>
