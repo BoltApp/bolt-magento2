@@ -329,11 +329,18 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                 return items;
             };
 
+            var getMetadata = function () {
+                return {
+                    encrypted_user_id: "<?= /* @noEscape */ $block->getEncodeUserId(); ?>"
+                };
+            }
+
             var cart;
             var setupProductPage = function () {
                 cart = {
                     currency: "<?= /* @noEscape */ $block->getStoreCurrencyCode(); ?>",
-                    items: getItemsData()
+                    items: getItemsData(),
+                    metadata: getMetadata()
                 };
 
                 // if connect.js is not loaded postpone until it is

@@ -52,6 +52,11 @@ class JsProductPage extends Js
      */
     private $searchCriteriaBuilder;
 
+    /**
+     * @var CartHelper
+     */
+    private $cartHelper;
+
     public function __construct(
         Context $context,
         Config $configHelper,
@@ -69,6 +74,7 @@ class JsProductPage extends Js
         $this->_product = $productView->getProduct();
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->_productRepository = $productRepository;
+        $this->cartHelper = $cartHelper;
         parent::__construct(
             $context,
             $configHelper,
@@ -184,5 +190,10 @@ class JsProductPage extends Js
         }
 
         return false;
+    }
+
+    public function getEncodeUserId()
+    {
+        return $this->cartHelper->getEncodeUserId();
     }
 }

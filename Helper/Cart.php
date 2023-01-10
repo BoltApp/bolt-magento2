@@ -1130,7 +1130,7 @@ class Cart extends AbstractHelper
      *  It used for PPC (product page checkout)
      *
      */
-    private function getEncodeUserId()
+    public function getEncodeUserId()
     {
         $user_id = $this->customerSession->getCustomer()->getId();
         $result = [
