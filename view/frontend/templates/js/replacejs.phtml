@@ -1486,7 +1486,10 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
 
         // When we know that cart will be updated soon we call configure with promises
         // to make sure bolt checkout with outdated cart isn't available for user
-        $(document).on("ajax:addToCart", function () {
+        $(document).on('ajax:addToCart', function (event, data) {
+            // current magento API
+            console.log(event);
+            console.log(data);
             var callBoltAfterAddToCart = function() {
                 expectCartRendering = true;
                 // If merchant shows popup after add to cart

@@ -454,6 +454,8 @@ define([
                 magentoCart.quoteMaskedId !== null &&
                 magentoCart.quoteMaskedId !== BoltCheckoutApiDriven.quoteMaskedId
             ) {
+                console.log("Plarform cart token:" + this.customerCart().quoteMaskedId)
+
                 BoltCheckoutApiDriven.quoteMaskedId = magentoCart.quoteMaskedId;
                 cart = {"id": BoltCheckoutApiDriven.quoteMaskedId};
                 if (!BoltCheckoutApiDriven.cartBarrier.isResolved()) {
@@ -1055,6 +1057,8 @@ define([
             if (this.customerCart().quoteMaskedId !== undefined &&
                 this.customerCart().quoteMaskedId !== null
             ) {
+                console.log("Plarform cart token:" + this.customerCart().quoteMaskedId)
+
                 this.quoteMaskedId = this.customerCart().quoteMaskedId;
                 this.cartBarrier.resolve({"id": this.quoteMaskedId})
                 BoltCheckoutApiDriven.isPromisesResolved = true;
@@ -1068,6 +1072,12 @@ define([
                 this.hintsBarrier.resolve({"hints": this.boltCartHints})
                 BoltCheckoutApiDriven.isPromisesResolved = true;
             }
+
+            $(document).on('ajax:addToCart', function (event, data) {
+                // fetch cart
+                console.log(event);
+                console.log(data);
+            });
         }
     }
 
