@@ -219,4 +219,11 @@
             <resource ref="Magento_Catalog::products" />
         </resources>
     </route>
+    <!--Add transaction for order-->
+    <route url="/V1/bolt/boltpay/transaction/manage" method="POST">
+        <service class="Bolt\Boltpay\Api\TransactionManagementInterface" method="execute"/>
+        <resources>
+            <resource ref="Magento_Sales::create" />
+        </resources>
+    </route>
 </routes>

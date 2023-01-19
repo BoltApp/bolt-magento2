@@ -62,6 +62,8 @@
     <preference for="Bolt\Boltpay\Api\Data\TaxDataInterface"   type="Bolt\Boltpay\Model\Api\Data\TaxData" />
     <preference for="Bolt\Boltpay\Api\Data\TaxResultInterface" type="Bolt\Boltpay\Model\Api\Data\TaxResult" />
 
+    <preference for="Bolt\Boltpay\Api\TransactionManagementInterface" type="Bolt\Boltpay\Model\Api\TransactionManagement" />
+
     <!-- For rest api discount code validation for gift card module -->
     <preference for="Bolt\Boltpay\Api\DiscountCodeValidationInterface" type="Bolt\Boltpay\Model\Api\DiscountCodeValidation" />
 
