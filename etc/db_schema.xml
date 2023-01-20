@@ -1,7 +1,0 @@
-<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
-        <table name="plugin_version_notification">
-            <column xsi:type="varchar" name="latest_version" nullable="false" comment="Latest available version of Bolt M2 plugin"/>
-            <column xsi:type="text" name="description" nullable="true" comment="Description for latest release"/>
-        </table>
-</schema>
