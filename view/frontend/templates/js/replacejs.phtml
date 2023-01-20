@@ -594,9 +594,11 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                     // or clicking the X-close button on the top right of the modal.
 
                     // re-create order in case checkout was closed
-                    // after order was changed from inside the checkout,
+                    // after the cart was changed from bolt checkout,
                     // i.e. the discount was applied
-                    invalidateBoltCart();
+                    // added 0 delay to allow bolt connect finish its work
+                    // before new Configure() call
+                    setTimeout(invalidateBoltCart, 0);
                     customerData.reload(['cart'], true);
                 }
             },
