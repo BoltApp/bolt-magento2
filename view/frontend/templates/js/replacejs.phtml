@@ -635,7 +635,7 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                         if (typeof data !== 'undefined') {
                             callbacks.success_url = data.success_url;
                         }
-                        trackCallbacks.onSuccess(data);
+                        trackCallbacks.onSuccess(transaction);
                     } finally {
                         callback();
                     }
