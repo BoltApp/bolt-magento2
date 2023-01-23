@@ -106,6 +106,11 @@ class Api extends AbstractHelper
     const API_AUTHORIZE_TRANSACTION = 'merchant/transactions/authorize';
 
     /**
+     * Api pre fetch cart
+     */
+    const API_PRE_FETCH_CART = 'order/pre_fetch_cart';
+
+    /**
      * Api oauth token exchange
      */
     const API_OAUTH_TOKEN = 'oauth/token';
@@ -114,6 +119,7 @@ class Api extends AbstractHelper
      * Path for sandbox mode
      */
     const XML_PATH_SANDBOX_MODE = 'payment/boltpay/sandbox_mode';
+
 
     /**
      * @var ZendClientFactory

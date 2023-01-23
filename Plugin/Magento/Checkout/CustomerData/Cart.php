@@ -1,9 +1,11 @@
 <?php
 namespace Bolt\Boltpay\Plugin\Magento\Checkout\CustomerData;
 
+use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Magento\Checkout\CustomerData\Cart as CustomerDataCart;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\Exception\AlreadyExistsException;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Model\QuoteIdToMaskedQuoteIdInterface;
 use Magento\Quote\Model\ResourceModel\Quote\QuoteIdMask as QuoteIdMaskResourceModel;
@@ -12,6 +14,8 @@ use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Helper\Cart as BoltHelperCart;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Magento\Framework\DataObjectFactory;
 
 /**
  * Process quote bolt data
@@ -57,6 +61,26 @@ class Cart
     private $featureSwitches;
 
     /**
+     * @var ConfigHelper
+     */
+    private $configHelper;
+
+    /**
+     * @var DataObjectFactory
+     */
+    private $dataObjectFactory;
+
+    /**
+     * @var ApiHelper
+     */
+    private $apiHelper;
+
+    /**
+     * @var string
+     */
+    private $quoteMaskedId;
+
+    /**
      * @param CheckoutSession $checkoutSession
      * @param QuoteIdToMaskedQuoteIdInterface $quoteIdToMaskedQuoteId
      * @param QuoteIdMaskResourceModel $quoteIdMaskResourceModel
@@ -64,6 +88,8 @@ class Cart
      * @param BoltHelperCart $boltHelperCart
      * @param Bugsnag $bugsnag
      * @param Decider $featureSwitches
+     * @param ConfigHelper $configHelper
+     * @param DataObjectFactory $dataObjectFactory
      */
     public function __construct(
         CheckoutSession $checkoutSession,
@@ -72,7 +98,10 @@ class Cart
         QuoteIdMaskFactory $quoteIdMaskFactory,
         BoltHelperCart $boltHelperCart,
         Bugsnag $bugsnag,
-        Decider $featureSwitches
+        Decider $featureSwitches,
+        ConfigHelper $configHelper,
+        DataObjectFactory $dataObjectFactory,
+        ApiHelper $apiHelper
     ) {
         $this->checkoutSession = $checkoutSession;
         $this->quoteIdToMaskedQuoteId = $quoteIdToMaskedQuoteId;
@@ -81,6 +110,9 @@ class Cart
         $this->boltHelperCart = $boltHelperCart;
         $this->bugsnag = $bugsnag;
         $this->featureSwitches = $featureSwitches;
+        $this->configHelper = $configHelper;
+        $this->dataObjectFactory = $dataObjectFactory;
+        $this->apiHelper = $apiHelper;
     }
 
     /**
@@ -103,6 +135,7 @@ class Cart
             try {
                 $result['quoteMaskedId'] = $this->getQuoteMaskedId((int)$quote->getId());
                 $result['boltCartHints'] = $this->boltHelperCart->getHints($quote->getId(), self::HINTS_TYPE);
+                $this->preFetchCartBoltRequest($quote);
             } catch (\Exception $e) {
                 $this->bugsnag->notifyException($e);
             }
@@ -130,13 +163,50 @@ class Cart
     private function getQuoteMaskedId(int $quoteId): string
     {
         try {
-            $maskedId = $this->quoteIdToMaskedQuoteId->execute($quoteId);
+            if (!$this->quoteMaskedId) {
+                $this->quoteMaskedId = $this->quoteIdToMaskedQuoteId->execute($quoteId);
+            }
         } catch (NoSuchEntityException $e) {
             $quoteIdMask = $this->quoteIdMaskFactory->create();
             $quoteIdMask->setQuoteId($quoteId);
             $this->quoteIdMaskResourceModel->save($quoteIdMask);
-            $maskedId = $quoteIdMask->getMaskedId();
+            $this->quoteMaskedId = $quoteIdMask->getMaskedId();
         }
-        return $maskedId;
+        return $this->quoteMaskedId;
+    }
+
+    /**
+     * Make pre fetch cart data to Bolt
+     *
+     * @param Quote $quote
+     * @return void
+     * @throws AlreadyExistsException
+     * @throws LocalizedException
+     */
+    private function preFetchCartBoltRequest(Quote $quote): void
+    {
+        $apiKey = $this->configHelper->getApiKey($quote->getStoreId());
+        $publishKey = $this->configHelper->getPublishableKeyCheckout($quote->getStoreId());
+        if (!$apiKey || !$publishKey) {
+            throw new LocalizedException(
+                __('Bolt API Key or Publishable Key - Multi Step is not configured')
+            );
+        }
+        $requestData = $this->dataObjectFactory->create();
+        $requestData->setDynamicApiUrl(ApiHelper::API_PRE_FETCH_CART)
+            ->setApiKey($apiKey)
+            ->setStatusOnly(true)
+            ->setRequestMethod('POST')
+            ->setHeaders(
+                [
+                    'X-Publishable-Key' => $publishKey
+                ]
+            )->setApiData(
+                [
+                    'order_reference' => $this->getQuoteMaskedId((int)$quote->getId())
+                ]
+            );
+        $request = $this->apiHelper->buildRequest($requestData);
+        $this->apiHelper->sendRequest($request);
     }
 }
