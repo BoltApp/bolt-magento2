@@ -216,7 +216,7 @@ class Cart
             // makes bolt pre-fetch cart request if customer-data is not in cache
             if (!$this->getCustomerDataFromCache($customerDataHash)) {
                 $this->preFetchCartBoltRequest($quote, $customerData);
-                $this->saveCustomerDataToCache($customerData, $customerDataHash);
+                $this->saveCustomerDataToCache($customerDataHash);
             }
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -236,8 +236,8 @@ class Cart
     {
 
         $apiKey = $this->configHelper->getApiKey($quote->getStoreId());
-        $publishKey = $this->configHelper->getPublishableKeyCheckout($quote->getStoreId());
-        if (!$apiKey || !$publishKey) {
+        $publishableKey = $this->configHelper->getPublishableKeyCheckout($quote->getStoreId());
+        if (!$apiKey || !$publishableKey) {
             throw new LocalizedException(
                 __('Bolt API Key or Publishable Key - Multi Step is not configured')
             );
@@ -249,7 +249,7 @@ class Cart
             ->setRequestMethod('POST')
             ->setHeaders(
                 [
-                    'X-Publishable-Key' => $publishKey
+                    'X-Publishable-Key' => $publishableKey
                 ]
             )->setApiData(
                 [
@@ -275,13 +275,12 @@ class Cart
      * Save customer data to cache
      *
      * @param string $customerDataHash
-     * @param array $customerData
      * @return bool
      */
-    private function saveCustomerDataToCache(array $customerData, string $customerDataHash): bool
+    private function saveCustomerDataToCache(string $customerDataHash): bool
     {
         return $this->cache->save(
-            $this->serializer->serialize($customerData),
+            'true',
             $customerDataHash, [self::PRE_FETCH_CART_CUSTOMER_DATA_CACHE_TAG],
             self::PRE_FETCH_CART_CUSTOMER_DATA_CACHE_LIFETIME
         );

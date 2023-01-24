@@ -651,8 +651,8 @@ class Definitions
         self::M2_PRE_FETCH_CART_VIA_API => [
             self::NAME_KEY        => self::M2_PRE_FETCH_CART_VIA_API,
             self::VAL_KEY         => true,
-            self::DEFAULT_VAL_KEY => false,
-            self::ROLLOUT_KEY     => 0
+            self::DEFAULT_VAL_KEY => true,
+            self::ROLLOUT_KEY     => 100
         ],
     ];
 }
