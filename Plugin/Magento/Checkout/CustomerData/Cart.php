@@ -214,9 +214,9 @@ class Cart
         $customerDataHash = $this->getCustomerDataHash($customerData);
         try {
             // makes bolt pre-fetch cart request if customer-data is not in cache
-            if (!$this->getCustomerDataFromCache($customerDataHash)) {
+            if (!$this->getCustomerDataHashFromCache($customerDataHash)) {
                 $this->preFetchCartBoltRequest($quote, $customerData);
-                $this->saveCustomerDataToCache($customerDataHash);
+                $this->saveCustomerDataHashToCache($customerDataHash);
             }
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
@@ -277,7 +277,7 @@ class Cart
      * @param string $customerDataHash
      * @return bool
      */
-    private function saveCustomerDataToCache(string $customerDataHash): bool
+    private function saveCustomerDataHashToCache(string $customerDataHash): bool
     {
         return $this->cache->save(
             'true',
@@ -292,7 +292,7 @@ class Cart
      * @param string $customerDataHash
      * @return string|null
      */
-    private function getCustomerDataFromCache(string $customerDataHash): ?string
+    private function getCustomerDataHashFromCache(string $customerDataHash): ?string
     {
         return $this->cache->load($customerDataHash);
     }
