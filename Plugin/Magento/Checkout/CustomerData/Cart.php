@@ -16,6 +16,8 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\DataObjectFactory;
+use Magento\Framework\Serialize\SerializerInterface as Serializer;
+use Magento\Framework\App\CacheInterface;
 
 /**
  * Process quote bolt data
@@ -24,6 +26,10 @@ use Magento\Framework\DataObjectFactory;
 class Cart
 {
     private const HINTS_TYPE = 'cart';
+
+    private const PRE_FETCH_CART_CUSTOMER_DATA_CACHE_TAG = 'PRE_FETCH_CART_CUSTOMER_DATA_CACHE_TAG';
+
+    private const PRE_FETCH_CART_CUSTOMER_DATA_CACHE_LIFETIME = 3600; // one hour
 
     /**
      * @var CheckoutSession
@@ -76,6 +82,16 @@ class Cart
     private $apiHelper;
 
     /**
+     * @var Serializer
+     */
+    private $serializer;
+
+    /**
+     * @var CacheInterface
+     */
+    private $cache;
+
+    /**
      * @var string
      */
     private $quoteMaskedId;
@@ -90,6 +106,9 @@ class Cart
      * @param Decider $featureSwitches
      * @param ConfigHelper $configHelper
      * @param DataObjectFactory $dataObjectFactory
+     * @param ApiHelper $apiHelper
+     * @param Serializer $serializer
+     * @param CacheInterface $cache
      */
     public function __construct(
         CheckoutSession $checkoutSession,
@@ -101,7 +120,9 @@ class Cart
         Decider $featureSwitches,
         ConfigHelper $configHelper,
         DataObjectFactory $dataObjectFactory,
-        ApiHelper $apiHelper
+        ApiHelper $apiHelper,
+        Serializer $serializer,
+        CacheInterface $cache
     ) {
         $this->checkoutSession = $checkoutSession;
         $this->quoteIdToMaskedQuoteId = $quoteIdToMaskedQuoteId;
@@ -113,6 +134,8 @@ class Cart
         $this->configHelper = $configHelper;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->apiHelper = $apiHelper;
+        $this->serializer = $serializer;
+        $this->cache = $cache;
     }
 
     /**
@@ -123,24 +146,24 @@ class Cart
      * @return array
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function afterGetSectionData(CustomerDataCart $subject, array $result)
+    public function afterGetSectionData(CustomerDataCart $subject, array $customerData)
     {
         if (!$this->featureSwitches->isEnabledFetchCartViaApi()) {
-            return $result;
+            return $customerData;
         }
         $quote = $this->getQuote();
-        $result['quoteMaskedId'] = null;
-        $result['boltCartHints'] = null;
+        $customerData['quoteMaskedId'] = null;
+        $customerData['boltCartHints'] = null;
         if ($quote->getId()) {
             try {
-                $result['quoteMaskedId'] = $this->getQuoteMaskedId((int)$quote->getId());
-                $result['boltCartHints'] = $this->boltHelperCart->getHints($quote->getId(), self::HINTS_TYPE);
-                $this->preFetchCartBoltRequest($quote);
+                $customerData['quoteMaskedId'] = $this->getQuoteMaskedId((int)$quote->getId());
+                $customerData['boltCartHints'] = $this->boltHelperCart->getHints($quote->getId(), self::HINTS_TYPE);
+                $this->preFetchCart($quote, $customerData);
             } catch (\Exception $e) {
                 $this->bugsnag->notifyException($e);
             }
         }
-        return $result;
+        return $customerData;
     }
 
     /**
@@ -176,15 +199,42 @@ class Cart
     }
 
     /**
+     * Pre-fetch cart main thread
+     *
+     * @param Quote $quote
+     * @param array $customerData
+     * @return void
+     * @throws LocalizedException
+     */
+    private function preFetchCart(Quote $quote, array $customerData): void
+    {
+        if (!$this->featureSwitches->isEnabledPreFetchCartViaApi()) {
+            return;
+        }
+        $customerDataHash = $this->getCustomerDataHash($customerData);
+        try {
+            // makes bolt pre-fetch cart request if customer-data is not in cache
+            if (!$this->getCustomerDataFromCache($customerDataHash)) {
+                $this->preFetchCartBoltRequest($quote, $customerData);
+                $this->saveCustomerDataToCache($customerData, $customerDataHash);
+            }
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+        }
+    }
+    /**
      * Make pre fetch cart data to Bolt
      *
      * @param Quote $quote
+     * @param array $customerData
      * @return void
      * @throws AlreadyExistsException
      * @throws LocalizedException
+     * @throws \Zend_Http_Client_Exception
      */
-    private function preFetchCartBoltRequest(Quote $quote): void
+    private function preFetchCartBoltRequest(Quote $quote, array $customerData): void
     {
+
         $apiKey = $this->configHelper->getApiKey($quote->getStoreId());
         $publishKey = $this->configHelper->getPublishableKeyCheckout($quote->getStoreId());
         if (!$apiKey || !$publishKey) {
@@ -208,5 +258,43 @@ class Cart
             );
         $request = $this->apiHelper->buildRequest($requestData);
         $this->apiHelper->sendRequest($request);
+    }
+
+    /**
+     * Returns uniq hash of customer data
+     *
+     * @param array $customerData
+     * @return string
+     */
+    private function getCustomerDataHash(array $customerData): string
+    {
+        return md5($this->serializer->serialize($customerData));
+    }
+
+    /**
+     * Save customer data to cache
+     *
+     * @param string $customerDataHash
+     * @param array $customerData
+     * @return bool
+     */
+    private function saveCustomerDataToCache(array $customerData, string $customerDataHash): bool
+    {
+        return $this->cache->save(
+            $this->serializer->serialize($customerData),
+            $customerDataHash, [self::PRE_FETCH_CART_CUSTOMER_DATA_CACHE_TAG],
+            self::PRE_FETCH_CART_CUSTOMER_DATA_CACHE_LIFETIME
+        );
+    }
+
+    /**
+     * Returns the customer data from cache
+     *
+     * @param string $customerDataHash
+     * @return string|null
+     */
+    private function getCustomerDataFromCache(string $customerDataHash): ?string
+    {
+        return $this->cache->load($customerDataHash);
     }
 }
