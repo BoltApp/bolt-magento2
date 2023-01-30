@@ -111,6 +111,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
         $this->setupCatalogProductEventTable($setup);
 
+        $this->setupPluginVersionNotificationTable($setup);
+
         $setup->endSetup();
     }
 
@@ -338,6 +340,32 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 ['type' => \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_UNIQUE]
             )
             ->setComment('Bolt Product Event Table');
+        $setup->getConnection()->createTable($table);
+    }
+
+    private function setupPluginVersionNotificationTable($setup)
+    {
+        $tableCreated = $setup->getConnection()->isTableExists('plugin_version_notification');
+        if ($tableCreated) {
+            return;
+        }
+
+        $table = $setup->getConnection()
+            ->newTable($setup->getTable('plugin_version_notification'))
+            ->addColumn(
+                'latest_version',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                255,
+                ['nullable' => false],
+                'Latest available version of Bolt M2 plugin'
+            )
+            ->addColumn(
+                'description',
+                \Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+                null,
+                ['nullable' => true],
+                'Description for latest release'
+            )->setComment('New plugin version notification table');
         $setup->getConnection()->createTable($table);
     }
 }
