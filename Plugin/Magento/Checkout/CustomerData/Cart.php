@@ -268,7 +268,7 @@ class Cart
      */
     private function getCustomerDataHash(array $customerData): string
     {
-        return md5($this->serializer->serialize($customerData));
+        return hash('md5', $this->serializer->serialize($customerData));
     }
 
     /**
