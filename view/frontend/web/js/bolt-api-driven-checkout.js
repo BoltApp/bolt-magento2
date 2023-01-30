@@ -637,7 +637,7 @@ define([
                             if (typeof data !== 'undefined') {
                                 BoltCheckoutApiDriven.boltCallbacks.success_url = data.success_url;
                             }
-                            window.boltConfig.trackCallbacks.onSuccess(data);
+                            window.boltConfig.trackCallbacks.onSuccess(transaction);
                         } finally {
                             callback();
                         }
