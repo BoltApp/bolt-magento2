@@ -274,3 +274,5 @@
 - Fixes intermittent issue where some logged-in users could not check out if Route was enabled.
 - Merchants can now filter orders by specific Bolt payment method e.g., `bolt-visa`.
 - Fixes intermittent issue where data may not send to third-party integrations.
+## [v2.26.5](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.5) 2023-01-30
+[TODO]
