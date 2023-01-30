@@ -539,6 +539,18 @@ class Decider extends AbstractHelper
     }
 
     /**
+     * Checks whether the feature switch for pre-fetching cart via api is enabled
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isEnabledPreFetchCartViaApi()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_PRE_FETCH_CART_VIA_API);
+    }
+
+    /**
      * Checks whether the feature switch for catalog ingestion instance update is disabled
      *
      * @return bool whether the feature switch is enabled
