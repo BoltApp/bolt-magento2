@@ -21,6 +21,7 @@ use Magento\Framework\Module\FullModuleList;
 use Magento\Framework\App\ResourceConnection;
 use Bolt\Boltpay\Model\Api\Data\PluginVersionFactory;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Magento\Framework\Module\PackageInfo;
 
 class ModuleRetriever
 {
@@ -47,14 +48,21 @@ class ModuleRetriever
     private $fullModuleList;
 
     /**
+     * @var PackageInfo
+     */
+    private $packageInfo;
+
+    /**
      * @var Bugsnag
      */
     private $bugsnag;
 
     /**
      * @param Decider $featureSwitches
+     * @param ResourceConnection $resource
      * @param PluginVersionFactory $pluginVersionFactory
      * @param FullModuleList $fullModuleList
+     * @param PackageInfo $packageInfo
      * @param Bugsnag $bugsnag
      */
     public function __construct(
@@ -62,12 +70,14 @@ class ModuleRetriever
         ResourceConnection $resource,
         PluginVersionFactory $pluginVersionFactory,
         FullModuleList $fullModuleList,
+        PackageInfo $packageInfo,
         Bugsnag $bugsnag
     ) {
         $this->featureSwitches = $featureSwitches;
         $this->resource = $resource;
         $this->pluginVersionFactory = $pluginVersionFactory;
         $this->fullModuleList = $fullModuleList;
+        $this->packageInfo = $packageInfo;
         $this->bugsnag = $bugsnag;
     }
 
@@ -81,7 +91,9 @@ class ModuleRetriever
                 : $this->getModulesList();
             foreach ($modulesList as $module) {
                 $moduleName = $this->getModuleName($module, $isUseModulesListFromDatabase);
-                $moduleVersion = $this->getModuleVersion($module, $isUseModulesListFromDatabase);
+                $moduleVersion = ($isUseModulesListFromDatabase)
+                    ? $this->getModuleVersion($module, $isUseModulesListFromDatabase)
+                    : $this->packageInfo->getVersion($moduleName);
                 $plugin = $this->pluginVersionFactory->create()
                     ->setName($moduleName)
                     ->setVersion($moduleVersion);
