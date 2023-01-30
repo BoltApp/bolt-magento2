@@ -91,6 +91,7 @@ class Order extends AbstractHelper
     const TS_ZERO_AMOUNT           = 'zero_amount:completed';
     const TS_CREDIT_IN_PROGRESS    = 'cc_credit:in_progress';
     const TS_CREDIT_COMPLETED      = 'cc_credit:completed';
+    const TS_CREDIT_CREATED      = 'cc_credit:created';
 
     const MISMATCH_TOLERANCE = 1;
 
@@ -1937,6 +1938,7 @@ class Order extends AbstractHelper
             self::TS_REJECTED_REVERSIBLE => 'REVERSIBLE REJECTED',
             self::TS_REJECTED_IRREVERSIBLE => 'IRREVERSIBLE REJECTED',
             self::TS_CREDIT_IN_PROGRESS => 'Refund is in progress. See actual refund status in Bolt merchant dashboard',
+            self::TS_CREDIT_CREATED => 'Refund is in progress. See actual refund status in Bolt merchant dashboard',
             self::TS_CREDIT_COMPLETED => Hook::$fromBolt ? 'REFUNDED UNSYNCHRONISED' : 'REFUNDED'
         ][$transactionState];
     }
@@ -2074,7 +2076,7 @@ class Order extends AbstractHelper
      */
     public function transactionToOrderState($transactionState, $order)
     {
-        if ($transactionState == self::TS_CREDIT_IN_PROGRESS || $transactionState == self::TS_CREDIT_COMPLETED) {
+        if ($transactionState == self::TS_CREDIT_IN_PROGRESS || $transactionState == self::TS_CREDIT_CREATED || $transactionState == self::TS_CREDIT_COMPLETED) {
             if ($order->getTotalRefunded() == $order->getGrandTotal() && $order->getTotalRefunded() == $order->getTotalPaid() && !$order->canShip()) {
                 return OrderModel::STATE_CLOSED;
             }
@@ -2232,6 +2234,7 @@ class Order extends AbstractHelper
                 break;
 
             case self::TS_CREDIT_IN_PROGRESS:
+            case self::TS_CREDIT_CREATED:
             case self::TS_CREDIT_COMPLETED:
                 if (in_array($transaction->id, $processedRefunds)) {
                     return;
@@ -2305,7 +2308,7 @@ class Order extends AbstractHelper
         $orderState = $this->transactionToOrderState($transactionState, $order);
 
         // If the action is not triggered by Bolt API request and transaction type is credit, there is not need to save order.
-        $ifSaveOrder = Hook::$fromBolt || ($transactionState != self::TS_CREDIT_IN_PROGRESS && $transactionState != self::TS_CREDIT_COMPLETED);
+        $ifSaveOrder = Hook::$fromBolt || ($transactionState != self::TS_CREDIT_IN_PROGRESS && $transactionState != self::TS_CREDIT_COMPLETED && $transactionState != self::TS_CREDIT_CREATED);
         $this->setOrderState($order, $orderState, $ifSaveOrder);
 
         // Send order confirmation email to customer.
