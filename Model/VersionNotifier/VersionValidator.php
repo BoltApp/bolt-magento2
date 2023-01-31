@@ -87,10 +87,10 @@ class VersionValidator
             return false;
         }
 
-        $this->versionNotifier->setLetestVersion($response['response_body']['name']);
+        $this->versionNotifier->setLatestVersion($response['response_body']['name']);
         $this->versionNotifier->setDescription($response['response_body']['body']);
 
-        return $this->versionNotifier->getLetestVersion();
+        return $this->versionNotifier->getLatestVersion();
     }
 
     private function getCurrentVersion(): string
