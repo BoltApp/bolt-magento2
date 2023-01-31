@@ -18,7 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Model\WebHook;
 
 use Bolt\Boltpay\Helper\Config as BoltConfig;
-use Bolt\Boltpay\Model\WebHook\StoreConfigurationRequestBuilder;
+use Bolt\Boltpay\Model\StoreConfiguration\StoreConfigurationRequestBuilder;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Config\Model\ResourceModel\Config as ResourceConfig;
@@ -30,7 +30,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class ProductEventRequestBuilderTest
- * @coversDefaultClass \Bolt\Boltpay\Model\WebHook\StoreConfigurationRequestBuilder
+ * @coversDefaultClass \Bolt\Boltpay\Model\StoreConfiguration\StoreConfigurationRequestBuilder
  */
 class StoreConfigurationRequestBuilderTest extends BoltTestCase
 {

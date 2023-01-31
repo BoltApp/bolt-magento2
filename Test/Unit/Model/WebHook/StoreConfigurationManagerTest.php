@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\WebHook;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as BoltConfig;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
-use Bolt\Boltpay\Model\WebHook\StoreConfigurationManager;
+use Bolt\Boltpay\Model\StoreConfiguration\StoreConfigurationManager;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Test\Unit\TestUtils;
@@ -34,7 +34,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class StoreConfigurationManagerTest
- * @coversDefaultClass \Bolt\Boltpay\Model\WebHook\StoreConfigurationManager
+ * @coversDefaultClass \Bolt\Boltpay\Model\StoreConfiguration\StoreConfigurationManager
  */
 class StoreConfigurationManagerTest extends BoltTestCase
 {
