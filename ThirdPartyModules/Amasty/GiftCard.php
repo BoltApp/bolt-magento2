@@ -140,6 +140,15 @@ class GiftCard
                     ->getGiftCardsByQuoteId($quote->getId());
                 /** @var \Amasty\GiftCard\Model\Quote|\Amasty\GiftCard\Model\Account $giftcard */
                 foreach ($giftcardQuotes->getItems() as $giftcard) {
+                    $alreadyExists = false;
+                    foreach ($discounts as $discount) {
+                        if($discount->reference == $giftCardCode){
+                            $alreadyExists = true;
+                            break;
+                        }
+                    }
+                    if($alreadyExists) continue;
+
                     $amount = abs((float)$giftcard->getCurrentValue());
                     $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                     $giftCardCode = $giftcard->getCode();
