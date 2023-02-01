@@ -293,11 +293,6 @@ class Config extends AbstractHelper
     const XML_PATH_CATALOG_INGESTION_INSTANT_EVENT = 'payment/boltpay/catalog_ingestion_instant_events';
 
     /**
-     * Path for system configuration updates request
-     */
-    const XML_PATH_CATALOG_INGESTION_SYSTEM_CONFIGURATION_UPDATE_REQUEST = 'payment/boltpay/catalog_ingestion_system_configuration_update_request_enabled';
-
-    /**
      * Path for Additional Javascript
      */
     const XML_PATH_ADDITIONAL_JS = 'payment/boltpay/additional_js';
@@ -2615,22 +2610,6 @@ class Config extends AbstractHelper
         );
         return ($eventsConfigValue !== null) ?
             explode(',', $eventsConfigValue) : [];
-    }
-
-    /**
-     * Returns if system configuration request enabled
-     *
-     * @param int|string|null $websiteId
-     *
-     * @return bool
-     */
-    public function getIsSystemConfigurationUpdateRequestEnabled($websiteId = null)
-    {
-        return $this->getScopeConfig()->isSetFlag(
-            self::XML_PATH_CATALOG_INGESTION_SYSTEM_CONFIGURATION_UPDATE_REQUEST,
-            ScopeInterface::SCOPE_WEBSITES,
-            $websiteId
-        );
     }
 
     /**

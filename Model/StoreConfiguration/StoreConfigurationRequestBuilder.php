@@ -15,7 +15,7 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\Model\CatalogIngestion;
+namespace Bolt\Boltpay\Model\StoreConfiguration;
 
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\Api as ApiHelper;

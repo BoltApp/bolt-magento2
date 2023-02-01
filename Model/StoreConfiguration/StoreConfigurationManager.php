@@ -15,14 +15,15 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\Model\CatalogIngestion;
+namespace Bolt\Boltpay\Model\StoreConfiguration;
 
 use Bolt\Boltpay\Api\StoreConfigurationManagerInterface;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Logger\Logger;
 use Bolt\Boltpay\Helper\Config;
-use Bolt\Boltpay\Model\CatalogIngestion\StoreConfigurationRequestBuilder;
+use Bolt\Boltpay\Model\StoreConfiguration\StoreConfigurationRequestBuilder;
 use Magento\Framework\Exception\LocalizedException;
+use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
  * Store configuration manager
@@ -45,26 +46,26 @@ class StoreConfigurationManager implements StoreConfigurationManagerInterface
     private $config;
 
     /**
-     * @var Logger
+     * @var Bugsnag
      */
-    private $logger;
+    private $bugsnag;
 
     /**
      * @param ApiHelper $apiHelper
      * @param StoreConfigurationRequestBuilder $storeConfigurationRequestBuilder
      * @param Config $config
-     * @param Logger $logger
+     * @param Bugsnag $bugsnag
      */
     public function __construct(
         ApiHelper $apiHelper,
         StoreConfigurationRequestBuilder $storeConfigurationRequestBuilder,
         Config $config,
-        Logger $logger
+        Bugsnag $bugsnag
     ) {
         $this->apiHelper = $apiHelper;
         $this->storeConfigurationRequestBuilder = $storeConfigurationRequestBuilder;
         $this->config = $config;
-        $this->logger = $logger;
+        $this->bugsnag = $bugsnag;
     }
 
     /**
@@ -88,7 +89,7 @@ class StoreConfigurationManager implements StoreConfigurationManagerInterface
             }
 
         } catch (\Exception $e) {
-            $this->logger->critical($e);
+            $this->bugsnag->notifyException($e);
             return false;
         }
     }

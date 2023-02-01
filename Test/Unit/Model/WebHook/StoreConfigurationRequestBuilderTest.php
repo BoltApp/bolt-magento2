@@ -15,22 +15,22 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\Test\Unit\Model\CatalogIngestion;
+namespace Bolt\Boltpay\Test\Unit\Model\WebHook;
 
-use Bolt\Boltpay\Model\CatalogIngestion\StoreConfigurationRequestBuilder;
-use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Config as BoltConfig;
+use Bolt\Boltpay\Model\StoreConfiguration\StoreConfigurationRequestBuilder;
+use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Config\Model\ResourceModel\Config as ResourceConfig;
 use Magento\Framework\Encryption\EncryptorInterface;
-use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\ObjectManagerInterface;
-use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\TestFramework\Helper\Bootstrap;
 
 /**
  * Class ProductEventRequestBuilderTest
- * @coversDefaultClass \Bolt\Boltpay\Model\CatalogIngestion\StoreConfigurationRequestBuilder
+ * @coversDefaultClass \Bolt\Boltpay\Model\StoreConfiguration\StoreConfigurationRequestBuilder
  */
 class StoreConfigurationRequestBuilderTest extends BoltTestCase
 {
@@ -66,12 +66,6 @@ class StoreConfigurationRequestBuilderTest extends BoltTestCase
         $apikey = $encryptor->encrypt(self::API_KEY);
         $publishKey = $encryptor->encrypt(self::PUBLISH_KEY);
         $configData = [
-            [
-                'path' => BoltConfig::XML_PATH_CATALOG_INGESTION_SYSTEM_CONFIGURATION_UPDATE_REQUEST,
-                'value' => 1,
-                'scope' => ScopeInterface::SCOPE_WEBSITES,
-                'scopeId' => $websiteId,
-            ],
             [
                 'path'    => BoltConfig::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
                 'value'   => $publishKey,
