@@ -277,5 +277,5 @@
 ## [v2.26.5](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.5) 2023-01-30
 
 ## Bug Fixes
-- Bolt now correctly reflects when transactions using Amazon Pay have a refund in progress. Previously, if a merchant refunded an Amazon Pay order in Magento, the order would be closed with a note stating the refund was in progress.
 - Fixes issue where shoppers could not add items to cart using Safari after logging in using the Bolt Shopper Assistant.
+- Fixes intermittent issue where checkout with Apple Pay was interrupted when used in combination with certain payment providers.
