@@ -274,5 +274,8 @@
 - Fixes intermittent issue where some logged-in users could not check out if Route was enabled.
 - Merchants can now filter orders by specific Bolt payment method e.g., `bolt-visa`.
 - Fixes intermittent issue where data may not send to third-party integrations.
-## [v2.26.5](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.5) 2023-01-30
-[TODO]
+## [v2.26.5](https://github.com/BoltApp/bolt-magento2/releases/tag/2.26.5) 2023-02-06
+
+## Bug Fixes
+- Fixes issue where shoppers could not add items to cart using Safari after logging in using the Bolt Shopper Assistant.
+- Fixes intermittent issue where checkout with Apple Pay was interrupted when used in combination with certain payment providers.
