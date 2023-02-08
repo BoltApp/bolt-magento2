@@ -384,7 +384,8 @@ class OAuthRedirect implements OAuthRedirectInterface
 
                 // The checkout may not have been completed yet, but the user may have logged in via Bolt SSO
                 $quote = $this->cartHelper->getQuoteById($reference);
-                if ($quote !== false) {
+                // quote shouldn't be attached to any customer to prevent issues by sso double authorization
+                if ($quote !== false && !$quote->getCustomerId()) {
                     try {
                         // we should make current customer cart as inactive and use guest cart as customer cart if login from bolt modal
                         $customerActiveQuote = $this->cartRepository->getActiveForCustomer($customer->getId());
@@ -397,7 +398,7 @@ class OAuthRedirect implements OAuthRedirectInterface
                     $quote->setCustomerIsGuest(false);
                     $this->cartHelper->saveQuote($quote);
                     $this->updateImmutableQuotes($quote, $customer);
-                } else {
+                } elseif($quote !== false) {
                     $this->bugsnag->notifyError("Cannot find quote", "ID: {$reference}");
                 }
             } else {
@@ -406,7 +407,8 @@ class OAuthRedirect implements OAuthRedirectInterface
                 $checkoutSession = $this->sessionHelper->getCheckoutSession();
                 if ($checkoutSession) {
                     $quote = $checkoutSession->getQuote();
-                    if ($quote->getId()) {
+                    // quote shouldn't be attached to any customer to prevent issues by sso double authorization
+                    if ($quote->getId() && !$quote->getCustomerId()) {
                         try {
                             // we should merge quote here for magento 2.3.X version and below, because
                             // https://github.com/magento/magento2/blob/44a7b6079bcac5ba92040b16f4f74024b4f34d09/app/code/Magento/Quote/Model/QuoteManagement.php#L297
