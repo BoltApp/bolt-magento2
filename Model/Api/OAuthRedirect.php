@@ -398,7 +398,7 @@ class OAuthRedirect implements OAuthRedirectInterface
                     $quote->setCustomerIsGuest(false);
                     $this->cartHelper->saveQuote($quote);
                     $this->updateImmutableQuotes($quote, $customer);
-                } elseif($quote !== false) {
+                } elseif($quote === false) {
                     $this->bugsnag->notifyError("Cannot find quote", "ID: {$reference}");
                 }
             } else {
