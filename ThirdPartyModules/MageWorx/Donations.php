@@ -70,13 +70,6 @@ class Donations
         $this->boltSessionHelper = $boltSessionHelper;
     }
 
-    public function getPredefinedValuesDonation()
-    {
-        $predefinedDonation = json_decode($this->scopeConfig->getValue('mageworx_donations/main/predefined_values_donation', 'store'), true);
-        $roundUpValue = $this->donationHelper->getRoundUpValue();
-        return array_merge([$roundUpValue], $predefinedDonation);
-    }
-
     /**
      * @param $result
      * @param \MageWorx\Donations\Helper\Donation $donationHelper
@@ -94,34 +87,24 @@ class Donations
         $shippingAddress = $checkoutSession->getQuote()->getShippingAddress();
 
         $mageworxDonationDetail = json_decode($shippingAddress->getMageworxDonationDetails(), true);
-        if (isset($mageworxDonationDetail['option']) && $mageworxDonationDetail['option'] && $mageworxDonationDetail['global_donation'] > 0) {
-            foreach (array_unique($mageworxDonationDetail['option']) as $option) {
-                $currencyCode = $quote->getQuoteCurrencyCode();
-                $unitPrice = 0;
-                if ($option == 0) {
-                    $unitPrice = @$mageworxDonationDetail['bolt_round_up'];
-                } else if ($option == self::BOLT_DYNAMIC_USER_INPUT_DONATION_ID) {
-                    $unitPrice = @$mageworxDonationDetail['bolt_dynamic_user_inputed'];
-                }else {
-                    $unitPrice = $this->getPredefinedValuesDonation()[$option];
-                }
+        if (isset($mageworxDonationDetail['global_donation']) && $mageworxDonationDetail['global_donation'] > 0) {
+            $currencyCode = $quote->getQuoteCurrencyCode();
+            $itemTotalAmount = @$mageworxDonationDetail['global_donation'];
+            $roundedTotalAmount = CurrencyUtils::toMinor($itemTotalAmount, $currencyCode);
+            $diff += CurrencyUtils::toMinorWithoutRounding($itemTotalAmount, $currencyCode) - $roundedTotalAmount;
+            $totalAmount += $roundedTotalAmount;
+            $product = [
+                'reference' => self::MAGEWORX_DONATION . '_' . 0,
+                'name' => 'Donation for charity: ' . $mageworxDonationDetail['charity_title'],
+                'sku' => self::MAGEWORX_DONATION . '_' . 0,
+                'description' => '',
+                'total_amount' => $roundedTotalAmount,
+                'unit_price' => CurrencyUtils::toMinor($itemTotalAmount, $currencyCode),
+                'quantity' => 1,
+                'type' => 'digital'
+            ];
+            $products[] = $product;
 
-                $itemTotalAmount = $unitPrice * 1;
-                $roundedTotalAmount = CurrencyUtils::toMinor($itemTotalAmount, $currencyCode);
-                $diff += CurrencyUtils::toMinorWithoutRounding($itemTotalAmount, $currencyCode) - $roundedTotalAmount;
-                $totalAmount += $roundedTotalAmount;
-                $product = [
-                    'reference' => self::MAGEWORX_DONATION . '_' . $option,
-                    'name' => 'Donation for charity: ' . $mageworxDonationDetail['charity_title'],
-                    'sku' => self::MAGEWORX_DONATION . '_' . $option,
-                    'description' => '',
-                    'total_amount' => $roundedTotalAmount,
-                    'unit_price' => CurrencyUtils::toMinor($unitPrice, $currencyCode),
-                    'quantity' => 1,
-                    'type' => 'digital'
-                ];
-                $products[] = $product;
-            }
         }
 
         if ($checkoutSession instanceof \Magento\Backend\Model\Session\Quote) {
@@ -227,54 +210,21 @@ class Donations
     )
     {
         if (strpos($addItem['product_id'], self::MAGEWORX_DONATION) !== false) {
-            $charityData = $charityCollectionFactory->create()->addFilter('is_active', 1)->getFirstItem();
-
+            $charityData = $charityCollectionFactory->create()->addFilter('is_active', 1)->addLocales()->getFirstItem();
             $this->donationHelper = $donationHelper;
-            $donationData = explode('_', $addItem['product_id']);
-            $donationId = $donationData[1];
             $amount = CurrencyUtils::toMajor($addItem['price'], $checkoutSession->getQuote()->getQuoteCurrencyCode());
             $shippingAddress = $checkoutSession->getQuote()->getShippingAddress();
-            $mageworxDonationDetails = json_decode($shippingAddress->getMageworxDonationDetails(), true);
-            $existMageworxDonationAmount = $shippingAddress->getBaseMageworxDonationAmount();
-            $mageworxDonationDetailsData = [];
-            if ($existMageworxDonationAmount > 0) {
-                $mageworxDonationDetails['option'][] = $donationId;
 
-                $mageworxDonationDetailsData =
-                    [
-                        'global_donation' => $amount + $existMageworxDonationAmount,
-                        'donation' => $amount + $existMageworxDonationAmount,
-                        'donation_roundup' => 0,
-                        'isUseDonationRoundUp' => false,
-                        'charity_id' => $charityData->getId(),
-                        'charity_title' => $charityData->getName(),
-                        'option' => array_unique($mageworxDonationDetails['option']),
-                        'bolt_round_up' => @$mageworxDonationDetails['bolt_round_up'],
-                        'bolt_dynamic_user_inputed' => @$mageworxDonationDetails['bolt_dynamic_user_inputed'],
-                    ];
+            $mageworxDonationDetailsData = [
+                'global_donation' => $amount,
+                'donation' => $amount,
+                'donation_roundup' => 0,
+                'isUseDonationRoundUp' => false,
+                'charity_id' => $charityData->getId(),
+                'charity_title' => $charityData->getName(),
+            ];
 
-            } else {
-                $mageworxDonationDetailsData = [
-                    'global_donation' => $amount,
-                    'donation' => $amount,
-                    'donation_roundup' => 0,
-                    'isUseDonationRoundUp' => false,
-                    'charity_id' => $charityData->getId(),
-                    'charity_title' => $charityData->getName(),
-                    'option' => [$donationId],
-                    'bolt_round_up' => 0,
-                    'bolt_dynamic_user_inputed' => 0
-                ];
-
-            }
-            if ($donationId == 0 && $amount > 0) {
-                $mageworxDonationDetailsData['bolt_round_up'] = $amount;
-            }
-
-            if ($donationId == self::BOLT_DYNAMIC_USER_INPUT_DONATION_ID && $amount > 0) {
-                $mageworxDonationDetailsData['bolt_dynamic_user_inputed'] = $amount;
-            }
-            $checkoutSession->setMageworxDonationDetails($mageworxDonationDetailsData);
+            $shippingAddress->setMageworxDonationDetails(json_encode($mageworxDonationDetailsData));
             $checkoutSession->setTotalsCollectedFlag(false)->getQuote()->collectTotals();
             return true;
         }
@@ -298,27 +248,13 @@ class Donations
     {
         $this->donationHelper = $donationHelper;
         if (strpos($removeItem['product_id'], self::MAGEWORX_DONATION) !== false) {
-            $removeItemInfo = explode('_', $removeItem['product_id']);
-            $donationId = $removeItemInfo[1];
+            $mageworxDonationDetails = [];
             $shippingAddress = $checkoutSession->getQuote()->getShippingAddress();
-            $mageworxDonationDetails = json_decode($shippingAddress->getMageworxDonationDetails(), true);
-            if ($donationId == 0 && isset($mageworxDonationDetails['bolt_round_up'])) {
-                $removeAmount = $mageworxDonationDetails['bolt_round_up'];
-                $mageworxDonationDetails['bolt_round_up'] = 0;
-            } elseif ($donationId == self::BOLT_DYNAMIC_USER_INPUT_DONATION_ID && isset($mageworxDonationDetails['bolt_dynamic_user_inputed'])) {
-                $removeAmount = $mageworxDonationDetails['bolt_dynamic_user_inputed'];
-                $mageworxDonationDetails['bolt_dynamic_user_inputed'] = 0;
-            }else {
-                $removeAmount = $this->getPredefinedValuesDonation()[$donationId];
-            }
-
-            $mageworxDonationDetails['global_donation'] -= $removeAmount;
-            $mageworxDonationDetails['donation'] -= $removeAmount;
-
-            if (($key = array_search($donationId, $mageworxDonationDetails['option'])) !== false) {
-                unset($mageworxDonationDetails['option'][$key]);
-            }
-            $checkoutSession->setMageworxDonationDetails($mageworxDonationDetails);
+            $mageworxDonationDetails['donation_roundup'] = 0;
+            $mageworxDonationDetails['isUseDonationRoundUp'] = false;
+            $mageworxDonationDetails['donation'] = 0;
+            $mageworxDonationDetails['global_donation'] = 0;
+            $shippingAddress->setMageworxDonationDetails(json_encode($mageworxDonationDetails));
             $checkoutSession->setTotalsCollectedFlag(false)->getQuote()->collectTotals();
 
             return true;
@@ -334,7 +270,7 @@ class Donations
     public function afterLoadSession($quote)
     {
         $checkoutSession = $this->boltSessionHelper->getCheckoutSession();
-        $checkoutSession->setMageworxDonationDetails(json_decode($quote->getShippingAddress()->getMageworxDonationDetails(), true));
+        $checkoutSession->getQuote()->getShippingAddress()->setMageworxDonationDetails($quote->getShippingAddress()->getMageworxDonationDetails());
         $checkoutSession->setTotalsCollectedFlag(false);
     }
 }

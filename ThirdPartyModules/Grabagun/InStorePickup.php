@@ -812,7 +812,7 @@ class InStorePickup
      */
     public function filterTaxResult($result, \Grabagun\Shipping\Helper\ShippingMethodHelper $shippingMethodHelper, $taxData, $totalsInformation, $currencyCode, $shipping_option, $ship_to_store_option, $quote)
     {
-        $typeOfShipment = $shippingMethodHelper->getTypeOfShipment($quote);
+        $typeOfShipment = $this->getTypeOfShipment($shippingMethodHelper, $quote);
         if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::MIXED_SHIPPING_ITEMS) {
             $shipping_option = $this->boltTax->getShippingDiscount($totalsInformation, $currencyCode, $shipping_option);
 
@@ -859,7 +859,7 @@ class InStorePickup
      */
     public function setExtraAddressInformation(\Grabagun\Shipping\Helper\ShippingMethodHelper $shippingMethodHelper, $addressInformation, $quote, $shipping_option, $ship_to_store_option, $addressData)
     {
-        $typeOfShipment = $shippingMethodHelper->getTypeOfShipment($quote);
+        $typeOfShipment = $this->getTypeOfShipment($shippingMethodHelper, $quote);
         if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::MIXED_SHIPPING_ITEMS) {
             $dealerInfo = $this->getDealerInfoFromReference($ship_to_store_option['reference']);
             $dealerId = $dealerInfo['dealer_id'];
@@ -884,7 +884,8 @@ class InStorePickup
         $quote
     )
     {
-        $typeOfShipment = $shippingMethodHelper->getTypeOfShipment($quote);
+        $typeOfShipment = $this->getTypeOfShipment($shippingMethodHelper, $quote);
+
         if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::MIXED_SHIPPING_ITEMS || $typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::FFL_SHIPPING_ITEMS_ONLY) {
             if (!$ship_to_store_option) {
                 throw new \Bolt\Boltpay\Exception\BoltException(
