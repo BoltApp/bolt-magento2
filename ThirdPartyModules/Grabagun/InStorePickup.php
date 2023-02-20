@@ -916,4 +916,37 @@ class InStorePickup
         }
 
     }
+
+    /**
+     * @param $cart
+     * @param \Grabagun\Shipping\Helper\ShippingMethodHelper $shippingMethodHelper
+     * @param \Grabagun\Shipping\Model\Carrier\FirearmShipping $firearmShipping
+     * @param $quote
+     * @return mixed
+     * @throws LocalizedException
+     */
+    public function filterCart(
+        $cart,
+        \Grabagun\Shipping\Helper\ShippingMethodHelper $shippingMethodHelper,
+        \Grabagun\Shipping\Model\Carrier\FirearmShipping $firearmShipping,
+        $quote
+    )
+    {
+        if (
+            $this->appState->getAreaCode() == \Magento\Framework\App\Area::AREA_ADMINHTML
+            && $this->getTypeOfShipment($shippingMethodHelper, $quote) == \Grabagun\Shipping\Model\Shipping\Config::MIXED_SHIPPING_ITEMS
+            && !empty($quote['ffl_dealer_shipping_description'])
+        ) {
+
+            $carrierData = explode('_', (string)$quote['ffl_dealer_shipping_description']);
+            if ($carrierData[0] === Config::FIREARMS_SHIPPING_CODE) {
+                $fflShippingDescription = $firearmShipping->getConfigData('title') . ' - ' . $firearmShipping->getMethodTitle($carrierData[1]);
+            }
+            if (isset($cart['shipments'])){
+                $cart['shipments'][0]['service'] = $cart['shipments'][0]['service'].' && '. $fflShippingDescription ;
+            }
+        }
+
+        return $cart;
+    }
 }

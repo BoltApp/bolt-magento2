@@ -1181,7 +1181,15 @@ class EventsForThirdPartyModules
                     'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
                     'sendClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
                     'boltClass'   => Amasty_Extrafee::class,
-                ]
+                ],
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "sendClasses" => [
+                        "Grabagun\Shipping\Helper\ShippingMethodHelper",
+                        "Grabagun\Shipping\Model\Carrier\FirearmShipping"
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
             ]
         ],
         "filterCartItems" => [
