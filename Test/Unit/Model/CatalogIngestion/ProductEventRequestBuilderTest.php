@@ -48,6 +48,8 @@ use Magento\Eav\Setup\EavSetup;
 use Magento\Catalog\Setup\CategorySetup;
 use Magento\ConfigurableProduct\Helper\Product\Options\Factory;
 use Vertex\Tax\Model\ModuleManager;
+use Magento\Catalog\Api\Data\ProductCustomOptionInterfaceFactory;
+use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
 
 /**
  * Class ProductEventRequestBuilderTest
@@ -151,6 +153,8 @@ class ProductEventRequestBuilderTest extends BoltTestCase
      */
     private $groupedChildProduct;
 
+    private $productCustomOptionFactory;
+
     /**
      * @inheritDoc
      */
@@ -165,6 +169,7 @@ class ProductEventRequestBuilderTest extends BoltTestCase
         $productEventProcessor = $this->objectManager->get(ProductEventProcessor::class);
         $this->productRepository = $this->objectManager->get(ProductRepositoryInterface::class);
         $this->attributeRepository = $this->objectManager->get(ProductAttributeRepositoryInterface::class);
+        $this->productCustomOptionFactory = $this->objectManager->get(ProductCustomOptionInterfaceFactory::class);
         $this->eavConfig = $this->objectManager->get(Config::class);
         $featureSwitches = $this->createMock(Decider::class);
         $featureSwitches->method('isCatalogIngestionEnabled')->willReturn(true);
@@ -242,6 +247,189 @@ class ProductEventRequestBuilderTest extends BoltTestCase
                         ],
                         'Media' => [],
                         'Options' => [],
+                        'Properties' => [
+                            [
+                                'Name' => 'cost',
+                                'NameID' => 81,
+                                'Value' => NULL,
+                                'DisplayType' => 'price',
+                                'DisplayName' => 'cost',
+                                'DisplayValue' => NULL,
+                                'Visibility' => 'false',
+                                'TextLabel' => 'Cost',
+                                'Position' => 0
+                            ]
+                        ],
+                        'Description' => 'Product Description'
+                    ],
+                'variants' => []
+            ]
+        ];
+        $this->assertEquals($expectedApiData, $apiData);
+    }
+
+    /**
+     * @test
+     */
+    public function testGetRequest_WithCustomOptions()
+    {
+        $product = $this->createProductWithCustomOptions();
+        $productEvent = $this->productEventRepository->getByProductId($product->getId());
+        $request = $this->productEventRequestBuilder->getRequest($productEvent, $this->storeManager->getWebsite()->getId());
+        $apiData = $request->getApiData();
+        $fulfillmentCenterID = ($this->moduleManger->isEnabled('Magento_InventoryCatalog')) ?
+            'Default Stock' : 'default';
+        $expectedApiData = [
+            'operation' => $productEvent->getType(),
+            'timestamp' => strtotime($productEvent->getCreatedAt()),
+            'product' => [
+                'product' =>
+                    [
+                        'MerchantProductID' => $product->getId(),
+                        'ProductType' => 'simple',
+                        'SKU' => 'ci_simple',
+                        'URL' => $product->getProductUrl(),
+                        'Name' => 'Catalog Ingestion Simple Product',
+                        'ManageInventory' => true,
+                        'Visibility' => 'true',
+                        'Backorder' => 'no',
+                        'Availability' => 'in_stock',
+                        'ShippingRequired' => true,
+                        'Prices' => [
+                            [
+                                'ListPrice' => 10000,
+                                'SalePrice' => 10000,
+                                'Currency' => 'USD',
+                                'Locale' => 'en_US'
+                            ]
+                        ],
+                        'Inventories' => [
+                            [
+                                'FulfillmentCenterID' => $fulfillmentCenterID,
+                                'InventoryLevel' => self::PRODUCT_QTY
+                            ]
+                        ],
+                        'Media' => [],
+                        'Options' => [
+                            [
+                                'Name' => 'test_option_code_1',
+                                'DisplayType' => 'field',
+                                'DisplayName' => 'test_option_code_1',
+                                'Visibility' => 'true',
+                                'SortOrder' => 1,
+                            ],
+                            [
+                                'Name' => 'area option',
+                                'DisplayType' => 'area',
+                                'DisplayName' => 'area option',
+                                'Visibility' => 'true',
+                                'SortOrder' => 2,
+                            ],
+                            [
+                                'Name' => 'drop_down option',
+                                'DisplayType' => 'drop_down',
+                                'DisplayName' => 'drop_down option',
+                                'Visibility' => 'true',
+                                'SortOrder' => 4,
+                                'Values' => [
+                                    [
+                                        'Value' => '1',
+                                        'DisplayValue' => 'drop_down option 1',
+                                        'SortOrder' => 1
+                                    ],
+                                    [
+                                        'Value' => '2',
+                                        'DisplayValue' => 'drop_down option 2',
+                                        'SortOrder' => 2
+                                    ],
+                                ]
+                            ],
+                            [
+                                'Name' => 'multiple option',
+                                'DisplayType' => 'multiple',
+                                'DisplayName' => 'multiple option',
+                                'Visibility' => 'true',
+                                'SortOrder' => 5,
+                                'Values' => [
+                                    [
+                                        'Value' => '3',
+                                        'DisplayValue' => 'multiple option 1',
+                                        'SortOrder' => 1
+                                    ],
+                                    [
+                                        'Value' => '4',
+                                        'DisplayValue' => 'multiple option 2',
+                                        'SortOrder' => 2
+                                    ],
+                                ]
+                            ],
+                            [
+                                'Name' => 'checkbox option',
+                                'DisplayType' => 'checkbox',
+                                'DisplayName' => 'checkbox option',
+                                'Visibility' => 'true',
+                                'SortOrder' => 6,
+                                'Values' => [
+                                    [
+                                        'Value' => '5',
+                                        'DisplayValue' => 'checkbox option 1',
+                                        'SortOrder' => 1
+                                    ],
+                                    [
+                                        'Value' => '6',
+                                        'DisplayValue' => 'checkbox option 2',
+                                        'SortOrder' => 2
+                                    ],
+                                ]
+                            ],
+                            [
+                                'Name' => 'radio option',
+                                'DisplayType' => 'radio',
+                                'DisplayName' => 'radio option',
+                                'Visibility' => 'true',
+                                'SortOrder' => 7,
+                                'Values' => [
+                                    [
+                                        'Value' => '7',
+                                        'DisplayValue' => 'radio option 1',
+                                        'SortOrder' => 1
+                                    ],
+                                    [
+                                        'Value' => '8',
+                                        'DisplayValue' => 'radio option 2',
+                                        'SortOrder' => 2
+                                    ],
+                                ]
+                            ],
+                            [
+                                'Name' => 'date option',
+                                'DisplayType' => 'date',
+                                'DisplayName' => 'date option',
+                                'Visibility' => 'true',
+                                'SortOrder' => 8,
+                            ],
+                            [
+                                'Name' => 'time option',
+                                'DisplayType' => 'time',
+                                'DisplayName' => 'time option',
+                                'Visibility' => 'true',
+                                'SortOrder' => 9,
+                            ],
+                            [
+                                'Name' => 'date_time option',
+                                'DisplayType' => 'date_time',
+                                'DisplayName' => 'date_time option',
+                                'Visibility' => 'true',
+                                'SortOrder' => 10,
+                            ],
+                            [
+                                'Name' => 'file option',
+                                'DisplayType' => 'file',
+                                'DisplayName' => 'file option',
+                                'Visibility' => 'true',
+                                'SortOrder' => 11,
+                            ],
+                        ],
                         'Properties' => [
                             [
                                 'Name' => 'cost',
@@ -701,6 +889,14 @@ class ProductEventRequestBuilderTest extends BoltTestCase
         $connection->delete($connection->getTableName('eav_attribute'), ['attribute_code = ?' => 'test_configurable']);
         $this->eavConfig->clear();
         $this->productRepository->cleanCache();
+        $connection->query("SET foreign_key_checks = 0");
+        $connection->truncateTable($this->resource->getTableName('catalog_product_option_type_price'));
+        $connection->truncateTable($this->resource->getTableName('catalog_product_option_type_title'));
+        $connection->truncateTable($this->resource->getTableName('catalog_product_option_price'));
+        $connection->truncateTable($this->resource->getTableName('catalog_product_option_title'));
+        $connection->truncateTable($this->resource->getTableName('catalog_product_option'));
+        $connection->truncateTable($this->resource->getTableName('catalog_product_option_type_value'));
+        $connection->query("SET foreign_key_checks = 1");
     }
 
     /**
@@ -736,6 +932,205 @@ class ProductEventRequestBuilderTest extends BoltTestCase
             ->setCanSaveCustomOptions(true)
             ->setHasOptions(true)
             ->setUrlKey('test-simple-product-'.round(microtime(true) * 1000));
+        return $this->productRepository->save($product);
+    }
+
+    /**
+     * Create simple product with custom options
+     *
+     * @return ProductInterface
+     */
+    private function createProductWithCustomOptions(): ProductInterface
+    {
+        $product = Bootstrap::getObjectManager()->create(Product::class);
+        $product->setTypeId(ProductType::TYPE_SIMPLE)
+            ->setAttributeSetId(4)
+            ->setName(self::PRODUCT_NAME)
+            ->setSku(self::PRODUCT_SKU)
+            ->setPrice(self::PRODUCT_PRICE)
+            ->setDescription('Product Description')
+            ->setMetaTitle('meta title')
+            ->setMetaKeyword('meta keyword')
+            ->setMetaDescription('meta description')
+            ->setVisibility(\Magento\Catalog\Model\Product\Visibility::VISIBILITY_BOTH)
+            ->setStatus(\Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED)
+            ->setCategoryIds([2])
+            ->setStoreId($this->storeManager->getStore()->getId())
+            ->setWebsiteIds([$this->storeManager->getStore()->getWebsiteId()])
+            ->setStockData(
+                [
+                    'qty' => self::PRODUCT_QTY,
+                    'is_in_stock' => 1,
+                    'manage_stock' => 1,
+                ]
+            )
+            ->setTaxClassId(0)
+            ->setCanSaveCustomOptions(true)
+            ->setHasOptions(true)
+            ->setUrlKey('test-simple-product-'.round(microtime(true) * 1000));
+        $product = $this->productRepository->save($product);
+
+        $product->setCanSaveCustomOptions(true);
+        $product->setHasOptions(true);
+        $options = [
+            [
+                'title' => 'test_option_code_1',
+                'type' => 'field',
+                'is_require' => true,
+                'sort_order' => 1,
+                'price' => -10.0,
+                'price_type' => 'fixed',
+                'sku' => 'sku1',
+                'max_characters' => 10,
+            ],
+            [
+                'title' => 'area option',
+                'type' => 'area',
+                'is_require' => true,
+                'sort_order' => 2,
+                'price' => 20.0,
+                'price_type' => 'percent',
+                'sku' => 'sku2',
+                'max_characters' => 20
+            ],
+            [
+                'title' => 'drop_down option',
+                'type' => 'drop_down',
+                'is_require' => false,
+                'sort_order' => 4,
+                'values' => [
+                    [
+                        'title' => 'drop_down option 1',
+                        'price' => 10,
+                        'price_type' => 'fixed',
+                        'sku' => 'drop_down option 1 sku',
+                        'sort_order' => 1,
+                    ],
+                    [
+                        'title' => 'drop_down option 2',
+                        'price' => 20,
+                        'price_type' => 'fixed',
+                        'sku' => 'drop_down option 2 sku',
+                        'sort_order' => 2,
+                    ],
+                ],
+            ],
+            [
+                'title' => 'multiple option',
+                'type' => 'multiple',
+                'is_require' => false,
+                'sort_order' => 5,
+                'values' => [
+                    [
+                        'title' => 'multiple option 1',
+                        'price' => 10,
+                        'price_type' => 'fixed',
+                        'sku' => 'multiple option 1 sku',
+                        'sort_order' => 1,
+                    ],
+                    [
+                        'title' => 'multiple option 2',
+                        'price' => 20,
+                        'price_type' => 'fixed',
+                        'sku' => 'multiple option 2 sku',
+                        'sort_order' => 2,
+                    ],
+                ],
+            ],
+            [
+                'title' => 'checkbox option',
+                'type' => 'checkbox',
+                'is_require' => false,
+                'sort_order' => 6,
+                'values' => [
+                    [
+                        'title' => 'checkbox option 1',
+                        'price' => 10,
+                        'price_type' => 'fixed',
+                        'sku' => 'multiple option 1 sku',
+                        'sort_order' => 1,
+                    ],
+                    [
+                        'title' => 'checkbox option 2',
+                        'price' => 20,
+                        'price_type' => 'fixed',
+                        'sku' => 'multiple option 2 sku',
+                        'sort_order' => 2,
+                    ],
+                ],
+            ],
+            [
+                'title' => 'radio option',
+                'type' => 'radio',
+                'is_require' => false,
+                'sort_order' => 7,
+                'values' => [
+                    [
+                        'title' => 'radio option 1',
+                        'price' => 10,
+                        'price_type' => 'fixed',
+                        'sku' => 'multiple option 1 sku',
+                        'sort_order' => 1,
+                    ],
+                    [
+                        'title' => 'radio option 2',
+                        'price' => 20,
+                        'price_type' => 'fixed',
+                        'sku' => 'multiple option 2 sku',
+                        'sort_order' => 2,
+                    ],
+                ],
+            ],
+            [
+                'title' => 'date option',
+                'type' => 'date',
+                'is_require' => true,
+                'sort_order' => 8,
+                'price' => -10.0,
+                'price_type' => 'fixed',
+                'sku' => 'sku33',
+                'max_characters' => 10,
+            ],
+            [
+                'title' => 'time option',
+                'type' => 'time',
+                'is_require' => true,
+                'sort_order' => 9,
+                'price' => -10.0,
+                'price_type' => 'fixed',
+                'sku' => 'sku33',
+                'max_characters' => 10,
+            ],
+            [
+                'title' => 'date_time option',
+                'type' => 'date_time',
+                'is_require' => true,
+                'sort_order' => 10,
+                'price' => -10.0,
+                'price_type' => 'fixed',
+                'sku' => 'sku33',
+                'max_characters' => 10,
+            ],
+            [
+                'title' => 'file option',
+                'type' => 'file',
+                'is_require' => true,
+                'sort_order' => 11,
+                'price' => -10.0,
+                'price_type' => 'fixed',
+                'sku' => 'sku23',
+                'max_characters' => 10,
+            ]
+        ];
+
+        $customOptions = [];
+        foreach ($options as $option) {
+            /** @var ProductCustomOptionInterface $customOption */
+            $customOption = $this->productCustomOptionFactory->create(['data' => $option]);
+            $customOption->setProductSku($product->getSku());
+            $customOptions[] = $customOption;
+        }
+        $product->setOptions($customOptions);
         return $this->productRepository->save($product);
     }
 
