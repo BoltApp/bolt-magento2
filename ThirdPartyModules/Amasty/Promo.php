@@ -92,7 +92,7 @@ class Promo
                     if (
                         in_array($rule->getSimpleAction(), self::PROMO_RULES)
                         && !$rule->getExtensionAttributes()->getAmpromoRule()->getItemsDiscount()
-                        && !$this->isAmastyRuleAlreadyAppliedAsSalesRule($rule->getExtensionAttributes()->getAmpromoRule(), $discounts)
+                        && !$this->isAmastyRuleAlreadyApplied($rule, $discounts)
                     ) {
                         $amount = 0;
                         $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
@@ -120,20 +120,16 @@ class Promo
     }
 
     /**
-     * Check if amasty rule have relations to already applied sales rule
+     * Check if rule has been already applied
      *
-     * @param \Amasty\Promo\Api\Data\GiftRuleInterface $amastyRule
+     * @param \Magento\SalesRule\Api\Data\RuleInterface $rule
      * @param array $appliedDiscounts
      * @return bool
      */
-    private function isAmastyRuleAlreadyAppliedAsSalesRule($amastyRule, $appliedDiscounts)
+    private function isAmastyRuleAlreadyApplied($rule, $appliedDiscounts)
     {
-        $salesRuleId = $amastyRule->getSalesruleId();
-        if (!$salesRuleId) {
-            return false;
-        }
         foreach ($appliedDiscounts as $discount) {
-            if (isset($discount['rule_id']) && $discount['rule_id'] == $salesRuleId) {
+            if (isset($discount['rule_id']) && $discount['rule_id'] == $rule->getRuleId()) {
                 return true;
             }
         }
