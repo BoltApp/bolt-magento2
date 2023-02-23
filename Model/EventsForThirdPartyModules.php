@@ -26,6 +26,7 @@ use Bolt\Boltpay\ThirdPartyModules\Amasty\Rewards as Amasty_Rewards;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\GiftCardAccount as Amasty_GiftCardAccount;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\GiftCard as Amasty_GiftCard;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Extrafee as Amasty_Extrafee;
+use Bolt\Boltpay\ThirdPartyModules\MageWorx\Donations as MageWorx_Donations;
 use Bolt\Boltpay\ThirdPartyModules\MageWorld\RewardPoints as MW_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\Bss\StoreCredit as Bss_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\Listrak\Remarketing as Listrak_Remarketing;
@@ -94,6 +95,11 @@ class EventsForThirdPartyModules
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
                     'boltClass'   => Route_Route::class,
                 ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'boltClass'   => MageWorx_Donations::class,
+                ]
             ],
         ],
         "beforeFailedPaymentOrderSave" => [
@@ -1122,6 +1128,12 @@ class EventsForThirdPartyModules
                         'Amasty\Extrafee\Model\TotalsInformationManagement'
                     ],
                     'boltClass'   => Amasty_Extrafee::class,
+                ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'sendClasses' => ['MageWorx\Donations\Helper\Donation'],
+                    'boltClass'   => MageWorx_Donations::class,
                 ]
             ],
         ],
@@ -1156,6 +1168,11 @@ class EventsForThirdPartyModules
                     'module'      => 'Amasty_Extrafee',
                     'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
                     'boltClass'   => Amasty_Extrafee::class,
+                ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'boltClass'   => MageWorx_Donations::class,
                 ]
             ],
         ],
@@ -1170,6 +1187,11 @@ class EventsForThirdPartyModules
                     'module'      => 'Amasty_Extrafee',
                     'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
                     'boltClass'   => Amasty_Extrafee::class,
+                ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'boltClass'   => MageWorx_Donations::class,
                 ]
             ],
         ],
@@ -1184,6 +1206,11 @@ class EventsForThirdPartyModules
                     'module'      => 'Amasty_Extrafee',
                     'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
                     'boltClass'   => Amasty_Extrafee::class,
+                ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'boltClass'   => MageWorx_Donations::class,
                 ]
             ],
         ],
@@ -1229,6 +1256,15 @@ class EventsForThirdPartyModules
                         'Amasty\Extrafee\Model\ResourceModel\ExtrafeeQuote\CollectionFactory'
                     ],
                     'boltClass'   => Amasty_Extrafee::class,
+                ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'sendClasses' => [
+                        'MageWorx\Donations\Helper\Donation',
+                        'MageWorx\Donations\Model\ResourceModel\Charity\CollectionFactory'
+                    ],
+                    'boltClass'   => MageWorx_Donations::class,
                 ]
             ],
         ],
@@ -1247,6 +1283,12 @@ class EventsForThirdPartyModules
                         'Amasty\Extrafee\Model\ResourceModel\ExtrafeeQuote\CollectionFactory'
                     ],
                     'boltClass'   => Amasty_Extrafee::class,
+                ],
+                'MageWorx_Donations' => [
+                    'module'      => 'MageWorx_Donations',
+                    'checkClasses' => ['MageWorx\Donations\Model\Donation'],
+                    'sendClasses' => ['\MageWorx\Donations\Helper\Donation'],
+                    'boltClass'   => MageWorx_Donations::class,
                 ]
             ],
         ],
@@ -1389,7 +1431,8 @@ class EventsForThirdPartyModules
                 // then we use sub-array to include classes for supported versions.
                 $classNames = is_array($classNameItem) ? $classNameItem : [$classNameItem];
                 $existClasses = array_filter($classNames, function ($className) {
-                    return $this->doesClassExist($className);
+                    return $this->
+                    doesClassExist($className);
                 });
                 if (empty($existClasses)) {
                     return [false,null];
