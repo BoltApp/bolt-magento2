@@ -461,7 +461,11 @@ class OAuthRedirect implements OAuthRedirectInterface
             $immutableQuote->setData($data);
             $immutableQuote->setCustomer($customer);
             $immutableQuote->setCustomerIsGuest(false);
-            $this->cartHelper->saveQuote($immutableQuote);
+            // Magento quote repository save() method triggers collectTotals() method for quote.
+            // Which is triggering some third-party tax extensions to request & collect taxes.
+            // In order to avoid repeatable tax requests from third-party extensions
+            // we use resource model to save quote instead of repositoryFix
+            $immutableQuote->save();
         }
     }
 
