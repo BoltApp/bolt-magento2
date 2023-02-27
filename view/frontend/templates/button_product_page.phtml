@@ -30,6 +30,9 @@ if (!$block->isBoltProductPage()) { return;
 if (!$block->isSupportableType()) { return;
 }
 
+if (!$block->getProduct()->isSaleable()) { return;
+}
+
 $additionalClass = $block->getAdditionalCheckoutButtonClass();
 $additionalCheckoutButtonAttributes = '';
 foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrValue) {
