@@ -1,0 +1,6 @@
+parameters:
+	level: 0
+	paths:
+		- Model
+	scanDirectories:
+        - /home/circleci/magento

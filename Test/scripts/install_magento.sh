@@ -59,7 +59,7 @@ if [ "${MAGENTO_VERSION}" == "2.4.2" ]; then
         --elasticsearch-host="localhost" \
         --elasticsearch-port=9200
 else
-    php bin/magento setup:install -q \
+    php -dmemory_limit=5G bin/magento setup:install -q \
         --language="en_US" \
         --timezone="UTC" \
         --currency="USD" \
@@ -77,4 +77,4 @@ else
         --magento-init-params="MAGE_MODE=developer"
 fi
 
-composer require --dev "mikey179/vfsstream:^1.6"
+COMPOSER_MEMORY_LIMIT=3G composer require --dev "mikey179/vfsstream:^1.6"
