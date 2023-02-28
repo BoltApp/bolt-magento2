@@ -46,6 +46,7 @@ use Bolt\Boltpay\ThirdPartyModules\BagRiders\StoreCredit as BagRiders_StoreCredi
 use Bolt\Boltpay\ThirdPartyModules\Teamwork\Token as Teamwork_Token;
 use Bolt\Boltpay\ThirdPartyModules\Teamwork\StoreCredit as Teamwork_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\SomethingDigital\InStorePickupBoltIntegration as SomethingDigital_InStorePickupBoltIntegration;
+use Bolt\Boltpay\ThirdPartyModules\Grabagun\InStorePickup as Grabagun_InStorePickup;
 use Bolt\Boltpay\ThirdPartyModules\Route\Route as Route_Route;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMedia_TmwGiftCard;
@@ -365,6 +366,12 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
                 ],
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "checkClasses" => ["Grabagun\Shipping\Model\ShippingMethodManagement"],
+                    "sendClasses" => ["Grabagun\Shipping\Helper\ShippingMethodHelper"],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
             ],
         ],
         "setInStoreShippingMethodForPrepareQuote" => [
@@ -380,7 +387,15 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker"],
                     "checkClasses" => ["Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
-                ]
+                ],
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "checkClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                    ],
+                    "sendClasses" => ["Grabagun\Shipping\Model\ShippingMethodManagement","Grabagun\Shipping\Helper\ShippingMethodHelper"],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
             ],
         ],
         "setInStoreShippingAddressForPrepareQuote" => [
@@ -403,7 +418,17 @@ class EventsForThirdPartyModules
                         "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver",
                     ],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
-                ]
+                ],
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "sendClasses" => [
+                        "Grabagun\Shipping\Helper\ShippingMethodHelper"
+                    ],
+                    "checkClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
             ],
         ],
         'afterUpdateOrderPayment' => [
@@ -452,6 +477,45 @@ class EventsForThirdPartyModules
                     'module'      => 'Magento_CompanyPayment',
                     'checkClasses' => ['Magento\CompanyPayment\Model\Payment\Checks\CanUseForCompany'],
                     'boltClass'   => Magento_CompanyPayment::class,
+                ],
+            ],
+        ],
+        'afterHandleCustomField' => [
+            "listeners" => [
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "checkClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
+            ],
+        ],
+        'afterGetShipToStoreAndShippingOptions' => [
+            "listeners" => [
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "checkClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                    ],
+                    "sendClasses" => [
+                        "Grabagun\Shipping\Helper\ShippingMethodHelper",
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
+            ],
+        ],
+        'beforeThrowingNoShippingMethodsException' => [
+            "listeners" => [
+                "Amasty_Shiprestriction" => [
+                    "module" => "Amasty_Shiprestriction",
+                    "checkClasses" => [
+                        "\Amasty\Shiprestriction\Model\ResourceModel\Rule\Collection",
+                    ],
+                    "sendClasses" => [
+                        "\Amasty\Shiprestriction\Model\ResourceModel\Rule\CollectionFactory",
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
                 ],
             ],
         ],
@@ -1067,6 +1131,20 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
                 ],
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "sendClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                        "Grabagun\DealerLocator\Api\DealerRepositoryInterface",
+                        "Grabagun\DealerLocator\Model\Resolver\Formatter",
+                        "Grabagun\Shipping\Helper\ShippingMethodHelper",
+                        "Grabagun\DealerLocator\Model\ResourceModel\Dealer\CollectionFactory"
+                    ],
+                    "checkClasses" => [
+                        "Grabagun\DealerLocator\Api\Data\DealerInterface",
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
             ],
         ],
         "getShipToStoreCarrierMethodCodes" => [
@@ -1086,6 +1164,17 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
                 ],
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "sendClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                        "Grabagun\Shipping\Helper\ShippingMethodHelper"
+                    ],
+                    "checkClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
             ],
         ],
         "filterCart" => [
@@ -1095,7 +1184,15 @@ class EventsForThirdPartyModules
                     'checkClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
                     'sendClasses' => ['Amasty\Extrafee\Model\FeesInformationManagement'],
                     'boltClass'   => Amasty_Extrafee::class,
-                ]
+                ],
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "sendClasses" => [
+                        "Grabagun\Shipping\Helper\ShippingMethodHelper",
+                        "Grabagun\Shipping\Model\Carrier\FirearmShipping"
+                    ],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
             ]
         ],
         "filterCartItems" => [
@@ -1193,6 +1290,14 @@ class EventsForThirdPartyModules
                     "module" => "Magento_InventoryInStorePickup",
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "checkClasses" => [
+                        "Grabagun\Shipping\Model\ShippingMethodManagement",
+                    ],
+                    "sendClasses" => ["Grabagun\Shipping\Helper\ShippingMethodHelper"],
+                    "boltClass" => Grabagun_InStorePickup::class,
                 ],
             ],
         ],
@@ -1317,6 +1422,24 @@ class EventsForThirdPartyModules
                     'module'      => 'Magento_CompanyPayment',
                     'sendClasses' => ['Magento\CompanyPayment\Model\Payment\Checks\CanUseForCompany'],
                     'boltClass'   => Magento_CompanyPayment::class,
+                ],
+            ],
+        ],
+        "filterCartItemShipmentType" => [
+            'listeners' => [
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    'sendClasses' => ['Grabagun\Shipping\Helper\ShippingMethodHelper'],
+                    "boltClass" => Grabagun_InStorePickup::class,
+                ],
+            ],
+        ],
+        "filterTaxResult" => [
+            'listeners' => [
+                "Grabagun_DealerLocator" => [
+                    "module" => "Grabagun_DealerLocator",
+                    "sendClasses" => ["Grabagun\Shipping\Helper\ShippingMethodHelper"],
+                    "boltClass" => Grabagun_InStorePickup::class,
                 ],
             ],
         ],
@@ -1479,6 +1602,36 @@ class EventsForThirdPartyModules
             }
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
+        }
+    }
+
+    /**
+     * Dispatch event and throw exception if error occurs
+     *
+     * Call all listeners that relates to existing module and if necessary classes exist
+     * and throw exception if error occurs
+     */
+    public function dispatchEventAndThrowException($eventName, ...$arguments)
+    {
+        if (!isset(static::eventListeners[$eventName])) {
+            return;
+        }
+        try {
+            foreach (static::eventListeners[$eventName]["listeners"] as $listener) {
+                list ($active, $sendClasses) = $this->prepareForListenerRun($listener);
+                if (!$active) {
+                    continue;
+                }
+                $boltClass = $this->objectManager->get($listener["boltClass"]);
+                if ($sendClasses) {
+                    $boltClass->$eventName(...$sendClasses, ...$arguments);
+                } else {
+                    $boltClass->$eventName(...$arguments);
+                }
+            }
+        } catch (Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
         }
     }
 
