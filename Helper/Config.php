@@ -453,7 +453,6 @@ class Config extends AbstractHelper
      * Map of human-readable config names to their XML paths
      */
     const CONFIG_SETTING_PATHS = [
-        'publishable_key_checkout'           => self::XML_PATH_PUBLISHABLE_KEY_CHECKOUT,
         'active'                             => self::XML_PATH_ACTIVE,
         'title'                              => self::XML_PATH_TITLE,
         'api_key'                            => self::XML_PATH_API_KEY,
