@@ -234,7 +234,7 @@ class Tax extends ShippingTax implements TaxInterface
      * @return array
      * @throws \Exception
      */
-    protected function getShippingDiscount($totalsInformation, $currencyCode, $shippingOption)
+    public function getShippingDiscount($totalsInformation, $currencyCode, $shippingOption)
     {
         $shippingDiscountAmount = $this->eventsForThirdPartyModules->runFilter(
             "collectShippingDiscounts",
