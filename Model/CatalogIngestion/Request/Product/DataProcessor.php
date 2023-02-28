@@ -643,23 +643,6 @@ class DataProcessor
     }
 
     /**
-     * Returns product image media entry
-     *
-     * @param ProductInterface $product
-     * @param int $imageId
-     * @return ProductAttributeMediaGalleryEntryInterface|null
-     */
-    private function getMediaImageEntry(ProductInterface $product, int $imageId): ?ProductAttributeMediaGalleryEntryInterface
-    {
-        $mediaGalleryEntries = $product->getMediaGalleryEntries();
-        foreach ($mediaGalleryEntries as $mediaEntry) {
-            if ($mediaEntry->getId() == $imageId) {
-                return $mediaEntry;
-            }
-        }
-    }
-
-    /**
      * Returns product inventories data
      *
      * @param ProductInterface $product
