@@ -65,9 +65,6 @@ trait ReceivedUrlTrait
     /** @var Serialize */
     private $serialize;
 
-    /**
-     * @return \Magento\Framework\App\ResponseInterface
-     */
     public function execute()
     {
         $boltSignature = $this->getRequest()->getParam('bolt_signature');
