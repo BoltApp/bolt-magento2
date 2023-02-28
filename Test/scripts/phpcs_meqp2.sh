@@ -25,15 +25,17 @@ export MAGENTO_VERSION="2.3.0"
 
 Test/scripts/install_magento.sh
 pwd
-cd ../magento
+cd ..
+pwd
+mkdir -p magento/app/code/Bolt/Boltpay
+mv project/* magento/app/code/Bolt/Boltpay/
+cd magento
 pwd
 # generate classes for phpstan
 php -dmemory_limit=5G bin/magento module:enable Bolt_Boltpay
 php -dmemory_limit=5G bin/magento setup:di:compile
 cd ..
 pwd
-mkdir -p magento/app/code/Bolt/Boltpay
-mv project/* magento/app/code/Bolt/Boltpay/
 cd magento/app/code/Bolt/Boltpay
 pwd
 wget https://github.com/phpstan/phpstan/releases/download/1.10.3/phpstan.phar
