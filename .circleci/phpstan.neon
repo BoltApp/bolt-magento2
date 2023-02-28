@@ -3,4 +3,4 @@ parameters:
 	paths:
 		- Model
 	scanDirectories:
-        - /home/circleci/magento
+		- /home/circleci/magento
