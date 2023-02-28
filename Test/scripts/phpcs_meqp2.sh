@@ -28,6 +28,7 @@ pwd
 cd ..
 pwd
 mkdir -p magento/app/code/Bolt/Boltpay
+mv project/.circleci/phpstan/* magento/app/code/Bolt/Boltpay/
 mv project/* magento/app/code/Bolt/Boltpay/
 cd magento
 pwd
@@ -40,6 +41,6 @@ cd magento/app/code/Bolt/Boltpay
 pwd
 wget https://github.com/phpstan/phpstan/releases/download/1.10.3/phpstan.phar
 chmod +x phpstan.phar
-cp /home/circleci/project/.circleci/phpstan.neon phpstan.neon
+#cp /home/circleci/project/.circleci/phpstan.neon phpstan.neon
 ls
 php -dmemory_limit=5G ./phpstan.phar analyse --level=0 --debug
