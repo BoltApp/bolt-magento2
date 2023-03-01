@@ -92,6 +92,7 @@ class Promo
                     if (
                         in_array($rule->getSimpleAction(), self::PROMO_RULES)
                         && !$rule->getExtensionAttributes()->getAmpromoRule()->getItemsDiscount()
+                        && !$this->isAmastyRuleAlreadyApplied($rule, $discounts)
                     ) {
                         $amount = 0;
                         $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
@@ -116,6 +117,23 @@ class Promo
         } finally {
             return [$discounts, $totalAmount, $diff];
         }
+    }
+
+    /**
+     * Check if rule has been already applied
+     *
+     * @param \Magento\SalesRule\Api\Data\RuleInterface $rule
+     * @param array $appliedDiscounts
+     * @return bool
+     */
+    private function isAmastyRuleAlreadyApplied($rule, $appliedDiscounts)
+    {
+        foreach ($appliedDiscounts as $discount) {
+            if (isset($discount['rule_id']) && $discount['rule_id'] == $rule->getRuleId()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
