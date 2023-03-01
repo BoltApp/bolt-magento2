@@ -909,7 +909,7 @@ class InStorePickup
         if ($errors) {
             $amastyShiprestrictionRuleCollectionFactory = $amastyShiprestrictionRuleCollection->create();
             foreach ($errors as $error) {
-                if ($amastyShiprestrictionRuleCollectionFactory->addFilter('is_active', 1)->addFilter('message',$error['error'])->getSize() > 0){
+                if ($amastyShiprestrictionRuleCollectionFactory->addFilter('is_active', 1)->addFilter('custom_restriction_message',$error['error'])->getSize() > 0){
                     throw new \Bolt\Boltpay\Exception\BoltException(__($error['error']), null, 6103);
                 };
             }
