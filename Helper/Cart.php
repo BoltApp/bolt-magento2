@@ -2292,6 +2292,7 @@ class Cart extends AbstractHelper
                         $ruleDescription = $rule->getDescription();
                         $description = $ruleDescription !== '' ? $ruleDescription : 'Discount (' . $couponCode . ')';
                         $discounts[] = [
+                            'rule_id'           => $rule->getRuleId(),
                             'description'       => $description,
                             'amount'            => $roundedAmount,
                             'reference'         => $couponCode,
@@ -2309,6 +2310,7 @@ class Cart extends AbstractHelper
                             $description = $rule->getName();
                         }
                         $discounts[] = [
+                            'rule_id'           => $rule->getRuleId(),
                             'description'       => trim(__('Discount ') . $description),
                             'amount'            => $roundedAmount,
                             'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_AUTO_PROMO,
