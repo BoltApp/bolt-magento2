@@ -119,6 +119,9 @@ class InStorePickup
     protected $appState;
     protected $boltTax;
 
+    protected $storeAddressFactory;
+    protected $shipToStoreOptionFactory;
+
     /**
      * InStorePickup constructor.
      * @param Bugsnag $bugsnagHelper
@@ -202,9 +205,6 @@ class InStorePickup
     {
         try {
             $tmpShippingOptions = [];
-
-            $fflOnlyQuote = true;
-            $quoteItems = $quote->getAllItems();
             $typeOfShipment = $this->getTypeOfShipment($grabgunShippingMethodHelper, $quote);
 
             if ($typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::NON_FFL_SHIPPING_ITEMS_ONLY) {
