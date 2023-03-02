@@ -1035,7 +1035,11 @@ define([
             this.customerCart = customerData.get('cart');
             //subscription of 'customer-data' cart
             this.customerCart.subscribe(BoltCheckoutApiDriven.magentoCartDataListener);
-
+            //call magento cart initialization in case if cart was loaded from browser data
+            //without customer-data cart update event.
+            if (this.customerCart()) {
+                BoltCheckoutApiDriven.magentoCartDataListener(this.customerCart());
+            }
             //call bolt checkout configure immediately with promise parameters
             this.boltCheckoutConfigureCall(this.cartBarrier.promise, this.hintsBarrier.promise);
             this.resolveReadyStatusPromise();
