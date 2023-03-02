@@ -1035,8 +1035,7 @@ define([
             this.customerCart = customerData.get('cart');
             //subscription of 'customer-data' cart
             this.customerCart.subscribe(BoltCheckoutApiDriven.magentoCartDataListener);
-            //call magento cart initialization in case if cart was loaded from browser data
-            //without customer-data cart update event.
+            //сall magento card initialisation if event happened before we subscribed to it
             if (this.customerCart()) {
                 BoltCheckoutApiDriven.magentoCartDataListener(this.customerCart());
             }
