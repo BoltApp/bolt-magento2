@@ -116,7 +116,8 @@ class Order extends AbstractHelper
         'afterpay' => 'Afterpay',
         'affirm' => 'Affirm',
         'braintree' => 'Braintree',
-        'applepay' => 'ApplePay'
+        'applepay' => 'ApplePay',
+        'credova' => 'Credova'
     ];
 
     /**
@@ -281,7 +282,7 @@ class Order extends AbstractHelper
      * @var Create|null
      */
     private $adminOrderCreateModel;
-    
+
     /**
      * @var GiftOptionsHandler
      */
@@ -323,7 +324,7 @@ class Order extends AbstractHelper
      * @param GiftOptionsHandler                  $giftOptionsHandler
      * @param OrderManagementInterface|null       $orderManagement
      * @param OrderIncrementIdChecker|null        $orderIncrementIdChecker
-     * @param Create|null                         $adminOrderCreateModel 
+     * @param Create|null                         $adminOrderCreateModel
      */
     public function __construct(
         Context $context,
@@ -833,6 +834,20 @@ class Order extends AbstractHelper
             $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
         }
 
+        if (
+            !empty($transaction->processor)
+            && $transaction->processor == 'credova'
+            && !empty($transaction->transaction_properties->credova_public_id)
+            && !empty($transaction->transaction_properties->credova_application_id)
+        ) {
+            $paymentData = [
+                'credova_public_id' => $transaction->transaction_properties->credova_public_id,
+                'credova_application_id' => $transaction->transaction_properties->credova_application_id
+            ];
+            $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        }
+
+
         $payment->save();
     }
 
@@ -970,7 +985,7 @@ class Order extends AbstractHelper
             });
         }
         ///////////////////////////////////////////////////////////////
-        
+
         // check if the order exists
         $order = $this->getExistingOrder($incrementId, $parentQuoteId);
 
@@ -2012,7 +2027,7 @@ class Order extends AbstractHelper
             $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
         }
         if ($saveOrder) {
-           $order->save(); 
+           $order->save();
         }
     }
 
@@ -2290,9 +2305,9 @@ class Order extends AbstractHelper
             $this->resetOrderState($order);
         }
         $orderState = $this->transactionToOrderState($transactionState, $order);
-        
+
         // If the action is not triggered by Bolt API request and transaction type is credit, there is not need to save order.
-        $ifSaveOrder = Hook::$fromBolt || ($transactionState != self::TS_CREDIT_IN_PROGRESS && $transactionState != self::TS_CREDIT_COMPLETED);      
+        $ifSaveOrder = Hook::$fromBolt || ($transactionState != self::TS_CREDIT_IN_PROGRESS && $transactionState != self::TS_CREDIT_COMPLETED);
         $this->setOrderState($order, $orderState, $ifSaveOrder);
 
         // Send order confirmation email to customer.

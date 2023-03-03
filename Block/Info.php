@@ -50,6 +50,14 @@ class Info extends \Magento\Payment\Block\Info
             $data[(string)__('Credit Card Number')] = sprintf('xxxx-%s', $ccLast4);
         }
 
+        if ($credovaPublicId = $info->getAdditionalInformation('credova_public_id')) {
+            $data[(string)__('Credova Public Id')]  = $credovaPublicId);
+        }
+
+        if ($credovaApplicationId = $info->getAdditionalInformation('credova_application_id')) {
+            $data[(string)__('Credova Application Id')]  = $credovaApplicationId;
+        }
+
         if ($data) {
             $transport->setData(array_merge($transport->getData(), $data));
         }
