@@ -200,6 +200,8 @@ trait ReceivedUrlTrait
             $this->messageManager->addErrorMessage($errorMessage);
             $this->_redirect($this->getErrorRedirectUrl());
         }
+
+        return; // @phpstan-ignore-line
     }
 
     /**

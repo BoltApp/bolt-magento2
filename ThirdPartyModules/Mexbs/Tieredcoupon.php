@@ -23,6 +23,7 @@ use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
+use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\SalesRule\Model\CouponFactory;
 use Magento\SalesRule\Model\RuleRepository;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;

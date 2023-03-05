@@ -1,4 +1,4 @@
 <?php
-namespace Amasty\Promo\Plugin\Quote\Model\Quote\TotalsCollectorPlugin {
+namespace Amasty\Promo\Plugin\Quote\Model\Quote {
     class TotalsCollectorPlugin{};
 }
