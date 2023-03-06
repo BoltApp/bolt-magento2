@@ -65,6 +65,7 @@ interface OrderManagementInterface
      * Deletes a specified order by ID.
      *
      * @param int $id The order ID.
+     * @return void
      * @throws \Magento\Framework\Exception\CouldNotDeleteException
      * @throws NoSuchEntityException
      * @throws WebapiException

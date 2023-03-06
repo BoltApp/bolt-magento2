@@ -288,7 +288,6 @@ class InStorePickupShipping
      * @param Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface $getPickupLocation
      * @param Magento\Quote\Model\Quote $quote
      * @param \stdClass                 $transaction
-     * @return array
      */
     public function setInStoreShippingAddressForPrepareQuote(
         $addressConverter,
