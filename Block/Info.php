@@ -51,7 +51,7 @@ class Info extends \Magento\Payment\Block\Info
         }
 
         if ($credovaPublicId = $info->getAdditionalInformation('credova_public_id')) {
-            $data[(string)__('Credova Public Id')]  = $credovaPublicId);
+            $data[(string)__('Credova Public Id')]  = $credovaPublicId;
         }
 
         if ($credovaApplicationId = $info->getAdditionalInformation('credova_application_id')) {
