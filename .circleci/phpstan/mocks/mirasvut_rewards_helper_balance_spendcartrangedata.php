@@ -1,4 +1,6 @@
 <?php
 namespace Mirasvit\Rewards\Helper\Balance {
-    class SpendCartRangeData{};
+    class SpendCartRangeData{
+        public function __construct(...$args) {}
+    };
 }
