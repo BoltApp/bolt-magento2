@@ -202,7 +202,7 @@ trait UpdateDiscountTrait
         if ($coupon && ($coupon->getCouponId() || $this->eventsForThirdPartyModules->runFilter("isValidCouponObj", false, $coupon, $couponCode))) {
             $result = $this->applyingCouponCode($couponCode, $coupon, $quote);
         } elseif ($giftCard && $giftCard->getId()) {
-            $result = $this->applyingGiftCardCode($couponCode, $giftCard, $quote);
+            $result = $this->applyGiftCardCode($couponCode, $giftCard, $quote);
         } else {
             throw new WebApiException(__('Something happened with current code.'));
         }
@@ -421,7 +421,7 @@ trait UpdateDiscountTrait
      * @return boolean
      * @throws BoltException
      */
-    private function applyingGiftCardCode($couponCode, $giftCard, $quote)
+    private function applyGiftCardCode($couponCode, $giftCard, $quote)
     {
         try {
             $result = $this->eventsForThirdPartyModules->runFilter(

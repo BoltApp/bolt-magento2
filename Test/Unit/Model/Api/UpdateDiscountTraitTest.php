@@ -1143,9 +1143,9 @@ class UpdateDiscountTraitTest extends BoltTestCase
     /**
      * @test
      *
-     * @covers \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::applyingGiftCardCode
+     * @covers \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::applyGiftCardCode
      */
-    public function applyingGiftCardCode_amastyGiftCard()
+    public function applyGiftCardCode_amastyGiftCard()
     {
         global $ifRunFilter;
         $quote = $this->getQuoteMock();
@@ -1157,7 +1157,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
         $ifRunFilter = $giftcardMock;
         $giftcardMock->expects(static::never())->method('getCodeId')->willReturn(self::COUPON_ID);
 
-        $result = TestHelper::invokeMethod($this->currentMock, 'applyingGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
+        $result = TestHelper::invokeMethod($this->currentMock, 'applyGiftCardCode', [self::COUPON_CODE, $giftcardMock, $quote]);
 
         $this->assertTrue($result);
     }
