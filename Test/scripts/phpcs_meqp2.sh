@@ -34,4 +34,4 @@ cd magento/app/code/Bolt/Boltpay
 wget https://github.com/phpstan/phpstan/releases/download/1.10.3/phpstan.phar
 chmod +x phpstan.phar
 
-php -dmemory_limit=5G ./phpstan.phar analyse --level=0 --xdebug
+php -dmemory_limit=5G ./phpstan.phar analyse --level=1 --xdebug
