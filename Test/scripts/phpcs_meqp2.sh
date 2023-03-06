@@ -14,4 +14,4 @@ composer create-project magento/magento-coding-standard --stability=dev magento-
 
 cd magento-coding-standard
 
-vendor/bin/phpcs ../project --standard=Magento2 --colors --severity=10
+vendor/bin/phpcs ../project --standard=Magento2 --colors --severity=9
