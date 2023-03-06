@@ -35,7 +35,6 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
 {
     use UpdateDiscountTrait {
         __construct as private UpdateDiscountTraitConstructor;
-        applyingGiftCardCode as private UpdateDiscountTraitApplyingGiftCardCode;
     }
 
     /**
