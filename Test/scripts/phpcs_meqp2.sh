@@ -35,7 +35,6 @@ wget https://github.com/phpstan/phpstan/releases/download/1.10.3/phpstan.phar
 chmod +x phpstan.phar
 
 # rename .mock files extension to .php
-# rename .mock files extension to .php
 MOCK_FILES=`find . -type f \( -name '*.mock' \)`
 for file in $MOCK_FILES
 do
