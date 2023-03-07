@@ -197,7 +197,7 @@ class Credit
 
             if ($payment->getMethod() == Payment::METHOD_CODE &&
                 $this->appState->getAreaCode() == FrontNameResolver::AREA_CODE &&
-                $payment->getQuote()->getUseCredit() == Mirasvit\Credit\Model\Config::USE_CREDIT_YES
+                $payment->getQuote()->getUseCredit() == \Mirasvit\Credit\Model\Config::USE_CREDIT_YES
             ) {
                 return true;
             }

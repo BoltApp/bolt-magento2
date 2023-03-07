@@ -448,8 +448,6 @@ abstract class UpdateCartCommon
 
     /**
      * @param array $result
-
-     * @return array
      * @throws \Exception
      */
     abstract protected function sendSuccessResponse($result, $quote = null);

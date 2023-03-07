@@ -383,7 +383,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * @param array $cart cart details
      * @param array $shipping_address shipping address
      *
-     * @return ShippingOptionsInterface
+     * @return ShippingOptionsInterface|void
      * @throws \Exception
      */
     public function getShippingMethods($cart, $shipping_address)

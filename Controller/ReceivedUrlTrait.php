@@ -65,9 +65,6 @@ trait ReceivedUrlTrait
     /** @var Serialize */
     private $serialize;
 
-    /**
-     * @return \Magento\Framework\App\ResponseInterface
-     */
     public function execute()
     {
         $boltSignature = $this->getRequest()->getParam('bolt_signature');
@@ -203,6 +200,8 @@ trait ReceivedUrlTrait
             $this->messageManager->addErrorMessage($errorMessage);
             $this->_redirect($this->getErrorRedirectUrl());
         }
+
+        return; // @phpstan-ignore-line
     }
 
     /**

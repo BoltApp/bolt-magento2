@@ -205,7 +205,6 @@ class InStorePickupShipping
      * @param array                     $shipping_option
      * @param array                     $ship_to_store_option
      * @param array                     $addressData
-     * @return array
      */
     public function setExtraAddressInformation(
         $setAddressPickupLocation,
@@ -258,7 +257,6 @@ class InStorePickupShipping
      * @param Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation $setAddressPickupLocation
      * @param Magento\Quote\Model\Quote $quote
      * @param \stdClass                 $transaction
-     * @return array
      */
     public function setInStoreShippingMethodForPrepareQuote(
         $setAddressPickupLocation,
@@ -290,7 +288,6 @@ class InStorePickupShipping
      * @param Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface $getPickupLocation
      * @param Magento\Quote\Model\Quote $quote
      * @param \stdClass                 $transaction
-     * @return array
      */
     public function setInStoreShippingAddressForPrepareQuote(
         $addressConverter,

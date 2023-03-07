@@ -38,7 +38,7 @@ class OrderPlugin
     /**
      * @var array
      */
-    private $disallowedOrderState;
+    private $disallowedOrderStates;
 
     /**
      * OrderPlugin constructor.
