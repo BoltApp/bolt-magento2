@@ -35,5 +35,5 @@ wget https://github.com/phpstan/phpstan/releases/download/1.10.3/phpstan.phar
 chmod +x phpstan.phar
 
 # rename .mock files extension to .php
-for i in *.mock; do mv -- "$i" "${i%.mock}.php"; done
+eval "for i in *.mock; do mv -- "$i" "${i%.mock}.php"; done"
 php -dmemory_limit=5G ./phpstan.phar analyse --level=0 --xdebug
