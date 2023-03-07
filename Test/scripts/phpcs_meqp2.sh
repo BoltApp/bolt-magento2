@@ -24,6 +24,9 @@ cd ..
 mkdir -p magento/app/code/Bolt/Boltpay
 mv project/.circleci/phpstan/* magento/app/code/Bolt/Boltpay/
 mv project/* magento/app/code/Bolt/Boltpay/
+cd magento/app/code/Bolt/Boltpay/
+# rename .mock files extension to .php
+for i in *.mock; do mv -- "$i" "${i%.mock}.php"; done
 cd magento
 
 # generate classes for phpstan
