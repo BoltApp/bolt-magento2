@@ -230,6 +230,7 @@ class GiftCard
             return isset($totals[self::MAGEPLAZA_GIFTCARD]) ? $totals[self::MAGEPLAZA_GIFTCARD]->getValue() : 0;
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
+            return 0;
         }
     }
 

@@ -54,6 +54,11 @@ class UpdateSettings implements UpdateSettingsInterface
     protected $response;
 
     /**
+     * @var BoltErrorResponse
+     */
+    protected $errorResponse;
+
+    /**
      * @var LogHelper
      */
     protected $logHelper;

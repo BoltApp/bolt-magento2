@@ -1,0 +1,20 @@
+parameters:
+	level: 0
+	paths:
+		- Api
+		- Block
+		- Controller
+		- Cron
+		- Exception
+		- Helper
+		- Logger
+		- Model
+		- Observer
+		- Plugin
+		- Section
+		- Service
+		- Setup
+		- ThirdPartyModules
+		- ViewModel
+	scanDirectories:
+		- /home/circleci/magento
