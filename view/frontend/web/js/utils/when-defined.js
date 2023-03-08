@@ -17,7 +17,7 @@
 define([], function () {
     /**
      * Map of watched objects to maps of their respective watched properties to configured callbacks
-     * @type {Map<Object, Map<string, function[]>>}
+     * @type {Map<Object, Map<string, Map<string, Function>>>}
      */
     var whenDefinedCallbacks = new Map([]);
 
@@ -29,10 +29,10 @@ define([], function () {
      * @param {Object} object to check for property definition
      * @param {number|string} property that is expected to be defined on {@see object}
      * @param {Function} callback function to be called when {@see property} gets defined on {@see object}
-     * @param {null} key deprecated parameter used for setting multiple callbacks per property
+     * @param {string} key used to prevent setting duplicate callbacks 
      */
-    function whenDefined(object, property, callback, key = null) {
-        if (object.hasOwnProperty(property)) {
+    function whenDefined (object, property, callback, key) {
+        if (object.hasOwnProperty(property) && typeof object[property] !== 'undefined') {
             callback();
         } else {
             var overloadedPropertyName = '_' + property;
@@ -40,34 +40,36 @@ define([], function () {
                 whenDefinedCallbacks.set(object, new Map([]));
             }
             if (!whenDefinedCallbacks.get(object).has(property)) {
-                whenDefinedCallbacks.get(object).set(property, []);
-            }
-            var propertyCallbacks = whenDefinedCallbacks.get(object).get(property);
-            propertyCallbacks.push(callback);
-            Object.defineProperty(object, property, {
-                configurable: true,
-                enumerable: true,
-                writeable: true,
-                /**
-                 * Retrieves the watched property from overloaded index
-                 *
-                 * @returns {*} {@see property} value on {@see object}
-                 */
-                get: function () {
-                    return this[overloadedPropertyName];
-                },
-                /**
-                 * Sets the overloaded property index with the provided value then executes configured callbacks
-                 *
-                 * @param {mixed} value
-                 */
-                set: function (value) {
-                    this[overloadedPropertyName] = value;
-                    for (var propertyCallback of propertyCallbacks.values()) {
-                        propertyCallback();
+                whenDefinedCallbacks.get(object).set(property, new Map([]));
+                Object.defineProperty(object, property, {
+                    configurable: true,
+                    enumerable: true,
+                    writeable: true,
+                    /**
+                     * Retrieves the watched property from overloaded index
+                     *
+                     * @returns {*} {@see property} value on {@see object}
+                     */
+                    get: function () {
+                        return this[overloadedPropertyName];
+                    },
+                    /**
+                     * Sets the overloaded property index with the provided value then executes configured callbacks
+                     *
+                     * @param {mixed} value
+                     */
+                    set: function (value) {
+                        this[overloadedPropertyName] = value;
+                        for (var propertyCallback of whenDefinedCallbacks.get(object).get(property).values()) {
+                            propertyCallback();
+                        }
                     }
-                }
-            });
+                });
+            }
+            if (typeof key == 'undefined') {
+                key = whenDefinedCallbacks.get(object).get(property).size;
+            }
+            whenDefinedCallbacks.get(object).get(property).set(key, callback);
         }
     }
 
