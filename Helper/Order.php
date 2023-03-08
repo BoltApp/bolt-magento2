@@ -118,7 +118,8 @@ class Order extends AbstractHelper
         'affirm' => 'Affirm',
         'braintree' => 'Braintree',
         'applepay' => 'ApplePay',
-        'amazon_pay' => 'AmazonPay'
+        'amazon_pay' => 'AmazonPay',
+        'credova' => 'Credova'
     ];
 
     /**
@@ -834,6 +835,20 @@ class Order extends AbstractHelper
             ];
             $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
         }
+
+        if (
+            !empty($transaction->processor)
+            && $transaction->processor == 'credova'
+            && !empty($transaction->transaction_properties->credova_public_id)
+            && !empty($transaction->transaction_properties->credova_application_id)
+        ) {
+            $paymentData = [
+                'credova_public_id' => $transaction->transaction_properties->credova_public_id,
+                'credova_application_id' => $transaction->transaction_properties->credova_application_id
+            ];
+            $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        }
+
 
         $payment->save();
     }
