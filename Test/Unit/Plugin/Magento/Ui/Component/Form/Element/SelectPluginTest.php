@@ -111,6 +111,11 @@ class SelectPluginTest extends BoltTestCase
                 '__disableTmpl' => true,
             ],
             [
+                'value'         => 'boltpay_credova',
+                'label'         => 'Bolt-Credova',
+                '__disableTmpl' => true,
+            ],
+            [
                 'value'         => 'boltpay_amex',
                 'label'         => 'Bolt-Amex',
                 '__disableTmpl' => true,
