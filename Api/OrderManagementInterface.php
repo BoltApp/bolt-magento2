@@ -104,9 +104,10 @@ interface OrderManagementInterface
      * & we don't want to trigger some after events if transaction failed.
      *
      * @param int $id The order ID.
+     * @param array $additionalTransactionInfo Additional transaction information.
      * @return \Magento\Sales\Api\Data\OrderInterface
      * @throws NoSuchEntityException
      * @throws WebapiException
      */
-    public function placeOrder($id);
+    public function placeOrder($id, $additionalTransactionInfo);
 }
