@@ -17,8 +17,6 @@
 
 namespace Bolt\Boltpay\Block;
 
-use Magento\Framework\Exception\LocalizedException;
-
 /**
  * Block is used for js bolt checkout initialization with
  * 'M2_ENABLE_API_DRIVEN_CART_INTEGRATION' feature switcher enabled parameter

@@ -19,7 +19,6 @@ namespace Bolt\Boltpay\Block\System\Config;
 
 use Magento\Config\Block\System\Config\Form\Field;
 use Magento\Backend\Block\Template\Context;
-use Magento\Framework\Data\Form\Element\AbstractElement;
 use Magento\Framework\View\Element\Template;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\IntegrationManagement;

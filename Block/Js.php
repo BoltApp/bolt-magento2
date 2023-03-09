@@ -29,7 +29,6 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Session\SessionManager as CheckoutSession;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
-use Magento\Quote\Model\Quote;
 
 /**
  * Js Block. The block class used in boltjs.phtml block.

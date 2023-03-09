@@ -17,8 +17,6 @@
 
 namespace Bolt\Boltpay\Api;
 
-use Magento\Sales\Model\Order;
-
 interface GetDefaultOrderStatusesInterface
 {
     /**

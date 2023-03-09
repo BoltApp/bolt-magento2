@@ -17,8 +17,6 @@
 
 namespace Bolt\Boltpay\Api\Data;
 
-use Bolt\Boltpay\Model\Api\Data\GetProductData;
-
 /**
  * Get Product interface.
  *
