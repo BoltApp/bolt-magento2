@@ -19,7 +19,6 @@ namespace Bolt\Boltpay\Api;
 
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
-use \Bolt\Boltpay\Api\Data\GetProductDataInterfacee;
 
 
 interface GetProductInterface

@@ -61,7 +61,6 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\Order;
 use Magento\SalesRule\Api\Data\RuleInterface;
-use Magento\SalesRule\Model\Rule;
 use Magento\SalesRule\Model\RuleRepository;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\ScopeInterface;
