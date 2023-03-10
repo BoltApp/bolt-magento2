@@ -738,15 +738,23 @@ class DataProcessor
      */
     private function getProductAvailability(ProductInterface $product): string
     {
+        $stockItem = $product->getExtensionAttributes()->getStockItem();
+        if (!$stockItem) {
+            return false;
+        }
         // for non msi magento configuration we should use data from stock item, otherwise the data will be not actual
         $isAvailable = ($this->moduleManager->isEnabled('Magento_InventoryCatalog')) ?
-            $product->isAvailable() : $product->getExtensionAttributes()->getStockItem()->getIsInStock();
+            $product->isAvailable() : $stockItem->getIsInStock();
 
         if (in_array($product->getTypeId(), $this->availableProductTypesForVariants) ||
-            !$product->getExtensionAttributes()->getStockItem()->getManageStock()
+            !$stockItem->getManageStock()
         ) {
-            $stockItem = $product->getExtensionAttributes()->getStockItem();
-            $isAvailable = (bool)$stockItem->getIsInStock() && $product->getQuantityAndStockStatus()['is_in_stock'];
+            $quantityAndStockStatus = $product->getQuantityAndStockStatus();
+            if (is_array($quantityAndStockStatus) && isset($quantityAndStockStatus['is_in_stock'])) {
+                $isAvailable = (bool)$stockItem->getIsInStock() && (bool)$quantityAndStockStatus['is_in_stock'];
+            } else {
+                $isAvailable = (bool)$stockItem->getIsInStock();
+            }
         }
         return ($isAvailable) ? 'in_stock' : 'out_of_stock';
     }
