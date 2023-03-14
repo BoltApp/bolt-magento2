@@ -70,6 +70,7 @@ use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Magento\Store\Model\Store;
+use Magento\Framework\App\ObjectManager;
 use Zend_Http_Client_Exception;
 
 /**
@@ -326,8 +327,8 @@ class Cart extends AbstractHelper
      * @param MsrpHelper $msrpHelper
      * @param PriceHelper $priceHelper
      * @param Store $store
-     * @param QuoteIdMaskResourceModel $quoteIdMaskResourceModel
-     * @param QuoteIdMaskFactory $quoteIdMaskFactory
+     * @param QuoteIdMaskResourceModel|null $quoteIdMaskResourceModel
+     * @param QuoteIdMaskFactory|null $quoteIdMaskFactory
      */
     public function __construct(
         Context $context,
@@ -363,8 +364,8 @@ class Cart extends AbstractHelper
         MsrpHelper $msrpHelper,
         PriceHelper $priceHelper,
         Store $store,
-        QuoteIdMaskResourceModel $quoteIdMaskResourceModel,
-        QuoteIdMaskFactory $quoteIdMaskFactory
+        QuoteIdMaskResourceModel $quoteIdMaskResourceModel = null,
+        QuoteIdMaskFactory $quoteIdMaskFactory = null
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -399,8 +400,10 @@ class Cart extends AbstractHelper
         $this->msrpHelper = $msrpHelper;
         $this->priceHelper = $priceHelper;
         $this->store = $store;
-        $this->quoteIdMaskResourceModel = $quoteIdMaskResourceModel;
-        $this->quoteIdMaskFactory = $quoteIdMaskFactory;
+        $this->quoteIdMaskResourceModel = $quoteIdMaskResourceModel ?:
+            ObjectManager::getInstance()->get(QuoteIdMaskResourceModel::class);
+        $this->quoteIdMaskFactory = $quoteIdMaskFactory ?:
+            ObjectManager::getInstance()->get(QuoteIdMaskFactory::class);
     }
 
     /**
