@@ -372,7 +372,7 @@ class Cart extends AbstractHelper
         Store $store,
         QuoteIdToMaskedQuoteIdInterface $quoteIdToMaskedQuoteId,
         QuoteIdMaskResourceModel $quoteIdMaskResourceModel,
-        QuoteIdMaskFactory $quoteIdMaskFactory,
+        QuoteIdMaskFactory $quoteIdMaskFactory
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
