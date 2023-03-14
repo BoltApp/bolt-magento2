@@ -130,7 +130,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
         PageFactory $resultPageFactory = null,
         ForwardFactory $resultForwardFactory = null,
         StoreManagerInterface $storeManager = null,
-        ?Decider $decider = null,
+        ?Decider $decider = null
     ) {
         parent::__construct(
             $context,
