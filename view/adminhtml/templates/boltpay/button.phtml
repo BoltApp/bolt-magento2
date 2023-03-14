@@ -41,7 +41,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
     <div class="bolt-checkout-button with-cards" <?= /* @noEscape */ $additionalCheckoutButtonAttributes ?>></div>
     <div class="bolt-checkout-options-separator" style="padding: 20px; display: none;">-- <?= /* @noEscape */ __('OR')?> --</div>
     <div class="bolt-checkout-pay-by-link"></div>
-    <input type="hidden" class="required-entry" id="bolt-required-field">
+    <input type="hidden" name="bolt-require-field" class="required-entry" id="bolt-required-field">
 </fieldset>
 
     <?php if ($isAdminReorderForLoggedInCustomerFeatureEnabled && $customerCreditCardInfos): ?>
