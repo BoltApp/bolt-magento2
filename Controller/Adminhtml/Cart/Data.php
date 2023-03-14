@@ -29,8 +29,6 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Escaper;
-use Magento\Framework\Exception\AlreadyExistsException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Registry;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Result\PageFactory;
@@ -82,12 +80,12 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
      * @var StoreManagerInterface|null
      */
     private $storeManager;
-    
+
     /**
      * @var EventsForThirdPartyModules
      */
     private $eventsForThirdPartyModules;
-    
+
     /**
      * Core registry
      *
@@ -132,7 +130,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
         PageFactory $resultPageFactory = null,
         ForwardFactory $resultForwardFactory = null,
         StoreManagerInterface $storeManager = null,
-        Decider $decider
+        ?Decider $decider = null,
     ) {
         parent::__construct(
             $context,
@@ -150,7 +148,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
         $this->coreRegistry = $coreRegistry;
         $this->storeManager = $storeManager ?: ObjectManager::getInstance()->get(StoreManagerInterface::class);
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
-        $this->decider = $decider;
+        $this->decider = $decider ?: ObjectManager::getInstance()->get(Decider::class);
     }
 
     /**
@@ -212,7 +210,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
                     ]
                )
             );
-                
+
             $customerEmail = $quote->getCustomerEmail();
             if (!$quote->getCustomerId()) {
                 if ($this->cartHelper->getCustomerByEmail($customerEmail)) {
