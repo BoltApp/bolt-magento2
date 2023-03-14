@@ -58,7 +58,6 @@ use Magento\Quote\Model\Quote\Address\Total as AddressTotal;
 use Magento\Quote\Model\Quote\TotalsCollector;
 use Magento\Quote\Model\QuoteFactory;
 use Magento\Quote\Model\QuoteIdMaskFactory;
-use Magento\Quote\Model\QuoteIdToMaskedQuoteIdInterface;
 use Magento\Quote\Model\ResourceModel\Quote as QuoteResource;
 use Magento\Quote\Model\ResourceModel\Quote\QuoteIdMask as QuoteIdMaskResourceModel;
 use Magento\Sales\Api\Data\OrderInterface;
@@ -284,11 +283,6 @@ class Cart extends AbstractHelper
     private $store;
 
     /**
-     * @var QuoteIdToMaskedQuoteIdInterface
-     */
-    private $quoteIdToMaskedQuoteId;
-
-    /**
      * @var QuoteIdMaskResourceModel
      */
     private $quoteIdMaskResourceModel;
@@ -332,7 +326,6 @@ class Cart extends AbstractHelper
      * @param MsrpHelper $msrpHelper
      * @param PriceHelper $priceHelper
      * @param Store $store
-     * @param QuoteIdToMaskedQuoteIdInterface $quoteIdToMaskedQuoteId
      * @param QuoteIdMaskResourceModel $quoteIdMaskResourceModel
      * @param QuoteIdMaskFactory $quoteIdMaskFactory
      */
@@ -370,7 +363,6 @@ class Cart extends AbstractHelper
         MsrpHelper $msrpHelper,
         PriceHelper $priceHelper,
         Store $store,
-        QuoteIdToMaskedQuoteIdInterface $quoteIdToMaskedQuoteId,
         QuoteIdMaskResourceModel $quoteIdMaskResourceModel,
         QuoteIdMaskFactory $quoteIdMaskFactory
     ) {
@@ -407,7 +399,6 @@ class Cart extends AbstractHelper
         $this->msrpHelper = $msrpHelper;
         $this->priceHelper = $priceHelper;
         $this->store = $store;
-        $this->quoteIdToMaskedQuoteId = $quoteIdToMaskedQuoteId;
         $this->quoteIdMaskResourceModel = $quoteIdMaskResourceModel;
         $this->quoteIdMaskFactory = $quoteIdMaskFactory;
     }
@@ -3121,24 +3112,20 @@ class Cart extends AbstractHelper
      *
      * @param int $quoteId
      * @return string
-     * @throws \Exception
      */
     public function getQuoteMaskedId(int $quoteId): string
     {
-        $quoteMaskedId = '';
         try {
-            // we have different implementations of quoteIdToMaskedQuoteId in diff magento versions
-            // it can throw NoSuchEntityException or return empty string if masked id is not generated
-            $quoteMaskedId = $this->quoteIdToMaskedQuoteId->execute($quoteId);
-            if (!$quoteMaskedId) {
-                $quoteMaskedId = $this->generateQuoteMaskedId($quoteId);
+            $quoteIdMask = $this->quoteIdMaskFactory->create();
+            $this->quoteIdMaskResourceModel->load($quoteIdMask, $quoteId, 'quote_id');
+            if ($quoteIdMask->getMaskedId()) {
+                return $quoteIdMask->getMaskedId();
             }
-        } catch (NoSuchEntityException $e) {
-            $quoteMaskedId = $this->generateQuoteMaskedId($quoteId);
+            return $this->generateQuoteMaskedId($quoteId);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
         }
-        return $quoteMaskedId;
+        return '';
     }
 
     /**
@@ -3146,19 +3133,13 @@ class Cart extends AbstractHelper
      *
      * @param int $quoteId
      * @return string
-     * @throws \Exception
+     * @throws AlreadyExistsException
      */
     private function generateQuoteMaskedId(int $quoteId): string
     {
-        try {
-            $quoteIdMask = $this->quoteIdMaskFactory->create();
-            $quoteIdMask->setQuoteId($quoteId);
-            $this->quoteIdMaskResourceModel->save($quoteIdMask);
-            $quoteMaskedId = $quoteIdMask->getMaskedId();
-        } catch (AlreadyExistsException $e) {
-            $quoteIdMask = $this->quoteIdMaskFactory->create();
-            $quoteMaskedId = $quoteIdMask->getMaskedId($quoteId);
-        }
-        return $quoteMaskedId;
+        $quoteIdMask = $this->quoteIdMaskFactory->create();
+        $quoteIdMask->setQuoteId($quoteId);
+        $this->quoteIdMaskResourceModel->save($quoteIdMask);
+        return $quoteIdMask->getMaskedId();
     }
 }
