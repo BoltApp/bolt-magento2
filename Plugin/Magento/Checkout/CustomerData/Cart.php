@@ -6,10 +6,6 @@ use Magento\Checkout\CustomerData\Cart as CustomerDataCart;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Quote\Model\QuoteIdToMaskedQuoteIdInterface;
-use Magento\Quote\Model\ResourceModel\Quote\QuoteIdMask as QuoteIdMaskResourceModel;
-use Magento\Quote\Model\QuoteIdMaskFactory;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Helper\Cart as BoltHelperCart;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -35,21 +31,6 @@ class Cart
      * @var CheckoutSession
      */
     private $checkoutSession;
-
-    /**
-     * @var QuoteIdToMaskedQuoteIdInterface
-     */
-    private $quoteIdToMaskedQuoteId;
-
-    /**
-     * @var QuoteIdMaskFactory
-     */
-    private $quoteIdMaskFactory;
-
-    /**
-     * @var QuoteIdMaskResourceModel
-     */
-    private $quoteIdMaskResourceModel;
 
     /**
      * @var BoltHelperCart
@@ -92,15 +73,7 @@ class Cart
     private $cache;
 
     /**
-     * @var string
-     */
-    private $quoteMaskedId;
-
-    /**
      * @param CheckoutSession $checkoutSession
-     * @param QuoteIdToMaskedQuoteIdInterface $quoteIdToMaskedQuoteId
-     * @param QuoteIdMaskResourceModel $quoteIdMaskResourceModel
-     * @param QuoteIdMaskFactory $quoteIdMaskFactory
      * @param BoltHelperCart $boltHelperCart
      * @param Bugsnag $bugsnag
      * @param Decider $featureSwitches
@@ -112,9 +85,6 @@ class Cart
      */
     public function __construct(
         CheckoutSession $checkoutSession,
-        QuoteIdToMaskedQuoteIdInterface $quoteIdToMaskedQuoteId,
-        QuoteIdMaskResourceModel $quoteIdMaskResourceModel,
-        QuoteIdMaskFactory $quoteIdMaskFactory,
         BoltHelperCart $boltHelperCart,
         Bugsnag $bugsnag,
         Decider $featureSwitches,
@@ -125,9 +95,6 @@ class Cart
         CacheInterface $cache
     ) {
         $this->checkoutSession = $checkoutSession;
-        $this->quoteIdToMaskedQuoteId = $quoteIdToMaskedQuoteId;
-        $this->quoteIdMaskResourceModel = $quoteIdMaskResourceModel;
-        $this->quoteIdMaskFactory = $quoteIdMaskFactory;
         $this->boltHelperCart = $boltHelperCart;
         $this->bugsnag = $bugsnag;
         $this->featureSwitches = $featureSwitches;
@@ -156,7 +123,7 @@ class Cart
         $customerData['boltCartHints'] = null;
         if ($quote->getId()) {
             try {
-                $customerData['quoteMaskedId'] = $this->getQuoteMaskedId((int)$quote->getId());
+                $customerData['quoteMaskedId'] = $this->boltHelperCart->getQuoteMaskedId((int)$quote->getId());
                 $customerData['boltCartHints'] = $this->boltHelperCart->getHints($quote->getId(), self::HINTS_TYPE);
                 $this->preFetchCart($quote, $customerData);
             } catch (\Exception $e) {
@@ -174,28 +141,6 @@ class Cart
     private function getQuote()
     {
         return $this->checkoutSession->getQuote();
-    }
-
-    /**
-     * Returns exists or generate new quote masked id
-     *
-     * @param int $quoteId
-     * @return string
-     * @throws AlreadyExistsException
-     */
-    private function getQuoteMaskedId(int $quoteId): string
-    {
-        try {
-            if (!$this->quoteMaskedId) {
-                $this->quoteMaskedId = $this->quoteIdToMaskedQuoteId->execute($quoteId);
-            }
-        } catch (NoSuchEntityException $e) {
-            $quoteIdMask = $this->quoteIdMaskFactory->create();
-            $quoteIdMask->setQuoteId($quoteId);
-            $this->quoteIdMaskResourceModel->save($quoteIdMask);
-            $this->quoteMaskedId = $quoteIdMask->getMaskedId();
-        }
-        return $this->quoteMaskedId;
     }
 
     /**
@@ -234,7 +179,6 @@ class Cart
      */
     private function preFetchCartBoltRequest(Quote $quote, array $customerData): void
     {
-
         $apiKey = $this->configHelper->getApiKey($quote->getStoreId());
         $publishableKey = $this->configHelper->getPublishableKeyCheckout($quote->getStoreId());
         if (!$apiKey || !$publishableKey) {
@@ -253,7 +197,7 @@ class Cart
                 ]
             )->setApiData(
                 [
-                    'order_reference' => $this->getQuoteMaskedId((int)$quote->getId())
+                    'order_reference' => $this->boltHelperCart->getQuoteMaskedId((int)$quote->getId())
                 ]
             );
         $request = $this->apiHelper->buildRequest($requestData);

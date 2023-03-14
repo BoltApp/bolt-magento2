@@ -42,6 +42,7 @@ use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DataObjectFactory;
+use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Serialize\SerializerInterface as Serialize;
@@ -56,7 +57,9 @@ use Magento\Quote\Model\Quote\Address as QuoteAddress;
 use Magento\Quote\Model\Quote\Address\Total as AddressTotal;
 use Magento\Quote\Model\Quote\TotalsCollector;
 use Magento\Quote\Model\QuoteFactory;
+use Magento\Quote\Model\QuoteIdMaskFactory;
 use Magento\Quote\Model\ResourceModel\Quote as QuoteResource;
+use Magento\Quote\Model\ResourceModel\Quote\QuoteIdMask as QuoteIdMaskResourceModel;
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\Order;
@@ -67,6 +70,7 @@ use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Magento\Store\Model\Store;
+use Magento\Framework\App\ObjectManager;
 use Zend_Http_Client_Exception;
 
 /**
@@ -280,39 +284,51 @@ class Cart extends AbstractHelper
     private $store;
 
     /**
-     * @param Context                    $context
-     * @param CheckoutSession            $checkoutSession
-     * @param ProductRepository          $productRepository
-     * @param ApiHelper                  $apiHelper
-     * @param ConfigHelper               $configHelper
-     * @param CustomerSession            $customerSession
-     * @param LogHelper                  $logHelper
-     * @param Bugsnag                    $bugsnag
-     * @param DataObjectFactory          $dataObjectFactory
-     * @param ImageFactory               $imageHelperFactory
-     * @param Emulation                  $appEmulation
-     * @param QuoteFactory               $quoteFactory
-     * @param TotalsCollector            $totalsCollector
-     * @param QuoteRepository            $quoteRepository
-     * @param OrderRepository            $orderRepository
-     * @param SearchCriteriaBuilder      $searchCriteriaBuilder
-     * @param QuoteResource              $quoteResource
-     * @param SessionHelper              $sessionHelper
-     * @param CheckoutHelper             $checkoutHelper
-     * @param DiscountHelper             $discountHelper
-     * @param CacheInterface             $cache
-     * @param ResourceConnection         $resourceConnection
-     * @param CartManagementInterface    $quoteManagement
-     * @param HookHelper                 $hookHelper
-     * @param CustomerRepository         $customerRepository
-     * @param MetricsClient              $metricsClient
-     * @param DeciderHelper              $deciderHelper
-     * @param Serialize                  $serialize
+     * @var QuoteIdMaskResourceModel
+     */
+    private $quoteIdMaskResourceModel;
+
+    /**
+     * @var QuoteIdMaskFactory
+     */
+    private $quoteIdMaskFactory;
+
+    /**
+     * @param Context $context
+     * @param CheckoutSession $checkoutSession
+     * @param ProductRepository $productRepository
+     * @param Api $apiHelper
+     * @param Config $configHelper
+     * @param CustomerSession $customerSession
+     * @param Log $logHelper
+     * @param Bugsnag $bugsnag
+     * @param DataObjectFactory $dataObjectFactory
+     * @param ImageFactory $imageHelperFactory
+     * @param Emulation $appEmulation
+     * @param QuoteFactory $quoteFactory
+     * @param TotalsCollector $totalsCollector
+     * @param QuoteRepository $quoteRepository
+     * @param OrderRepository $orderRepository
+     * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param QuoteResource $quoteResource
+     * @param Session $sessionHelper
+     * @param CheckoutHelper $checkoutHelper
+     * @param Discount $discountHelper
+     * @param CacheInterface $cache
+     * @param ResourceConnection $resourceConnection
+     * @param CartManagementInterface $quoteManagement
+     * @param Hook $hookHelper
+     * @param CustomerRepository $customerRepository
+     * @param MetricsClient $metricsClient
+     * @param DeciderHelper $deciderHelper
+     * @param Serialize $serialize
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
-     * @param RuleRepository             $ruleRepository
-     * @param MsrpHelper                 $msrpHelper
-     * @param PriceHelper                $priceHelper
-     * @param Store                      $store
+     * @param RuleRepository $ruleRepository
+     * @param MsrpHelper $msrpHelper
+     * @param PriceHelper $priceHelper
+     * @param Store $store
+     * @param QuoteIdMaskResourceModel|null $quoteIdMaskResourceModel
+     * @param QuoteIdMaskFactory|null $quoteIdMaskFactory
      */
     public function __construct(
         Context $context,
@@ -347,7 +363,9 @@ class Cart extends AbstractHelper
         RuleRepository $ruleRepository,
         MsrpHelper $msrpHelper,
         PriceHelper $priceHelper,
-        Store $store
+        Store $store,
+        QuoteIdMaskResourceModel $quoteIdMaskResourceModel = null,
+        QuoteIdMaskFactory $quoteIdMaskFactory = null
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -382,6 +400,10 @@ class Cart extends AbstractHelper
         $this->msrpHelper = $msrpHelper;
         $this->priceHelper = $priceHelper;
         $this->store = $store;
+        $this->quoteIdMaskResourceModel = $quoteIdMaskResourceModel ?:
+            ObjectManager::getInstance()->get(QuoteIdMaskResourceModel::class);
+        $this->quoteIdMaskFactory = $quoteIdMaskFactory ?:
+            ObjectManager::getInstance()->get(QuoteIdMaskFactory::class);
     }
 
     /**
@@ -3083,5 +3105,41 @@ class Cart extends AbstractHelper
         if ($code) {
             $this->store->setCurrentCurrencyCode($code);
         }
+    }
+
+    /**
+     * Returns exists or generate new quote masked id
+     *
+     * @param int $quoteId
+     * @return string
+     */
+    public function getQuoteMaskedId(int $quoteId): string
+    {
+        try {
+            $quoteIdMask = $this->quoteIdMaskFactory->create();
+            $this->quoteIdMaskResourceModel->load($quoteIdMask, $quoteId, 'quote_id');
+            if ($quoteIdMask->getMaskedId()) {
+                return $quoteIdMask->getMaskedId();
+            }
+            return $this->generateQuoteMaskedId($quoteId);
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+        }
+        return '';
+    }
+
+    /**
+     * Generates new cart masked id
+     *
+     * @param int $quoteId
+     * @return string
+     * @throws AlreadyExistsException
+     */
+    private function generateQuoteMaskedId(int $quoteId): string
+    {
+        $quoteIdMask = $this->quoteIdMaskFactory->create();
+        $quoteIdMask->setQuoteId($quoteId);
+        $this->quoteIdMaskResourceModel->save($quoteIdMask);
+        return $quoteIdMask->getMaskedId();
     }
 }

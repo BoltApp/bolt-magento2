@@ -19,7 +19,8 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceContainer name="js">
-            <block class="Bolt\Boltpay\Block\Js" name="replacejs" template="Bolt_Boltpay::boltpay/js/replacejs.phtml" />
+            <block class="Bolt\Boltpay\Block\MinifiedJs" name="replacejs" template="Bolt_Boltpay::boltpay/js/replacejs.phtml" />
+            <block class="Bolt\Boltpay\Block\Adminhtml\MinifiedJsCartApiDriven" name="replacejs-cart-api-driven" template="Bolt_Boltpay::js/replacejs-cart-api-driven.phtml"/>
         </referenceContainer>
         <referenceBlock name="order_create_billing_form">
             <action method="setMethodFormTemplate">
