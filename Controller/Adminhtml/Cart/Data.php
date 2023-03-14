@@ -29,11 +29,14 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Escaper;
+use Magento\Framework\Exception\AlreadyExistsException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Registry;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 /**
  * Class Data.
@@ -93,20 +96,26 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
     private $coreRegistry;
 
     /**
-     * @param Context                    $context
-     * @param JsonFactory                $resultJsonFactory
-     * @param CartHelper                 $cartHelper
-     * @param ConfigHelper               $configHelper
-     * @param Bugsnag                    $bugsnag
-     * @param MetricsClient              $metricsClient
-     * @param DataObjectFactory          $dataObjectFactory
-     * @param Registry                   $coreRegistry
+     * @var Decider
+     */
+    private $decider;
+
+    /**
+     * @param Context $context
+     * @param JsonFactory $resultJsonFactory
+     * @param CartHelper $cartHelper
+     * @param ConfigHelper $configHelper
+     * @param Bugsnag $bugsnag
+     * @param MetricsClient $metricsClient
+     * @param DataObjectFactory $dataObjectFactory
+     * @param Registry $coreRegistry
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
-     * @param Product|null               $productHelper
-     * @param Escaper|null               $escaper
-     * @param PageFactory|null           $resultPageFactory
-     * @param ForwardFactory|null        $resultForwardFactory
+     * @param Product|null $productHelper
+     * @param Escaper|null $escaper
+     * @param PageFactory|null $resultPageFactory
+     * @param ForwardFactory|null $resultForwardFactory
      * @param StoreManagerInterface|null $storeManager
+     * @param Decider $decider
      */
     public function __construct(
         Context $context,
@@ -122,7 +131,8 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
         Escaper $escaper = null,
         PageFactory $resultPageFactory = null,
         ForwardFactory $resultForwardFactory = null,
-        StoreManagerInterface $storeManager = null
+        StoreManagerInterface $storeManager = null,
+        Decider $decider
     ) {
         parent::__construct(
             $context,
@@ -140,6 +150,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
         $this->coreRegistry = $coreRegistry;
         $this->storeManager = $storeManager ?: ObjectManager::getInstance()->get(StoreManagerInterface::class);
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
+        $this->decider = $decider;
     }
 
     /**
@@ -166,6 +177,26 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
             $isPreAuth = $this->configHelper->getIsPreAuth($storeId);
             $connectUrl = $this->configHelper->getCdnUrl($storeId) . '/connect.js';
 
+            if ($this->decider->isEnabledFetchCartViaApi()) {
+                // set bolt checkout type to backoffice as a flag for forming correct success redirect url
+                if (!$quote->getBoltCheckoutType()) {
+                    $quote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE);
+                    $this->cartHelper->quoteResourceSave($quote);
+                }
+                $hints = $this->cartHelper->getHints();
+                return $this->resultJsonFactory->create()
+                    ->setData(
+                        [
+                            'cart'           => ['id' => $this->cartHelper->getQuoteMaskedId((int)$quote->getId())],
+                            'hints'          => $hints,
+                            'backOfficeKey'  => $backOfficeKey,
+                            'paymentOnlyKey' => $paymentOnlyKey,
+                            'storeId'        => $storeId,
+                            'isPreAuth'      => $isPreAuth,
+                            'connectUrl'     => $connectUrl
+                        ]
+                    );
+            }
             /**
              * initialize rule data for backend orders, consumed by
              * @see \Magento\CatalogRule\Observer\ProcessAdminFinalPriceObserver::execute
