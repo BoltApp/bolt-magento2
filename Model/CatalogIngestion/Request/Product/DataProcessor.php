@@ -740,7 +740,7 @@ class DataProcessor
     {
         $stockItem = $product->getExtensionAttributes()->getStockItem();
         if (!$stockItem) {
-            return false;
+            return 'out_of_stock';
         }
         // for non msi magento configuration we should use data from stock item, otherwise the data will be not actual
         $isAvailable = ($this->moduleManager->isEnabled('Magento_InventoryCatalog')) ?
