@@ -438,12 +438,13 @@ class OrderManagement implements OrderManagementInterface
      * & we don't want to trigger some after events if transaction failed.
      *
      * @param int $id The order ID.
+     * @param mixed $transactionData Additional transaction information.
      * @return \Magento\Sales\Api\Data\OrderInterface
      * @throws NoSuchEntityException
      * @throws WebapiException
      * @throws \Exception
      */
-    public function placeOrder($id)
+    public function placeOrder($id, $transactionData)
     {
         $order = $this->orderHelper->getOrderById($id);
         return $this->orderService->place($order);
