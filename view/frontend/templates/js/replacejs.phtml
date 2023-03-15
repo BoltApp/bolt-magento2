@@ -39,6 +39,7 @@ $connectJsUrl = $block->getConnectJsUrl();
 $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
 $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConnectJsDynamic;
 $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
+$isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDisabled();
 ?>
 
 <script type="text/javascript">
@@ -1493,7 +1494,11 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                 expectCartRendering = true;
                 // If merchant shows popup after add to cart
                 // delay 0 allows to render bolt button before we call configure
-                setTimeout(callConfigureWithPromises, 0);
+                <?php if ($isAjaxAddToCartSuccessTimeoutDisabled): ?>
+                    callConfigureWithPromises();
+                <?php else: ?>
+                    setTimeout(callConfigureWithPromises, 0);
+                <?php endif; ?>
                 // set flag to animate always present button when we catch cart updating
                 if (boltConfig.always_present_checkout) {
                     newItemAddedToCart = true;
