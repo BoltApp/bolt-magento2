@@ -61,6 +61,10 @@ class DataProcessor
 
     private const PRODUCT_IMAGE_SIZENAME = 'standard';
 
+    private const OUT_OF_STOCK = 'out_of_stock';
+
+    private const IN_STOCK = 'in_stock';
+
     /**
      * @var ObjectManager
      */
@@ -740,7 +744,7 @@ class DataProcessor
     {
         $stockItem = $product->getExtensionAttributes()->getStockItem();
         if (!$stockItem) {
-            return 'out_of_stock';
+            return self::OUT_OF_STOCK;
         }
         // for non msi magento configuration we should use data from stock item, otherwise the data will be not actual
         $isAvailable = ($this->moduleManager->isEnabled('Magento_InventoryCatalog')) ?
@@ -756,7 +760,7 @@ class DataProcessor
                 $isAvailable = (bool)$stockItem->getIsInStock();
             }
         }
-        return ($isAvailable) ? 'in_stock' : 'out_of_stock';
+        return ($isAvailable) ? self::IN_STOCK : self::OUT_OF_STOCK;
     }
 
     /**
