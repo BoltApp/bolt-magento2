@@ -177,7 +177,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
 
             if ($this->decider->isEnabledFetchCartViaApi()) {
                 // set bolt checkout type to backoffice as a flag for forming correct success redirect url
-                if (!$quote->getBoltCheckoutType()) {
+                if ($quote->getBoltCheckoutType() != CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
                     $quote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE);
                     $this->cartHelper->quoteResourceSave($quote);
                 }
