@@ -549,7 +549,7 @@ class Js extends Template
         if ($this->featureSwitches->isDisableOpenReplayJs()) {
             return true;
         }
-        
+
         return false;
     }
 
@@ -857,5 +857,20 @@ function($argName) {
                 )
                 : []
         );
+    }
+
+    /**
+     * Check if ajax add to cart success event timeout disabled
+     *
+     * @return bool
+     * @throws LocalizedException
+     */
+    public function isAjaxAddToCartSuccessTimeoutDisabled()
+    {
+        if ($this->featureSwitches->isAjaxAddToCartSuccessTimeoutDisabled()) {
+            return true;
+        }
+
+        return false;
     }
 }
