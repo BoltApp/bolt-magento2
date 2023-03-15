@@ -17,9 +17,9 @@
 define([], function () {
     /**
      * Map of watched objects to maps of their respective watched properties to configured callbacks
-     * @type {Map<Object, Map<string, function[]>>}
+     * @type {Map<Object, Map<string, Map<string, function>>>}
      */
-    var whenDefinedCallbacks = new Map([]);
+    var whenDefinedCallbacks = new Map();
 
     /**
      * Executes provided callback when a property gets defined on provided object.
@@ -31,19 +31,17 @@ define([], function () {
      * @param {Function} callback function to be called when {@see property} gets defined on {@see object}
      * @param {null} key deprecated parameter used for setting multiple callbacks per property
      */
-    function whenDefined(object, property, callback, key = null) {
-        if (object.hasOwnProperty(property)) {
+    function whenDefined (object, property, callback, key) {
+        if (object.hasOwnProperty(property) && typeof object[property] !== 'undefined') {
             callback();
-        } else {
-            var overloadedPropertyName = '_' + property;
-            if (!whenDefinedCallbacks.has(object)) {
-                whenDefinedCallbacks.set(object, new Map([]));
-            }
-            if (!whenDefinedCallbacks.get(object).has(property)) {
-                whenDefinedCallbacks.get(object).set(property, []);
-            }
-            var propertyCallbacks = whenDefinedCallbacks.get(object).get(property);
-            propertyCallbacks.push(callback);
+            return;
+        }
+        var overloadedPropertyName = '_' + property;
+        if (!whenDefinedCallbacks.has(object)) {
+            whenDefinedCallbacks.set(object, new Map());
+        }
+        if (!whenDefinedCallbacks.get(object).has(property)) {
+            whenDefinedCallbacks.get(object).set(property, new Map());
             Object.defineProperty(object, property, {
                 configurable: true,
                 enumerable: true,
@@ -63,12 +61,16 @@ define([], function () {
                  */
                 set: function (value) {
                     this[overloadedPropertyName] = value;
-                    for (var propertyCallback of propertyCallbacks.values()) {
+                    for (var propertyCallback of whenDefinedCallbacks.get(object).get(property).values()) {
                         propertyCallback();
                     }
                 }
             });
         }
+        if (typeof key == 'undefined') {
+            key = whenDefinedCallbacks.get(object).get(property).size;
+        }
+        whenDefinedCallbacks.get(object).get(property).set(key, callback);
     }
 
     return whenDefined;
