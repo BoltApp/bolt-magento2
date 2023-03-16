@@ -58,6 +58,7 @@
             <resource name="Magento_Backend::stores_settings" />
             <resource name="Magento_Backend::store" />
             <resource name="Magento_GiftCardAccount::customer_giftcardaccount"/>
+            <resource name="Aheadworks_Giftcard::giftcard_codes"/>
         </resources>
     </integration>
 </integrations>
