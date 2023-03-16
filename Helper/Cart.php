@@ -269,12 +269,12 @@ class Cart extends AbstractHelper
      * @var MsrpHelper
      */
     private $msrpHelper;
-    
+
     /**
      * @var PriceHelper
      */
     private $priceHelper;
-    
+
     /**
      * @var Store
      */
@@ -880,6 +880,9 @@ class Cart extends AbstractHelper
 
         if ($this->doesOrderExist($cart, $quote)) {
             $this->deactivateSessionQuote($quote);
+            throw new LocalizedException(
+                __('Order was created. Please reload the page and try again')
+            );
             return;
         }
 
@@ -1517,7 +1520,7 @@ class Cart extends AbstractHelper
                 $itemSku = trim($item->getSku());
                 $itemReference = $item->getProductId();
                 $itemName = $item->getName();
-                
+
                 //By default this feature switch is enabled.
                 if ($this->deciderHelper->isCustomizableOptionsSupport()) {
                     try {
@@ -2107,15 +2110,34 @@ class Cart extends AbstractHelper
                         'Order create error',
                         'Shipping method not set.'
                     );
+
+                    throw new LocalizedException(
+                        __('Shipping method is missing. Please select shipping method and try again')
+                    );
+
                     return [];
                 }
-                
+
                 if (!$this->isBackendSession()) {
                     $address->setCollectShippingRates(true);
                     $this->collectAddressTotals($quote, $address);
                     $address->save();
+                } else {
+                    if ($requireBillingAddress && !$this->isAddressComplete($cartBillingAddress)) {
+                        $this->logAddressData($cartBillingAddress);
+                        $this->bugsnag->notifyError(
+                            'Order create error',
+                            'Billing address data insufficient.'
+                        );
+
+                        throw new LocalizedException(
+                            __('Billing address is missing. Please input all required fields in billing address form and try again')
+                        );
+
+                        return [];
+                    }
                 }
-                
+
                 // Shipping address
                 $shipAddress = [
                     'first_name' => $address->getFirstname(),
@@ -2131,9 +2153,17 @@ class Cart extends AbstractHelper
                     'email' => $address->getEmail() ?: $email
                 ];
 
+                if (!$shipAddress['first_name'] && !empty($cart['billing_address']['first_name'])) {
+                    $shipAddress['first_name'] = $cart['billing_address']['first_name'];
+                }
+
+                if (!$shipAddress['last_name'] && !empty($cart['billing_address']['last_name'])) {
+                    $shipAddress['last_name'] = $cart['billing_address']['last_name'];
+                }
+
                 if ($this->isAddressComplete($shipAddress)) {
                     $cost = $address->getShippingAmount();
-                    $shippingService = $address->getShippingDescription();                    
+                    $shippingService = $address->getShippingDescription();
                     $shippingDiscountAmount = $this->eventsForThirdPartyModules->runFilter("collectShippingDiscounts", $address->getShippingDiscountAmount(), $quote, $address);
                     if ($shippingDiscountAmount >= DiscountHelper::MIN_NONZERO_VALUE && !$this->ignoreAdjustingShippingAmount($quote)) {
                         $cost = $cost - $shippingDiscountAmount;
@@ -2163,6 +2193,11 @@ class Cart extends AbstractHelper
                         'Order create error',
                         'Shipping address data insufficient.'
                     );
+
+                    throw new LocalizedException(
+                        __('Shipping address is missing. Please input all required fields in shipping address form and try again')
+                    );
+
                     return [];
                 }
             }
@@ -2280,7 +2315,7 @@ class Cart extends AbstractHelper
         // check if getCouponCode is not null
         /////////////////////////////////////////////////////////////////////////////////
         if (($amount = abs((float)$address->getDiscountAmount())) || $quote->getCouponCode()) {
-            $ruleDiscountDetails = $this->getSaleRuleDiscounts($quote);     
+            $ruleDiscountDetails = $this->getSaleRuleDiscounts($quote);
             list($ruleDiscountDetails, $discounts, $totalAmount) = $this->eventsForThirdPartyModules->runFilter('filterQuoteDiscountDetails', [$ruleDiscountDetails, $discounts, $totalAmount], $quote);
             foreach ($ruleDiscountDetails as $salesruleId => $ruleDiscountAmount) {
                 $rule = $this->ruleRepository->getById($salesruleId);
@@ -2917,7 +2952,7 @@ class Cart extends AbstractHelper
 
         return $this->checkIfQuoteHasCartFixedAmountAndApplyToShippingRule($quote);
     }
-    
+
     /**
      * @param $quote
      * @param $shippingMethod
@@ -2944,7 +2979,7 @@ class Cart extends AbstractHelper
 
         return false;
     }
-    
+
     /**
      * Collect discount amount from each applied sale rules.
      *
@@ -2984,7 +3019,7 @@ class Cart extends AbstractHelper
                 }
             }
         }
-        
+
         $ruleDiscountDetails = [];
         foreach ($salesRuleIds as $salesRuleId) {
             $rule = $this->ruleRepository->getById($salesRuleId);
@@ -2996,7 +3031,7 @@ class Cart extends AbstractHelper
         }
         return $ruleDiscountDetails;
     }
-    
+
     /**
      * If the Magento version < 2.3.4, we still collect discounts details via plugin methods.
      *
@@ -3033,7 +3068,7 @@ class Cart extends AbstractHelper
         }
         return false;
     }
-    
+
     /**
      * Get SKU of quote item
      *
@@ -3053,10 +3088,10 @@ class Cart extends AbstractHelper
             $product->setData('sku_type', $oldSkuType);
             return $itemSku;
         }
-        
+
         return trim($item->getSku());
     }
-    
+
     /**
      * Set current store currency code
      *
