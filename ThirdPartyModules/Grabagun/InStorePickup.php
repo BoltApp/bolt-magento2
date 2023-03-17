@@ -566,11 +566,14 @@ class InStorePickup
     }
 
     /**
-     * @return mixed
+     * @param $address
+     * @param bool $removeStreet
+     * @return array
+     * @throws LocalizedException
      */
-    private function getGeoCodesForAddress($address)
+    private function getGeoCodesForAddress($address, $removeStreet = false)
     {
-        $queryString = http_build_query([
+        $addressData = [
             'key' => $this->scopeConfig->getValue('dealerlocator/dealerlocator/google_api_key', 'store'),
             'components' => implode('|', [
                 'country:' . $address['country_code'],
@@ -578,7 +581,12 @@ class InStorePickup
                 'locality:' . $address['locality'],
             ]),
             'address' => $address['street_address1'] . ', ' . $address['postal_code'] . ' ' . $address['locality'],
-        ]);
+        ];
+        if ($removeStreet) {
+            $addressData['address'] = $address['postal_code'] . ' ' . $address['locality'];
+        }
+
+        $queryString = http_build_query($addressData);
 
         $this->client->get(self::GOOGLE_ENDPOINT . '?' . $queryString);
         if ($this->client->getStatus() !== 200) {
@@ -587,8 +595,13 @@ class InStorePickup
 
         $res = $this->json->unserialize($this->client->getBody());
 
-        if ($res['status'] !== 'OK') {
-            throw new LocalizedException(__('Unable to geocode address %1', $queryString));
+        if ($res['status'] !== 'OK' ) {
+            if (!$removeStreet){
+                // Get geocode for address without street (sometimes, customer input wrong street)
+                return $this->getGeoCodesForAddress($address, true);
+            } else {
+                throw new LocalizedException(__('Unable to geocode address %1', $queryString));
+            }
         }
 
         foreach ($res['results'] as $result) {
