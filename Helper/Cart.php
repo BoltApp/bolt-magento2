@@ -901,6 +901,9 @@ class Cart extends AbstractHelper
 
         if ($this->doesOrderExist($cart, $quote)) {
             $this->deactivateSessionQuote($quote);
+            throw new LocalizedException(
+                __('Order was created. Please reload the page and try again')
+            );
             return;
         }
 
@@ -2117,6 +2120,11 @@ class Cart extends AbstractHelper
                         'Order create error',
                         'Billing address data insufficient.'
                     );
+
+                    throw new LocalizedException(
+                        __('Billing address is missing. Please input all required fields in billing address form and try again')
+                    );
+
                     return [];
                 }
             } else {
@@ -2130,6 +2138,11 @@ class Cart extends AbstractHelper
                         'Order create error',
                         'Shipping method not set.'
                     );
+
+                    throw new LocalizedException(
+                        __('Shipping method is missing. Please select shipping method and try again')
+                    );
+
                     return [];
                 }
 
@@ -2202,6 +2215,11 @@ class Cart extends AbstractHelper
                         'Order create error',
                         'Shipping address data insufficient.'
                     );
+
+                    throw new LocalizedException(
+                        __('Shipping address is missing. Please input all required fields in shipping address form and try again')
+                    );
+
                     return [];
                 }
             }
