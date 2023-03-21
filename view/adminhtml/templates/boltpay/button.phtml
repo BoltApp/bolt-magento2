@@ -47,8 +47,8 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
     <?php if ($isAdminReorderForLoggedInCustomerFeatureEnabled && $customerCreditCardInfos): ?>
     <script>
         require(['jquery', 'jquery/ui'], function($){
-            $(document).on('change', 'select[name="bolt-credit-cards"]', function(){
-
+            $(document).on('change', 'select[name="bolt-credit-cards"]', function(e){
+                e.stopImmediatePropagation();
                 var $creditCardsValue = $(this).val();
                 var $boltRequiredField = $('#bolt-required-field');
 
