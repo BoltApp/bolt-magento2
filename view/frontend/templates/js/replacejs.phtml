@@ -1253,6 +1253,14 @@ $isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDi
                 // check if magento section was initialized before our code execution
                 if (customerData.get('cart')().data_id !== undefined) {
                     magentoCartDataListener(customerData.get('cart')());
+                } else {
+                    // if magento cart is not present for some reason (wrong setup)
+                    // we need to get it ourself
+                    setTimeout(function () {
+                        if (BoltState.magentoCart === null) {
+                            customerData.invalidate(['cart']);
+                        }
+                    }, 4000);
                 }
                 if (customerData.get('boltcart')().data_id !== undefined) {
                     boltCartDataListener(customerData.get('boltcart')());
