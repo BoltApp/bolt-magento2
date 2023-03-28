@@ -33,7 +33,7 @@ define([
         boltCallbacks: {},
         boltParameters: {},
         quoteMaskedId: null,
-        boltCartHints: null,
+        boltCartHints: {prefill:{}},
         magentoCartTimeStamp: null,
         cartBarrier: null,
         hintsBarrier: null,
@@ -459,9 +459,8 @@ define([
                 if (!BoltCheckoutApiDriven.cartBarrier.isResolved()) {
                     BoltCheckoutApiDriven.cartBarrier.resolve(cart);
                     BoltCheckoutApiDriven.isPromisesResolved = true;
-                } else {
-                    isBoltCheckoutConfigureCallRequired = true;
                 }
+                isBoltCheckoutConfigureCallRequired = true;
             }
 
             //resolve hints promise if not resolved or prepare hints data for bolt config call
@@ -474,9 +473,8 @@ define([
                 if (!BoltCheckoutApiDriven.hintsBarrier.isResolved()) {
                     BoltCheckoutApiDriven.hintsBarrier.resolve(hints);
                     BoltCheckoutApiDriven.isPromisesResolved = true;
-                } else {
-                    isBoltCheckoutConfigureCallRequired = true;
                 }
+                isBoltCheckoutConfigureCallRequired = true;
             }
 
             //update bolt configuration if data was changed
@@ -1038,14 +1036,6 @@ define([
             //сall magento card initialisation if event happened before we subscribed to it
             if (this.customerCart()) {
                 BoltCheckoutApiDriven.magentoCartDataListener(this.customerCart());
-            } else {
-                // if magento cart is not present for some reason (wrong setup)
-                 // we need to get it ourself
-                setTimeout(function () {
-                    if (!this.customerCart()) {
-                        customerData.invalidate(['cart']);
-                    }
-                }, 4000);
             }
             //call bolt checkout configure immediately with promise parameters
             this.boltCheckoutConfigureCall(this.cartBarrier.promise, this.hintsBarrier.promise);
@@ -1057,6 +1047,14 @@ define([
             this.initPaymentOnly();
             this.initHintsObservers();
             if (!this.customerCart()) {
+                // if magento cart is not present for some reason (wrong setup)
+                // we need to get it ourself
+                setTimeout(function () {
+                    if (!BoltCheckoutApiDriven.customerCart()) {
+                        customerData.invalidate(['cart']);
+                        customerData.reload(['cart']);
+                    }
+                }, 4000);
                 return;
             }
 
