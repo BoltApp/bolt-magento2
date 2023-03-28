@@ -341,6 +341,10 @@
         <plugin name="BoltBoltpayInvoiceOrderPlugin" type="Bolt\Boltpay\Plugin\Magento\Sales\Model\InvoiceOrderPlugin" sortOrder="1"/>
     </type>
 
+    <type name="Magento\Sales\Api\OrderManagementInterface">
+        <plugin name="BoltBoltpayOrderManagementPlugin" type="Bolt\Boltpay\Plugin\Magento\Sales\Api\OrderManagementPlugin"/>
+    </type>
+
     <preference for="Bolt\Boltpay\Api\Data\PluginVersionNotificationInterface" type="Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotification" />
     <preference for="Bolt\Boltpay\Api\PluginVersionNotificationRepositoryInterface" type="Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotificationRepository" />
     <preference for="Bolt\Boltpay\Api\GetProductImageUrlInterface" type="Bolt\Boltpay\Model\Api\GetProductImageUrl" />

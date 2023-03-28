@@ -156,32 +156,6 @@ class OrderPlugin
     }
 
     /**
-     * Override Order place method.
-     * Skip execution when we just created the order.
-     * We call it manually later when bolt transaction is created.
-     *
-     * @param Order $subject
-     * @param callable $proceed
-     * @return Order
-     */
-    public function aroundPlace(Order $subject, callable $proceed)
-    {
-        $isRechargedOrder = $this->request->getParam('bolt-credit-cards');
-        // Move on if the order payment method is not Bolt
-        if (!$subject->getPayment()
-            || $subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE
-            || $isRechargedOrder
-        ) {
-            return $proceed();
-        }
-        // Skip if the order did not reach Order::STATE_NEW state
-        if (!$subject->getState() || $subject->getState() == Order::STATE_PENDING_PAYMENT) {
-            return $subject;
-        }
-        return $proceed();
-    }
-
-    /**
      * Prevent creating an order with an empty state / status.
      * Since we rip Order::place out of the context by going around it
      * first time it was called from QuoteManagement::submitQuote and
