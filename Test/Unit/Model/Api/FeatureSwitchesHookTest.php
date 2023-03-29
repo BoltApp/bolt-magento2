@@ -38,6 +38,11 @@ class FeatureSwitchesHookTest extends BoltTestCase
     private $fsHook;
 
     /**
+     * @var ConfigHelper
+     */
+    private $configHelper;
+
+    /**
      * @inheritdoc
      */
     public function setUpInternal()
@@ -46,6 +51,7 @@ class FeatureSwitchesHookTest extends BoltTestCase
             return;
         }
         $this->objectManager = Bootstrap::getObjectManager();
+        $this->configHelper = $this->objectManager->get(ConfigHelper::class);
         $this->fsHook = $this->objectManager->create(FeatureSwitchesHook::class);
     }
 
@@ -71,12 +77,18 @@ class FeatureSwitchesHookTest extends BoltTestCase
     public function notWorkingUpdatesFromBolt()
     {
         $this->fsHook->notifyChanged();
+        $exceptionMsg = "Something went wrong when talking to Bolt.";
+        // in magento version under 2.3.0 zend framework contains a bug in header response regexp parser in class Zend_Http_Response::extractHeaders
+        // which is throwing the "Invalid header line detected" exception if response has: "HTTP/2 403" header line.
+        if (version_compare($this->configHelper->getStoreVersion(), '2.3.0', '<')) {
+            $exceptionMsg = "Invalid header line detected";
+        }
         $response = json_decode(TestHelper::getProperty($this->fsHook, 'response')->getBody(), true);
         $this->assertEquals(
             [
                 'error' => [
                     'code' => 6001,
-                    'message' => "Something went wrong when talking to Bolt."
+                    'message' => $exceptionMsg
                 ],
                 'status' => 'failure'
             ],
