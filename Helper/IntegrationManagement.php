@@ -23,7 +23,7 @@ use Magento\Framework\App\Cache\TypeListInterface as Cache;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\DataObjectFactory;
-use Magento\Framework\HTTP\ZendClient;
+use Bolt\Boltpay\Model\HttpClientAdapterFactory;
 use Magento\Framework\UrlInterface;
 use Magento\Integration\Api\IntegrationServiceInterface;
 use Magento\Integration\Api\OauthServiceInterface as IntegrationOauthService;
@@ -45,105 +45,105 @@ class IntegrationManagement extends AbstractHelper
      * Integration is not created yet
      */
     const BOLT_INTEGRATION_STATUS_NONEXISTENT = '0';
-    
+
     /**
      * Integration is already created and in matched env
      */
     const BOLT_INTEGRATION_STATUS_CREATED = '1';
-    
+
     /**
      * Integration is already created but in unmatched env
      */
     const BOLT_INTEGRATION_STATUS_EXPIRED = '2';
-    
-    
+
+
     /**
      * Integration is not created yet
      */
     const BOLT_INTEGRATION_MODE_NONEXISTENT = '0';
-    
+
     /**
      * Integration is created for Bolt sandbox mode
      */
     const BOLT_INTEGRATION_MODE_SANDBOX = 'sandbox';
-    
+
     /**
      * Integration is created for Bolt production mode
      */
     const BOLT_INTEGRATION_MODE_PRODUCTION = 'production';
-    
-    
+
+
     const BOLT_INTEGRATION_NAME = 'boltIntegration';
-    
+
     const BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL = '/v1/magento2/bolt-checkout/authorize';
     const BOLT_INTEGRATION_IDENTITY_LINKING_URL = 'https://status.bolt.com/';
     const BOLT_INTEGRATION_TOKEN_EXCHANGE_URL = '/v1/magento2/bolt-checkout/exchange';
-    
+
     /**
      * @var \Magento\Integration\Model\ConfigBasedIntegrationManager
      */
     private $integrationManager;
-    
+
     /**
      * @var \Magento\Integration\Api\IntegrationServiceInterface
      */
     protected $integrationService;
-    
+
     /**
      * @var \Magento\Integration\Model\Config
      */
     protected $integrationConfig;
-    
+
     /**
      * @var \Magento\Integration\Api\OauthServiceInterface
      */
     protected $oauthService;
-    
+
     /**
      * @var Bolt\Boltpay\Helper\Bugsnag
      */
     protected $bugsnag;
-    
+
     /**
      * @var Bolt\Boltpay\Helper\Config
      */
     protected $configHelper;
-    
+
     /**
      * @var DataObjectFactory
      */
     private $dataObjectFactory;
-    
+
     /**
      * @var \Magento\Config\Model\ResourceModel\Config
      */
     protected $resourceConfig;
-    
+
     /**
      * @var \Magento\Framework\App\Cache\TypeListInterface
      */
     protected $cache;
-    
+
     /**
-     * @var \Magento\Framework\HTTP\ZendClient
+     * @var HttpClientAdapterFactory
      */
-    protected $httpClient;
-    
+    protected $httpClientAdapterFactory;
+
     /**
      * @var \Magento\Integration\Helper\Oauth\Data
      */
     protected $dataHelper;
-    
+
     /**
      * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
      */
     protected $deciderHelper;
-    
+
     /**
      * @var \Magento\Framework\UrlInterface
      */
     protected $urlBuilder;
-    
+
     /**
      * @param Context $context
      * @param ConfigBasedIntegrationManager $integrationManager
@@ -155,7 +155,7 @@ class IntegrationManagement extends AbstractHelper
      * @param DataObjectFactory $dataObjectFactory
      * @param ResourceConfig $resourceConfig
      * @param Cache $cache
-     * @param ZendClient $httpClient
+     * @param HttpClientAdapterFactory $httpClient
      * @param DeciderHelper $deciderHelper
      * @param UrlInterface $urlBuilder
      */
@@ -170,7 +170,7 @@ class IntegrationManagement extends AbstractHelper
         DataObjectFactory $dataObjectFactory,
         ResourceConfig $resourceConfig,
         Cache $cache,
-        ZendClient $httpClient,
+        HttpClientAdapterFactory $httpClientAdapterFactory,
         IntegrationOauthHelper $dataHelper,
         DeciderHelper $deciderHelper,
         UrlInterface $urlBuilder
@@ -185,12 +185,12 @@ class IntegrationManagement extends AbstractHelper
         $this->dataObjectFactory = $dataObjectFactory;
         $this->resourceConfig = $resourceConfig;
         $this->cache = $cache;
-        $this->httpClient = $httpClient;
+        $this->httpClientAdapterFactory = $httpClientAdapterFactory;
         $this->dataHelper = $dataHelper;
         $this->deciderHelper = $deciderHelper;
         $this->urlBuilder = $urlBuilder;
     }
-    
+
     /**
      * Get an access token, tied to integration which has permissions to specific API resources in the system.
      *
@@ -205,14 +205,14 @@ class IntegrationManagement extends AbstractHelper
                 if ($accessToken) {
                     $token = $accessToken->getToken();
                 }
-            }   
+            }
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
         } finally {
             return $token;
         }
     }
-    
+
     /**
      * Get comsumer id of Magento integration.
      *
@@ -224,14 +224,14 @@ class IntegrationManagement extends AbstractHelper
         try {
             if ($boltIntegration = $this->getMagentoIntegration()) {
                 $consumerId = $boltIntegration->getConsumerId();
-            }   
+            }
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
         } finally {
             return $consumerId;
         }
     }
-    
+
     /**
      * Get id of Magento integration.
      *
@@ -243,14 +243,14 @@ class IntegrationManagement extends AbstractHelper
         try {
             if ($boltIntegration = $this->getMagentoIntegration()) {
                 $integrationId = (int)($boltIntegration->getId());
-            }   
+            }
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
         } finally {
             return $integrationId;
         }
     }
-    
+
     /**
      * Find Magento integration related to Bolt API.
      *
@@ -263,14 +263,14 @@ class IntegrationManagement extends AbstractHelper
             $integrations = $this->integrationConfig->getIntegrations();
             if (isset($integrations['boltIntegration'])) {
                 $boltIntegration = $this->integrationService->findByName('boltIntegration');
-            }    
+            }
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
         } finally {
             return $boltIntegration;
         }
     }
-    
+
     /**
      * Delete Magento integration related to Bolt API.
      *
@@ -302,7 +302,7 @@ class IntegrationManagement extends AbstractHelper
             return false;
         }
     }
-    
+
     /**
      * Create Magento integration for Bolt API.
      *
@@ -328,14 +328,14 @@ class IntegrationManagement extends AbstractHelper
                     $integrationData[IntegrationModel::ID] = $boltIntegration->getId();
                     $boltIntegration = $this->integrationService->update($integrationData);
                 }
-            }  
+            }
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
         } finally {
             return $boltIntegration;
         }
     }
-    
+
     /**
      * Link access token of Magento integration to Bolt merchant account via OAuth handshake.
      *
@@ -371,8 +371,9 @@ class IntegrationManagement extends AbstractHelper
                 );
             }
             $loginSuccessCallback = $this->urlBuilder->getUrl('*/*/loginSuccessCallback');
-            $this->httpClient->setUri($this->getTokensExchangeUrl($storeId));
-            $this->httpClient->setParameterPost(
+            $client = $this->httpClientAdapterFactory->create();
+            $client->setUri($this->getTokensExchangeUrl($storeId));
+            $client->setParameterPost(
                 [
                     'oauth_consumer_key' => $consumer->getKey(),
                     'callback_url' => $loginSuccessCallback,
@@ -380,9 +381,11 @@ class IntegrationManagement extends AbstractHelper
             );
             $maxredirects = $this->dataHelper->getConsumerPostMaxRedirects();
             $timeout = $this->dataHelper->getConsumerPostTimeout();
-            $this->httpClient->setConfig(['maxredirects' => $maxredirects, 'timeout' => $timeout]);
-            $response = $this->httpClient->request(\Magento\Framework\HTTP\ZendClient::POST);
-            if ($response->getStatus() != 200) {
+            $client->setConfig(['maxredirects' => $maxredirects, 'timeout' => $timeout]);
+            $response = $client->request('POST');
+            if ( (method_exists($response, 'getStatus') && $response->getStatus() != 200) ||
+                (method_exists($response, 'getStatusCode') && $response->getStatusCode() != 200)
+            ) {
                 throw new Exception(
                     __(
                         'An error occurred while processing token exchange: "%1".',
@@ -396,7 +399,7 @@ class IntegrationManagement extends AbstractHelper
             return false;
         }
     }
-    
+
     /**
      * get callback URL.
      *
@@ -408,7 +411,7 @@ class IntegrationManagement extends AbstractHelper
     {
         return rtrim($this->configHelper->getIntegrationBaseUrl($storeId), '/') . self::BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL;
     }
-    
+
     /**
      * get identity link URL.
      *
@@ -420,7 +423,7 @@ class IntegrationManagement extends AbstractHelper
     {
         return self::BOLT_INTEGRATION_IDENTITY_LINKING_URL;
     }
-    
+
     /**
      * get token exchange URL.
      *
