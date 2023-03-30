@@ -121,29 +121,9 @@ commands:
             .circleci/scripts/test-merchant-branches.sh "github" "BoltApp" "bolt-magento2"
 
 jobs:
-  integration-magento-php74-magento246:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php74:2.4.6
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-      - image: cimg/mysql:8.0
-        command: --default-authentication-plugin=mysql_native_password
-        environment:
-          MYSQL_ROOT_PASSWORD: ""
-    resource_class: large
-    environment:
-      MAGENTO_DIR: magento
-    steps:
-      - m2-php-test:
-          cache_key_separator: php74mag24installed
-          m2_version: "2.4.6"
-          php_version: "php74"
-          is_magento_integration: true
-
   integration-magento-php74-magento24:
     docker:
-      - image: boltdev/m2-installed-plugin-ci-php74:2.4.2
+      - image: boltdev/m2-installed-plugin-ci-php74:2.4.6
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASS
