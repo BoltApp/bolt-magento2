@@ -30,8 +30,6 @@ use Magento\Framework\HTTP\ZendClientFactory;
  * Instead, we should use "Magento\Framework\HTTP\LaminasClient" class
  * This class is created to avoid 2.26.0 client adapter issues related to deprecated classes.
  */
-// @codingStandardsIgnoreFile
-// phpcs:disable
 class HttpClientAdapter
 {
     /**
@@ -51,7 +49,6 @@ class HttpClientAdapter
     {
         $this->boltConfigHelper = $boltConfigHelper;
         $clientFactory = version_compare($this->boltConfigHelper->getStoreVersion(), '2.4.6', '>=')
-            // @codingStandardsIgnoreLine
             ? ObjectManager::getInstance()->get(LaminasClientFactory::class)
             : ObjectManager::getInstance()->get(ZendClientFactory::class);
         $this->client = $clientFactory->create();
@@ -77,7 +74,6 @@ class HttpClientAdapter
      */
     public function setConfig($config = array())
     {
-        // @codingStandardsIgnoreLine
         if ($this->client instanceof LaminasClient) {
             $this->client->setOptions($config);
         } else {
@@ -94,9 +90,7 @@ class HttpClientAdapter
      */
     public function setHeaders($headers)
     {
-        // @codingStandardsIgnoreLine
         if ($this->client instanceof LaminasClient) {
-            // @codingStandardsIgnoreLine
             $headersObject = new Headers();
             foreach ($headers as $headerName => $headerValue) {
                 $headersObject->addHeaderLine($headerName, $headerName . ':' . $headerValue);
@@ -117,7 +111,6 @@ class HttpClientAdapter
      */
     public function setRawData($rawData, $enctype = null)
     {
-        // @codingStandardsIgnoreLine
         if ($this->client instanceof LaminasClient) {
             $this->client->setEncType($enctype);
             $this->client->setRawBody($rawData);
@@ -147,7 +140,6 @@ class HttpClientAdapter
      */
     public function request($methodType)
     {
-        // @codingStandardsIgnoreLine
         if ($this->client instanceof LaminasClient) {
             $this->client->setMethod($methodType);
             return $this->client->send();
