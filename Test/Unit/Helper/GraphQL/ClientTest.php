@@ -19,8 +19,8 @@ namespace Bolt\Boltpay\Test\Unit\Helper\GraphQL;
 
 use Bolt\Boltpay\Helper\Config as BoltConfig;
 use Bolt\Boltpay\Helper\GraphQL\Client;
-use Magento\Framework\HTTP\ZendClientFactory;
-use Magento\Framework\HTTP\ZendClient;
+use Bolt\Boltpay\Model\HttpClientAdapterFactory;
+use Bolt\Boltpay\Model\HttpClientAdapter;
 use Bolt\Boltpay\Model\ResponseFactory;
 use Bolt\Boltpay\Model\Response as BoltResponse;
 use Bolt\Boltpay\Model\RequestFactory;
@@ -45,9 +45,9 @@ class ClientTest extends BoltTestCase
     private $context;
 
     /**
-     * @var ZendClientFactory\
+     * @var HttpClientAdapterFactory
      */
-    private $zendClientFactory;
+    private $httpClientAdapterFactory;
 
     /**
      * @var BoltConfig
@@ -86,7 +86,7 @@ class ClientTest extends BoltTestCase
     {
 
         $this->context = $this->createMock(Context::class);
-        $this->zendClientFactory = $this->createMock(ZendClientFactory::class);
+        $this->httpClientAdapterFactory = $this->createMock(HttpClientAdapterFactory::class);
         $this->boltConfig = $this->createMock(BoltConfig::class);
         $this->responseFactory = $this->createMock(ResponseFactory::class);
         $this->requestFactory = $this->createMock(RequestFactory::class);
@@ -98,7 +98,7 @@ class ClientTest extends BoltTestCase
             Client::class,
             [
                 'context' => $this->context,
-                'httpClientFactory' => $this->zendClientFactory,
+                'httpClientAdapterFactory' => $this->httpClientAdapterFactory,
                 'configHelper' => $this->boltConfig,
                 'responseFactory' => $this->responseFactory,
                 'requestFactory' => $this->requestFactory,
@@ -118,15 +118,15 @@ class ClientTest extends BoltTestCase
     {
         $instance = new Client(
             $this->context,
-            $this->zendClientFactory,
+            $this->httpClientAdapterFactory,
             $this->boltConfig,
             $this->responseFactory,
             $this->requestFactory,
             $this->logger,
             $this->bugsnag
         );
-        
-        static::assertAttributeEquals($this->zendClientFactory, 'httpClientFactory', $instance);
+
+        static::assertAttributeEquals($this->httpClientAdapterFactory, 'httpClientAdapterFactory', $instance);
         static::assertAttributeEquals($this->boltConfig, 'configHelper', $instance);
         static::assertAttributeEquals($this->responseFactory, 'responseFactory', $instance);
         static::assertAttributeEquals($this->requestFactory, 'requestFactory', $instance);
@@ -139,10 +139,10 @@ class ClientTest extends BoltTestCase
      */
     public function getFeatureSwitches_success()
     {
-        $httpClient = $this->createMock(ZendClient::class);
+        $httpClient = $this->createMock(HttpClientAdapter::class);
         $response = $this->createMock(Response::class);
 
-        $this->zendClientFactory
+        $this->httpClientAdapterFactory
             ->method('create')
             ->willReturn($httpClient);
 
@@ -166,10 +166,10 @@ class ClientTest extends BoltTestCase
      */
     public function getFeatureSwitches_fail()
     {
-        $httpClient = $this->createMock(ZendClient::class);
+        $httpClient = $this->createMock(HttpClientAdapter::class);
         $response = $this->createMock(Response::class);
 
-        $this->zendClientFactory
+        $this->httpClientAdapterFactory
             ->method('create')
             ->willReturn($httpClient);
 
@@ -193,10 +193,10 @@ class ClientTest extends BoltTestCase
      */
     public function sendLogs_success()
     {
-        $httpClient = $this->createMock(ZendClient::class);
+        $httpClient = $this->createMock(HttpClientAdapter::class);
         $response = $this->createMock(Response::class);
 
-        $this->zendClientFactory
+        $this->httpClientAdapterFactory
             ->method('create')
             ->willReturn($httpClient);
 
@@ -220,10 +220,10 @@ class ClientTest extends BoltTestCase
      */
     public function sendLogs_fail()
     {
-        $httpClient = $this->createMock(ZendClient::class);
+        $httpClient = $this->createMock(HttpClientAdapter::class);
         $response = $this->createMock(Response::class);
 
-        $this->zendClientFactory
+        $this->httpClientAdapterFactory
             ->method('create')
             ->willReturn($httpClient);
 
