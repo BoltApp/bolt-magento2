@@ -1,5 +1,4 @@
 <?php
-// @codingStandardsIgnoreFile
 /**
  * Bolt magento2 plugin
  *
@@ -31,6 +30,8 @@ use Magento\Framework\HTTP\ZendClientFactory;
  * Instead, we should use "Magento\Framework\HTTP\LaminasClient" class
  * This class is created to avoid 2.26.0 client adapter issues related to deprecated classes.
  */
+// @codingStandardsIgnoreFile
+// phpcs:disable
 class HttpClientAdapter
 {
     /**
