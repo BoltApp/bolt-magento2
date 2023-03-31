@@ -2139,6 +2139,22 @@ class Cart extends AbstractHelper
                     $address->save();
                 }
 
+                if (
+                    $this->isBackendSession()
+                    && $requireBillingAddress
+                    && !$this->isAddressComplete($cartBillingAddress)
+                ) {
+                    $this->logAddressData($cartBillingAddress);
+                    $this->bugsnag->notifyError(
+                        'Order create error',
+                        'Billing address data insufficient.'
+                    );
+
+                    throw new LocalizedException(
+                        __('Billing address is missing. Please input all required fields in billing address form and try again')
+                    );
+                }
+
                 // Shipping address
                 $shipAddress = [
                     'first_name' => $address->getFirstname(),
