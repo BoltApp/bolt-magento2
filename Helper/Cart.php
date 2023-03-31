@@ -2132,6 +2132,8 @@ class Cart extends AbstractHelper
                     'email' => $address->getEmail() ?: $email
                 ];
 
+                $shipAddress = $this->eventsForThirdPartyModules->runFilter('filterCartShippingAddress', $shipAddress, $cart);
+
                 if ($this->isAddressComplete($shipAddress)) {
                     $cost = $address->getShippingAmount();
                     $shippingService = $address->getShippingDescription();
