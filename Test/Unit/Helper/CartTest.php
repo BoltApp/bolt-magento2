@@ -2521,7 +2521,9 @@ ORDER
         $this->currentMock->expects(static::never())->method('isBoltOrderCachingEnabled')->with(static::STORE_ID)
         ->willReturn(false);
 
-        static::assertNull($this->currentMock->getBoltpayOrder(false, ''));
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Order was created. Please reload the page and try again');
+        $this->currentMock->getBoltpayOrder(false, '');
     }
 
         /**
@@ -3072,7 +3074,9 @@ ORDER
         $this->objectsToClean[] = $product;
         $quote->addProduct($product, 1);
         TestUtils::setQuoteToSession($quote);
-        $result = $boltHelperCart->getCartData(true, json_encode(
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Billing address is missing. Please input all required fields in billing address form and try again');
+        $boltHelperCart->getCartData(true, json_encode(
             [
                 'billingAddress' => [
                     'firstname'    => "IntegrationBolt",
@@ -3089,8 +3093,6 @@ ORDER
                 ]
             ]
         ));
-
-        static::assertEquals([], $result);
     }
 
         /**
@@ -3731,7 +3733,9 @@ ORDER
         $quote->getShippingAddress()->setShippingMethod(null)->setCollectShippingRates(true);
         $quote->collectTotals()->save();
         TestUtils::setQuoteToSession($quote);
-        $result = $boltHelperCart->getCartData(
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Shipping method is missing. Please select shipping method and try again');
+        $boltHelperCart->getCartData(
             true,
             json_encode(
                 [
@@ -3750,10 +3754,6 @@ ORDER
                     ]
                 ]
             )
-        );
-        static::assertEquals(
-            [],
-            $result
         );
     }
 
@@ -3818,8 +3818,9 @@ ORDER
         $this->bugsnag->expects(static::once())->method('notifyError')
         ->with('Order create error', 'Shipping address data insufficient.');
         $this->deciderHelper->expects(self::once())->method('isAddSessionIdToCartMetadata')->willReturn(true);
-        $result = $currentMock->getCartData(true, json_encode([]));
-        static::assertEquals([], $result);
+        $this->expectException(LocalizedException::class);
+        $this->expectExceptionMessage('Shipping address is missing. Please input all required fields in shipping address form and try again');
+        $currentMock->getCartData(true, json_encode([]));
     }
 
         /**

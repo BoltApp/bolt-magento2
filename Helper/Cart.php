@@ -901,7 +901,9 @@ class Cart extends AbstractHelper
 
         if ($this->doesOrderExist($cart, $quote)) {
             $this->deactivateSessionQuote($quote);
-            return;
+            throw new LocalizedException(
+                __('Order was created. Please reload the page and try again')
+            );
         }
 
         if (version_compare($this->configHelper->getStoreVersion(), '2.3.6', '<') && $this->deciderHelper->isAPIDrivenIntegrationEnabled()) {
@@ -2117,7 +2119,10 @@ class Cart extends AbstractHelper
                         'Order create error',
                         'Billing address data insufficient.'
                     );
-                    return [];
+
+                    throw new LocalizedException(
+                        __('Billing address is missing. Please input all required fields in billing address form and try again')
+                    );
                 }
             } else {
                 // assign parent shipping method to clone
@@ -2130,7 +2135,10 @@ class Cart extends AbstractHelper
                         'Order create error',
                         'Shipping method not set.'
                     );
-                    return [];
+
+                    throw new LocalizedException(
+                        __('Shipping method is missing. Please select shipping method and try again')
+                    );
                 }
 
                 if (!$this->isBackendSession()) {
@@ -2202,7 +2210,10 @@ class Cart extends AbstractHelper
                         'Order create error',
                         'Shipping address data insufficient.'
                     );
-                    return [];
+
+                    throw new LocalizedException(
+                        __('Shipping address is missing. Please input all required fields in shipping address form and try again')
+                    );
                 }
             }
 
