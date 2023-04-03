@@ -49,7 +49,11 @@ class LoginPlugin extends AbstractLoginPlugin
                 return $this->$prop;
             }, $result, $result);
             $json = $propGetter('json');
-            $response = \Zend_Json::decode($json);
+            if (class_exists('\Laminas\Json\Json')) {
+                $response = \Laminas\Json\Json::decode($json);
+            } else {
+                $response = \Zend_Json::decode($json);
+            }
 
             // Sanity check. If result has an error flag set, pass the original result through unchainged
             if ($response['errors'] !== false) {
