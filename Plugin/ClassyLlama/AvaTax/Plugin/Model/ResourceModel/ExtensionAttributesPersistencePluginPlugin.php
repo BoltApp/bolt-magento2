@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Plugin\ClassyLlama\AvaTax\Plugin\Model\ResourceModel;
 
+use ClassyLlama\AvaTax\Plugin\Model\ResourceModel\ExtensionAttributesPersistencePlugin;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 
