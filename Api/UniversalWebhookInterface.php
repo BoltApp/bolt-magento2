@@ -15,7 +15,7 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
- namespace Bolt\Boltpay\Api;
+namespace Bolt\Boltpay\Api;
 
  /**
   * Universal webhook interface. Passes the request data to the right helper functions to handle the request

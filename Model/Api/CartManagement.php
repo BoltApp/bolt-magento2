@@ -36,16 +36,6 @@ class CartManagement implements CartManagementInterface
     private $data;
 
     /**
-     * @var integer
-     */
-    private $storeID;
-
-    /**
-     * @var integer
-     */
-    private $websiteId;
-
-    /**
      * @var StoreManagerInterface
      */
     private $storeManager;
@@ -76,6 +66,7 @@ class CartManagement implements CartManagementInterface
      * @param StoreManagerInterface $storeManager
      * @param Bugsnag $bugsnag
      * @param CartHelper $cartHelper
+     * @param QuoteIdMaskResource $quoteIdMaskResource
      */
     public function __construct(
         QuoteIdMaskFactory $quoteIdMaskFactory,
