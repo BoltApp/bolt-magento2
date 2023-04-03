@@ -17,15 +17,12 @@
 
 namespace Bolt\Boltpay\Model\Api;
 
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Webapi\Exception as WebApiException;
 use Magento\Catalog\Api\ProductRepositoryInterface as ProductRepository;
 use Magento\CatalogInventory\Api\StockStateInterface as StockState;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
-use Bolt\Boltpay\Model\Api\UpdateCartContext;
 
 /**
  * Trait UpdateCartItemTrait

@@ -17,7 +17,6 @@
 
 namespace Bolt\Boltpay\Model\Api\Data;
 
-use Bolt\Boltpay\Api\Data\CartDataInterface;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterface;
 
 /**

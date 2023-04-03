@@ -26,11 +26,6 @@ use Bolt\Boltpay\Api\Data\ProductInterface;
  */
 class Product extends \Magento\Catalog\Model\Product implements ProductInterface
 {
-    /**
-     * @var float
-     */
-    private $finalPrice;
-
 
     /**
      * Sets final price of product

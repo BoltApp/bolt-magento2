@@ -19,13 +19,8 @@ namespace Bolt\Boltpay\Model\Api;
 
 use Bolt\Boltpay\Helper\Hook;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebApiException;
 use Bolt\Boltpay\Api\UpdateCartInterface;
-use Bolt\Boltpay\Model\Api\UpdateCartCommon;
-use Bolt\Boltpay\Model\Api\UpdateCartContext;
-use Bolt\Boltpay\Model\Api\UpdateDiscountTrait;
-use Bolt\Boltpay\Model\Api\UpdateCartItemTrait;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Api\Data\CartDataInterfaceFactory;
 use Bolt\Boltpay\Api\Data\UpdateCartResultInterfaceFactory;

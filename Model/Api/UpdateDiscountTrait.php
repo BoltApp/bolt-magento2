@@ -31,12 +31,10 @@ use Magento\Quote\Model\Quote\TotalsCollector;
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
-use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\Discount as DiscountHelper;
-use Bolt\Boltpay\Model\Api\UpdateCartContext;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 

@@ -19,9 +19,7 @@ namespace Bolt\Boltpay\Model\StoreConfiguration;
 
 use Bolt\Boltpay\Api\StoreConfigurationManagerInterface;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
-use Bolt\Boltpay\Logger\Logger;
 use Bolt\Boltpay\Helper\Config;
-use Bolt\Boltpay\Model\StoreConfiguration\StoreConfigurationRequestBuilder;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Helper\Bugsnag;
 
