@@ -904,7 +904,6 @@ class Cart extends AbstractHelper
             throw new LocalizedException(
                 __('Order was created. Please reload the page and try again')
             );
-            return;
         }
 
         if (version_compare($this->configHelper->getStoreVersion(), '2.3.6', '<') && $this->deciderHelper->isAPIDrivenIntegrationEnabled()) {
@@ -2124,8 +2123,6 @@ class Cart extends AbstractHelper
                     throw new LocalizedException(
                         __('Billing address is missing. Please input all required fields in billing address form and try again')
                     );
-
-                    return [];
                 }
             } else {
                 // assign parent shipping method to clone
@@ -2142,8 +2139,6 @@ class Cart extends AbstractHelper
                     throw new LocalizedException(
                         __('Shipping method is missing. Please select shipping method and try again')
                     );
-
-                    return [];
                 }
 
                 if (!$this->isBackendSession()) {
@@ -2219,8 +2214,6 @@ class Cart extends AbstractHelper
                     throw new LocalizedException(
                         __('Shipping address is missing. Please input all required fields in shipping address form and try again')
                     );
-
-                    return [];
                 }
             }
 
