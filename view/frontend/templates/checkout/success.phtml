@@ -30,6 +30,7 @@ if ($block->shouldDisableBoltCheckout()) { return;
         'Magento_Customer/js/customer-data'
     ], function (customerData) {
         var sections = ['cart'];
+        customerData.initStorage();
         customerData.invalidate(sections);
         customerData.reload(sections, true);
     });
