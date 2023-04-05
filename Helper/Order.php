@@ -2439,14 +2439,14 @@ class Order extends AbstractHelper
         ) && !$invoice->getEmailSent()) {
             try {
                 $this->invoiceSender->send($invoice);
-                // restore order data
-                $order->setBaseSubtotal($baseSubtotal);
-                $order->setBaseTaxAmount($baseTaxAmount);
-                $order->setBaseShippingAmount($baseShippingAmount);
             } catch (\Exception $e) {
                 $this->bugsnag->notifyException($e);
             }
 
+            // restore order data
+            $order->setBaseSubtotal($baseSubtotal);
+            $order->setBaseTaxAmount($baseTaxAmount);
+            $order->setBaseShippingAmount($baseShippingAmount);
             //Add notification comment to order
             $order->addStatusHistoryComment(
                 __('Invoice #%1 is created. Notification email is sent to customer.', $invoice->getId())
