@@ -2422,11 +2422,16 @@ class Order extends AbstractHelper
         $invoice->setRequestedCaptureCase(Invoice::CAPTURE_OFFLINE);
         $invoice->setTransactionId($transactionId);
         $invoice->setGrandTotal($amount);
+        $invoice->setBaseGrandTotal($amount);
         $invoice->register();
         $invoice->save();
 
         $order->addRelatedObject($invoice);
 
+        // pre-save required order data with will be overwritten during invoice email sending
+        $baseSubtotal = $order->getBaseSubtotal();
+        $baseTaxAmount = $order->getBaseTaxAmount();
+        $baseShippingAmount = $order->getBaseShippingAmount();
         if ($this->scopeConfig->isSetFlag(
             InvoiceEmailIdentity::XML_PATH_EMAIL_ENABLED,
             ScopeInterface::SCOPE_STORE,
@@ -2434,6 +2439,10 @@ class Order extends AbstractHelper
         ) && !$invoice->getEmailSent()) {
             try {
                 $this->invoiceSender->send($invoice);
+                // restore order data
+                $order->setBaseSubtotal($baseSubtotal);
+                $order->setBaseTaxAmount($baseTaxAmount);
+                $order->setBaseShippingAmount($baseShippingAmount);
             } catch (\Exception $e) {
                 $this->bugsnag->notifyException($e);
             }
