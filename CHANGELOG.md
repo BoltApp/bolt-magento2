@@ -282,4 +282,4 @@
 - Introduced Fetch Cart, a new alternative way for Bolt to create the cart on the Bolt side rather than building it on the plugin side by utilizing the Magento Native API. This feature is disabled by default.
 - Fixed a catalog ingestion feature affecting a specific subset of products.
 ## [v2.27.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.1) 2023-04-06
-[TODO]
+- Plugin is now compatible with Magento version 2.4.6.
