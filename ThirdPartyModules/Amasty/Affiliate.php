@@ -78,7 +78,6 @@ class Affiliate
         $this->bugsnagHelper = $bugsnagHelper;
         $this->cache = $cache;
         $this->serialize = $serialize;
-        $this->boltSessionHelper = $boltSessionHelper;
         $this->cookieManager = $cookieManager;
         $this->cookieMetadataFactory = $cookieMetadataFactory;
         $this->scopeConfig = $scopeConfig;
