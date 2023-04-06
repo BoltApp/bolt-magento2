@@ -64,7 +64,6 @@ use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\Order;
 use Magento\SalesRule\Api\Data\RuleInterface;
-use Magento\SalesRule\Model\Rule;
 use Magento\SalesRule\Model\RuleRepository;
 use Magento\Store\Model\App\Emulation;
 use Magento\Store\Model\ScopeInterface;
@@ -901,7 +900,9 @@ class Cart extends AbstractHelper
 
         if ($this->doesOrderExist($cart, $quote)) {
             $this->deactivateSessionQuote($quote);
-            return;
+            throw new LocalizedException(
+                __('Order was created. Please reload the page and try again')
+            );
         }
 
         if (version_compare($this->configHelper->getStoreVersion(), '2.3.6', '<') && $this->deciderHelper->isAPIDrivenIntegrationEnabled()) {
@@ -2117,7 +2118,10 @@ class Cart extends AbstractHelper
                         'Order create error',
                         'Billing address data insufficient.'
                     );
-                    return [];
+
+                    throw new LocalizedException(
+                        __('Billing address is missing. Please input all required fields in billing address form and try again')
+                    );
                 }
             } else {
                 // assign parent shipping method to clone
@@ -2130,13 +2134,32 @@ class Cart extends AbstractHelper
                         'Order create error',
                         'Shipping method not set.'
                     );
-                    return [];
+
+                    throw new LocalizedException(
+                        __('Shipping method is missing. Please select shipping method and try again')
+                    );
                 }
 
                 if (!$this->isBackendSession()) {
                     $address->setCollectShippingRates(true);
                     $this->collectAddressTotals($quote, $address);
                     $address->save();
+                }
+
+                if (
+                    $this->isBackendSession()
+                    && $requireBillingAddress
+                    && !$this->isAddressComplete($cartBillingAddress)
+                ) {
+                    $this->logAddressData($cartBillingAddress);
+                    $this->bugsnag->notifyError(
+                        'Order create error',
+                        'Billing address data insufficient.'
+                    );
+
+                    throw new LocalizedException(
+                        __('Billing address is missing. Please input all required fields in billing address form and try again')
+                    );
                 }
 
                 // Shipping address
@@ -2186,7 +2209,10 @@ class Cart extends AbstractHelper
                         'Order create error',
                         'Shipping address data insufficient.'
                     );
-                    return [];
+
+                    throw new LocalizedException(
+                        __('Shipping address is missing. Please input all required fields in shipping address form and try again')
+                    );
                 }
             }
 
@@ -2250,7 +2276,7 @@ class Cart extends AbstractHelper
      *
      * @param string $email
      * @return bool
-     * @throws \Zend_Validate_Exception
+     * @throws \Zend_Validate_Exception|\Magento\Framework\Validator\ValidateException
      */
     public function validateEmail($email)
     {
@@ -2260,7 +2286,11 @@ class Cart extends AbstractHelper
             '<'
         ) ? 'EmailAddress' : \Magento\Framework\Validator\EmailAddress::class;
 
-        return \Zend_Validate::is($email, $emailClass);
+        if (class_exists('\Magento\Framework\Validator\ValidatorChain')) {
+            return \Magento\Framework\Validator\ValidatorChain::is($email, $emailClass);
+        } else {
+            return \Zend_Validate::is($email, $emailClass);
+        }
     }
 
     /**

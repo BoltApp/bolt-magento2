@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Helper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Magento\Framework\HTTP\ZendClientFactory;
+use Bolt\Boltpay\Model\HttpClientAdapterFactory;
 use Magento\Framework\App\CacheInterface;
 
 /**
@@ -45,9 +45,9 @@ class Geolocation extends AbstractHelper
     private $bugsnag;
 
     /**
-     * @var ZendClientFactory
+     * @var HttpClientAdapterFactory
      */
-    private $httpClientFactory;
+    private $httpClientAdapterFactory;
 
     /**
      * @var CacheInterface
@@ -62,20 +62,20 @@ class Geolocation extends AbstractHelper
      * @param Context $context
      * @param Config $configHelper
      * @param Bugsnag $bugsnag
-     * @param ZendClientFactory $httpClientFactory
+     * @param HttpClientAdapterFactory $httpClientFactory
      * @param CacheInterface $cache
      */
     public function __construct(
         Context $context,
         ConfigHelper $configHelper,
         Bugsnag $bugsnag,
-        ZendClientFactory $httpClientFactory,
+        HttpClientAdapterFactory $httpClientAdapterFactory,
         CacheInterface $cache
     ) {
         parent::__construct($context);
         $this->configHelper = $configHelper;
         $this->bugsnag = $bugsnag;
-        $this->httpClientFactory = $httpClientFactory;
+        $this->httpClientAdapterFactory = $httpClientAdapterFactory;
         $this->cache = $cache;
     }
 
@@ -102,7 +102,7 @@ class Geolocation extends AbstractHelper
 
         $endpoint = sprintf($this->endpointFormat, $ip, $apiKey);
 
-        $client = $this->httpClientFactory->create();
+        $client = $this->httpClientAdapterFactory->create();
         $client->setUri($endpoint);
         $client->setConfig(['maxredirects' => 0, 'timeout' => 30]);
 

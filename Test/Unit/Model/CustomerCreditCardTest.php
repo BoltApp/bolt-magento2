@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Test\Unit\Model;
 
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Model\CustomerCreditCard;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
@@ -67,6 +68,11 @@ class CustomerCreditCardTest extends BoltTestCase
     private $order;
 
     /**
+     * @var ConfigHelper
+     */
+    private $configHelper;
+
+    /**
      * Setup for CustomerCreditCardTest Class
      */
     public function setUpInternal()
@@ -75,6 +81,7 @@ class CustomerCreditCardTest extends BoltTestCase
             return;
         }
         $this->objectManager = Bootstrap::getObjectManager();
+        $this->configHelper = $this->objectManager->get(ConfigHelper::class);
         $this->customerCreditCard = $this->objectManager->create(CustomerCreditCard::class);
         $store = $this->objectManager->get(StoreManagerInterface::class);
         $storeId = $store->getStore()->getId();
@@ -117,8 +124,14 @@ class CustomerCreditCardTest extends BoltTestCase
      */
     public function recharge_withException()
     {
+        $exceptionMsg = "Authentication error. Authorization required.";
+        // in magento version under 2.3.0 zend framework contains a bug in header response regexp parser in class Zend_Http_Response::extractHeaders
+        // which is throwing the "Invalid header line detected" exception if response has: "HTTP/2 401" header line.
+        if (version_compare($this->configHelper->getStoreVersion(), '2.3.0', '<')) {
+            $exceptionMsg = "Invalid header line detected";
+        }
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessage('Authentication error. Authorization required.');
+        $this->expectExceptionMessage($exceptionMsg);
         $this->customerCreditCard->recharge($this->order);
     }
 

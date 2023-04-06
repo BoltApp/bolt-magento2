@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Helper\GraphQL;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\HTTP\ZendClientFactory;
+use Bolt\Boltpay\Model\HttpClientAdapterFactory;
 use Bolt\Boltpay\Model\ResponseFactory;
 use Bolt\Boltpay\Model\RequestFactory;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -43,9 +43,9 @@ class Client extends AbstractHelper
     const MERCHANT_API_GQL_ENDPOINT = 'v2/merchant/api';
 
     /**
-     * @var ZendClientFactory
+     * @var HttpClientAdapterFactory
      */
-    private $httpClientFactory;
+    private $httpClientAdapterFactory;
 
     /**
      * @var ConfigHelper
@@ -78,7 +78,7 @@ class Client extends AbstractHelper
 
     /**
      * @param Context $context
-     * @param ZendClientFactory $httpClientFactory
+     * @param HttpClientAdapterFactory $httpClientAdapterFactory
      * @param ConfigHelper $configHelper
      * @param ResponseFactory $responseFactory
      * @param RequestFactory $requestFactory
@@ -87,7 +87,7 @@ class Client extends AbstractHelper
      */
     public function __construct(
         Context $context,
-        ZendClientFactory $httpClientFactory,
+        HttpClientAdapterFactory $httpClientAdapterFactory,
         ConfigHelper $configHelper,
         ResponseFactory $responseFactory,
         RequestFactory $requestFactory,
@@ -95,7 +95,7 @@ class Client extends AbstractHelper
         Bugsnag $bugsnag
     ) {
         parent::__construct($context);
-        $this->httpClientFactory = $httpClientFactory;
+        $this->httpClientAdapterFactory = $httpClientAdapterFactory;
         $this->configHelper = $configHelper;
         $this->responseFactory = $responseFactory;
         $this->requestFactory = $requestFactory;
@@ -107,7 +107,7 @@ class Client extends AbstractHelper
     private function makeGQLCall($query, $operation, $variables)
     {
         $result = $this->responseFactory->create();
-        $client = $this->httpClientFactory->create();
+        $client = $this->httpClientAdapterFactory->create();
 
         $apiKey = $this->configHelper->getApiKey();
 
@@ -143,9 +143,13 @@ class Client extends AbstractHelper
             $responseBody = $response->getBody();
 
             $this->bugsnag->registerCallback(function ($report) use ($response) {
+                $headers = $response->getHeaders();
+                if (!is_array($headers) && is_object($headers) && method_exists($headers, 'toArray')) {
+                    $headers = $headers->toArray();
+                }
                 $report->setMetaData([
                     'BOLT API RESPONSE' => [
-                        'headers' => $response->getHeaders(),
+                        'headers' => $headers,
                         'body'    => $response->getBody(),
                     ]
                 ]);
@@ -153,6 +157,9 @@ class Client extends AbstractHelper
 
             $this->bugsnag->registerCallback(function ($report) use ($response) {
                 $headers = $response->getHeaders();
+                if (!is_array($headers) && is_object($headers) && method_exists($headers, 'toArray')) {
+                    $headers = $headers->toArray();
+                }
                 $report->setMetaData([
                     'META DATA' => [
                         'bolt_trace_id' => $headers[ConfigHelper::BOLT_TRACE_ID_HEADER] ?? null,

@@ -22,7 +22,8 @@ use Bolt\Boltpay\Helper\Geolocation;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
-use Magento\Framework\HTTP\ZendClientFactory;
+use Bolt\Boltpay\Model\HttpClientAdapterFactory;
+use Bolt\Boltpay\Model\HttpClientAdapter;
 use Magento\Framework\App\CacheInterface;
 
 /**
@@ -52,9 +53,9 @@ class GeolocationTest extends BoltTestCase
     private $bugsnag;
 
     /**
-     * @var ZendClientFactory
+     * @var HttpClientAdapterFactory
      */
-    private $httpClientFactory;
+    private $httpClientAdapterFactory;
 
     /**
      * @var CacheInterface
@@ -74,7 +75,7 @@ class GeolocationTest extends BoltTestCase
         $this->context = $this->createPartialMock(Context::class, ['getMpGiftCards']);
         $this->configHelper = $this->createPartialMock(ConfigHelper::class, ['getGeolocationApiKey', 'getClientIp']);
         $this->bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
-        $this->httpClientFactory = $this->createPartialMock(ZendClientFactory::class, ['create', 'setUri', 'setConfig', 'request', 'getBody']);
+        $this->httpClientAdapterFactory = $this->createPartialMock(HttpClientAdapterFactory::class, ['create', 'setUri', 'setConfig', 'request', 'getBody']);
         $this->cache = $this->createPartialMock(CacheInterface::class, ['save', 'load', 'getFrontend', 'remove', 'clean']);
         $this->mock = $this->getMockBuilder(Geolocation::class)
             ->setMethods(['getLocationJson'])
@@ -83,7 +84,7 @@ class GeolocationTest extends BoltTestCase
                     $this->context,
                     $this->configHelper,
                     $this->bugsnag,
-                    $this->httpClientFactory,
+                    $this->httpClientAdapterFactory,
                     $this->cache
                 ]
             )
@@ -102,13 +103,13 @@ class GeolocationTest extends BoltTestCase
             $this->context,
             $this->configHelper,
             $this->bugsnag,
-            $this->httpClientFactory,
+            $this->httpClientAdapterFactory,
             $this->cache
         );
-        
+
         static::assertAttributeEquals($this->configHelper, 'configHelper', $instance);
         static::assertAttributeEquals($this->bugsnag, 'bugsnag', $instance);
-        static::assertAttributeEquals($this->httpClientFactory, 'httpClientFactory', $instance);
+        static::assertAttributeEquals($this->httpClientAdapterFactory, 'httpClientAdapterFactory', $instance);
         static::assertAttributeEquals($this->cache, 'cache', $instance);
     }
 
@@ -141,11 +142,11 @@ class GeolocationTest extends BoltTestCase
         $this->configHelper->expects(self::once())->method('getClientIp')->willReturn(self::CLIENT_IP);
         $this->cache->expects(self::once())->method('load')->willReturn(null);
 
-        $this->httpClientFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->httpClientFactory->expects(self::once())->method('setUri')->willReturnSelf();
-        $this->httpClientFactory->expects(self::once())->method('setConfig')->willReturnSelf();
-        $this->httpClientFactory->expects(self::once())->method('request')->willReturnSelf();
-        $this->httpClientFactory->expects(self::once())->method('getBody')->willReturn(self::LOCATION_JSON);
+        $this->httpClientAdapterFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->httpClientAdapterFactory->expects(self::once())->method('setUri')->willReturnSelf();
+        $this->httpClientAdapterFactory->expects(self::once())->method('setConfig')->willReturnSelf();
+        $this->httpClientAdapterFactory->expects(self::once())->method('request')->willReturnSelf();
+        $this->httpClientAdapterFactory->expects(self::once())->method('getBody')->willReturn(self::LOCATION_JSON);
 
         $this->cache->expects(self::once())
             ->method('save')
@@ -163,11 +164,11 @@ class GeolocationTest extends BoltTestCase
         $this->configHelper->expects(self::once())->method('getClientIp')->willReturn(self::CLIENT_IP);
         $this->cache->expects(self::once())->method('load')->willReturn(null);
 
-        $this->httpClientFactory->expects(self::once())->method('create')->willReturnSelf();
-        $this->httpClientFactory->expects(self::once())->method('setUri')->willReturnSelf();
-        $this->httpClientFactory->expects(self::once())->method('setConfig')->willReturnSelf();
-        $this->httpClientFactory->expects(self::once())->method('request')->willReturnSelf();
-        $this->httpClientFactory->expects(self::once())->method('getBody')->willThrowException(new \Exception('exception'));
+        $this->httpClientAdapterFactory->expects(self::once())->method('create')->willReturnSelf();
+        $this->httpClientAdapterFactory->expects(self::once())->method('setUri')->willReturnSelf();
+        $this->httpClientAdapterFactory->expects(self::once())->method('setConfig')->willReturnSelf();
+        $this->httpClientAdapterFactory->expects(self::once())->method('request')->willReturnSelf();
+        $this->httpClientAdapterFactory->expects(self::once())->method('getBody')->willThrowException(new \Exception('exception'));
         $this->bugsnag->expects(self::once())->method('notifyException')->with(new \Exception('exception'))->willReturnSelf();
 
         $this->assertNull($this->mock->getLocation());

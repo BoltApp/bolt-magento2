@@ -19,7 +19,6 @@ namespace Bolt\Boltpay\Model\Api\Data;
 
 use Bolt\Boltpay\Api\Data\ShippingDataInterface;
 use Bolt\Boltpay\Api\Data\ShippingOptionInterface;
-use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface;
 
 /**
  * Class ShippingData. Shipping options property of Shipping.

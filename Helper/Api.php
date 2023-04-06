@@ -29,7 +29,7 @@ use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\DataObject;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\HTTP\ZendClientFactory;
+use Bolt\Boltpay\Model\HttpClientAdapterFactory;
 use Zend_Http_Client_Exception;
 
 /**
@@ -122,9 +122,9 @@ class Api extends AbstractHelper
 
 
     /**
-     * @var ZendClientFactory
+     * @var HttpClientAdapterFactory
      */
-    private $httpClientFactory;
+    private $httpClientAdapterFactory;
 
     /**
      * @var ConfigHelper
@@ -157,7 +157,7 @@ class Api extends AbstractHelper
 
     /**
      * @param Context           $context
-     * @param ZendClientFactory $httpClientFactory
+     * @param HttpClientAdapterFactory $httpClientFactory
      * @param ConfigHelper      $configHelper
      * @param ResponseFactory   $responseFactory
      * @param RequestFactory    $requestFactory
@@ -166,7 +166,7 @@ class Api extends AbstractHelper
      */
     public function __construct(
         Context $context,
-        ZendClientFactory $httpClientFactory,
+        HttpClientAdapterFactory $httpClientAdapterFactory,
         ConfigHelper $configHelper,
         ResponseFactory $responseFactory,
         RequestFactory $requestFactory,
@@ -174,7 +174,7 @@ class Api extends AbstractHelper
         Bugsnag $bugsnag
     ) {
         parent::__construct($context);
-        $this->httpClientFactory = $httpClientFactory;
+        $this->httpClientAdapterFactory = $httpClientAdapterFactory;
         $this->configHelper = $configHelper;
         $this->responseFactory = $responseFactory;
         $this->requestFactory = $requestFactory;
@@ -194,7 +194,7 @@ class Api extends AbstractHelper
     public function sendRequest($request)
     {
         $result = $this->responseFactory->create();
-        $client = $this->httpClientFactory->create();
+        $client = $this->httpClientAdapterFactory->create();
 
         $apiData = $request->getApiData();
         $apiUrl = $request->getApiUrl();
@@ -238,9 +238,13 @@ class Api extends AbstractHelper
             $responseBody = $response->getBody();
 
             $this->bugsnag->registerCallback(function ($report) use ($response) {
+                $headers = $response->getHeaders();
+                if (!is_array($headers) && is_object($headers) && method_exists($headers, 'toArray')) {
+                    $headers = $headers->toArray();
+                }
                 $report->setMetaData([
                     'BOLT API RESPONSE' => [
-                        'headers' => $response->getHeaders(),
+                        'headers' => $headers,
                         'body'    => $response->getBody(),
                     ]
                 ]);
@@ -248,6 +252,9 @@ class Api extends AbstractHelper
 
             $this->bugsnag->registerCallback(function ($report) use ($response) {
                 $headers = $response->getHeaders();
+                if (!is_array($headers) && is_object($headers) && method_exists($headers, 'toArray')) {
+                    $headers = $headers->toArray();
+                }
                 $report->setMetaData([
                     'META DATA' => [
                         'bolt_trace_id' => $headers[ConfigHelper::BOLT_TRACE_ID_HEADER] ?? null,
@@ -259,7 +266,7 @@ class Api extends AbstractHelper
         }
 
         if ($request->getStatusOnly() && $response) {
-            return $response->getStatus();
+            return (method_exists($response, 'getStatus')) ? $response->getStatus() : $response->getStatusCode();
         }
 
         if ($responseBody) {

@@ -53,8 +53,6 @@ use Magento\GroupedProduct\Model\Product\Type\Grouped as GroupedProductType;
  */
 class DataProcessor
 {
-    private const PRIMARY_IMAGE_TYPE_CODE = 'image';
-
     private const PRODUCT_VISIBILITY_VISIBLE = 'true';
 
     private const PRODUCT_VISIBILITY_NOT_VISIBLE = 'false';
