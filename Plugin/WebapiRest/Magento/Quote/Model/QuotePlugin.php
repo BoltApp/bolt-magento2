@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Plugin\WebapiRest\Magento\Quote\Model;
 
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\App\State;
 
 /**
@@ -40,12 +41,12 @@ class QuotePlugin
     private $appState;
 
     /**
-     * @param \Bolt\Boltpay\Helper\FeatureSwitch\Decider|null $featureSwitches
+     * @param Decider|null $featureSwitches
      * @param State $appState
      */
     public function __construct(
-        \Bolt\Boltpay\Helper\FeatureSwitch\Decider $featureSwitches = null,
-        State $appState
+        State $appState,
+        Decider $featureSwitches = null,
     ) {
         $this->featureSwitches = $featureSwitches ?? \Magento\Framework\App\ObjectManager::getInstance()
                 ->get(\Bolt\Boltpay\Helper\FeatureSwitch\Decider::class);
@@ -66,7 +67,7 @@ class QuotePlugin
     {
         if ($this->isPreventSettingBoltIpsAsCustomerIpOnQuote
             && $key === 'remote_ip' &&
-            $this->appState->getAreaCode() === \Magento\Framework\App\Area::AREA_WEBAPI_REST
+            ($this->appState->getAreaCode() === \Magento\Framework\App\Area::AREA_WEBAPI_REST || \Bolt\Boltpay\Helper\Hook::$fromBolt)
         ) {
             return [$key, ($subject->getData('remote_ip') ?: $subject->getOrigData('remote_ip')) ?: $value];
         }
