@@ -17,6 +17,8 @@
 
 namespace Bolt\Boltpay\Plugin\WebapiRest\Magento\Quote\Model;
 
+use Magento\Framework\App\State;
+
 /**
  * Plugin for {@see \Magento\Quote\Model\Quote}
  */
@@ -33,22 +35,29 @@ class QuotePlugin
     private $isPreventSettingBoltIpsAsCustomerIpOnQuote;
 
     /**
-     * QuotePlugin constructor.
-     *
-     * @param \Bolt\Boltpay\Helper\FeatureSwitch\Decider $featureSwitches
+     * @var State
      */
-    public function __construct(\Bolt\Boltpay\Helper\FeatureSwitch\Decider $featureSwitches = null)
-    {
+    private $appState;
+
+    /**
+     * @param \Bolt\Boltpay\Helper\FeatureSwitch\Decider|null $featureSwitches
+     * @param State $appState
+     */
+    public function __construct(
+        \Bolt\Boltpay\Helper\FeatureSwitch\Decider $featureSwitches = null,
+        State $appState
+    ) {
         $this->featureSwitches = $featureSwitches ?? \Magento\Framework\App\ObjectManager::getInstance()
                 ->get(\Bolt\Boltpay\Helper\FeatureSwitch\Decider::class);
         $this->isPreventSettingBoltIpsAsCustomerIpOnQuote = $this->featureSwitches->isPreventSettingBoltIpsAsCustomerIpOnQuote();
+        $this->appState = $appState;
     }
 
     /**
      * Prevent IP from being set when requests are coming from Bolt, except initially
      *
      * @param \Magento\Quote\Model\Quote $subject intercepted quote object
-     * @param array|string               $key 
+     * @param array|string               $key
      * @param mixed                      $value
      *
      * @return array|void
@@ -56,8 +65,9 @@ class QuotePlugin
     public function beforeSetData(\Magento\Quote\Model\Quote $subject, $key, $value = null)
     {
         if ($this->isPreventSettingBoltIpsAsCustomerIpOnQuote
-            && $key === 'remote_ip'
-            && \Bolt\Boltpay\Helper\Hook::$fromBolt) {
+            && $key === 'remote_ip' &&
+            $this->appState->getAreaCode() === \Magento\Framework\App\Area::AREA_WEBAPI_REST
+        ) {
             return [$key, ($subject->getData('remote_ip') ?: $subject->getOrigData('remote_ip')) ?: $value];
         }
     }
