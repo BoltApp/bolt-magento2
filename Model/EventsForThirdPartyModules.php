@@ -1309,6 +1309,11 @@ class EventsForThirdPartyModules
                                       "MW\Affiliate\Observer\SalesOrderAfter"],
                     "boltClass" => MW_Affiliate::class,
                 ],
+                'Amasty_Affiliate' => [
+                    "module" => "Amasty_Affiliate",
+                    "sendClasses" => ["Amasty\Affiliate\Observer\SalesOrderAfterPlaceObserver"],
+                    "boltClass" => Amasty_Affiliate::class,
+                ],
             ],
         ],
         'filterQuoteDiscountDetails' => [

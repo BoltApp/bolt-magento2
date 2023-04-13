@@ -92,7 +92,7 @@ class Affiliate
      */
     public function saveSessionData($sessionData, $quoteId, $checkoutSession)
     {
-        $sessionData['current_affiliate_account_code'] = $this->cookieManager->getCookie(self::AMASTY_CURRENT_AFFILIATE_ACCOUNT_CODE);
+        $sessionData[self::AMASTY_CURRENT_AFFILIATE_ACCOUNT_CODE] = $this->cookieManager->getCookie(self::AMASTY_CURRENT_AFFILIATE_ACCOUNT_CODE);
 
         return $sessionData;
     }
@@ -108,12 +108,45 @@ class Affiliate
             $cacheIdentifier = BoltSession::BOLT_SESSION_PREFIX . $quote->getBoltParentQuoteId();
             if ($serialized = $this->cache->load($cacheIdentifier)) {
                 $sessionData = $this->serialize->unserialize($serialized);
-                if (isset($sessionData["current_affiliate_account_code"])) {
-                    $this->addToCookies($sessionData["current_affiliate_account_code"]);
+                if (isset($sessionData[self::AMASTY_CURRENT_AFFILIATE_ACCOUNT_CODE])) {
+                    $this->addToCookies($sessionData[self::AMASTY_CURRENT_AFFILIATE_ACCOUNT_CODE]);
                 }
             }
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
+        }
+    }
+
+    /**
+     * Trigger Amasty Affiliate sales_order_place_after event
+     *
+     * @param OrderModel $result
+     * @param \Amasty\Affiliate\Observer\SalesOrderAfterPlaceObserver $amastyAffiliateObserverSalesOrderAfter
+     * @param OrderModel $order
+     */
+    public function beforeGetOrderByIdProcessNewOrder($result, $amastyAffiliateObserverSalesOrderAfter, $order)
+    {
+        try {
+            $cacheIdentifier = BoltSession::BOLT_SESSION_PREFIX . $order->getQuoteId();
+            if ($serialized = $this->cache->load($cacheIdentifier)) {
+                $sessionData = $this->serialize->unserialize($serialized);
+                if (isset($sessionData[self::AMASTY_CURRENT_AFFILIATE_ACCOUNT_CODE])) {
+                    $this->addToCookies($sessionData[self::AMASTY_CURRENT_AFFILIATE_ACCOUNT_CODE]);
+                }
+                // In Bolt pre-auth checkout process, the order creation does not trigger sales_order_place_after event
+                // (instead, this event would be triggered when the payment is captured), as a result, the affiliate commission is missing.
+                // To fix this issue, we execute the observer \Amasty\Affiliate\Observer\SalesOrderAfterPlaceObserver programmatically.
+                $event = new \Magento\Framework\DataObject(['order' => $order]);
+                $observer = \Magento\Framework\App\ObjectManager::getInstance()->create(\Magento\Framework\Event\Observer::class);
+                $observer->setEvent($event);
+                $observer->setData('order', $order);
+                $observer->setEventName('sales_order_place_after');
+                $amastyAffiliateObserverSalesOrderAfter->execute($observer);
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        } finally {
+            return $result;
         }
     }
 
@@ -124,16 +157,6 @@ class Affiliate
      */
     private function addToCookies($accountCode)
     {
-        $cookieExpiration = $this->scopeConfig
-                ->getValue('amasty_affiliate/general/cookie_expiration') * 24 * 60 * 60;//in seconds
-        $publicCookieMetadata = $this->cookieMetadataFactory->createPublicCookieMetadata()
-            ->setDuration($cookieExpiration)
-            ->setPath('/')
-            ->setSecure(true);
-        $this->cookieManager->setPublicCookie(
-            self::AMASTY_CURRENT_AFFILIATE_ACCOUNT_CODE,
-            $accountCode,
-            $publicCookieMetadata
-        );
+        $_COOKIE[self::AMASTY_CURRENT_AFFILIATE_ACCOUNT_CODE] = $accountCode;
     }
 }
