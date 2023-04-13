@@ -51,6 +51,7 @@
             <resource name="Magento_Sales::comment" />
             <resource name="Magento_Sales::emails" />
             <resource name="Magento_Sales::sales_creditmemo" />
+            <resource name="Magento_Sales::transactions_fetch" />
             <resource name="Magento_Backend::marketing" />
             <resource name="Magento_CatalogRule::promo" />
             <resource name="Magento_SalesRule::quote"/>
