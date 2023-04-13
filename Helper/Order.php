@@ -847,6 +847,19 @@ class Order extends AbstractHelper
             $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
         }
 
+        if (!empty($transaction->authorization) && !empty($transaction->authorization->avs_response)) {
+            $paymentData = [
+                'avs_response' => $transaction->authorization->avs_response,
+            ];
+            $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        }
+
+        if (!empty($transaction->authorization) && !empty($transaction->authorization->cvv_response)) {
+            $paymentData = [
+                'cvv_response' => $transaction->authorization->cvv_response,
+            ];
+            $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
+        }
 
         $payment->save();
     }
