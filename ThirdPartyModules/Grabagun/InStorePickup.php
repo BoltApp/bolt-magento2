@@ -660,6 +660,7 @@ class InStorePickup
      */
     public function setInStoreShippingAddressForPrepareQuote(
         \Grabagun\Shipping\Helper\ShippingMethodHelper $grabgunShippingMethodHelper,
+        \Grabagun\DealerLocator\Model\ResourceModel\Dealer\CollectionFactory $grabagunCollectionFactory,
         $quote,
         $transaction
     )
@@ -672,11 +673,15 @@ class InStorePickup
                 $address = $transactionInStoreShipment->address ?? null;
                 if ($address) {
                     $address->country_code = 'US';
+                    $dealerInfo = $this->getDealerInfoFromReference($shipment->reference);
+                    $item = $grabagunCollectionFactory->create()->addFieldToFilter('id', ['eq' => $dealerInfo['dealer_id']])->getFirstItem();
+
                     $this->orderHelper->setAddress($quote->getShippingAddress(), $address);
                     $quote->getShippingAddress()
                         ->setFirstName($shipment->shipping_address->first_name)
                         ->setLastName($shipment->shipping_address->last_name)
-                        ->setCompany($transactionInStoreShipment->store_name)
+                        ->setCompany($item->getDealerName())
+                        ->setTelephone($item->getPhone())
                         ->save();
                 }
             }

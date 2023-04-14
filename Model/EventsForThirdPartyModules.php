@@ -427,7 +427,8 @@ class EventsForThirdPartyModules
                 "Grabagun_DealerLocator" => [
                     "module" => "Grabagun_DealerLocator",
                     "sendClasses" => [
-                        "Grabagun\Shipping\Helper\ShippingMethodHelper"
+                        "Grabagun\Shipping\Helper\ShippingMethodHelper",
+                        "Grabagun\DealerLocator\Model\ResourceModel\Dealer\CollectionFactory"
                     ],
                     "checkClasses" => [
                         "Grabagun\Shipping\Model\ShippingMethodManagement",
