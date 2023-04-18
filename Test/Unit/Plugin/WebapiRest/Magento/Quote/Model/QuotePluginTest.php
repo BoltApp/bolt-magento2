@@ -30,11 +30,17 @@ class QuotePluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
     private $featureSwitchesMock;
 
     /**
+     * @var \Magento\Framework\App\State|\PHPUnit\Framework\MockObject\MockObject|\PHPUnit_Framework_MockObject_MockObject
+     */
+    private $stateMock;
+
+    /**
      * Setup test dependencies
      */
     protected function setUp(): void
     {
         $this->featureSwitchesMock = $this->createMock(\Bolt\Boltpay\Helper\FeatureSwitch\Decider::class);
+        $this->stateMock = $this->createMock(\Magento\Framework\App\State::class);
         parent::setUp();
     }
 
@@ -51,6 +57,7 @@ class QuotePluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
         $value,
         $originalRemoteIp,
         $currentRemoteIp,
+        $isWebApiRest,
         $fromBolt,
         $isPreventSettingBoltIpsAsCustomerIpOnQuote,
         $changedArguments
@@ -58,10 +65,19 @@ class QuotePluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
         $om = \Magento\TestFramework\Helper\Bootstrap::getObjectManager();
         $this->featureSwitchesMock->method('isPreventSettingBoltIpsAsCustomerIpOnQuote')
             ->willReturn($isPreventSettingBoltIpsAsCustomerIpOnQuote);
+        if ($isWebApiRest) {
+            $this->stateMock->method('getAreaCode')
+                ->willReturn(\Magento\Framework\App\Area::AREA_WEBAPI_REST);
+        } else {
+            $this->stateMock->method('getAreaCode')
+                ->willReturn(\Magento\Framework\App\Area::AREA_FRONTEND);
+        }
+
         $pluginInstance = $om->create(
             \Bolt\Boltpay\Plugin\WebapiRest\Magento\Quote\Model\QuotePlugin::class,
             [
-                'featureSwitches' => $this->featureSwitchesMock
+                'featureSwitches' => $this->featureSwitchesMock,
+                'appState' => $this->stateMock
             ]
         );
         $quote = $om->create(\Magento\Quote\Model\Quote::class);
@@ -87,6 +103,7 @@ class QuotePluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
                 'value'                                      => $boltIP,
                 'originalRemoteIp'                           => $customerIP1,
                 'currentRemoteIp'                            => $customerIP1,
+                'isWebApiRest'                               => true,
                 'fromBolt'                                   => true,
                 'isPreventSettingBoltIpsAsCustomerIpOnQuote' => true,
                 'changedArguments'                           => ['remote_ip', $customerIP1],
@@ -96,6 +113,7 @@ class QuotePluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
                 'value'                                      => $customerIP1,
                 'originalRemoteIp'                           => null,
                 'currentRemoteIp'                            => null,
+                'isWebApiRest'                               => true,
                 'fromBolt'                                   => true,
                 'isPreventSettingBoltIpsAsCustomerIpOnQuote' => true,
                 'changedArguments'                           => ['remote_ip', $customerIP1],
@@ -105,6 +123,7 @@ class QuotePluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
                 'value'                                      => $boltIP,
                 'originalRemoteIp'                           => $customerIP1,
                 'currentRemoteIp'                            => $customerIP2,
+                'isWebApiRest'                               => true,
                 'fromBolt'                                   => true,
                 'isPreventSettingBoltIpsAsCustomerIpOnQuote' => true,
                 'changedArguments'                           => ['remote_ip', $customerIP2],
@@ -114,6 +133,7 @@ class QuotePluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
                 'value'                                      => $boltIP,
                 'originalRemoteIp'                           => $customerIP1,
                 'currentRemoteIp'                            => null,
+                'isWebApiRest'                               => true,
                 'fromBolt'                                   => true,
                 'isPreventSettingBoltIpsAsCustomerIpOnQuote' => true,
                 'changedArguments'                           => ['remote_ip', $customerIP1],
@@ -123,6 +143,7 @@ class QuotePluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
                 'value'                                      => true,
                 'originalRemoteIp'                           => $customerIP1,
                 'currentRemoteIp'                            => $customerIP2,
+                'isWebApiRest'                               => false,
                 'fromBolt'                                   => false,
                 'isPreventSettingBoltIpsAsCustomerIpOnQuote' => false,
                 'changedArguments'                           => null,
@@ -132,6 +153,7 @@ class QuotePluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
                 'value'                                      => true,
                 'originalRemoteIp'                           => $customerIP1,
                 'currentRemoteIp'                            => $customerIP2,
+                'isWebApiRest'                               => false,
                 'fromBolt'                                   => false,
                 'isPreventSettingBoltIpsAsCustomerIpOnQuote' => false,
                 'changedArguments'                           => null,
@@ -141,6 +163,7 @@ class QuotePluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
                 'value'                                      => $boltIP,
                 'originalRemoteIp'                           => $customerIP1,
                 'currentRemoteIp'                            => $customerIP1,
+                'isWebApiRest'                               => false,
                 'fromBolt'                                   => false,
                 'isPreventSettingBoltIpsAsCustomerIpOnQuote' => true,
                 'changedArguments'                           => null,
@@ -150,6 +173,7 @@ class QuotePluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
                 'value'                                      => $boltIP,
                 'originalRemoteIp'                           => $customerIP1,
                 'currentRemoteIp'                            => $customerIP1,
+                'isWebApiRest'                               => true,
                 'fromBolt'                                   => true,
                 'isPreventSettingBoltIpsAsCustomerIpOnQuote' => false,
                 'changedArguments'                           => null,
