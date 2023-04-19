@@ -438,7 +438,7 @@ define([
         magentoCartDataListener: function (magentoCart) {
             BoltCheckoutApiDriven.resolveReadyStatusPromise();
             //if timestamp is the same no checks needed
-            if (magentoCart.data_id === this.magentoCartTimeStamp) {
+            if (magentoCart.data_id && magentoCart.data_id === this.magentoCartTimeStamp) {
                 return;
             }
             //init default values
