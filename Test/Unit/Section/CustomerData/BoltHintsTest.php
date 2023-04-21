@@ -88,6 +88,12 @@ class BoltHintsTest extends BoltTestCase
                 'value' => true,
                 'scope' => ScopeInterface::SCOPE_STORE,
                 'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => ConfigHelper::XML_PATH_ACTIVE,
+                'value' => true,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
             ]
         ];
         TestUtils::setupBoltConfig($configData);
@@ -95,5 +101,25 @@ class BoltHintsTest extends BoltTestCase
         $result = $this->boltHints->getSectionData();
 
         $this->assertEquals($result, ['data' => 'testHints']);
+    }
+
+
+    /**
+     * @test
+     * @covers ::getSectionData
+     */
+    public function getSectionData_returnEmptyArray()
+    {
+        $configData = [
+            [
+                'path' => ConfigHelper::XML_PATH_ACTIVE,
+                'value' => false,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $result = $this->boltHints->getSectionData();
+        $this->assertEquals($result, []);
     }
 }

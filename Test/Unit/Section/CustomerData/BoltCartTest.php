@@ -22,6 +22,12 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Section\CustomerData\BoltCart;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
+use Magento\Store\Model\ScopeInterface;
+use Bolt\Boltpay\Test\Unit\TestUtils;
+use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Store\Model\StoreManagerInterface;
+use Bolt\Boltpay\Test\Unit\TestHelper;
 
 /**
  * Class BoltCartTest
@@ -41,18 +47,22 @@ class BoltCartTest extends BoltTestCase
      */
     private $boltCart;
 
+    private $storeId;
+    private $objectManager;
+
     /**
      * @inheritdoc
      */
     public function setUpInternal()
     {
+        if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
+            return;
+        }
         $this->cartHelper = $this->createMock(CartHelper::class);
-        $this->boltCart = (new ObjectManager($this))->getObject(
-            BoltCart::class,
-            [
-                'cartHelper' => $this->cartHelper
-            ]
-        );
+        $this->objectManager = Bootstrap::getObjectManager();
+        $this->boltCart = $this->objectManager->create(BoltCart::class);
+        $store = $this->objectManager->get(StoreManagerInterface::class);
+        $this->storeId = $store->getStore()->getId();
     }
 
     /**
@@ -60,7 +70,36 @@ class BoltCartTest extends BoltTestCase
      */
     public function getSectionData()
     {
+        $configData = [
+            [
+                'path' => ConfigHelper::XML_PATH_ACTIVE,
+                'value' => true,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        TestHelper::setProperty($this->boltCart, 'cartHelper', $this->cartHelper);
         $this->cartHelper->expects(self::once())->method('calculateCartAndHints');
         $this->boltCart->getSectionData();
+    }
+
+    /**
+     * @test
+     */
+    public function getSectionData_returnEmptyArray()
+    {
+        $configData = [
+            [
+                'path' => ConfigHelper::XML_PATH_ACTIVE,
+                'value' => false,
+                'scope' => ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+
+        $result = $this->boltCart->getSectionData();
+        $this->assertEquals($result, []);
     }
 }
