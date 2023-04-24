@@ -19,6 +19,7 @@
 namespace Bolt\Boltpay\Section\CustomerData;
 
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Customer\CustomerData\SectionSourceInterface;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
@@ -35,19 +36,30 @@ class BoltCart implements SectionSourceInterface
     private $featureSwitches;
 
     /**
+     * @var ConfigHelper
+     */
+    private $configHelper;
+
+    /**
      * @param CartHelper $cartHelper
      * @param Decider $featureSwitches
      */
     public function __construct(
         CartHelper $cartHelper,
-        Decider $featureSwitches
+        Decider $featureSwitches,
+        ConfigHelper $configHelper
     ) {
         $this->cartHelper = $cartHelper;
         $this->featureSwitches = $featureSwitches;
+        $this->configHelper = $configHelper;
+
     }
 
     public function getSectionData()
     {
+        if (!$this->configHelper->isActive()) {
+            return [];
+        }
         return (!$this->featureSwitches->isEnabledFetchCartViaApi())
             ? $this->cartHelper->calculateCartAndHints() : [];
     }

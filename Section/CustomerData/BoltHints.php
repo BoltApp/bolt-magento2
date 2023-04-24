@@ -44,7 +44,7 @@ class BoltHints implements SectionSourceInterface
 
     public function getSectionData()
     {
-        if (!$this->configHelper->getProductPageCheckoutFlag()) {
+        if (!$this->configHelper->isActive() || !$this->configHelper->getProductPageCheckoutFlag()) {
             return [];
         }
         return [
