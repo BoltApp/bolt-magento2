@@ -888,4 +888,14 @@ function($argName) {
 
         return false;
     }
+
+    /**
+     * Is display reward points on minicart enabled
+     *
+     * @return boolean
+     */
+    public function displayRewardPointsInMinicartConfig()
+    {
+        return $this->configHelper->displayRewardPointsInMinicartConfig();
+    }
 }

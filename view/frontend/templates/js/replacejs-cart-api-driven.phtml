@@ -28,3 +28,16 @@
         }
     }
 </script>
+<?php if ($block->displayRewardPointsInMinicartConfig()): ?>
+<script>
+    require.config({
+        config: {
+            mixins: {
+                'Magento_Reward/js/view/payment/reward': {
+                    'Bolt_Boltpay/js/mixins/payment/reward': true
+                }
+            }
+        }
+    });
+</script>
+<?php endif; ?>
