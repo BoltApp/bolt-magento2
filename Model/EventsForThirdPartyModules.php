@@ -44,6 +44,7 @@ use Bolt\Boltpay\ThirdPartyModules\Magecomp\Extrafee as Magecomp_Extrafee;
 use Bolt\Boltpay\ThirdPartyModules\Webkul\Odoomagentoconnect as Webkul_Odoomagentoconnect;
 use Bolt\Boltpay\ThirdPartyModules\J2t\Rewardpoints as J2t_Rewardpoints;
 use Bolt\Boltpay\ThirdPartyModules\BagRiders\StoreCredit as BagRiders_StoreCredit;
+use Bolt\Boltpay\ThirdPartyModules\Magento\CustomerBalance as Magento_CustomerBalance;
 use Bolt\Boltpay\ThirdPartyModules\Teamwork\Token as Teamwork_Token;
 use Bolt\Boltpay\ThirdPartyModules\Teamwork\StoreCredit as Teamwork_StoreCredit;
 use Bolt\Boltpay\ThirdPartyModules\SomethingDigital\InStorePickupBoltIntegration as SomethingDigital_InStorePickupBoltIntegration;
@@ -265,6 +266,11 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["BagRiders\StoreCredit\Model\StoreCredit\ApplyStoreCreditToQuote"],
                     "boltClass" => BagRiders_StoreCredit::class,
                 ],
+                [
+                    "module" => "Magento_CustomerBalance",
+                    "checkClasses" => ["Magento\CustomerBalance\Model\Balance"],
+                    "boltClass" => Magento_CustomerBalance::class,
+                ],
             ]
         ],
         'beforeValidateQuoteDataForProcessNewOrder' => [
@@ -452,7 +458,7 @@ class EventsForThirdPartyModules
                     'module'      => 'Route_Route',
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
                     'sendClasses' => ['Route\Route\Model\Route\Merchant',
-                                      'Route\Route\Helper\Data'],
+                        'Route\Route\Helper\Data'],
                     'boltClass'   => Route_Route::class,
                 ],
             ],
@@ -995,6 +1001,11 @@ class EventsForThirdPartyModules
                     "module" => "BagRiders_StoreCredit",
                     "checkClasses" => ["BagRiders\StoreCredit\Api\Data\SalesFieldInterface"],
                     "boltClass" => BagRiders_StoreCredit::class,
+                ],
+                [
+                    "module" => "Magento_CustomerBalance",
+                    "checkClasses" => ["Magento\CustomerBalance\Model\Balance"],
+                    "boltClass" => Magento_CustomerBalance::class,
                 ],
             ]
         ],
