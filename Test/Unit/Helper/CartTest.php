@@ -4203,6 +4203,7 @@ ORDER
             'discount_category' => 'store_credit',
             'discount_type'   => 'fixed_amount',
             'type'   => 'fixed_amount',
+            'reference' => 'Store Credit'
         ]
         ];
         static::assertEquals($expectedDiscount, $discounts);

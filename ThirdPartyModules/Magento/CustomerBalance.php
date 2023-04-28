@@ -21,6 +21,8 @@ use Bolt\Boltpay\Helper\Config;
 
 class CustomerBalance
 {
+    const STORE_CREDIT = 'Store Credit';
+
     /**
      * @var Config
      */
@@ -53,5 +55,41 @@ class CustomerBalance
             ];
         }
         return $layout;
+    }
+
+    /**
+     * @param $result
+     * @param $couponCode
+     * @param $quote
+     * @return array
+     */
+    public function filterVerifyAppliedStoreCredit (
+        $result,
+        $couponCode,
+        $quote
+    )
+    {
+        if ($couponCode == self::STORE_CREDIT && $quote->getUseCustomerBalance()) {
+            $result[] = $couponCode;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param $couponCode
+     * @param $quote
+     * @param $websiteId
+     * @param $storeId
+     */
+    public function removeAppliedStoreCredit(
+        $couponCode,
+        $quote,
+        $websiteId,
+        $storeId
+    ) {
+        if ($couponCode == self::STORE_CREDIT) {
+            $quote->setUseCustomerBalance(false)->collectTotals()->save();
+        }
     }
 }
