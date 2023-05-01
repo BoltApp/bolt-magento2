@@ -55,6 +55,7 @@ use Bolt\Boltpay\ThirdPartyModules\MageWorx\ShippingRules as MageWorx_ShippingRu
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Promo as Amasty_Promo;
 use Bolt\Boltpay\ThirdPartyModules\Mexbs\Tieredcoupon as Mexbs_Tieredcoupon;
 use Bolt\Boltpay\ThirdPartyModules\Magento\CompanyPayment as Magento_CompanyPayment;
+use Bolt\Boltpay\ThirdPartyModules\Amasty\Affiliate as Amasty_Affiliate;
 use Exception;
 
 class EventsForThirdPartyModules
@@ -93,6 +94,10 @@ class EventsForThirdPartyModules
                     'module'      => 'Route_Route',
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
                     'boltClass'   => Route_Route::class,
+                ],
+                [
+                    "module" => "Amasty_Affiliate",
+                    "boltClass" => Amasty_Affiliate::class,
                 ],
             ],
         ],
@@ -1032,6 +1037,10 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["MW\Affiliate\Helper\Data"],
                     "boltClass" => MW_Affiliate::class,
                 ],
+                [
+                    "module" => "Amasty_Affiliate",
+                    "boltClass" => Amasty_Affiliate::class,
+                ],
             ],
         ],
         "getCartCacheIdentifier" => [
@@ -1299,6 +1308,11 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["MW\Affiliate\Helper\Data",
                                       "MW\Affiliate\Observer\SalesOrderAfter"],
                     "boltClass" => MW_Affiliate::class,
+                ],
+                'Amasty_Affiliate' => [
+                    "module" => "Amasty_Affiliate",
+                    "sendClasses" => ["Amasty\Affiliate\Observer\SalesOrderAfterPlaceObserver"],
+                    "boltClass" => Amasty_Affiliate::class,
                 ],
             ],
         ],
