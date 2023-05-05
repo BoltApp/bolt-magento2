@@ -15,7 +15,7 @@
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
-namespace Bolt\Boltpay\Plugin\Magento\Sales\Controller\Adminhtml;
+namespace Bolt\Boltpay\Plugin\Magento\Sales\Controller\Adminhtml\Invoice;
 
 use Magento\Sales\Controller\Adminhtml\Order\Invoice\Capture;
 use Magento\Sales\Api\TransactionRepositoryInterface;
