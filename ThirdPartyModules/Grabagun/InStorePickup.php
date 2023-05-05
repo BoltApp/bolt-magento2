@@ -714,6 +714,9 @@ class InStorePickup
                     $shippingAddress = $quote->getShippingAddress();
                     $shippingAddress->setCollectShippingRates(true);
                     $shippingAddress->setShippingMethod($dealerShipingMethod->getCarrierCode() . '_' . $dealerShipingMethod->getMethodCode())->save();
+                    if ($quote->getData('ffl_dealer_address')) {
+                        $quote->setData('ffl_dealer_address', null)->setData('address_replaced_by_ffl', 0)->save();
+                    }
                 }
             }
 
@@ -727,6 +730,7 @@ class InStorePickup
                 $dealerShippingMethod = $dealerInfo['dealer_shipping_method'];
 
                 $quote->setData('ffl_dealer_address', $dealerId);
+                $quote->setData('address_replaced_by_ffl', 0);
                 $quote->setData(\Grabagun\Shipping\Model\Shipping\Config::SALES_ORDER_ATTRIBUTE_FFL_SHIPPING_ADDRESS_DESCRIPTION, $dealerShippingMethod);
                 $quote->save();
             }
@@ -885,6 +889,12 @@ class InStorePickup
             $quote->setData('ffl_dealer_address', $dealerId);
             $quote->setData(\Grabagun\Shipping\Model\Shipping\Config::SALES_ORDER_ATTRIBUTE_FFL_SHIPPING_ADDRESS_DESCRIPTION, $dealerShippingMethod);
             $quote->save();
+        }
+        if (
+            $typeOfShipment == \Grabagun\Shipping\Model\Shipping\Config::FFL_SHIPPING_ITEMS_ONLY
+            && $quote->getData('ffl_dealer_address')
+        ) {
+            $quote->setData('ffl_dealer_address', null)->setData('address_replaced_by_ffl', 0)->save();
         }
     }
 
