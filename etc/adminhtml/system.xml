@@ -49,7 +49,7 @@
                         <config_path>payment/boltpay/signing_secret</config_path>
                         <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
                     </field>
-                    <field id="publishable_key_checkout" translate="label" type="obscure" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="publishable_key_checkout" translate="label" type="obscure" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Publishable Key - Multi Step</label>
                         <tooltip>Used by Bolt JavaScript to display the Multistep Experience</tooltip>
                         <config_path>payment/boltpay/publishable_key_checkout</config_path>
