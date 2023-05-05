@@ -203,6 +203,13 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                         // Already sent a response with error, so just return.
                         return false;
                     }
+                    // Adding the same data into immutable quote
+                    // in order to avoid missing addons in parent quote
+                    $result = $this->addItemToQuote($product, $immutableQuote, $addItem, $quoteItem);
+                    if (!$result) {
+                        // Already sent a response with error, so just return.
+                        return false;
+                    }
                 }
 
                 $this->updateTotals($parentQuote);
