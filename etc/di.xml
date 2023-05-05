@@ -346,6 +346,9 @@
     <type name="Magento\Sales\Controller\Adminhtml\Order\VoidPayment">
         <plugin name="BoltBoltpayVoidOrderPlugin" type="Bolt\Boltpay\Plugin\Magento\Sales\Controller\Adminhtml\VoidPlugin" sortOrder="1"/>
     </type>
+    <type name="Magento\Sales\Controller\Adminhtml\Order\Invoice\Capture">
+        <plugin name="BoltBoltpayCaptureInvoicePlugin" type="Bolt\Boltpay\Plugin\Magento\Sales\Controller\Adminhtml\Invoice\CapturePlugin" sortOrder="1"/>
+    </type>
 
     <preference for="Bolt\Boltpay\Api\Data\PluginVersionNotificationInterface" type="Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotification" />
     <preference for="Bolt\Boltpay\Api\PluginVersionNotificationRepositoryInterface" type="Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotificationRepository" />

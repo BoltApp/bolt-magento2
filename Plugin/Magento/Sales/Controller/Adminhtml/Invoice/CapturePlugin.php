@@ -17,42 +17,43 @@
 
 namespace Bolt\Boltpay\Plugin\Magento\Sales\Controller\Adminhtml;
 
-use Magento\Sales\Controller\Adminhtml\Order\VoidPayment;
-use Bolt\Boltpay\Helper\Order as OrderHelper;
+use Magento\Sales\Controller\Adminhtml\Order\Invoice\Capture;
 use Magento\Sales\Api\TransactionRepositoryInterface;
 use Bolt\Boltpay\Model\Payment;
+use Magento\Sales\Api\InvoiceRepositoryInterface;
 
-class VoidPlugin
+class CapturePlugin
 {
-    /**
-     * @var OrderHelper
-     */
-    private $orderHelper;
-
     /**
      * @var TransactionRepositoryInterface
      */
     private $transactionRepository;
 
+    /**
+     * @var InvoiceRepositoryInterface
+     */
+    private $invoiceRepository;
+
     public function __construct(
-        OrderHelper $orderHelper,
-        TransactionRepositoryInterface $transactionRepository
+        TransactionRepositoryInterface $transactionRepository,
+        InvoiceRepositoryInterface $invoiceRepository
     ) {
-        $this->orderHelper = $orderHelper;
         $this->transactionRepository = $transactionRepository;
+        $this->invoiceRepository = $invoiceRepository;
     }
 
     /**
-     * Closing auth transaction before void of order to sync bolt with default magento logic
+     * Closing auth transaction after invoice capture to sync bolt with default magento logic
      *
-     * @param VoidPayment $subject
-     * @return void
+     * @param Capture $subject
+     * @param $result
+     * @return \Magento\Framework\Controller\ResultInterface
      * @throws \Magento\Framework\Exception\InputException
      */
-    public function beforeExecute(VoidPayment $subject)
+    public function afterExecute(Capture $subject, $result)
     {
-        $orderId = $subject->getRequest()->getParam('order_id');
-        $order = $this->orderHelper->getOrderById($orderId);
+        $invoice = $this->invoiceRepository->get($subject->getRequest()->getParam('invoice_id'));
+        $order = $invoice->getOrder();
 
         $payment = $order->getPayment();
         $transaction = $this->transactionRepository->getByTransactionType(
@@ -64,5 +65,7 @@ class VoidPlugin
             $transaction->setIsClosed(1);
             $this->transactionRepository->save($transaction);
         }
+
+        return $result;
     }
 }

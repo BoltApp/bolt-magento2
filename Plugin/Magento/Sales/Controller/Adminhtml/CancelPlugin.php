@@ -44,6 +44,7 @@ class CancelPlugin
 
     /**
      * Closing auth transaction before cancel of order to sync bolt with default magento logic
+     *
      * @param Cancel $subject
      * @return void
      * @throws \Magento\Framework\Exception\InputException
