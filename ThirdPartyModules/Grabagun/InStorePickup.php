@@ -216,7 +216,12 @@ class InStorePickup
 
                 $this->dealerFormatter = $dealerFormatter;
                 $this->dealerRepository = $dealerRepository;
-                $getGeoCodesForAddress = $this->getGeoCodesForAddress($addressData);
+                try {
+                    $getGeoCodesForAddress = $this->getGeoCodesForAddress($addressData);
+                } catch (\Exception $e){
+                    $this->bugsnagHelper->notifyException($e);
+                    return [[], []];
+                }
                 // set default to 100 miles
                 $defaultRadius = $this->scopeConfig->getValue('payment/boltpay/grab_gun_default_maximum_number_of_instance', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
                 $defaultPageSize = $this->scopeConfig->getValue('payment/boltpay/grab_gun_default_maximum_number_of_results', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
