@@ -22,13 +22,15 @@
             <block class="Bolt\Boltpay\Block\Js" name="bolt.checkout.button" before="-" template="Bolt_Boltpay::button.phtml" />
         </referenceContainer>
 
-        <referenceContainer name="cart.discount">
-            <block class="Bolt\Boltpay\Block\Js" name="bolt.checkout.discount"
-                   template="Bolt_Boltpay::checkout/cart/discounts.phtml" after="-">
-                <arguments>
-                    <argument name="view_model" xsi:type="object">Bolt\Boltpay\ViewModel\CartDiscounts</argument>
-                </arguments>
-            </block>
+        <referenceContainer name="checkout.cart.container">
+            <container name="cart.discount" label="Cart Discount Container" htmlTag="div" htmlClass="cart-discount" after="-">
+                <block class="Bolt\Boltpay\Block\Js" name="bolt.checkout.discount"
+                       template="Bolt_Boltpay::checkout/cart/discounts.phtml" after="-">
+                    <arguments>
+                        <argument name="view_model" xsi:type="object">Bolt\Boltpay\ViewModel\CartDiscounts</argument>
+                    </arguments>
+                </block>
+            </container>
         </referenceContainer>
     </body>
 </page>
