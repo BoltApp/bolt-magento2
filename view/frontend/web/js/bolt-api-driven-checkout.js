@@ -1120,6 +1120,7 @@ define([
             })
         }
 
+        // When an item is added to an empty cart, the quoteMaskedId takes a moment to get populated, so wait for that
         const maxAttempts = 3;
         for (let i = 0; i < maxAttempts; i++) {
             if (!BoltCheckoutApiDriven.quoteMaskedId) {
