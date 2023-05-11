@@ -1053,6 +1053,9 @@ define([
             this.readyStatusBarrier = this.initBarrier();
             this.initiateCheckout = window.boltConfig.initiate_checkout && this.getInitiateCheckoutCookie();
             this.customerCart = customerData.get('cart');
+            this.productId = config.boltConfig.productId;
+            this.productFinalPrice = Number(config.boltConfig.productFinalPrice);
+            this.boltSubscriptionsEnabled = Boolean(config.boltConfig.boltSubscriptionsEnabled);
             //subscription of 'customer-data' cart
             this.customerCart.subscribe(BoltCheckoutApiDriven.magentoCartDataListener);
             //сall magento card initialisation if event happened before we subscribed to it
@@ -1109,6 +1112,12 @@ define([
     $(document).on('ajax:addToCart', async function (event, data) {
         if (!BoltCheckoutApiDriven.boltSubscriptionsEnabled) {
             return;
+        }
+
+        const sleep = (millisec) => {
+            return new Promise(resolve => {
+                setTimeout(() => { resolve('') }, millisec);
+            })
         }
 
         const maxAttempts = 3;
