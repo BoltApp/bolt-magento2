@@ -23,7 +23,11 @@
     {
         "*": {
             "Bolt_Boltpay/js/bolt-api-driven-checkout":{
-                "boltConfig": {}
+                "boltConfig": {
+                    "productId": <?= $block->isOnProductPage() ? $block->getCurrentProduct()->getId() : 0; ?>,
+                    "productFinalPrice": "<?= $block->isOnProductPage() ? $block->getCurrentProduct()->getFinalPrice() : 0; ?>",
+                    "boltSubscriptionsEnabled": <?= $block->isPDPFrequencySelectorEnabled(); ?>
+                }
             }
         }
     }

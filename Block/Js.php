@@ -91,6 +91,12 @@ class Js extends Template
         $this->httpContext = $httpContext;
     }
 
+    public function getCurrentProduct() {
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $product = $objectManager->get('Magento\Framework\Registry')->registry('current_product');
+        return $product;
+    }
+
     /**
      * Get track js url
      *

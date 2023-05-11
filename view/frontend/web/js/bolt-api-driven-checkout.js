@@ -84,6 +84,9 @@ define([
             '.fieldset.estimate',
             '#checkout-step-shipping'
         ],
+        productId: 0,
+        productFinalPrice: 0,
+        boltSubscriptionsEnabled: false,
 
         /**
          * Resolving ready status promise
@@ -1014,6 +1017,25 @@ define([
             );
         },
 
+        boltSetUpSubscriptionFrequencySelector: function() {
+            // deprecated, to be removed
+            const callbacks = {
+                onSubscriptionChanged: function(reference, frequency) {}
+            }
+
+            // should only contain one item
+            const cart = {
+                items: [
+                    {
+                        reference: BoltCheckoutApiDriven.productId.toString(),
+                        price: BoltCheckoutApiDriven.productFinalPrice,
+                    }
+                ]
+            }
+
+            window.BoltCheckout.configureProductFrequencySelector(cart, {}, callbacks, BoltCheckoutApiDriven.quoteMaskedId)
+        },
+
         /**
          * Main init method. Preparing bolt connection config data, events/elementListeners/promises
          *
@@ -1077,8 +1099,31 @@ define([
                 this.hintsBarrier.resolve({"hints": this.boltCartHints})
                 BoltCheckoutApiDriven.isPromisesResolved = true;
             }
+
+            if (this.boltSubscriptionsEnabled) {
+                this.boltSetUpSubscriptionFrequencySelector();
+            }
         }
     }
+
+    $(document).on('ajax:addToCart', async function (event, data) {
+        if (!BoltCheckoutApiDriven.boltSubscriptionsEnabled) {
+            return;
+        }
+
+        const maxAttempts = 3;
+        for (let i = 0; i < maxAttempts; i++) {
+            if (!BoltCheckoutApiDriven.quoteMaskedId) {
+                await sleep(1000);
+            } else {
+                break;
+            }
+        }
+
+        if (BoltCheckoutApiDriven.quoteMaskedId) {
+            window.BoltCheckout.persistSubscriptionFrequencySelection(BoltCheckoutApiDriven.quoteMaskedId);
+        }
+    });
 
     /**
      * Entry point
