@@ -205,10 +205,18 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                     }
                     // Adding the same data into immutable quote
                     // in order to avoid missing addons in parent quote
-                    $result = $this->addItemToQuote($product, $immutableQuote, $addItem, $quoteItem);
-                    if (!$result) {
-                        // Already sent a response with error, so just return.
-                        return false;
+                    $addToImmutableQuote = true;
+                    foreach ($immutableQuote->getItems() as $item) {
+                        if ($item->getSku() == $product->getSku()) {
+                            $addToImmutableQuote = false;
+                        }
+                    }
+                    if ($addToImmutableQuote) {
+                        $result = $this->addItemToQuote($product, $immutableQuote, $addItem, $quoteItem);
+                        if (!$result) {
+                            // Already sent a response with error, so just return.
+                            return false;
+                        }
                     }
                 }
 
