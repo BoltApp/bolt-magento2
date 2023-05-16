@@ -67,6 +67,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Sales\Api\TransactionRepositoryInterface;
 
 /**
  * Class Order
@@ -291,6 +292,11 @@ class Order extends AbstractHelper
     private $giftOptionsHandler;
 
     /**
+     * @var TransactionRepositoryInterface
+     */
+    private $transactionRepository;
+
+    /**
      * Order constructor.
      *
      * @param Context                             $context
@@ -324,6 +330,7 @@ class Order extends AbstractHelper
      * @param CreditmemoManagementInterface       $creditmemoManagement
      * @param EventsForThirdPartyModules          $eventsForThirdPartyModules
      * @param GiftOptionsHandler                  $giftOptionsHandler
+     * @param TransactionRepositoryInterface      $transactionRepository
      * @param OrderManagementInterface|null       $orderManagement
      * @param OrderIncrementIdChecker|null        $orderIncrementIdChecker
      * @param Create|null                         $adminOrderCreateModel
@@ -360,6 +367,7 @@ class Order extends AbstractHelper
         CreditmemoManagementInterface $creditmemoManagement,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
         GiftOptionsHandler $giftOptionsHandler,
+        TransactionRepositoryInterface $transactionRepository,
         OrderManagementInterface $orderManagement = null,
         OrderIncrementIdChecker $orderIncrementIdChecker = null,
         Create $adminOrderCreateModel = null
@@ -395,6 +403,7 @@ class Order extends AbstractHelper
         $this->creditmemoManagement = $creditmemoManagement;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         $this->giftOptionsHandler = $giftOptionsHandler;
+        $this->transactionRepository = $transactionRepository;
         $this->orderManagement = $orderManagement
             ?: \Magento\Framework\App\ObjectManager::getInstance()->get(OrderManagementInterface::class);
         $this->orderIncrementIdChecker = $orderIncrementIdChecker
@@ -997,7 +1006,7 @@ class Order extends AbstractHelper
                 $exception = new LocalizedException(__('Unknown quote id: %1', $quoteId));
                 if (Hook::$fromBolt && in_array($transaction->status, [Payment::TRANSACTION_AUTHORIZED, Payment::TRANSACTION_CANCELLED])) {
                     if ($transaction->status == Payment::TRANSACTION_AUTHORIZED) {
-                        $this->voidTransactionOnBolt($transaction->id, $storeId);
+                        $this->voidTransactionOnBolt($transaction->id, $storeId, $order);
                     }
 
                     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1082,11 +1091,12 @@ class Order extends AbstractHelper
     /**
      * @param $transactionId
      * @param $storeId
+     * @param OrderInterface $order
      * @return $this
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function voidTransactionOnBolt($transactionId, $storeId)
+    public function voidTransactionOnBolt($transactionId, $storeId, $order)
     {
         //Get transaction data
         $transactionData = [
@@ -1114,6 +1124,17 @@ class Order extends AbstractHelper
         $status = $response->status ?? null;
         if ($status != 'cancelled') {
             throw new LocalizedException(__('Payment void error.'));
+        }
+
+        $payment = $order->getPayment();
+        $transaction = $this->transactionRepository->getByTransactionType(
+            \Magento\Sales\Model\Order\Payment\Transaction::TYPE_AUTH,
+            $payment->getId()
+        );
+
+        if ($payment->getMethod() == Payment::METHOD_CODE && ($transaction && !$transaction->getIsClosed())) {
+            $transaction->setIsClosed(1);
+            $this->transactionRepository->save($transaction);
         }
 
         return $this;
