@@ -267,6 +267,7 @@ class UpdateCartTest extends BoltTestCase
                     'isVirtual',
                     'collectTotals',
                     'getQuoteCurrencyCode',
+                    'getItems',
                     'getItemsCount',
                     'getCustomerId',
                     'setCouponCode',
@@ -291,6 +292,7 @@ class UpdateCartTest extends BoltTestCase
         $quote->method('isVirtual')->willReturn($isVirtual);
         $quote->method('getQuoteCurrencyCode')->willReturn('USD');
         $quote->method('collectTotals')->willReturnSelf();
+        $quote->method('getItems')->willReturn(null);
         $quote->method('getItemsCount')->willReturn(1);
         $quote->method('getCustomerId')->willReturn($customerId);
         $quote->expects(self::any())->method('setCouponCode')->willReturnSelf();
