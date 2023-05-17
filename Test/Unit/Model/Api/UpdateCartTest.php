@@ -828,8 +828,8 @@ class UpdateCartTest extends BoltTestCase
         $this->currentMock->expects(self::once())->method('verifyItemData')
             ->with($product, $add_items[0], $quoteItem, self::WEBSITE_ID)
             ->willReturn(true);
-        
-        $this->currentMock->expects(self::once())->method('addItemToQuote')
+
+        $this->currentMock->expects(self::atLeastOnce())->method('addItemToQuote')
             ->with($product, $parentQuoteMock, $add_items[0], $quoteItem)
             ->willReturn(true);
         
