@@ -2392,7 +2392,8 @@ class Order extends AbstractHelper
         if ($transactionType == Transaction::TYPE_VOID || ($transactionType == Transaction::TYPE_CAPTURE && $this->isFullyCaptured($order, $transaction))) {
             $orderTransaction = $this->transactionRepository->getByTransactionType(
                 \Magento\Sales\Model\Order\Payment\Transaction::TYPE_AUTH,
-                $payment->getId()
+                $payment->getId(),
+                $order->getId()
             );
 
             if ($orderTransaction && !$orderTransaction->getIsClosed()) {
