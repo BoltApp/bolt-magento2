@@ -1006,7 +1006,7 @@ class Order extends AbstractHelper
                 $exception = new LocalizedException(__('Unknown quote id: %1', $quoteId));
                 if (Hook::$fromBolt && in_array($transaction->status, [Payment::TRANSACTION_AUTHORIZED, Payment::TRANSACTION_CANCELLED])) {
                     if ($transaction->status == Payment::TRANSACTION_AUTHORIZED) {
-                        $this->voidTransactionOnBolt($transaction->id, $storeId, $order);
+                        $this->voidTransactionOnBolt($transaction->id, $storeId);
                     }
 
                     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1096,7 +1096,7 @@ class Order extends AbstractHelper
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
-    public function voidTransactionOnBolt($transactionId, $storeId, $order)
+    public function voidTransactionOnBolt($transactionId, $storeId)
     {
         //Get transaction data
         $transactionData = [
@@ -1124,17 +1124,6 @@ class Order extends AbstractHelper
         $status = $response->status ?? null;
         if ($status != 'cancelled') {
             throw new LocalizedException(__('Payment void error.'));
-        }
-
-        $payment = $order->getPayment();
-        $transaction = $this->transactionRepository->getByTransactionType(
-            \Magento\Sales\Model\Order\Payment\Transaction::TYPE_AUTH,
-            $payment->getId()
-        );
-
-        if ($payment->getMethod() == Payment::METHOD_CODE && ($transaction && !$transaction->getIsClosed())) {
-            $transaction->setIsClosed(1);
-            $this->transactionRepository->save($transaction);
         }
 
         return $this;
@@ -2400,6 +2389,18 @@ class Order extends AbstractHelper
 
         $payment_transaction->save();
 
+        if ($transactionType == Transaction::TYPE_VOID || ($transactionType == Transaction::TYPE_CAPTURE && $this->isFullyCaptured($order, $transaction))) {
+            $orderTransaction = $this->transactionRepository->getByTransactionType(
+                \Magento\Sales\Model\Order\Payment\Transaction::TYPE_AUTH,
+                $payment->getId()
+            );
+
+            if ($orderTransaction && !$orderTransaction->getIsClosed()) {
+                $orderTransaction->setIsClosed(1);
+                $this->transactionRepository->save($orderTransaction);
+            }
+        }
+
         // save payment and order
         $payment->save();
         if ($ifSaveOrder) {
@@ -2413,6 +2414,33 @@ class Order extends AbstractHelper
             $transactionState,
             $prevTransactionState
         );
+    }
+
+    /**
+     * @param OrderInterface $order
+     * @param \stdClass $transaction
+     * @return bool
+     */
+    private function isFullyCaptured ($order, $transaction)
+    {
+        if (isset($transaction->captures)) {
+            $capturedAmount = 0;
+            foreach ($transaction->captures as $capture) {
+                $capturedAmount += $capture->amount->amount;
+            }
+
+            if ($capturedAmount == $order->getGrandTotal()) {
+                return true;
+            } else {
+                $diff = $capturedAmount - $order->getGrandTotal();
+                if (abs($diff) <= self::MISMATCH_TOLERANCE) {
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        return false;
     }
 
     /**
