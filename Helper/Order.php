@@ -67,6 +67,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Sales\Api\TransactionRepositoryInterface;
 
 /**
  * Class Order
@@ -291,6 +292,11 @@ class Order extends AbstractHelper
     private $giftOptionsHandler;
 
     /**
+     * @var TransactionRepositoryInterface
+     */
+    private $transactionRepository;
+
+    /**
      * Order constructor.
      *
      * @param Context                             $context
@@ -324,6 +330,7 @@ class Order extends AbstractHelper
      * @param CreditmemoManagementInterface       $creditmemoManagement
      * @param EventsForThirdPartyModules          $eventsForThirdPartyModules
      * @param GiftOptionsHandler                  $giftOptionsHandler
+     * @param TransactionRepositoryInterface      $transactionRepository
      * @param OrderManagementInterface|null       $orderManagement
      * @param OrderIncrementIdChecker|null        $orderIncrementIdChecker
      * @param Create|null                         $adminOrderCreateModel
@@ -360,6 +367,7 @@ class Order extends AbstractHelper
         CreditmemoManagementInterface $creditmemoManagement,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
         GiftOptionsHandler $giftOptionsHandler,
+        TransactionRepositoryInterface $transactionRepository,
         OrderManagementInterface $orderManagement = null,
         OrderIncrementIdChecker $orderIncrementIdChecker = null,
         Create $adminOrderCreateModel = null
@@ -395,6 +403,7 @@ class Order extends AbstractHelper
         $this->creditmemoManagement = $creditmemoManagement;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
         $this->giftOptionsHandler = $giftOptionsHandler;
+        $this->transactionRepository = $transactionRepository;
         $this->orderManagement = $orderManagement
             ?: \Magento\Framework\App\ObjectManager::getInstance()->get(OrderManagementInterface::class);
         $this->orderIncrementIdChecker = $orderIncrementIdChecker
@@ -1082,6 +1091,7 @@ class Order extends AbstractHelper
     /**
      * @param $transactionId
      * @param $storeId
+     * @param OrderInterface $order
      * @return $this
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
@@ -2379,6 +2389,24 @@ class Order extends AbstractHelper
 
         $payment_transaction->save();
 
+        if ($transactionType == Transaction::TYPE_VOID || ($transactionType == Transaction::TYPE_CAPTURE && $this->isFullyCaptured($order, $transaction))) {
+            try {
+                $orderTransaction = $this->transactionRepository->getByTransactionType(
+                    \Magento\Sales\Model\Order\Payment\Transaction::TYPE_AUTH,
+                    $payment->getId(),
+                    $order->getId()
+                );
+            } catch (\Magento\Framework\Exception\InputException $e) {
+                $this->bugsnag->notifyException($e);
+                $orderTransaction = null;
+            }
+
+            if ($orderTransaction && !$orderTransaction->getIsClosed()) {
+                $orderTransaction->setIsClosed(1);
+                $this->transactionRepository->save($orderTransaction);
+            }
+        }
+
         // save payment and order
         $payment->save();
         if ($ifSaveOrder) {
@@ -2392,6 +2420,33 @@ class Order extends AbstractHelper
             $transactionState,
             $prevTransactionState
         );
+    }
+
+    /**
+     * @param OrderInterface $order
+     * @param \stdClass $transaction
+     * @return bool
+     */
+    private function isFullyCaptured ($order, $transaction)
+    {
+        if (isset($transaction->captures)) {
+            $capturedAmount = 0;
+            foreach ($transaction->captures as $capture) {
+                $capturedAmount += $capture->amount->amount;
+            }
+
+            if ($capturedAmount == $order->getGrandTotal()) {
+                return true;
+            } else {
+                $diff = $capturedAmount - $order->getGrandTotal();
+                if (abs($diff) <= self::MISMATCH_TOLERANCE) {
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        return false;
     }
 
     /**
