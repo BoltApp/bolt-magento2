@@ -209,7 +209,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                     if ($immutableQuote->getItems()) {
                         $addToImmutableQuote = false;
                     }
-                    if ($addToImmutableQuote) {
+                    if ($addToImmutableQuote && !$parentQuote->getId() == $immutableQuoteId) {
                         $result = $this->addItemToQuote($product, $immutableQuote, $addItem, $quoteItem);
                         if (!$result) {
                             // Already sent a response with error, so just return.
