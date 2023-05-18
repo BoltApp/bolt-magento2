@@ -268,8 +268,12 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                         // Already sent a response with error, so just return.
                         return false;
                     }
+                    $removeFromImmutableQuote = true;
+                    if ($parentQuote->getId() == $immutableQuoteId) {
+                        $removeFromImmutableQuote = false;
+                    }
 
-                    if ($addToImmutableQuote) {
+                    if ($removeFromImmutableQuote) {
                         $result = $this->removeItemFromQuote($quoteItem, $removeItem, $immutableQuote);
                         if (!$result) {
                             // Already sent a response with error, so just return.

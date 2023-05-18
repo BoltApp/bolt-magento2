@@ -970,8 +970,8 @@ class UpdateCartTest extends BoltTestCase
         $this->currentMock->expects(self::once())->method('verifyItemData')
             ->with($product, $remove_items[0], $cartItems[0], self::WEBSITE_ID)
             ->willReturn(true);
-            
-        $this->currentMock->expects(self::once())->method('removeItemFromQuote')
+
+        $this->currentMock->expects(self::atLeastOnce())->method('removeItemFromQuote')
             ->with($cartItems[0], $remove_items[0], $parentQuoteMock)
             ->willReturn(true);
         
