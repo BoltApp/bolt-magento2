@@ -269,6 +269,9 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                         return false;
                     }
                     $removeFromImmutableQuote = true;
+                    if (!$immutableQuote->getItemById($quoteItem['quote_item_id'])) {
+                        $removeFromImmutableQuote = false;
+                    }
                     if ($parentQuote->getId() == $immutableQuoteId) {
                         $removeFromImmutableQuote = false;
                     }
