@@ -203,6 +203,26 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                         // Already sent a response with error, so just return.
                         return false;
                     }
+                    // Adding the same data into immutable quote
+                    // in order to avoid missing addons in parent quote
+                    $addToImmutableQuote = true;
+
+                    foreach ($immutableQuote->getItems() as $item) {
+                        if ($item->getSku() == $product->getSku()) {
+                            $addToImmutableQuote = false;
+                        }
+                    }
+                    if ($parentQuote->getId() == $immutableQuoteId) {
+                        $addToImmutableQuote = false;
+                    }
+
+                    if ($addToImmutableQuote) {
+                        $result = $this->addItemToQuote($product, $immutableQuote, $addItem, $quoteItem);
+                        if (!$result) {
+                            // Already sent a response with error, so just return.
+                            return false;
+                        }
+                    }
                 }
 
                 $this->updateTotals($parentQuote);
@@ -245,6 +265,21 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                     if (!$result) {
                         // Already sent a response with error, so just return.
                         return false;
+                    }
+                    $removeFromImmutableQuote = true;
+                    if (!$immutableQuote->getItemById($quoteItem['quote_item_id'])) {
+                        $removeFromImmutableQuote = false;
+                    }
+                    if ($parentQuote->getId() == $immutableQuoteId) {
+                        $removeFromImmutableQuote = false;
+                    }
+
+                    if ($removeFromImmutableQuote) {
+                        $result = $this->removeItemFromQuote($quoteItem, $removeItem, $immutableQuote);
+                        if (!$result) {
+                            // Already sent a response with error, so just return.
+                            return false;
+                        }
                     }
                 }
 

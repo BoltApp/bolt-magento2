@@ -267,7 +267,9 @@ class UpdateCartTest extends BoltTestCase
                     'isVirtual',
                     'collectTotals',
                     'getQuoteCurrencyCode',
+                    'getItems',
                     'getItemsCount',
+                    'getItemById',
                     'getCustomerId',
                     'setCouponCode',
                     'getCouponCode',
@@ -291,7 +293,9 @@ class UpdateCartTest extends BoltTestCase
         $quote->method('isVirtual')->willReturn($isVirtual);
         $quote->method('getQuoteCurrencyCode')->willReturn('USD');
         $quote->method('collectTotals')->willReturnSelf();
+        $quote->method('getItems')->willReturn([$quoteItem]);
         $quote->method('getItemsCount')->willReturn(1);
+        $quote->method('getItemById')->willReturn($quoteItem);
         $quote->method('getCustomerId')->willReturn($customerId);
         $quote->expects(self::any())->method('setCouponCode')->willReturnSelf();
         $quote->method('getCouponCode')->willReturn($couponCode);
@@ -826,8 +830,8 @@ class UpdateCartTest extends BoltTestCase
         $this->currentMock->expects(self::once())->method('verifyItemData')
             ->with($product, $add_items[0], $quoteItem, self::WEBSITE_ID)
             ->willReturn(true);
-        
-        $this->currentMock->expects(self::once())->method('addItemToQuote')
+
+        $this->currentMock->expects(self::atLeastOnce())->method('addItemToQuote')
             ->with($product, $parentQuoteMock, $add_items[0], $quoteItem)
             ->willReturn(true);
         
@@ -968,8 +972,8 @@ class UpdateCartTest extends BoltTestCase
         $this->currentMock->expects(self::once())->method('verifyItemData')
             ->with($product, $remove_items[0], $cartItems[0], self::WEBSITE_ID)
             ->willReturn(true);
-            
-        $this->currentMock->expects(self::once())->method('removeItemFromQuote')
+
+        $this->currentMock->expects(self::atLeastOnce())->method('removeItemFromQuote')
             ->with($cartItems[0], $remove_items[0], $parentQuoteMock)
             ->willReturn(true);
         
