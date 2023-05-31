@@ -220,10 +220,7 @@ class ApiTest extends BoltTestCase
         $reportMock = $this->createPartialMock(Report::class, ['setMetaData']);
         $dummyResponseBody = '{"data": {"logMerchantLogs": {"isSuccessful": true}}}';
 
-        $reportMock->expects(self::exactly(3))->method('setMetaData')->withConsecutive(
-            [
-                TestHelper::buildArraySubset(['BOLT API REQUEST' => $request->getData()])
-            ],
+        $reportMock->expects(self::exactly(2))->method('setMetaData')->withConsecutive(
             [
                 [
                     'BOLT API RESPONSE' => [
@@ -357,10 +354,7 @@ class ApiTest extends BoltTestCase
         $reportMock = $this->createPartialMock(Report::class, ['setMetaData']);
         $emptyResponseBody = '';
 
-        $reportMock->expects(self::exactly(3))->method('setMetaData')->withConsecutive(
-            [
-                TestHelper::buildArraySubset(['BOLT API REQUEST' => $request->getData()])
-            ],
+        $reportMock->expects(self::exactly(2))->method('setMetaData')->withConsecutive(
             [
                 [
                     'BOLT API RESPONSE' => [

@@ -223,12 +223,6 @@ class Api extends AbstractHelper
 
         $request->setHeaders($headers);
 
-        $this->bugsnag->registerCallback(function ($report) use ($request) {
-            $report->setMetaData([
-                'BOLT API REQUEST' => $request->getData()
-            ]);
-        });
-
         $client->setHeaders($headers);
 
         $responseBody = null;
