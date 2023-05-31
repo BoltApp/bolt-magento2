@@ -237,7 +237,7 @@ class ApiTest extends BoltTestCase
                 ]
             ]
         );
-        $this->bugsnag->expects(self::exactly(3))->method('registerCallback')->willReturnCallback(
+        $this->bugsnag->expects(self::exactly(2))->method('registerCallback')->willReturnCallback(
             function (callable $callback) use ($reportMock) {
                 $callback($reportMock);
             }
@@ -371,7 +371,7 @@ class ApiTest extends BoltTestCase
                 ]
             ]
         );
-        $this->bugsnag->expects(self::exactly(3))->method('registerCallback')->willReturnCallback(
+        $this->bugsnag->expects(self::exactly(2))->method('registerCallback')->willReturnCallback(
             function (callable $callback) use ($reportMock) {
                 $callback($reportMock);
             }
