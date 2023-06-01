@@ -240,7 +240,7 @@ class ApiTest extends BoltTestCase
         $client->expects(static::once())->method('request')->willReturn($responseMock);
 
         $responseMock->expects(static::exactly(1))->method('getHeaders')->willReturn([]);
-        $responseMock->expects(static::exactly(2))->method('getBody')->willReturn($dummyResponseBody);
+        $responseMock->expects(static::exactly(1))->method('getBody')->willReturn($dummyResponseBody);
 
         $resultMock->expects(static::once())->method('setResponse')->with(json_decode($dummyResponseBody));
 
@@ -366,7 +366,7 @@ class ApiTest extends BoltTestCase
         $client->expects(static::once())->method('request')->willReturn($responseMock);
 
         $responseMock->expects(static::exactly(1))->method('getHeaders')->willReturn([]);
-        $responseMock->expects(static::exactly(2))->method('getBody')->willReturn($emptyResponseBody);
+        $responseMock->expects(static::exactly(1))->method('getBody')->willReturn($emptyResponseBody);
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Something went wrong in the payment gateway.');
