@@ -237,19 +237,6 @@ class Api extends AbstractHelper
                     $headers = $headers->toArray();
                 }
                 $report->setMetaData([
-                    'BOLT API RESPONSE' => [
-                        'headers' => $headers,
-                        'body'    => $response->getBody(),
-                    ]
-                ]);
-            });
-
-            $this->bugsnag->registerCallback(function ($report) use ($response) {
-                $headers = $response->getHeaders();
-                if (!is_array($headers) && is_object($headers) && method_exists($headers, 'toArray')) {
-                    $headers = $headers->toArray();
-                }
-                $report->setMetaData([
                     'META DATA' => [
                         'bolt_trace_id' => $headers[ConfigHelper::BOLT_TRACE_ID_HEADER] ?? null,
                     ]

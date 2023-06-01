@@ -220,15 +220,7 @@ class ApiTest extends BoltTestCase
         $reportMock = $this->createPartialMock(Report::class, ['setMetaData']);
         $dummyResponseBody = '{"data": {"logMerchantLogs": {"isSuccessful": true}}}';
 
-        $reportMock->expects(self::exactly(2))->method('setMetaData')->withConsecutive(
-            [
-                [
-                    'BOLT API RESPONSE' => [
-                        'headers' => [],
-                        'body'    => $dummyResponseBody,
-                    ]
-                ]
-            ],
+        $reportMock->expects(self::exactly(1))->method('setMetaData')->withConsecutive(
             [
                 [
                     'META DATA' => [
@@ -237,7 +229,7 @@ class ApiTest extends BoltTestCase
                 ]
             ]
         );
-        $this->bugsnag->expects(self::exactly(2))->method('registerCallback')->willReturnCallback(
+        $this->bugsnag->expects(self::exactly(1))->method('registerCallback')->willReturnCallback(
             function (callable $callback) use ($reportMock) {
                 $callback($reportMock);
             }
@@ -354,15 +346,7 @@ class ApiTest extends BoltTestCase
         $reportMock = $this->createPartialMock(Report::class, ['setMetaData']);
         $emptyResponseBody = '';
 
-        $reportMock->expects(self::exactly(2))->method('setMetaData')->withConsecutive(
-            [
-                [
-                    'BOLT API RESPONSE' => [
-                        'headers' => [],
-                        'body'    => $emptyResponseBody,
-                    ]
-                ]
-            ],
+        $reportMock->expects(self::exactly(1))->method('setMetaData')->withConsecutive(
             [
                 [
                     'META DATA' => [
@@ -371,7 +355,7 @@ class ApiTest extends BoltTestCase
                 ]
             ]
         );
-        $this->bugsnag->expects(self::exactly(2))->method('registerCallback')->willReturnCallback(
+        $this->bugsnag->expects(self::exactly(1))->method('registerCallback')->willReturnCallback(
             function (callable $callback) use ($reportMock) {
                 $callback($reportMock);
             }
