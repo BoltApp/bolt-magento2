@@ -322,6 +322,11 @@ class Definitions
      */
     const M2_AJAX_ADD_TO_CART_SUCCESS_DISABLE_TIME_OUT = 'M2_AJAX_ADD_TO_CART_SUCCESS_DISABLE_TIME_OUT';
 
+    /**
+     * Store CVV and AVS response in payment info object
+     */
+    const M2_STORE_CVV_AND_AVS_RESPONSE_IN_PAYMENT_INFO = 'M2_STORE_CVV_AND_AVS_RESPONSE_IN_PAYMENT_INFO';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -661,6 +666,12 @@ class Definitions
         ],
         self::M2_AJAX_ADD_TO_CART_SUCCESS_DISABLE_TIME_OUT => [
             self::NAME_KEY        => self::M2_AJAX_ADD_TO_CART_SUCCESS_DISABLE_TIME_OUT,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_STORE_CVV_AND_AVS_RESPONSE_IN_PAYMENT_INFO => [
+            self::NAME_KEY        => self::M2_STORE_CVV_AND_AVS_RESPONSE_IN_PAYMENT_INFO,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0

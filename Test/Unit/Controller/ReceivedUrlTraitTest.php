@@ -260,6 +260,7 @@ class ReceivedUrlTraitTest extends BoltTestCase
         
         $this->deciderMock->method('isSetOrderPaymentInfoDataOnSuccessPage')
             ->willReturn($isSetOrderPaymentInfoDataOnSuccessPage);
+        $this->deciderMock->method('isStoringCvvAndAvsResponseInPaymentInfoEnabled')->willReturn(false);
         $this->order->method('getPayment')->willReturn($isPaymentAvailable ? $this->paymentMock : null);
         $this->orderHelper->method('fetchTransactionInfo')->willReturn(json_decode(self::DECODED_BOLT_PAYLOAD));
 

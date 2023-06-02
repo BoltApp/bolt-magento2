@@ -1291,11 +1291,12 @@ class OrderManagementTest extends BoltTestCase
         
         $featureSwitch = $this->getMockBuilder(Decider::class)
             ->disableOriginalConstructor()
-            ->setMethods(['isCreatingCreditMemoFromWebHookEnabled', 'isIgnoreHookForInvoiceCreationEnabled','isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled'])
+            ->setMethods(['isCreatingCreditMemoFromWebHookEnabled', 'isIgnoreHookForInvoiceCreationEnabled','isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled','isStoringCvvAndAvsResponseInPaymentInfoEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isCreatingCreditMemoFromWebHookEnabled')->willReturn(true);
         $featureSwitch->expects($this->any())->method('isIgnoreHookForInvoiceCreationEnabled')->willReturn(false);
         $featureSwitch->expects($this->any())->method('isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled')->willReturn(false);
+        $featureSwitch->expects($this->any())->method('isStoringCvvAndAvsResponseInPaymentInfoEnabled')->willReturn(false);
 
         $featureSwitchProperty = new \ReflectionProperty(
             OrderHelper::class,

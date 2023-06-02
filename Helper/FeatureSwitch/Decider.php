@@ -515,6 +515,18 @@ class Decider extends AbstractHelper
     }
 
     /**
+     * Checks whether the feature switch for storing CVV and AVS response in payment info is enabled
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isStoringCvvAndAvsResponseInPaymentInfoEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_STORE_CVV_AND_AVS_RESPONSE_IN_PAYMENT_INFO);
+    }
+
+    /**
      * Checks whether the feature switch for module retriever fetching from setup_module m2 table is enabled
      *
      * @return bool whether the feature switch is enabled
