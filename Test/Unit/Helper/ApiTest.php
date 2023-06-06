@@ -220,18 +220,7 @@ class ApiTest extends BoltTestCase
         $reportMock = $this->createPartialMock(Report::class, ['setMetaData']);
         $dummyResponseBody = '{"data": {"logMerchantLogs": {"isSuccessful": true}}}';
 
-        $reportMock->expects(self::exactly(3))->method('setMetaData')->withConsecutive(
-            [
-                TestHelper::buildArraySubset(['BOLT API REQUEST' => $request->getData()])
-            ],
-            [
-                [
-                    'BOLT API RESPONSE' => [
-                        'headers' => [],
-                        'body'    => $dummyResponseBody,
-                    ]
-                ]
-            ],
+        $reportMock->expects(self::exactly(1))->method('setMetaData')->withConsecutive(
             [
                 [
                     'META DATA' => [
@@ -240,7 +229,7 @@ class ApiTest extends BoltTestCase
                 ]
             ]
         );
-        $this->bugsnag->expects(self::exactly(3))->method('registerCallback')->willReturnCallback(
+        $this->bugsnag->expects(self::exactly(1))->method('registerCallback')->willReturnCallback(
             function (callable $callback) use ($reportMock) {
                 $callback($reportMock);
             }
@@ -250,8 +239,8 @@ class ApiTest extends BoltTestCase
 
         $client->expects(static::once())->method('request')->willReturn($responseMock);
 
-        $responseMock->expects(static::exactly(2))->method('getHeaders')->willReturn([]);
-        $responseMock->expects(static::exactly(2))->method('getBody')->willReturn($dummyResponseBody);
+        $responseMock->expects(static::exactly(1))->method('getHeaders')->willReturn([]);
+        $responseMock->expects(static::exactly(1))->method('getBody')->willReturn($dummyResponseBody);
 
         $resultMock->expects(static::once())->method('setResponse')->with(json_decode($dummyResponseBody));
 
@@ -357,18 +346,7 @@ class ApiTest extends BoltTestCase
         $reportMock = $this->createPartialMock(Report::class, ['setMetaData']);
         $emptyResponseBody = '';
 
-        $reportMock->expects(self::exactly(3))->method('setMetaData')->withConsecutive(
-            [
-                TestHelper::buildArraySubset(['BOLT API REQUEST' => $request->getData()])
-            ],
-            [
-                [
-                    'BOLT API RESPONSE' => [
-                        'headers' => [],
-                        'body'    => $emptyResponseBody,
-                    ]
-                ]
-            ],
+        $reportMock->expects(self::exactly(1))->method('setMetaData')->withConsecutive(
             [
                 [
                     'META DATA' => [
@@ -377,7 +355,7 @@ class ApiTest extends BoltTestCase
                 ]
             ]
         );
-        $this->bugsnag->expects(self::exactly(3))->method('registerCallback')->willReturnCallback(
+        $this->bugsnag->expects(self::exactly(1))->method('registerCallback')->willReturnCallback(
             function (callable $callback) use ($reportMock) {
                 $callback($reportMock);
             }
@@ -387,8 +365,8 @@ class ApiTest extends BoltTestCase
 
         $client->expects(static::once())->method('request')->willReturn($responseMock);
 
-        $responseMock->expects(static::exactly(2))->method('getHeaders')->willReturn([]);
-        $responseMock->expects(static::exactly(2))->method('getBody')->willReturn($emptyResponseBody);
+        $responseMock->expects(static::exactly(1))->method('getHeaders')->willReturn([]);
+        $responseMock->expects(static::exactly(1))->method('getBody')->willReturn($emptyResponseBody);
 
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Something went wrong in the payment gateway.');

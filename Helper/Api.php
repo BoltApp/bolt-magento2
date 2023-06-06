@@ -223,12 +223,6 @@ class Api extends AbstractHelper
 
         $request->setHeaders($headers);
 
-        $this->bugsnag->registerCallback(function ($report) use ($request) {
-            $report->setMetaData([
-                'BOLT API REQUEST' => $request->getData()
-            ]);
-        });
-
         $client->setHeaders($headers);
 
         $responseBody = null;
@@ -236,19 +230,6 @@ class Api extends AbstractHelper
         try {
             $response = $client->setRawData($requestData, $contentType)->request($requestMethod);
             $responseBody = $response->getBody();
-
-            $this->bugsnag->registerCallback(function ($report) use ($response) {
-                $headers = $response->getHeaders();
-                if (!is_array($headers) && is_object($headers) && method_exists($headers, 'toArray')) {
-                    $headers = $headers->toArray();
-                }
-                $report->setMetaData([
-                    'BOLT API RESPONSE' => [
-                        'headers' => $headers,
-                        'body'    => $response->getBody(),
-                    ]
-                ]);
-            });
 
             $this->bugsnag->registerCallback(function ($report) use ($response) {
                 $headers = $response->getHeaders();
