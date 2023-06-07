@@ -53,5 +53,14 @@ class Success extends Template
         $this->featureSwitches = $featureSwitches;
         $this->checkoutSession = $checkoutSession;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
+
+    }
+
+    /**
+     * Get Magento version
+     * @return string
+     */
+    public function getMagentoVersion() {
+        return $this->configHelper->getStoreVersion();
     }
 }
