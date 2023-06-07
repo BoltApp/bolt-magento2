@@ -2427,6 +2427,7 @@ class Cart extends AbstractHelper
                     $discounts[] = [
                         'description'       => 'Store Credit',
                         'amount'            => $roundedAmount,
+                        'reference'         => \Bolt\Boltpay\ThirdPartyModules\Magento\CustomerBalance::STORE_CREDIT,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
                         'discount_type'     => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/discounts.code.apply and v2/cart.update
                         'type'              => Discount::BOLT_DISCOUNT_TYPE_FIXED, // For v1/merchant/order
