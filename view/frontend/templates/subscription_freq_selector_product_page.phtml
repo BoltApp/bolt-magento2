@@ -161,11 +161,5 @@ if (!$block->isBoltProductPageForFrequencySelector()) { return;
         };
 
         setupProductPage();
-
-        $(document).on('updatePrice', function (event, data) {
-            if (data) {
-                setupProductPage();
-            }
-        });
     });
 </script>
