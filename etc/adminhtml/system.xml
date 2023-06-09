@@ -445,6 +445,18 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <if_module_enabled>MageWorx_RewardPoints</if_module_enabled>
                     </field>
+                    <field id="grab_gun_default_maximum_number_of_instance" translate="label" type="text" sortOrder="252" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Store Search Maximum Number Of Instance</label>
+                        <config_path>payment/boltpay/grab_gun_default_maximum_number_of_instance</config_path>
+                        <validate>required-entry validate-number</validate>
+                        <if_module_enabled>Grabagun_DealerLocator</if_module_enabled>
+                    </field>
+                    <field id="grab_gun_default_maximum_number_of_results" translate="label" type="text" sortOrder="252" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Store Search Maximum Number Of Results</label>
+                        <validate>required-entry validate-number</validate>
+                        <config_path>payment/boltpay/grab_gun_default_maximum_number_of_results</config_path>
+                        <if_module_enabled>Grabagun_DealerLocator</if_module_enabled>
+                    </field>
                 </group>
                 <group id="catalog_ingestion" translate="label" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Catalog Ingestion</label>

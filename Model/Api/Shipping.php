@@ -95,6 +95,7 @@ class Shipping extends ShippingTax implements ShippingInterface
         $shippingOptions = $this->getShippingOptions($addressData);
         // Get ship to store options
         list($shipToStoreOptions, $shippingOptions) = $this->eventsForThirdPartyModules->runFilter("getShipToStoreOptions", [[],$shippingOptions], $this->quote, $shippingOptions, $addressData);
+        $this->eventsForThirdPartyModules->dispatchEventAndThrowException("afterGetShipToStoreAndShippingOptions", $shipToStoreOptions, $shippingOptions, $this->quote);
         /**
          * @var ShippingDataInterface $shippingData
          */
@@ -188,7 +189,11 @@ class Shipping extends ShippingTax implements ShippingInterface
                     ]);
                 });
                 $this->bugsnag->notifyError('SHIPPING ERRORS', 'Shipping Method Errors');
-            }    
+            }
+
+            if (!$shippingOptions) {
+                $this->eventsForThirdPartyModules->dispatchEventAndThrowException("beforeThrowingNoShippingMethodsException", $errors);
+            }
         }
 
         if (!$shippingOptions) {
