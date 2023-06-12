@@ -77,10 +77,10 @@ class CustomerBalance
     }
 
     /**
-     * @param $result
      * @param $couponCode
      * @param $quote
-     * @return array
+     * @param $websiteId
+     * @param $storeId
      */
     public function removeAppliedStoreCredit(
         $couponCode,
