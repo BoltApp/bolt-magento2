@@ -415,9 +415,9 @@ define([
          */
         updateHints: function (){
             // Check if cart exists (orderToken received).
-            // Othervise, do not update hints until it becomes available.
+            // Otherwise, do not update hints until it becomes available.
             if (!BoltCheckoutApiDriven.quoteMaskedId) {
-                whenDefined(BoltCheckoutApiDriven.quoteMaskedId, 'boltQuoteMaskedId', BoltCheckoutApiDriven.updateHints, 'updateHints');
+                whenDefined(BoltCheckoutApiDriven, 'quoteMaskedId', BoltCheckoutApiDriven.updateHints, 'updateHints');
                 return;
             }
             let newHints = JSON.stringify(BoltCheckoutApiDriven.boltCartHints);
