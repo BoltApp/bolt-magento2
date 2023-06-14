@@ -3411,7 +3411,7 @@ class OrderTest extends BoltTestCase
             ]
         );
         $order->method('getOrderCurrencyCode')->willReturn(self::CURRENCY_CODE);
-        $order->expects(static::once())->method('getTotalInvoiced')->willReturn($totalInvoiced);
+        $order->expects(static::atLeastOnce())->method('getTotalInvoiced')->willReturn($totalInvoiced);
         $order->expects(static::once())->method('getGrandTotal')->willReturn($grandTotal);
         $order->method('addStatusHistoryComment')->willReturn($order);
         $order->method('setIsCustomerNotified')->willReturn($order);
@@ -3525,7 +3525,7 @@ class OrderTest extends BoltTestCase
             ]
         );
         $order->method('getOrderCurrencyCode')->willReturn(self::CURRENCY_CODE);
-        $order->expects(static::once())->method('getTotalInvoiced')->willReturn(5);
+        $order->expects(static::atLeastOnce())->method('getTotalInvoiced')->willReturn(5);
         $order->expects(static::once())->method('getGrandTotal')->willReturn(5);
         $order->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
         $order->method('addStatusHistoryComment')->willReturn($order);
@@ -3661,7 +3661,7 @@ class OrderTest extends BoltTestCase
             ]
         );
         $order->method('getOrderCurrencyCode')->willReturn(self::CURRENCY_CODE);
-        $order->expects(static::once())->method('getTotalInvoiced')->willReturn(5);
+        $order->expects(static::atLeastOnce())->method('getTotalInvoiced')->willReturn(5);
         $order->expects(static::once())->method('getGrandTotal')->willReturn(5);
         $order->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
         $order->method('addStatusHistoryComment')->willReturn($order);

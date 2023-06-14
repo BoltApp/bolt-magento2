@@ -2482,6 +2482,7 @@ class Order extends AbstractHelper
         $invoice->save();
 
         $order->addRelatedObject($invoice);
+        $order->setTotalPaid((float)$order->getTotalInvoiced() + $amount);
 
         // pre-save required order data with will be overwritten during invoice email sending
         $baseSubtotal = $order->getBaseSubtotal();
