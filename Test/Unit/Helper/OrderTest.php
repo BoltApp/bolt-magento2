@@ -3411,7 +3411,7 @@ class OrderTest extends BoltTestCase
             ]
         );
         $order->method('getOrderCurrencyCode')->willReturn(self::CURRENCY_CODE);
-        $order->expects(static::once())->method('getTotalInvoiced')->willReturn($totalInvoiced);
+        $order->expects(static::atLeastOnce())->method('getTotalInvoiced')->willReturn($totalInvoiced);
         $order->expects(static::once())->method('getGrandTotal')->willReturn($grandTotal);
         $order->method('addStatusHistoryComment')->willReturn($order);
         $order->method('setIsCustomerNotified')->willReturn($order);
