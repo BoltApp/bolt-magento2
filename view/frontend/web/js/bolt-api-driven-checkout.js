@@ -32,7 +32,7 @@ define([
         customerCart: null,
         boltCallbacks: {},
         boltParameters: {},
-        quoteMaskedId: null,
+        quoteMaskedId: undefined,
         boltCartHints: {prefill:{}},
         magentoCartTimeStamp: null,
         cartBarrier: null,
