@@ -34,6 +34,7 @@ use Magento\Integration\Model\Config\Converter as IntegrationConverter;
 use Magento\Integration\Model\ConfigBasedIntegrationManager;
 use Magento\Integration\Model\Integration as IntegrationModel;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
+use Magento\Store\Model\StoreManagerInterface;
 
 /**
  * Boltpay IntegrationManagement helper
@@ -145,6 +146,11 @@ class IntegrationManagement extends AbstractHelper
     protected $urlBuilder;
 
     /**
+     * @var \Magento\Store\Model\StoreManagerInterface
+     */
+    protected $storeManager;
+
+    /**
      * @param Context $context
      * @param ConfigBasedIntegrationManager $integrationManager
      * @param IntegrationServiceInterface $integrationService
@@ -158,6 +164,7 @@ class IntegrationManagement extends AbstractHelper
      * @param HttpClientAdapterFactory $httpClient
      * @param DeciderHelper $deciderHelper
      * @param UrlInterface $urlBuilder
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         Context $context,
@@ -173,7 +180,8 @@ class IntegrationManagement extends AbstractHelper
         HttpClientAdapterFactory $httpClientAdapterFactory,
         IntegrationOauthHelper $dataHelper,
         DeciderHelper $deciderHelper,
-        UrlInterface $urlBuilder
+        UrlInterface $urlBuilder,
+        StoreManagerInterface $storeManager
     ) {
         parent::__construct($context);
         $this->integrationManager = $integrationManager;
@@ -189,6 +197,7 @@ class IntegrationManagement extends AbstractHelper
         $this->dataHelper = $dataHelper;
         $this->deciderHelper = $deciderHelper;
         $this->urlBuilder = $urlBuilder;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -370,7 +379,15 @@ class IntegrationManagement extends AbstractHelper
                     )
                 );
             }
-            $loginSuccessCallback = $this->urlBuilder->getUrl('*/*/loginSuccessCallback');
+            // Check if base_url is the same for adminhtml & frontend scopes.
+            // Set frontend base_url in case of a difference.
+            $urlParams = [];
+            foreach ($this->storeManager->getStores(true) as $store) {
+                if (!strpos($this->urlBuilder->getUrl(), $store->getBaseUrl())) {
+                    $urlParams['_scope'] = $store->getId();
+                }
+            }
+            $loginSuccessCallback = $this->urlBuilder->getUrl('*/*/loginSuccessCallback', $urlParams);
             $client = $this->httpClientAdapterFactory->create();
             $client->setUri($this->getTokensExchangeUrl($storeId));
             $client->setParameterPost(
