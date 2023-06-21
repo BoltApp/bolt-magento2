@@ -176,6 +176,14 @@ class Form extends PaymentForm
     }
 
     /**
+     * @return bool
+     */
+    public function isPayByLinkEnabled()
+    {
+        return $this->featureSwitch->isPayByLinkEnabled();
+    }
+
+    /**
      * @return string
      */
     public function getPublishableKeyBackOffice()
