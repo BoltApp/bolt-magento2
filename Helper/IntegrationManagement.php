@@ -379,21 +379,30 @@ class IntegrationManagement extends AbstractHelper
                     )
                 );
             }
-            // Check if base_url is the same for adminhtml & frontend scopes.
-            // Set frontend base_url in case of a difference.
-            $urlParams = [];
-            foreach ($this->storeManager->getStores(true) as $store) {
-                if (!strpos($this->urlBuilder->getUrl(), $store->getBaseUrl())) {
-                    $urlParams['_scope'] = $store->getId();
-                }
-            }
-            $loginSuccessCallback = $this->urlBuilder->getUrl('*/*/loginSuccessCallback', $urlParams);
+
+            return $this->prepareAndSendExchangeRequest($storeId, $consumer);
+        } catch (Exception $e) {
+            $this->bugsnag->notifyException($e);
+            return false;
+        }
+    }
+
+    /**
+     * Prepare and send exchange request
+     *
+     * @throws Exception
+     */
+    private function prepareAndSendExchangeRequest($storeId, $consumer): bool
+    {
+        $errorLog = [];
+        $callbackUrlArray = $this->configureCallbackUrl();
+        foreach ($callbackUrlArray as $key => $callbackUrl) {
             $client = $this->httpClientAdapterFactory->create();
             $client->setUri($this->getTokensExchangeUrl($storeId));
             $client->setParameterPost(
                 [
                     'oauth_consumer_key' => $consumer->getKey(),
-                    'callback_url' => $loginSuccessCallback,
+                    'callback_url' => $callbackUrl,
                 ]
             );
             $maxredirects = $this->dataHelper->getConsumerPostMaxRedirects();
@@ -403,18 +412,63 @@ class IntegrationManagement extends AbstractHelper
             if ( (method_exists($response, 'getStatus') && $response->getStatus() != 200) ||
                 (method_exists($response, 'getStatusCode') && $response->getStatusCode() != 200)
             ) {
-                throw new Exception(
-                    __(
-                        'An error occurred while processing token exchange: "%1".',
-                        $response->getMessage()
-                    )
+                $errorLog[$key . ' attempt'] = $response->getMessage();
+            } else {
+                return true;
+            }
+        }
+
+        if (!empty($errorLog)) {
+            throw new Exception(
+                $this->prepareErrorMessage($errorLog)
+            );
+        }
+        return false;
+    }
+
+    /**
+     * Check if adminhtml base_url is different from FE base_url
+     * and returning of FE urls in case of a difference, to avoid request errors
+     *
+     * @return array
+     */
+    public function configureCallbackUrl(): array
+    {
+        $loginSuccessCallbackArray = [];
+        $adminBaseUrl = $this->urlBuilder->getUrl();
+        foreach ($this->storeManager->getStores(true) as $store) {
+            if (strpos($adminBaseUrl, $store->getBaseUrl()) === false) {
+                $loginSuccessCallbackArray[] = $this->urlBuilder->getUrl(
+                    '*/*/loginSuccessCallback',
+                    ['_scope' => $store->getId()]
                 );
             }
-            return true;
-        } catch (Exception $e) {
-            $this->bugsnag->notifyException($e);
-            return false;
         }
+
+        if (empty($loginSuccessCallbackArray)) {
+            return [$this->urlBuilder->getUrl('*/*/loginSuccessCallback')];
+        }
+
+        return $loginSuccessCallbackArray;
+    }
+
+    /**
+     * Prepare exchange error message
+     *
+     * @param $errorLog
+     * @return \Magento\Framework\Phrase
+     */
+    private function prepareErrorMessage($errorLog): \Magento\Framework\Phrase
+    {
+        $errorDetails = "";
+        foreach ($errorLog as $attempt => $errorMessage) {
+            $errorDetails .= sprintf('%s: %s%s', $attempt, $errorMessage, PHP_EOL);
+        }
+
+        return __(
+            'An error occurred while processing token exchange: "%1".',
+            $errorDetails
+        );
     }
 
     /**
