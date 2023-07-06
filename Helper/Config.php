@@ -127,11 +127,6 @@ class Config extends AbstractHelper
      */
     const XML_PATH_IS_PRE_AUTH = 'payment/boltpay/is_pre_auth';
 
-     /**
-     * Enable PDP frequency selector
-     */
-    const XML_PATH_PDP_FREQUENCY_SELECTOR = 'payment/boltpay/pdp_frequency_selector';
-
     /**
      * Enable product page checkout
      */
@@ -463,7 +458,6 @@ class Config extends AbstractHelper
         'sandbox_mode'                       => self::XML_PATH_SANDBOX_MODE,
         'is_pre_auth'                        => self::XML_PATH_IS_PRE_AUTH,
         'product_page_checkout'              => self::XML_PATH_PRODUCT_PAGE_CHECKOUT,
-        'pdp_frequency_selector'             => self::XML_PATH_PDP_FREQUENCY_SELECTOR,
         'select_product_page_checkout'       => self::XML_PATH_SELECT_PRODUCT_PAGE_CHECKOUT,
         'geolocation_api_key'                => self::XML_PATH_GEOLOCATION_API_KEY,
         'replace_selectors'                  => self::XML_PATH_REPLACE_SELECTORS,
@@ -1053,22 +1047,6 @@ class Config extends AbstractHelper
             ScopeInterface::SCOPE_STORE,
             $storeId
         ) ?: '';
-    }
-
-    /**
-     * Get PDP frequeny selector flag
-     *
-     * @param int|string|Store $store
-     *
-     * @return boolean
-     */
-    public function getPDPFrequencySelectorFlag($store = null)
-    {
-        return $this->getScopeConfig()->isSetFlag(
-            self::XML_PATH_PDP_FREQUENCY_SELECTOR,
-            ScopeInterface::SCOPE_STORE,
-            $store
-        );
     }
 
     /**

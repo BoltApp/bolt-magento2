@@ -28,7 +28,7 @@ if ($block->shouldDisableBoltCheckout()) {
 <?php
 $checkoutKey = $block->getCheckoutKey();
 $isLoadConnectJs = $block->isLoadConnectJs();
-$isLoadBoltJs = $block->isOnPageFromWhiteList() || $block->isMinicartEnabled() || $block->isBoltProductPage() || $block->isBoltProductPageForFrequencySelector();
+$isLoadBoltJs = $block->isOnPageFromWhiteList() || $block->isMinicartEnabled() || $block->isBoltProductPage();
 $isDisableTrackJs = ($block->isDisableTrackJsOnHomePage() && $block->isOnHomePage())
                     || ($block->isDisableTrackJsOnNonBoltPages() && (!$isLoadBoltJs || !$isLoadConnectJs));
 $isLoadAccountJs = ($block->isBoltSSOEnabled() || $block->isOrderManagementEnabled());
