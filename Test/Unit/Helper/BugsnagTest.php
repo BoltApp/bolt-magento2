@@ -73,7 +73,7 @@ class BugsnagTest extends BoltTestCase
         $this->configHelperMock = $this->createPartialMock(Config::class, ['getComposerVersion','isSandboxModeSet','isTestEnvSet','getModuleVersion']);
         $this->directoryListMock = $this->createMock(DirectoryList::class);
         $this->storeManagerMock = $this->createPartialMock(StoreManager::class, ['getStore', 'getBaseUrl']);
-        $this->boltLogger = $this->createMock(BoltLogger::class);
+        $this->boltLogger = $this->createPartialMock(BoltLogger::class, ['addErrorLog']);
         $this->bugsnagMock = $this->createMock(BugsnagClient::class);
 
         $this->currentMock = $this->createPartialMock(Bugsnag::class, []);
@@ -88,6 +88,12 @@ class BugsnagTest extends BoltTestCase
             $this->currentMock,
             'configHelper',
             $this->configHelperMock
+        );
+
+        TestHelper::setProperty(
+            $this->currentMock,
+            'boltLogger',
+            $this->boltLogger
         );
     }
 
