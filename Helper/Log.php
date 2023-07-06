@@ -69,4 +69,17 @@ class Log extends AbstractHelper
         }
         return $this;
     }
+
+
+    /**
+     * @param $error
+     * @return $this
+     */
+    public function addErrorLog($error)
+    {
+        if ($this->configHelper->isDebugModeOn()) {
+            $this->boltLogger->error($error);
+        }
+        return $this;
+    }
 }

@@ -22,6 +22,7 @@ use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\Filesystem\DirectoryList;
 use Magento\Store\Model\StoreManagerInterface;
+use Bolt\Boltpay\Helper\Log as BoltLogger;
 
 /**
  * Boltpay Bugsnag wrapper helper
@@ -50,21 +51,30 @@ class Bugsnag extends AbstractHelper
     protected $storeManager;
 
     /**
+     * @var BoltLogger
+     */
+    protected $boltLogger;
+
+    /**
+     * Bugsnag constructor.
      * @param Context $context
      * @param Config $configHelper
      * @param DirectoryList $directoryList
      * @param StoreManagerInterface $storeManager
+     * @param BoltLogger $boltLogger
      */
     public function __construct(
         Context $context,
         ConfigHelper $configHelper,
         DirectoryList $directoryList,
-        StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        BoltLogger $boltLogger
     ) {
         parent::__construct($context);
 
         $this->storeManager = $storeManager;
         $this->configHelper = $configHelper;
+        $this->boltLogger = $boltLogger;
 
         $this->bugsnag = \Bugsnag\Client::make(self::API_KEY);
         $this->bugsnag->getConfig()->setNotifyReleaseStages([self::STAGE_DEVELOPMENT, self::STAGE_PRODUCTION]);
@@ -97,6 +107,7 @@ class Bugsnag extends AbstractHelper
     public function notifyException($throwable, callable $callback = null)
     {
         $this->bugsnag->notifyException($throwable, $callback);
+        $this->boltLogger->addErrorLog($throwable->getMessage());
     }
 
     /**
@@ -111,6 +122,7 @@ class Bugsnag extends AbstractHelper
     public function notifyError($name, $message, callable $callback = null)
     {
         $this->bugsnag->notifyError($name, $message, $callback);
+        $this->boltLogger->addErrorLog($message);
     }
 
     /**
