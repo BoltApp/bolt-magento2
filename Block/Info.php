@@ -58,6 +58,14 @@ class Info extends \Magento\Payment\Block\Info
             $data[(string)__('Credova Application Id')]  = $credovaApplicationId;
         }
 
+        if ($cvvResponse = $info->getAdditionalInformation('cvv_response')) {
+            $data[(string)__('CVV Response')]  = $cvvResponse;
+        }
+
+        if ($avsResponse = $info->getAdditionalInformation('avs_response')) {
+            $data[(string)__('AVS Response')]  = $avsResponse;
+        }
+
         if ($data) {
             $transport->setData(array_merge($transport->getData(), $data));
         }
