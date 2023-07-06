@@ -31,6 +31,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Bugsnag;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use ReflectionException;
+use Bolt\Boltpay\Helper\Log as BoltLogger;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Bugsnag
@@ -59,6 +60,8 @@ class BugsnagTest extends BoltTestCase
     /** @var MockObject|DirectoryList mocked instance of Directory List object */
     private $directoryListMock;
 
+    private $boltLogger;
+
     /**
      * Setup test dependencies, called before each test
      *
@@ -70,6 +73,7 @@ class BugsnagTest extends BoltTestCase
         $this->configHelperMock = $this->createPartialMock(Config::class, ['getComposerVersion','isSandboxModeSet','isTestEnvSet','getModuleVersion']);
         $this->directoryListMock = $this->createMock(DirectoryList::class);
         $this->storeManagerMock = $this->createPartialMock(StoreManager::class, ['getStore', 'getBaseUrl']);
+        $this->boltLogger = $this->createMock(BoltLogger::class);
         $this->bugsnagMock = $this->createMock(BugsnagClient::class);
 
         $this->currentMock = $this->createPartialMock(Bugsnag::class, []);
@@ -114,7 +118,8 @@ class BugsnagTest extends BoltTestCase
             $this->contextMock,
             $this->configHelperMock,
             $this->directoryListMock,
-            $this->storeManagerMock
+            $this->storeManagerMock,
+            $this->boltLogger
         );
         static::assertAttributeEquals(
             $this->storeManagerMock,
