@@ -16,14 +16,16 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
 }
 ?>
 
-<?php if (!$backofficePublishableKey && !$paymentOnlyKey): ?>
-    <fieldset class="admin__fieldset payment-method" id="payment_form_<?= /* @noEscape */ $code; ?>">
-        <span>
-            <?= /* @noEscape */ __('In order to use Bolt from admin, please set "Publishable Key - Back Office" or "Publishable Key - Payment Only" in the magento config (Stores > Configuration > Sales > Payment methods > Bolt Pay).'); ?>
-        </span>
-        <input type="hidden" name="bolt-required-field" class="required-entry" id="bolt-required-field">
-    </fieldset>
-<?php else: ?>
+<?php if ($block->isPayByLinkEnabled() && !$paymentOnlyKey): ?>
+    <div>
+        <?= /* @noEscape */ __('- In order to use Bolt Pay By Link from admin, please set "Publishable Key - Payment Only" in the magento config (Stores > Configuration > Sales > Payment methods > Bolt Pay).'); ?>
+    </div>
+<?php endif; ?>
+<?php if (!$backofficePublishableKey): ?>
+    <div>
+       <?= /* @noEscape */ __('- In order to use Bolt Back Office from admin, please set "Publishable Key - Back Office" in the magento config (Stores > Configuration > Sales > Payment methods > Bolt Pay).'); ?>
+    </div>
+<?php endif; ?>
 <fieldset class="admin__fieldset payment-method" id="payment_form_<?= /* @noEscape */ $code; ?>" style="display:none">
     <?php if ($isAdminReorderForLoggedInCustomerFeatureEnabled && $customerCreditCardInfos): ?>
         <div>
@@ -77,4 +79,3 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
     </script>
 <?php endif; ?>
 
-<?php endif; ?>
