@@ -2041,6 +2041,14 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('order_comment_field')
             ->setValue(var_export($this->getOrderCommentField(), true));
+        // instant button variant field
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+            ->setName('instant_button_variant')
+            ->setValue($this->getInstantButtonVariant(), true);
+        // instant button variant field ppc
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+            ->setName('instant_button_variant_ppc')
+            ->setValue($this->getInstantPPCButtonVariant());
 
         return $boltSettings;
     }
