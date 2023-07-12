@@ -2963,8 +2963,8 @@ function(arg) {
             ],
             'PPC variant Provided case' => [
                 'variant' => '',
-                'variantPPC' => 'variantPPC',
-                'expectedResult' => '&variant=variantPPC'
+                'variantPPC' => 'PPC',
+                'expectedResult' => '&variant=PPC'
             ],
             'Variant and PPC variant Provided case for non PPC page' => [
                 'variant' => 'variant',
