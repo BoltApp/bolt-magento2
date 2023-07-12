@@ -586,6 +586,29 @@ class Js extends Template
     }
 
     /**
+     * Return CSS styles for bolt button
+     *
+     * @param string $buttonType
+     * 
+     * @return string
+     */
+    public function getVariantForInstantButton($buttonType = '')
+    {
+        $variant = '';
+        $buttonVariant = $this->configHelper->getInstantButtonVariant();
+        $buttonPPCVariant = $this->configHelper->getInstantPPCButtonVariant();
+        if ($buttonVariant != '' || $buttonPPCVariant != ''){
+            $variant = "&variant=";
+            if ($buttonType == "PPC" && $buttonPPCVariant != ''){
+                $variant .= $buttonPPCVariant;
+            } else {
+                $variant .= $buttonVariant;
+            }
+        }
+        return $variant;
+    }
+
+    /**
      * Return true if Order Management is enabled
      *
      * @return bool

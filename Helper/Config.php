@@ -433,6 +433,10 @@ class Config extends AbstractHelper
      */
     const XML_PATH_CONNECT_INTEGRATION_MODE = 'payment/boltpay/connect_magento_integration_mode';
 
+    const XML_PATH_INSTANT_BUTTON_VARIANT = 'payment/boltpay/instant_button_variant';
+    
+    const XML_PATH_INSTANT_BUTTON_VARIANT_PPC = 'payment/boltpay/instant_button_variant_ppc';
+
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
@@ -492,7 +496,9 @@ class Config extends AbstractHelper
         'should_minify_javascript'           => self::XML_PATH_SHOULD_MINIFY_JAVASCRIPT,
         'capture_merchant_metrics'           => self::XML_PATH_CAPTURE_MERCHANT_METRICS,
         'track_checkout_funnel'              => self::XML_PATH_TRACK_CHECKOUT_FUNNEL,
-        'connect_magento_integration_mode'   => self::XML_PATH_CONNECT_INTEGRATION_MODE
+        'connect_magento_integration_mode'   => self::XML_PATH_CONNECT_INTEGRATION_MODE,
+        'instant_button_variant'             => self::XML_PATH_INSTANT_BUTTON_VARIANT,
+        'instant_button_variant_ppc'         => self::XML_PATH_INSTANT_BUTTON_VARIANT_PPC
     ];
 
     /**
@@ -1368,6 +1374,38 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_IS_PRE_AUTH,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get button variant from config
+     *
+     * @param int|string|Store $store
+     *
+     * @return string
+     */
+    public function getInstantButtonVariant($store = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_INSTANT_BUTTON_VARIANT,
+            ScopeInterface::SCOPE_STORE,
+            $store
+        );
+    }
+
+    /**
+     * Get PPC button variant from config
+     *
+     * @param int|string|Store $store
+     *
+     * @return string
+     */
+    public function getInstantPPCButtonVariant($store = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_INSTANT_BUTTON_VARIANT_PPC,
             ScopeInterface::SCOPE_STORE,
             $store
         );
