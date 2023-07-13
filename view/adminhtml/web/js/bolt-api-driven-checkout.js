@@ -37,6 +37,7 @@ define([
         hints: {prefill:{}},
         createRequest: null,
         oldHints: null,
+        paymentOnlyKey: null,
         inputNameToHintsPrefill: {
             'order[billing_address][firstname]': 'firstname',
             'order[billing_address][lastname]': 'lastname',
@@ -321,33 +322,7 @@ define([
                     BoltCheckoutApiDriven.insertConnectScript(data.backOfficeKey, data.connectUrl);
                 }
                 if (data.paymentOnlyKey && BoltCheckoutApiDriven.settings.pay_by_link_url) {
-                    // generate order link handler
-                    $(document).on('click', '#bolt-pay-by-link-generate', function(e){
-                        e.preventDefault();
-                        $('#bolt-pay-by-link-generate span').text('Generating...');
-                        $('#bolt-pay-by-link-generate').prop('disabled', true);
-                        // gets order token by quote masked id
-                        BoltCheckout.createBoltOrder(BoltCheckoutApiDriven.cart.id).then((result) => {
-                            $('#bolt-pay-by-link-generate').prop('disabled', false);
-                            $('#bolt-pay-by-link-generate').hide();
-                            if (result.error) {
-                                $('#bolt-pay-by-link-generate span').text('Generate order link');
-                                $('#bolt-pay-by-link-generate').prop('disabled', false);
-                                throw result.error;
-                            }
-                            // show order pay by link
-                            $(".bolt-checkout-pay-by-link").html("Send <a id='bolt-pay-by-link' href='"
-                                + BoltCheckoutApiDriven.settings.pay_by_link_url + "?"
-                                + $.param({ publishable_key: data.paymentOnlyKey, token: result.orderToken })
-                                + "'>this link</a> to consumer to receive payment");
-
-                        }).catch((error) => {
-                            $('#bolt-pay-by-link-generate span').text('Generate order link');
-                            $('#bolt-pay-by-link-generate').prop('disabled', false);
-                            throw error;
-                        });
-                    });
-
+                    BoltCheckoutApiDriven.paymentOnlyKey = data.paymentOnlyKey
                     $(".bolt-checkout-pay-by-link-generate").show();
                     $(".bolt-checkout-options-separator").toggle(!!data.backOfficeKey);
                 }
@@ -411,6 +386,38 @@ define([
                 if (!BoltCheckoutApiDriven.isValidToken()) {
                     e.preventDefault();
                 }
+            });
+
+            // generate order link handler
+            $(document).on('click', '#bolt-pay-by-link-generate', function(e){
+                e.preventDefault();
+                if (!BoltCheckoutApiDriven.paymentOnlyKey) {
+                    return;
+                }
+                $('#bolt-pay-by-link-generate span').text('Generating...');
+                $('#bolt-pay-by-link-generate').prop('disabled', true);
+                // gets order token by quote masked id
+                BoltCheckout.createBoltOrder(BoltCheckoutApiDriven.cart.id).then((result) => {
+                    $('#bolt-pay-by-link-generate').prop('disabled', false);
+                    $('#bolt-pay-by-link-generate').hide();
+                    if (result.error) {
+                        $('#bolt-pay-by-link-generate span').text('Generate order link');
+                        $('#bolt-pay-by-link-generate').prop('disabled', false);
+                        $('#bolt-pay-by-link-generate').show();
+                        throw result.error;
+                    }
+                    // show order pay by link
+                    $(".bolt-checkout-pay-by-link").html("Send <a id='bolt-pay-by-link' href='"
+                        + BoltCheckoutApiDriven.settings.pay_by_link_url + "?"
+                        + $.param({ publishable_key: BoltCheckoutApiDriven.paymentOnlyKey, token: result.orderToken })
+                        + "'>this link</a> to consumer to receive payment");
+
+                }).catch((error) => {
+                    $('#bolt-pay-by-link-generate span').text('Generate order link');
+                    $('#bolt-pay-by-link-generate').prop('disabled', false);
+                    $('#bolt-pay-by-link-generate').show();
+                    alert(error);
+                });
             });
 
             BoltCheckoutApiDriven.initElementReadyCallback(BoltCheckoutApiDriven.boltButtonSelector, function () {
