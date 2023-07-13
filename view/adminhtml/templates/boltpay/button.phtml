@@ -46,6 +46,11 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
            value='<?= /* @noEscape */ $block->escapeHtml($block->getPlaceOrderPayload()) ?>' />
     <div class="bolt-checkout-button with-cards" <?= /* @noEscape */ $additionalCheckoutButtonAttributes ?>></div>
     <div class="bolt-checkout-options-separator" style="padding: 20px; display: none;">-- <?= /* @noEscape */ __('OR')?> --</div>
+    <div class="bolt-checkout-pay-by-link-generate" style="display: none;">
+        <button id='bolt-pay-by-link-generate' class="action-default">
+            <span><?= __('Generate order link') ?></span>
+        </button>
+    </div>
     <div class="bolt-checkout-pay-by-link"></div>
     <input type="hidden" name="bolt-require-field" class="required-entry" id="bolt-required-field">
 </fieldset>
