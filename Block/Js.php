@@ -595,16 +595,16 @@ class Js extends Template
     public function getVariantForInstantButton($buttonType = '')
     {
         $variant = '';
+        $variantQuery = "&variant=";
+        
         $buttonVariant = $this->configHelper->getInstantButtonVariant();
         $buttonPPCVariant = $this->configHelper->getInstantPPCButtonVariant();
-        if ($buttonVariant != '' || $buttonPPCVariant != ''){
-            $variant = "&variant=";
-            if ($buttonType == "PPC" && $buttonPPCVariant != ''){
-                $variant .= $buttonPPCVariant;
-            } else {
-                $variant .= $buttonVariant;
-            }
+        if ($buttonType == "PPC" && $buttonPPCVariant != ''){
+            $variant = $variantQuery.$buttonPPCVariant;
+        } else {
+            $variant = $variantQuery.$buttonVariant;
         }
+
         return $variant;
     }
 

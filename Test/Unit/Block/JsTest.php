@@ -2975,6 +2975,11 @@ function(arg) {
                 'variant' => 'variant',
                 'variantPPC' => 'PPC',
                 'expectedResult' => '&variant=PPC'
+            ],
+            'Only PPC variant for non PPC Button' => [
+                'variant' => '',
+                'variantPPC' => 'PPCVariant',
+                'expectedResult' => ''
             ]
 
         ];
