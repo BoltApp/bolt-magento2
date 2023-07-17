@@ -394,6 +394,16 @@
                         <config_path>payment/boltpay/new_plugin_version_notification</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
+                    <field id="instant_button_variant" translate="label" type="text" sortOrder="390" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Bolt button variant</label>
+                        <config_path>payment/boltpay/instant_button_variant</config_path>
+                        <comment>The name of a button variant to be used.</comment>
+                    </field>
+                    <field id="instant_button_variant_ppc" translate="label" type="text" sortOrder="400" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Bolt button variant PPC</label>
+                        <config_path>payment/boltpay/instant_button_variant_ppc</config_path>
+                        <comment>The name of a button variant to be used for PPC pages.</comment>
+                    </field>
                 </group>
                 <group id="third_party_modules" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Third Party Modules Support</label>

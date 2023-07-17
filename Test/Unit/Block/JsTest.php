@@ -2903,4 +2903,85 @@ function(arg) {
             ],
         ];
     }
+
+    /**
+     * @test
+     * that getVariantForInstantButton returns Variant for Bol the variants added to the config
+     *
+     * @covers ::getButtonCssStyles
+     *
+     * @dataProvider getVariantForInstantButton_withVariantAddedConfigsProvider
+     *
+     * @param string $variant from the config helper
+     * @param string $variantPPC from the config helper
+     * @param string $expectedResult of the tested method call
+     */
+    public function getVariantForInstantButton_withVariantAdded_returnsVariantName(
+        $variant,
+        $variantPPC,
+        $expectedResult
+    ) {
+        $buttonType = '';
+        if($variantPPC == 'PPC'){
+            $buttonType = $variantPPC;
+        }
+        TestUtils::setupBoltConfig(
+            [
+                [
+                    'path' => Config::XML_PATH_INSTANT_BUTTON_VARIANT,
+                    'value' => $variant,
+                    'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                    'scopeId' => $this->storeId,
+                ],
+                [
+                    'path' => Config::XML_PATH_INSTANT_BUTTON_VARIANT_PPC,
+                    'value' => $variantPPC,
+                    'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                    'scopeId' => $this->storeId,
+                ]
+            ]
+        );
+        static::assertEquals($expectedResult, $this->block->getVariantForInstantButton($variantPPC));
+    }
+
+
+    /**
+     * Data provider for @see getVariantForInstantButton
+     */
+    public function getVariantForInstantButton_withVariantAddedConfigsProvider()
+    {
+        return [
+            'No Variants Case' => [
+                'variant' => '',
+                'variantPPC' => '',
+                'expectedResult' => ''
+            ],
+            'Variant Provided case' => [
+                'variant' => 'variant',
+                'variantPPC' => '',
+                'expectedResult' => '&variant=variant'
+            ],
+            'PPC variant Provided case' => [
+                'variant' => '',
+                'variantPPC' => 'PPC',
+                'expectedResult' => '&variant=PPC'
+            ],
+            'Variant and PPC variant Provided case for non PPC page' => [
+                'variant' => 'variant',
+                'variantPPC' => 'variantPPC',
+                'expectedResult' => '&variant=variant'
+            ],
+            'Variant and PPC variant Provided case for PPC page' => [
+                'variant' => 'variant',
+                'variantPPC' => 'PPC',
+                'expectedResult' => '&variant=PPC'
+            ],
+            'Only PPC variant for non PPC Button' => [
+                'variant' => '',
+                'variantPPC' => 'PPCVariant',
+                'expectedResult' => ''
+            ]
+
+        ];
+    }
 }
