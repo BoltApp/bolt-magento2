@@ -932,7 +932,7 @@ $isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDi
                     ], function (customerData) {
                         var customer = customerData.get('customer');
                         BoltState.isUserLoggedIn = false;
-                        if (customer().firstname) {
+                        if (customer && customer() && customer().firstname) {
                             BoltState.isUserLoggedIn = true;
                         }
                         resolveCheckPromise();
