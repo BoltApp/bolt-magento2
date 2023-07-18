@@ -98,7 +98,11 @@ define([
             }
             if (!BoltCheckoutApiDriven.initiateCheckout && !BoltCheckoutApiDriven.customerCart().isGuestCheckoutAllowed) {
                 if (BoltCheckoutApiDriven.isUserLoggedIn === null) {
-                    BoltCheckoutApiDriven.isUserLoggedIn = customer().isLoggedIn;
+                    if (customer && customer() && customer().firstname) {
+                        BoltCheckoutApiDriven.isUserLoggedIn = true;
+                    } else {
+                        BoltCheckoutApiDriven.isUserLoggedIn = false;
+                    }
                     BoltCheckoutApiDriven.resolveReadyStatusPromise();
                     return;
                 }
