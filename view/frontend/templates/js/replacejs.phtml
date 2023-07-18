@@ -927,8 +927,14 @@ $isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDi
             if (!BoltState.initiateCheckout && !BoltState.magentoCart.isGuestCheckoutAllowed) {
                 if (BoltState.isUserLoggedIn === null) {
                     // initiate magento customer module to know if user logged in or not
-                    require(['Magento_Customer/js/model/customer'], function (customer) {
-                        BoltState.isUserLoggedIn = customer.isLoggedIn();
+                    require([
+                        'Magento_Customer/js/customer-data'
+                    ], function (customerData) {
+                        var customer = customerData.get('customer');
+                        BoltState.isUserLoggedIn = false;
+                        if (customer && customer() && customer().firstname) {
+                            BoltState.isUserLoggedIn = true;
+                        }
                         resolveCheckPromise();
                     });
                     return;
