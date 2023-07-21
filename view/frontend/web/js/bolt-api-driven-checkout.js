@@ -105,8 +105,14 @@ define([
                 if (!BoltCheckoutApiDriven.isUserLoggedIn) {
                     if (BoltCheckoutApiDriven.popUpOpen) {
                         // If we resolve promises after user clicked checkout button
-                        // we should show authentication popup
-                        BoltCheckoutApiDriven.showAuthenticationPopup();
+                        if (window.boltConfig.is_sso_enabled) {
+                            // we should show Bolt SSO popup if SSO is enabled
+                            BoltCheckoutApiDriven.showBoltSSOPopup()
+                        } else {
+                            // we should show authentication popup
+                            BoltCheckoutApiDriven.showAuthenticationPopup();
+                        }
+
                     }
                     BoltCheckoutApiDriven.resolveReadyStatusPromiseToValue(false);
                     return;
@@ -134,6 +140,15 @@ define([
             // set a cookie for auto opening Bolt checkout after login
             BoltCheckoutApiDriven.setInitiateCheckoutCookie();
             authenticationPopup.showModal();
+        },
+
+        /**
+         * Showing authentication modal popup
+         */
+        showBoltSSOPopup: function () {
+            // set a cookie for auto opening Bolt checkout after login
+            BoltCheckoutApiDriven.setInitiateCheckoutCookie();
+            $('#bolt-sso-popup .bolt-account-sso [data-tid="shopperDashboardButton"]').click();
         },
 
         /**
@@ -720,7 +735,12 @@ define([
                             && !BoltCheckoutApiDriven.customerCart.isGuestCheckoutAllowed
                             && !BoltCheckoutApiDriven.isUserLoggedIn
                         ) {
-                            BoltCheckoutApiDriven.showAuthenticationPopup();
+                            if (window.boltConfig.is_sso_enabled) {
+                                BoltCheckoutApiDriven.showBoltSSOPopup()
+                            } else {
+                                BoltCheckoutApiDriven.showAuthenticationPopup();
+                            }
+
                         }
                         BoltCheckoutApiDriven.popUpOpen = false;
                         return false;

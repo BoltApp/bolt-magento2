@@ -67,7 +67,7 @@ class JsTest extends BoltTestCase
     /**
      * @var int expected number of settings returned by {@see \Bolt\Boltpay\Block\Js::getSettings}
      */
-    const SETTINGS_NUMBER = 30;
+    const SETTINGS_NUMBER = 31;
 
     /**
      * @var int expeced number of tracking callback returned by {@see \Bolt\Boltpay\Block\Js::getTrackCallbacks}

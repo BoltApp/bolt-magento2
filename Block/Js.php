@@ -331,6 +331,7 @@ class Js extends Template
             'order_management_selector'             => $this->getOrderManagementSelector(),
             'api_integration'                       => $this->featureSwitches->isAPIDrivenIntegrationEnabled(),
             'shopper_widget_url'                    => $this->getShopperWidgetJsUrl(),
+            'is_sso_enabled'                        => $this->isBoltSSOEnabled()
         ]);
     }
 
