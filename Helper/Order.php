@@ -2435,10 +2435,11 @@ class Order extends AbstractHelper
                 $capturedAmount += $capture->amount->amount;
             }
 
-            if ($capturedAmount == $order->getGrandTotal()) {
+            $grandTotalConverted = CurrencyUtils::toMinor($order->getGrandTotal(), $order->getOrderCurrencyCode());
+            if ($capturedAmount == $grandTotalConverted) {
                 return true;
             } else {
-                $diff = $capturedAmount - $order->getGrandTotal();
+                $diff = $capturedAmount - $grandTotalConverted;
                 if (abs($diff) <= self::MISMATCH_TOLERANCE) {
                     return true;
                 }
