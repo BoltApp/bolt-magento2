@@ -26,6 +26,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\View\Layout;
+use Magento\Framework\App\RequestInterface;
 
 /**
  * Class RemoveBlocksObserver
@@ -54,6 +55,7 @@ class RemoveBlocksObserverTest extends BoltTestCase
      */
     private $deciderMock;
 
+    private $request;
     /**
      * @test
      */
@@ -102,19 +104,38 @@ class RemoveBlocksObserverTest extends BoltTestCase
         $this->currentMock->execute($eventObserver);
     }
 
+    /**
+     * @test
+     */
+    public function execute_doesNotUnsetElements_ifBoltSSOEnabledButUseGetShowNativeParam()
+    {
+        $eventObserver = $this->createPartialMock(Observer::class, ['getLayout', 'getData']);
+        $layout = $this->createMock(Layout::class);
+        $eventObserver->expects(static::once())->method('getData')->with('full_action_name')->willReturn('customer_account_login');
+        $eventObserver->expects(static::once())->method('getLayout')->willReturn($layout);
+        $this->configHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
+        $this->request->expects(static::once())->method('getParam')->willReturn('native');
+        $layout->expects(static::exactly(2))->method('unsetElement')->withConsecutive(
+            ['bolt_sso_login'],
+            ['bolt_sso_register']
+        );
+        $this->currentMock->execute($eventObserver);
+    }
+
     protected function setUpInternal()
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
         $this->logHelper = $this->createMock(LogHelper::class);
+        $this->request = $this->createMock(RequestInterface::class);
         $this->deciderMock = $this->createMock(Decider::class);
-        $this->currentMock = new RemoveBlocksObserver($this->configHelper, $this->logHelper, $this->deciderMock);
+        $this->currentMock = new RemoveBlocksObserver($this->configHelper, $this->logHelper, $this->request, $this->deciderMock);
     }
 
     /**
      * @test
      * that the observer will remove(unset) relevant account navigation links if the following preconditions are met:
-     * 1. The action name starts with 'customer_account' since the links are added in 
-     * 
+     * 1. The action name starts with 'customer_account' since the links are added in
+     *
      * @return void
      * @dataProvider execute_ifPreconditionsAreMet_unsetsNavigationLinksProvider
      * @covers ::execute
