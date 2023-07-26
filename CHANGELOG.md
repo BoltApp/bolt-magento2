@@ -283,3 +283,12 @@
 - Fixed a catalog ingestion feature affecting a specific subset of products.
 ## [v2.27.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.1) 2023-04-06
 - Plugin is now compatible with Magento version 2.4.6.
+## [v2.27.2](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.3) 2023-07-25
+- New: 
+  - Merchants can now create their own style variants of the Bolt Button for their Product Page checkout button.
+  - Support added for the Mageworx Donations suite. 
+  - Support added for the Amasty Affiliate Plugin.
+- Additional:
+  - Fixes a bug in the M2 Admin Portal that impacted the visibility of the sales order void button after order void in the M2. 
+  - Fixes a bug in the M2 Admin Portal that prevented merchants from using different Bolt Divisions at the M2 Store level. Previously, this was only possible at the website level.
+
