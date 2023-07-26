@@ -723,7 +723,11 @@ $isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDi
                         && !BoltState.magentoCart.isGuestCheckoutAllowed
                         && !BoltState.isUserLoggedIn
                     ) {
-                        showAuthenticationPopup();
+                        if (window.boltConfig.is_sso_enabled) {
+                            showBoltSSOPopup()
+                        } else {
+                            showAuthenticationPopup();
+                        }
                     }
                     popUpOpen = false;
                     return false;
@@ -909,6 +913,12 @@ $isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDi
             authenticationPopup.showModal();
         }
 
+        var showBoltSSOPopup = function() {
+            // set a cookie for auto opening Bolt checkout after login
+            setInitiateCheckoutCookie();
+            $('#bolt-sso-popup .bolt-account-sso [data-tid="shopperDashboardButton"]').click();
+        }
+
         var resolveCheckPromise = function() {
             var resolveToValue = function(value) {
                 BoltState.check.resolve(value);
@@ -942,8 +952,14 @@ $isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDi
                 if (!BoltState.isUserLoggedIn) {
                     if (popUpOpen) {
                         // If we resolve promises after user clicked checkout button
-                        // we should show authentication popup
-                        showAuthenticationPopup();
+                        if (window.boltConfig.is_sso_enabled){
+                            // we should show Bolt SSO popup if SSO is enabled
+                            showBoltSSOPopup();
+                        }else {
+                            // we should show authentication popup
+                            showAuthenticationPopup();
+                        }
+
                     }
                     resolveToValue(false);
                     return;

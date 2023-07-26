@@ -33,7 +33,7 @@ use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Api\Data\CustomerInterfaceFactory;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Customer\Model\Session as CustomerSession;
-use Magento\Customer\Model\Url;
+use Magento\Framework\UrlInterface as Url;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
@@ -522,10 +522,30 @@ class OAuthRedirect implements OAuthRedirectInterface
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
         }
-        $this->response->setRedirect($this->url->getAccountUrl())->sendResponse();
+        $redirectUrl = $this->url->getUrl('customer/account');
+        $checkoutSession = $this->sessionHelper->getCheckoutSession();
 
+        if (
+            $this->getCookieManager()->getCookie('bolt_initiate_checkout')
+            && $this->hasCart($checkoutSession)
+        ) {
+            $checkoutSession->setBoltInitiateCheckout(true);
+            if (!$this->deciderHelper->ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn()) {
+                $redirectUrl = $this->url->getUrl('checkout/cart');
+            }
+        }
+        $this->response->setRedirect($redirectUrl)->sendResponse();
     }
 
+    /**
+     * @param $checkoutSession
+     * @return bool
+     */
+    protected function hasCart($checkoutSession)
+    {
+        return $checkoutSession->hasQuote()
+            && count($checkoutSession->getQuote()->getAllVisibleItems()) > 0;
+    }
     /**
      * Set form key cookie
      *
