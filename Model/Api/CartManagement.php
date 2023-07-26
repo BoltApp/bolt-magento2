@@ -105,7 +105,7 @@ class CartManagement implements CartManagementInterface
                 }
 
             }
-            $this->data->setMaskedQuoteID($maskedQuoteID);
+            $this->data->setMaskedQuoteId($maskedQuoteID);
             return $this->data;
         } catch (WebapiException $e) {
             $this->bugsnag->notifyException($e);

@@ -35,7 +35,7 @@ class GetMaskedQuoteIDData implements GetMaskedQuoteIDDataInterface, \JsonSerial
      * @api
      * @return string
      */
-    public function getMaskedQuoteID()
+    public function getMaskedQuoteId()
     {
         return $this->maskedQuoteID;
     }
@@ -48,7 +48,7 @@ class GetMaskedQuoteIDData implements GetMaskedQuoteIDDataInterface, \JsonSerial
      *
      * @return $this
      */
-    public function setMaskedQuoteID($id)
+    public function setMaskedQuoteId($id)
     {
         $this->maskedQuoteID = $id;
         return $this;
