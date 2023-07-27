@@ -283,7 +283,7 @@
 - Fixed a catalog ingestion feature affecting a specific subset of products.
 ## [v2.27.1](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.1) 2023-04-06
 - Plugin is now compatible with Magento version 2.4.6.
-## [v2.27.2](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.3) 2023-07-25
+## [v2.27.2](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.2) 2023-07-25
 - New: 
   - Merchants can now create their own style variants of the Bolt Button for their Product Page checkout button.
   - Support added for the Mageworx Donations suite. 
