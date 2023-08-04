@@ -19,8 +19,9 @@ define([
     'Magento_Customer/js/customer-data',
     'Bolt_Boltpay/js/utils/when-defined',
     'Magento_Customer/js/model/authentication-popup',
+    'Magento_Checkout/js/model/quote',
     'domReady!'
-], function ($, _, customerData, whenDefined, authenticationPopup) {
+], function ($, _, customerData, whenDefined, authenticationPopup, quote) {
     'use strict';
 
     /**
@@ -210,7 +211,7 @@ define([
                 // Watch for data changes in the document
                 BoltCheckoutApiDriven.elementDataObserver = new MutationObserver(BoltCheckoutApiDriven.callElementDataChangeCallbacks);
                 let config = {
-                    characterData: true,
+                    attributes: true,
                     subtree: true
                 };
                 BoltCheckoutApiDriven.elementDataObserver.observe(window.document.documentElement, config);
@@ -251,7 +252,7 @@ define([
                     BoltCheckoutApiDriven.initElementReadyCallback(selector, function(el) {
                         if (onReady) callback(el);
                         let value = el.value;
-                        BoltCheckoutApiDriven.initElementReadyCallback(selector, function(element) {
+                        BoltCheckoutApiDriven.initElementDataChangeCallback(selector, function(element) {
                             if (visibleOnly && element.offsetParent === null) return;
                             if (element.value !== value) {
                                 value = element.value;
@@ -439,13 +440,11 @@ define([
                 whenDefined(BoltCheckoutApiDriven, 'quoteMaskedId', BoltCheckoutApiDriven.updateHints, 'updateHints');
                 return;
             }
-            let newHints = JSON.stringify(BoltCheckoutApiDriven.boltCartHints);
-            if ((BoltCheckoutApiDriven.boltCartHints !== newHints) && !BoltCheckoutApiDriven.isPromisesResolved) {
+            if (BoltCheckoutApiDriven.isPromisesResolved) {
                 BoltCheckoutApiDriven.boltCheckoutConfigureCall(
                     {"id": BoltCheckoutApiDriven.quoteMaskedId},
-                    {"hints": BoltCheckoutApiDriven.boltCartHints}
+                    BoltCheckoutApiDriven.boltCartHints
                 );
-                BoltCheckoutApiDriven.boltCartHints = newHints;
             }
         },
 
@@ -487,8 +486,13 @@ define([
                 magentoCart.boltCartHints !== null &&
                 !_.isEqual(BoltCheckoutApiDriven.boltCartHints, magentoCart.boltCartHints)
             ) {
-                BoltCheckoutApiDriven.boltCartHints = magentoCart.boltCartHints;
-                hints = {"hints": BoltCheckoutApiDriven.boltCartHints};
+                let prefill = BoltCheckoutApiDriven.isObject(magentoCart.boltCartHints.prefill)
+                    ? BoltCheckoutApiDriven.deepMergeObjects(BoltCheckoutApiDriven.boltCartHints.prefill, magentoCart.boltCartHints.prefill) : magentoCart.boltCartHints.prefill;
+
+                hints = BoltCheckoutApiDriven.deepMergeObjects(BoltCheckoutApiDriven.boltCartHints, magentoCart.boltCartHints);
+                hints.prefill = prefill;
+
+                BoltCheckoutApiDriven.boltCartHints = hints;
                 if (!BoltCheckoutApiDriven.hintsBarrier.isResolved()) {
                     BoltCheckoutApiDriven.hintsBarrier.resolve(hints);
                     BoltCheckoutApiDriven.isPromisesResolved = true;
@@ -587,7 +591,7 @@ define([
                         if (window.BoltCheckout && BoltCheckoutApiDriven.isPromisesResolved) {
                             BoltCheckoutApiDriven.boltCheckoutConfigureCall(
                                 {"id": BoltCheckoutApiDriven.quoteMaskedId},
-                                {"hints": BoltCheckoutApiDriven.boltCartHints}
+                                BoltCheckoutApiDriven.boltCartHints
                             );
                         }
                     });
@@ -914,7 +918,7 @@ define([
             });
             BoltCheckoutApiDriven.boltCheckoutConfigureCall(
                 {"id": BoltCheckoutApiDriven.quoteMaskedId},
-                {"hints": BoltCheckoutApiDriven.boltCartHints}
+                BoltCheckoutApiDriven.boltCartHints
             );
         },
 
@@ -983,7 +987,7 @@ define([
                 }
 
                 BoltCheckoutApiDriven.updateHints();
-            });
+            }, true);
 
             // monitor address text input fields and update hints on value change
             for (let i = 0, length = BoltCheckoutApiDriven.inputNameToHintsPrefillPrefixes.length; i < length; i++) {
@@ -1010,7 +1014,7 @@ define([
                                         delete BoltCheckoutApiDriven.boltCartHints.prefill[prefillKey];
                                     }
                                     BoltCheckoutApiDriven.updateHints();
-                                });
+                                }, true);
 
                             } (inputName);
                         }
@@ -1018,6 +1022,12 @@ define([
 
                 } (prefix);
             }
+        },
+
+        initAdditionalObservers: function () {
+            $(document).on('bolt:createOrder', function() {
+                customerData.reload(['cart'], true);
+            });
         },
 
         /**
@@ -1057,6 +1067,18 @@ define([
             this.customerCart = customerData.get('cart');
             //subscription of 'customer-data' cart
             this.customerCart.subscribe(BoltCheckoutApiDriven.magentoCartDataListener);
+
+            // If quote is not empty and quote total was changed through a method we didn't create,
+            // we should reload the magento cart since totals are probably now out of sync.
+            if (!$.isEmptyObject(quote)) {
+                quote.totals.subscribe(function (totals) {
+                    if (!BoltCheckoutApiDriven.isPromisesResolved) {
+                        return;
+                    }
+                    $(document).trigger('bolt:createOrder');
+                });
+            }
+
             //сall magento card initialisation if event happened before we subscribed to it
             if (this.customerCart()) {
                 BoltCheckoutApiDriven.magentoCartDataListener(this.customerCart());
@@ -1070,6 +1092,7 @@ define([
             this.initPaymentOnlyObservers();
             this.initPaymentOnly();
             this.initHintsObservers();
+            this.initAdditionalObservers();
             if (!this.customerCart()) {
                 // if magento cart is not present for some reason (wrong setup)
                 // we need to get it ourself
@@ -1098,7 +1121,7 @@ define([
                 this.customerCart().boltCartHints !== null
             ) {
                 this.boltCartHints = this.customerCart().boltCartHints;
-                this.hintsBarrier.resolve({"hints": this.boltCartHints})
+                this.hintsBarrier.resolve(this.boltCartHints)
                 BoltCheckoutApiDriven.isPromisesResolved = true;
             }
         }
