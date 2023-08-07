@@ -80,7 +80,7 @@ define([
             'city':      'city',
             'postcode':  'zip'
         },
-        quoteAddressToHintsPrefill: {
+        quoteAddressKeysToHintsPrefill: {
             'firstname': 'firstName',
             'lastname':  'lastName',
             'email':  'email',
@@ -1053,9 +1053,9 @@ define([
 
         getPrefillAddressFromQuoteAddress: function (quoteAddress) {
             let quoteHintsPrefill = {};
-            for (let addressKey in BoltCheckoutApiDriven.quoteAddressToHintsPrefill) {
+            for (let addressKey in BoltCheckoutApiDriven.quoteAddressKeysToHintsPrefill) {
                 if (quoteAddress.hasOwnProperty(addressKey) && quoteAddress[addressKey] !== undefined) {
-                    quoteHintsPrefill[BoltCheckoutApiDriven.quoteAddressToHintsPrefill[addressKey]] = quoteAddress[addressKey];
+                    quoteHintsPrefill[BoltCheckoutApiDriven.quoteAddressKeysToHintsPrefill[addressKey]] = quoteAddress[addressKey];
                 }
             }
             if (quoteAddress.hasOwnProperty('street') && quoteAddress.street !== undefined) {
