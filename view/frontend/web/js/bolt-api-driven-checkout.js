@@ -80,6 +80,16 @@ define([
             'city':      'city',
             'postcode':  'zip'
         },
+        quoteAddressKeysToHintsPrefill: {
+            'firstname': 'firstName',
+            'lastname':  'lastName',
+            'email':  'email',
+            'telephone': 'phone',
+            'region': 'state',
+            'city':      'city',
+            'postcode':  'zip',
+            'countryId':  'country'
+        },
         inputNameToHintsPrefillPrefixes: [
             '.fieldset.estimate',
             '#checkout-step-shipping'
@@ -210,7 +220,7 @@ define([
                 // Watch for data changes in the document
                 BoltCheckoutApiDriven.elementDataObserver = new MutationObserver(BoltCheckoutApiDriven.callElementDataChangeCallbacks);
                 let config = {
-                    characterData: true,
+                    attributes: true,
                     subtree: true
                 };
                 BoltCheckoutApiDriven.elementDataObserver.observe(window.document.documentElement, config);
@@ -251,7 +261,7 @@ define([
                     BoltCheckoutApiDriven.initElementReadyCallback(selector, function(el) {
                         if (onReady) callback(el);
                         let value = el.value;
-                        BoltCheckoutApiDriven.initElementReadyCallback(selector, function(element) {
+                        BoltCheckoutApiDriven.initElementDataChangeCallback(selector, function(element) {
                             if (visibleOnly && element.offsetParent === null) return;
                             if (element.value !== value) {
                                 value = element.value;
@@ -439,13 +449,11 @@ define([
                 whenDefined(BoltCheckoutApiDriven, 'quoteMaskedId', BoltCheckoutApiDriven.updateHints, 'updateHints');
                 return;
             }
-            let newHints = JSON.stringify(BoltCheckoutApiDriven.boltCartHints);
-            if ((BoltCheckoutApiDriven.boltCartHints !== newHints) && !BoltCheckoutApiDriven.isPromisesResolved) {
+            if (BoltCheckoutApiDriven.isPromisesResolved) {
                 BoltCheckoutApiDriven.boltCheckoutConfigureCall(
                     {"id": BoltCheckoutApiDriven.quoteMaskedId},
-                    {"hints": BoltCheckoutApiDriven.boltCartHints}
+                    BoltCheckoutApiDriven.boltCartHints
                 );
-                BoltCheckoutApiDriven.boltCartHints = newHints;
             }
         },
 
@@ -487,8 +495,13 @@ define([
                 magentoCart.boltCartHints !== null &&
                 !_.isEqual(BoltCheckoutApiDriven.boltCartHints, magentoCart.boltCartHints)
             ) {
-                BoltCheckoutApiDriven.boltCartHints = magentoCart.boltCartHints;
-                hints = {"hints": BoltCheckoutApiDriven.boltCartHints};
+                let prefill = BoltCheckoutApiDriven.isObject(magentoCart.boltCartHints.prefill)
+                    ? BoltCheckoutApiDriven.deepMergeObjects(BoltCheckoutApiDriven.boltCartHints.prefill, magentoCart.boltCartHints.prefill) : magentoCart.boltCartHints.prefill;
+
+                hints = BoltCheckoutApiDriven.deepMergeObjects(BoltCheckoutApiDriven.boltCartHints, magentoCart.boltCartHints);
+                hints.prefill = prefill;
+
+                BoltCheckoutApiDriven.boltCartHints = hints;
                 if (!BoltCheckoutApiDriven.hintsBarrier.isResolved()) {
                     BoltCheckoutApiDriven.hintsBarrier.resolve(hints);
                     BoltCheckoutApiDriven.isPromisesResolved = true;
@@ -587,7 +600,7 @@ define([
                         if (window.BoltCheckout && BoltCheckoutApiDriven.isPromisesResolved) {
                             BoltCheckoutApiDriven.boltCheckoutConfigureCall(
                                 {"id": BoltCheckoutApiDriven.quoteMaskedId},
-                                {"hints": BoltCheckoutApiDriven.boltCartHints}
+                                BoltCheckoutApiDriven.boltCartHints
                             );
                         }
                     });
@@ -914,7 +927,7 @@ define([
             });
             BoltCheckoutApiDriven.boltCheckoutConfigureCall(
                 {"id": BoltCheckoutApiDriven.quoteMaskedId},
-                {"hints": BoltCheckoutApiDriven.boltCartHints}
+                BoltCheckoutApiDriven.boltCartHints
             );
         },
 
@@ -983,7 +996,7 @@ define([
                 }
 
                 BoltCheckoutApiDriven.updateHints();
-            });
+            }, true);
 
             // monitor address text input fields and update hints on value change
             for (let i = 0, length = BoltCheckoutApiDriven.inputNameToHintsPrefillPrefixes.length; i < length; i++) {
@@ -1010,7 +1023,7 @@ define([
                                         delete BoltCheckoutApiDriven.boltCartHints.prefill[prefillKey];
                                     }
                                     BoltCheckoutApiDriven.updateHints();
-                                });
+                                }, true);
 
                             } (inputName);
                         }
@@ -1038,6 +1051,24 @@ define([
             );
         },
 
+        getPrefillAddressFromQuoteAddress: function (quoteAddress) {
+            let quoteHintsPrefill = {};
+            for (let addressKey in BoltCheckoutApiDriven.quoteAddressKeysToHintsPrefill) {
+                if (quoteAddress.hasOwnProperty(addressKey) && quoteAddress[addressKey] !== undefined) {
+                    quoteHintsPrefill[BoltCheckoutApiDriven.quoteAddressKeysToHintsPrefill[addressKey]] = quoteAddress[addressKey];
+                }
+            }
+            if (quoteAddress.hasOwnProperty('street') && quoteAddress.street !== undefined) {
+                if (quoteAddress.street[0] !== undefined) {
+                    quoteHintsPrefill['addressLine1'] = quoteAddress.street[0];
+                }
+                if (quoteAddress.street[1] !== undefined) {
+                    quoteHintsPrefill['addressLine2'] = quoteAddress.street[1];
+                }
+            }
+            return quoteHintsPrefill;
+        },
+
         /**
          * Main init method. Preparing bolt connection config data, events/elementListeners/promises
          *
@@ -1057,6 +1088,29 @@ define([
             this.customerCart = customerData.get('cart');
             //subscription of 'customer-data' cart
             this.customerCart.subscribe(BoltCheckoutApiDriven.magentoCartDataListener);
+
+            // If quote is not empty and quote shipping address was changed,
+            // we should update the address prefill hints
+            // the quote object available only when checkoutConfig is defined
+            if (window.checkoutConfig !== undefined) {
+                require(['Magento_Checkout/js/model/quote'], function (quote) {
+                    if (!$.isEmptyObject(quote)) {
+                        quote.shippingAddress.subscribe(function (address) {
+                            if (!BoltCheckoutApiDriven.isPromisesResolved) {
+                                return;
+                            }
+                            // get bolt hints prefill data based on new quote address
+                            let quotePrefill = BoltCheckoutApiDriven.getPrefillAddressFromQuoteAddress(address);
+                            // update prefill if it was updated
+                            if (!_.isEqual(quotePrefill, BoltCheckoutApiDriven.boltCartHints.prefill)) {
+                                BoltCheckoutApiDriven.boltCartHints.prefill = quotePrefill;
+                                BoltCheckoutApiDriven.updateHints();
+                            }
+                        });
+                    }
+                });
+            }
+
             //сall magento card initialisation if event happened before we subscribed to it
             if (this.customerCart()) {
                 BoltCheckoutApiDriven.magentoCartDataListener(this.customerCart());
@@ -1098,7 +1152,7 @@ define([
                 this.customerCart().boltCartHints !== null
             ) {
                 this.boltCartHints = this.customerCart().boltCartHints;
-                this.hintsBarrier.resolve({"hints": this.boltCartHints})
+                this.hintsBarrier.resolve(this.boltCartHints)
                 BoltCheckoutApiDriven.isPromisesResolved = true;
             }
         }
