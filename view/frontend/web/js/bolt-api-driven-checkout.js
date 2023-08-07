@@ -19,9 +19,8 @@ define([
     'Magento_Customer/js/customer-data',
     'Bolt_Boltpay/js/utils/when-defined',
     'Magento_Customer/js/model/authentication-popup',
-    'Magento_Checkout/js/model/quote',
     'domReady!'
-], function ($, _, customerData, whenDefined, authenticationPopup, quote) {
+], function ($, _, customerData, whenDefined, authenticationPopup) {
     'use strict';
 
     /**
@@ -80,6 +79,16 @@ define([
             'street[1]': 'addressLine2',
             'city':      'city',
             'postcode':  'zip'
+        },
+        quoteAddressToHintsPrefill: {
+            'firstname': 'firstName',
+            'lastname':  'lastName',
+            'email':  'email',
+            'telephone': 'phone',
+            'region': 'state',
+            'city':      'city',
+            'postcode':  'zip',
+            'countryId':  'country'
         },
         inputNameToHintsPrefillPrefixes: [
             '.fieldset.estimate',
@@ -1024,12 +1033,6 @@ define([
             }
         },
 
-        initAdditionalObservers: function () {
-            $(document).on('bolt:createOrder', function() {
-                customerData.reload(['cart'], true);
-            });
-        },
-
         /**
          * Call BoltCheckout configure
          *
@@ -1046,6 +1049,24 @@ define([
                 this.boltCallbacks,
                 this.boltParameters
             );
+        },
+
+        getPrefillAddressFromQuoteAddress: function (quoteAddress) {
+            let quoteHintsPrefill = {};
+            for (let addressKey in BoltCheckoutApiDriven.quoteAddressToHintsPrefill) {
+                if (quoteAddress.hasOwnProperty(addressKey) && quoteAddress[addressKey] !== undefined) {
+                    quoteHintsPrefill[BoltCheckoutApiDriven.quoteAddressToHintsPrefill[addressKey]] = quoteAddress[addressKey];
+                }
+            }
+            if (quoteAddress.hasOwnProperty('street') && quoteAddress.street !== undefined) {
+                if (quoteAddress.street[0] !== undefined) {
+                    quoteHintsPrefill['addressLine1'] = quoteAddress.street[0];
+                }
+                if (quoteAddress.street[1] !== undefined) {
+                    quoteHintsPrefill['addressLine2'] = quoteAddress.street[1];
+                }
+            }
+            return quoteHintsPrefill;
         },
 
         /**
@@ -1068,14 +1089,25 @@ define([
             //subscription of 'customer-data' cart
             this.customerCart.subscribe(BoltCheckoutApiDriven.magentoCartDataListener);
 
-            // If quote is not empty and quote total was changed through a method we didn't create,
-            // we should reload the magento cart since totals are probably now out of sync.
-            if (!$.isEmptyObject(quote)) {
-                quote.totals.subscribe(function (totals) {
-                    if (!BoltCheckoutApiDriven.isPromisesResolved) {
-                        return;
+            // If quote is not empty and quote shipping address was changed,
+            // we should update the address prefill hints
+            // the quote object available only when checkoutConfig is defined
+            if (window.checkoutConfig !== undefined) {
+                require(['Magento_Checkout/js/model/quote'], function (quote) {
+                    if (!$.isEmptyObject(quote)) {
+                        quote.shippingAddress.subscribe(function (address) {
+                            if (!BoltCheckoutApiDriven.isPromisesResolved) {
+                                return;
+                            }
+                            // get bolt hints prefill data based on new quote address
+                            let quotePrefill = BoltCheckoutApiDriven.getPrefillAddressFromQuoteAddress(address);
+                            // update prefill if it was updated
+                            if (!_.isEqual(quotePrefill, BoltCheckoutApiDriven.boltCartHints.prefill)) {
+                                BoltCheckoutApiDriven.boltCartHints.prefill = quotePrefill;
+                                BoltCheckoutApiDriven.updateHints();
+                            }
+                        });
                     }
-                    $(document).trigger('bolt:createOrder');
                 });
             }
 
@@ -1092,7 +1124,6 @@ define([
             this.initPaymentOnlyObservers();
             this.initPaymentOnly();
             this.initHintsObservers();
-            this.initAdditionalObservers();
             if (!this.customerCart()) {
                 // if magento cart is not present for some reason (wrong setup)
                 // we need to get it ourself
