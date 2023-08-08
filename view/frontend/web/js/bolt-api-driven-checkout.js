@@ -359,7 +359,7 @@ define([
          * @returns {string}
          */
         getCheckoutType: function () {
-            return this.trim(location.pathname, '/') === 'checkout' ? 'payment' : 'checkout';
+            return BoltCheckoutApiDriven.trim(location.pathname, '/') === 'checkout' ? 'payment' : 'checkout';
         },
 
         /**
@@ -389,7 +389,7 @@ define([
                 throw new TypeError("Invalid flags supplied '" + flags.match(new RegExp("[^gi]*")) + "'");
             }
 
-            characters = this.escapeRegex(characters);
+            characters = BoltCheckoutApiDriven.escapeRegex(characters);
 
             return str.replace(new RegExp("^[" + characters + "]+|[" + characters + "]+$", flags), '');
         },
@@ -465,7 +465,7 @@ define([
         magentoCartDataListener: function (magentoCart) {
             BoltCheckoutApiDriven.resolveReadyStatusPromise();
             //if timestamp is the same no checks needed
-            if (magentoCart.data_id && magentoCart.data_id === this.magentoCartTimeStamp) {
+            if (magentoCart.data_id && magentoCart.data_id === BoltCheckoutApiDriven.magentoCartTimeStamp) {
                 return;
             }
             //init default values
@@ -789,7 +789,7 @@ define([
                 if (scriptTag) {
                     return;
                 }
-                let publishableKey = this.getCheckoutKey();
+                let publishableKey = BoltCheckoutApiDriven.getCheckoutKey();
                 scriptTag = document.createElement('script');
                 scriptTag.setAttribute('type', 'text/javascript');
                 scriptTag.setAttribute('async', '');
@@ -932,14 +932,14 @@ define([
         },
 
         initPaymentOnlyObservers: function () {
-            if (this.getCheckoutType() === 'payment') {
+            if (BoltCheckoutApiDriven.getCheckoutType() === 'payment') {
                 /////////////////////////////////////////////////////
                 // Call Bolt order creation Magento endpoint on
                 // customer billing address change on payment only page,
                 // storing the live page data in Bolt cart.
                 /////////////////////////////////////////////////////
                 let billing_address_value;
-                this.initElementReadyCallback(this.billingAddressSelector, function(element) {
+                BoltCheckoutApiDriven.initElementReadyCallback(BoltCheckoutApiDriven.billingAddressSelector, function(element) {
                     let address = element.value;
                     if (address === 'null' || address === '') return;
 
@@ -956,7 +956,7 @@ define([
                 // the live page data in Bolt cart.
                 /////////////////////////////////////////////////////
                 let customer_email_value;
-                this.initElementReadyCallback(this.customerEmailSelector, function(element) {
+                BoltCheckoutApiDriven.initElementReadyCallback(BoltCheckoutApiDriven.customerEmailSelector, function(element) {
 
                     let email = element.value.trim();
                     if (email === "") return;
@@ -1046,8 +1046,8 @@ define([
             BoltCheckoutApiDriven.boltConfigure = window.BoltCheckout.configure(
                 boltCart,
                 boltHints,
-                this.boltCallbacks,
-                this.boltParameters
+                BoltCheckoutApiDriven.boltCallbacks,
+                BoltCheckoutApiDriven.boltParameters
             );
         },
 
