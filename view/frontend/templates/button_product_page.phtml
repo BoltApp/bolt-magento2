@@ -162,6 +162,15 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                 },
 
                 check: function () {
+
+                    var showBoltSSOPopup = function() {
+                        // set a cookie for auto opening Bolt checkout after login
+                        $('#bolt-sso-popup .bolt-account-sso [data-tid="shopperDashboardButton"]').click();
+                    }
+
+                    var showMagentoAuthenticationPopup = function () {
+                        authenticationPopup.showModal();
+                    }
                     /**
                      * On Bolt button click check if guest checkout is allowed.
                      * Display login popup to guest customers if it is not. The
@@ -172,7 +181,11 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                     if ( !customer().firstname && !isGuestCheckoutAllowed) {
                         // if authentication is required for checkout set a cookie
                         // for auto opening Bolt checkout after login
-                        authenticationPopup.showModal();
+                        if (window.boltConfig.is_sso_enabled) {
+                            showBoltSSOPopup()
+                        } else {
+                            showMagentoAuthenticationPopup();
+                        }
                         return false;
                     }
                     // wait for validation module init
