@@ -193,7 +193,7 @@ class ExtendWarrantyPlan extends AbstractExtensibleModel implements ExtendWarran
     /**
      * @inheritDoc
      */
-    public function setExtensionAttributes(\Bolt\Boltpay\Api\Data\ExtendWarrantyPlanInterfaceExtensionInterface $extensionAttributes)
+    public function setExtensionAttributes(\Bolt\Boltpay\Api\Data\ExtendWarrantyPlanExtensionInterface $extensionAttributes)
     {
         return $this->_setExtensionAttributes($extensionAttributes);
     }
