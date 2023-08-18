@@ -359,7 +359,7 @@ define([
          * @returns {string}
          */
         getCheckoutType: function () {
-            return this.trim(location.pathname, '/') === 'checkout' ? 'payment' : 'checkout';
+            return BoltCheckoutApiDriven.trim(location.pathname, '/') === 'checkout' ? 'payment' : 'checkout';
         },
 
         /**
@@ -389,7 +389,7 @@ define([
                 throw new TypeError("Invalid flags supplied '" + flags.match(new RegExp("[^gi]*")) + "'");
             }
 
-            characters = this.escapeRegex(characters);
+            characters = BoltCheckoutApiDriven.escapeRegex(characters);
 
             return str.replace(new RegExp("^[" + characters + "]+|[" + characters + "]+$", flags), '');
         },
@@ -465,7 +465,7 @@ define([
         magentoCartDataListener: function (magentoCart) {
             BoltCheckoutApiDriven.resolveReadyStatusPromise();
             //if timestamp is the same no checks needed
-            if (magentoCart.data_id && magentoCart.data_id === this.magentoCartTimeStamp) {
+            if (magentoCart.data_id && magentoCart.data_id === BoltCheckoutApiDriven.magentoCartTimeStamp) {
                 return;
             }
             //init default values
@@ -789,7 +789,7 @@ define([
                 if (scriptTag) {
                     return;
                 }
-                let publishableKey = this.getCheckoutKey();
+                let publishableKey = BoltCheckoutApiDriven.getCheckoutKey();
                 scriptTag = document.createElement('script');
                 scriptTag.setAttribute('type', 'text/javascript');
                 scriptTag.setAttribute('async', '');
@@ -932,14 +932,14 @@ define([
         },
 
         initPaymentOnlyObservers: function () {
-            if (this.getCheckoutType() === 'payment') {
+            if (BoltCheckoutApiDriven.getCheckoutType() === 'payment') {
                 /////////////////////////////////////////////////////
                 // Call Bolt order creation Magento endpoint on
                 // customer billing address change on payment only page,
                 // storing the live page data in Bolt cart.
                 /////////////////////////////////////////////////////
                 let billing_address_value;
-                this.initElementReadyCallback(this.billingAddressSelector, function(element) {
+                BoltCheckoutApiDriven.initElementReadyCallback(BoltCheckoutApiDriven.billingAddressSelector, function(element) {
                     let address = element.value;
                     if (address === 'null' || address === '') return;
 
@@ -956,7 +956,7 @@ define([
                 // the live page data in Bolt cart.
                 /////////////////////////////////////////////////////
                 let customer_email_value;
-                this.initElementReadyCallback(this.customerEmailSelector, function(element) {
+                BoltCheckoutApiDriven.initElementReadyCallback(BoltCheckoutApiDriven.customerEmailSelector, function(element) {
 
                     let email = element.value.trim();
                     if (email === "") return;
@@ -1046,8 +1046,8 @@ define([
             BoltCheckoutApiDriven.boltConfigure = window.BoltCheckout.configure(
                 boltCart,
                 boltHints,
-                this.boltCallbacks,
-                this.boltParameters
+                BoltCheckoutApiDriven.boltCallbacks,
+                BoltCheckoutApiDriven.boltParameters
             );
         },
 
@@ -1077,17 +1077,17 @@ define([
         init: function(config) {
             //wait while BoltCheckout will be initialized
             if (!window.BoltCheckout) {
-                whenDefined(window, 'BoltCheckout', this.init, 'BoltCheckoutApiDrivenInit');
+                whenDefined(window, 'BoltCheckout', BoltCheckoutApiDriven.init, 'BoltCheckoutApiDrivenInit');
                 return;
             }
             //init new barriers
-            this.cartBarrier = this.initBarrier();
-            this.hintsBarrier = this.initBarrier();
-            this.readyStatusBarrier = this.initBarrier();
-            this.initiateCheckout = window.boltConfig.initiate_checkout && this.getInitiateCheckoutCookie();
-            this.customerCart = customerData.get('cart');
+            BoltCheckoutApiDriven.cartBarrier = BoltCheckoutApiDriven.initBarrier();
+            BoltCheckoutApiDriven.hintsBarrier = BoltCheckoutApiDriven.initBarrier();
+            BoltCheckoutApiDriven.readyStatusBarrier = BoltCheckoutApiDriven.initBarrier();
+            BoltCheckoutApiDriven.initiateCheckout = window.boltConfig.initiate_checkout && BoltCheckoutApiDriven.getInitiateCheckoutCookie();
+            BoltCheckoutApiDriven.customerCart = customerData.get('cart');
             //subscription of 'customer-data' cart
-            this.customerCart.subscribe(BoltCheckoutApiDriven.magentoCartDataListener);
+            BoltCheckoutApiDriven.customerCart.subscribe(BoltCheckoutApiDriven.magentoCartDataListener);
 
             // If quote is not empty and quote shipping address was changed,
             // we should update the address prefill hints
@@ -1112,19 +1112,19 @@ define([
             }
 
             //сall magento card initialisation if event happened before we subscribed to it
-            if (this.customerCart()) {
-                BoltCheckoutApiDriven.magentoCartDataListener(this.customerCart());
+            if (BoltCheckoutApiDriven.customerCart()) {
+                BoltCheckoutApiDriven.magentoCartDataListener(BoltCheckoutApiDriven.customerCart());
             }
             //call bolt checkout configure immediately with promise parameters
-            this.boltCheckoutConfigureCall(this.cartBarrier.promise, this.hintsBarrier.promise);
-            this.resolveReadyStatusPromise();
-            this.initBoltCallbacks();
-            this.initUIElements();
-            this.initOrderManagement();
-            this.initPaymentOnlyObservers();
-            this.initPaymentOnly();
-            this.initHintsObservers();
-            if (!this.customerCart()) {
+            BoltCheckoutApiDriven.boltCheckoutConfigureCall(BoltCheckoutApiDriven.cartBarrier.promise, BoltCheckoutApiDriven.hintsBarrier.promise);
+            BoltCheckoutApiDriven.resolveReadyStatusPromise();
+            BoltCheckoutApiDriven.initBoltCallbacks();
+            BoltCheckoutApiDriven.initUIElements();
+            BoltCheckoutApiDriven.initOrderManagement();
+            BoltCheckoutApiDriven.initPaymentOnlyObservers();
+            BoltCheckoutApiDriven.initPaymentOnly();
+            BoltCheckoutApiDriven.initHintsObservers();
+            if (!BoltCheckoutApiDriven.customerCart()) {
                 // if magento cart is not present for some reason (wrong setup)
                 // we need to get it ourself
                 setTimeout(function () {
@@ -1136,23 +1136,23 @@ define([
                 return;
             }
 
-            this.magentoCartTimeStamp = this.customerCart().data_id;
+            BoltCheckoutApiDriven.magentoCartTimeStamp = BoltCheckoutApiDriven.customerCart().data_id;
 
             //trying to resolve cart promise if data is existed
-            if (this.customerCart().quoteMaskedId !== undefined &&
-                this.customerCart().quoteMaskedId !== null
+            if (BoltCheckoutApiDriven.customerCart().quoteMaskedId !== undefined &&
+                BoltCheckoutApiDriven.customerCart().quoteMaskedId !== null
             ) {
-                this.quoteMaskedId = this.customerCart().quoteMaskedId;
-                this.cartBarrier.resolve({"id": this.quoteMaskedId})
+                BoltCheckoutApiDriven.quoteMaskedId = BoltCheckoutApiDriven.customerCart().quoteMaskedId;
+                BoltCheckoutApiDriven.cartBarrier.resolve({"id": BoltCheckoutApiDriven.quoteMaskedId})
                 BoltCheckoutApiDriven.isPromisesResolved = true;
             }
 
             //trying to resolve hints promise if data is existed
-            if (this.customerCart().boltCartHints !== undefined &&
-                this.customerCart().boltCartHints !== null
+            if (BoltCheckoutApiDriven.customerCart().boltCartHints !== undefined &&
+                BoltCheckoutApiDriven.customerCart().boltCartHints !== null
             ) {
-                this.boltCartHints = this.customerCart().boltCartHints;
-                this.hintsBarrier.resolve(this.boltCartHints)
+                BoltCheckoutApiDriven.boltCartHints = BoltCheckoutApiDriven.customerCart().boltCartHints;
+                BoltCheckoutApiDriven.hintsBarrier.resolve(BoltCheckoutApiDriven.boltCartHints)
                 BoltCheckoutApiDriven.isPromisesResolved = true;
             }
         }
