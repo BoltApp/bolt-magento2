@@ -219,4 +219,11 @@
             <resource ref="Magento_Catalog::products" />
         </resources>
     </route>
+    <!--Extend_Warranty module support-->
+    <route url="/V1/bolt/boltpay/extend-warranty/:cartId/add" method="POST">
+        <service class="Bolt\Boltpay\Api\ExtendWarrantyManagementInterface" method="addWarrantyPlan"/>
+        <resources>
+            <resource ref="Magento_Cart::manage" />
+        </resources>
+    </route>
 </routes>
