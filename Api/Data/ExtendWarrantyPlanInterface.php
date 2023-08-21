@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\Api\Data;
 /**
  * Extend warranty plan
  */
-interface ExtendWarrantyPlanInterface
+interface ExtendWarrantyPlanInterface extends \Magento\Framework\Api\ExtensibleDataInterface
 {
     const PRODUCT = 'product';
     const PLAN_ID = 'planId';
@@ -193,4 +193,19 @@ interface ExtendWarrantyPlanInterface
      * @return ExtendWarrantyPlanInterface
      */
     public function setQty(int $qty): ExtendWarrantyPlanInterface;
+
+    /**
+     * Retrieve existing extension attributes object or create a new one.
+     *
+     * @return \Bolt\Boltpay\Api\Data\ExtendWarrantyPlanExtensionInterface|null
+     */
+    public function getExtensionAttributes();
+
+    /**
+     * Set an extension attributes object.
+     *
+     * @param \Bolt\Boltpay\Api\Data\ExtendWarrantyPlanExtensionInterface $extensionAttributes
+     * @return $this
+     */
+    public function setExtensionAttributes(\Bolt\Boltpay\Api\Data\ExtendWarrantyPlanExtensionInterface $extensionAttributes);
 }

@@ -183,7 +183,7 @@ class ExtendWarrantyPlan extends AbstractExtensibleModel implements ExtendWarran
     }
 
     /**
-     * @inheritDoc
+     * @return \Bolt\Boltpay\Api\Data\ExtendWarrantyPlanExtensionInterface|null
      */
     public function getExtensionAttributes()
     {
@@ -191,7 +191,8 @@ class ExtendWarrantyPlan extends AbstractExtensibleModel implements ExtendWarran
     }
 
     /**
-     * @inheritDoc
+     * @param \Bolt\Boltpay\Api\Data\ExtendWarrantyPlanExtensionInterface $extensionAttributes
+     * @return $this
      */
     public function setExtensionAttributes(\Bolt\Boltpay\Api\Data\ExtendWarrantyPlanExtensionInterface $extensionAttributes)
     {
