@@ -305,10 +305,14 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
 
                     options[name] = value;
                 });
-                // Extend_Warranty 3-th party module support: add collected plans as additional product options
-                if (additionalData && additionalData.extendWarrantyPlans) {
-                    options['extend_warranty_plans'] = additionalData.extendWarrantyPlans;
-                }
+
+                <?php if ($block->isExtendWarrantyModuleEnabled()): ?>
+                    // Extend_Warranty 3-th party module support: add collected plans as additional product options
+                    if (additionalData && additionalData.extendWarrantyPlans) {
+                        options['extend_warranty_plans'] = additionalData.extendWarrantyPlans;
+                    }
+                <?php endif; ?>
+
                 options['storeId'] = '<?= /* @noEscape */ $block->getStoreId(); ?>';
                 var formKey = $.mage.cookies.get('form_key');
                 if (!formKey && $('[name="form_key"]').length) {
