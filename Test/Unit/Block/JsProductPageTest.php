@@ -38,6 +38,7 @@ use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Http\Context as HttpContext;
 use Magento\Framework\App\Request\Http;
 use Magento\TestFramework\Helper\Bootstrap;
+use Magento\Framework\Module\Manager;
 
 /**
  * Class JsTest
@@ -290,6 +291,7 @@ class JsProductPageTest extends BoltTestCase
                     $this->createMock(SearchCriteriaBuilder::class),
                     $this->createMock(EventsForThirdPartyModules::class),
                     $this->createMock(HttpContext::class),
+                    $this->createMock(Manager::class)
                 ]
             )
             ->getMock();

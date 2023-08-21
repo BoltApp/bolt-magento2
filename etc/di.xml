@@ -344,4 +344,7 @@
     <preference for="Bolt\Boltpay\Api\Data\PluginVersionNotificationInterface" type="Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotification" />
     <preference for="Bolt\Boltpay\Api\PluginVersionNotificationRepositoryInterface" type="Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotificationRepository" />
     <preference for="Bolt\Boltpay\Api\GetProductImageUrlInterface" type="Bolt\Boltpay\Model\Api\GetProductImageUrl" />
+    <!--Extend_Warranty module support-->
+    <preference for="Bolt\Boltpay\Api\Data\ExtendWarrantyPlanInterface" type="Bolt\Boltpay\Model\Api\Data\ExtendWarrantyPlan" />
+    <preference for="Bolt\Boltpay\Api\ExtendWarrantyManagementInterface" type="Bolt\Boltpay\Model\Api\ExtendWarrantyManagement" />
 </config>

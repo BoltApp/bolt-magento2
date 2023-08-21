@@ -162,6 +162,10 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                 },
 
                 check: function () {
+                    <?php if ($block->isExtendWarrantyModuleEnabled()): ?>
+                        // Extend_Warranty module collect current product plans
+                        extendWarrantyCollectPlans();
+                    <?php endif; ?>
 
                     var showBoltSSOPopup = function() {
                         // set a cookie for auto opening Bolt checkout after login
@@ -171,6 +175,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                     var showMagentoAuthenticationPopup = function () {
                         authenticationPopup.showModal();
                     }
+
                     /**
                      * On Bolt button click check if guest checkout is allowed.
                      * Display login popup to guest customers if it is not. The
@@ -258,7 +263,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
             });
             <?php endif; ?>
 
-            var getItemsData = function () {
+            var getItemsData = function (additionalData) {
                 var options = {};
                 var compositeAttributes = ['super_attribute', 'options', 'bundle_option', 'bundle_option_qty'];
                 var checkboxAttributes = ['links'];
@@ -300,6 +305,14 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
 
                     options[name] = value;
                 });
+
+                <?php if ($block->isExtendWarrantyModuleEnabled()): ?>
+                    // Extend_Warranty 3-th party module support: add collected plans as additional product options
+                    if (additionalData && additionalData.extendWarrantyPlans) {
+                        options['extend_warranty_plans'] = additionalData.extendWarrantyPlans;
+                    }
+                <?php endif; ?>
+
                 options['storeId'] = '<?= /* @noEscape */ $block->getStoreId(); ?>';
                 var formKey = $.mage.cookies.get('form_key');
                 if (!formKey && $('[name="form_key"]').length) {
@@ -346,17 +359,68 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
             };
 
             var cart;
-            var setupProductPage = function () {
+            var setupProductPage = function (additionalData) {
                 cart = {
                     currency: "<?= /* @noEscape */ $block->getStoreCurrencyCode(); ?>",
-                    items: getItemsData()
+                    items: getItemsData(additionalData)
                 };
-
                 // if connect.js is not loaded postpone until it is
                 whenDefined(window, 'BoltCheckout', function(){
                     BoltCheckout.configureProductCheckout(cart, hints, callbacks);
                 }, 'configureProductCheckout');
             };
+
+            <?php if ($block->isExtendWarrantyModuleEnabled()): ?>
+                // Extend_Warranty 3-th party module support
+                // collecting selected warranty plans and add as additional product options in request
+                var extendWarrantyCollectPlans = function () {
+                    // check if Extend_Warranty global variable = "Extend" is defined
+                    if (window.Extend === undefined || window.Extend.buttons === undefined) {
+                        return;
+                    }
+                    let extendWarrantyPlanItems = [];
+                    <?php if ($block->isGrouped()): ?>
+                        let childProducts = new Map();
+                        // collect child product id's and sku's
+                        <?php foreach ($block->getGroupedProductChildren() as $childProduct):?>
+                            childProducts.set(<?= $childProduct->getId() ?>, { sku: '<?= $childProduct->getSku() ?>'});
+                        <?php endforeach; ?>
+                        childProducts.forEach((product, productId) => {
+                            // get warranty plan configuration instance for current child product
+                            // the "#warranty-offers" part is hardcoded in module
+                            let extendWarrantyInstance = Extend.buttons.instance('#warranty-offers-' + productId);
+                            // if plan is exist for child product
+                            if (extendWarrantyInstance) {
+                                // get current selected warranty plan for child product
+                                let extendWarrantyPlan = extendWarrantyInstance.getPlanSelection();
+                                if (extendWarrantyPlan) {
+                                    // fill product sku to warranty plan. The key should be product it is module restriction
+                                    extendWarrantyPlan.product = product.sku;
+                                    // push child product warranty plan selected to the full list of selected plans
+                                    extendWarrantyPlanItems.push(extendWarrantyPlan);
+                                }
+                            }
+                        });
+                    <?php else: ?>
+                        // get warranty plan configuration instance for current non-group product
+                        // the "#warranty-offers" part is hardcoded in module
+                        let extendWarrantyInstance = Extend.buttons.instance('#warranty-offers-<?= $block->getProduct()->getId() ?>');
+                        if (extendWarrantyInstance) {
+                            // get warranty plan selected
+                            let extendWarrantyPlan = extendWarrantyInstance.getPlanSelection();
+                            if (extendWarrantyPlan) {
+                                // fill product sku to warranty plan, The key should be product it is module restriction
+                                extendWarrantyPlan.product = '<?= $block->getProduct()->getSku() ?>';
+                                extendWarrantyPlanItems.push(extendWarrantyPlan);
+                            }
+                        }
+                    <?php endif; ?>
+                    // if we collected at least one warranty plan call bolt product page reconfiguration
+                    if (extendWarrantyPlanItems.length) {
+                        setupProductPage({extendWarrantyPlans: extendWarrantyPlanItems});
+                    }
+                }
+            <?php endif; ?>
 
             setupProductPage();
 
