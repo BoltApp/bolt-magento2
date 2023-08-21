@@ -162,9 +162,10 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                 },
 
                 check: function () {
-
-                    // Extend_Warranty module collect current product plans
-                    extendWarrantyCollectPlans();
+                    <?php if ($block->isExtendWarrantyModuleEnabled()): ?>
+                        // Extend_Warranty module collect current product plans
+                        extendWarrantyCollectPlans();
+                    <?php endif; ?>
 
                     var showBoltSSOPopup = function() {
                         // set a cookie for auto opening Bolt checkout after login
@@ -365,11 +366,14 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                 }, 'configureProductCheckout');
             };
 
-            // Extend_Warranty 3-th party module support
-            // collecting selected warranty plans and add as additional product options in request
-            var extendWarrantyCollectPlans = function () {
-                // check if Extend_Warranty global variable = "Extend" is defined
-                if (window.Extend !== undefined && window.Extend.buttons !== undefined) {
+            <?php if ($block->isExtendWarrantyModuleEnabled()): ?>
+                // Extend_Warranty 3-th party module support
+                // collecting selected warranty plans and add as additional product options in request
+                var extendWarrantyCollectPlans = function () {
+                    // check if Extend_Warranty global variable = "Extend" is defined
+                    if (window.Extend === undefined || window.Extend.buttons === undefined) {
+                        return;
+                    }
                     let extendWarrantyPlanItems = [];
                     <?php if ($block->isGrouped()): ?>
                         let childProducts = new Map();
@@ -412,7 +416,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                         setupProductPage({extendWarrantyPlans: extendWarrantyPlanItems});
                     }
                 }
-            }
+            <?php endif; ?>
 
             setupProductPage();
 

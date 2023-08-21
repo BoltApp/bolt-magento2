@@ -28,6 +28,7 @@ use Magento\Catalog\Model\ProductRepository;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Http\Context as HttpContext;
+use Magento\Framework\Module\Manager;
 use Magento\Framework\View\Element\Template\Context;
 
 /**
@@ -52,6 +53,11 @@ class JsProductPage extends Js
      */
     private $searchCriteriaBuilder;
 
+    /**
+     * @var Manager
+     */
+    private $moduleManager;
+
     public function __construct(
         Context $context,
         Config $configHelper,
@@ -64,11 +70,13 @@ class JsProductPage extends Js
         SearchCriteriaBuilder $searchCriteriaBuilder,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
         HttpContext $httpContext,
+        Manager $moduleManager,
         array $data = []
     ) {
         $this->_product = $productView->getProduct();
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->_productRepository = $productRepository;
+        $this->moduleManager = $moduleManager;
         parent::__construct(
             $context,
             $configHelper,
@@ -184,5 +192,15 @@ class JsProductPage extends Js
         }
 
         return false;
+    }
+
+    /**
+     * Checking if Extend_Warranty module enabled
+     *
+     * @return bool
+     */
+    public function isExtendWarrantyModuleEnabled()
+    {
+        return $this->moduleManager->isEnabled('Extend_Warranty');
     }
 }
