@@ -45,11 +45,6 @@ class Js extends Template
     protected static $blockAlreadyShown;
 
     /**
-     * @var HttpContext
-     */
-    protected $httpContext;
-
-    /**
      * @var CartHelper
      */
     private $cartHelper;
@@ -590,7 +585,7 @@ class Js extends Template
      * Return CSS styles for bolt button
      *
      * @param string $buttonType
-     * 
+     *
      * @return string
      */
     public function getVariantForInstantButton($buttonType = '')

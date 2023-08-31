@@ -33,12 +33,12 @@ class AbstractActionPlugin
      * @var \Magento\Customer\Model\Session
      */
     protected $customerSession;
-    
+
     /**
      * @var \Magento\Framework\App\Http\Context
      */
     protected $httpContext;
-    
+
     /**
      * @var Bolt\Boltpay\Model\EventsForThirdPartyModules
      */
@@ -70,6 +70,11 @@ class AbstractActionPlugin
         callable $proceed,
         RequestInterface $request
     ) {
+        $this->httpContext->setValue(
+            'customer_group_id',
+            $this->customerSession->getCustomerGroupId(),
+            false
+        );
         $this->eventsForThirdPartyModules->dispatchEvent("shouldDisableBoltCheckout", $this->customerSession, $this->httpContext);
         return $proceed($request);
     }

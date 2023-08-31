@@ -127,6 +127,12 @@
                         <config_path>payment/boltpay/bolt_sso</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
+                    <field id="disabled_customer_groups" translate="label comment" type="multiselect" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Disable for Customer Groups</label>
+                        <comment>Chosen customer groups won't be able to use Bolt</comment>
+                        <source_model>Bolt\Boltpay\Model\Source\Group</source_model>
+                        <can_be_empty>1</can_be_empty>
+                    </field>
                     <field id="button_color" translate="label" type="text" sortOrder="87" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Primary Color</label>
                         <config_path>payment/boltpay/button_color</config_path>
@@ -171,6 +177,7 @@
                         <label>Replace Button Selectors</label>
                         <config_path>payment/boltpay/replace_selectors</config_path>
                     </field>
+
                     <field id="totals_change_selectors" translate="label" type="textarea" sortOrder="95" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Totals Monitor Selectors</label>
                         <config_path>payment/boltpay/totals_change_selectors</config_path>

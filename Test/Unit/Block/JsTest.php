@@ -1846,6 +1846,14 @@ JS;
         $quote = TestUtils::createQuote();
         $checkoutSession->method('getQuote')->willReturn($quote);
         TestHelper::setProperty($currentMock, 'checkoutSession', $checkoutSession);
+        $httpContextMock = $this->createPartialMock(Context::class,['getValue']);
+        if ($isBoltFeatureEnabled){
+            $httpContextMock->expects(static::once())->method('getValue')
+                ->with('customer_group_id')
+                ->willReturn(1);
+        }
+
+        TestHelper::setProperty($currentMock, 'httpContext', $httpContextMock);
 
         // stub \Bolt\Boltpay\Block\BlockTrait::isPageRestricted start
         $currentMock->method('getRequest')->willReturnSelf();
