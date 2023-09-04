@@ -1480,7 +1480,7 @@ class Order extends AbstractHelper
             );
         }
         try {
-            $order->cancel()->save();
+            $this->orderManagement->cancel($order->getEntityId());
             $this->orderRepository->delete($order);
         } catch (\Exception $e) {
             $this->bugsnag->registerCallback(function ($report) use ($order) {
