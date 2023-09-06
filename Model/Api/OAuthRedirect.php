@@ -559,6 +559,12 @@ class OAuthRedirect implements OAuthRedirectInterface
             ? $this->cookieFormKey->get()
             // otherwise get it from the session or generate new one
             : $this->formKey->getFormKey();
+
+        // temporary log data
+        if (!$this->cookieFormKey->get()) {
+            $this->bugsnag->notifyError('form_key_sso', sprintf('form_key is missed in cookies after sso login, new cookie generated: %s', $formKey));
+        }
+
         $cookieMetadata = $this->getCookieMetadataFactory()->createPublicCookieMetadata();
         $cookieMetadata->setDomain($this->sessionConfig->getCookieDomain());
         $cookieMetadata->setPath($this->sessionConfig->getCookiePath());
