@@ -569,7 +569,6 @@ class OAuthRedirect implements OAuthRedirectInterface
         $cookieMetadata->setDomain($this->sessionConfig->getCookieDomain());
         $cookieMetadata->setPath($this->sessionConfig->getCookiePath());
         $cookieMetadata->setSecure($this->sessionConfig->getCookieSecure());
-        $cookieMetadata->setSameSite('Lax');
         $lifetime = $this->sessionConfig->getCookieLifetime();
         if ($lifetime !== 0) {
             $cookieMetadata->setDuration($lifetime);
