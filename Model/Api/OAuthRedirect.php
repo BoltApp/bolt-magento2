@@ -554,17 +554,26 @@ class OAuthRedirect implements OAuthRedirectInterface
      */
     private function updateFormKeyCookie()
     {
+        $formKey = ($this->cookieFormKey->get())
+            // if form key cookie was already initialized on front we should use it
+            ? $this->cookieFormKey->get()
+            // otherwise get it from the session or generate new one
+            : $this->formKey->getFormKey();
         $cookieMetadata = $this->getCookieMetadataFactory()->createPublicCookieMetadata();
         $cookieMetadata->setDomain($this->sessionConfig->getCookieDomain());
         $cookieMetadata->setPath($this->sessionConfig->getCookiePath());
         $cookieMetadata->setSecure($this->sessionConfig->getCookieSecure());
+        $cookieMetadata->setSameSite('Lax');
         $lifetime = $this->sessionConfig->getCookieLifetime();
         if ($lifetime !== 0) {
             $cookieMetadata->setDuration($lifetime);
         }
         $this->cookieFormKey->set(
-            $this->formKey->getFormKey(),
+            $formKey,
             $cookieMetadata
+        );
+        $this->formKey->set(
+            $this->cookieFormKey->get()
         );
     }
 }
