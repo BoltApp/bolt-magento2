@@ -2485,10 +2485,12 @@ class Order extends AbstractHelper
         $order->addRelatedObject($invoice);
 
         // in unexpected case order total paid could be empty, we should set it
-        if (!$order->getTotalPaid() && $order->getTotalInvoiced()) {
-            $order->setTotalPaid((float)$order->getTotalInvoiced());
-        } elseif (!$order->getTotalPaid() && !$order->getTotalInvoiced()) {
-            $order->setTotalPaid($amount);
+        if (!$order->getTotalPaid()) {
+            if ($order->getTotalInvoiced()) {
+                $order->setTotalPaid((float)$order->getTotalInvoiced());
+            } else {
+                $order->setTotalPaid($amount);
+            }
         }
 
         // pre-save required order data with will be overwritten during invoice email sending
