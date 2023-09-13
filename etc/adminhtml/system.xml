@@ -131,6 +131,7 @@
                         <label>Disable for Customer Groups</label>
                         <comment>Chosen customer groups won't be able to use Bolt</comment>
                         <source_model>Bolt\Boltpay\Model\Source\Group</source_model>
+                        <frontend_model>Bolt\Boltpay\Block\System\Config\DisableForCustomerGroup</frontend_model>
                         <can_be_empty>1</can_be_empty>
                     </field>
                     <field id="button_color" translate="label" type="text" sortOrder="87" showInDefault="1" showInWebsite="1" showInStore="0">

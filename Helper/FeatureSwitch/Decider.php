@@ -573,4 +573,16 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_AJAX_ADD_TO_CART_SUCCESS_DISABLE_TIME_OUT);
     }
+
+    /**
+     * Checks whether the feature switch for disable Bolt for customer group
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isDisableBoltForCustomerGroup()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_DISABLE_BOLT_FOR_CUSTOMER_GROUP);
+    }
 }

@@ -164,7 +164,7 @@ trait BlockTrait
      */
     public function isCustomerDisabled($customerGroupId)
     {
-        return in_array($customerGroupId, $this->configHelper->getDisabledCustomerGroups());
+        return $this->featureSwitches->isDisableBoltForCustomerGroup() && in_array($customerGroupId, $this->configHelper->getDisabledCustomerGroups());
     }
 
     /**

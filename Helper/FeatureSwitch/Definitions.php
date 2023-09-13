@@ -143,6 +143,11 @@ class Definitions
     const M2_INCLUDE_USER_GROUP_ID_INTO_CART = 'M2_INCLUDE_USER_GROUP_ID_INTO_CART';
 
     /**
+     * Disable Bolt for customer group
+     */
+    const M2_DISABLE_BOLT_FOR_CUSTOMER_GROUP = 'M2_DISABLE_BOLT_FOR_CUSTOMER_GROUP';
+
+    /**
      * Capture email to Listrak
      */
     const M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED = 'M2_CAPTURE_EMAIL_TO_LISTRAK_ENABLED';
@@ -661,6 +666,12 @@ class Definitions
         ],
         self::M2_AJAX_ADD_TO_CART_SUCCESS_DISABLE_TIME_OUT => [
             self::NAME_KEY        => self::M2_AJAX_ADD_TO_CART_SUCCESS_DISABLE_TIME_OUT,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_DISABLE_BOLT_FOR_CUSTOMER_GROUP => [
+            self::NAME_KEY        => self::M2_DISABLE_BOLT_FOR_CUSTOMER_GROUP,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
