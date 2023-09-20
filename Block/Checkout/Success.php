@@ -22,6 +22,7 @@ use Bolt\Boltpay\Block\BlockTrait;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Framework\App\Http\Context as HttpContext;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
 use Magento\Framework\Session\SessionManager as CheckoutSession;
@@ -46,6 +47,7 @@ class Success extends Template
         Decider $featureSwitches,
         CheckoutSession $checkoutSession,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
+        HttpContext $httpContext,
         array $data = []
     ) {
         parent::__construct($context, $data);
@@ -53,7 +55,7 @@ class Success extends Template
         $this->featureSwitches = $featureSwitches;
         $this->checkoutSession = $checkoutSession;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
-
+        $this->httpContext = $httpContext;
     }
 
     /**

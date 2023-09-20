@@ -21,6 +21,7 @@ use Bolt\Boltpay\Block\BlockTrait;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Framework\App\Http\Context as HttpContext;
 use Magento\Framework\View\Element\Template;
 use Magento\Theme\Block\Html\Pager;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory;
@@ -72,8 +73,10 @@ class CreditCard extends Template
         Decider $featureSwitches,
         CheckoutSession $checkoutSession,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
+        HttpContext $httpContext,
         array $data = []
     ) {
+        $this->httpContext = $httpContext;
         $this->formKey = $formKey;
         $this->collectionFactory = $collectionFactory;
         $this->customerSession = $customerSession;

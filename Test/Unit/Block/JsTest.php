@@ -1833,8 +1833,9 @@ JS;
                 'getFullActionName'
             ]
         );
-        $deciderMock = $this->createPartialMock(Decider::class, ['isBoltEnabled']);
+        $deciderMock = $this->createPartialMock(Decider::class, ['isBoltEnabled', 'isAllowDisablingBoltForCustomerGroup']);
         $deciderMock->method('isBoltEnabled')->willReturn($isBoltFeatureEnabled);
+        $deciderMock->method('isAllowDisablingBoltForCustomerGroup')->willReturn(false);
         TestHelper::setProperty($currentMock, 'featureSwitches', $deciderMock);
         $configHelper = $this->objectManager->create(Config::class);
         TestHelper::setProperty($currentMock, 'configHelper', $configHelper);
@@ -1846,6 +1847,14 @@ JS;
         $quote = TestUtils::createQuote();
         $checkoutSession->method('getQuote')->willReturn($quote);
         TestHelper::setProperty($currentMock, 'checkoutSession', $checkoutSession);
+        $httpContextMock = $this->createPartialMock(Context::class,['getValue']);
+        if ($isBoltFeatureEnabled){
+            $httpContextMock->expects(static::once())->method('getValue')
+                ->with('customer_group_id')
+                ->willReturn(1);
+        }
+
+        TestHelper::setProperty($currentMock, 'httpContext', $httpContextMock);
 
         // stub \Bolt\Boltpay\Block\BlockTrait::isPageRestricted start
         $currentMock->method('getRequest')->willReturnSelf();

@@ -31,7 +31,7 @@ trait BlockTrait
 
     /** @var Decider */
     public $featureSwitches;
-    
+
     /**
      * @var EventsForThirdPartyModules
      */
@@ -41,6 +41,8 @@ trait BlockTrait
      * @var CheckoutSession
      */
     public $checkoutSession;
+
+    public $httpContext;
 
     /**
      * @return mixed
@@ -157,6 +159,15 @@ trait BlockTrait
     }
 
     /**
+     * @param int $customerGroupId
+     * @return bool
+     */
+    public function isCustomerDisabled($customerGroupId)
+    {
+        return $this->featureSwitches->isAllowDisablingBoltForCustomerGroup() && in_array($customerGroupId, $this->configHelper->getDisabledCustomerGroups());
+    }
+
+    /**
      * Return true if we need to disable bolt scripts and button
      * Checks whether the module is active,
      * the page is Bolt checkout restricted and if there is an IP restriction.
@@ -168,7 +179,8 @@ trait BlockTrait
         if (!$this->featureSwitches->isBoltEnabled()) {
             return true;
         }
-        $result = !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted() || $this->isKeyMissing();
+        $isCustomerDisabled =  $this->isCustomerDisabled($this->httpContext->getValue('customer_group_id'));
+        $result = !$this->isEnabled() || $this->isPageRestricted() || $this->isIPRestricted() || $this->isKeyMissing() || $isCustomerDisabled;
         return $this->eventsForThirdPartyModules->runFilter('filterShouldDisableBoltCheckout', $result, $this->getQuoteFromCheckoutSession());
     }
 

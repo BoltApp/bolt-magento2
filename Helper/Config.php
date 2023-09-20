@@ -335,6 +335,7 @@ class Config extends AbstractHelper
      * Use Store Credit on Shopping Cart configuration path
      */
     const XML_PATH_STORE_CREDIT = 'payment/boltpay/store_credit';
+    const XML_DISABLE_CUSTOMER_GROUP = 'payment/boltpay/additional/disabled_customer_groups';
 
     /**
      * Use Store Credit on Shopping Cart configuration path
@@ -434,7 +435,7 @@ class Config extends AbstractHelper
     const XML_PATH_CONNECT_INTEGRATION_MODE = 'payment/boltpay/connect_magento_integration_mode';
 
     const XML_PATH_INSTANT_BUTTON_VARIANT = 'payment/boltpay/instant_button_variant';
-    
+
     const XML_PATH_INSTANT_BUTTON_VARIANT_PPC = 'payment/boltpay/instant_button_variant_ppc';
 
     /**
@@ -1614,6 +1615,20 @@ class Config extends AbstractHelper
         $clientIP = $this->getClientIp();
         $whitelist = $this->getIPWhitelistArray($storeId);
         return $whitelist && !in_array($clientIP, $whitelist);
+    }
+
+    /**
+     * @return array
+     */
+    public function getDisabledCustomerGroups(): array
+    {
+        $multiselectValue = (string) $this->getScopeConfig()->getValue(self::XML_DISABLE_CUSTOMER_GROUP);
+        return array_filter(
+            explode(',', $multiselectValue),
+            function ($elem) {
+                return trim($elem) != '';
+            }
+        );
     }
 
     /**
