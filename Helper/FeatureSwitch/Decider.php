@@ -583,6 +583,6 @@ class Decider extends AbstractHelper
      */
     public function isDisableBoltForCustomerGroup()
     {
-        return $this->isSwitchEnabled(Definitions::M2_DISABLE_BOLT_FOR_CUSTOMER_GROUP);
+        return $this->isSwitchEnabled(Definitions::M2_ALLOW_DISABLING_BOLT_FOR_CUSTOMER_GROUP);
     }
 }

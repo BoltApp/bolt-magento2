@@ -145,7 +145,7 @@ class Definitions
     /**
      * Disable Bolt for customer group
      */
-    const M2_DISABLE_BOLT_FOR_CUSTOMER_GROUP = 'M2_DISABLE_BOLT_FOR_CUSTOMER_GROUP';
+    const M2_ALLOW_DISABLING_BOLT_FOR_CUSTOMER_GROUP = 'M2_ALLOW_DISABLING_BOLT_FOR_CUSTOMER_GROUP';
 
     /**
      * Capture email to Listrak
@@ -670,8 +670,8 @@ class Definitions
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0
         ],
-        self::M2_DISABLE_BOLT_FOR_CUSTOMER_GROUP => [
-            self::NAME_KEY        => self::M2_DISABLE_BOLT_FOR_CUSTOMER_GROUP,
+        self::M2_ALLOW_DISABLING_BOLT_FOR_CUSTOMER_GROUP => [
+            self::NAME_KEY        => self::M2_ALLOW_DISABLING_BOLT_FOR_CUSTOMER_GROUP,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0

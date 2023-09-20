@@ -178,12 +178,10 @@
                         <label>Replace Button Selectors</label>
                         <config_path>payment/boltpay/replace_selectors</config_path>
                     </field>
-
                     <field id="totals_change_selectors" translate="label" type="textarea" sortOrder="95" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Totals Monitor Selectors</label>
                         <config_path>payment/boltpay/totals_change_selectors</config_path>
                     </field>
-
                     <field id="additional_checkout_button_class" translate="label" type="text" sortOrder="105" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Additional Checkout Button Class</label>
                         <config_path>payment/boltpay/additional_checkout_button_class</config_path>
