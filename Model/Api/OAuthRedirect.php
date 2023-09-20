@@ -504,24 +504,6 @@ class OAuthRedirect implements OAuthRedirectInterface
             $this->getCookieManager()->deleteCookie('mage-cache-sessid', $metadata);
         }
 
-        try {
-            // we should force to set new "form_key" cookie here to prevent safari "session expired" issue
-            // when we are logged-in by SSO without page redirect (by using Bolt Shopper Assistant for example)
-            // in this case magento removing cookie by backend here:
-            // https://github.com/magento/magento2/blob/5844ade68b2f9632e3888c81c946068eba6328bb/app/code/Magento/PageCache/Observer/FlushFormKey.php
-            // but on safari without redirect the cookie is removed from browser (you can't see cookie on the devtool) but not in window.document object
-            // (we can see the cookie "form_key" there by checking object in browser console: "document.cookie")
-            // therefore all future requests is being called without "form_key" which is the reason of  "session expire" issue.
-            // By normal flow Magento updates that cookie in file:
-            // 2.2.0 - 2.3.0 https://github.com/magento/magento2/blob/44a7b6079bcac5ba92040b16f4f74024b4f34d09/app/code/Magento/PageCache/view/frontend/web/js/page-cache.js#L115
-            // 2.4.0 https://github.com/magento/magento2/blob/5844ade68b2f9632e3888c81c946068eba6328bb/app/code/Magento/PageCache/view/frontend/web/js/form-key-provider.js#L87
-            // Magento js above sets new cookie only in case if cookie is not exist
-            // but in our issue case magento js file is able to read cookie from document object (because cookie was not removed by safari)
-            // and doesn't update browser cookie.
-            $this->updateFormKeyCookie();
-        } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
-        }
         $redirectUrl = $this->url->getUrl('customer/account');
         $checkoutSession = $this->sessionHelper->getCheckoutSession();
 
@@ -545,26 +527,5 @@ class OAuthRedirect implements OAuthRedirectInterface
     {
         return $checkoutSession->hasQuote()
             && count($checkoutSession->getQuote()->getAllVisibleItems()) > 0;
-    }
-    /**
-     * Set form key cookie
-     *
-     * @return void
-     * @throws LocalizedException
-     */
-    private function updateFormKeyCookie()
-    {
-        $cookieMetadata = $this->getCookieMetadataFactory()->createPublicCookieMetadata();
-        $cookieMetadata->setDomain($this->sessionConfig->getCookieDomain());
-        $cookieMetadata->setPath($this->sessionConfig->getCookiePath());
-        $cookieMetadata->setSecure($this->sessionConfig->getCookieSecure());
-        $lifetime = $this->sessionConfig->getCookieLifetime();
-        if ($lifetime !== 0) {
-            $cookieMetadata->setDuration($lifetime);
-        }
-        $this->cookieFormKey->set(
-            $this->formKey->getFormKey(),
-            $cookieMetadata
-        );
     }
 }
