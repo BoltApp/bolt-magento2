@@ -1155,6 +1155,14 @@ define([
                 BoltCheckoutApiDriven.hintsBarrier.resolve(BoltCheckoutApiDriven.boltCartHints)
                 BoltCheckoutApiDriven.isPromisesResolved = true;
             }
+
+            // open the checkout if auto-open flag is set
+            // one time only on page load
+            if (BoltCheckoutApiDriven.initiateCheckout && BoltCheckoutApiDriven.allowAutoOpen) {
+                BoltCheckoutApiDriven.boltConfigure.open();
+                BoltCheckoutApiDriven.allowAutoOpen = false;
+            }
+
         }
     }
 
