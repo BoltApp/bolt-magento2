@@ -581,7 +581,7 @@ class Decider extends AbstractHelper
      *
      * @throws LocalizedException if the feature switch key is unknown
      */
-    public function isDisableBoltForCustomerGroup()
+    public function isAllowDisablingBoltForCustomerGroup()
     {
         return $this->isSwitchEnabled(Definitions::M2_ALLOW_DISABLING_BOLT_FOR_CUSTOMER_GROUP);
     }

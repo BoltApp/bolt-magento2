@@ -1833,8 +1833,9 @@ JS;
                 'getFullActionName'
             ]
         );
-        $deciderMock = $this->createPartialMock(Decider::class, ['isBoltEnabled']);
+        $deciderMock = $this->createPartialMock(Decider::class, ['isBoltEnabled', 'isAllowDisablingBoltForCustomerGroup']);
         $deciderMock->method('isBoltEnabled')->willReturn($isBoltFeatureEnabled);
+        $deciderMock->method('isAllowDisablingBoltForCustomerGroup')->willReturn(false);
         TestHelper::setProperty($currentMock, 'featureSwitches', $deciderMock);
         $configHelper = $this->objectManager->create(Config::class);
         TestHelper::setProperty($currentMock, 'configHelper', $configHelper);
