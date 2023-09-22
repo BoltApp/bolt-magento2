@@ -21,6 +21,7 @@ use Magento\Checkout\Api\PaymentInformationManagementInterface;
 use \Bolt\Boltpay\Api\RouteInsuranceManagementInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Customer\Model\Session as CustomerSession;
+use Bolt\Boltpay\ThirdPartyModules\ShipperHQ\Backend\AdminShipmentMethod as ShipperHqAdminShipmentMethod;
 
 /**
  * Plugin for {@see \PaymentInformationManagementInterface}
@@ -58,12 +59,18 @@ class PaymentInformationManagementPlugin
     private $customerSession;
 
     /**
+     * @var ShipperHqAdminShipmentMethod
+     */
+    private $shipperHqAdminShipmentMethod;
+
+    /**
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Bolt\Boltpay\Helper\Cart $cartHelper
      * @param \Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId
      * @param \Magento\Framework\Module\Manager $moduleManager
      * @param CustomerRepository $customerRepository
      * @param CustomerSession $customerSession
+     * @param ShipperHqAdminShipmentMethod $shipperHqAdminShipmentMethod
      */
     public function __construct(
         \Magento\Checkout\Model\Session $checkoutSession,
@@ -71,7 +78,8 @@ class PaymentInformationManagementPlugin
         \Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId,
         \Magento\Framework\Module\Manager $moduleManager,
         CustomerRepository $customerRepository,
-        CustomerSession $customerSession
+        CustomerSession $customerSession,
+        ShipperHqAdminShipmentMethod $shipperHqAdminShipmentMethod
     ) {
         $this->checkoutSession = $checkoutSession;
         $this->cartHelper = $cartHelper;
@@ -79,6 +87,7 @@ class PaymentInformationManagementPlugin
         $this->moduleManager = $moduleManager;
         $this->customerRepository = $customerRepository;
         $this->customerSession = $customerSession;
+        $this->shipperHqAdminShipmentMethod = $shipperHqAdminShipmentMethod;
     }
 
     public function beforeSavePaymentInformationAndPlaceOrder(
@@ -101,6 +110,11 @@ class PaymentInformationManagementPlugin
                     $this->customerSession->setCustomerDataAsLoggedIn($customer);
                 }
             }
+        }
+
+        if ($this->moduleManager->isEnabled(ShipperHqAdminShipmentMethod::SHIPPER_HQ_MODULE_NAME))
+        {
+            $this->shipperHqAdminShipmentMethod->restoreAdminShipDataInSession($cartId);
         }
 
         return [$cartId, $paymentMethod, $billingAddress];
