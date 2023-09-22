@@ -62,7 +62,7 @@ class AdminShipmentMethod
     public function __construct(
         CartHelper $cartHelper,
         BackendQuoteSession $backendQuoteSession,
-        DataObjectFactory $dataObjectFactory,
+        DataObjectFactory $dataObjectFactory
     ) {
         $this->cartHelper = $cartHelper;
         $this->backendQuoteSession = $backendQuoteSession;
