@@ -86,7 +86,7 @@ class SessionManagerPlugin
      */
     public function afterStart(
         SessionManagerInterface $subject,
-        SessionManagerInterface $resultSubject,
+        SessionManagerInterface $resultSubject
     ): SessionManagerInterface {
         try {
             $boltSessionParams = $this->getBoltSessionParamsFromRequest();
