@@ -123,7 +123,7 @@ class SessionManagerPlugin
      * @param mixed $boltSessionParams
      * @return bool
      */
-    private function isBoltSessionParamsValid(mixed $boltSessionParams): bool
+    private function isBoltSessionParamsValid($boltSessionParams): bool
     {
         if ($boltSessionParams === null) {
             return false;
@@ -156,7 +156,7 @@ class SessionManagerPlugin
      * @param mixed $boltSessionParams
      * @return void
      */
-    private function validateBoltSessionParamsType(mixed $boltSessionParams): void
+    private function validateBoltSessionParamsType($boltSessionParams): void
     {
         if (!is_array($boltSessionParams)) {
             $msg = sprintf(
