@@ -256,7 +256,7 @@ class SessionManagerPlugin
         if (!class_exists($boltSessionParam[self::BOLT_SESSION_PARAM_SESSION_CLASS_NAME_KEY])) {
             $msg = sprintf(
                 'The provided [%s] class is not exist',
-                $boltSessionParam[self::BOLT_SESSION_PARAM_SESSION_CLASS_NAME_KEY],
+                $boltSessionParam[self::BOLT_SESSION_PARAM_SESSION_CLASS_NAME_KEY]
             );
             throw new \InvalidArgumentException($msg);
         }
