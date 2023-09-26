@@ -585,4 +585,16 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_ALLOW_DISABLING_BOLT_FOR_CUSTOMER_GROUP);
     }
+
+    /**
+     * Checks whether the feature switch for bolt session params is enabled
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isBoltSessionParamsEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_BOLT_SESSION_PARAMS);
+    }
 }
