@@ -17,9 +17,13 @@
 
 namespace Bolt\Boltpay\Model;
 
+use Magento\Authorization\Model\UserContextInterface;
+use Magento\Framework\Stdlib\DateTime;
+use Magento\Framework\Stdlib\DateTime\DateTime as Date;
 use Magento\Framework\Webapi\Rest\Request;
-use Magento\Integration\Api\UserTokenReaderInterface;
-use Magento\Integration\Api\UserTokenValidatorInterface;
+use Magento\Integration\Helper\Oauth\Data as OauthHelper;
+use Magento\Integration\Model\Oauth\Token;
+use Magento\Integration\Model\Oauth\TokenFactory;
 use Magento\Integration\Api\IntegrationServiceInterface;
 use Bolt\Boltpay\Helper\IntegrationManagement as BoltIntegrationManagement;
 
@@ -29,14 +33,9 @@ use Bolt\Boltpay\Helper\IntegrationManagement as BoltIntegrationManagement;
 class RestApiRequestValidator
 {
     /**
-     * @var UserTokenReaderInterface
+     * @var TokenFactory
      */
-    private $userTokenReader;
-
-    /**
-     * @var UserTokenValidatorInterface
-     */
-    private $userTokenValidator;
+    private $tokenFactory;
 
     /**
      * @var IntegrationServiceInterface
@@ -44,18 +43,36 @@ class RestApiRequestValidator
     private $integrationService;
 
     /**
-     * @param UserTokenReaderInterface $userTokenReader
-     * @param UserTokenValidatorInterface $userTokenValidator
+     * @var DateTime
+     */
+    private $dateTime;
+
+    /**
+     * @var Date
+     */
+    private $date;
+
+    /**
+     * @var OauthHelper
+     */
+    private $oauthHelper;
+
+    /**
+     * @param TokenFactory $tokenFactory
      * @param IntegrationServiceInterface $integrationService
      */
     public function __construct(
-        UserTokenReaderInterface $userTokenReader,
-        UserTokenValidatorInterface $userTokenValidator,
-        IntegrationServiceInterface $integrationService
+        TokenFactory $tokenFactory,
+        IntegrationServiceInterface $integrationService,
+        DateTime $dateTime = null,
+        Date $date = null,
+        OauthHelper $oauthHelper = null
     ) {
-        $this->userTokenReader = $userTokenReader;
-        $this->userTokenValidator = $userTokenValidator;
+        $this->tokenFactory = $tokenFactory;
         $this->integrationService = $integrationService;
+        $this->dateTime = $dateTime;
+        $this->date = $date;
+        $this->oauthHelper = $oauthHelper;
     }
 
     /**
@@ -84,15 +101,9 @@ class RestApiRequestValidator
         }
 
         $bearerToken = $headerPieces[1];
-        try {
-            $token = $this->userTokenReader->read($bearerToken);
-        } catch (\Exception $e) {
-            return false;
-        }
+        $token = $this->tokenFactory->create()->loadByToken($bearerToken);
 
-        try {
-            $this->userTokenValidator->validate($token);
-        } catch (\Exception $e) {
+        if (!$token->getId() || $token->getRevoked() || $this->isTokenExpired($token)) {
             return false;
         }
 
@@ -113,5 +124,33 @@ class RestApiRequestValidator
         }
 
         return true;
+    }
+
+    /**
+     * Check if token is expired.
+     *
+     * @param Token $token
+     * @return bool
+     */
+    private function isTokenExpired(Token $token): bool
+    {
+        if ($token->getUserType() == UserContextInterface::USER_TYPE_ADMIN) {
+            $tokenTtl = $this->oauthHelper->getAdminTokenLifetime();
+        } elseif ($token->getUserType() == UserContextInterface::USER_TYPE_CUSTOMER) {
+            $tokenTtl = $this->oauthHelper->getCustomerTokenLifetime();
+        } else {
+            // other user-type tokens are considered always valid
+            return false;
+        }
+
+        if (empty($tokenTtl)) {
+            return false;
+        }
+
+        if ($this->dateTime->strToTime($token->getCreatedAt()) < ($this->date->gmtTimestamp() - $tokenTtl * 3600)) {
+            return true;
+        }
+
+        return false;
     }
 }
