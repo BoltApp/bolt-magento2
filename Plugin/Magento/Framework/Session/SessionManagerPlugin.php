@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Plugin\Magento\Framework\Session;
 use Magento\Framework\Session\SessionManagerInterface;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\App\ObjectManager;
+use Bolt\Boltpay\Model\RestApiRequestValidator as BoltRestApiRequestValidator;
 use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
@@ -45,6 +46,11 @@ class SessionManagerPlugin
     private $request;
 
     /**
+     * @var BoltRestApiRequestValidator
+     */
+    private $boltRestApiRequestValidator;
+
+    /**
      * @var Bugsnag
      */
     private $bugsnag;
@@ -66,13 +72,16 @@ class SessionManagerPlugin
 
     /**
      * @param Request $request
+     * @param BoltRestApiRequestValidator $boltRestApiRequestValidator
      * @param Bugsnag $bugsnag
      */
     public function __construct(
         Request $request,
+        BoltRestApiRequestValidator $boltRestApiRequestValidator,
         Bugsnag $bugsnag
     ) {
         $this->request = $request;
+        $this->boltRestApiRequestValidator = $boltRestApiRequestValidator;
         $this->bugsnag = $bugsnag;
         $this->objectManager = ObjectManager::getInstance();
     }
@@ -89,6 +98,11 @@ class SessionManagerPlugin
         SessionManagerInterface $resultSubject
     ): SessionManagerInterface {
         try {
+            // skip if request is not from bolt
+            if (!$this->boltRestApiRequestValidator->isValidBoltRequest($this->request)) {
+                return $resultSubject;
+            }
+
             $boltSessionParams = $this->getBoltSessionParamsFromRequest();
 
             if (!$this->isBoltSessionParamsValid($boltSessionParams)) {
