@@ -64,9 +64,9 @@ class RestApiRequestValidator
     public function __construct(
         TokenFactory $tokenFactory,
         IntegrationServiceInterface $integrationService,
-        DateTime $dateTime = null,
-        Date $date = null,
-        OauthHelper $oauthHelper = null
+        DateTime $dateTime,
+        Date $date,
+        OauthHelper $oauthHelper
     ) {
         $this->tokenFactory = $tokenFactory;
         $this->integrationService = $integrationService;
