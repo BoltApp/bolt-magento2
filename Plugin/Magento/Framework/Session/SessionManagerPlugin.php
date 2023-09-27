@@ -21,6 +21,7 @@ use Magento\Framework\Session\SessionManagerInterface;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\App\ObjectManager;
 use Bolt\Boltpay\Model\RestApiRequestValidator as BoltRestApiRequestValidator;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Bugsnag;
 
 /**
@@ -56,6 +57,11 @@ class SessionManagerPlugin
     private $bugsnag;
 
     /**
+     * @var Decider
+     */
+    private $decider;
+
+    /**
      * @var ObjectManager
      */
     private $objectManager;
@@ -73,15 +79,18 @@ class SessionManagerPlugin
     /**
      * @param Request $request
      * @param BoltRestApiRequestValidator $boltRestApiRequestValidator
+     * @param Decider $decider
      * @param Bugsnag $bugsnag
      */
     public function __construct(
         Request $request,
         BoltRestApiRequestValidator $boltRestApiRequestValidator,
+        Decider $decider,
         Bugsnag $bugsnag
     ) {
         $this->request = $request;
         $this->boltRestApiRequestValidator = $boltRestApiRequestValidator;
+        $this->decider = $decider;
         $this->bugsnag = $bugsnag;
         $this->objectManager = ObjectManager::getInstance();
     }
@@ -98,6 +107,10 @@ class SessionManagerPlugin
         SessionManagerInterface $resultSubject
     ): SessionManagerInterface {
         try {
+            if (!$this->decider->isBoltSessionParamsEnabled()) {
+                return $resultSubject;
+            }
+
             // skip if request is not from bolt
             if (!$this->boltRestApiRequestValidator->isValidBoltRequest($this->request)) {
                 return $resultSubject;
