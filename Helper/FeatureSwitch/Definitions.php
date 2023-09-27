@@ -328,7 +328,7 @@ class Definitions
     const M2_AJAX_ADD_TO_CART_SUCCESS_DISABLE_TIME_OUT = 'M2_AJAX_ADD_TO_CART_SUCCESS_DISABLE_TIME_OUT';
 
     /**
-     * Enable disabling ajax add to cart success event time out
+     * Bolt session params flow enabling
      */
     const M2_BOLT_SESSION_PARAMS = 'M2_BOLT_SESSION_PARAMS';
 
