@@ -40,4 +40,8 @@
         <plugin name="bolt_boltpay_webapirest_magento_checkout_api_payment_information_management_plugin"
                 type="Bolt\Boltpay\Plugin\WebapiRest\Magento\Checkout\Api\PaymentInformationManagementPlugin"/>
     </type>
+    <type name="Magento\Framework\Session\SessionManagerInterface">
+        <plugin name="bolt_boltpay_webapirest_magento_framework_session_manager"
+                type="Bolt\Boltpay\Plugin\Magento\Framework\Session\SessionManagerPlugin"/>
+    </type>
 </config>
