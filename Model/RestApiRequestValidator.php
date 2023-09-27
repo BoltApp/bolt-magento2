@@ -103,17 +103,12 @@ class RestApiRequestValidator
         $bearerToken = $headerPieces[1];
         $token = $this->tokenFactory->create()->loadByToken($bearerToken);
 
-        if (!$token->getId() || $token->getRevoked() || $this->isTokenExpired($token)) {
-            return false;
-        }
-
-        $userContext = $token->getUserContext();
-        if (!$userContext->getUserId()) {
+        if (!$token->getId() || !$token->getConsumerId() || $token->getRevoked() || $this->isTokenExpired($token)) {
             return false;
         }
 
         try {
-            $integration = $this->integrationService->findByConsumerId($userContext->getUserId());
+            $integration = $this->integrationService->findByConsumerId($token->getConsumerId());
         } catch (\Exception $e) {
             return false;
         }
