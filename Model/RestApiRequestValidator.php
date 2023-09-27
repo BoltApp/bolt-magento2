@@ -51,7 +51,7 @@ class RestApiRequestValidator
     public function __construct(
         UserTokenReaderInterface $userTokenReader,
         UserTokenValidatorInterface $userTokenValidator,
-        IntegrationServiceInterface $integrationService,
+        IntegrationServiceInterface $integrationService
     ) {
         $this->userTokenReader = $userTokenReader;
         $this->userTokenValidator = $userTokenValidator;
