@@ -2577,6 +2577,7 @@ class OrderTest extends BoltTestCase
     public function cancelOrder_cancelThrowsException_notifiesExceptionAndSetsStatusAndState()
     {
         $exception = new Exception('');
+
         $order = $this->createPartialMock(
             Order::class,
             [
@@ -2586,6 +2587,7 @@ class OrderTest extends BoltTestCase
                 'getConfig'
             ]
         );
+
         $orderConfigMock = $this->createPartialMock(
             Config::class,
             [
@@ -2593,11 +2595,14 @@ class OrderTest extends BoltTestCase
             ]
         );
 
-
         $orderConfigMock->expects(static::once())->method('getStateDefaultStatus')
             ->willReturn(OrderModel::STATE_CANCELED);
 
-        $order->expects(self::once())->method('cancel')->willThrowException($exception);
+        $orderManagementMock = $this->createPartialMock(OrderManagement::class, [
+            'cancel'
+        ]);
+        $orderManagementMock->expects(self::once())->method('cancel')->willThrowException($exception);
+        TestHelper::setInaccessibleProperty($this->orderHelper,'orderManagement', $orderManagementMock);
 
         $bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
         $bugsnag->expects(self::once())->method('notifyException')->with($exception);
@@ -2668,7 +2673,7 @@ class OrderTest extends BoltTestCase
             \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_CREATING_CREDITMEMO_FROM_WEB_HOOK_ENABLED,
             $isCreatingCreditMemoFromWebHookEnabled
         );
-        
+
         $product = TestUtils::createSimpleProduct();
         $payment = $this->objectManager->create(OrderPayment::class);
         $payment->setMethod(Payment::METHOD_CODE);
@@ -2676,7 +2681,7 @@ class OrderTest extends BoltTestCase
             'transaction_reference' => 'B74N-PQXW-PYQ9',
             'transaction_state' => 'cc_payment:completed',
         ];
-        $payment->setAdditionalInformation($paymentData);        
+        $payment->setAdditionalInformation($paymentData);
         $addressData = TestUtils::createMagentoSampleAddress();
         $orderItems = [];
         $orderItem = TestUtils::createOrderItemByProduct($product, 1);
@@ -2694,11 +2699,11 @@ class OrderTest extends BoltTestCase
         $order->setTotalRefunded($orderTotalRefunded);
         $order->setGrandTotal($orderGrandTotal);
         $order->setTotalPaid($orderTotalPaid);
-        
+
         $order->setActionFlag(Order::ACTION_FLAG_UNHOLD, $orderCanShip);
         $order->setIsVirtual(!$orderCanShip);
         $order->setActionFlag(Order::ACTION_FLAG_SHIP, $orderCanShip);
-        
+
         static::assertEquals($orderState, $this->orderHelper->transactionToOrderState($transactionState, $order));
         TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
@@ -4808,7 +4813,7 @@ class OrderTest extends BoltTestCase
     public function addCustomerDetails_ifNoCustomerId_assignsFirstAndLastNameFromTransaction()
     {
         $quote = TestUtils::createQuote();
-        
+
         $transaction = [
             'order' => [
                 'cart' => [

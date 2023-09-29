@@ -2062,7 +2062,7 @@ class Order extends AbstractHelper
     protected function cancelOrder($order)
     {
         try {
-            $order->cancel();
+            $this->orderManagement->cancel($order->getEntityId());
             $order->setState(OrderModel::STATE_CANCELED);
             $order->setStatus($order->getConfig()->getStateDefaultStatus(OrderModel::STATE_CANCELED));
         } catch (\Exception $e) {
