@@ -179,7 +179,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                     if ($this->eventsForThirdPartyModules->runFilter('filterAddItemBeforeUpdateCart', false, $addItem, $this->checkoutSession)) {
                         continue;
                     }
-                    
+
                     $product = $this->getProduct($addItem['product_id'], $storeId);
                     if (!$product) {
                         // Already sent a response with error, so just return.
@@ -207,7 +207,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                     // in order to avoid missing addons in parent quote
                     $addToImmutableQuote = true;
 
-                    foreach ($immutableQuote->getItems() as $item) {
+                    foreach ($immutableQuote->getAllItems() as $item) {
                         if ($item->getSku() == $product->getSku()) {
                             $addToImmutableQuote = false;
                         }
@@ -236,7 +236,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                     if ($this->eventsForThirdPartyModules->runFilter('filterRemoveItemBeforeUpdateCart', false, $removeItem, $this->checkoutSession)) {
                         continue;
                     }
-                    
+
                     $quoteItem = $this->getQuoteItemByProduct($removeItem, $cartItems);
                     if (!$quoteItem) {
                         $this->sendErrorResponse(
