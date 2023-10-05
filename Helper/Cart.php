@@ -451,9 +451,15 @@ class Cart extends AbstractHelper
             if (!$isQuoteActive) {
                 $quote->setIsActive(true);
             }
-            $this->loadHandler->load($quote);
-            // restore quote active state
-            $quote->setIsActive($isQuoteActive);
+
+            try {
+                $this->loadHandler->load($quote);
+                // restore quote active state
+                $quote->setIsActive($isQuoteActive);
+            } catch (\Exception $e) {
+                $this->bugsnag->notifyException($e);
+            }
+
             $this->quotes[$quoteId] = $quote;
         }
 
