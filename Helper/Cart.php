@@ -71,7 +71,6 @@ use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Magento\Store\Model\Store;
 use Magento\Framework\App\ObjectManager;
 use Zend_Http_Client_Exception;
-use Magento\Quote\Model\QuoteRepository\LoadHandler;
 
 /**
  * Boltpay Cart helper
@@ -294,11 +293,6 @@ class Cart extends AbstractHelper
     private $quoteIdMaskFactory;
 
     /**
-     * @var LoadHandler
-     */
-    private $loadHandler;
-
-    /**
      * @param Context $context
      * @param CheckoutSession $checkoutSession
      * @param ProductRepository $productRepository
@@ -334,7 +328,6 @@ class Cart extends AbstractHelper
      * @param Store $store
      * @param QuoteIdMaskResourceModel|null $quoteIdMaskResourceModel
      * @param QuoteIdMaskFactory|null $quoteIdMaskFactory
-     * @param LoadHandler|null $loadHandler
      */
     public function __construct(
         Context $context,
@@ -371,8 +364,7 @@ class Cart extends AbstractHelper
         PriceHelper $priceHelper,
         Store $store,
         QuoteIdMaskResourceModel $quoteIdMaskResourceModel = null,
-        QuoteIdMaskFactory $quoteIdMaskFactory = null,
-        LoadHandler $loadHandler = null
+        QuoteIdMaskFactory $quoteIdMaskFactory = null
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -411,8 +403,6 @@ class Cart extends AbstractHelper
             ObjectManager::getInstance()->get(QuoteIdMaskResourceModel::class);
         $this->quoteIdMaskFactory = $quoteIdMaskFactory ?:
             ObjectManager::getInstance()->get(QuoteIdMaskFactory::class);
-        $this->loadHandler = $loadHandler ?:
-            ObjectManager::getInstance()->get(LoadHandler::class);
     }
 
     /**
@@ -445,21 +435,6 @@ class Cart extends AbstractHelper
             if ($quote === false) {
                 return false;
             }
-
-            $isQuoteActive = $quote->getIsActive();
-            // load handler works only for active quote
-            if (!$isQuoteActive) {
-                $quote->setIsActive(true);
-            }
-
-            try {
-                $this->loadHandler->load($quote);
-            } catch (\Exception $e) {
-                $this->bugsnag->notifyException($e);
-            }
-
-            // restore quote active state
-            $quote->setIsActive($isQuoteActive);
 
             $this->quotes[$quoteId] = $quote;
         }
