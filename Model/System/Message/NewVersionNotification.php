@@ -61,7 +61,7 @@ class NewVersionNotification implements MessageInterface
      */
     public function isDisplayed()
     {
-        if ($this->config->getNewPluginVersionNotificationEnabled()) {
+        if ($this->config->getNewPluginVersionNotificationEnabled() && $this->getNewVersionInfo()) {
             return true;
         }
         return false;
