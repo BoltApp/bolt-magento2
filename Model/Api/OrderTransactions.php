@@ -47,7 +47,7 @@ class OrderTransactions implements OrderTransactionsInterface
      */
     public function execute(
         TransactionInterface $transaction,
-        array $additionalInformation
+        $additionalInformation
     ): int {
         $transaction->setData(
             TransactionInterface::ADDITIONAL_INFORMATION,
