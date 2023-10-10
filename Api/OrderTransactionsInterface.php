@@ -31,11 +31,11 @@ interface OrderTransactionsInterface
      * Save order transaction
      *
      * @param TransactionInterface $transaction
-     * @param string[] $additionalInformation
+     * @param mixed $additionalInformation
      * @return int
      */
     public function execute(
         TransactionInterface $transaction,
-        array $additionalInformation
+        $additionalInformation
     ): int;
 }
