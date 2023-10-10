@@ -31,7 +31,7 @@ interface OrderTransactionsInterface
      * Save order transaction
      *
      * @param TransactionInterface $transaction
-     * @param string[] $additionalInformation
+     * @param $additionalInformation
      * @return int
      */
     public function execute(
