@@ -291,4 +291,10 @@
 - Additional:
   - Fixes a bug in the M2 Admin Portal that impacted the visibility of the sales order void button after order void in the M2. 
   - Fixes a bug in the M2 Admin Portal that prevented merchants from using different Bolt Divisions at the M2 Store level. Previously, this was only possible at the website level.
+## [v2.27.3](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.3) 2023-10-12
+- New:
+  - Support added for Extend Warranty.
+- Additional:
+  - Fixes a bug when customer coupon code usage limit was not restored after failed payment.
+  - Fixes a bug when Bolt mini cart button would sometimes not get rendered in Fetch Cart flow under some conditions such as slow internet connection (race condition issue).
 
