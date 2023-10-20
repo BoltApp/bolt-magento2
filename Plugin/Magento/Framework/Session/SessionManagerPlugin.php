@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Plugin\Magento\Framework\Session;
 use Magento\Framework\Session\SessionManagerInterface;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Framework\App\ObjectManager;
+use Magento\Framework\Serialize\Serializer\Json;
 use Bolt\Boltpay\Model\RestApiRequestValidator as BoltRestApiRequestValidator;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -29,9 +30,9 @@ use Bolt\Boltpay\Helper\Bugsnag;
  */
 class SessionManagerPlugin
 {
-    const BOLT_SESSION_PARAMS_KEY = 'bolt_session_params';
+    const BOLT_SESSION_PARAMS_HEADER_KEY = 'X-Bolt-Session-Params';
 
-    const BOLT_SESSION_PARAM_BUGSNAG_ERROR_NAME = self::BOLT_SESSION_PARAMS_KEY . '_error';
+    const BOLT_SESSION_PARAM_BUGSNAG_ERROR_NAME = self::BOLT_SESSION_PARAMS_HEADER_KEY . '_error';
 
     const BOLT_SESSION_PARAM_NAME_KEY = 'name';
 
@@ -67,6 +68,11 @@ class SessionManagerPlugin
     private $objectManager;
 
     /**
+     * @var Json
+     */
+    private $json;
+
+    /**
      * Available types of bolt_session_param properties
      *
      * @var string[]
@@ -79,17 +85,20 @@ class SessionManagerPlugin
     /**
      * @param Request $request
      * @param BoltRestApiRequestValidator $boltRestApiRequestValidator
+     * @param Json $json
      * @param Decider $decider
      * @param Bugsnag $bugsnag
      */
     public function __construct(
         Request $request,
         BoltRestApiRequestValidator $boltRestApiRequestValidator,
+        Json $json,
         Decider $decider,
         Bugsnag $bugsnag
     ) {
         $this->request = $request;
         $this->boltRestApiRequestValidator = $boltRestApiRequestValidator;
+        $this->json = $json;
         $this->decider = $decider;
         $this->bugsnag = $bugsnag;
         $this->objectManager = ObjectManager::getInstance();
@@ -134,14 +143,14 @@ class SessionManagerPlugin
     }
 
     /**
-     * Returns bolt session params data from request
+     * Returns bolt session params data from request header
      *
      * @return array|null
      */
     private function getBoltSessionParamsFromRequest(): ?array
     {
-        $bodyParams = $this->request->getBodyParams();
-        return $bodyParams[self::BOLT_SESSION_PARAMS_KEY] ?? null;
+        $boltSessionParamsHeader = $this->request->getHeader(self::BOLT_SESSION_PARAMS_HEADER_KEY);
+        return $boltSessionParamsHeader ? $this->json->unserialize($boltSessionParamsHeader) : null;
     }
 
     /**
@@ -166,8 +175,8 @@ class SessionManagerPlugin
             $this->bugsnag->notifyError(
                 self::BOLT_SESSION_PARAM_BUGSNAG_ERROR_NAME,
                 sprintf(
-                    'The %s request param validation issue: %s',
-                    self::BOLT_SESSION_PARAMS_KEY,
+                    'The %s request header param validation issue: %s',
+                    self::BOLT_SESSION_PARAMS_HEADER_KEY,
                     $e->getMessage()
                 )
             );
@@ -187,8 +196,8 @@ class SessionManagerPlugin
     {
         if (!is_array($boltSessionParams)) {
             $msg = sprintf(
-                'The [%s] request param should be array, [%s] given',
-                self::BOLT_SESSION_PARAMS_KEY,
+                'The [%s] request header param should be json array, [%s] given',
+                self::BOLT_SESSION_PARAMS_HEADER_KEY,
                 gettype($boltSessionParams)
             );
             throw new \InvalidArgumentException($msg);
