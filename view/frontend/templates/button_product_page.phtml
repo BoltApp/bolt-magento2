@@ -66,7 +66,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
 
             var customer = customerData.get('customer');
             var isGuestCheckoutAllowed = <?= /* @noEscape */ $block->isGuestCheckoutAllowed(); ?>;
-            var itemPrice = <?= /* @noEscape */ $block->getProduct()->getFinalPrice(); ?>;
+            var itemPrice = <?= /* @noEscape */ $block->getProduct()->getPriceInfo()->getPrice('final_price')->getValue(); ?>;
 
             var settings = window.boltConfig;
             var trackCallbacks = settings.trackCallbacks;
@@ -433,7 +433,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
             // options change in updatePrice event listened below.
             // The final item price is the sum of all prices stored here.
             var itemPrices = {
-                basePrice: <?= /* @noEscape */ $block->getProduct()->getFinalPrice(); ?>
+                basePrice: <?= /* @noEscape */ $block->getProduct()->getPriceInfo()->getPrice('final_price')->getValue(); ?>
             };
 
             /**
