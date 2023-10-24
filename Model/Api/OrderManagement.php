@@ -32,8 +32,11 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\Webapi\Exception as WebApiException;
 use Magento\Newsletter\Model\SubscriberFactory;
+use Magento\Payment\Gateway\Command\CommandException;
 use Magento\Sales\Model\Order as OrderModel;
 use \Magento\Sales\Model\Service\OrderService;
+use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Api\PaymentFailuresInterface;
 
 /**
  * Class OrderManagement
@@ -104,6 +107,16 @@ class OrderManagement implements OrderManagementInterface
     private $subscriberFactory;
 
     /**
+     * @var OrderRepositoryInterface
+     */
+    private $orderRepository;
+
+    /**
+     * @var PaymentFailuresInterface
+     */
+    private $paymentFailures;
+
+    /**
      * @param HookHelper $hookHelper
      * @param OrderHelper $orderHelper
      * @param LogHelper $logHelper
@@ -116,6 +129,8 @@ class OrderManagement implements OrderManagementInterface
      * @param Decider $decider
      * @param OrderService $orderService
      * @param SubscriberFactory $subscriberFactory
+     * @param OrderRepositoryInterface $orderRepository
+     * @param PaymentFailuresInterface $paymentFailures
      */
     public function __construct(
         HookHelper $hookHelper,
@@ -129,7 +144,9 @@ class OrderManagement implements OrderManagementInterface
         CartHelper $cartHelper,
         Decider $decider,
         OrderService $orderService,
-        SubscriberFactory $subscriberFactory
+        SubscriberFactory $subscriberFactory,
+        OrderRepositoryInterface $orderRepository,
+        PaymentFailuresInterface $paymentFailures
     ) {
         $this->hookHelper   = $hookHelper;
         $this->orderHelper  = $orderHelper;
@@ -143,6 +160,8 @@ class OrderManagement implements OrderManagementInterface
         $this->decider = $decider;
         $this->orderService = $orderService;
         $this->subscriberFactory = $subscriberFactory;
+        $this->orderRepository = $orderRepository;
+        $this->paymentFailures = $paymentFailures;
     }
 
     /**
@@ -432,22 +451,33 @@ class OrderManagement implements OrderManagementInterface
     }
 
     /**
-     * Places an order by order ID.
-     * We need this endpoint because we skip order place during order creation
-     * as transaction might be failed on bolt side
-     * & we don't want to trigger some after events if transaction failed.
+     *  Places an order by order ID.
+     *  We need this endpoint because we skip order place during order creation
+     *  as transaction might be failed on bolt side
+     *  & we don't want to trigger some after events if transaction failed.
      *
-     * @param int $id The order ID.
-     * @param mixed $transactionData Additional transaction information.
+     * @param $id
+     * @param $transactionData
      * @return \Magento\Sales\Api\Data\OrderInterface
-     * @throws NoSuchEntityException
-     * @throws WebapiException
-     * @throws \Exception
+     * @throws CommandException
      */
     public function placeOrder($id, $transactionData)
     {
         $order = $this->orderHelper->getOrderById($id);
-        return $this->orderService->place($order);
+        try {
+            $order->place();
+        } catch (CommandException $e) {
+            $this->paymentFailures->handle((int)$order->getQuoteId(), __($e->getMessage()));
+            throw $e;
+        }
+
+        try {
+            $order = $this->orderRepository->save($order);
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+            throw $e;
+        }
+        return $order;
     }
 
     /**
