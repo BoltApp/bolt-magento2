@@ -684,8 +684,8 @@ class Definitions
         self::M2_BOLT_SESSION_PARAMS => [
             self::NAME_KEY        => self::M2_BOLT_SESSION_PARAMS,
             self::VAL_KEY         => true,
-            self::DEFAULT_VAL_KEY => false,
-            self::ROLLOUT_KEY     => 0
+            self::DEFAULT_VAL_KEY => true,
+            self::ROLLOUT_KEY     => 100
         ],
     ];
 }
