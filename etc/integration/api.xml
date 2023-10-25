@@ -57,7 +57,7 @@
             <resource name="Magento_SalesRule::quote"/>
             <resource name="Magento_Backend::stores" />
             <resource name="Magento_Backend::stores_settings" />
-            <resource name="Magento_Backend::stores_attributes" />
+            <resource name="Magento_Catalog::attributes_attributes" />
             <resource name="Magento_Backend::store" />
             <resource name="Magento_GiftCardAccount::customer_giftcardaccount"/>
             <resource name="Aheadworks_Giftcard::giftcard_codes"/>
