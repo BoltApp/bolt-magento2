@@ -17,11 +17,13 @@
 
 namespace Bolt\Boltpay\Test\Unit\Plugin;
 
+use Bolt\Boltpay\Helper\Config as HelperConfig;
 use Bolt\Boltpay\Plugin\ClearQuote;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Store\Model\ScopeInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 
 /**
@@ -51,6 +53,16 @@ class ClearQuoteTest extends BoltTestCase
      */
     public function afterClearQuote()
     {
+        TestUtils::setupBoltConfig(
+            [
+                [
+                    'path'    => \Bolt\Boltpay\Helper\Config::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+                    'value'   => true,
+                    'scope'   => ScopeInterface::SCOPE_STORE,
+                    'scopeId' => 0,
+                ]
+            ]
+        );
         $checkoutSession = $this->objectManager->create(CheckoutSession::class);
         $quote = TestUtils::createQuote();
         TestHelper::setInaccessibleProperty($this->plugin,'quoteToRestore', $quote);
@@ -68,6 +80,17 @@ class ClearQuoteTest extends BoltTestCase
      */
     public function beforeClearQuote_withGetQuoteByIdIsNotCalled_returnNull($currentQuoteId, $orderQuoteId)
     {
+        TestUtils::setupBoltConfig(
+            [
+                [
+                    'path'    => \Bolt\Boltpay\Helper\Config::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+                    'value'   => true,
+                    'scope'   => ScopeInterface::SCOPE_STORE,
+                    'scopeId' => 0,
+                ]
+            ]
+        );
+
         $checkoutSession = $this->objectManager->create(CheckoutSession::class);
         $checkoutSession->getQuote()->setId($currentQuoteId);
         $checkoutSession->setLastSuccessQuoteId($orderQuoteId);
@@ -92,6 +115,17 @@ class ClearQuoteTest extends BoltTestCase
      */
     public function beforeClearQuote_withGetQuoteByIdIsCalled_returnNull()
     {
+        TestUtils::setupBoltConfig(
+            [
+                [
+                    'path'    => \Bolt\Boltpay\Helper\Config::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+                    'value'   => true,
+                    'scope'   => ScopeInterface::SCOPE_STORE,
+                    'scopeId' => 0,
+                ]
+            ]
+        );
+
         $sessionQuote = TestUtils::createQuote();
         /** @var CheckoutSession $checkoutSession */
         $checkoutSession = $this->objectManager->create(CheckoutSession::class);
@@ -103,5 +137,26 @@ class ClearQuoteTest extends BoltTestCase
         $checkoutSession->setLastSuccessQuoteId($quoteSuccess->getId());
         $this->assertNull($this->plugin->beforeClearQuote($checkoutSession));
         $this->assertEquals($sessionQuote->getId(), TestHelper::getProperty($this->plugin,'quoteToRestore')->getId());
+    }
+
+    /**
+     * @test
+     * @covers ::beforeClearQuote
+     */
+    public function beforeClearQuote_ifPpcIsDisabled_returnNull()
+    {
+        TestUtils::setupBoltConfig(
+            [
+                [
+                    'path'    => \Bolt\Boltpay\Helper\Config::XML_PATH_PRODUCT_PAGE_CHECKOUT,
+                    'value'   => false,
+                    'scope'   => ScopeInterface::SCOPE_STORE,
+                    'scopeId' => 0,
+                ]
+            ]
+        );
+
+        $checkoutSession = $this->objectManager->create(CheckoutSession::class);
+        $this->assertNull($this->plugin->beforeClearQuote($checkoutSession));
     }
 }

@@ -27,7 +27,7 @@ class ClearQuote
      * @var CartHelper
      */
     private $cartHelper;
-    
+
     /**
      * @var ConfigHelper
      */
@@ -57,6 +57,9 @@ class ClearQuote
      */
     public function beforeClearQuote(CheckoutSession $subject)
     {
+        if (!$this->configHelper->getProductPageCheckoutFlag()) {
+            return null;
+        }
         // We don't want to clear quote
         // in Product page checkout (PPC) flow
         $this->quoteToRestore = null;
@@ -87,7 +90,7 @@ class ClearQuote
      */
     public function afterClearQuote(CheckoutSession $subject)
     {
-        if ($this->quoteToRestore) {
+        if ($this->configHelper->getProductPageCheckoutFlag() && $this->quoteToRestore) {
             $subject->replaceQuote($this->quoteToRestore);
             return $subject;
         }
