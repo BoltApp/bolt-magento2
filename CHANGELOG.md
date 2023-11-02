@@ -297,7 +297,7 @@
 - Additional:
   - Fixes a bug when customer coupon code usage limit was not restored after failed payment.
   - Fixes a bug when Bolt mini cart button would sometimes not get rendered in Fetch Cart flow under some conditions such as slow internet connection (race condition issue).
-## [v2.27.4](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.4) 2023-10-31
+## [v2.27.4](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.4) 2023-11-02
 - New:
   - Support added for Multicurrency stores.
 - Additional:
