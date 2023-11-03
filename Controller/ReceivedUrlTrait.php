@@ -58,10 +58,10 @@ trait ReceivedUrlTrait
      * @var OrderHelper
      */
     private $orderHelper;
-    
+
     /** @var CacheInterface */
     private $cache;
-    
+
     /** @var Serialize */
     private $serialize;
 
@@ -91,6 +91,11 @@ trait ReceivedUrlTrait
 
                 /** @var Quote $quote */
                 $quote = $this->getQuoteById($order->getQuoteId());
+                $featureSwitchHelper = $this->cartHelper->getFeatureSwitchDeciderHelper();
+                if ($featureSwitchHelper->isAPIDrivenIntegrationEnabled() && $featureSwitchHelper->isSaveCustomerCreditCardEnabled()) {
+                    $reference = $this->getReferenceFromPayload($payloadArray);
+                    $this->orderHelper->saveCustomerCreditCard($reference, $storeId);
+                }
 
                 if ($this->redirectToAdminIfNeeded($quote)) {
                     // redirected
@@ -101,7 +106,7 @@ trait ReceivedUrlTrait
                     $reference = $this->getReferenceFromPayload($payloadArray);
                     try {
                         if (
-                            $this->cartHelper->getFeatureSwitchDeciderHelper()->isSetOrderPaymentInfoDataOnSuccessPage()
+                            $featureSwitchHelper->isSetOrderPaymentInfoDataOnSuccessPage()
                             && ($orderPayment = $order->getPayment())
                             && ($transaction = $this->orderHelper->fetchTransactionInfo($reference))) {
                             $this->orderHelper->setOrderPaymentInfoData($orderPayment, $transaction);
@@ -134,9 +139,9 @@ trait ReceivedUrlTrait
 
                 // add order information to the session
                 $this->clearOrderSession($order, $redirectUrl);
-                
+
                 $cacheIdentifier = ReceivedUrlInterface::BOLT_ORDER_SUCCESS_PREFIX . $this->checkoutSession->getSessionId();
-                
+
                 $sessionData = [
                     "LastQuoteId"   => $quote->getId(),
                     "LastSuccessQuoteId"   => $quote->getId(),
@@ -145,7 +150,7 @@ trait ReceivedUrlTrait
                     "LastRealOrderId"   => $order->getIncrementId(),
                     "LastOrderStatus"   => $order->getStatus(),
                 ];
-                
+
                 $this->cache->save($this->serialize->serialize($sessionData), $cacheIdentifier, [], 600);
 
                 $this->_redirect($redirectUrl);
