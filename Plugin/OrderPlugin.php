@@ -29,12 +29,12 @@ class OrderPlugin
      * @var \Magento\Framework\App\RequestInterface
      */
     private $request;
-    
+
     /**
      * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
      */
     private $featureSwitches;
-    
+
     /**
      * @var array
      */
@@ -88,7 +88,7 @@ class OrderPlugin
         } elseif (!$subject->getState() || $state === Order::STATE_NEW) {
             $state = Order::STATE_PENDING_PAYMENT;
         }
-         
+
         // When the create_order hook (thread 1) takes a lot of time to execute and returns a timeout, the authorize/payment hook (thread 2) is sent to Magento.
         // It updates the order prior to the create_order hook (thread 1) process.
         // This ensures that the order in processing/complete/closed status won't be updated back to pending_review.
@@ -96,7 +96,7 @@ class OrderPlugin
             && ($state === Order::STATE_PENDING_PAYMENT || $state === Order::STATE_NEW)) {
             return [$this->oldState];
         }
-        
+
         return [$state];
     }
 
@@ -117,12 +117,12 @@ class OrderPlugin
         }
 
         // Recharge customer with an existing Bolt credit card is a custom behavior of Bolt plugin,
-        // so feature switch M2_DISALLOW_ORDER_STATUS_OVERRIDE does not affect it. 
+        // so feature switch M2_DISALLOW_ORDER_STATUS_OVERRIDE does not affect it.
         if ($subject->getIsRechargedOrder()) {
             // Check and set the recharged order state to processing
             return [Order::STATE_PROCESSING];
         }
-        
+
         // The order state is for Magento to understand and process the order in a defined workflow.
         // Whereas, the order status is for store owners to understand and process the order in a workflow.
         // The merchant may create any number of custom order statuses to manage the exact order flow.
@@ -130,7 +130,7 @@ class OrderPlugin
         if ($this->featureSwitches->isDisallowOrderStatusOverride()) {
             return [$status];
         }
-        
+
         $oldStatus = $subject->getStatus();
 
         if ($status === \Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATUS_PENDING) {
@@ -143,7 +143,7 @@ class OrderPlugin
         ) {
             $status = $subject->getConfig()->getStateDefaultStatus(Order::STATE_PENDING_PAYMENT);
         }
-         
+
         // When the create_order hook (thread 1) takes a lot of time to execute and returns a timeout, the authorize/payment hook (thread 2) is sent to Magento.
         // It updates the order prior to the create_order hook (thread 1) process.
         // This ensures that the order in processing/complete/closed status won't be updated back to pending_review.
@@ -151,7 +151,7 @@ class OrderPlugin
             && ($status === Order::STATE_PENDING_PAYMENT || $status === Order::STATE_NEW)) {
             return [$oldStatus];
         }
-        
+
         return [$status];
     }
 
@@ -166,6 +166,10 @@ class OrderPlugin
      */
     public function aroundPlace(Order $subject, callable $proceed)
     {
+        if ($this->featureSwitches->isPlaceOrderCallAlwaysEnabled()) {
+            return $proceed();
+        }
+
         $isRechargedOrder = $this->request->getParam('bolt-credit-cards');
         // Move on if the order payment method is not Bolt
         if (!$subject->getPayment()

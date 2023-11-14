@@ -597,4 +597,16 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_BOLT_SESSION_PARAMS);
     }
+
+    /**
+     * Checks whether the feature switch for placing an order in pending payment state is enabled
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isPlaceOrderCallAlwaysEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_PLACE_ORDER_CALL_ALWAYS);
+    }
 }
