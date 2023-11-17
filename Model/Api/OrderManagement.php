@@ -464,6 +464,10 @@ class OrderManagement implements OrderManagementInterface
     public function placeOrder($id, $transactionData)
     {
         $order = $this->orderHelper->getOrderById($id);
+        if ($this->decider->isPlaceOrderCallAlwaysEnabled()) {
+            return $order;
+        }
+
         try {
             $order->place();
         } catch (CommandException $e) {
