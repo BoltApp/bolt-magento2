@@ -599,14 +599,14 @@ class Decider extends AbstractHelper
     }
 
     /**
-     * Checks whether the feature switch for placing an order in pending payment state is enabled
+     * Checks whether the feature switch for postpone order place call is enabled
      *
      * @return bool whether the feature switch is enabled
      *
      * @throws LocalizedException if the feature switch key is unknown
      */
-    public function isPlaceOrderCallAlwaysEnabled()
+    public function isOrderPlaceCallNotPostponed()
     {
-        return $this->isSwitchEnabled(Definitions::M2_PLACE_ORDER_CALL_ALWAYS);
+        return $this->isSwitchEnabled(Definitions::M2_DO_NOT_POSTPONE_ORDER_PLACE_CALL);
     }
 }

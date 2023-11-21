@@ -166,7 +166,9 @@ class OrderPlugin
      */
     public function aroundPlace(Order $subject, callable $proceed)
     {
-        if ($this->featureSwitches->isPlaceOrderCallAlwaysEnabled()) {
+        // call original method if the feature switch is enabled
+        // for example: the amasty gift card extension uses the initial order place method to make correct gift cards transactions
+        if ($this->featureSwitches->isOrderPlaceCallNotPostponed()) {
             return $proceed();
         }
 
@@ -202,6 +204,12 @@ class OrderPlugin
      */
     public function afterPlace($subject, $result)
     {
+        // we don't update the order state if the order is already in the Order::STATE_NEW state
+        // because we are not skipping the Order::place call in this case
+        if ($this->featureSwitches->isOrderPlaceCallNotPostponed()) {
+            return $result;
+        }
+
         // Skip if the order payment method is not Bolt
         if (!$subject->getPayment()
             || $subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE
@@ -229,6 +237,12 @@ class OrderPlugin
      */
     public function afterSetState($subject, $result)
     {
+        // we don't want to call order place twice
+        // because we are not skipping the order place call in this case
+        if ($this->featureSwitches->isOrderPlaceCallNotPostponed()) {
+            return $result;
+        }
+
         // Skip if the order payment method is not Bolt
         if (!$subject->getPayment()
             || $subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE
