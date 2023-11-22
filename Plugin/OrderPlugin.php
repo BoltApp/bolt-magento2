@@ -67,6 +67,10 @@ class OrderPlugin
      */
     public function beforeSetState(Order $subject, $state)
     {
+        if ($this->featureSwitches->isOrderPlaceCallNotPostponed()) {
+            return [$state];
+        }
+
         // Store the initial order state.
         // Used in conditionally calling Order::place just once
         // in the transition from Order::STATE_PENDING_PAYMENT to Order::STATE_NEW.
@@ -110,6 +114,10 @@ class OrderPlugin
      */
     public function beforeSetStatus(Order $subject, $status)
     {
+        if ($this->featureSwitches->isOrderPlaceCallNotPostponed()) {
+            return [$status];
+        }
+
         if (!$subject->getPayment()
             || $subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE
         ) {
