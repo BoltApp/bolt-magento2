@@ -332,6 +332,11 @@ class Definitions
      */
     const M2_BOLT_SESSION_PARAMS = 'M2_BOLT_SESSION_PARAMS';
 
+    /**
+     * Enable do not postpone order place call
+     */
+    const M2_DO_NOT_POSTPONE_ORDER_PLACE_CALL = 'M2_DO_NOT_POSTPONE_ORDER_PLACE_CALL';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -686,6 +691,12 @@ class Definitions
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => true,
             self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_DO_NOT_POSTPONE_ORDER_PLACE_CALL => [
+            self::NAME_KEY        => self::M2_DO_NOT_POSTPONE_ORDER_PLACE_CALL,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
     ];
 }

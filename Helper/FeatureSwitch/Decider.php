@@ -597,4 +597,16 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_BOLT_SESSION_PARAMS);
     }
+
+    /**
+     * Checks whether the feature switch for postpone order place call is enabled
+     *
+     * @return bool whether the feature switch is enabled
+     *
+     * @throws LocalizedException if the feature switch key is unknown
+     */
+    public function isOrderPlaceCallNotPostponed()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_DO_NOT_POSTPONE_ORDER_PLACE_CALL);
+    }
 }
