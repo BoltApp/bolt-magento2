@@ -183,7 +183,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                      * used.
                      */
                     // check if login is required
-                    if ( !customer().firstname && !isGuestCheckoutAllowed) {
+                    if ( (!customer() || !customer().firstname) && !isGuestCheckoutAllowed) {
                         // if authentication is required for checkout set a cookie
                         // for auto opening Bolt checkout after login
                         if (window.boltConfig.is_sso_enabled) {
