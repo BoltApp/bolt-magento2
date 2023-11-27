@@ -211,12 +211,20 @@ class CreateOrder implements CreateOrderInterface
                     self::E_BOLT_GENERAL_ERROR
                 );
             }
-            
+
             $this->cartHelper->setCurrentCurrencyCode($currency);
 
             $immutableQuoteId = $this->getQuoteIdFromPayloadOrder($order);
             /** @var Quote $immutableQuote */
             $immutableQuote = $this->loadQuoteData($immutableQuoteId);
+
+            if (!$immutableQuote) {
+                throw new BoltException(
+                    __('Immutable quote does not exist. Quote id: ' . $immutableQuoteId),
+                    null,
+                    self::E_BOLT_GENERAL_ERROR
+                );
+            }
 
             $this->preProcessWebhook($immutableQuote->getStoreId());
 
@@ -429,7 +437,6 @@ class CreateOrder implements CreateOrderInterface
                     ]
                 ]);
             });
-            $quote = null;
 
             throw new BoltException(
                 __('There is no quote with ID: %1', $quoteId),

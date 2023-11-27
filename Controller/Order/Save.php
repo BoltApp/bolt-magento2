@@ -104,6 +104,11 @@ class Save extends Action
             $reference = $this->getRequest()->getParam('reference');
             // call order save and update
             list($quote, $order) = $this->orderHelper->saveUpdateOrder($reference);
+
+            if (!$order || !$quote) {
+                throw new Exception('save and update order call failed');
+            }
+
             if ($sessionQuote && $sessionQuote->getId() != $quote->getId()) {
                 // If we had quote linked to session and it's not immutableQuote
                 // then we in product page, non-pre-auth checkout flow

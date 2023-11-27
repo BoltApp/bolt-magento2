@@ -1016,7 +1016,7 @@ class Order extends AbstractHelper
 
                     if (!$this->featureSwitches->isLogMissingQuoteFailedHooksEnabled()) {
                         $this->bugsnag->notifyException($exception);
-                        return $this;
+                        return [null, null];
                     }
 
                     /** @var \Bolt\Boltpay\Model\ResourceModel\WebhookLog\Collection $webhookLogCollection */
@@ -1026,7 +1026,7 @@ class Order extends AbstractHelper
                         $numberOfMissingQuoteFailedHooks = $webhookLog->getNumberOfMissingQuoteFailedHooks();
                         if ($numberOfMissingQuoteFailedHooks > 10) {
                             $this->bugsnag->notifyException($exception);
-                            return $this;
+                            return [null, null];
                         }
 
                         $webhookLog->incrementAttemptCount();
