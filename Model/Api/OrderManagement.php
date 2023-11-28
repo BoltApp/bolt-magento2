@@ -336,11 +336,13 @@ class OrderManagement implements OrderManagementInterface
             $request
         );
 
-        $orderData = json_encode($order->getData());
+        $displayId = ($order !== null) ? $order->getIncrementId() : '';
+        $orderData = ($order !== null) ? json_encode($order->getData()) : '';
+
         $this->response->setHttpResponseCode(200);
         $this->response->setBody(json_encode([
             'status' => 'success',
-            'display_id' => $order->getIncrementId(),
+            'display_id' => $displayId,
             'message' => "Order creation / update was successful. Order Data: $orderData",
         ]));
     }

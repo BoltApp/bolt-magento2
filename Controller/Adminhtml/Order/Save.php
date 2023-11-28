@@ -105,6 +105,10 @@ class Save extends Action
             // call order save and update
             list($quote, $order) = $this->orderHelper->saveUpdateOrder($reference, $storeId);
 
+            if (!$order || !$quote) {
+                throw new Exception('save and update order call failed');
+            }
+
             $orderId = $order->getId();
             // clear quote session
             $this->clearQuoteSession($quote);
