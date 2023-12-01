@@ -58,10 +58,10 @@ trait ReceivedUrlTrait
      * @var OrderHelper
      */
     private $orderHelper;
-    
+
     /** @var CacheInterface */
     private $cache;
-    
+
     /** @var Serialize */
     private $serialize;
 
@@ -97,7 +97,7 @@ trait ReceivedUrlTrait
                     return;
                 }
 
-                if ($order->getState() === Order::STATE_PENDING_PAYMENT) {
+                if ($order->getState() === Order::STATE_PENDING_PAYMENT || $order->getState() === Order::STATE_PAYMENT_REVIEW) {
                     $reference = $this->getReferenceFromPayload($payloadArray);
                     try {
                         if (
@@ -134,9 +134,9 @@ trait ReceivedUrlTrait
 
                 // add order information to the session
                 $this->clearOrderSession($order, $redirectUrl);
-                
+
                 $cacheIdentifier = ReceivedUrlInterface::BOLT_ORDER_SUCCESS_PREFIX . $this->checkoutSession->getSessionId();
-                
+
                 $sessionData = [
                     "LastQuoteId"   => $quote->getId(),
                     "LastSuccessQuoteId"   => $quote->getId(),
@@ -145,7 +145,7 @@ trait ReceivedUrlTrait
                     "LastRealOrderId"   => $order->getIncrementId(),
                     "LastOrderStatus"   => $order->getStatus(),
                 ];
-                
+
                 $this->cache->save($this->serialize->serialize($sessionData), $cacheIdentifier, [], 600);
 
                 $this->_redirect($redirectUrl);
