@@ -57,7 +57,7 @@ class ShippingMethods implements ShippingMethodsInterface
     const NO_SHIPPING_SERVICE = 'No Shipping Required';
     const NO_SHIPPING_REFERENCE = 'noshipping';
     const BOLT_SHIPPING_TAX_CACHE_TAG = 'BOLT_SHIPPING_TAX_CACHE_TAG';
-    
+
     const E_BOLT_CUSTOM_ERROR = 6103;
     const E_BOLT_GENERAL_ERROR = 6009;
 
@@ -350,7 +350,6 @@ class ShippingMethods implements ShippingMethodsInterface
      *
      * @param $addressData
      * @throws BoltException
-     * @throws \Zend_Validate_Exception
      */
     private function validateAddressData($addressData)
     {
@@ -362,7 +361,6 @@ class ShippingMethods implements ShippingMethodsInterface
      *
      * @param $email
      * @throws BoltException
-     * @throws \Zend_Validate_Exception
      */
     private function validateEmail($email)
     {

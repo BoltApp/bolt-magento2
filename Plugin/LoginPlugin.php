@@ -37,7 +37,6 @@ class LoginPlugin extends AbstractLoginPlugin
      */
     public function afterExecute($subject, $result)
     {
-
         try {
             // Pass through the original result if the customer is not logged in or the cart is empty
             if (!$this->shouldRedirectToCartPage($subject)) {
@@ -49,11 +48,7 @@ class LoginPlugin extends AbstractLoginPlugin
                 return $this->$prop;
             }, $result, $result);
             $json = $propGetter('json');
-            if (class_exists('\Laminas\Json\Json')) {
-                $response = \Laminas\Json\Json::decode($json, \Laminas\Json\Json::TYPE_ARRAY);
-            } else {
-                $response = \Zend_Json::decode($json);
-            }
+            $response = $this->jsonSerializer->unserialize($json);
 
             // Sanity check. If result has an error flag set, pass the original result through unchainged
             if ($response['errors'] !== false) {

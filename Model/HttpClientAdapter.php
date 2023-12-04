@@ -45,12 +45,17 @@ class HttpClientAdapter
     /**
      * @param BoltConfigHelper $boltConfigHelper
      */
-    public function __construct(BoltConfigHelper $boltConfigHelper)
-    {
+    public function __construct(
+        BoltConfigHelper $boltConfigHelper,
+        ZendClientFactory $zendClientFactory = null,
+        LaminasClientFactory $laminasClientFactory = null
+    ) {
         $this->boltConfigHelper = $boltConfigHelper;
-        $clientFactory = version_compare($this->boltConfigHelper->getStoreVersion(), '2.4.6', '>=')
-            ? ObjectManager::getInstance()->get(LaminasClientFactory::class)
-            : ObjectManager::getInstance()->get(ZendClientFactory::class);
+        if (version_compare($this->boltConfigHelper->getStoreVersion(), '2.4.6', '>=')) {
+            $clientFactory = $laminasClientFactory ?: ObjectManager::getInstance()->get(LaminasClientFactory::class);
+        } else {
+            $clientFactory = $zendClientFactory ?: ObjectManager::getInstance()->get(ZendClientFactory::class);
+        }
         $this->client = $clientFactory->create();
     }
 

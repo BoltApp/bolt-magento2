@@ -45,10 +45,10 @@ abstract class ShippingTax
     const METRICS_SUCCESS_KEY = 'shippingtax.success';
     const METRICS_FAILURE_KEY = 'shippingtax.failure';
     const METRICS_LATENCY_KEY = 'shippingtax.latency';
-    
+
     const E_BOLT_CUSTOM_ERROR = 6103;
     const E_BOLT_GENERAL_ERROR = 6009;
-    
+
     const NO_SHIPPING_SERVICE = 'No Shipping Required';
     const NO_SHIPPING_REFERENCE = 'noshipping';
 
@@ -126,17 +126,17 @@ abstract class ShippingTax
      * @var ShippingOptionInterfaceFactory
      */
     protected $shippingOptionFactory;
-    
+
     /**
      * @var ShipToStoreOptionInterfaceFactory
      */
     protected $shipToStoreOptionFactory;
-    
+
     /**
      * @var StoreAddressInterfaceFactory
      */
     protected $storeAddressFactory;
-    
+
     /**
      * @var EventsForThirdPartyModules
      */
@@ -172,7 +172,6 @@ abstract class ShippingTax
      *
      * @param $addressData
      * @throws BoltException
-     * @throws \Zend_Validate_Exception
      */
     public function validateAddressData($addressData)
     {
@@ -184,7 +183,6 @@ abstract class ShippingTax
      *
      * @param $email
      * @throws BoltException
-     * @throws \Zend_Validate_Exception
      */
     public function validateEmail($email)
     {

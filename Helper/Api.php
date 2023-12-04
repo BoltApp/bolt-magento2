@@ -30,7 +30,6 @@ use Magento\Framework\App\Helper\Context;
 use Magento\Framework\DataObject;
 use Magento\Framework\Exception\LocalizedException;
 use Bolt\Boltpay\Model\HttpClientAdapterFactory;
-use Zend_Http_Client_Exception;
 
 /**
  * Boltpay API helper
@@ -189,7 +188,6 @@ class Api extends AbstractHelper
      *
      * @return Response|int
      * @throws LocalizedException
-     * @throws Zend_Http_Client_Exception
      */
     public function sendRequest($request)
     {

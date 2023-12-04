@@ -48,7 +48,6 @@ use Magento\Sales\Model\Order\Payment\Transaction\Builder as TransactionBuilder;
 use Bolt\Boltpay\Model\Service\InvoiceService;
 use Magento\Sales\Model\OrderIncrementIdChecker;
 use Magento\Store\Model\ScopeInterface;
-use Zend_Http_Client_Exception;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Framework\DataObjectFactory;
 use Bolt\Boltpay\Helper\Log as LogHelper;
@@ -420,7 +419,6 @@ class Order extends AbstractHelper
      *
      * @return Response
      * @throws LocalizedException
-     * @throws Zend_Http_Client_Exception
      *
      * @api
      */
@@ -951,7 +949,6 @@ class Order extends AbstractHelper
      *
      * @return array|mixed
      * @throws LocalizedException
-     * @throws Zend_Http_Client_Exception
      */
     public function saveUpdateOrder($reference, $storeId = null, $boltTraceId = null, $hookType = null, $hookPayload = null)
     {
@@ -1094,7 +1091,6 @@ class Order extends AbstractHelper
      * @param OrderInterface $order
      * @return $this
      * @throws LocalizedException
-     * @throws Zend_Http_Client_Exception
      */
     public function voidTransactionOnBolt($transactionId, $storeId)
     {
@@ -1625,7 +1621,6 @@ class Order extends AbstractHelper
      * @throws NoSuchEntityException
      * @throws \Magento\Framework\Exception\AlreadyExistsException
      * @throws \Magento\Framework\Exception\SessionException
-     * @throws \Zend_Validate_Exception
      */
     public function prepareQuote($immutableQuote, $transaction)
     {
@@ -2131,7 +2126,6 @@ class Order extends AbstractHelper
      *
      * @throws \Exception
      * @throws LocalizedException
-     * @throws Zend_Http_Client_Exception
      */
     public function updateOrderPayment($order, $transaction = null, $reference = null, $hookType = null, $hookPayload = null)
     {
