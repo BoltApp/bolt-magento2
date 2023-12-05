@@ -50,20 +50,22 @@ class Info extends \Magento\Payment\Block\Info
             $data[(string)__('Credit Card Number')] = sprintf('xxxx-%s', $ccLast4);
         }
 
-        if ($credovaPublicId = $info->getAdditionalInformation('credova_public_id')) {
-            $data[(string)__('Credova Public Id')]  = $credovaPublicId;
-        }
+        if ($this->getArea() == \Magento\Framework\App\Area::AREA_ADMINHTML) {
+            if ($credovaPublicId = $info->getAdditionalInformation('credova_public_id')) {
+                $data[(string)__('Credova Public Id')]  = $credovaPublicId;
+            }
 
-        if ($credovaApplicationId = $info->getAdditionalInformation('credova_application_id')) {
-            $data[(string)__('Credova Application Id')]  = $credovaApplicationId;
-        }
+            if ($credovaApplicationId = $info->getAdditionalInformation('credova_application_id')) {
+                $data[(string)__('Credova Application Id')]  = $credovaApplicationId;
+            }
 
-        if ($cvvResponse = $info->getAdditionalInformation('cvv_response')) {
-            $data[(string)__('CVV Response')]  = $cvvResponse;
-        }
+            if ($cvvResponse = $info->getAdditionalInformation('cvv_response')) {
+                $data[(string)__('CVV Response')]  = $cvvResponse;
+            }
 
-        if ($avsResponse = $info->getAdditionalInformation('avs_response')) {
-            $data[(string)__('AVS Response')]  = $avsResponse;
+            if ($avsResponse = $info->getAdditionalInformation('avs_response')) {
+                $data[(string)__('AVS Response')]  = $avsResponse;
+            }
         }
 
         if ($data) {
