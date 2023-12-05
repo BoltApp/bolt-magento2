@@ -41,6 +41,7 @@ class InfoTest extends BoltTestCase
         $this->mock = $this->createPartialMock(
             Info::class,
             [
+                'getArea',
                 'getInfo',
                 'getMethod',
                 'getCcType',
@@ -60,6 +61,7 @@ class InfoTest extends BoltTestCase
     public function prepareSpecificInformationCreditCard()
     {
         $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
+        $this->mock->expects(self::once())->method('getArea')->willReturn('frontend');
         $this->mock->expects(self::once())->method('getCcType')->willReturn('visa');
         $this->mock->expects(self::once())->method('getCcLast4')->willReturn('1111');
         $data = TestHelper::invokeMethod($this->mock, '_prepareSpecificInformation', [null]);
@@ -78,6 +80,7 @@ class InfoTest extends BoltTestCase
     public function prepareSpecificInformationPaypal()
     {
         $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
+        $this->mock->expects(self::once())->method('getArea')->willReturn('frontend');
         $this->mock->expects(self::once())->method('getCcType')->willReturn('');
         $this->mock->expects(self::once())->method('getCcLast4')->willReturn('');
         $data = TestHelper::invokeMethod($this->mock, '_prepareSpecificInformation', [null]);
