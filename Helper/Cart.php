@@ -70,7 +70,6 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
 use Magento\Store\Model\Store;
 use Magento\Framework\App\ObjectManager;
-use Zend_Http_Client_Exception;
 
 /**
  * Boltpay Cart helper
@@ -643,7 +642,6 @@ class Cart extends AbstractHelper
      * @param int $storeId
      * @return Response|int
      * @throws LocalizedException
-     * @throws Zend_Http_Client_Exception
      */
     protected function boltCreateOrder($cart, $storeId = null)
     {
@@ -885,7 +883,6 @@ class Cart extends AbstractHelper
      *
      * @return Response|void
      * @throws LocalizedException
-     * @throws Zend_Http_Client_Exception
      */
     public function getBoltpayOrder($paymentOnly, $placeOrderPayload = null, $storeId = null)
     {
@@ -1173,7 +1170,6 @@ class Cart extends AbstractHelper
      * @param bool $save                 if set to true save the $child instance upon the transfer
      * @param array $emailFields         fields that need to pass email validation to be transfered, skipped otherwise
      * @param array $excludeFields       fields to be excluded from the transfer (e.g. unique identifiers)
-     * @throws \Zend_Validate_Exception
      */
     private function transferData(
         $parent,
@@ -1215,7 +1211,6 @@ class Cart extends AbstractHelper
      * @param Quote $source
      * @param Quote $destination
      * @throws \Magento\Framework\Exception\AlreadyExistsException
-     * @throws \Zend_Validate_Exception
      */
     public function replicateQuoteData($source, $destination)
     {
@@ -1294,7 +1289,6 @@ class Cart extends AbstractHelper
      * @param Quote $quote
      * @return Quote
      * @throws \Magento\Framework\Exception\AlreadyExistsException
-     * @throws \Zend_Validate_Exception
      */
     protected function createImmutableQuote($quote)
     {
@@ -2276,7 +2270,7 @@ class Cart extends AbstractHelper
      *
      * @param string $email
      * @return bool
-     * @throws \Zend_Validate_Exception|\Magento\Framework\Validator\ValidateException
+     * @throws \Magento\Framework\Validator\ValidateException
      */
     public function validateEmail($email)
     {

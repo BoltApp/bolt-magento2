@@ -26,6 +26,7 @@ use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Store\Model\StoreManagerInterface as StoreManager;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 
 abstract class AbstractLoginPlugin
 {
@@ -55,19 +56,23 @@ abstract class AbstractLoginPlugin
      * @var Decider
      */
     private $decider;
-    
+
     /**
      * @var StoreManager
      */
     private $storeManager;
-    
+
     /**
      * @var Config
      */
     private $configHelper;
 
     /**
-     * AbstractLoginPlugin constructor.
+     * @var JsonSerializer
+     */
+    protected $jsonSerializer;
+
+    /**
      * @param CustomerSession $customerSession
      * @param CheckoutSession $checkoutSession
      * @param ResultFactory $resultFactory
@@ -75,6 +80,7 @@ abstract class AbstractLoginPlugin
      * @param Decider $decider
      * @param StoreManager $storeManager
      * @param Config $configHelper
+     * @param JsonSerializer $jsonSerializer
      */
     public function __construct(
         CustomerSession $customerSession,
@@ -83,7 +89,8 @@ abstract class AbstractLoginPlugin
         Bugsnag $bugsnag,
         Decider $decider,
         StoreManager $storeManager,
-        Config $configHelper
+        Config $configHelper,
+        JsonSerializer $jsonSerializer
     ) {
         $this->customerSession = $customerSession;
         $this->checkoutSession = $checkoutSession;
@@ -92,6 +99,7 @@ abstract class AbstractLoginPlugin
         $this->decider = $decider;
         $this->storeManager = $storeManager;
         $this->configHelper = $configHelper;
+        $this->jsonSerializer = $jsonSerializer;
     }
 
     /**
@@ -126,7 +134,7 @@ abstract class AbstractLoginPlugin
      */
     protected function shouldRedirectToCartPage($subject)
     {
-        
+
         return $this->configHelper->isActive($this->getStore()->getId())
             && $this->isRequestFromNonCheckoutPage($subject)
             && $this->isCustomerLoggedIn()
@@ -150,7 +158,7 @@ abstract class AbstractLoginPlugin
     {
         $this->bugsnag->notifyException($e);
     }
-    
+
     /**
      * @return \Magento\Store\Api\Data\StoreInterface
      */
@@ -158,7 +166,7 @@ abstract class AbstractLoginPlugin
     {
         return $this->storeManager->getStore();
     }
-    
+
     /**
      * @return bool
      */

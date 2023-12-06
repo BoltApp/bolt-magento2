@@ -18,7 +18,6 @@ use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
 use Magento\Sales\Api\OrderManagementInterface;
-use Zend_Http_Client_Exception;
 
 class NonBoltOrderPlugin
 {
@@ -165,7 +164,6 @@ class NonBoltOrderPlugin
      * @param string $paymentMethod
      * @return Response|int
      * @throws LocalizedException
-     * @throws Zend_Http_Client_Exception
      */
     protected function createNonBoltOrder($cart, $customer, $storeId, $paymentMethod)
     {

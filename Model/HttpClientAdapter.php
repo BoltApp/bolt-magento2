@@ -20,9 +20,7 @@ use Bolt\Boltpay\Helper\Config as BoltConfigHelper;
 use Laminas\Http\Headers;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\HTTP\LaminasClient;
-use Magento\Framework\HTTP\LaminasClientFactory;
 use Magento\Framework\HTTP\ZendClient;
-use Magento\Framework\HTTP\ZendClientFactory;
 
 /**
  * Bolt http client adapter
@@ -48,10 +46,9 @@ class HttpClientAdapter
     public function __construct(BoltConfigHelper $boltConfigHelper)
     {
         $this->boltConfigHelper = $boltConfigHelper;
-        $clientFactory = version_compare($this->boltConfigHelper->getStoreVersion(), '2.4.6', '>=')
-            ? ObjectManager::getInstance()->get(LaminasClientFactory::class)
-            : ObjectManager::getInstance()->get(ZendClientFactory::class);
-        $this->client = $clientFactory->create();
+        $this->client = version_compare($this->boltConfigHelper->getStoreVersion(), '2.4.6', '>=')
+            ? ObjectManager::getInstance()->create(LaminasClient::class)
+            : ObjectManager::getInstance()->create(ZendClient::class);
     }
 
     /**

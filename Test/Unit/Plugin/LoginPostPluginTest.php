@@ -27,6 +27,7 @@ use Magento\Customer\Controller\Account\LoginPost;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Store\Model\StoreManagerInterface as StoreManager;
 use Bolt\Boltpay\Helper\Config;
+use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 use Zend\Stdlib\Parameters;
 /**
  * Class LoginPostPluginTest
@@ -57,12 +58,14 @@ class LoginPostPluginTest extends BoltTestCase
 
     /** @var @var Decider */
     private $decider;
-    
+
     /** @var StoreManager */
     private $storeManager;
-    
+
     /** @var Config */
     private $configHelper;
+
+    private $jsonSerializer;
 
     public function setUpInternal()
     {
@@ -80,6 +83,7 @@ class LoginPostPluginTest extends BoltTestCase
         $this->loginPost = $this->createMock(LoginPost::class);
         $this->storeManager = $this->createMock(StoreManager::class);
         $this->configHelper = $this->createMock(Config::class);
+        $this->jsonSerializer = $this->createMock(JsonSerializer::class);
         $this->decider = $this->createPartialMock(
             Decider::class,
             ['ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn']
@@ -96,7 +100,8 @@ class LoginPostPluginTest extends BoltTestCase
                 $this->bugsnag,
                 $this->decider,
                 $this->storeManager,
-                $this->configHelper
+                $this->configHelper,
+                $this->jsonSerializer
             ])
             ->getMock();
     }
