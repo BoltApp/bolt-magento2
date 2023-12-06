@@ -2296,11 +2296,7 @@ class Cart extends AbstractHelper
             '<'
         ) ? 'EmailAddress' : \Magento\Framework\Validator\EmailAddress::class;
 
-        if (class_exists('\Magento\Framework\Validator\ValidatorChain')) {
-            return \Magento\Framework\Validator\ValidatorChain::is($email, $emailClass);
-        } else {
-            return \Zend_Validate::is($email, $emailClass);
-        }
+        return \Magento\Framework\Validator\ValidatorChain::is($email, $emailClass);
     }
 
     /**
