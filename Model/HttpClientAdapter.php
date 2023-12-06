@@ -46,10 +46,9 @@ class HttpClientAdapter
     public function __construct(BoltConfigHelper $boltConfigHelper)
     {
         $this->boltConfigHelper = $boltConfigHelper;
-        $clientFactory = version_compare($this->boltConfigHelper->getStoreVersion(), '2.4.6', '>=')
+        $this->client = version_compare($this->boltConfigHelper->getStoreVersion(), '2.4.6', '>=')
             ? ObjectManager::getInstance()->create(LaminasClient::class)
             : ObjectManager::getInstance()->create(ZendClient::class);
-        $this->client = $clientFactory->create();
     }
 
     /**
