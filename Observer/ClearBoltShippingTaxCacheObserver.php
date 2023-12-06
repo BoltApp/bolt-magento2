@@ -22,6 +22,7 @@ use Bolt\Boltpay\Model\Api\ShippingMethods;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 class ClearBoltShippingTaxCacheObserver implements ObserverInterface
 {
@@ -31,13 +32,24 @@ class ClearBoltShippingTaxCacheObserver implements ObserverInterface
     private $cache;
 
     /**
+     * @var Decider
+     */
+    private $featureSwitches;
+
+
+    /**
      * ClearBoltCacheObserver constructor.
      *
      * @param CacheInterface|null $cache
+     * @param Decider $featureSwitches
      */
-    public function __construct(CacheInterface $cache = null)
+    public function __construct(
+        CacheInterface $cache = null,
+        Decider $featureSwitches
+    )
     {
         $this->cache = $cache ?: \Magento\Framework\App\ObjectManager::getInstance()->get(CacheInterface::class);
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
@@ -47,6 +59,10 @@ class ClearBoltShippingTaxCacheObserver implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
+        if ($this->featureSwitches->isAPIDrivenIntegrationEnabled()) {
+            return $this;
+        }
+
         $this->cache->clean([ShippingMethods::BOLT_SHIPPING_TAX_CACHE_TAG]);
     }
 }
