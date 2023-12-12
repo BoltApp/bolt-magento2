@@ -61,7 +61,6 @@ interface ProductEventManagerInterface
      * @param ProductEventInterface $productEvent
      * @return bool
      * @throws LocalizedException
-     * @throws \Zend_Http_Client_Exception
      */
     public function sendProductEvent(ProductEventInterface $productEvent): bool;
 
@@ -73,7 +72,6 @@ interface ProductEventManagerInterface
      * @param int|null $websiteId
      * @return void
      * @throws LocalizedException
-     * @throws \Zend_Http_Client_Exception
      */
     public function runInstantProductEvent(int $productId, string $type, int $websiteId = null): void;
 }
