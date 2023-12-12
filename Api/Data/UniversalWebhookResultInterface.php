@@ -42,7 +42,7 @@ interface UniversalWebhookResultInterface
      * Get error object
      *
      * @api
-     * @return []
+     * @return mixed
      */
 
     public function getError();
@@ -51,7 +51,7 @@ interface UniversalWebhookResultInterface
      * Set error object
      *
      * @api
-     * @param [] $error
+     * @param $error
      * @return \Bolt\Boltpay\Api\Data\UniversalWebhookResultInterface
      */
 

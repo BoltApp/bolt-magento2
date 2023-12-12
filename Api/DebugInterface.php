@@ -28,7 +28,7 @@ interface DebugInterface
     /**
      * @param array $data
      *  
-     * @return \Bolt\Boltpay\Api\Data\DebugInfo
+     * @return \Bolt\Boltpay\Api\Data\DebugInfo|mixed
      */
     public function universalDebug($data);
 }

@@ -61,7 +61,7 @@ interface LegacyApiInterface
      * @param mixed $remove_items
      * @param mixed $discount_codes_to_add
      * @param mixed $discount_codes_to_remove
-     * @return Bolt\Boltpay\Api\Data\UpdateCartResultInterface
+     * @return Bolt\Boltpay\Api\Data\UpdateCartResultInterface|mixed
      */
     public function updateCart(
         $cart,

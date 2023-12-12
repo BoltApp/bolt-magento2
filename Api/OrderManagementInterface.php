@@ -16,7 +16,8 @@
  */
 
 namespace Bolt\Boltpay\Api;
-
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Webapi\Exception as WebApiException;
 /**
  * Order management interface. Saves the order and updates the payment / transaction info.
  *

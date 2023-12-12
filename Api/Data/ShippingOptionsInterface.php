@@ -37,7 +37,7 @@ interface ShippingOptionsInterface
      * Set available shipping options.
      *
      * @api
-     * @param \Bolt\Boltpay\Api\Data\ShippingOptionInterface[]
+     * @param \Bolt\Boltpay\Api\Data\ShippingOptionInterface[] $shippingOptions
      * @return $this
      */
     public function setShippingOptions($shippingOptions);
@@ -54,7 +54,7 @@ interface ShippingOptionsInterface
      * Set available shipping options.
      *
      * @api
-     * @param \Bolt\Boltpay\Api\Data\ShippingTaxInterface
+     * @param \Bolt\Boltpay\Api\Data\ShippingTaxInterface $taxResult
      * @return $this
      */
     public function setTaxResult($taxResult);

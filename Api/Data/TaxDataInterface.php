@@ -36,7 +36,7 @@ interface TaxDataInterface extends ShippingTaxDataInterface
     /**
      * Set tax result.
      *
-     * @param \Bolt\Boltpay\Api\Data\TaxResultInterface
+     * @param \Bolt\Boltpay\Api\Data\TaxResultInterface $taxResult
      * @return $this
      * @api
      */
@@ -53,7 +53,7 @@ interface TaxDataInterface extends ShippingTaxDataInterface
     /**
      * Set selected shipping option tax data.
      *
-     * @param \Bolt\Boltpay\Api\Data\ShippingOptionInterface
+     * @param \Bolt\Boltpay\Api\Data\ShippingOptionInterface $shippingOption
      * @return $this
      * @api
      */
@@ -71,7 +71,7 @@ interface TaxDataInterface extends ShippingTaxDataInterface
      * Set available ship to store option.
      *
      * @api
-     * @param \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface
+     * @param \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface $shipToStoreOption
      * @return $this
      */
     public function setShipToStoreOption($shipToStoreOption);
