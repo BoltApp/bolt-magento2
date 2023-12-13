@@ -22,6 +22,7 @@ use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\Framework\App\Http\Context as HttpContext;
+use Magento\Framework\App\Request\Http;
 use Magento\Framework\View\Element\Template;
 use Magento\Theme\Block\Html\Pager;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory;
@@ -51,6 +52,9 @@ class CreditCard extends Template
     protected $formKey;
 
     protected $_creditCardCollection;
+
+    /** @var Http */
+    protected $_request;
 
     /**
      * CreditCard constructor.
@@ -96,10 +100,12 @@ class CreditCard extends Template
         parent::_prepareLayout();
 
         if ($this->getCreditCardCollection()) {
+            /** @var \Magento\Theme\Block\Html\Pager $pager */
             $pager = $this->getLayout()->createBlock(
                 Pager::class,
                 'bolt.creditcards.pager'
-            )->setCollection(
+            );
+            $pager->setCollection(
                 $this->_creditCardCollection
             );
             $this->setChild('pager', $pager);

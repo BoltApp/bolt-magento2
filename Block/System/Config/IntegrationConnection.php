@@ -29,12 +29,12 @@ class IntegrationConnection extends Field
     const IntegrationConnection_BLOCK_NAME     = "Bolt_Boltpay.adminhtml.config.integrationconnection.template";
     
     /**
-     * @var Bolt\Boltpay\Helper\Config
+     * @var \Bolt\Boltpay\Helper\Config
      */
     protected $configHelper;
     
     /**
-     * @var Bolt\Boltpay\Helper\IntegrationManagement
+     * @var \Bolt\Boltpay\Helper\IntegrationManagement
      */
     protected $integrationManagement;
     
@@ -71,6 +71,7 @@ class IntegrationConnection extends Field
         $isBoltSandboxMode = $this->configHelper->isSandboxModeSet($storeId);
         $boltCurrentMode = $isBoltSandboxMode ? IntegrationManagement::BOLT_INTEGRATION_MODE_SANDBOX : IntegrationManagement::BOLT_INTEGRATION_MODE_PRODUCTION;
         $boltOppositeMode = $isBoltSandboxMode ? IntegrationManagement::BOLT_INTEGRATION_MODE_PRODUCTION : IntegrationManagement::BOLT_INTEGRATION_MODE_SANDBOX;
+        /** @var Template $block */
         $block = $this->getLayout()->createBlock(
                 Template::class,
                 self::IntegrationConnection_BLOCK_NAME,
@@ -113,18 +114,21 @@ class IntegrationConnection extends Field
     {
         switch ($integrationStatus) {
             case '1':
-                $label = __('Re-send API keys to Bolt');
+                $label = __('Re-send API keys to Bolt'); /** @phpstan-ignore-line */
                 break;
             case '2':
-                $label = __('Delete API keys');
+                $label = __('Delete API keys'); /** @phpstan-ignore-line */
                 break;
             default:
-                $label = __('Authenticate with Bolt');
+                $label = __('Authenticate with Bolt'); /** @phpstan-ignore-line */
                 break;
         }
-        $button = $this->getLayout()->createBlock(
+        /** @var \Magento\Backend\Block\Widget\Button $buttonBlock */
+        $buttonBlock = $this->getLayout()->createBlock(
             'Magento\Backend\Block\Widget\Button'
-        )->setData(
+        );
+
+        $button = $buttonBlock->setData(
             [
                 'id' => 'bolt_integration_token_button',
                 'label' => $label,

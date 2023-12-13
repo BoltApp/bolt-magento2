@@ -48,11 +48,11 @@ class Version extends \Magento\Config\Block\System\Config\Form\Field
         $version = $this->configHelper->getModuleVersion();
 
         if (!$version) {
-            $version = __('--');
+            $version = __('--'); /** @phpstan-ignore-line */
         }
 
         $output = '<div style="background-color:#eee;padding:1em;border:1px solid #ddd;">';
-        $output .= __('Bolt M2 Version') . ': ' . $version;
+        $output .= __('Bolt M2 Version') . ': ' . $version; /** @phpstan-ignore-line */
         $output .= "</div>";
 
         return '<div id="row_' . $element->getHtmlId() . '">' . $output . '</div>';

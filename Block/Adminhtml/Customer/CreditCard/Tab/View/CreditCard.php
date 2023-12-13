@@ -58,7 +58,6 @@ class CreditCard extends \Magento\Backend\Block\Widget\Grid\Extended
     protected function _construct()
     {
         parent::_construct();
-        $this->setSortable(false);
         $this->setPagerVisibility(false);
         $this->setFilterVisibility(false);
     }
@@ -86,7 +85,7 @@ class CreditCard extends \Magento\Backend\Block\Widget\Grid\Extended
         $this->addColumn(
             'credit_card_id',
             [
-                'header' => __('Credit Card Id'),
+                'header' => __('Credit Card Id'), /** @phpstan-ignore-line */
                 'index' => 'credit_card_id'
             ]
         );
@@ -94,7 +93,7 @@ class CreditCard extends \Magento\Backend\Block\Widget\Grid\Extended
         $this->addColumn(
             'credit_card_type',
             [
-                'header' => __('Credit Card Type'),
+                'header' => __('Credit Card Type'),/** @phpstan-ignore-line */
                 'index' => 'credit_card_type',
                 'renderer' => CardType::class,
             ]
@@ -103,7 +102,7 @@ class CreditCard extends \Magento\Backend\Block\Widget\Grid\Extended
         $this->addColumn(
             'credit_card_last_4_digit',
             [
-                'header' => __('Credit Card Last 4 Digit'),
+                'header' => __('Credit Card Last 4 Digit'),/** @phpstan-ignore-line */
                 'index' => 'credit_card_last_4_digit',
                 'renderer' => CardNumber::class,
             ]
@@ -112,7 +111,7 @@ class CreditCard extends \Magento\Backend\Block\Widget\Grid\Extended
         $this->addColumn(
             'action',
             [
-                'header' => __('Action'),
+                'header' => __('Action'), /** @phpstan-ignore-line */
                 'index' => 'delete_action',
                 'renderer' => DeleteAction::class,
                 'header_css_class' => 'col-actions',

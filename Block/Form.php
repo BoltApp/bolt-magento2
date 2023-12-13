@@ -23,6 +23,7 @@ use Magento\Payment\Block\Form as PaymentForm;
 use Magento\Framework\View\Element\Template\Context;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\CollectionFactory as CustomerCreditCardCollectionFactory;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Magento\Quote\Model\Quote;
 
 class Form extends PaymentForm
 {
@@ -72,13 +73,14 @@ class Form extends PaymentForm
     ) {
         parent::__construct($context, $data);
         $this->configHelper = $configHelper;
+        /** @var \Magento\Backend\Model\Session|\Magento\Checkout\Model\Session $magentoQuote */
         $this->_quote = $magentoQuote->getQuote();
         $this->customerCreditCardCollectionFactory = $customerCreditCardCollectionFactory;
         $this->featureSwitch = $featureSwitch;
     }
 
     /**
-     * @return \Magento\Backend\Model\Session\Quote
+     * @return \Magento\Backend\Model\Session\Quote|\Magento\Quote\Api\Data\CartInterface|Quote
      */
     public function getQuoteData()
     {
@@ -135,6 +137,7 @@ class Form extends PaymentForm
      */
     public function getPlaceOrderPayload()
     {
+        /** @var Quote $quote */
         $quote = $this->getQuoteData();
 
         $result = [
