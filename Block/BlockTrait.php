@@ -19,7 +19,9 @@ namespace Bolt\Boltpay\Block;
 use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Framework\App\Request\Http;
 use Magento\Framework\Session\SessionManager as CheckoutSession;
+use Magento\Tests\NamingConvention\true\mixed;
 
 trait BlockTrait
 {
@@ -38,7 +40,7 @@ trait BlockTrait
     public $eventsForThirdPartyModules;
 
     /**
-     * @var CheckoutSession
+     * @var \Magento\Checkout\Model\Session|mixed
      */
     public $checkoutSession;
 
@@ -119,7 +121,7 @@ trait BlockTrait
      */
     private function isPageRestricted()
     {
-        $currentPage = $this->getRequest()->getFullActionName();
+        $currentPage = $this->_request->getFullActionName();
 
         // Check if the page is blacklisted
         if (in_array($currentPage, $this->getPageBlacklist())) {
@@ -201,7 +203,7 @@ trait BlockTrait
     }
 
     /**
-     * @return Quote
+     * @return mixed
      */
     public function getQuoteFromCheckoutSession()
     {

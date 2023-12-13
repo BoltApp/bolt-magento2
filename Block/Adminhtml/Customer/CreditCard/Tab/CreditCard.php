@@ -58,7 +58,7 @@ class CreditCard extends \Magento\Backend\Block\Template implements TabInterface
      */
     public function getTabLabel()
     {
-        return __('Bolt Credit Cards');
+        return __('Bolt Credit Cards'); /** @phpstan-ignore-line */
     }
 
     /**
@@ -66,7 +66,7 @@ class CreditCard extends \Magento\Backend\Block\Template implements TabInterface
      */
     public function getTabTitle()
     {
-        return __('Bolt Credit Cards');
+        return __('Bolt Credit Cards'); /** @phpstan-ignore-line */
     }
 
     /**

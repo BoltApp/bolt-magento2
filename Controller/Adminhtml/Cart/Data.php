@@ -163,10 +163,10 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
         try {
             $storeId = $this->_getSession()->getStoreId();
             if (!$storeId) {
-                throw new LocalizedException(__('Order creation not initialized'));
+                throw new LocalizedException(__('Order creation not initialized')); /** @phpstan-ignore-line */
             }
             $this->_initSession();
-
+            /** @var mixed $quote */
             $quote = $this->_getOrderCreateModel()->getQuote();
             $this->storeManager->setCurrentStore($storeId);
 
@@ -216,7 +216,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
                 if ($this->cartHelper->getCustomerByEmail($customerEmail)) {
                     throw new LocalizedException(
                         __('A customer with the same email address already exists in an associated website.')
-                    );
+                    ); /** @phpstan-ignore-line */
                 }
                 $this->_getOrderCreateModel()->getBillingAddress()->setEmail($customerEmail);
                 $quote->setCustomerEmail($customerEmail);

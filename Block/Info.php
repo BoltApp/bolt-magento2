@@ -39,32 +39,33 @@ class Info extends \Magento\Payment\Block\Info
     protected function _prepareSpecificInformation($transport = null)
     {
         $transport = parent::_prepareSpecificInformation($transport);
+        /** @var \Magento\Sales\Model\Order\Payment $info */
         $info = $this->getInfo();
         $data = [];
 
         if ($ccType = $info->getCcType()) {
-            $data[(string)__('Credit Card Type')] = strtoupper($ccType);
+            $data[(string)__('Credit Card Type')] = strtoupper($ccType); /** @phpstan-ignore-line */
         }
 
         if ($ccLast4 = $info->getCcLast4()) {
-            $data[(string)__('Credit Card Number')] = sprintf('xxxx-%s', $ccLast4);
+            $data[(string)__('Credit Card Number')] = sprintf('xxxx-%s', $ccLast4); /** @phpstan-ignore-line */
         }
 
         if ($this->getArea() == \Magento\Framework\App\Area::AREA_ADMINHTML) {
             if ($credovaPublicId = $info->getAdditionalInformation('credova_public_id')) {
-                $data[(string)__('Credova Public Id')]  = $credovaPublicId;
+                $data[(string)__('Credova Public Id')]  = $credovaPublicId; /** @phpstan-ignore-line */
             }
 
             if ($credovaApplicationId = $info->getAdditionalInformation('credova_application_id')) {
-                $data[(string)__('Credova Application Id')]  = $credovaApplicationId;
+                $data[(string)__('Credova Application Id')]  = $credovaApplicationId; /** @phpstan-ignore-line */
             }
 
             if ($cvvResponse = $info->getAdditionalInformation('cvv_response')) {
-                $data[(string)__('CVV Response')]  = $cvvResponse;
+                $data[(string)__('CVV Response')]  = $cvvResponse; /** @phpstan-ignore-line */
             }
 
             if ($avsResponse = $info->getAdditionalInformation('avs_response')) {
-                $data[(string)__('AVS Response')]  = $avsResponse;
+                $data[(string)__('AVS Response')]  = $avsResponse; /** @phpstan-ignore-line */
             }
         }
 
@@ -77,6 +78,7 @@ class Info extends \Magento\Payment\Block\Info
 
     public function displayPaymentMethodTitle()
     {
+        /** @var \Magento\Sales\Model\Order\Payment $info */
         $info = $this->getInfo();
 
         if ($info->getCcTransId()) {
