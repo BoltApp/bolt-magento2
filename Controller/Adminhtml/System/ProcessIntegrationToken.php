@@ -40,7 +40,7 @@ class ProcessIntegrationToken extends Action
     protected $resultJsonFactory;
     
     /**
-     * @var Bolt\Boltpay\Helper\IntegrationManagement
+     * @var \Bolt\Boltpay\Helper\IntegrationManagement
      */
     protected $integrationManagement;
     
@@ -50,7 +50,7 @@ class ProcessIntegrationToken extends Action
     protected $resourceConfig;
     
     /**
-     * @var Bolt\Boltpay\Helper\Bugsnag
+     * @var \Bolt\Boltpay\Helper\Bugsnag
      */
     protected $bugsnag;
     

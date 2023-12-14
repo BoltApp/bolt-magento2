@@ -25,7 +25,7 @@ use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Model\Quote;
-use Bolt\Boltpay\Helper\Order as orderHelper;
+use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -42,11 +42,11 @@ class Save extends Action
      */
     private $resultJsonFactory;
 
-    /** @var CheckoutSession */
+    /** @var CheckoutSession|mixed */
     private $checkoutSession;
 
     /**
-     * @var orderAdminHelper
+     * @var OrderHelper
      */
     private $orderHelper;
 
@@ -78,8 +78,8 @@ class Save extends Action
         Context $context,
         JsonFactory $resultJsonFactory,
         CheckoutSession $checkoutSession,
-        orderHelper $orderHelper,
-        configHelper $configHelper,
+        OrderHelper $orderHelper,
+        ConfigHelper $configHelper,
         Bugsnag $bugsnag,
         DataObjectFactory $dataObjectFactory
     ) {
@@ -132,9 +132,7 @@ class Save extends Action
 
     /**
      * Clear quote session after successful order
-     *
-     * @param Quote
-     *
+     * @param $quote
      * @return void
      */
     private function clearQuoteSession($quote)
@@ -146,9 +144,7 @@ class Save extends Action
 
     /**
      * Clear order session after successful order
-     *
-     * @param Order
-     *
+     * @param $order
      * @return void
      */
     private function clearOrderSession($order)

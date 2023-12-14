@@ -27,7 +27,7 @@ use Magento\Framework\Data\Form\FormKey\Validator;
 class DeleteCreditCard extends Action
 {
     /**
-     * @var \Bolt\Boltpay\Model\CustomerCreditCard
+     * @var \Bolt\Boltpay\Model\CustomerCreditCardFactory
      */
     private $customerCreditCardFactory;
 
@@ -75,24 +75,25 @@ class DeleteCreditCard extends Action
     {
         try {
             if (!$this->formKeyValidator->validate($this->getRequest())) {
-                $this->messageManager->addErrorMessage(__('Invalid form key'));
+                $this->messageManager->addErrorMessage(__('Invalid form key')); /** @phpstan-ignore-line */
                 return $this->_redirect($this->_redirect->getRefererUrl());
             }
 
             $id = $this->getRequest()->getParam('id');
             if ($id) {
+                /** @var mixed $creditCard */
                 $creditCard = $this->customerCreditCardFactory->create()->load($id);
                 if ($creditCard
                     && $creditCard->getId()
                     && $this->customerSession->getCustomerId() == $creditCard->getCustomerId()
                 ) {
                     $creditCard->delete();
-                    $this->messageManager->addSuccessMessage(__('You deleted the Bolt credit card'));
+                    $this->messageManager->addSuccessMessage(__('You deleted the Bolt credit card')); /** @phpstan-ignore-line */
                 } else {
-                    $this->messageManager->addErrorMessage(__("Credit Card doesn't exist"));
+                    $this->messageManager->addErrorMessage(__("Credit Card doesn't exist"));/** @phpstan-ignore-line */
                 }
             } else {
-                $this->messageManager->addErrorMessage(__('Missing id parameter'));
+                $this->messageManager->addErrorMessage(__('Missing id parameter')); /** @phpstan-ignore-line */
             }
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
