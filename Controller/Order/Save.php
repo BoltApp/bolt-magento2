@@ -42,7 +42,7 @@ class Save extends Action
      */
     private $resultJsonFactory;
 
-    /** @var CheckoutSession */
+    /** @var CheckoutSession|mixed */
     private $checkoutSession;
 
     /**

@@ -60,7 +60,8 @@ class Hints extends Action
     /**
      * Get hints for Product page checkout
      *
-     * @return Json
+     * @return \Magento\Framework\App\ResponseInterface|\Magento\Framework\Controller\Result\Json|\Magento\Framework\Controller\ResultInterface
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function execute()
     {
