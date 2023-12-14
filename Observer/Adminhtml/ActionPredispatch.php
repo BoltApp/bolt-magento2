@@ -52,7 +52,7 @@ class ActionPredispatch implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        /** @var \Magento\Framework\App\RequestInterface $request */
+        /** @var \Magento\Framework\App\Request\Http $request */
         $request = $observer->getData('request');
         $this->eventsForThirdPartyModules->dispatchEvent(
             $this->convertEventName('adminhtml_controller_action_predispatch'),

@@ -26,9 +26,12 @@ use Bolt\Boltpay\Helper\MetricsClient;
 use Exception;
 use Magento\Catalog\Model\ProductRepository;
 use Magento\Framework\DataObjectFactory;
+use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\Sales\Model\Order;
+use Magento\Shipping\Model\Order\Track;
 
 class TrackingSaveObserver implements ObserverInterface
 {
@@ -38,7 +41,7 @@ class TrackingSaveObserver implements ObserverInterface
     private $configHelper;
 
     /**
-     * @var DataObjectFactory
+     * @var DataObjectFactory|mixed
      */
     private $dataObjectFactory;
 
@@ -101,8 +104,10 @@ class TrackingSaveObserver implements ObserverInterface
         }
         $startTime = $this->metricsClient->getCurrentTime();
         try {
+            /** @var Event|mixed $event */
+            $event = $observer->getEvent();
             /** @var \Magento\Sales\Model\Order\Shipment\Track $tracking */
-            $tracking = $observer->getEvent()->getTrack();
+            $tracking = $event->getTrack();
 
             // If we update track (don't create) and carrier and number are the same do nothing
             if (!$this->isTrackNew($tracking)) {
@@ -117,6 +122,7 @@ class TrackingSaveObserver implements ObserverInterface
 
             /** @var \Magento\Sales\Model\Order\Shipment $shipment */
             $shipment = $tracking->getShipment();
+            /** @var Order|mixed $order */
             $order = $shipment->getOrder();
             $payment = $order->getPayment();
 
@@ -208,7 +214,7 @@ class TrackingSaveObserver implements ObserverInterface
             $request = $this->apiHelper->buildRequest($requestData);
             $result = $this->apiHelper->sendRequest($request);
 
-            if ($result != 200) {
+            if ($result !== 200) {
                 $this->metricsClient->processMetric(
                     'tracking_creation.failure',
                     1,
@@ -259,7 +265,6 @@ class TrackingSaveObserver implements ObserverInterface
     /**
      * Convert item options into bolt format
      *
-     * @param array item options
      * @param mixed $itemOptions
      *
      * @return array
