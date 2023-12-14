@@ -21,6 +21,7 @@ namespace Bolt\Boltpay\Observer\Adminhtml\Sales;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Model\CustomerCreditCardFactory as CustomerCreditCardFactory;
+use Bolt\Boltpay\Model\Response;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -53,7 +54,7 @@ class RechargeCustomer implements ObserverInterface
      * @param Bugsnag                   $bugsnag
      * @param RequestInterface          $request
      * @param CustomerCreditCardFactory $boltCustomerCreditCardFactory
-     * @param Order                     $orderHelper
+     * @param OrderHelper                     $orderHelper
      */
     public function __construct(
         Bugsnag $bugsnag,
@@ -70,6 +71,7 @@ class RechargeCustomer implements ObserverInterface
     public function execute(Observer $observer)
     {
         try {
+            /** @var \Magento\Framework\Event|mixed $event */
             $event = $observer->getEvent();
             $order = $event->getOrder();
 
@@ -82,8 +84,8 @@ class RechargeCustomer implements ObserverInterface
             if ($creditCardValue = $this->request->getParam('bolt-credit-cards')) {
                 /** @var \Bolt\Boltpay\Model\CustomerCreditCard $boltCustomerCreditCard */
                 $boltCustomerCreditCard = $this->boltCustomerCreditCardFactory->create()->load($creditCardValue);
+                /** @var Response|mixed $response */
                 $response = $boltCustomerCreditCard->recharge($order);
-
                 $responseData = $response->getResponse();
                 $reference = $responseData->transaction->reference ?? null;
                 if ($reference) {
@@ -91,7 +93,7 @@ class RechargeCustomer implements ObserverInterface
                         __(
                             'Bolt recharged transaction: %1',
                             $this->orderHelper->formatReferenceUrl($reference)
-                        )
+                        ) /** @phpstan-ignore-line */
                     );
                 }
                 $order->setData('is_recharged_order', true);

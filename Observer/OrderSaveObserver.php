@@ -28,6 +28,7 @@ use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Exception;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\DataObjectFactory;
+use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 
@@ -46,7 +47,7 @@ class OrderSaveObserver implements ObserverInterface
     private $configHelper;
 
     /**
-     * @var DataObjectFactory
+     * @var DataObjectFactory|mixed
      */
     private $dataObjectFactory;
 
@@ -115,10 +116,11 @@ class OrderSaveObserver implements ObserverInterface
         }
 
         $result = self::RESULT_FAILURE;
+        $startTime = $this->metricsClient->getCurrentTime();
         try {
-            $startTime = $this->metricsClient->getCurrentTime();
-            
-            $order = $observer->getEvent()->getOrder();
+            /** @var Event|mixed $event */
+            $event = $observer->getEvent();
+            $order = $event->getOrder();
             $storeId = $order->getStoreId();
             $currencyCode = $order->getOrderCurrencyCode();
 
@@ -150,7 +152,7 @@ class OrderSaveObserver implements ObserverInterface
 
             $request = $this->apiHelper->buildRequest($requestData);
             $result = $this->apiHelper->sendRequest($request);
-            if ($result == 200) {
+            if ($result === 200) {
                 $result = self::RESULT_SUCCESS;
             }
         } catch (Exception $e) {
