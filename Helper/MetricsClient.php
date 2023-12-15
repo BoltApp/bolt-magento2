@@ -85,7 +85,6 @@ class MetricsClient extends AbstractHelper
     /**
      * @param Context $context
      * @param Config $configHelper
-     * @param DirectoryList $directoryList
      * @param StoreManagerInterface $storeManager
      * @param Bugsnag $bugsnag
      * @param LogHelper $logHelper
@@ -97,7 +96,6 @@ class MetricsClient extends AbstractHelper
     public function __construct(
         Context $context,
         ConfigHelper $configHelper,
-        DirectoryList $directoryList,
         StoreManagerInterface $storeManager,
         Bugsnag $bugsnag,
         LogHelper $logHelper,

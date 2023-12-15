@@ -45,8 +45,8 @@ class CheckboxesHandler extends AbstractHelper
 
     /**
      * @param Context $context
-     * @param OrderHelper $orderHelper
      * @param Bugsnag $bugsnag
+     * @param SubscriberFactory $subscriberFactory
      */
     public function __construct(
         Context $context,
@@ -61,7 +61,7 @@ class CheckboxesHandler extends AbstractHelper
     /**
      * Handle checkboxes
      *
-     * @param OrderModel $order
+     * @param \Magento\Sales\Model\Order $order
      * @param array $checkboxes
      */
     public function handle($order, $checkboxes)
@@ -95,7 +95,7 @@ class CheckboxesHandler extends AbstractHelper
      * - If order for logged in user subscribe by userId
      * - If order for guest user subscribe by email
      *
-     * @param OrderModel $order
+     * @param \Magento\Sales\Model\Order $order
      */
     public function subscribeToNewsletter($order)
     {

@@ -1,3 +1,14 @@
 <?php
-namespace Unirgy\Giftcert\Model;
-class Cert{}
+namespace Unirgy\Giftcert\Model {
+    class Cert{
+        const GIFTCERT_CODE = 'GIFTCERT_CODE';
+        public function get($code){}
+        public function getCertNumber(){}
+        public function getBalance(){}
+        public function getStoreId(){}
+        public function getData($key){}
+    }
+    class GiftcertRepository{
+        public function get($code){}
+    }
+}

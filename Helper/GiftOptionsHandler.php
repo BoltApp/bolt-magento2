@@ -50,7 +50,7 @@ class GiftOptionsHandler extends AbstractHelper
     /**
      * Handle gift options
      *
-     * @param OrderModel $order
+     * @param \Magento\Sales\Model\Order $order
      * @param \stdClass $transaction
      */
     public function handle($order, $transaction)

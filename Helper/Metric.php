@@ -45,8 +45,7 @@ class Metric implements \JsonSerializable
 
     /**
      * Gets JSON for object
-     *
-     * @return JSON
+     * @return mixed
      */
     public function getMetricJson()
     {

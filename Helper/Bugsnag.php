@@ -20,7 +20,6 @@ namespace Bolt\Boltpay\Helper;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
-use Magento\Framework\Filesystem\DirectoryList;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Log as BoltLogger;
 
@@ -38,7 +37,7 @@ class Bugsnag extends AbstractHelper
     const STAGE_TEST        = 'test';
 
     /**
-     * @var BugsnagClient
+     * @var \Bugsnag\Client
      */
     private $bugsnag;
 
@@ -59,14 +58,12 @@ class Bugsnag extends AbstractHelper
      * Bugsnag constructor.
      * @param Context $context
      * @param Config $configHelper
-     * @param DirectoryList $directoryList
      * @param StoreManagerInterface $storeManager
      * @param BoltLogger $boltLogger
      */
     public function __construct(
         Context $context,
         ConfigHelper $configHelper,
-        DirectoryList $directoryList,
         StoreManagerInterface $storeManager,
         BoltLogger $boltLogger
     ) {
@@ -99,7 +96,7 @@ class Bugsnag extends AbstractHelper
     /**
      * Notify Bugsnag of a non-fatal/handled throwable.
      *
-     * @param \Throwable    $throwable the throwable to notify Bugsnag about
+     * @param mixed   $throwable the throwable to notify Bugsnag about
      * @param callable|null $callback  the customization callback
      *
      * @return void

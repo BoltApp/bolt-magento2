@@ -341,6 +341,7 @@ class AutomatedTesting extends AbstractHelper
         $searchCriteria = $searchCriteriaBuilder->create();
 
         $products = $this->productRepository->getList($searchCriteria)->getItems();
+        /** @var Product $product */
         foreach ($products as $product) {
             if ($this->stockRegistry->getStockItem($product->getId())->getIsInStock() && (
                 $type !== 'sale' ||

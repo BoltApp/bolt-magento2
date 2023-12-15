@@ -169,7 +169,7 @@ class Session extends AbstractHelper
      * Load logged in customer checkout and customer sessions from cached session id.
      * Replace parent quote with immutable quote in checkout session.
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      * @param array $metadata
      *
      * @throws \Magento\Framework\Exception\LocalizedException

@@ -57,11 +57,11 @@ class ApiUtils
         $resultFromJSON = json_decode((string)$responseBody);
         $jsonError = self::handleJsonParseError();
         if ($jsonError != null) {
-            throw new LocalizedException(__('JSON Parse Error: ' . $jsonError));
+            throw new LocalizedException(__('JSON Parse Error: ' . $jsonError)); /** @phpstan-ignore-line */
         }
 
         if (self::isApiError($resultFromJSON)) {
-            $message = isset($resultFromJSON->errors[0]->message) ? __($resultFromJSON->errors[0]->message) : __('Bolt API Error Response');
+            $message = isset($resultFromJSON->errors[0]->message) ? __($resultFromJSON->errors[0]->message) : __('Bolt API Error Response'); /** @phpstan-ignore-line */
             throw new LocalizedException($message);
         }
         return $resultFromJSON;
