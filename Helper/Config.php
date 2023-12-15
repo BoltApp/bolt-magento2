@@ -1586,7 +1586,9 @@ class Config extends AbstractHelper
             'HTTP_FORWARDED',
             'REMOTE_ADDR'
         ] as $key) {
-            if ($ips = $this->_request->getServer($key, false)) {
+            /** @var \Magento\Framework\App\Request\Http $request */
+            $request = $this->_request;
+            if ($ips = $request->getServer($key, false)) {
                 foreach (explode(',', $ips) as $ip) {
                     $ip = trim($ip); // just to be safe
                     if (filter_var(
@@ -1858,7 +1860,7 @@ class Config extends AbstractHelper
     /**
      * Get all bolt configuration settings
      *
-     * @return BoltConfigSetting[]
+     * @return BoltConfigSettingFactory[]
      */
     public function getAllConfigSettings()
     {
@@ -2059,7 +2061,7 @@ class Config extends AbstractHelper
         // instant button variant field
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('instant_button_variant')
-            ->setValue($this->getInstantButtonVariant(), true);
+            ->setValue($this->getInstantButtonVariant());
         // instant button variant field ppc
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('instant_button_variant_ppc')

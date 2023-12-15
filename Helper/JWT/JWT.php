@@ -136,7 +136,7 @@ class JWT
         }
 
         // Check the signature
-        if (!static::verify("$headb64.$bodyb64", $sig, $key, $header->alg)) {
+        if (!self::verify("$headb64.$bodyb64", $sig, $key, $header->alg)) {
             throw new SignatureInvalidException('Signature verification failed');
         }
 
@@ -267,7 +267,7 @@ class JWT
         }
 
         if ($errno = \json_last_error()) {
-            static::handleJsonError($errno);
+            self::handleJsonError($errno);
         } elseif ($obj === null && $input !== 'null') {
             throw new DomainException('Null result with non-null input');
         }
@@ -287,7 +287,7 @@ class JWT
     {
         $json = \json_encode($input);
         if ($errno = \json_last_error()) {
-            static::handleJsonError($errno);
+            self::handleJsonError($errno);
         } elseif ($json === 'null' && $input !== null) {
             throw new DomainException('Null result with non-null input');
         }
@@ -361,13 +361,13 @@ class JWT
                 if (\function_exists('hash_equals')) {
                     return \hash_equals($signature, $hash);
                 }
-                $len = \min(static::safeStrlen($signature), static::safeStrlen($hash));
+                $len = \min(self::safeStrlen($signature), self::safeStrlen($hash));
 
                 $status = 0;
                 for ($i = 0; $i < $len; $i++) {
                     $status |= (\ord($signature[$i]) ^ \ord($hash[$i]));
                 }
-                $status |= (static::safeStrlen($signature) ^ static::safeStrlen($hash));
+                $status |= (self::safeStrlen($signature) ^ self::safeStrlen($hash));
 
                 return $status === 0;
         }

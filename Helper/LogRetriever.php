@@ -59,7 +59,7 @@ class LogRetriever
 
     /** 
      * Function which returns the log of requested type if it exists.
-     * @param string $logType
+     * @param mixed $logType
      * @return array
      */
     public function getLogOfType($logType){

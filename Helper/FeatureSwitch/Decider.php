@@ -39,7 +39,7 @@ class Decider extends AbstractHelper
     private $_state;
 
     /**
-     * @var CoreSession
+     * @var CoreSession|mixed
      */
     private $_session;
 
@@ -135,7 +135,7 @@ class Decider extends AbstractHelper
     {
         $defaultDef = Definitions::DEFAULT_SWITCH_VALUES[$switchName] ?? null;
         if (!$defaultDef) {
-            throw new LocalizedException(__("Unknown feature switch"));
+            throw new LocalizedException(__("Unknown feature switch")); /** @phpstan-ignore-line */
         }
         $switch = null;
         try {

@@ -21,6 +21,7 @@ namespace Bolt\Boltpay\Helper;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\JWT\JWT;
+use Bolt\Boltpay\Model\Response;
 use Exception;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
@@ -43,7 +44,7 @@ class SSOHelper extends AbstractHelper
     private $storeManager;
 
     /**
-     * @var DataObjectFactory
+     * @var DataObjectFactory|mixed
      */
     private $dataObjectFactory;
 

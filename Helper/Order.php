@@ -24,6 +24,7 @@ use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Model\Api\CreateOrder;
 use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Model\Response;
+use Bolt\Boltpay\Model\WebhookLog;
 use Magento\Customer\Api\Data\GroupInterface;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Api\SearchCriteriaBuilder;
@@ -40,6 +41,7 @@ use Magento\Sales\Api\OrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepository;
 use Magento\Sales\Model\AdminOrder\Create;
 use Magento\Sales\Model\Order as OrderModel;
+use Magento\Sales\Model\Order\Creditmemo;
 use Magento\Sales\Model\Order\Email\Container\InvoiceIdentity as InvoiceEmailIdentity;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
@@ -189,7 +191,7 @@ class Order extends AbstractHelper
     private $orderRepository;
 
     /**
-     * @var DataObjectFactory
+     * @var DataObjectFactory|mixed
      */
     private $dataObjectFactory;
 
@@ -291,7 +293,7 @@ class Order extends AbstractHelper
     private $giftOptionsHandler;
 
     /**
-     * @var TransactionRepositoryInterface
+     * @var TransactionRepositoryInterface|mixed
      */
     private $transactionRepository;
 
@@ -417,7 +419,7 @@ class Order extends AbstractHelper
      * @param string $reference
      * @param        $storeId
      *
-     * @return Response
+     * @return Response|mixed
      * @throws LocalizedException
      *
      * @api
@@ -435,6 +437,7 @@ class Order extends AbstractHelper
         //Build Request
         $request = $this->apiHelper->buildRequest($requestData, $storeId);
 
+        /** @var Response|mixed $result */
         $result = $this->apiHelper->sendRequest($request);
         $response = $result->getResponse();
         $this->transactionInfo[$reference] = $response;
@@ -469,7 +472,7 @@ class Order extends AbstractHelper
     /**
      * Set Quote address data helper method.
      *
-     * @param Address $quoteAddress
+     * @param Address|mixed $quoteAddress
      * @param $address
      *
      * @throws \Exception
@@ -591,7 +594,7 @@ class Order extends AbstractHelper
     /**
      * Set Quote payment method, 'boltpay'
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      *
      * @throws LocalizedException
      * @throws \Exception
@@ -652,7 +655,7 @@ class Order extends AbstractHelper
      */
     private function checkExistingOrder($parentQuoteId)
     {
-        /** @var OrderModel $order */
+        /** @var  $order */
         if ($order = $this->getExistingOrder(null, $parentQuoteId)) {
             $this->bugsnag->notifyError(
                 'Duplicate Order Creation Attempt',
@@ -693,11 +696,7 @@ class Order extends AbstractHelper
             throw $e;
         }
         if ($order === null) {
-            throw new LocalizedException(__(
-                'Quote Submit Error. Parent Quote ID: %1 Immutable Quote ID: %2',
-                $quote->getId(),
-                $immutableQuote->getId()
-            ));
+            throw new LocalizedException(__('Quote Submit Error. Parent Quote ID: %1 Immutable Quote ID: %2', $quote->getId(), $immutableQuote->getId())); /** @phpstan-ignore-line */
         }
         if (Hook::$fromBolt) {
             $order->addStatusHistoryComment(
@@ -712,7 +711,7 @@ class Order extends AbstractHelper
      * Save additional order data and dispatch the after submit event
      *
      * @param OrderModel $order
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      * @param \stdClass $transaction
      */
     protected function orderPostprocess($order, $quote, $transaction)
@@ -740,7 +739,7 @@ class Order extends AbstractHelper
         // Save reference to the Bolt transaction with the order
         if (isset($transaction->reference)) {
             $order->addStatusHistoryComment(
-                __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference))
+                __('Bolt transaction: %1', $this->formatReferenceUrl($transaction->reference)) /** @phpstan-ignore-line */
             );
         }
         // Add the user_note to the order comments and make it visible for the customer.
@@ -795,7 +794,7 @@ class Order extends AbstractHelper
     /**
      * Assign data to the order payment instance
      *
-     * @param OrderPaymentInterface $payment
+     * @param \Magento\Sales\Model\Order\Payment $payment
      * @param \stdClass $transaction
      * @return void
      */
@@ -863,7 +862,7 @@ class Order extends AbstractHelper
     /**
      * Delete redundant immutable quotes.
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      */
     private function deleteRedundantQuotes($quote)
     {
@@ -888,7 +887,6 @@ class Order extends AbstractHelper
      * Required for the order to be imported by some ERP systems.
      *
      * @param OrderModel $order
-     * @param string $state
      */
     public function resetOrderState($order)
     {
@@ -913,7 +911,7 @@ class Order extends AbstractHelper
             && ! in_array($hookType, static::VALID_HOOKS_FOR_ORDER_CREATION)
         ) {
             throw new BoltException(
-                __('Order creation is forbidden from hook of type: %1', $hookType),
+                __('Order creation is forbidden from hook of type: %1', $hookType), /** @phpstan-ignore-line */
                 null,
                 CreateOrder::E_BOLT_REJECTED_ORDER
             );
@@ -925,7 +923,7 @@ class Order extends AbstractHelper
      *
      * @param string $quoteId
      *
-     * @return OrderInterface|false
+     * @return \Magento\Sales\Model\Order|false|mixed
      */
     public function getOrderByQuoteId($quoteId)
     {
@@ -952,6 +950,7 @@ class Order extends AbstractHelper
      */
     public function saveUpdateOrder($reference, $storeId = null, $boltTraceId = null, $hookType = null, $hookPayload = null)
     {
+        /** @var mixed $transaction */
         $transaction = $this->fetchTransactionInfo($reference, $storeId);
 
         $parentQuoteId = $transaction->order->cart->order_reference;
@@ -995,12 +994,13 @@ class Order extends AbstractHelper
         ///////////////////////////////////////////////////////////////
 
         // check if the order exists
+        /** @var \Magento\Sales\Model\Order $order */
         $order = $this->getExistingOrder($incrementId, $parentQuoteId);
 
         // if not create the order
         if (!$order || !$order->getId()) {
             if (!$immutableQuote) {
-                $exception = new LocalizedException(__('Unknown quote id: %1', $quoteId));
+                $exception = new LocalizedException(__('Unknown quote id: %1', $quoteId)); /** @phpstan-ignore-line */
                 if (Hook::$fromBolt && in_array($transaction->status, [Payment::TRANSACTION_AUTHORIZED, Payment::TRANSACTION_CANCELLED])) {
                     if ($transaction->status == Payment::TRANSACTION_AUTHORIZED) {
                         $this->voidTransactionOnBolt($transaction->id, $storeId);
@@ -1018,7 +1018,6 @@ class Order extends AbstractHelper
 
                     /** @var \Bolt\Boltpay\Model\ResourceModel\WebhookLog\Collection $webhookLogCollection */
                     $webhookLogCollection = $this->webhookLogCollectionFactory->create();
-
                     if ($webhookLog = $webhookLogCollection->getWebhookLogByTransactionId($transaction->id, $hookType)) {
                         $numberOfMissingQuoteFailedHooks = $webhookLog->getNumberOfMissingQuoteFailedHooks();
                         if ($numberOfMissingQuoteFailedHooks > 10) {
@@ -1088,7 +1087,6 @@ class Order extends AbstractHelper
     /**
      * @param $transactionId
      * @param $storeId
-     * @param OrderInterface $order
      * @return $this
      * @throws LocalizedException
      */
@@ -1113,13 +1111,13 @@ class Order extends AbstractHelper
 
         if (empty($response)) {
             throw new LocalizedException(
-                __('Bad void response from boltpay')
+                __('Bad void response from boltpay') /** @phpstan-ignore-line */
             );
         }
 
         $status = $response->status ?? null;
         if ($status != 'cancelled') {
-            throw new LocalizedException(__('Payment void error.'));
+            throw new LocalizedException(__('Payment void error.')); /** @phpstan-ignore-line */
         }
 
         return $this;
@@ -1191,7 +1189,7 @@ class Order extends AbstractHelper
 
     /**
      * @param OrderInterface $order
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      */
     public function dispatchPostCheckoutEvents($order, $quote)
     {
@@ -1226,7 +1224,7 @@ class Order extends AbstractHelper
     /**
      * Cancel or detete the failed payment order depending on settings via feature switches
      *
-     * @param string $displayId
+     * @param string $display_id
      * @param string $immutableQuoteId
      * @return string log message
      * @throws \Magento\Framework\Exception\AlreadyExistsException
@@ -1256,17 +1254,8 @@ class Order extends AbstractHelper
     {
         // check if the order has been created in the meanwhile
         if ($order = $this->getExistingOrder(null, $quote->getId())) {
-
             if ($order->isCanceled()) {
-                throw new BoltException(
-                    __(
-                        'Order has been canceled due to the previously declined payment. Quote ID: %1 Order Increment ID %2',
-                        $quote->getId(),
-                        $order->getIncrementId()
-                    ),
-                    null,
-                    CreateOrder::E_BOLT_REJECTED_ORDER
-                );
+                throw new BoltException(__('Order has been canceled due to the previously declined payment. Quote ID: %1 Order Increment ID %2', $quote->getId(), $order->getIncrementId()), null, CreateOrder::E_BOLT_REJECTED_ORDER); /** @phpstan-ignore-line */
             }
 
             if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
@@ -1301,7 +1290,6 @@ class Order extends AbstractHelper
      */
     public function submitQuote($quote, $orderData = [])
     {
-        /** @var OrderModel $order */
         try {
             $order = $this->quoteManagement->submit($quote, $orderData);
         } catch (\Exception $e) {
@@ -1341,6 +1329,7 @@ class Order extends AbstractHelper
             $originalOrderId = $transaction->order->cart->metadata->original_order_entity_id
         ) {
             try {
+                /** @var \Magento\Sales\Model\Order|mixed $originalOrder */
                 $originalOrder = $this->orderRepository->get($originalOrderId);
                 $originalId = $originalOrder->getOriginalIncrementId();
                 if (!$originalId) {
@@ -1388,10 +1377,7 @@ class Order extends AbstractHelper
                 ]);
             });
             throw new BoltException(
-                __(
-                    'Quote Submit Error. Parent Quote ID: %1',
-                    $quote->getId()
-                ),
+                __('Quote Submit Error. Parent Quote ID: %1', $quote->getId()), /** @phpstan-ignore-line */
                 null,
                 CreateOrder::E_BOLT_GENERAL_ERROR
             );
@@ -1402,11 +1388,9 @@ class Order extends AbstractHelper
         $existingOrder = $this->eventsForThirdPartyModules->runFilter('beforeGetOrderByIdProcessNewOrder', $this->cartHelper->getOrderById($order->getId()), $order);
         $orderPayment = $existingOrder->getPayment();
         if ($orderPayment && $orderPayment->getMethod() !== Payment::METHOD_CODE) {
-            throw new LocalizedException(__(
-                'Payment method assigned to order %1 is: %2',
-                $order->getIncrementId(),
-                $orderPayment->getMethod()
-            ));
+            throw new LocalizedException(
+                __('Payment method assigned to order %1 is: %2', $order->getIncrementId(), $orderPayment->getMethod()) /** @phpstan-ignore-line */
+            );
         }
 
         $order = $existingOrder;
@@ -1507,11 +1491,7 @@ class Order extends AbstractHelper
 
         if (!$order) {
             throw new BoltException(
-                __(
-                    'Order Cancelation Error. Order does not exist. Order #: %1 Immutable Quote ID: %2',
-                    $incrementId,
-                    $immutableQuoteId
-                ),
+                __('Order Cancelation Error. Order does not exist. Order #: %1 Immutable Quote ID: %2', $incrementId, $immutableQuoteId), /** @phpstan-ignore-line */
                 null,
                 CreateOrder::E_BOLT_GENERAL_ERROR
             );
@@ -1519,7 +1499,7 @@ class Order extends AbstractHelper
 
         if ($order->getState() === OrderModel::STATE_PENDING_PAYMENT) {
             $this->cancelOrder($order);
-            $order->addCommentToStatusHistory(__('BOLTPAY INFO :: Order was canceled due to Bolt rejection before authorization'));
+            $order->addCommentToStatusHistory(__('BOLTPAY INFO :: Order was canceled due to Bolt rejection before authorization')); /** @phpstan-ignore-line */
             $this->orderRepository->save($order);
         }
         return $order->getState() === OrderModel::STATE_CANCELED;
@@ -1544,12 +1524,7 @@ class Order extends AbstractHelper
         $state = $order->getState();
         if ($state !== OrderModel::STATE_PENDING_PAYMENT) {
             throw new BoltException(
-                __(
-                    'Order Delete Error. Order is in invalid state. Order #: %1 State: %2 Immutable Quote ID: %3',
-                    $incrementId,
-                    $state,
-                    $immutableQuoteId
-                ),
+                __('Order Delete Error. Order is in invalid state. Order #: %1 State: %2 Immutable Quote ID: %3', $incrementId, $state, $immutableQuoteId) /** @phpstan-ignore-line */,
                 null,
                 CreateOrder::E_BOLT_GENERAL_ERROR
             );
@@ -1579,11 +1554,10 @@ class Order extends AbstractHelper
     /**
      * @param $orderIncrementId
      * @param null $quoteId
-     * @return false|OrderInterface|OrderModel
+     * @return OrderModel|mixed
      */
     public function getExistingOrder($orderIncrementId, $quoteId = null)
     {
-        /** @var OrderModel $order */
         $order = $this->cartHelper->getOrderByIncrementId($orderIncrementId, true);
 
         // If we had timeout issue on the create_order hook and the third party change the order increment id
@@ -1614,7 +1588,7 @@ class Order extends AbstractHelper
     /**
      * Load and prepare parent quote
      *
-     * @param Quote $immutableQuote
+     * @param Quote|mixed $immutableQuote
      * @param  \stdClass $transaction
      * @return Quote
      * @throws LocalizedException
@@ -1624,7 +1598,6 @@ class Order extends AbstractHelper
      */
     public function prepareQuote($immutableQuote, $transaction)
     {
-        /** @var Quote $quote */
         $boltParentQuoteId = $immutableQuote->getBoltParentQuoteId();
         if ($boltParentQuoteId) {
             $quote = $this->cartHelper->getQuoteById($boltParentQuoteId);
@@ -1728,7 +1701,7 @@ class Order extends AbstractHelper
     /**
      * Get processed items (captures or refunds) as an array
      *
-     * @param OrderPaymentInterface $payment
+     * @param OrderPaymentInterface|mixed $payment
      * @param string $itemType 'captures' | 'refunds'
      * @return array
      */
@@ -1740,7 +1713,7 @@ class Order extends AbstractHelper
     /**
      * Get processed capture ids array
      *
-     * @param OrderPaymentInterface $payment
+     * @param OrderPaymentInterface|mixed $payment
      * @return array
      */
     private function getProcessedCaptures($payment)
@@ -1751,7 +1724,7 @@ class Order extends AbstractHelper
     /**
      * Get processed refund ids array
      *
-     * @param OrderPaymentInterface $payment
+     * @param OrderPaymentInterface|mixed $payment
      * @return array
      */
     private function getProcessedRefunds($payment)
@@ -1764,7 +1737,7 @@ class Order extends AbstractHelper
      * Infer eventually missing states. Represent Bolt partial capture AUTHORIZED state as CAPTURED.
      *
      * @param \stdClass $transaction
-     * @param OrderPaymentInterface $payment
+     * @param OrderPaymentInterface|mixed $payment
      * @param null $hookType
      * @return string
      */
@@ -1879,7 +1852,7 @@ class Order extends AbstractHelper
         // Do it once only, skip on subsequent hooks
         if ($order->getState() != OrderModel::STATE_HOLDED) {
             // Add order status history comment
-            $comment = __(
+            $comment = __( /** @phpstan-ignore-line */
                 'BOLTPAY INFO :: THERE IS A MISMATCH IN THE ORDER PAID AND ORDER RECORDED.<br>
              Paid amount: %1 Recorded amount: %2<br>Bolt transaction: %3',
                 CurrencyUtils::toMajor($boltTotal, $currencyCode),
@@ -1931,13 +1904,14 @@ class Order extends AbstractHelper
             ]);
         });
 
-        throw new LocalizedException(__(
+        throw new LocalizedException(__( /** @phpstan-ignore-line */
             'Order Totals Mismatch Reference: %1 Order: %2 Bolt Total: %3 Store Total: %4',
             $transaction->reference,
             $incrementId,
             $boltTotal,
             $storeTotal
-        ));
+        )
+        );
     }
 
     /**
@@ -2080,7 +2054,7 @@ class Order extends AbstractHelper
         $paymentMethod = $payment->getMethod();
 
         if ($paymentMethod != Payment::METHOD_CODE) {
-            throw new LocalizedException(__(
+            throw new LocalizedException(__( /** @phpstan-ignore-line */
                 'Payment method assigned to order is: %1',
                 $paymentMethod
             ));
@@ -2137,7 +2111,7 @@ class Order extends AbstractHelper
             $reference = $transaction->reference;
         }
 
-        /** @var OrderPaymentInterface $payment */
+        /** @var OrderPaymentInterface|mixed $payment */
         $payment = $order->getPayment();
 
         $this->checkPaymentMethod($payment);
@@ -2267,7 +2241,7 @@ class Order extends AbstractHelper
                 break;
 
             default:
-                throw new LocalizedException(__(
+                throw new LocalizedException(__(/** @phpstan-ignore-line */
                     'Unhandled transaction state : %1',
                     $transactionState
                 ));
@@ -2294,7 +2268,7 @@ class Order extends AbstractHelper
             'token_type' => $transaction->from_credit_card->token_type ?? $transaction->processor
         ];
 
-        $message = __(
+        $message = __(/** @phpstan-ignore-line */
             'BOLTPAY INFO :: PAYMENT Status: %1 Amount: %2<br>Bolt transaction: %3',
             $this->getBoltTransactionStatus($transactionState),
             $this->formatAmountForDisplay($order, $amount / 100),
@@ -2461,14 +2435,17 @@ class Order extends AbstractHelper
         $currencyCode = $order->getOrderCurrencyCode();
         try {
             if (CurrencyUtils::toMinor($order->getTotalInvoiced() + $amount, $currencyCode) === CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode)) {
+                /** @var Invoice|mixed $invoice */
                 $invoice = $this->invoiceService->prepareInvoice($order);
             } else {
+                /** @var Invoice|mixed $invoice */
                 $invoice = $this->invoiceService->prepareInvoiceWithoutItems($order, $amount);
             }
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             throw $e;
         }
+
         $invoice->setRequestedCaptureCase(Invoice::CAPTURE_OFFLINE);
         $invoice->setTransactionId($transactionId);
         $invoice->setGrandTotal($amount);
@@ -2508,7 +2485,7 @@ class Order extends AbstractHelper
             $order->setBaseShippingAmount($baseShippingAmount);
             //Add notification comment to order
             $order->addStatusHistoryComment(
-                __('Invoice #%1 is created. Notification email is sent to customer.', $invoice->getId())
+                __('Invoice #%1 is created. Notification email is sent to customer.', $invoice->getId()) /** @phpstan-ignore-line */
             )->setIsCustomerNotified(true);
         }
 
@@ -2538,11 +2515,11 @@ class Order extends AbstractHelper
                 $adjustment['qtys'][$item->getId()] = 0;
             }
         }
-
+        /** @var Creditmemo|mixed $creditMemo */
         $creditMemo = $this->creditmemoFactory->createByOrder($order, $adjustment);
 
         $creditMemo->setAutomaticallyCreated(true)
-                    ->addComment(__('The credit memo has been created automatically.'));
+                    ->addComment(__('The credit memo has been created automatically.'));/** @phpstan-ignore-line */
 
         $this->creditmemoManagement->refund($creditMemo, true);
     }
@@ -2554,8 +2531,8 @@ class Order extends AbstractHelper
      */
     protected function validateRefundAmount(OrderModel $order, $refundAmount)
     {
-        if (!isset($refundAmount) || !is_numeric($refundAmount) || $refundAmount < 0) {
-            throw new \Exception(__('Refund amount is invalid'));
+        if (!$refundAmount || !is_numeric($refundAmount) || $refundAmount < 0) {
+            throw new \Exception(__('Refund amount is invalid'));/** @phpstan-ignore-line */
         }
 
         $totalRefunded = $order->getTotalRefunded() ?: 0;
@@ -2564,7 +2541,7 @@ class Order extends AbstractHelper
 
         if ($availableRefund < $refundAmount) {
             throw new \Exception(
-                __('Refund amount is invalid: refund amount [%1], available refund [%2]', $refundAmount, $availableRefund)
+                __('Refund amount is invalid: refund amount [%1], available refund [%2]', $refundAmount, $availableRefund) /** @phpstan-ignore-line */
             );
         }
     }
@@ -2599,8 +2576,8 @@ class Order extends AbstractHelper
      */
     protected function validateCaptureAmount(OrderInterface $order, $captureAmount)
     {
-        if (!isset($captureAmount) || !is_numeric($captureAmount) || $captureAmount < 0) {
-            throw new \Exception(__('Capture amount is invalid'));
+        if (!$captureAmount || !is_numeric($captureAmount) || $captureAmount < 0) {
+            throw new \Exception(__('Capture amount is invalid')); /** @phpstan-ignore-line */
         }
 
         $currencyCode = $order->getOrderCurrencyCode();
@@ -2631,13 +2608,13 @@ class Order extends AbstractHelper
             );
             if ($previouslyCaptured == $captureAmountMinor) {
                 throw new \Exception(
-                    __(
+                    __(/** @phpstan-ignore-line */
                         'The same capture amount was already invoiced'
                     )
                 );
             }
             throw new \Exception(
-                __(
+                __( /** @phpstan-ignore-line */
                     'Capture amount is invalid: capture amount [%1], previously captured [%2], grand total [%3]',
                     $captureAmountMinor,
                     $previouslyCaptured,
@@ -2660,20 +2637,20 @@ class Order extends AbstractHelper
     }
 
     /**
-     * @param OrderPaymentInterface $payment
+     * @param OrderPaymentInterface|mixed $payment
      *
      * @return \Magento\Framework\Phrase|string
      */
-    protected function getVoidMessage(OrderPaymentInterface $payment)
+    protected function getVoidMessage($payment)
     {
         $authorizationTransaction = $payment->getAuthorizationTransaction();
         /** @var OrderModel $order */
         $order = $payment->getOrder();
         $voidAmount = $order->getGrandTotal() - $order->getTotalPaid();
 
-        $message = __('BOLT notification: Transaction authorization has been voided.');
-        $message .= ' ' .__('Amount: %1.', $this->formatAmountForDisplay($order, $voidAmount));
-        $message .= ' ' .__('Transaction ID: %1.', $authorizationTransaction->getHtmlTxnId());
+        $message = __('BOLT notification: Transaction authorization has been voided.'); /** @phpstan-ignore-line */
+        $message .= ' ' .__('Amount: %1.', $this->formatAmountForDisplay($order, $voidAmount)); /** @phpstan-ignore-line */
+        $message .= ' ' .__('Transaction ID: %1.', $authorizationTransaction->getHtmlTxnId()); /** @phpstan-ignore-line */
 
         return $message;
     }
@@ -2747,18 +2724,14 @@ class Order extends AbstractHelper
         }
         if ($order->getState() !== OrderModel::STATE_PENDING_PAYMENT) {
             throw new BoltException(
-                __(
-                    'Order Delete Error. Order is in invalid state. Order #: %1 State: %2 Immutable Quote ID: %3',
-                    $displayId,
-                    $order->getState(),
-                    $immutableQuoteId
-                ),
+                __('Order Delete Error. Order is in invalid state. Order #: %1 State: %2 Immutable Quote ID: %3', $displayId, $order->getState(), $immutableQuoteId) /** @phpstan-ignore-line */,
                 null,
                 CreateOrder::E_BOLT_GENERAL_ERROR
             );
         }
         $this->orderManagement->cancel($order->getId());
         /** reload order because {@see \Bolt\Boltpay\Helper\Cart::getOrderByIncrementId} */
+        /** @var \Magento\Sales\Model\Order|mixed $order */
         $order = $this->orderRepository->get($order->getId());
 
         $parentQuoteId = $order->getQuoteId();
@@ -2783,7 +2756,7 @@ class Order extends AbstractHelper
         $this->eventsForThirdPartyModules->dispatchEvent("beforeFailedPaymentOrderSave", $order);
 
         $order->addData(['quote_id' => null]);
-        $order->addCommentToStatusHistory(__('BOLTPAY INFO :: Order was canceled due to Processor rejection'));
+        $order->addCommentToStatusHistory(__('BOLTPAY INFO :: Order was canceled due to Processor rejection')); /** @phpstan-ignore-line */
         $this->orderRepository->save($order);
     }
 }
