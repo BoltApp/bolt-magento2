@@ -30,7 +30,7 @@ class TotalsCollectorPlugin
     {
         // legacy flow: skip amasty promo calculation for immutable quote collect total calls
         if ($quote->getBoltParentQuoteId() != null && $quote->getBoltParentQuoteId() != $quote->getId()) {
-            $address->setData(AmastyTotalsCollectorPlugin::KEY_IS_ADDRESS_PROCESSED, true);
+            $address->setData('amastyFreeGiftProcessed', true);
         }
 
         if (Hook::$is_from_remove_discount_hook) {
