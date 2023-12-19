@@ -17,10 +17,12 @@
 
 namespace Bolt\Boltpay\Plugin\WebapiRest\Magento\Checkout\Api;
 
+use Bolt\Boltpay\Helper\Cart;
 use Magento\Checkout\Api\PaymentInformationManagementInterface;
 use \Bolt\Boltpay\Api\RouteInsuranceManagementInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Customer\Model\Session as CustomerSession;
+use Magento\Framework\Webapi\Rest\Request as WebApiRequest;
 
 /**
  * Plugin for {@see \PaymentInformationManagementInterface}
@@ -57,6 +59,12 @@ class PaymentInformationManagementPlugin
      */
     private $customerSession;
 
+    /** @var \Magento\Backend\Model\Auth\Session $backendSession */
+    protected $backendSession;
+    
+    /** @var WebApiRequest $webApiRequest */
+    protected $webApiRequest;
+
     /**
      * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param \Bolt\Boltpay\Helper\Cart $cartHelper
@@ -71,7 +79,9 @@ class PaymentInformationManagementPlugin
         \Magento\Quote\Model\MaskedQuoteIdToQuoteIdInterface $maskedQuoteIdToQuoteId,
         \Magento\Framework\Module\Manager $moduleManager,
         CustomerRepository $customerRepository,
-        CustomerSession $customerSession
+        CustomerSession $customerSession,
+        \Magento\Backend\Model\Auth\Session $backendSession,
+          WebApiRequest $webApiRequest
     ) {
         $this->checkoutSession = $checkoutSession;
         $this->cartHelper = $cartHelper;
@@ -79,6 +89,8 @@ class PaymentInformationManagementPlugin
         $this->moduleManager = $moduleManager;
         $this->customerRepository = $customerRepository;
         $this->customerSession = $customerSession;
+        $this->backendSession = $backendSession;
+        $this->webApiRequest = $webApiRequest;
     }
 
     public function beforeSavePaymentInformationAndPlaceOrder(
@@ -99,6 +111,17 @@ class PaymentInformationManagementPlugin
                 if ($customerID) {
                     $customer = $this->customerRepository->getById($customerID);
                     $this->customerSession->setCustomerDataAsLoggedIn($customer);
+                }
+            }
+        }
+        // verify if api request is from Bolt side
+        if ($this->webApiRequest->getHeader('x-bolt-trace-id')) {
+            // verify if Mageside_CustomShippingPrice module is enabled
+            if ($this->moduleManager->isEnabled("Mageside_CustomShippingPrice")) {
+                $quote = $this->cartHelper->getQuoteById($cartId);
+                $checkoutType = $quote->getBoltCheckoutType();
+                if ($checkoutType == Cart::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
+                    $this->backendSession->setIsBoltBackOffice(true);
                 }
             }
         }

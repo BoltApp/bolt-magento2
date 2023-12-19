@@ -44,4 +44,18 @@
         <plugin name="bolt_boltpay_webapirest_magento_framework_session_manager"
                 type="Bolt\Boltpay\Plugin\Magento\Framework\Session\SessionManagerPlugin"/>
     </type>
+    <type name="Magento\Checkout\Model\ShippingInformationManagement">
+        <plugin name="bolt_boltpay_webapirest_magento_checkout_api_shipping_information_management_plugin"
+                type="Bolt\Boltpay\Plugin\WebapiRest\Magento\Checkout\Api\ShippingInformationManagement"/>
+    </type>
+
+    <type name="Magento\Quote\Model\ShippingMethodManagement">
+        <plugin name="bolt_boltpay_webapirest_magento_checkout_api_shipping_method_management_plugin"
+                type="Bolt\Boltpay\Plugin\WebapiRest\Magento\Checkout\Api\ShippingMethodManagement"
+                sortOrder="10" />
+    </type>
+    <type name="Magento\Backend\Model\Auth\Session">
+        <plugin name="bolt_boltpay_webapirest_magento_backend_model_auth_session_plugin"
+                type="Bolt\Boltpay\Plugin\WebapiRest\Magento\Backend\Model\Auth\Session"/>
+    </type>
 </config>
