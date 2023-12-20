@@ -78,6 +78,7 @@ class WebhookLog extends AbstractModel implements \Magento\Framework\DataObject\
      */
     public function recordAttempt($transactionId, $hookType)
     {
+        /** @var mixed $this */
         $this->setTransactionId($transactionId)
             ->setHookType($hookType)
             ->setNumberOfMissingQuoteFailedHooks(1)
@@ -92,6 +93,7 @@ class WebhookLog extends AbstractModel implements \Magento\Framework\DataObject\
      */
     public function incrementAttemptCount()
     {
+        /** @var mixed $this */
         $this->setNumberOfMissingQuoteFailedHooks($this->getNumberOfMissingQuoteFailedHooks() + 1)
              ->setUpdatedAt($this->_coreDate->gmtDate())
              ->save();

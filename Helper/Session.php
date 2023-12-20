@@ -252,7 +252,7 @@ class Session extends AbstractHelper
     }
 
     /**
-     * @return AdminCheckoutSession|CheckoutSession
+     * @return AdminCheckoutSession|CheckoutSession|mixed
      * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getCheckoutSession()

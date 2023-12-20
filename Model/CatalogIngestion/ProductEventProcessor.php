@@ -53,7 +53,7 @@ class ProductEventProcessor
 
     /**
      * Disabled attributes for triggering sync.
-     * @var []
+     * @var array
      */
     private $disabledAttrCodes = [
         'has_options',

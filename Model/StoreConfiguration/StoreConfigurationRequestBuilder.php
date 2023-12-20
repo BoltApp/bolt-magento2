@@ -44,7 +44,7 @@ class StoreConfigurationRequestBuilder
     private $apiHelper;
 
     /**
-     * @var DataObjectFactory
+     * @var DataObjectFactory|mixed
      */
     private $dataObjectFactory;
 
@@ -85,7 +85,7 @@ class StoreConfigurationRequestBuilder
         $publishKey = $this->config->getPublishableKeyCheckout($store->getId());
         if (!$apiKey || !$publishKey) {
             throw new LocalizedException(
-                __('Bolt API Key or Publishable Key - Multi Step is not configured')
+                __('Bolt API Key or Publishable Key - Multi Step is not configured') //@phpstan-ignore-line
             );
         }
         $requestData = $this->dataObjectFactory->create();

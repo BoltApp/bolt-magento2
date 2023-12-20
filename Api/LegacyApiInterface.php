@@ -36,7 +36,7 @@ interface LegacyApiInterface
      * @param mixed $display_id
      * @param mixed $source_transaction_id
      * @param mixed $source_transaction_reference
-     * @return void
+     * @return mixed
      */
 
     public function manage(
@@ -61,7 +61,7 @@ interface LegacyApiInterface
      * @param mixed $remove_items
      * @param mixed $discount_codes_to_add
      * @param mixed $discount_codes_to_remove
-     * @return Bolt\Boltpay\Api\Data\UpdateCartResultInterface|mixed
+     * @return \Bolt\Boltpay\Api\Data\UpdateCartResultInterface|mixed
      */
     public function updateCart(
         $cart,
@@ -123,7 +123,7 @@ interface LegacyApiInterface
      * @param mixed  $order - which contain token and cart nodes.
      * @param string $currency
      *
-     * @return void
+     * @return mixed
      */
     public function createOrder($type = null, $order = null, $currency = null);
 }

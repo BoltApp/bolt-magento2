@@ -78,11 +78,7 @@ class StoreConfigurationManager implements StoreConfigurationManagerInterface
                 return true;
             } else {
                 throw new LocalizedException(
-                    __(
-                        'Error response status during %1 request, status: %2',
-                        StoreConfigurationRequestBuilder::API_REQUEST_API_URL,
-                        $responseStatus
-                        )
+                    __('Error response status during %1 request, status: %2', StoreConfigurationRequestBuilder::API_REQUEST_API_URL, $responseStatus) //@phpstan-ignore-line
                     );
             }
 

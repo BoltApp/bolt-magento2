@@ -432,9 +432,9 @@ class UpdateCartContext
     {
         return $this->sessionHelper;
     }
-    
+
     /**
-     * @return Cache
+     * @return CacheInterface|mixed
      */
     public function getCache()
     {

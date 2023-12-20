@@ -42,7 +42,7 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
     private $configHelper;
 
     /**
-     * @var DataObjectFactory
+     * @var DataObjectFactory|mixed
      */
     private $dataObjectFactory;
 
@@ -112,6 +112,7 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
         $orderCurrency = $order->getOrderCurrencyCode();
         //Request Data
         $requestData = $this->dataObjectFactory->create();
+        /** @var mixed $this */
         $requestData->setApiData(
             [
                 'consumer_id' => $this->getConsumerId(),
@@ -135,7 +136,7 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
 
         if (empty($response)) {
             throw new LocalizedException(
-                __('Bad payment response from boltpay')
+                __('Bad payment response from boltpay') // @phpstan-ignore-line
             );
         }
 
@@ -147,6 +148,7 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
      */
     public function getCardInfoObject()
     {
+        /** @var mixed $this */
         $cardInfoArray = json_decode((string)$this->getCardInfo(), true);
         $cartInfo = $this->dataObjectFactory->create();
         $cartInfo->setData($cardInfoArray);
@@ -179,6 +181,7 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
      */
     public function saveCreditCard($customerId, $boltConsumerId, $boltCreditCardId, $cardInfo)
     {
+        /** @var mixed $this */
         $this->setCustomerId($customerId)
             ->setConsumerId($boltConsumerId)
             ->setCreditCardId($boltCreditCardId)

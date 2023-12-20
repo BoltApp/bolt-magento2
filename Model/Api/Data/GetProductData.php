@@ -103,7 +103,7 @@ class GetProductData implements GetProductDataInterface, \JsonSerializable
      * Set parent info.
      *
      * @api
-     * @param ProductInventoryInfoInterface
+     * @param ProductInventoryInfoInterface $parent
      *
      * @return $this
      */

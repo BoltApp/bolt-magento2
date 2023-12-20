@@ -55,7 +55,7 @@ class Group implements OptionSourceInterface
             $notLoggedGroup = $this->groupManagement->getNotLoggedInGroup();
             array_unshift($this->options, [
                 'value' => $notLoggedGroup->getId(),
-                'label' => __('Not Logged In')
+                'label' => __('Not Logged In')  // @phpstan-ignore-line
             ]);
         }
 

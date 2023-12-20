@@ -177,7 +177,6 @@ class OrderManagement implements OrderManagementInterface
      * @param mixed $currency
      * @param mixed $status
      * @param mixed $display_id
-     * @param mixed $immutable_quote_id
      * @param mixed $source_transaction_id
      * @param mixed $source_transaction_reference
      *
@@ -268,7 +267,7 @@ class OrderManagement implements OrderManagementInterface
     {
         if ($items == null) {
             throw new BoltException(
-                __('An unknown error occured when fetching the cart'),
+                __('An unknown error occured when fetching the cart'),// @phpstan-ignore-line
                 null,
                 6300 //const not yet made for this error code
             );
@@ -293,7 +292,7 @@ class OrderManagement implements OrderManagementInterface
     {
         if (empty($reference)) {
             throw new LocalizedException(
-                __('Missing required parameters.')
+                __('Missing required parameters.') // @phpstan-ignore-line
             );
         }
 
@@ -379,7 +378,7 @@ class OrderManagement implements OrderManagementInterface
 
         if (!isset($request['items'][0])) {
             throw new LocalizedException(
-                __('Missing required parameters.')
+                __('Missing required parameters.') // @phpstan-ignore-line
             );
         }
 
@@ -407,22 +406,20 @@ class OrderManagement implements OrderManagementInterface
 
     /**
      * Deletes a specified order by ID.
-     *
-     * @param int $id The order ID.
-     * @throws \Magento\Framework\Exception\CouldNotDeleteException
-     * @throws NoSuchEntityException
-     * @throws WebapiException
+     * @param int $id
+     * @return void
+     * @throws WebApiException
      */
     public function deleteById($id)
     {
         try {
             $order = $this->orderHelper->getOrderById($id);
             if ($order->getState() != OrderModel::STATE_PENDING_PAYMENT) {
-                throw new WebapiException(__('Unexpected order state'), 0, 422);
+                throw new WebapiException(__('Unexpected order state'), 0, 422); // @phpstan-ignore-line
             }
             $payment = $order->getPayment();
             if ($payment && $payment->getCcTransId() != "") {
-                throw new WebapiException(__('Order is already associated with transaction'), 0, 422);
+                throw new WebapiException(__('Order is already associated with transaction'), 0, 422); // @phpstan-ignore-line
             }
             $this->orderHelper->deleteOrder($order);
         } catch (WebapiException $e) {
@@ -439,11 +436,11 @@ class OrderManagement implements OrderManagementInterface
      * We need this endpoing because magento API is not able to create
      * partial invoice without settings specific items
      *
-     * @param int $id The order ID.
-     * @param float $amount
-     * @return bool $notify
-     * @throws NoSuchEntityException
-     * @throws WebapiException
+     * @param $id
+     * @param $amount
+     * @param $notify
+     * @return int|mixed
+     * @throws LocalizedException
      */
     public function createInvoice($id, $amount, $notify = false) {
         $order = $this->orderHelper->getOrderById($id);
@@ -453,6 +450,7 @@ class OrderManagement implements OrderManagementInterface
     }
 
     /**
+     *
      *  Places an order by order ID.
      *  We need this endpoint because we skip order place during order creation
      *  as transaction might be failed on bolt side
@@ -462,6 +460,7 @@ class OrderManagement implements OrderManagementInterface
      * @param $transactionData
      * @return \Magento\Sales\Api\Data\OrderInterface
      * @throws CommandException
+     * @throws LocalizedException
      */
     public function placeOrder($id, $transactionData)
     {
@@ -472,7 +471,7 @@ class OrderManagement implements OrderManagementInterface
         try {
             $order->place();
         } catch (CommandException $e) {
-            $this->paymentFailures->handle((int)$order->getQuoteId(), __($e->getMessage()));
+            $this->paymentFailures->handle((int)$order->getQuoteId(), __($e->getMessage())); // @phpstan-ignore-line
             throw $e;
         }
 
@@ -490,8 +489,6 @@ class OrderManagement implements OrderManagementInterface
      *
      * @param int $id The order ID.
      * @return bool
-     * @throws NoSuchEntityException
-     * @throws WebapiException
      */
     public function subscribeToNewsletter($id) {
         try {

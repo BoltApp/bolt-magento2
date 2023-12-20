@@ -119,7 +119,8 @@ class UniversalWebhook implements UniversalWebhookInterface
     }
 
     /**
-     * @param UniversalWebhookResultInterface $result
+     * @param $result
+     * @return mixed
      */
     private function formatResponse($result)
     {

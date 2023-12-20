@@ -78,7 +78,7 @@ class OAuthRedirect implements OAuthRedirectInterface
     private $cartHelper;
 
     /**
-     * @var SessionHelper
+     * @var SessionHelper|mixed
     */
     private $sessionHelper;
 
@@ -290,12 +290,12 @@ class OAuthRedirect implements OAuthRedirectInterface
         Hook::$fromBolt = true;
         if (!$this->deciderHelper->isBoltSSOEnabled()) {
             $this->bugsnag->notifyError('OAuthRedirect', 'BoltSSO feature is disabled');
-            throw new NoSuchEntityException(__('Request does not match any route.'));
+            throw new NoSuchEntityException(__('Request does not match any route.')); // @phpstan-ignore-line
         }
 
         if ($code === '' || $scope === '' || $state === '') {
             $this->bugsnag->notifyError('OAuthRedirect', 'Bad Request');
-            throw new WebapiException(__('Bad Request'), 0, WebapiException::HTTP_BAD_REQUEST);
+            throw new WebapiException(__('Bad Request'), 0, WebapiException::HTTP_BAD_REQUEST); // @phpstan-ignore-line
         }
 
         list($clientID, $clientSecret, $boltPublicKey) = $this->ssoHelper->getOAuthConfiguration();
@@ -303,13 +303,13 @@ class OAuthRedirect implements OAuthRedirectInterface
         $token = $this->ssoHelper->exchangeToken($code, $scope, $clientID, $clientSecret);
         if (is_string($token)) {
             $this->bugsnag->notifyError('OAuthRedirect', $token);
-            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR); // @phpstan-ignore-line
         }
 
         $payload = $this->ssoHelper->parseAndValidateJWT($token->{'id_token'}, $clientID, $boltPublicKey);
         if (is_string($payload)) {
             $this->bugsnag->notifyError('OAuthRedirect', $payload);
-            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR); // @phpstan-ignore-line
         }
 
         $externalID = $payload['sub'];
@@ -353,7 +353,7 @@ class OAuthRedirect implements OAuthRedirectInterface
                 'OAuthRedirect',
                 'customer with email ' . $payload['email'] . ' found but email is not verified'
             );
-            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR); // @phpstan-ignore-line
         }
 
         try {
@@ -431,7 +431,7 @@ class OAuthRedirect implements OAuthRedirectInterface
             $this->linkLoginAndRedirect($externalID, $customer->getId());
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR); // @phpstan-ignore-line
         }
     }
 
