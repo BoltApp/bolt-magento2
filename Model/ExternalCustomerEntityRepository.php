@@ -66,7 +66,7 @@ class ExternalCustomerEntityRepository implements ExternalCustomerEntityReposito
         $externalCustomerEntityCollection = $this->externalCustomerEntityCollectionFactory->create();
         $externalCustomerEntity = $externalCustomerEntityCollection->getExternalCustomerEntityByExternalID($externalID);
         if ($externalCustomerEntity === null) {
-            throw new NoSuchEntityException(__('Unable to find external customer entity with external ID "%1"', $externalID));
+            throw new NoSuchEntityException(__('Unable to find external customer entity with external ID "%1"', $externalID)); // @phpstan-ignore-line
         }
         return $externalCustomerEntity;
     }

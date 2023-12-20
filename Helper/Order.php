@@ -2426,10 +2426,11 @@ class Order extends AbstractHelper
      * @param float $amount
      * @param bool $notify
      *
-     * @return bool
+     * @return Invoice|mixed
      * @throws \Exception
      * @throws LocalizedException
      */
+
     public function createOrderInvoice($order, $amount, $notify = false, $transactionId = null)
     {
         $currencyCode = $order->getOrderCurrencyCode();

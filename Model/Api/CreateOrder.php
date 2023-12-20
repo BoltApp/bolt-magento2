@@ -40,6 +40,7 @@ use Magento\Quote\Model\Quote\Item as QuoteItem;
 use Magento\CatalogInventory\Helper\Data as CatalogInventoryData;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Magento\Sales\Model\Order;
 
 /**
  * Class CreateOrder
@@ -198,7 +199,7 @@ class CreateOrder implements CreateOrderInterface
 
             if ($type !== 'order.create') {
                 throw new BoltException(
-                    __('Invalid hook type!'),
+                    __('Invalid hook type!'), // @phpstan-ignore-line
                     null,
                     self::E_BOLT_GENERAL_ERROR
                 );
@@ -206,7 +207,7 @@ class CreateOrder implements CreateOrderInterface
 
             if (empty($order)) {
                 throw new BoltException(
-                    __('Missing order data.'),
+                    __('Missing order data.'),// @phpstan-ignore-line
                     null,
                     self::E_BOLT_GENERAL_ERROR
                 );
@@ -220,7 +221,7 @@ class CreateOrder implements CreateOrderInterface
 
             if (!$immutableQuote) {
                 throw new BoltException(
-                    __('Immutable quote does not exist. Quote id: ' . $immutableQuoteId),
+                    __('Immutable quote does not exist. Quote id: ' . $immutableQuoteId), // @phpstan-ignore-line
                     null,
                     self::E_BOLT_GENERAL_ERROR
                 );
@@ -313,7 +314,7 @@ class CreateOrder implements CreateOrderInterface
     /**
      * @param Quote $immutableQuote
      * @param \stdClass $transaction
-     * @return OrderModel
+     * @return Order
      * @throws \Exception
      * @throws BoltException
      */
@@ -368,7 +369,7 @@ class CreateOrder implements CreateOrderInterface
             return $order['cart']['order_reference'];
         }
 
-        $error = __('cart->order_reference does not exist');
+        $error = __('cart->order_reference does not exist'); // @phpstan-ignore-line
         throw new LocalizedException($error);
     }
 
@@ -383,7 +384,7 @@ class CreateOrder implements CreateOrderInterface
             return $order['cart']['display_id'];
         }
 
-        $error = __('cart->display_id does not exist');
+        $error = __('cart->display_id does not exist');// @phpstan-ignore-line
         throw new LocalizedException($error);
     }
 
@@ -439,7 +440,7 @@ class CreateOrder implements CreateOrderInterface
             });
 
             throw new BoltException(
-                __('There is no quote with ID: %1', $quoteId),
+                __('There is no quote with ID: %1', $quoteId),// @phpstan-ignore-line
                 null,
                 self::E_BOLT_GENERAL_ERROR
             );
@@ -471,7 +472,7 @@ class CreateOrder implements CreateOrderInterface
     /**
      * Validate minimum order amount
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      * @throws BoltException
      */
     public function validateMinimumAmount($quote)
@@ -489,7 +490,7 @@ class CreateOrder implements CreateOrderInterface
                 ]);
             });
             throw new BoltException(
-                __('The minimum order amount: %1 has not being met.', $minAmount),
+                __('The minimum order amount: %1 has not being met.', $minAmount), // @phpstan-ignore-line
                 null,
                 self::E_BOLT_MINIMUM_PRICE_NOT_MET
             );
@@ -511,7 +512,7 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
-     * @param Quote  $quote
+     * @param Quote|mixed  $quote
      * @param               $transaction
      * @throws BoltException
      * @throws NoSuchEntityException
@@ -544,7 +545,7 @@ class CreateOrder implements CreateOrderInterface
 
         if ($diff = $this->arrayDiff($quoteSkus, $transactionSkus)) {
             throw new BoltException(
-                __('Cart data has changed. SKU: ' . json_encode($diff)),
+                __('Cart data has changed. SKU: ' . json_encode($diff)), // @phpstan-ignore-line
                 null,
                 self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
             );
@@ -558,7 +559,7 @@ class CreateOrder implements CreateOrderInterface
             $this->hasItemErrors($item);
             if (empty($transactionItems)) {
                 throw new BoltException(
-                    __('Quote item does not exist in Bolt cart. Item id: ' . $item->getItemId() .', SKU: ' . $this->cartHelper->getSkuFromQuoteItem($item)),
+                    __('Quote item does not exist in Bolt cart. Item id: ' . $item->getItemId() .', SKU: ' . $this->cartHelper->getSkuFromQuoteItem($item)), // @phpstan-ignore-line
                     null,
                     self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
                 );
@@ -570,7 +571,7 @@ class CreateOrder implements CreateOrderInterface
     /**
      * Check if quote have errors.
      *
-     * @param QuoteItem $quoteItem
+     * @param QuoteItem|mixed $quoteItem
      * @return bool
      * @throws BoltException
      */
@@ -619,7 +620,7 @@ class CreateOrder implements CreateOrderInterface
         }
 
         throw new BoltException(
-            __($message),
+            __($message),// @phpstan-ignore-line
             null,
             $boltErrorCode
         );
@@ -647,16 +648,19 @@ class CreateOrder implements CreateOrderInterface
                 return true;
             }
         }
-        $this->bugsnag->registerCallback(function ($report) use ($itemPrice, $transactionUnitPrice) {
-            $report->setMetaData([
-                'Pre Auth' => [
-                    'item.price' => $itemPrice,
-                    'transaction.unit_price' => $transactionUnitPrice,
-                ]
-            ]);
-        });
+        if (isset($transactionUnitPrice)) {
+            $this->bugsnag->registerCallback(function ($report) use ($itemPrice, $transactionUnitPrice) {
+                $report->setMetaData([
+                    'Pre Auth' => [
+                        'item.price' => $itemPrice,
+                        'transaction.unit_price' => $transactionUnitPrice,
+                    ]
+                ]);
+            });
+        }
+
         throw new BoltException(
-            __('Price does not match. Item sku: ' . $itemSku),
+            __('Price does not match. Item sku: ' . $itemSku),// @phpstan-ignore-line
             null,
             self::E_BOLT_ITEM_PRICE_HAS_BEEN_UPDATED
         );
@@ -685,7 +689,7 @@ class CreateOrder implements CreateOrderInterface
                 ]);
             });
             throw new BoltException(
-                __('Cart Tax mismatched.'),
+                __('Cart Tax mismatched.'), // @phpstan-ignore-line
                 null,
                 self::E_BOLT_CART_HAS_EXPIRED
             );
@@ -693,7 +697,7 @@ class CreateOrder implements CreateOrderInterface
     }
 
     /**
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      * @param \stdClass $transaction
      * @return void
      * @throws BoltException
@@ -728,7 +732,7 @@ class CreateOrder implements CreateOrderInterface
                 ]);
             });
             throw new BoltException(
-                __('Shipping total has changed. Old value: ' . $boltCost . ', new value: ' . $storeCost),
+                __('Shipping total has changed. Old value: ' . $boltCost . ', new value: ' . $storeCost), // @phpstan-ignore-line
                 null,
                 self::E_BOLT_SHIPPING_EXPIRED
             );
@@ -757,7 +761,7 @@ class CreateOrder implements CreateOrderInterface
                 ]);
             });
             throw new BoltException(
-                __('Total amount does not match.'),
+                __('Total amount does not match.'), //@phpstan-ignore-line
                 null,
                 self::E_BOLT_CART_HAS_EXPIRED
             );

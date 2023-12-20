@@ -47,7 +47,7 @@ interface OrderManagementInterface
      * @param mixed $source_transaction_id
      * @param mixed $source_transaction_reference
      *
-     * @return void
+     * @return mixed
      */
     public function manage(
         $id = null,

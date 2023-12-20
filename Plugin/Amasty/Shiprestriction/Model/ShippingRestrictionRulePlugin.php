@@ -33,7 +33,7 @@ class ShippingRestrictionRulePlugin
     }
     
     /**
-     * @param AmastyTotalsCollectorPlugin $subject
+     * @param \Amasty\Shiprestriction\Model\ShippingRestrictionRule $subject
      * @param \Magento\Quote\Model\Quote\TotalsCollector $nextSubject
      * @param callable $nextProceed
      * @param \Magento\Quote\Model\Quote $quote

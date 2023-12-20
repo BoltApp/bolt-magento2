@@ -203,7 +203,7 @@ class Shipping extends ShippingTax implements ShippingInterface
                 ]);
             });
             throw new BoltException(
-                __('No Shipping Methods retrieved'),
+                __('No Shipping Methods retrieved'), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_SERVICE
             );

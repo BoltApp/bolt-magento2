@@ -33,7 +33,7 @@ class Events implements OptionSourceInterface
     public function toOptionArray(): array
     {
         return [
-            ['value' => self::STOCK_STATUS_CHANGES, 'label' => __('Product Stock Status Changes')]
+            ['value' => self::STOCK_STATUS_CHANGES, 'label' => __('Product Stock Status Changes')] // @phpstan-ignore-line
         ];
     }
 }

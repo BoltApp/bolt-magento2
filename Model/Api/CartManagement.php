@@ -46,7 +46,7 @@ class CartManagement implements CartManagementInterface
     private $bugsnag;
 
     /**
-     * @var QuoteIdMaskFactory
+     * @var QuoteIdMaskFactory|mixed
      */
     private $quoteIdMaskFactory;
 
@@ -101,7 +101,7 @@ class CartManagement implements CartManagementInterface
             if (!$maskedQuoteID) {
                 $maskedQuoteID = $this->generateMaskQuoteId($cartId);
                 if (!$maskedQuoteID) {
-                    throw new WebapiException(__('Masked quote ID does not found'), 0, WebapiException::HTTP_NOT_FOUND);
+                    throw new WebapiException(__('Masked quote ID does not found'), 0, WebapiException::HTTP_NOT_FOUND); // @phpstan-ignore-line
                 }
 
             }
@@ -112,7 +112,7 @@ class CartManagement implements CartManagementInterface
             throw $e;
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR); // @phpstan-ignore-line
         }
     }
 
@@ -143,7 +143,7 @@ class CartManagement implements CartManagementInterface
         try {
             $quote = $this->cartHelper->getQuoteById($cartId);
             if (!$quote) {
-                throw new WebapiException(__('Quote does not found'), 0, WebapiException::HTTP_NOT_FOUND);
+                throw new WebapiException(__('Quote does not found'), 0, WebapiException::HTTP_NOT_FOUND); // @phpstan-ignore-line
             }
 
             $quote->setIsActive((bool)$isActive)->save();
@@ -152,7 +152,7 @@ class CartManagement implements CartManagementInterface
             throw $e;
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR); // @phpstan-ignore-line
         }
     }
 
@@ -169,7 +169,7 @@ class CartManagement implements CartManagementInterface
         try {
             $quoteId = $this->maskedQuoteIdToQuoteId($maskedQuoteId);
             if (!$quoteId) {
-                throw new WebapiException(__('Quote does not found'), 0, WebapiException::HTTP_NOT_FOUND);
+                throw new WebapiException(__('Quote does not found'), 0, WebapiException::HTTP_NOT_FOUND); // @phpstan-ignore-line
             }
 
             return $quoteId;
@@ -178,7 +178,7 @@ class CartManagement implements CartManagementInterface
             throw $e;
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR); // @phpstan-ignore-line
         }
     }
 

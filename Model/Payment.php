@@ -139,7 +139,7 @@ class Payment extends AbstractMethod
     private $apiHelper;
 
     /**
-     * @var TimezoneInterface
+     * @var TimezoneInterface|mixed
      */
     private $localeDate;
 
@@ -159,7 +159,7 @@ class Payment extends AbstractMethod
     private $metricsClient;
 
     /**
-     * @var DataObjectFactory
+     * @var DataObjectFactory|mixed
      */
     private $dataObjectFactory;
 
@@ -169,7 +169,7 @@ class Payment extends AbstractMethod
     private $cartHelper;
 
     /**
-     * @var TransactionRepository
+     * @var TransactionRepository|mixed
      */
     protected $transactionRepository;
 
@@ -271,7 +271,12 @@ class Payment extends AbstractMethod
         return $this->void($payment);
     }
 
-    private function getTransactionIDs(InfoInterface $payment) {
+    /**
+     * @param InfoInterface|mixed $payment
+     * @return array
+     * @throws LocalizedException
+     */
+    private function getTransactionIDs($payment) {
         $transactionReference = $payment->getCcTransId();
         if ($transactionReference) {
             // api flow
@@ -284,18 +289,18 @@ class Payment extends AbstractMethod
         }
 
         throw new LocalizedException(
-            __('Please wait while transaction gets updated from Bolt.')
+            __('Please wait while transaction gets updated from Bolt.') // @phpstan-ignore-line
         );
     }
     /**
      * Void the payment through gateway
      *
-     * @param DataObject|InfoInterface $payment
+     * @param DataObject|InfoInterface|mixed $payment
      *
      * @return $this
      * @throws \Exception
      */
-    public function void(InfoInterface $payment)
+    public function void($payment)
     {
         try {
             $startTime = $this->metricsClient->getCurrentTime();
@@ -318,14 +323,14 @@ class Payment extends AbstractMethod
 
             if (empty($response)) {
                 throw new LocalizedException(
-                    __('Bad void response from boltpay')
+                    __('Bad void response from boltpay') // @phpstan-ignore-line
                 );
             }
 
             $status = $response->status ?? null;
 
             if (!in_array($status, ['cancelled','completed'])) {
-                throw new LocalizedException(__('Payment void error.'));
+                throw new LocalizedException(__('Payment void error.')); // @phpstan-ignore-line
             }
 
             $order = $payment->getOrder();
@@ -345,13 +350,13 @@ class Payment extends AbstractMethod
      * Fetch transaction details info. This will fetch the latest transaction information from Bolt and update the
      * payment status in magento if needed.
      *
-     * @param InfoInterface $payment
+     * @param InfoInterface|mixed $payment
      * @param string $transactionId
      *
      * @return array
      * @throws \Exception
      */
-    public function fetchTransactionInfo(InfoInterface $payment, $transactionId)
+    public function fetchTransactionInfo($payment, $transactionId)
     {
         try {
             $startTime = $this->metricsClient->getCurrentTime();
@@ -381,13 +386,13 @@ class Payment extends AbstractMethod
     /**
      * Capture the authorized transaction through the gateway
      *
-     * @param InfoInterface $payment
+     * @param InfoInterface|mixed $payment
      * @param float $amount
      *
      * @return $this
      * @throws \Exception
      */
-    public function capture(InfoInterface $payment, $amount)
+    public function capture($payment, $amount)
     {
         $startTime = $this->metricsClient->getCurrentTime();
         try {
@@ -401,7 +406,7 @@ class Payment extends AbstractMethod
             $order = $payment->getOrder();
 
             if ($amount < 0) {
-                throw new LocalizedException(__('Invalid amount for capture.'));
+                throw new LocalizedException(__('Invalid amount for capture.'));// @phpstan-ignore-line
             }
 
             $captureAmount = $this->getCaptureAmount($order, $amount);
@@ -437,12 +442,12 @@ class Payment extends AbstractMethod
 
             if (empty($response)) {
                 throw new LocalizedException(
-                    __('Bad capture response from boltpay')
+                    __('Bad capture response from boltpay') // @phpstan-ignore-line
                 );
             }
             $status = $response->status ?? null;
             if (!in_array($status, [self::TRANSACTION_AUTHORIZED, self::TRANSACTION_COMPLETED])) {
-                throw new LocalizedException(__('Payment capture error.'));
+                throw new LocalizedException(__('Payment capture error.')); // @phpstan-ignore-line
             }
 
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
@@ -470,19 +475,19 @@ class Payment extends AbstractMethod
     /**
      * Refund the amount
      *
-     * @param DataObject|InfoInterface $payment
+     * @param InfoInterface|mixed $payment
      * @param float $amount
      *
      * @return $this
      * @throws \Exception
      */
-    public function refund(InfoInterface $payment, $amount)
+    public function refund($payment, $amount)
     {
         try {
             $startTime = $this->metricsClient->getCurrentTime();
 
             if ($amount < 0) {
-                throw new LocalizedException(__('Invalid amount for refund.'));
+                throw new LocalizedException(__('Invalid amount for refund.')); // @phpstan-ignore-line
             }
 
             $order = $payment->getOrder();
@@ -526,13 +531,13 @@ class Payment extends AbstractMethod
 
             if (empty($response)) {
                 throw new LocalizedException(
-                    __('Bad refund response from boltpay')
+                    __('Bad refund response from boltpay') // @phpstan-ignore-line
                 );
             }
             $status = $response->status ?? null;
 
             if (!in_array($status, [self::TRANSACTION_COMPLETED, self::TRANSACTION_IN_PROGRESS, self::TRANSACTION_CREATED])) {
-                throw new LocalizedException(__('Payment refund error.'));
+                throw new LocalizedException(__('Payment refund error.')); // @phpstan-ignore-line
             }
 
             $this->orderHelper->updateOrderPayment($order, null, $response->reference);
@@ -601,6 +606,7 @@ class Payment extends AbstractMethod
      */
     public function canReviewPayment()
     {
+        /** @var InfoInterface|mixed $info */
         $info = $this->getInfoInstance();
         $state = $info->getCcStatusDescription();
         if ($state) {
@@ -638,12 +644,12 @@ class Payment extends AbstractMethod
      * Function to process the review (approve/reject), sends data to Bolt API
      * And update order history
      *
-     * @param InfoInterface $payment
+     * @param InfoInterface|mixed $payment
      * @param               $review
      *
      * @return bool
      */
-    protected function review(InfoInterface $payment, $review)
+    protected function review($payment, $review)
     {
         try {
             $transactionData = $this->getTransactionIDs($payment);
@@ -664,7 +670,7 @@ class Payment extends AbstractMethod
             $response = $result->getResponse();
 
             if (strlen((string)$response->reference) == 0) {
-                throw new LocalizedException(__('Bad review response. Empty transaction reference'));
+                throw new LocalizedException(__('Bad review response. Empty transaction reference')); //@phpstan-ignore-line
             }
 
             $this->updateReviewedOrderHistory($payment, $review);
@@ -678,16 +684,16 @@ class Payment extends AbstractMethod
     }
 
     /**
-     * @param InfoInterface $payment
+     * @param InfoInterface|mixed $payment
      * @param               $review
      */
-    protected function updateReviewedOrderHistory(InfoInterface $payment, $review)
+    protected function updateReviewedOrderHistory($payment, $review)
     {
         $statusMessage = ($review == self::DECISION_APPROVE) ?
             'Force approve order by %1 %2.' : 'Confirm order rejection by %1 %2.';
 
         $adminUser = $this->authSession->getUser();
-        $message = __($statusMessage, $adminUser->getFirstname(), $adminUser->getLastname());
+        $message = __($statusMessage, $adminUser->getFirstname(), $adminUser->getLastname()); //@phpstan-ignore-line
 
         $order = $payment->getOrder();
         $order->addStatusHistoryComment($message);

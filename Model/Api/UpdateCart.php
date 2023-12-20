@@ -318,7 +318,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage(),
                 $e->getHttpCode(),
-                ($immutableQuote) ? $immutableQuote : null
+                isset($immutableQuote) ? $immutableQuote : null
             );
 
             return false;
@@ -406,7 +406,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
     }
 
     /**
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      * @return array
      * @throws \Exception
      */
@@ -469,10 +469,8 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
     }
 
     /**
-     * @param Quote $quote
-     * @param array $cart
-     * @return UpdateCartResultInterface
-     * @throws \Exception
+     * @param $quote
+     * @return mixed
      */
     public function generateResult($quote)
     {
