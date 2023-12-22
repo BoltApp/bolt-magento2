@@ -44,4 +44,8 @@
         <plugin name="bolt_boltpay_webapirest_magento_framework_session_manager"
                 type="Bolt\Boltpay\Plugin\Magento\Framework\Session\SessionManagerPlugin"/>
     </type>
+    <type name="Magento\Framework\Webapi\ErrorProcessor">
+        <plugin name="bolt_boltpay_webapirest_magento_error_processor"
+                type="Bolt\Boltpay\Plugin\WebapiRest\Magento\Framework\Webapi\ErrorProcessorPlugin"/>
+    </type>
 </config>
