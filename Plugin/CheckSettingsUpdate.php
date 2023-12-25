@@ -69,7 +69,7 @@ class CheckSettingsUpdate
     }
 
     /**
-     * @param CheckoutSession $subject
+     * @param MagentoConfig $subject
      * @return null Return null because method Save have no arguments
      */
     public function beforeSave(MagentoConfig $subject)
@@ -79,8 +79,10 @@ class CheckSettingsUpdate
     }
 
     /**
-     * @param CheckoutSession $subject
-     * @return CheckoutSession
+     * @param MagentoConfig $subject
+     * @param $result
+     * @return mixed
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function afterSave(MagentoConfig $subject, $result)
     {

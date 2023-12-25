@@ -17,6 +17,7 @@ use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepository;
+use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\OrderManagementInterface;
 
 class NonBoltOrderPlugin
@@ -37,7 +38,7 @@ class NonBoltOrderPlugin
     private $cartHelper;
 
     /**
-     * @var DataObjectFactory
+     * @var DataObjectFactory|mixed
      */
     private $dataObjectFactory;
 
@@ -101,9 +102,10 @@ class NonBoltOrderPlugin
 
     /**
      * @param OrderManagementInterface $orderManagementInterface
-     * @param Order
-     *
-     * @return Order
+     * @param $order
+     * @return mixed
+     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function afterPlace(OrderManagementInterface $orderManagementInterface, $order)
     {
@@ -118,7 +120,7 @@ class NonBoltOrderPlugin
                 // ignore Bolt orders
                 return $order;
             }
-
+            /** @var Quote|mixed $quote */
             $quote = $this->quoteRepository->get($order->getQuoteId());
             if (!$quote) {
                 $this->metricsClient->processCountMetric("non_bolt_order_creation.no_quote", 1);
@@ -156,13 +158,11 @@ class NonBoltOrderPlugin
     }
 
     /**
-     * Call Bolt Create Non-Bolt Order API
-     *
-     * @param array $cart
-     * @param CustomerInterface $customer
-     * @param int $storeId
-     * @param string $paymentMethod
-     * @return Response|int
+     * @param $cart
+     * @param $customer
+     * @param $storeId
+     * @param $paymentMethod
+     * @return Response|mixed
      * @throws LocalizedException
      */
     protected function createNonBoltOrder($cart, $customer, $storeId, $paymentMethod)

@@ -53,7 +53,7 @@ class Cart
     private $configHelper;
 
     /**
-     * @var DataObjectFactory
+     * @var DataObjectFactory|mixed
      */
     private $dataObjectFactory;
 
@@ -109,9 +109,10 @@ class Cart
      * Add bolt data to result
      *
      * @param CustomerDataCart $subject
-     * @param array $result
+     * @param array $customerData
      * @return array
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     * @throws LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function afterGetSectionData(CustomerDataCart $subject, array $customerData)
     {
@@ -182,9 +183,7 @@ class Cart
         $apiKey = $this->configHelper->getApiKey($quote->getStoreId());
         $publishableKey = $this->configHelper->getPublishableKeyCheckout($quote->getStoreId());
         if (!$apiKey || !$publishableKey) {
-            throw new LocalizedException(
-                __('Bolt API Key or Publishable Key - Multi Step is not configured')
-            );
+            throw new LocalizedException(__('Bolt API Key or Publishable Key - Multi Step is not configured')); /** @phpstan-ignore-line */
         }
         $requestData = $this->dataObjectFactory->create();
         $requestData->setDynamicApiUrl(ApiHelper::API_PRE_FETCH_CART)

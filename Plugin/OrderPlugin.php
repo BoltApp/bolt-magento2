@@ -31,7 +31,7 @@ class OrderPlugin
     private $request;
 
     /**
-     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
+     * @var \Bolt\Boltpay\Helper\FeatureSwitch\Decider
      */
     private $featureSwitches;
 
@@ -71,6 +71,7 @@ class OrderPlugin
             return [$state];
         }
 
+        /** @var mixed $subject */
         // Store the initial order state.
         // Used in conditionally calling Order::place just once
         // in the transition from Order::STATE_PENDING_PAYMENT to Order::STATE_NEW.
@@ -117,7 +118,7 @@ class OrderPlugin
         if ($this->featureSwitches->isOrderPlaceCallNotPostponed()) {
             return [$status];
         }
-
+        /** @var mixed $subject */
         if (!$subject->getPayment()
             || $subject->getPayment()->getMethod() != \Bolt\Boltpay\Model\Payment::METHOD_CODE
         ) {

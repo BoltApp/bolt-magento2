@@ -51,11 +51,11 @@ class ClearQuote
     }
 
     /**
-     * @param CheckoutSession $subject
+     * @param CheckoutSession|mixed $subject
      * @return null Return null because method clearQuote have no arguments
      * @throws \Exception
      */
-    public function beforeClearQuote(CheckoutSession $subject)
+    public function beforeClearQuote($subject)
     {
         if (!$this->configHelper->getProductPageCheckoutFlag()) {
             return null;

@@ -31,13 +31,12 @@ class ShippingRestrictionRulePlugin
     ) {
         $this->sessionHelper = $sessionHelper;
     }
-    
+
     /**
      * @param \Amasty\Shiprestriction\Model\ShippingRestrictionRule $subject
-     * @param \Magento\Quote\Model\Quote\TotalsCollector $nextSubject
-     * @param callable $nextProceed
-     * @param \Magento\Quote\Model\Quote $quote
-     * @param \Magento\Quote\Model\Quote\Address $address
+     * @param $request
+     * @return array
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function beforeGetRestrictionRules(\Amasty\Shiprestriction\Model\ShippingRestrictionRule $subject, $request)
     {
@@ -47,7 +46,7 @@ class ShippingRestrictionRulePlugin
             return [$request];
         }
         $firstItem = current($allItems);
-        /** @var \Magento\Quote\Model\Quote\Address $address */
+        /** @var \Magento\Quote\Model\Quote\Address|mixed $address */
         $address = $firstItem->getAddress();
         if ($address->getQuote()->getBoltCheckoutType() == CartHelper::BOLT_CHECKOUT_TYPE_BACKOFFICE) {
             $this->sessionHelper->getCheckoutSession()->setBoltBackendOrderShippingRestrictionRule(true);

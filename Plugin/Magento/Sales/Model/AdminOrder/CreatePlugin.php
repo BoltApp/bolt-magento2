@@ -28,7 +28,7 @@ class CreatePlugin
      */
     private $configHelper;
 
-    /** @var AdminCheckoutSession */
+    /** @var AdminCheckoutSession|mixed */
     private $adminCheckoutSession;
 
     /**
