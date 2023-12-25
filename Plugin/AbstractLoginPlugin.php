@@ -38,7 +38,7 @@ abstract class AbstractLoginPlugin
     private $customerSession;
 
     /**
-     * @var CheckoutSession
+     * @var CheckoutSession|mixed
      */
     private $checkoutSession;
 
@@ -160,7 +160,7 @@ abstract class AbstractLoginPlugin
     }
 
     /**
-     * @return \Magento\Store\Api\Data\StoreInterface
+     * @return \Magento\Store\Api\Data\StoreInterface|mixed
      */
     protected function getStore()
     {

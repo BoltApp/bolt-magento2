@@ -54,7 +54,7 @@ class CacheFedexResultPlugin
     private $sessionHelper;
     
     /**
-     * @var Closure proxy
+     * @var mixed proxy
      */
     private $methodCaller;
     

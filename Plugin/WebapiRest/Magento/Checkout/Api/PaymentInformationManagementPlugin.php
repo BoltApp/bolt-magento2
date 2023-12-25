@@ -28,7 +28,7 @@ use Magento\Customer\Model\Session as CustomerSession;
 class PaymentInformationManagementPlugin
 {
     /**
-     * @var \Magento\Checkout\Model\Session
+     * @var \Magento\Checkout\Model\Session|mixed
      */
     private $checkoutSession;
 

@@ -23,7 +23,7 @@ use Bolt\Boltpay\ThirdPartyModules\MageWorx\RewardPoints as BoltMageWorxRewards;
 class ApplyPlugin
 {
     /**
-     * @var CustomerSession
+     * @var CustomerSession|mixed
      */
     private $customerSession;
 
@@ -45,6 +45,7 @@ class ApplyPlugin
      * @return mixed
      */
     public function beforeExecute(\MageWorx\RewardPoints\Controller\Checkout\Apply $subject) {
+        /** @var mixed $subject */
         if ($subject->getRequest()->isXmlHttpRequest()) {
             $amount = $subject->getRequest()->getParam('amount');
             if (is_null($amount)) {

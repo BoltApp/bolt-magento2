@@ -17,6 +17,7 @@
 namespace Bolt\Boltpay\Plugin\Magento\GiftCard;
 
 use Bolt\Boltpay\Model\Payment as BoltPayment;
+use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
 use Magento\Sales\Model\Order;
 
@@ -27,6 +28,7 @@ class GenerateGiftCardAccountsOrderPlugin
         callable $proceed,
         Observer $observer
     ) {
+        /** @var Event|mixed $event */
         $event = $observer->getEvent();
         /** @var Order $order */
         $order =  $event->getOrder();

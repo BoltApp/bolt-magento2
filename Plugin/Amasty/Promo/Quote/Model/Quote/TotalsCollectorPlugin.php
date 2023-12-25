@@ -11,6 +11,8 @@ use Bolt\Boltpay\Helper\Hook;
 use Amasty\Promo\Plugin\Quote\Model\Quote\TotalsCollectorPlugin as AmastyTotalsCollectorPlugin;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
+use Magento\Quote\Model\Quote;
+
 
 class TotalsCollectorPlugin
 {
@@ -48,7 +50,7 @@ class TotalsCollectorPlugin
         if (Hook::$fromBolt && $this->state->getAreaCode() === Area::AREA_WEBAPI_REST) {
             $address->setData('amastyFreeGiftProcessed', true);
         }
-
+        /** @var mixed $subject*/
         if (Hook::$is_from_remove_discount_hook) {
             $proceedFlag = function () use ($subject) {
                 $subject->proceedFlag = false;
