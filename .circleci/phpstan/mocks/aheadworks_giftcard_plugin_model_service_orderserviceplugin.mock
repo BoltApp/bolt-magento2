@@ -1,0 +1,6 @@
+<?php
+namespace Aheadworks\Giftcard\Plugin\Model\Service {
+    class OrderServicePlugin {
+    public function aroundCancel(...$args) {}
+    };
+}

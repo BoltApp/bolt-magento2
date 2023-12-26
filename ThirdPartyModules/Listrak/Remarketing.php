@@ -104,7 +104,6 @@ class Remarketing
     }
 
     /**
-     * @param null $storeId
      * @return bool
      */
     private function isListrakEnabled()

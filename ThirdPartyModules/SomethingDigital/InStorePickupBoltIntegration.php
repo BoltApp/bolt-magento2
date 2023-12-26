@@ -77,12 +77,12 @@ class InStorePickupBoltIntegration
 
     /**
      * @param $result
-     * @param \SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker $pickupStoreChecker
-     * @param \Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver $saveDeliveryObserver
-     * @param \Magento\Quote\Model\Quote $quote
+     * @param $pickupStoreChecker
+     * @param $saveDeliveryObserver
+     * @param $quote
      * @param $shippingOptions
      * @param $addressData
-     * @return array
+     * @return array[]|mixed
      */
     public function getShipToStoreOptions(
         $result,
@@ -144,11 +144,11 @@ class InStorePickupBoltIntegration
 
     /**
      * @param $result
-     * @param \SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker $pickupStoreChecker
-     * @param \Magento\Quote\Model\Quote $quote
+     * @param $pickupStoreChecker
+     * @param $quote
      * @param $ship_to_store_option
      * @param $addressData
-     * @return array
+     * @return mixed
      */
     public function getShipToStoreCarrierMethodCodes(
         $result,
@@ -167,9 +167,10 @@ class InStorePickupBoltIntegration
     }
 
     /**
-     * @param \SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker $pickupStoreChecker
-     * @param \Magento\Quote\Model\Quote $quote
-     * @param \stdClass $transaction
+     * @param $pickupStoreChecker
+     * @param $quote
+     * @param $transaction
+     * @return void
      */
     public function setInStoreShippingMethodForPrepareQuote(
         $pickupStoreChecker,
@@ -192,10 +193,11 @@ class InStorePickupBoltIntegration
     }
 
     /**
-     * @param \SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker $pickupStoreChecker
-     * @param \Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver $saveDeliveryObserver
-     * @param \Magento\Quote\Model\Quote $quote
-     * @param \stdClass $transaction
+     * @param $pickupStoreChecker
+     * @param $saveDeliveryObserver
+     * @param $quote
+     * @param $transaction
+     * @return void
      */
     public function setInStoreShippingAddressForPrepareQuote(
         $pickupStoreChecker,

@@ -19,13 +19,6 @@ namespace Bolt\Boltpay\Model;
 
 use Magento\Framework\DataObject;
 
-/**
- * Response object
- *
- * @method getResponse
- * @method getStoreId
- * @method setStoreId($storeId)
- */
 class Response extends DataObject
 {
 }

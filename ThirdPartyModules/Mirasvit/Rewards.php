@@ -26,7 +26,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Customer\Model\Session as CustomerSession;
-
+use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 class Rewards
 {
     const MIRASVIT_REWARDS = 'mirasvitrewards';
@@ -47,24 +47,24 @@ class Rewards
      * @var \Mirasvit\Rewards\Helper\Purchase
      */
     private $mirasvitRewardsPurchaseHelper;
-    
+
     /**
-     * @var ThirdPartyModuleFactory
+     * @var ThirdPartyModuleFactory|mixed
      */
     private $mirasvitRewardsSpendRulesListHelper;
     
     /**
-     * @var ThirdPartyModuleFactory
+     * @var ThirdPartyModuleFactory|mixed
      */
     private $mirasvitRewardsModelConfig;
     
     /**
-     * @var ThirdPartyModuleFactory
+     * @var ThirdPartyModuleFactory|mixed
      */
     private $mirasvitRewardsBalanceHelper;
     
     /**
-     * @var ThirdPartyModuleFactory
+     * @var ThirdPartyModuleFactory|mixed
      */
     private $mirasvitRewardsRuleQuoteSubtotalCalc;
 
@@ -94,16 +94,15 @@ class Rewards
     private $cartHelper;
     
     /**
-     * @var CustomerSession
+     * @var CustomerSession|mixed
      */
     private $customerSession;
     
     private $appliedRewardsMode;
 
     /**
-     * Rewards constructor.
      * @param Bugsnag $bugsnagHelper
-     * @param ScopeInterface $scopeConfigInterface
+     * @param ScopeConfigInterface $scopeConfigInterface
      * @param CustomerFactory $customerFactory
      * @param SessionHelper $sessionHelper
      * @param CartHelper $cartHelper
@@ -126,12 +125,13 @@ class Rewards
     }
 
     /**
-     * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
-     * @param \Mirasvit\Rewards\Helper\Balance  $mirasvitRewardsBalanceHelper
-     * @param \Mirasvit\Rewards\Helper\Balance\SpendRulesList $mirasvitRewardsSpendRulesListHelper
-     * @param \Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
-     * @param \Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc $mirasvitRewardsRuleQuoteSubtotalCalc
+     * @param $mirasvitRewardsPurchaseHelper
+     * @param $mirasvitRewardsBalanceHelper
+     * @param $mirasvitRewardsSpendRulesListHelper
+     * @param $mirasvitRewardsModelConfig
+     * @param $mirasvitRewardsRuleQuoteSubtotalCalc
      * @param $immutableQuote
+     * @return void
      */
     public function applyExternalDiscountData(
         $mirasvitRewardsPurchaseHelper,
@@ -152,15 +152,14 @@ class Rewards
 
     /**
      * @param $result
-     * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
-     * @param \Mirasvit\Rewards\Helper\Balance  $mirasvitRewardsBalanceHelper
-     * @param \Mirasvit\Rewards\Helper\Balance\SpendRulesList $mirasvitRewardsSpendRulesListHelper
-     * @param \Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
-     * @param \Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc $mirasvitRewardsRuleQuoteSubtotalCalc
+     * @param $mirasvitRewardsPurchaseHelper
+     * @param $mirasvitRewardsBalanceHelper
+     * @param $mirasvitRewardsSpendRulesListHelper
+     * @param $mirasvitRewardsModelConfig
+     * @param $mirasvitRewardsRuleQuoteSubtotalCalc
      * @param $quote
      * @param $parentQuote
      * @param $paymentOnly
-     *
      * @return array
      */
     public function collectDiscounts(
@@ -210,14 +209,13 @@ class Rewards
 
     /**
      * @param $result
-     * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
-     * @param \Mirasvit\Rewards\Helper\Balance  $mirasvitRewardsBalanceHelper
-     * @param \Mirasvit\Rewards\Helper\Balance\SpendRulesList $mirasvitRewardsSpendRulesListHelper
-     * @param \Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
-     * @param \Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc $mirasvitRewardsRuleQuoteSubtotalCalc
+     * @param $mirasvitRewardsPurchaseHelper
+     * @param $mirasvitRewardsBalanceHelper
+     * @param $mirasvitRewardsSpendRulesListHelper
+     * @param $mirasvitRewardsModelConfig
+     * @param $mirasvitRewardsRuleQuoteSubtotalCalc
      * @param $quote
-     *
-     * @return string
+     * @return mixed|string
      */
     public function filterApplyExternalQuoteData(
         $result,
@@ -286,7 +284,7 @@ class Rewards
     /**
      * If enabled, gets the Mirasvit Rewards amount used
      *
-     * @param \Magento\Quote\Model\Quote $quote The parent quote of this order which contains Rewards points references
+     * @param \Magento\Quote\Model\Quote|mixed $quote The parent quote of this order which contains Rewards points references
      *
      * @return float  If enabled, the currency amount used in the order, otherwise 0
      */
@@ -344,14 +342,13 @@ class Rewards
             return 0;
         }
     }
-    
+
     /**
-     * @param \Mirasvit\Rewards\Model\Spending\Rule $rule
-     * @param \Magento\Customer\Model\Customer      $customer
-     * @param float                                 $pointsNumber
-     * @param float                                 $quoteSubTotal
-     *
-     * @return float
+     * @param $rules
+     * @param $customer
+     * @param $pointsNumber
+     * @param $quoteSubTotal
+     * @return int
      */
     private function calMaxSpendAmount($rules, $customer, $pointsNumber, $quoteSubTotal)
     {
@@ -407,17 +404,25 @@ class Rewards
         
         return $totalAmount;
     }
-    
+
     /**
      * Calcs min and max amount of spend points for quote
      *
-     * @param \Magento\Quote\Model\Quote            $quote
-     * @param \Magento\Customer\Model\Customer      $customer
-     * @param \Mirasvit\Rewards\Model\Spending\Rule $rule
-     * @param float                                 $balancePoints
-     * @param float                                 $quoteSubTotal
-     *
-     * @return \Magento\Framework\DataObject
+     * @param $quote
+     * @param $customer
+     * @param $rules
+     * @param $balancePoints
+     * @param $quoteSubTotal
+     * @return \Magento\Framework\DataObject|mixed
+     */
+
+    /**
+     * @param $quote
+     * @param $customer
+     * @param $rules
+     * @param $balancePoints
+     * @param $quoteSubTotal
+     * @return \Magento\Framework\DataObject|mixed
      */
     private function getCartPointsRange($quote, $customer, $rules, $balancePoints, $quoteSubTotal)
     {
@@ -456,15 +461,13 @@ class Rewards
             'max_points'  => $data->maxPoints,
         ]);
     }
-    
+
     /**
-     * This is a private function copied from class Mirasvit\Rewards\Helper\Balance\SpendCartRange,
+     *  This is a private function copied from class Mirasvit\Rewards\Helper\Balance\SpendCartRange,
      * though we have some custom logic in it.
-     *
-     * @param \Mirasvit\Rewards\Model\Spending\Tier $tier
-     * @param SpendCartRangeData                    $data
-     *
-     * @return SpendCartRangeData
+     * @param $tier
+     * @param $data
+     * @return mixed
      */
     private function calcPointsPerRule($tier, $data)
     {
@@ -504,17 +507,15 @@ class Rewards
 
         return $data;
     }
-    
+
     /**
      * This is a private function copied from class Mirasvit\Rewards\Helper\Balance\SpendCartRange,
      * and we do not have any custom logic in it.
-     *
-     * @param float              $ruleMinPoints
-     * @param float              $ruleMaxPoints
-     * @param float              $monetaryStep
-     * @param float              $ruleSpendPoints
-     * @param SpendCartRangeData $data
-     *
+     * @param $ruleMinPoints
+     * @param $ruleMaxPoints
+     * @param $monetaryStep
+     * @param $ruleSpendPoints
+     * @param $data
      * @return bool
      */
     private function isRuleValid($ruleMinPoints, $ruleMaxPoints, $monetaryStep, $ruleSpendPoints, $data)
@@ -556,15 +557,16 @@ class Rewards
             $this->appliedRewardsMode = self::MIRASVIT_REWARDS_APPLY_MODE_ALL;
         }
     }
-    
+
     /**
-     * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
-     * @param \Mirasvit\Rewards\Helper\Balance  $mirasvitRewardsBalanceHelper
-     * @param \Mirasvit\Rewards\Helper\Balance\SpendRulesList $mirasvitRewardsSpendRulesListHelper
-     * @param \Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
-     * @param \Mirasvit\Rewards\Helper\Checkout $mirasvitRewardsCheckoutHelper
-     * @param \Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc $mirasvitRewardsRuleQuoteSubtotalCalc
+     * @param $mirasvitRewardsPurchaseHelper
+     * @param $mirasvitRewardsBalanceHelper
+     * @param $mirasvitRewardsSpendRulesListHelper
+     * @param $mirasvitRewardsModelConfig
+     * @param $mirasvitRewardsCheckoutHelper
+     * @param $mirasvitRewardsRuleQuoteSubtotalCalc
      * @param $quote
+     * @return void
      */
     public function beforeValidateQuoteDataForProcessNewOrder(
         $mirasvitRewardsPurchaseHelper,
@@ -594,13 +596,13 @@ class Rewards
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * @param $result
-     * @param \Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
+     * @param $mirasvitRewardsModelConfig
      * @param $quote
      * @param $transaction
-     * @return boolean
+     * @return bool
      */
     public function filterSkipValidateShippingForProcessNewOrder(
         $result,
@@ -610,29 +612,27 @@ class Rewards
     ) {
         return $result || $mirasvitRewardsModelConfig->getGeneralIsSpendShipping();
     }
-    
+
     /**
      * To run filter to check if the Mirasvit rewards can be applied to shipping.
      *
-     * @param boolean $result
-     * @param Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
-     *
-     * @return boolean
+     * @param $result
+     * @param $mirasvitRewardsModelConfig
+     * @return mixed
      */
     public function checkMirasvitRewardsIsShippingIncluded($result, $mirasvitRewardsModelConfig)
     {
         return $mirasvitRewardsModelConfig->getGeneralIsSpendShipping();
     }
-    
+
     /**
      * Exclude the Mirasvit rewards points from shipping discount,
      * so the Bolt can apply Mirasvit rewards points to shipping properly.
-     *
-     * @param float $result
-     * @param Quote|object $quote
-     * @param Address|object $shippingAddress
-     *
-     * @return float
+     * @param $result
+     * @param $quote
+     * @param $shippingAddress
+     * @return mixed
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function collectShippingDiscounts($result, $quote, $shippingAddress)
     {
@@ -641,20 +641,19 @@ class Rewards
         $result -= $mirasvitRewardsShippingDiscountAmount;
         return $result;
     }
-    
+
     /**
      * Return code if the quote has Mirasvit rewards.
      *
      * @param $result
-     * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
-     * @param \Mirasvit\Rewards\Helper\Balance  $mirasvitRewardsBalanceHelper
-     * @param \Mirasvit\Rewards\Helper\Balance\SpendRulesList $mirasvitRewardsSpendRulesListHelper
-     * @param \Mirasvit\Rewards\Model\Config $mirasvitRewardsModelConfig
-     * @param \Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc $mirasvitRewardsRuleQuoteSubtotalCalc
+     * @param $mirasvitRewardsPurchaseHelper
+     * @param $mirasvitRewardsBalanceHelper
+     * @param $mirasvitRewardsSpendRulesListHelper
+     * @param $mirasvitRewardsModelConfig
+     * @param $mirasvitRewardsRuleQuoteSubtotalCalc
      * @param $couponCode
      * @param $quote
-     *
-     * @return array
+     * @return mixed
      */
     public function filterVerifyAppliedStoreCredit(
         $result,
@@ -684,17 +683,16 @@ class Rewards
         
         return $result;
     }
-    
+
     /**
      * Remove Mirasvit rewards from the quote.
-     *
-     * @param \Mirasvit\Rewards\Helper\Purchase $mirasvitRewardsPurchaseHelper
-     * @param \Mirasvit\Rewards\Helper\Checkout $mirasvitRewardsCheckoutHelper
+     * @param $mirasvitRewardsPurchaseHelper
+     * @param $mirasvitRewardsCheckoutHelper
      * @param $couponCode
      * @param $quote
      * @param $websiteId
      * @param $storeId
-     *
+     * @return void
      */
     public function removeAppliedStoreCredit(
         $mirasvitRewardsPurchaseHelper,

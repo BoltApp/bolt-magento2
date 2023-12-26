@@ -21,6 +21,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Session\SessionManagerInterface as SessionManager;
+use Magento\Quote\Model\Quote;
 
 class RewardPoints
 {
@@ -32,18 +33,12 @@ class RewardPoints
     protected $bugsnagHelper;
     
     /**
-     * @var SessionManager
+     * @var SessionManager|mixed
      */
     protected $sessionManager;
-    
-    /**
-     * @var \Mirasvit\Credit\Helper\Data
-     */
+
     protected $mwRewardPointsHelperData;
-    
-    /**
-     * @var \MW\RewardPoints\Model\CustomerFactory
-     */
+
     protected $mwRewardPointsModelCustomer;
 
     /**
@@ -61,9 +56,9 @@ class RewardPoints
      * Collect MW reward points data when building Bolt cart.
      *
      * @param array $result
-     * @param MW\RewardPoints\Helper\Data $mwRewardPointsHelperData
-     * @param MW\RewardPoints\Model\CustomerFactory $mwRewardPointsModelCustomer
-     * @param Quote $quote
+     * @param $mwRewardPointsHelperData
+     * @param $mwRewardPointsModelCustomer
+     * @param Quote|mixed $quote
      *
      * @return array
      */
@@ -141,9 +136,9 @@ class RewardPoints
     /**
      * Update reward points to the quote.
      *
-     * @param MW\RewardPoints\Helper\Data $mwRewardPointsHelperData
-     * @param MW\RewardPoints\Model\CustomerFactory $mwRewardPointsModelCustomer
-     * @param Quote $quote
+     * @param $mwRewardPointsHelperData
+     * @param $mwRewardPointsModelCustomer
+     * @param Quote|mixed $quote
      *
      */
     public function beforePrepareQuote(
@@ -200,16 +195,14 @@ class RewardPoints
         
         return $result;
     }
-    
+
     /**
      * Remove MW reward points from the quote.
-     *
-     * @param $amastyApplyStoreCreditToQuote
      * @param $couponCode
      * @param $quote
      * @param $websiteId
      * @param $storeId
-     *
+     * @return void
      */
     public function removeAppliedStoreCredit(
         $couponCode,
@@ -242,12 +235,11 @@ class RewardPoints
     }
 
     /**
-     * @param int                                    $result
-     * @param \MW\RewardPoints\Helper\Data           $mwRewardPointsHelperData
-     * @param \MW\RewardPoints\Model\CustomerFactory $mwRewardPointsModelCustomerFactory
-     * @param \Magento\Quote\Model\Quote             $quote
-     *
-     * @return int
+     * @param $result
+     * @param $mwRewardPointsHelperData
+     * @param $mwRewardPointsModelCustomerFactory
+     * @param $quote
+     * @return int|mixed
      */
     public function filterShippingAmount($result,
                                          $mwRewardPointsHelperData,
@@ -327,12 +319,11 @@ class RewardPoints
     }
 
     /**
-     * @param bool                         $result
-     * @param \MW\RewardPoints\Helper\Data $mwRewardPointsHelperData
-     * @param \Magento\Quote\Model\Quote   $quote
-     * @param \stdClass                    $transaction
-     *
-     * @return bool
+     * @param $result
+     * @param $mwRewardPointsHelperData
+     * @param $quote
+     * @param $transaction
+     * @return mixed|true
      */
     public function filterSkipValidateShippingForProcessNewOrder(
         $result,
@@ -365,7 +356,6 @@ class RewardPoints
      * @param $quote
      * @param $currencyCode
      * @return int
-     * @throws \Exception
      */
     public function getDiscountedAmount($quote, $currencyCode) {
         $amastyGift = 0;

@@ -45,15 +45,13 @@ class Uninstall implements UninstallInterface
     }
 
     /**
-     * Remove all tables in provided array if they exist
-     *
-     * @param SchemSetupInterface $setup
-     *
+     * @param SchemaSetupInterface $setup
      * @return void
      */
     private function removeBoltTables(SchemaSetupInterface $setup)
     {
         try {
+            /** @var SchemaSetupInterface|mixed $tables */
             $tables = $setup->getConnection()->fetchAll(
                 "SELECT TABLE_NAME FROM information_schema.tables WHERE table_name LIKE 'bolt_%'"
             );
@@ -73,24 +71,26 @@ class Uninstall implements UninstallInterface
     /**
      * Remove all Bolt Plugin configurations from the config table
      *
-     * @param SchemSetupInterface $setup
+     * @param SchemaSetupInterface $setup
      *
      * @return void
      */
     private function removeBoltConfig(SchemaSetupInterface $setup)
     {
+        /** @var SchemaSetupInterface|mixed $setup */
         $setup->getConnection()->delete($setup->getTable('core_config_data'), "path like '%payment/boltpay%'");
     }
 
     /**
      * Clean Up Quote and Sales Order tables.
      *
-     * @param SchemSetupInterface $setup
+     * @param SchemaSetupInterface $setup
      *
      * @return void
      */
     private function removeBoltColumns(SchemaSetupInterface $setup)
     {
+        /** @var SchemaSetupInterface|mixed $setup */
         // Clean up quote table
         $setup->getConnection()->dropColumn(
             $setup->getTable('quote'),

@@ -80,13 +80,12 @@ class RewardPoints
     }
 
     /**
-     * @param array                                   $result
-     * @param CustomerRewardPointsManagementInterface $aheadworksCustomerRewardPointsManagement
-     * @param \Aheadworks\RewardPoints\Model\Config   $aheadworksConfig
-     * @param Quote                                   $quote
-     * @param Quote                                   $parentQuote
-     * @param bool                                    $paymentOnly
-     *
+     * @param $result
+     * @param mixed $aheadworksCustomerRewardPointsManagement
+     * @param mixed $aheadworksConfig
+     * @param Quote|mixed $quote
+     * @param Quote|mixed $parentQuote
+     * @param $paymentOnly
      * @return array
      */
     public function collectDiscounts(
@@ -113,7 +112,7 @@ class RewardPoints
                     );
                 $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                 $discounts[] = [
-                    'description'       => __('Reward Points'),
+                    'description'       => __('Reward Points'),/** @phpstan-ignore-line */
                     'amount'            => $roundedAmount,
                     'reference'         => self::AHEADWORKS_REWARD_POINTS,
                     'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_STORE_CREDIT,
@@ -186,7 +185,7 @@ class RewardPoints
      * because it is plugged into {@see \Magento\Sales\Api\OrderManagementInterface::cancel} instead of
      * {@see \Magento\Sales\Model\Order::cancel} which we call in {@see \Bolt\Boltpay\Helper\Order::deleteOrder}
      *
-     * @param \Aheadworks\RewardPoints\Plugin\Model\Service\OrderServicePlugin $aheadworksRewardPointsOrderServicePlugin
+     * @param mixed $aheadworksRewardPointsOrderServicePlugin
      * @param \Magento\Sales\Model\Order                                       $order to be deleted
      */
     public function beforeFailedPaymentOrderSave($aheadworksRewardPointsOrderServicePlugin, $order)
@@ -204,7 +203,7 @@ class RewardPoints
      * Add Aheadworks Reward Points to layout to be rendered below the cart
      *
      * @param array                                   $jsLayout
-     * @param CustomerRewardPointsManagementInterface $customerRewardPointsManagement
+     * @param mixed $customerRewardPointsManagement
      *
      * @return array
      */

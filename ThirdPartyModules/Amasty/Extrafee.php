@@ -158,7 +158,7 @@ class Extrafee
         try {
             $cartItems = array_filter(
                 $cartItems,
-                function ($item) use ($parentQuoteId) {
+                function ($item) use ($parentQuoteId) { // @phpstan-ignore-line
                     $itemReference = ArrayHelper::getValueFromArray($item, 'reference');
                     return strpos($itemReference, self::AMASTY_EXTRAFEE_PREFIX) === false;
                 }

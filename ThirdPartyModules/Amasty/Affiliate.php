@@ -61,16 +61,17 @@ class Affiliate
     private $cookieManager;
 
     /**
-     * @param Bugsnag         $bugsnagHelper
-     * @param CacheInterface  $cache
-     * @param Serialize       $serialize
-     * @param BoltSession     $boltSessionHelper
+     * @param Bugsnag $bugsnagHelper
+     * @param CacheInterface $cache
+     * @param Serialize $serialize
+     * @param CookieManagerInterface $cookieManager
+     * @param CookieMetadataFactory $cookieMetadataFactory
+     * @param ScopeConfigInterface $scopeConfig
      */
     public function __construct(
         Bugsnag         $bugsnagHelper,
         CacheInterface  $cache,
         Serialize       $serialize,
-        BoltSession     $boltSessionHelper,
         CookieManagerInterface $cookieManager,
         CookieMetadataFactory $cookieMetadataFactory,
         ScopeConfigInterface $scopeConfig
@@ -100,7 +101,7 @@ class Affiliate
     /**
      * Restore Amasty affiliate referral code to cookie.
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      */
     public function afterLoadSession($quote)
     {
@@ -119,10 +120,10 @@ class Affiliate
 
     /**
      * Trigger Amasty Affiliate sales_order_place_after event
-     *
-     * @param OrderModel $result
-     * @param \Amasty\Affiliate\Observer\SalesOrderAfterPlaceObserver $amastyAffiliateObserverSalesOrderAfter
-     * @param OrderModel $order
+     * @param $result
+     * @param $amastyAffiliateObserverSalesOrderAfter
+     * @param $order
+     * @return mixed
      */
     public function beforeGetOrderByIdProcessNewOrder($result, $amastyAffiliateObserverSalesOrderAfter, $order)
     {

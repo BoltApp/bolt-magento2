@@ -21,6 +21,7 @@ use Bolt\Boltpay\Model\Payment;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+use Magento\Framework\Event;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Model\Service\OrderService;
 use Magento\Framework\App\State;
@@ -193,7 +194,9 @@ class Credit
     public function checkMirasvitCreditAdminQuoteUsed($result, Observer $observer)
     {
         try {
-            $payment = $observer->getEvent()->getPayment();
+            /** @var Event|mixed $event */
+            $event = $observer->getEvent();
+            $payment = $event->getPayment();
 
             if ($payment->getMethod() == Payment::METHOD_CODE &&
                 $this->appState->getAreaCode() == FrontNameResolver::AREA_CODE &&
@@ -207,15 +210,13 @@ class Credit
 
         return false;
     }
-    
+
     /**
      * To run filter to check if the Mirasvit credit amount can be applied to shipping/tax.
-     *
-     * @param boolean $result
-     * @param Mirasvit\Credit\Api\Config\CalculationConfigInterface|Mirasvit\Credit\Service\Config\CalculationConfig $mirasvitStoreCreditCalculationConfig
-     * @param Quote|object $quote
-     *
-     * @return boolean
+     * @param $result
+     * @param $mirasvitStoreCreditCalculationConfig
+     * @param $quote
+     * @return bool
      */
     public function checkMirasvitCreditIsShippingTaxIncluded(
         $result,

@@ -1,4 +1,7 @@
 <?php
 namespace Aheadworks\Giftcard\Model {
-    class Giftcard{};
+    class Giftcard{
+    public function getCode(...$args) {}
+
+    };
 }

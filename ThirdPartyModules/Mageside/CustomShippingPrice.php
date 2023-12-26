@@ -98,7 +98,7 @@ class CustomShippingPrice
      * Mageside custom shipping is only allowed to be used from the admin system,
      * so we need to restore the auth session.
      *
-     * @param Quote $quote
+     * @param $quote
      */
     public function afterLoadSession($quote)
     {

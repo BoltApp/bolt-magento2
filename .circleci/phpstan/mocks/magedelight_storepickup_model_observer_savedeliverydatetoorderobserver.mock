@@ -1,0 +1,6 @@
+<?php
+namespace Magedelight\Storepickup\Model\Observer {
+    class SaveDeliveryDateToOrderObserver{
+    public function create(...$args) {}
+    };
+}
