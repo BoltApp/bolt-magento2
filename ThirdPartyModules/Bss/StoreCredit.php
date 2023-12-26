@@ -25,14 +25,8 @@ class StoreCredit
 {
     const BSS_STORE_CREDIT = 'bss_storecredit';
 
-    /**
-     * @var $bssStoreCreditHelper
-     */
     private $bssStoreCreditHelper;
 
-    /**
-     * @var $bssStoreCreditCollection
-     */
     private $bssStoreCreditCollection;
 
     /**

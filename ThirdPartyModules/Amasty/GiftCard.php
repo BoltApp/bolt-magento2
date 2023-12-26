@@ -43,7 +43,7 @@ class GiftCard
     private $resourceConnection;
     
     /**
-     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
+     * @var \Bolt\Boltpay\Helper\FeatureSwitch\Decider
      */
     private $featureSwitches;
 
@@ -67,11 +67,11 @@ class GiftCard
 
     /**
      * Restores Amasty Giftcard balances used in an order that is going to be deleted
-     *
-     * @param \Amasty\GiftCard\Model\ResourceModel\Quote\CollectionFactory $giftcardQuoteCollectionFactory
-     * @param \Amasty\GiftCard\Api\CodeRepositoryInterface                 $giftcardCodeRepository
-     * @param \Amasty\GiftCard\Api\AccountRepositoryInterface              $giftcardAccountRepository
-     * @param \Magento\Sales\Model\Order                                   $order
+     * @param $giftcardQuoteCollectionFactory
+     * @param $giftcardCodeRepository
+     * @param $giftcardAccountRepository
+     * @param \Magento\Sales\Model\Order $order
+     * @return void
      */
     public function beforeFailedPaymentOrderSave(
         $giftcardQuoteCollectionFactory,
@@ -82,7 +82,6 @@ class GiftCard
         try {
             $giftcardQuotes = $giftcardQuoteCollectionFactory->create()
                 ->getGiftCardsByQuoteId($order->getQuoteId());
-            /** @var \Amasty\GiftCard\Model\Quote $giftcardQuote */
             foreach ($giftcardQuotes->getItems() as $giftcardQuote) {
                 try {
                     $giftcardAccount = $giftcardAccountRepository->getById($giftcardQuote->getAccountId());
@@ -106,11 +105,11 @@ class GiftCard
     }
 
     /**
-     * @param array                                                        $result
-     * @param \Amasty\GiftCard\Model\ResourceModel\Quote\CollectionFactory $giftcardQuoteCollectionFactory
-     * @param \Magento\Quote\Model\Quote                                   $quote
-     * @param \Magento\Quote\Model\Quote                                   $parentQuote
-     * @param bool                                                         $paymentOnly
+     * @param $result
+     * @param $giftcardQuoteCollectionFactory
+     * @param $quote
+     * @param $parentQuote
+     * @param $paymentOnly
      * @return array
      */
     public function collectDiscounts(
@@ -124,7 +123,6 @@ class GiftCard
 
         try {
             $currencyCode = $quote->getQuoteCurrencyCode();
-            /** @var \Magento\Quote\Model\Quote\Address\Total[] */
             $totals = $quote->getTotals();
             $totalDiscount = $totals[Discount::AMASTY_GIFTCARD] ?? null;
             $roundedDiscountAmount = 0;
@@ -138,13 +136,12 @@ class GiftCard
             if ($totalDiscount && $totalDiscount->getValue() && $this->discountHelper->getAmastyPayForEverything()) {
                 $giftcardQuotes = $giftcardQuoteCollectionFactory->create()->joinAccount()
                     ->getGiftCardsByQuoteId($quote->getId());
-                /** @var \Amasty\GiftCard\Model\Quote|\Amasty\GiftCard\Model\Account $giftcard */
                 foreach ($giftcardQuotes->getItems() as $giftcard) {
                     $amount = abs((float)$giftcard->getCurrentValue());
                     $roundedAmount = CurrencyUtils::toMinor($amount, $currencyCode);
                     $giftCardCode = $giftcard->getCode();
                     $discountItem = [
-                        'description'       => __('Gift Card ') . $giftCardCode,
+                        'description'       => __('Gift Card ') . $giftCardCode,/** @phpstan-ignore-line */
                         'amount'            => $roundedAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                         'reference'         => $giftCardCode,
@@ -169,11 +166,11 @@ class GiftCard
     }
 
     /**
-     * @param mixed|null                            $result
-     * @param \Amasty\GiftCard\Model\AccountFactory $giftcardAccountFactory
-     * @param string                                $couponCode
-     * @param Quote                                 $quote
-     * @return \Amasty\GiftCard\Model\Account
+     * @param $result
+     * @param $giftcardAccountFactory
+     * @param $couponCode
+     * @param $quote
+     * @return \Exception|mixed|null
      */
     public function loadGiftcard($result, $giftcardAccountFactory, $couponCode, $quote)
     {
@@ -197,16 +194,13 @@ class GiftCard
     }
 
     /**
-     * @see \Bolt\Boltpay\Model\Api\DiscountCodeValidation::applyingGiftCardCode
-     *
-     *
-     * @param mixed                                            $result
-     * @param \Amasty\GiftCard\Model\GiftCardManagementFactory $giftcardManagementFactory
-     * @param string                                           $code
-     * @param \Amasty\GiftCard\Model\Account                   $giftCard
-     * @param Quote                                            $immutableQuote
-     * @param Quote                                            $parentQuote
-     * @return array
+     * @param $result
+     * @param $giftcardManagementFactory
+     * @param $code
+     * @param $giftCard
+     * @param $immutableQuote
+     * @param $parentQuote
+     * @return array|mixed
      */
     public function applyGiftcard(
         $result,
@@ -233,7 +227,7 @@ class GiftCard
                 'discount_amount' => abs(
                     CurrencyUtils::toMinor($giftCard->getCurrentValue(), $parentQuote->getQuoteCurrencyCode())
                 ),
-                'description'     => __('Gift Card (%1)', $code),
+                'description'     => __('Gift Card (%1)', $code), /** @phpstan-ignore-line */
                 'discount_type'   => 'fixed_amount',
             ];
         } catch (\Exception $e) {
@@ -245,12 +239,12 @@ class GiftCard
     }
 
     /**
-     * @param bool                                      $result
-     * @param \Amasty\GiftCard\Model\GiftCardManagement $giftCardManagement
-     * @param string                                    $couponCode
-     * @param \Amasty\GiftCard\Model\Account            $giftCard
-     * @param Quote                                     $quote
-     * @return bool
+     * @param $result
+     * @param $giftCardManagement
+     * @param $couponCode
+     * @param $giftCard
+     * @param $quote
+     * @return bool|mixed
      */
     public function filterApplyingGiftCardCode(
         $result,
@@ -271,11 +265,11 @@ class GiftCard
     }
 
     /**
-     * @param bool                                      $result
-     * @param \Amasty\GiftCard\Model\GiftCardManagement $giftCardManagement
-     * @param \Amasty\GiftCard\Model\Account            $giftCard
-     * @param Quote                                     $quote
-     * @return bool
+     * @param $result
+     * @param $giftCardManagement
+     * @param $giftCard
+     * @param $quote
+     * @return bool|mixed
      */
     public function filterRemovingGiftCardCode(
         $result,
@@ -366,7 +360,7 @@ class GiftCard
     }
     
     /**
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      */
     public function deleteRedundantDiscounts($quote)
     {
@@ -394,7 +388,7 @@ class GiftCard
      * Remove Amasty Gift Card and update quote totals
      *
      * @param int $codeId
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      */
     public function removeAmastyGiftCard($codeId, $quote)
     {

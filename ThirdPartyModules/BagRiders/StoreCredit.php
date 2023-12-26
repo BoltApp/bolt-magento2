@@ -52,7 +52,7 @@ class StoreCredit
 
     /**
      * @param $result
-     * @param \BagRiders\StoreCredit\Api\StoreCreditRepositoryInterface $storeCreditRepository
+     * @param $storeCreditRepository
      * @param \Magento\Quote\Model\Quote $quote
      * @param \Magento\Quote\Model\Quote $parentQuote
      * @param bool $paymentOnly
@@ -142,12 +142,12 @@ class StoreCredit
     /**
      * Remove BagRiders store credits from the quote.
      *
-     * @param \BagRiders\StoreCredit\Model\StoreCredit\ApplyStoreCreditToQuote $bagRidersApplyStoreCreditQuote
-     * @param string $couponCode
-     * @param \Magento\Quote\Model\Quote $quote
-     * @param int $websiteId
-     * @param int $storeId
-     *
+     * @param $bagRidersApplyStoreCreditQuote
+     * @param $couponCode
+     * @param $quote
+     * @param $websiteId
+     * @param $storeId
+     * @return void
      */
     public function removeAppliedStoreCredit (
         $bagRidersApplyStoreCreditQuote,
@@ -165,10 +165,11 @@ class StoreCredit
             throw $e;
         }
     }
-    
+
     /**
-     * @param \BagRiders\StoreCredit\Api\StoreCreditRepositoryInterface $storeCreditRepository
-     * @param \Magento\Quote\Model\Quote $quote
+     * @param $storeCreditRepository
+     * @param $quote
+     * @return false|void
      */
     public function beforeValidateQuoteDataForProcessNewOrder(
         $storeCreditRepository,

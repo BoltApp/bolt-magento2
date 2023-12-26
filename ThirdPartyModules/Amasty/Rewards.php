@@ -34,14 +34,8 @@ class Rewards
      */
     private $bugsnagHelper;
 
-    /**
-     * @var Quote
-     */
     protected $amastyRewardsResourceQuote;
 
-    /**
-     * @var \Amasty\Rewards\Model\Quote
-     */
     protected $amastyRewardsQuote;
 
     /**
@@ -62,10 +56,12 @@ class Rewards
     }
 
     /**
-     * @param array $result
-     * @param Data|RewardsPropertyProvider $amastyRewardsHelperData
-     * @param Quote $quote
-     *
+     * @param $result
+     * @param $amastyRewardsHelperData
+     * @param $amastyRewardsResourceModelQuote
+     * @param $quote
+     * @param $parentQuote
+     * @param $paymentOnly
      * @return array
      */
     public function collectDiscounts(
@@ -79,6 +75,7 @@ class Rewards
         list ($discounts, $totalAmount, $diff) = $result;
 
         try {
+            $amount = 0;
             $pointsUsed = null;
             if ($quote->getData('amrewards_point')) {
                 $rewardData = $amastyRewardsHelperData->getRewardsData();
@@ -187,9 +184,10 @@ class Rewards
      * Amasty reward points are held in a separate table
      * and are not assigned to the quote / totals directly out of the customer session.
      *
-     * @param Quote $amastyRewardsResourceQuote
-     * @param \Amasty\Rewards\Model\Quote  $amastyRewardsQuote
+     * @param $amastyRewardsResourceQuote
+     * @param $amastyRewardsQuote
      * @param $immutableQuote
+     * @return void
      */
     public function applyExternalDiscountData(
         $amastyRewardsResourceQuote,
@@ -205,10 +203,11 @@ class Rewards
     /**
      * If Amasty Reward Points extension is present clone applied reward points
      *
-     * @param Quote $amastyRewardsResourceQuote
-     * @param \Amasty\Rewards\Model\Quote  $amastyRewardsQuote
+     * @param $amastyRewardsResourceQuote
+     * @param $amastyRewardsQuote
      * @param $sourceQuote
      * @param $destinationQuote
+     * @return void
      */
     public function replicateQuoteData(
         $amastyRewardsResourceQuote,
@@ -230,8 +229,9 @@ class Rewards
      * to the (source) quote itself. The data is needed to be set before the quote totals are calculated,
      * for example in the Shipping and Tax call.
      *
-     * @param Quote $source
-     * @param Quote|null $destination
+     * @param $source
+     * @param $destination
+     * @return void
      */
     public function setAmastyRewardPoints($source, $destination = null)
     {
@@ -251,7 +251,8 @@ class Rewards
     /**
      * Try to clear Amasty Reward Points data for the immutable quotes
      *
-     * @param Quote $quote parent quote
+     * @param $quote
+     * @return void
      */
     public function deleteRedundantDiscounts($quote)
     {
@@ -277,7 +278,7 @@ class Rewards
     /**
      * Remove Amasty Reward Points quote info
      *
-     * @param Quote $quote
+     * @param $quote
      */
     public function clearExternalData($quote)
     {

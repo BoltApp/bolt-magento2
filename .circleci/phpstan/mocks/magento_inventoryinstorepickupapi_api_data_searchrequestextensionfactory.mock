@@ -1,0 +1,4 @@
+<?php
+namespace Magento\InventoryInStorePickupApi\Api\Data {
+    class SearchRequestExtensionFactory{};
+}

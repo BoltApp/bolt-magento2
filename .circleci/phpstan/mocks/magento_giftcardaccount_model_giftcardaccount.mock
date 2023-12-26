@@ -1,6 +1,11 @@
 <?php
 namespace Magento\GiftCardAccount\Model {
-    class Giftcardaccount{};
+    class Giftcardaccount{
+        public function isEmpty(...$args) {}
+        public function isValid(...$args) {}
+        public function removeFromCart(...$args) {}
+        public function addToCart(...$args) {}
+    };
 }
 
 

@@ -43,7 +43,7 @@ class Affiliate
     private $serialize;
     
     /**
-     * @var BoltSession
+     * @var BoltSession|mixed
      */
     private $boltSessionHelper;
     
@@ -98,7 +98,7 @@ class Affiliate
      * Save MW affiliate referral code into cache.
      *
      * @param array $sessionData
-     * @param \MW\Affiliate\Helper\Data $mwAffiliateHelperData
+     * @param $mwAffiliateHelperData
      * @param int|string $quoteId
      * @param mixed $checkoutSession
      */
@@ -130,7 +130,7 @@ class Affiliate
     /**
      * Restore MW affiliate referral code to the checkout session.
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      */
     public function afterLoadSession($quote)
     {
@@ -151,10 +151,10 @@ class Affiliate
     /**
      * Restore MW affiliate referral link info/referral code to the cookies/session.
      *
-     * @param OrderModel $result
-     * @param \MW\Affiliate\Helper\Data $mwAffiliateHelperData
-     * @param \MW\Affiliate\Observer\SalesOrderAfter $mwAffiliateObserverSalesOrderAfter
-     * @param OrderModel $order
+     * @param $result
+     * @param $mwAffiliateHelperData
+     * @param $mwAffiliateObserverSalesOrderAfter
+     * @param $order
      */
     public function beforeGetOrderByIdProcessNewOrder($result, $mwAffiliateHelperData, $mwAffiliateObserverSalesOrderAfter, $order)
     {

@@ -28,9 +28,6 @@ class StoreCredit
 {
     const AHEADWORKS_STORE_CREDIT = 'aw_store_credit';
 
-    /**
-     * @var $aheadworksCustomerStoreCreditManagement
-     */
     private $aheadworksCustomerStoreCreditManagement;
 
     /**
@@ -169,7 +166,7 @@ class StoreCredit
      * We may add extra css for styling the related section per the merchant's theme when needed.
      *
      * @param array                                  $jsLayout
-     * @param CustomerStoreCreditManagementInterface $customerStoreCreditManagement
+     * @param mixed $customerStoreCreditManagement
      *
      * @return array
      */

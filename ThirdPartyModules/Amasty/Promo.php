@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\ThirdPartyModules\Amasty;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+use Magento\SalesRule\Model\RuleFactory;
 use Magento\SalesRule\Model\RuleRepository;
 
 
@@ -87,6 +88,7 @@ class Promo
             if ($couponCode = $quote->getCouponCode()) {
                 $salesruleIds = explode(',', ($quote->getAppliedRuleIds() ?: ''));
                 foreach ($salesruleIds as $salesruleId) {
+                    /** @var RuleFactory|mixed $rule */
                     $rule = $this->ruleRepository->getById($salesruleId);
 
                     if (

@@ -42,18 +42,12 @@ class RewardPoints
     private $configHelper;
     
     /**
-     * @var CustomerSession
+     * @var CustomerSession|mixed
      */
     private $customerSession;
-    
-    /**
-     * @var \MageWorx\RewardPoints\Helper\Data
-     */
+
     private $mageWorxRewardPointsHelper;
-    
-    /**
-     * @var \MageWorx\RewardPoints\Api\CustomerBalanceRepositoryInterface
-     */
+
     private $customerBalanceRepository;
     
     private $appliedRewardsMode;
@@ -74,16 +68,15 @@ class RewardPoints
         $this->customerSession = $customerSession;
         $this->configHelper = $configHelper;
     }
-    
+
     /**
-     * @param array $result
-     * @param \MageWorx\RewardPoints\Api\CustomerBalanceRepositoryInterface $customerBalanceRepository
-     * @param \MageWorx\RewardPoints\Model\PointCurrencyConverter $pointCurrencyConverter
-     * @param \MageWorx\RewardPoints\Helper\Data $mageWorxRewardPointsHelper
-     * @param Quote $quote
-     * @param Quote $parentQuote
-     * @param bool $paymentOnly
-     *
+     * @param $result
+     * @param $customerBalanceRepository
+     * @param $pointCurrencyConverter
+     * @param $mageWorxRewardPointsHelper
+     * @param $quote
+     * @param $parentQuote
+     * @param $paymentOnly
      * @return array
      */
     public function collectDiscounts(
@@ -139,9 +132,8 @@ class RewardPoints
     /**
      * Add MageWorx Reward Points to layout to be rendered below the cart
      *
-     * @param array $jsLayout
-     * @param \MageWorx\RewardPoints\Helper\Data $mageWorxRewardPointsHelper
-     *
+     * @param $jsLayout
+     * @param $mageWorxRewardPointsHelper
      * @return array
      */
     public function collectCartDiscountJsLayout(
@@ -171,14 +163,13 @@ class RewardPoints
 
         return $jsLayout;
     }
-    
+
     /**
      * Get additional conditions to compare the quote totals.
      *
-     * @param string $result
-     * @param \MageWorx\RewardPoints\Helper\Data $mageWorxRewardPointsHelper
-     * 
-     * @return string
+     * @param $result
+     * @param $mageWorxRewardPointsHelper
+     * @return mixed|string
      */
     public function getAdditionalQuoteTotalsConditions($result, $mageWorxRewardPointsHelper)
     {
@@ -211,7 +202,7 @@ class RewardPoints
     /**
      * If enabled, gets the MageWorx rewards points used
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      *
      * @return int
      */

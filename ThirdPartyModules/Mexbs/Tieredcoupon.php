@@ -92,14 +92,13 @@ class Tieredcoupon
         $this->couponFactory = $couponFactory;
         $this->cartHelper = $cartHelper;
     }
-    
+
     /**
      * Get tiered coupon if exists
-     *
-     * @param mixed|null                        $result
-     * @param \Mexbs\Tieredcoupon\Helper\Data   $mexbsTieredcouponHelperData
-     * @param string                            $couponCode
-     * @return mixed|null     
+     * @param $result
+     * @param $mexbsTieredcouponHelperData
+     * @param $couponCode
+     * @return mixed
      */
     public function loadCouponCodeData($result, $mexbsTieredcouponHelperData, $couponCode)
     {
@@ -116,15 +115,15 @@ class Tieredcoupon
 
         return $result;
     }
-    
+
     /**
      * Check if the coupon is a valid tiered coupon
      *
-     * @param bool                              $result
-     * @param \Mexbs\Tieredcoupon\Helper\Data   $mexbsTieredcouponHelperData
-     * @param mixed                             $coupon
-     * @param string                            $couponCode
-     * @return bool
+     * @param $result
+     * @param $mexbsTieredcouponHelperData
+     * @param $coupon
+     * @param $couponCode
+     * @return mixed|true
      */
     public function isValidCouponObj($result, $mexbsTieredcouponHelperData, $coupon, $couponCode)
     {
@@ -141,14 +140,16 @@ class Tieredcoupon
 
         return $result;
     }
-    
+
     /**
      * Return the sale rule of applied subcoupon
      *
-     * @param mixed|null                        $result
-     * @param \Mexbs\Tieredcoupon\Helper\Data   $mexbsTieredcouponHelperData
-     * @param mixed                             $coupon
-     * @return mixed|null
+     * @param $result
+     * @param $mexbsTieredcouponHelperData
+     * @param $coupon
+     * @return \Magento\SalesRule\Api\Data\RuleInterface|\Magento\SalesRule\Model\Data\Rule|mixed
+     * @throws NoSuchEntityException
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function getCouponRelatedRule($result, $mexbsTieredcouponHelperData, $coupon)
     {
@@ -179,17 +180,18 @@ class Tieredcoupon
 
         return $result;
     }
-    
+
     /**
      * Apply tiered coupon to quote
      *
-     * @param bool                              $result
-     * @param \Mexbs\Tieredcoupon\Helper\Data   $mexbsTieredcouponHelperData
-     * @param string                            $couponCode
-     * @param mixed                             $coupon
-     * @param \Magento\Quote\Model\Quote        $quote
-     * @param \Magento\Quote\Model\Quote        $addQuote
-     * @return bool
+     * @param $result
+     * @param $mexbsTieredcouponHelperData
+     * @param $couponCode
+     * @param $coupon
+     * @param $quote
+     * @param $addQuote
+     * @return array|mixed
+     * @throws BoltException
      */
     public function filterApplyingCouponCode(
         $result,
@@ -211,12 +213,7 @@ class Tieredcoupon
                 $quote->setCouponCode($couponCode)->collectTotals();
                 $this->quoteRepository->save($quote);
                 if ($couponCode !== $quote->getCouponCode()) {
-                    throw new BoltException(
-                        __('Coupon code %1 does not equal with the quote code %2.', $couponCode, $quote->getCouponCode()),
-                        null,
-                        BoltErrorResponse::ERR_SERVICE,
-                        $quote
-                    );
+                    throw new BoltException(__('Coupon code %1 does not equal with the quote code %2.', $couponCode, $quote->getCouponCode()), null, BoltErrorResponse::ERR_SERVICE, $quote); /** @phpstan-ignore-line */
                 }
                 $subCouponCodes = $tieredCoupon->getSubCouponCodes();
                 $saleRuleDiscounts = $this->cartHelper->getSaleRuleDiscounts($quote);
@@ -234,12 +231,7 @@ class Tieredcoupon
                     }
                 }
                 if (!$roundedAmount) {
-                    throw new BoltException(
-                        __('Failed to apply the coupon code %1', $couponCode),
-                        null,
-                        BoltErrorResponse::ERR_SERVICE,
-                        $quote
-                    );
+                    throw new BoltException(__('Failed to apply the coupon code %1', $couponCode), null, BoltErrorResponse::ERR_SERVICE, $quote); /** @phpstan-ignore-line */
                 }
                 $description = $tieredCoupon->getDescription();
                 $display = $description != '' ? $description : 'Discount (' . $couponCode . ')';
@@ -257,14 +249,14 @@ class Tieredcoupon
 
         return $result;
     }
-    
+
     /**
      * Apply tiered coupon to discounts for Bolt cart
      *
-     * @param bool                              $result
-     * @param \Mexbs\Tieredcoupon\Helper\Data   $mexbsTieredcouponHelperData
-     * @param \Magento\Quote\Model\Quote        $quote
-     * @return array
+     * @param $result
+     * @param $mexbsTieredcouponHelperData
+     * @param $quote
+     * @return array|mixed
      */
     public function filterQuoteDiscountDetails(
         $result,
