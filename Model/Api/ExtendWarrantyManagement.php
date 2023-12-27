@@ -102,13 +102,14 @@ class ExtendWarrantyManagement implements ExtendWarrantyManagementInterface
      * Add extend warranty product to the cart based on extend warranty data
      *
      * @param string $cartId
-     * @param ExtendWarrantyPlanInterface|mixed $plan
+     * @param ExtendWarrantyPlanInterface $plan
      * @return void
      * @throws WebapiException
      */
-    public function addWarrantyPlan(string $cartId, $plan)
+    public function addWarrantyPlan(string $cartId, ExtendWarrantyPlanInterface $plan)
     {
         try {
+            /** @var ExtendWarrantyPlanInterface|mixed $plan */
             if (!$this->isModuleEnabled()) {
                 $responseBody = [
                     'message' => sprintf("%s is not installed on merchant's site", self::MODULE_NAME)

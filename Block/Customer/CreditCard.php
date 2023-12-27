@@ -53,9 +53,6 @@ class CreditCard extends Template
 
     protected $_creditCardCollection;
 
-    /** @var Http */
-    protected $_request;
-
     /**
      * CreditCard constructor.
      * @param Template\Context $context
@@ -129,8 +126,8 @@ class CreditCard extends Template
      */
     public function getCreditCardCollection()
     {
-        $page = ($this->_request->getParam('p')) ?: self::CURRENT_PAGE;
-        $pageSize = ($this->_request->getParam('limit')) ?: self::PAGE_SIZE;
+        $page = ($this->getRequestObject()->getParam('p')) ?: self::CURRENT_PAGE;
+        $pageSize = ($this->getRequestObject()->getParam('limit')) ?: self::PAGE_SIZE;
         $collection = $this->collectionFactory->create()
             ->getCreditCardInfosByCustomerId(
                 $this->customerSession->getCustomerId()

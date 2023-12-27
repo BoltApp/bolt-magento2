@@ -123,7 +123,6 @@ class BugsnagTest extends BoltTestCase
         $instance = new Bugsnag(
             $this->contextMock,
             $this->configHelperMock,
-            $this->directoryListMock,
             $this->storeManagerMock,
             $this->boltLogger
         );

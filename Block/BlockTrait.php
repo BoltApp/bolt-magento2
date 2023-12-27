@@ -55,6 +55,13 @@ trait BlockTrait
     }
 
     /**
+     * @return Http
+     */
+    public function getRequestObject() {
+        return $this->_request;
+    }
+
+    /**
      * Get checkout key. Any of the defined publishable keys for use with track.js.
      *
      * @return  string
@@ -62,7 +69,7 @@ trait BlockTrait
     public function getCheckoutKey()
     {
         if ($this->configHelper->isPaymentOnlyCheckoutEnabled()
-            && $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION) {
+            && $this->getRequestObject()->getFullActionName() == Config::CHECKOUT_PAGE_ACTION) {
             return $this->configHelper->getPublishableKeyPayment();
         }
 
@@ -121,7 +128,7 @@ trait BlockTrait
      */
     private function isPageRestricted()
     {
-        $currentPage = $this->_request->getFullActionName();
+        $currentPage = $this->getRequestObject()->getFullActionName();
 
         // Check if the page is blacklisted
         if (in_array($currentPage, $this->getPageBlacklist())) {

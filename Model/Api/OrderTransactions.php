@@ -47,14 +47,15 @@ class OrderTransactions implements OrderTransactionsInterface
      */
 
     /**
-     * @param mixed $transaction
+     * @param TransactionInterface $transaction
      * @param $additionalInformation
      * @return int
      */
     public function execute(
-        $transaction,
+        TransactionInterface $transaction,
         $additionalInformation
     ): int {
+        /** @var mixed $transaction */
         $transaction->setData(
             TransactionInterface::ADDITIONAL_INFORMATION,
             $additionalInformation
