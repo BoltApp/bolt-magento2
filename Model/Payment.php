@@ -295,14 +295,15 @@ class Payment extends AbstractMethod
     /**
      * Void the payment through gateway
      *
-     * @param DataObject|InfoInterface|mixed $payment
+     * @param InfoInterface $payment
      *
      * @return $this
      * @throws \Exception
      */
-    public function void($payment)
+    public function void(InfoInterface $payment)
     {
         try {
+            /** @var InfoInterface|mixed $payment */
             $startTime = $this->metricsClient->getCurrentTime();
 
             $transactionData = $this->getTransactionIDs($payment);
@@ -350,15 +351,16 @@ class Payment extends AbstractMethod
      * Fetch transaction details info. This will fetch the latest transaction information from Bolt and update the
      * payment status in magento if needed.
      *
-     * @param InfoInterface|mixed $payment
+     * @param InfoInterface $payment
      * @param string $transactionId
      *
      * @return array
      * @throws \Exception
      */
-    public function fetchTransactionInfo($payment, $transactionId)
+    public function fetchTransactionInfo(InfoInterface $payment, $transactionId)
     {
         try {
+            /** @var InfoInterface|mixed $payment */
             $startTime = $this->metricsClient->getCurrentTime();
 
             $transaction = $this->transactionRepository->getByTransactionId(
@@ -386,14 +388,15 @@ class Payment extends AbstractMethod
     /**
      * Capture the authorized transaction through the gateway
      *
-     * @param InfoInterface|mixed $payment
+     * @param InfoInterface $payment
      * @param float $amount
      *
      * @return $this
      * @throws \Exception
      */
-    public function capture($payment, $amount)
+    public function capture(InfoInterface $payment, $amount)
     {
+        /** @var InfoInterface|mixed $payment */
         $startTime = $this->metricsClient->getCurrentTime();
         try {
             if ($payment->getCcTransId()) {
@@ -475,15 +478,16 @@ class Payment extends AbstractMethod
     /**
      * Refund the amount
      *
-     * @param InfoInterface|mixed $payment
+     * @param InfoInterface $payment
      * @param float $amount
      *
      * @return $this
      * @throws \Exception
      */
-    public function refund($payment, $amount)
+    public function refund(InfoInterface $payment, $amount)
     {
         try {
+            /** @var InfoInterface|mixed $payment */
             $startTime = $this->metricsClient->getCurrentTime();
 
             if ($amount < 0) {
@@ -644,14 +648,15 @@ class Payment extends AbstractMethod
      * Function to process the review (approve/reject), sends data to Bolt API
      * And update order history
      *
-     * @param InfoInterface|mixed $payment
+     * @param InfoInterface $payment
      * @param               $review
      *
      * @return bool
      */
-    protected function review($payment, $review)
+    protected function review(InfoInterface $payment, $review)
     {
         try {
+            /** @var InfoInterface|mixed $payment */
             $transactionData = $this->getTransactionIDs($payment);
             $transactionData['decision'] = $review;
 

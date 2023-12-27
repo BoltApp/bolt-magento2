@@ -1829,7 +1829,7 @@ JS;
                 'isKeyMissing',
                 'getPageBlacklist',
                 'getIPWhitelistArray',
-                'getRequest',
+                'getRequestObject',
                 'getFullActionName'
             ]
         );
@@ -1857,7 +1857,7 @@ JS;
         TestHelper::setProperty($currentMock, 'httpContext', $httpContextMock);
 
         // stub \Bolt\Boltpay\Block\BlockTrait::isPageRestricted start
-        $currentMock->method('getRequest')->willReturnSelf();
+        $currentMock->method('getRequestObject')->willReturnSelf();
         $currentMock->method('getPageBlacklist')->willReturn($isPageRestricted ? [null] : []);
         // stub \Bolt\Boltpay\Block\BlockTrait::isPageRestricted end
 

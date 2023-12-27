@@ -32,9 +32,6 @@ class Success extends Template
 {
     use BlockTrait;
 
-    /** @var Http */
-    protected $_request;
-
     /**
      * Success constructor.
      *
