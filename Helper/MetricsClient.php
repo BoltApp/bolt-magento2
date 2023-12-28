@@ -222,7 +222,6 @@ class MetricsClient extends AbstractHelper
                 usleep(500);
             } else {
                 return null;
-                break;
             }
         }
         return $workingFile;

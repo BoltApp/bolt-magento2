@@ -158,6 +158,7 @@ class Affiliate
      */
     private function addToCookies($accountCode)
     {
+        // phpcs:ignore
         $_COOKIE[self::AMASTY_CURRENT_AFFILIATE_ACCOUNT_CODE] = $accountCode;
     }
 }

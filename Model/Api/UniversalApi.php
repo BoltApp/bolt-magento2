@@ -205,7 +205,6 @@ class UniversalApi implements UniversalApiInterface
                         null,
                         BoltErrorResponse::ERR_SERVICE
                     );
-                    break;
             }
 
             //not everything returns a value for result here. They send their own responses for now.

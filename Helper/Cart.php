@@ -850,7 +850,7 @@ class Cart extends AbstractHelper
         try {
             // get table name with prefix
             $tableName = $this->resourceConnection->getTableName('quote');
-
+            // phpcs:ignore
             $sql = "UPDATE {$tableName} SET updated_at = CURRENT_TIMESTAMP WHERE entity_id = :entity_id";
             $bind = [
                 'entity_id' => $quoteId

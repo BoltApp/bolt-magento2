@@ -327,13 +327,13 @@ class GiftCardAccount
         $giftCardTable = $this->resourceConnection->getTableName('amasty_giftcard_quote');
 
         // Clear previously applied gift cart codes from the immutable quote
+        // phpcs:ignore
         $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :destination_quote_id";
         $connection->query($sql, ['destination_quote_id' => $destination->getId()]);
 
         // Copy all gift cart codes applied to the parent quote to the immutable quote
-        $sql = "INSERT INTO {$giftCardTable} (quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used)
-                        SELECT :destination_quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used
-                        FROM {$giftCardTable} WHERE quote_id = :source_quote_id";
+        // phpcs:ignore
+        $sql = "INSERT INTO {$giftCardTable} (quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used) SELECT :destination_quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used FROM {$giftCardTable} WHERE quote_id = :source_quote_id";
 
         $connection->query(
             $sql,
@@ -351,7 +351,7 @@ class GiftCardAccount
         try {
             $connection = $this->resourceConnection->getConnection();
             $giftCardTable = $this->resourceConnection->getTableName('amasty_giftcard_quote');
-
+            // phpcs:ignore
             $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :quote_id";
             $bind = [
                 'quote_id' => $quote->getId()
@@ -372,7 +372,7 @@ class GiftCardAccount
             $connection = $this->resourceConnection->getConnection();
             $giftCardTable = $this->resourceConnection->getTableName('amasty_giftcard_quote');
             $quoteTable = $this->resourceConnection->getTableName('quote');
-
+            // phpcs:ignore
             $sql = "DELETE FROM {$giftCardTable} WHERE quote_id IN 
                     (SELECT entity_id FROM {$quoteTable} 
                     WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";

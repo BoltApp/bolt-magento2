@@ -624,8 +624,6 @@ class CreateOrder implements CreateOrderInterface
             null,
             $boltErrorCode
         );
-
-        return false;
     }
 
     /**

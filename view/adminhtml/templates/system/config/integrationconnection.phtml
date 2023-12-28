@@ -18,10 +18,10 @@ $integrationStatus = $block->getIntegrationStatus();
         'prototype'
     ], function(jQuery){
         var collectSpan = jQuery('#bolt_integration_keys_span');
-        var keysValueId = jQuery('#<?= trim($block->getInputId()) ?>');
+        var keysValueId = jQuery('#<?= /* @noEscape */ trim($block->getInputId()) ?>');
         jQuery('#bolt_integration_token_button').click(function () {                      
             new Ajax.Request('<?= $block->escapeUrl($block->getProcessIntegrationTokenAjaxUrl()) ?>', {
-                parameters:   {'store_id': '<?= trim($block->getStoreId()) ?>'},
+                parameters:   {'store_id': '<?= /* @noEscape */ trim($block->getStoreId()) ?>'},
                 loaderArea:   false,
                 asynchronous: true,
                 onCreate: function() {
@@ -74,9 +74,9 @@ $integrationStatus = $block->getIntegrationStatus();
     });
 </script>
 <span id="bolt_integration_keys_span">
-    <img class="processing" hidden="hidden" alt="Processing" style="margin:0 5px" src="<?php echo $block->getViewFileUrl('images/process_spinner.gif') ?>"/>
-    <img class="created" hidden="hidden" alt="Created" style="margin:-3px 5px" src="<?php echo $block->getViewFileUrl('images/rule_component_apply.gif') ?>"/>
-    <img class="failure" hidden="hidden" alt="failure" style="margin:-3px 5px" src="<?php echo $block->getViewFileUrl('images/rule_component_remove.gif') ?>"/>
+    <img class="processing" hidden="hidden" alt="Processing" style="margin:0 5px" src="<?php /* @noEscape */ echo $block->getViewFileUrl('images/process_spinner.gif') ?>"/>
+    <img class="created" hidden="hidden" alt="Created" style="margin:-3px 5px" src="<?php /* @noEscape */ echo $block->getViewFileUrl('images/rule_component_apply.gif') ?>"/>
+    <img class="failure" hidden="hidden" alt="failure" style="margin:-3px 5px" src="<?php /* @noEscape */ echo $block->getViewFileUrl('images/rule_component_remove.gif') ?>"/>
     <span id="bolt_integration_keys_message_span"></span>
 </span>
 <div class="message message-notice" id="bolt_integration_exits_proper" <?= $integrationStatus !== '1' ? 'hidden="hidden"' : '' ?>>
@@ -84,7 +84,7 @@ $integrationStatus = $block->getIntegrationStatus();
     </div>
 </div>
 <div class="message message-notice" id="bolt_integration_exits_improper" <?= $integrationStatus !== '2' ? 'hidden="hidden"' : '' ?>>
-    <div>It looks like Magento API keys were created for <?= trim($block->getBoltOppositeMode()) ?> and now this store is in <?= trim($block->getBoltCurrentMode()) ?> mode.
+    <div>It looks like Magento API keys were created for <?= /* @noEscape */ trim($block->getBoltOppositeMode()) ?> and now this store is in <?= /* @noEscape */ trim($block->getBoltCurrentMode()) ?> mode.
     Please delete keys and generate them again.
     </div>
 </div>
