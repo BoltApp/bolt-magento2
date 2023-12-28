@@ -40,4 +40,4 @@ for file in $MOCK_FILES
 do
   mv -- "$file" "${file%.mock}.php"
 done
-php -dmemory_limit=5G ./phpstan.phar analyse --level=0 --xdebug
+php -dmemory_limit=5G ./phpstan.phar analyse --level=2 --xdebug
