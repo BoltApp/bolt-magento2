@@ -9,10 +9,24 @@ namespace Bolt\Boltpay\Plugin\Amasty\Promo\Quote\Model\Quote;
 
 use Bolt\Boltpay\Helper\Hook;
 use Amasty\Promo\Plugin\Quote\Model\Quote\TotalsCollectorPlugin as AmastyTotalsCollectorPlugin;
-
+use Magento\Framework\App\State;
+use Magento\Framework\App\Area;
 
 class TotalsCollectorPlugin
 {
+    /**
+     * @var State
+     */
+    private $state;
+
+    /**
+     * @param State $state
+     */
+    public function __construct(State $state)
+    {
+        $this->state = $state;
+    }
+
     /**
      * @param AmastyTotalsCollectorPlugin $subject
      * @param \Magento\Quote\Model\Quote\TotalsCollector $nextSubject
@@ -28,11 +42,10 @@ class TotalsCollectorPlugin
         \Magento\Quote\Model\Quote\Address $address
     )
     {
-        // legacy flow: skip amasty promo calculation for immutable quote collect total calls
-        // amasty promo define the db table with relations between quote id and promo items
-        // because id's of immutable quote and original quote are different, amasty promo can't find promo items status during immutable quote collect totals
-        // which leads to mismatch between original quote and immutable quote which leads to restoring already removed items in card
-        if ($quote->getBoltParentQuoteId() != null && $quote->getBoltParentQuoteId() != $quote->getId()) {
+        // during add/remove bolt addon items (route etc.) we need to skip amasty promo items processing
+        // because during web-api rest calls from bolt amasty doesn't have access to the current session promo items state data: "ampromo_items"
+        // which could lead to the restoring already removed items
+        if (Hook::$fromBolt && $this->state->getAreaCode() === Area::AREA_WEBAPI_REST) {
             $address->setData('amastyFreeGiftProcessed', true);
         }
 
