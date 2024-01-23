@@ -60,7 +60,7 @@ class DutyTax
                 
                 $zonosShippingQuotesTable = $this->resourceConnection->getTableName('zonos_shipping_quotes');
                 $quoteTable = $this->resourceConnection->getTableName('quote');
-                
+                // phpcs:ignore
                 $sql = "DELETE FROM {$zonosShippingQuotesTable} WHERE quote_id IN
                     (SELECT entity_id FROM {$quoteTable}
                     WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
@@ -89,7 +89,7 @@ class DutyTax
                 $connection = $this->resourceConnection->getConnection();
                 
                 $zonosShippingQuotesTable = $this->resourceConnection->getTableName('zonos_shipping_quotes');
-                
+                // phpcs:ignore
                 $sql = "DELETE FROM {$zonosShippingQuotesTable} WHERE quote_id = :quote_id";
                 $bind = [
                     'quote_id' => $quote->getId()

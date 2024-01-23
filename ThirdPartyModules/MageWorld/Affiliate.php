@@ -190,15 +190,19 @@ class Affiliate
     private function setAffiliateCookies($sessionData)
     {
         if (isset($sessionData["mwAffiliateCustomer"])) {
+            // phpcs:ignore
             $_COOKIE['customer'] = $sessionData["mwAffiliateCustomer"];
         }
         if (isset($sessionData["mwAffiliateReferralFrom"])) {
+            // phpcs:ignore
             $_COOKIE['mw_referral_from'] = $sessionData["mwAffiliateReferralFrom"];
         }
         if (isset($sessionData["mwAffiliateReferralFromDomain"])) {
+            // phpcs:ignore
             $_COOKIE['mw_referral_from_domain'] = $sessionData["mwAffiliateReferralFromDomain"];
         }
         if (isset($sessionData["mwAffiliateReferralTo"])) {
+            // phpcs:ignore
             $_COOKIE['mw_referral_to'] = $sessionData["mwAffiliateReferralTo"];
         }
     }

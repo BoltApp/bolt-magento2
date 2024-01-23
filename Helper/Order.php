@@ -2245,7 +2245,6 @@ class Order extends AbstractHelper
                     'Unhandled transaction state : %1',
                     $transactionState
                 ));
-                break;
         }
 
         // format the last transaction data for storing within the order payment record instance

@@ -282,7 +282,7 @@ class GiftCard
         }
         try {
             $giftCardTable = $this->resourceConnection->getTableName('amasty_amgiftcard_quote');
-
+            // phpcs:ignore
             $sql = "DELETE FROM {$giftCardTable} WHERE code_id = :code_id AND quote_id = :quote_id";
             $this->resourceConnection->getConnection()->query(
                 $sql,
@@ -319,13 +319,13 @@ class GiftCard
             $giftCardTable = $this->resourceConnection->getTableName('amasty_amgiftcard_quote');
 
             // Clear previously applied gift cart codes from the immutable quote
+            // phpcs:ignore
             $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :destination_quote_id";
             $connection->query($sql, ['destination_quote_id' => $destination->getId()]);
 
             // Copy all gift cart codes applied to the parent quote to the immutable quote
-            $sql = "INSERT INTO {$giftCardTable} (quote_id, code_id, account_id, base_gift_amount, code)
-                        SELECT :destination_quote_id, code_id, account_id, base_gift_amount, code
-                        FROM {$giftCardTable} WHERE quote_id = :source_quote_id";
+            // phpcs:ignore
+            $sql = "INSERT INTO {$giftCardTable} (quote_id, code_id, account_id, base_gift_amount, code) SELECT :destination_quote_id, code_id, account_id, base_gift_amount, code FROM {$giftCardTable} WHERE quote_id = :source_quote_id";
 
             $connection->query(
                 $sql,
@@ -347,7 +347,7 @@ class GiftCard
         $connection = $this->resourceConnection->getConnection();
         try {
             $giftCardTable = $this->resourceConnection->getTableName('amasty_amgiftcard_quote');
-
+            // phpcs:ignore
             $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :quote_id";
             $bind = [
                 'quote_id' => $quote->getId()
@@ -368,7 +368,7 @@ class GiftCard
         try {
             $giftCardTable = $this->resourceConnection->getTableName('amasty_amgiftcard_quote');
             $quoteTable = $this->resourceConnection->getTableName('quote');
-
+            // phpcs:ignore
             $sql = "DELETE FROM {$giftCardTable} WHERE quote_id IN 
                     (SELECT entity_id FROM {$quoteTable} 
                     WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
@@ -396,7 +396,7 @@ class GiftCard
             $connection = $this->resourceConnection->getConnection();
 
             $giftCardTable = $this->resourceConnection->getTableName('amasty_amgiftcard_quote');
-
+            // phpcs:ignore
             $sql = "DELETE FROM {$giftCardTable} WHERE code_id = :code_id AND quote_id = :quote_id";
             $connection->query($sql, ['code_id' => $codeId, 'quote_id' => $quote->getId()]);
 

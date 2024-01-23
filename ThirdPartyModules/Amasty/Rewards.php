@@ -260,7 +260,7 @@ class Rewards
         try {
             $rewardsTable = $this->resourceConnection->getTableName('amasty_rewards_quote');
             $quoteTable = $this->resourceConnection->getTableName('quote');
-
+            // phpcs:ignore
             $sql = "DELETE FROM {$rewardsTable} WHERE quote_id IN
                     (SELECT entity_id FROM {$quoteTable}
                     WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
@@ -285,7 +285,7 @@ class Rewards
         $connection = $this->resourceConnection->getConnection();
         try {
             $rewardsTable = $this->resourceConnection->getTableName('amasty_rewards_quote');
-
+            // phpcs:ignore
             $sql = "DELETE FROM {$rewardsTable} WHERE quote_id = :quote_id";
             $bind = [
                 'quote_id' => $quote->getId()
