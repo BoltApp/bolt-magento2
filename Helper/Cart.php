@@ -1074,6 +1074,14 @@ class Cart extends AbstractHelper
                 $prefill['email'] = $quote->getCustomerEmail();
             }
 
+            if (!$prefill['firstName'] && $this->customerSession->isLoggedIn()){
+                $prefill['firstName'] = $this->customerSession->getCustomer()->getData('firstname');
+            }
+
+            if (!$prefill['lastName'] && $this->customerSession->isLoggedIn()){
+                $prefill['lastName'] = $this->customerSession->getCustomer()->getData('lastname');
+            }
+
             // Skip pre-fill for Apple Pay related data.
             if ($prefill['email'] == 'na@bolt.com' || $prefill['phone'] == '8005550111' || $prefill['addressLine1'] == 'tbd') {
                 return;
