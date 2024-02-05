@@ -123,6 +123,10 @@ class Cart
         $customerData['boltCartHints'] = null;
         if ($quote->getId()) {
             try {
+                if ($this->boltHelperCart->getOrderByQuoteId($quote->getId())) {
+                    $this->boltHelperCart->deactivateSessionQuote($quote);
+                    return $customerData;
+                }
                 $customerData['quoteMaskedId'] = $this->boltHelperCart->getQuoteMaskedId((int)$quote->getId());
                 $customerData['boltCartHints'] = $this->boltHelperCart->getHints($quote->getId(), self::HINTS_TYPE);
                 $this->preFetchCart($quote, $customerData);
