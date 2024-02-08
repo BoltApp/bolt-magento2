@@ -14,6 +14,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Serialize\SerializerInterface as Serializer;
 use Magento\Framework\App\CacheInterface;
+use Magento\Sales\Model\Order;
 
 /**
  * Process quote bolt data
@@ -123,7 +124,8 @@ class Cart
         $customerData['boltCartHints'] = null;
         if ($quote->getId()) {
             try {
-                if ($this->boltHelperCart->getOrderByQuoteId($quote->getId())) {
+                $order = $this->boltHelperCart->getOrderByQuoteId($quote->getId());
+                if ($order && $order->getStatus() != Order::STATE_PENDING_PAYMENT) {
                     $this->boltHelperCart->deactivateSessionQuote($quote);
                     return $customerData;
                 }
