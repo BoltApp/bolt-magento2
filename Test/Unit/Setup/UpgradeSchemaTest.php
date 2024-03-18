@@ -212,8 +212,8 @@ class UpgradeSchemaTest extends BoltTestCase
         $this->schemaSetup->expects(static::exactly(2))
             ->method('addIndex')
             ->withConsecutive(
-                ['quote', $quoteUniqueHash, ['bolt_parent_quote_id']], // Параметры для первого вызова
-                ['plugin_version_notification', 'plugin_version_notification_latest_version_primary', ['latest_version'], 'primary'] // Параметры для второго вызова
+                ['quote', $quoteUniqueHash, ['bolt_parent_quote_id']],
+                ['plugin_version_notification', 'plugin_version_notification_latest_version_primary', ['latest_version'], 'primary']
             )
             ->willReturnSelf();
 
