@@ -206,7 +206,7 @@ class UpgradeSchemaTest extends BoltTestCase
             )
             ->willReturn(
                 $quoteUniqueHash,
-                'plugin_version_notification_latest_version_primary',
+                'plugin_version_notification_latest_version_primary'
             );
 
         $this->schemaSetup->expects(static::exactly(2))
