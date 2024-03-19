@@ -66,11 +66,11 @@ class MetadataProviderPlugin
         $options
     ): array {
         $paymentMethodFieldKey = $this->getPaymentMethodFieldKey($fields);
-        if (!$this->config->getShowCcTypeInOrderGrid() || !$paymentMethodFieldKey || !$this->isBoltPaymentMethod($options, $document)) {
+        if (!$paymentMethodFieldKey || !$this->isBoltPaymentMethod($options, $document)) {
             return $result;
         }
 
-        if ($this->isSupportedCcType($document)) {
+        if ($this->config->getShowCcTypeInOrderGrid() && $this->isSupportedCcType($document)) {
             $result[$paymentMethodFieldKey] = 'Bolt-' . BoltOrderHelper::SUPPORTED_CC_TYPES[$document->getData(self::CC_TYPE_KEY)];
         } elseif ($this->isApiFlow($document)) {
             $result[$paymentMethodFieldKey] = $document->getData(self::ADDITIONAL_DATA_KEY);
