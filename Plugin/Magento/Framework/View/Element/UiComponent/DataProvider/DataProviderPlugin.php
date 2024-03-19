@@ -60,16 +60,13 @@ class DataProviderPlugin
      */
     public function afterGetData(DataProvider $subject, $result)
     {
-        if (!$this->configHelper->getShowCcTypeInOrderGrid()) {
-            return $result;
-        }
-
         if ($this->isResultEmptyOrIrrelevant($result, $subject)) {
             return $result;
         }
 
         $ids = $this->getBoltOrderIds($result['items']);
         $paymentCollection = $this->getPaymentCollection($ids);
+        $showCcTypeInOrderGrid = $this->configHelper->getShowCcTypeInOrderGrid();
 
         foreach ($result['items'] as &$item) {
             $payment = $this->getPaymentFromCollection($paymentCollection, $item);
@@ -77,7 +74,7 @@ class DataProviderPlugin
                 continue;
             }
 
-            $this->updatePaymentMethod($item, $payment);
+            $this->updatePaymentMethod($item, $payment, $showCcTypeInOrderGrid);
         }
 
         return $result;
@@ -153,12 +150,14 @@ class DataProviderPlugin
      *
      * @param array $item
      * @param $payment
+     * @param $showCcTypeInOrderGrid
      * @return void
      */
-    private function updatePaymentMethod(array &$item, $payment): void
+    private function updatePaymentMethod(array &$item, $payment, $showCcTypeInOrderGrid): void
     {
-        if ($this->isSupportedCcType($payment)) {
-            $item['payment_method'] .= '_' . strtolower((string)$payment->getCcType());
+        $ccType = $payment->getCcType();
+        if ($showCcTypeInOrderGrid && $this->isSupportedCcType($ccType)) {
+            $item['payment_method'] .= '_' . strtolower((string)$ccType);
             return;
         }
 
@@ -167,14 +166,21 @@ class DataProviderPlugin
             return;
         }
 
-        if ($this->isThirdPartyMethod($payment)) {
-            $item['payment_method'] .= '_' . $this->getThirdPartyMethod($payment);
+        $thirdPartyMethod = $this->getThirdPartyMethod($payment);
+        if ($thirdPartyMethod) {
+            $item['payment_method'] .= '_' . $thirdPartyMethod;
         }
     }
 
-    private function isSupportedCcType($payment): bool
+    /**
+     * Checks if cc type is supported
+     *
+     * @param $ccType
+     * @return bool
+     */
+    private function isSupportedCcType($ccType): bool
     {
-        return !empty($payment->getCcType()) && key_exists(strtolower((string)$payment->getCcType()), Order::SUPPORTED_CC_TYPES);
+        return !empty($ccType) && key_exists(strtolower((string)$ccType), Order::SUPPORTED_CC_TYPES);
     }
 
     /**
@@ -201,26 +207,17 @@ class DataProviderPlugin
     }
 
     /**
-     * Checks if payment method is third party
-     *
-     * @param $payment
-     * @return bool
-     */
-    private function isThirdPartyMethod($payment): bool
-    {
-        $intersectResult = array_intersect([$payment->getData('additional_information/processor'), $payment->getAdditionalData()], array_keys(Order::TP_METHOD_DISPLAY));
-        return !empty($intersectResult);
-    }
-
-    /**
      * Returns third party method
      *
      * @param $payment
-     * @return string
+     * @return string|null
      */
-    private function getThirdPartyMethod($payment): string
+    private function getThirdPartyMethod($payment): ?string
     {
         $intersectResult = array_intersect([$payment->getData('additional_information/processor'), $payment->getAdditionalData()], array_keys(Order::TP_METHOD_DISPLAY));
-        return reset($intersectResult);
+        if (!empty($intersectResult)) {
+            return reset($intersectResult);
+        }
+        return null;
     }
 }
