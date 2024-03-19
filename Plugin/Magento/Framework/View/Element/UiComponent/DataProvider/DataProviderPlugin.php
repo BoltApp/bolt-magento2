@@ -60,65 +60,167 @@ class DataProviderPlugin
      */
     public function afterGetData(DataProvider $subject, $result)
     {
-        if (empty($result['items'])) {
+        if (!$this->configHelper->getShowCcTypeInOrderGrid()) {
             return $result;
         }
-        if (!in_array(
-            $subject->getName(),
-            [
-                'sales_order_grid_data_source',
-                'sales_order_invoice_grid_data_source',
-                'sales_order_creditmemo_grid_data_source',
-                'sales_order_shipment_grid_data_source'
-            ]
-        )) {
+
+        if ($this->isResultEmptyOrIrrelevant($result, $subject)) {
             return $result;
         }
-        $ids = array_column(
+
+        $ids = $this->getBoltOrderIds($result['items']);
+        $paymentCollection = $this->getPaymentCollection($ids);
+
+        foreach ($result['items'] as &$item) {
+            $payment = $this->getPaymentFromCollection($paymentCollection, $item);
+            if (!$payment) {
+                continue;
+            }
+
+            $this->updatePaymentMethod($item, $payment);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Returns payment collection
+     *
+     * @param array $ids
+     * @return \Magento\Sales\Model\ResourceModel\Order\Payment\Collection
+     */
+    private function getPaymentCollection(array $ids)
+    {
+        return $this->paymentCollectionFactory->create()
+            ->addFieldToFilter('parent_id', ['in' => $ids]);
+    }
+
+    /**
+     * Checks if result is empty or irrelevant
+     *
+     * @param $result
+     * @param $subject
+     * @return bool
+     */
+    private function isResultEmptyOrIrrelevant($result, $subject): bool
+    {
+        $relevantGrids = [
+            'sales_order_grid_data_source',
+            'sales_order_invoice_grid_data_source',
+            'sales_order_creditmemo_grid_data_source',
+            'sales_order_shipment_grid_data_source'
+        ];
+
+        return empty($result['items']) || !in_array($subject->getName(), $relevantGrids);
+    }
+
+    /**
+     * Returns Bolt order ids
+     *
+     * @param array $items
+     * @return array
+     */
+    private function getBoltOrderIds(array $items): array
+    {
+        return array_column(
             array_filter(
-                $result['items'],
+                $items,
                 function ($item) {
                     return $item['payment_method'] == \Bolt\Boltpay\Model\Payment::METHOD_CODE;
                 }
             ),
-            key_exists('order_id', $result['items'][0]) ? 'order_id' : 'entity_id'
+            key_exists('order_id', $items[0]) ? 'order_id' : 'entity_id'
         );
-        $paymentCollection = $this->paymentCollectionFactory->create()
-            ->addFieldToFilter('parent_id', ['in' => $ids]);
-        $showCcTypeInOrderGrid = $this->configHelper->getShowCcTypeInOrderGrid();
-        foreach ($result['items'] as &$item) {
-            /** @var \Magento\Sales\Model\Order\Payment $payment */
-            $payment = $paymentCollection->getItemByColumnValue(
-                'parent_id',
-                key_exists('order_id', $item) ? $item['order_id'] : $item['entity_id']
-            );
-            if (!$payment) {
-                continue;
-            }
-            if ($showCcTypeInOrderGrid && ! empty($ccType = $payment->getCcType()) &&
-                key_exists(
-                    $ccType = strtolower((string)$ccType),
-                    Order::SUPPORTED_CC_TYPES
-                )
-            ) {
-                $item['payment_method'] .= '_' . $ccType;
-                continue;
-            }
-            if ($payment->getCcTransId()) {
-                // api flow, title rendered on server side
-                $title = $payment->getAdditionalData();
-                if ($title && ($intersection = array_intersect([strtolower (str_replace('Bolt-', '', $title))], array_keys(Order::TP_METHOD_DISPLAY)))) {
-                    $item['payment_method'] = \Bolt\Boltpay\Model\Payment::METHOD_CODE . '_' . reset($intersection);
-                }
-                continue;
-            }
-            if ($intersection = array_intersect(
-                [$payment->getData('additional_information/processor'), $payment->getAdditionalData()],
-                array_keys(Order::TP_METHOD_DISPLAY)
-            )) {
-                $item['payment_method'] .= '_' . reset($intersection);
-            }
+    }
+
+    /**
+     * Returns payment from collection
+     *
+     * @param $paymentCollection
+     * @param array $item
+     * @return mixed
+     */
+    private function getPaymentFromCollection($paymentCollection, array $item)
+    {
+        return $paymentCollection->getItemByColumnValue(
+            'parent_id',
+            key_exists('order_id', $item) ? $item['order_id'] : $item['entity_id']
+        );
+    }
+
+    /**
+     * Updates payment method in the grid
+     *
+     * @param array $item
+     * @param $payment
+     * @return void
+     */
+    private function updatePaymentMethod(array &$item, $payment): void
+    {
+        if ($this->isSupportedCcType($payment)) {
+            $item['payment_method'] .= '_' . strtolower((string)$payment->getCcType());
+            return;
         }
-        return $result;
+
+        if ($payment->getCcTransId() && $this->isApiFlow($payment)) {
+            $item['payment_method'] = \Bolt\Boltpay\Model\Payment::METHOD_CODE . '_' . $this->getApiFlowMethod($payment);
+            return;
+        }
+
+        if ($this->isThirdPartyMethod($payment)) {
+            $item['payment_method'] .= '_' . $this->getThirdPartyMethod($payment);
+        }
+    }
+
+    private function isSupportedCcType($payment): bool
+    {
+        return !empty($payment->getCcType()) && key_exists(strtolower((string)$payment->getCcType()), Order::SUPPORTED_CC_TYPES);
+    }
+
+    /**
+     * Checks if payment method is API flow
+     *
+     * @param $payment
+     * @return bool
+     */
+    private function isApiFlow($payment): bool
+    {
+        return $payment->getAdditionalData() && array_intersect([strtolower(str_replace('Bolt-', '', $payment->getAdditionalData()))], array_keys(Order::TP_METHOD_DISPLAY));
+    }
+
+    /**
+     * Returns API flow method
+     *
+     * @param $payment
+     * @return string
+     */
+    private function getApiFlowMethod($payment): string
+    {
+        $intersectResult = array_intersect([strtolower(str_replace('Bolt-', '', $payment->getAdditionalData()))], array_keys(Order::TP_METHOD_DISPLAY));
+        return reset($intersectResult);
+    }
+
+    /**
+     * Checks if payment method is third party
+     *
+     * @param $payment
+     * @return bool
+     */
+    private function isThirdPartyMethod($payment): bool
+    {
+        $intersectResult = array_intersect([$payment->getData('additional_information/processor'), $payment->getAdditionalData()], array_keys(Order::TP_METHOD_DISPLAY));
+        return !empty($intersectResult);
+    }
+
+    /**
+     * Returns third party method
+     *
+     * @param $payment
+     * @return string
+     */
+    private function getThirdPartyMethod($payment): string
+    {
+        $intersectResult = array_intersect([$payment->getData('additional_information/processor'), $payment->getAdditionalData()], array_keys(Order::TP_METHOD_DISPLAY));
+        return reset($intersectResult);
     }
 }

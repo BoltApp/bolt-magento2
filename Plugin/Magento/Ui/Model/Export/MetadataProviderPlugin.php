@@ -31,6 +31,10 @@ class MetadataProviderPlugin
 
     private const CC_TYPE_KEY = 'cc_type';
 
+    private const CC_TRANS_ID_KEY = 'cc_trans_id';
+
+    private const ADDITIONAL_DATA_KEY = 'additional_data';
+
     /**
      * @var Config
      */
@@ -61,22 +65,63 @@ class MetadataProviderPlugin
         $fields,
         $options
     ): array {
-        if (!$this->config->getShowCcTypeInOrderGrid()) {
+        $paymentMethodFieldKey = $this->getPaymentMethodFieldKey($fields);
+        if (!$this->config->getShowCcTypeInOrderGrid() || !$paymentMethodFieldKey || !$this->isBoltPaymentMethod($options, $document)) {
             return $result;
         }
-        $paymentMethodFieldKeyArr = array_keys($fields, self::PAYMENT_METHOD_KEY);
-        $paymentMethodFieldKey = null;
-        if (!empty($paymentMethodFieldKeyArr)) {
-            $paymentMethodFieldKey = array_shift($paymentMethodFieldKeyArr);
-        }
-        if ($paymentMethodFieldKey &&
-            $document->getData(self::PAYMENT_METHOD_KEY) === Payment::METHOD_CODE &&
-            $document->getData(self::CC_TYPE_KEY) &&
-            isset($options[self::PAYMENT_METHOD_KEY][Payment::METHOD_CODE]) &&
-            array_key_exists($document->getData(self::CC_TYPE_KEY), BoltOrderHelper::SUPPORTED_CC_TYPES)
-        ) {
+
+        if ($this->isSupportedCcType($document)) {
             $result[$paymentMethodFieldKey] = 'Bolt-' . BoltOrderHelper::SUPPORTED_CC_TYPES[$document->getData(self::CC_TYPE_KEY)];
+        } elseif ($this->isApiFlow($document)) {
+            $result[$paymentMethodFieldKey] = $document->getData(self::ADDITIONAL_DATA_KEY);
         }
+
         return $result;
+    }
+
+    /**
+     * Get payment method field key
+     *
+     * @param $fields
+     * @return string|null
+     */
+    private function getPaymentMethodFieldKey($fields): ?string
+    {
+        $paymentMethodFieldKeyArr = array_keys($fields, self::PAYMENT_METHOD_KEY);
+        return !empty($paymentMethodFieldKeyArr) ? array_shift($paymentMethodFieldKeyArr) : null;
+    }
+
+    /**
+     * Check if the document has Bolt payment method
+     *
+     * @param $options
+     * @param DocumentInterface $document
+     * @return bool
+     */
+    private function isBoltPaymentMethod($options, DocumentInterface $document): bool
+    {
+        return isset($options[self::PAYMENT_METHOD_KEY][Payment::METHOD_CODE]) && $document->getData(self::PAYMENT_METHOD_KEY) == Payment::METHOD_CODE;
+    }
+
+    /**
+     * Check if the document has supported cc type
+     *
+     * @param DocumentInterface $document
+     * @return bool
+     */
+    private function isSupportedCcType(DocumentInterface $document): bool
+    {
+        return $document->getData(self::CC_TYPE_KEY) && array_key_exists($document->getData(self::CC_TYPE_KEY), BoltOrderHelper::SUPPORTED_CC_TYPES);
+    }
+
+    /**
+     * Check if the document is from API flow
+     *
+     * @param DocumentInterface $document
+     * @return bool
+     */
+    private function isApiFlow(DocumentInterface $document): bool
+    {
+        return $document->getData(self::CC_TRANS_ID_KEY) && $document->getData(self::ADDITIONAL_DATA_KEY);
     }
 }
