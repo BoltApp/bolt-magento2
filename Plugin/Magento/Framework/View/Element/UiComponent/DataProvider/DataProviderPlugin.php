@@ -126,7 +126,7 @@ class DataProviderPlugin
                     return $item['payment_method'] == \Bolt\Boltpay\Model\Payment::METHOD_CODE;
                 }
             ),
-            key_exists('order_id', $items[0]) ? 'order_id' : 'entity_id'
+            array_key_exists('order_id', $items[0]) ? 'order_id' : 'entity_id'
         );
     }
 
@@ -141,7 +141,7 @@ class DataProviderPlugin
     {
         return $paymentCollection->getItemByColumnValue(
             'parent_id',
-            key_exists('order_id', $item) ? $item['order_id'] : $item['entity_id']
+            array_key_exists('order_id', $item) ? $item['order_id'] : $item['entity_id']
         );
     }
 
@@ -180,7 +180,7 @@ class DataProviderPlugin
      */
     private function isSupportedCcType($ccType): bool
     {
-        return !empty($ccType) && key_exists(strtolower((string)$ccType), Order::SUPPORTED_CC_TYPES);
+        return !empty($ccType) && array_key_exists(strtolower((string)$ccType), Order::SUPPORTED_CC_TYPES);
     }
 
     /**
