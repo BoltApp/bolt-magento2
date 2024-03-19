@@ -198,14 +198,23 @@ class UpgradeSchemaTest extends BoltTestCase
             ->willReturnSelf();
 
         $quoteUniqueHash = '98156307323252d52c6683671a73dff3';
-        $this->schemaSetup->expects(static::once())
-            ->method('getIdxName')
-            ->with('quote', ['bolt_parent_quote_id'])
-            ->willReturn($quoteUniqueHash);
+        $this->schemaSetup->expects(static::exactly(2))
+        ->method('getIdxName')
+            ->withConsecutive(
+                ['quote', ['bolt_parent_quote_id']],
+                ['plugin_version_notification', ['latest_version'], 'primary']
+            )
+            ->willReturn(
+                $quoteUniqueHash,
+                'plugin_version_notification_latest_version_primary'
+            );
 
-        $this->schemaSetup->expects(static::once())
+        $this->schemaSetup->expects(static::exactly(2))
             ->method('addIndex')
-            ->with($quoteTable, $quoteUniqueHash, ['bolt_parent_quote_id'])
+            ->withConsecutive(
+                ['quote', $quoteUniqueHash, ['bolt_parent_quote_id']],
+                ['plugin_version_notification', 'plugin_version_notification_latest_version_primary', ['latest_version'], 'primary']
+            )
             ->willReturnSelf();
 
         $this->schemaSetup->expects(static::atLeastOnce())

@@ -113,6 +113,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
         $this->setupPluginVersionNotificationTable($setup);
 
+        $this->addPluginVersionNotificationTablePrimaryKey($setup);
+
         $setup->endSetup();
     }
 
@@ -367,5 +369,19 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'Description for latest release'
             )->setComment('New plugin version notification table');
         $setup->getConnection()->createTable($table);
+    }
+
+    private function addPluginVersionNotificationTablePrimaryKey($setup)
+    {
+        $tableCreated = $setup->getConnection()->isTableExists('plugin_version_notification');
+        if ($tableCreated) {
+            // set primary key to latest_version
+            $setup->getConnection()->addIndex(
+                $setup->getTable('plugin_version_notification'),
+                $setup->getIdxName('plugin_version_notification', ['latest_version'], \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_PRIMARY),
+                ['latest_version'],
+                \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_PRIMARY
+            );
+        }
     }
 }
