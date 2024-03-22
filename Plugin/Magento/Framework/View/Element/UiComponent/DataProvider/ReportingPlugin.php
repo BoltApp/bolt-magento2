@@ -57,11 +57,7 @@ class ReportingPlugin
                 'main_table.entity_id = payment.parent_id',
                 []
             );
-            $collectionSelect->columns([
-                'cc_type' => 'LOWER(payment.cc_type)',
-                'cc_trans_id' => 'LOWER(payment.cc_trans_id)',
-                'additional_data' => 'payment.additional_data'
-            ]);
+            $collectionSelect->columns(['cc_type' => 'LOWER(payment.cc_type)']);
         }
         return $result;
     }
