@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\ThirdPartyModules\Zonos;
 
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\App\ResourceConnection;
+use Magento\Quote\Model\Quote;
 
 class DutyTax
 {
@@ -49,7 +50,7 @@ class DutyTax
      * Zonos_DutyTax adds a foreign key constraint to the quote table,
      * so we have to delete the related rows in zonos_shipping_quotes before deleting redundant quotes
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      */
     public function beforeOrderDeleteRedundantQuotes($quote)
     {
@@ -59,7 +60,7 @@ class DutyTax
                 
                 $zonosShippingQuotesTable = $this->resourceConnection->getTableName('zonos_shipping_quotes');
                 $quoteTable = $this->resourceConnection->getTableName('quote');
-                
+                // phpcs:ignore
                 $sql = "DELETE FROM {$zonosShippingQuotesTable} WHERE quote_id IN
                     (SELECT entity_id FROM {$quoteTable}
                     WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
@@ -88,7 +89,7 @@ class DutyTax
                 $connection = $this->resourceConnection->getConnection();
                 
                 $zonosShippingQuotesTable = $this->resourceConnection->getTableName('zonos_shipping_quotes');
-                
+                // phpcs:ignore
                 $sql = "DELETE FROM {$zonosShippingQuotesTable} WHERE quote_id = :quote_id";
                 $bind = [
                     'quote_id' => $quote->getId()

@@ -33,7 +33,7 @@ class SuccessValidatorPlugin
     /** @var Serialize */
     private $serialize;
     
-    /** @var CheckoutSession */
+    /** @var CheckoutSession|mixed */
     private $checkoutSession;
 
     /**

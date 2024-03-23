@@ -52,6 +52,7 @@ class RemoveActionPlugin
      */
     public function afterExecute(\Magento\Reward\Controller\Cart\Remove $subject, $result)
     {
+        /** @var mixed $subject */
         if ($this->configHelper->displayRewardPointsInMinicartConfig() && $subject->getRequest()->isAjax()) {
             $subject->getResponse()->clearHeader('Location');
             $subject->getResponse()->setStatusHeader(200);

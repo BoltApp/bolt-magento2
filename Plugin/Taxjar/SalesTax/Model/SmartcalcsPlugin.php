@@ -75,6 +75,7 @@ class SmartcalcsPlugin
                 $this->priceCurrency->round($quoteDetailsItem->getUnitPrice())
             );
         }
+        /** @var mixed $shippingAssignmentItem */
         foreach ($shippingAssignment->getItems() as $shippingAssignmentItem) {
             $shippingAssignmentItem->setBaseCalculationPrice(
                 $this->priceCurrency->round($shippingAssignmentItem->getBaseTaxCalculationPrice())

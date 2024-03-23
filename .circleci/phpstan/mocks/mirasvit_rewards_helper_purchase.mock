@@ -1,0 +1,7 @@
+<?php
+namespace Mirasvit\Rewards\Helper {
+    class Purchase{
+        public function getByQuote(...$args) {}
+
+    };
+}

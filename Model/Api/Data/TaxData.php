@@ -59,7 +59,7 @@ class TaxData implements TaxDataInterface, \JsonSerializable
      * Set available shipping options.
      *
      * @api
-     * @param TaxResultInterface
+     * @param TaxResultInterface $taxResult
      *
      * @return $this
      */
@@ -84,7 +84,7 @@ class TaxData implements TaxDataInterface, \JsonSerializable
      * Set selected shipping option.
      *
      * @api
-     * @param ShippingOptionInterface
+     * @param ShippingOptionInterface $shippingOption
      * @return $this
      */
     public function setShippingOption($shippingOption)
@@ -108,7 +108,7 @@ class TaxData implements TaxDataInterface, \JsonSerializable
      * Set available ship to store option.
      *
      * @api
-     * @param \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface
+     * @param \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface $shipToStoreOption
      * @return $this
      */
     public function setShipToStoreOption($shipToStoreOption)

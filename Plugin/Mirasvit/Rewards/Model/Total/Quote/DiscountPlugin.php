@@ -33,9 +33,7 @@ class DiscountPlugin
     private $eventsForThirdPartyModules;
 
     /**
-     * DiscountPlugin constructor.
-     *
-     * @param CheckoutSession $checkoutSession
+     * @param SessionHelper $sessionHelper
      * @param EventsForThirdPartyModules $eventsForThirdPartyModules
      */
     public function __construct(

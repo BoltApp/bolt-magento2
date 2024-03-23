@@ -36,7 +36,7 @@ interface GetMaskedQuoteIDDataInterface
      * Set product info.
      *
      * @api
-     * @param string
+     * @param string $id
      * @return $this
      */
     public function setMaskedQuoteId($id);

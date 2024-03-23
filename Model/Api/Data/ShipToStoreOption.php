@@ -154,7 +154,7 @@ class ShipToStoreOption implements ShipToStoreOptionInterface, \JsonSerializable
      * Set store address.
      *
      * @api
-     * @param \Bolt\Boltpay\Api\Data\StoreAddressInterface $storeAddress
+     * @param \Bolt\Boltpay\Api\Data\StoreAddressInterface $address
      * @return $this
      */
     public function setAddress($address)

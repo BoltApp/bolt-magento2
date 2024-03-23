@@ -34,7 +34,7 @@ class Rewardpoints
     private $bugsnagHelper;
 
     /**
-     * @var PriceCurrencyInterface
+     * @var PriceCurrencyInterface|mixed
      */
     private $priceCurrency;
     
@@ -42,10 +42,6 @@ class Rewardpoints
      * @var QuoteRepository
      */
     private $quoteRepository;
-    
-    /**
-     * @var \J2t\Rewardpoints\Helper\Data
-     */
     private $rewardHelper;
 
     /**
@@ -65,9 +61,9 @@ class Rewardpoints
 
     /**
      * @param array                         $result
-     * @param \J2t\Rewardpoints\Helper\Data $rewardHelper
-     * @param \Magento\Quote\Model\Quote    $quote
-     * @param \Magento\Quote\Model\Quote    $parentQuote
+     * @param  $rewardHelper
+     * @param \Magento\Quote\Model\Quote|mixed    $quote
+     * @param \Magento\Quote\Model\Quote|mixed    $parentQuote
      * @param bool                          $paymentOnly
      * @return array
      */
@@ -194,8 +190,8 @@ class Rewardpoints
     /**
      * Update reward points to the quote.
      *
-     * @param \J2t\Rewardpoints\Helper\Data $rewardHelper
-     * @param Quote $quote
+     * @param $rewardHelper
+     * @param Quote|mixed $quote
      *
      */
     public function beforePrepareQuote(
@@ -246,7 +242,7 @@ class Rewardpoints
     /**
      * Calculate the max amount of reward points can be applied to quote.
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      * @param float $points
      * @param bool  $collectTotals
      *

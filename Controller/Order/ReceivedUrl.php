@@ -87,7 +87,9 @@ class ReceivedUrl extends Action implements ReceivedUrlInterface
      */
     private function hasNoUrlReferer()
     {
-        return ! $this->getRequest()->getServer('HTTP_REFERER');
+        /** @var mixed $request */
+        $request = $this->getRequest();
+        return ! $request->getServer('HTTP_REFERER');
     }
 
     /**
@@ -97,14 +99,16 @@ class ReceivedUrl extends Action implements ReceivedUrlInterface
      */
     private function hasBoltUrlReferer()
     {
-        $refererUrl = $this->getRequest()->getServer('HTTP_REFERER');
+        /** @var mixed $request */
+        $request = $this->getRequest();
+        $refererUrl = $request->getServer('HTTP_REFERER');
         $cdnUrl = $this->configHelper->getCdnUrl();
         return substr($refererUrl, 0, strlen((string)$cdnUrl)) === $cdnUrl;
     }
 
     /**
      * Redirect user to admin's order confirmation page if this is backoffice order placed by admin page
-     * @param quote Quote
+     * @param $quote
      * @return boolean
      */
     protected function redirectToAdminIfNeeded($quote)

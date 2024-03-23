@@ -16,6 +16,7 @@
  */
 namespace Bolt\Boltpay\Plugin\Magento;
 
+use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
 
 class TogglePaymentMethodsPlugin
@@ -30,9 +31,11 @@ class TogglePaymentMethodsPlugin
         callable $proceed,
         Observer $observer
     ) {
+        /** @var Observer|mixed $observer */
         $proceed($observer);
-
-        $paymentMethod = $observer->getEvent()->getMethodInstance()->getCode();
+        /** @var Event|mixed $event */
+        $event = $observer->getEvent();
+        $paymentMethod = $event->getMethodInstance()->getCode();
         if ($paymentMethod != \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
             return;
         }

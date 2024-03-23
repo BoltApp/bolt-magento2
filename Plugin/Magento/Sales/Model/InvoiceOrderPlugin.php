@@ -23,7 +23,7 @@ use Magento\Sales\Api\InvoiceRepositoryInterface;
 class InvoiceOrderPlugin
 {
     /**
-     * @var InvoiceRepositoryInterface
+     * @var InvoiceRepositoryInterface|mixed
      */
     private $invoiceRepository;
 

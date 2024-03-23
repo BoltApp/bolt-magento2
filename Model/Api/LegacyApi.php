@@ -64,13 +64,13 @@ class LegacyApi implements LegacyApiInterface
     protected $updateCart;
 
     /**
-     * @var CreateOrderInterface $createOrder
-     * @var DiscountCodeValidationInterface $discountCodeValidation
-     * @var OrderManagementInterface $orderManagement
-     * @var ShippingInterface $shipping
-     * @var ShippingMethodsInterface $shippingMethods
-     * @var TaxInterface $tax
-     * @var UpdateCartInterface $updateCart
+     * @param CreateOrderInterface $createOrder
+     * @param DiscountCodeValidationInterface $discountCodeValidation
+     * @param OrderManagementInterface $orderManagement
+     * @param ShippingInterface $shipping
+     * @param ShippingMethodsInterface $shippingMethods
+     * @param TaxInterface $tax
+     * @param UpdateCartInterface $updateCart
      */
     public function __construct(
         CreateOrderInterface $createOrder,
@@ -100,10 +100,9 @@ class LegacyApi implements LegacyApiInterface
      * @param mixed $currency
      * @param mixed $status
      * @param mixed $display_id
-     * @param mixed $immutable_quote_id
      * @param mixed $source_transaction_id
      * @param mixed $source_transaction_reference
-     * @return void
+     * @return mixed
      */
     public function manage(
         $id = null,
@@ -138,7 +137,7 @@ class LegacyApi implements LegacyApiInterface
      * @param mixed $remove_items
      * @param mixed $discount_codes_to_add
      * @param mixed $discount_codes_to_remove
-     * @return void
+     * @return \Bolt\Boltpay\Api\Data\UpdateCartResultInterface|mixed
      */
     public function updateCart(
         $cart,
@@ -229,7 +228,7 @@ class LegacyApi implements LegacyApiInterface
      * @param mixed  $order - which contain token and cart nodes.
      * @param string $currency
      *
-     * @return void
+     * @return mixed
      */
     public function createOrder($type = null, $order = null, $currency = null)
     {

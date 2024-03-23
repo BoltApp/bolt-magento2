@@ -72,7 +72,7 @@ class Hook extends AbstractHelper
     private $request;
 
     /**
-     * @var DataObjectFactory
+     * @var DataObjectFactory|mixed
      */
     private $dataObjectFactory;
 
@@ -154,7 +154,7 @@ class Hook extends AbstractHelper
             return false;
         }
 
-        return $result == 200;
+        return $result === 200;
     }
 
     /**
@@ -213,7 +213,7 @@ class Hook extends AbstractHelper
         $hmac_header = $this->request->getHeader(self::HMAC_HEADER);
 
         if (!$this->verifySignature($payload, $hmac_header) && !$this->verifyWebhookApi($payload, $hmac_header)) {
-            throw new WebapiException(__('Precondition Failed'), 6001, 412);
+            throw new WebapiException(__('Precondition Failed'), 6001, 412); /** @phpstan-ignore-line */
         }
     }
 

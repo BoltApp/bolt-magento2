@@ -55,7 +55,7 @@ class AddressCollectTotalsObserverPlugin
      * @see \Magento\Quote\Observer\Frontend\Quote\Address\CollectTotalsObserver::execute
      *
      * @param CollectTotalsObserver $subject original observer instance
-     * @param Observer              $observer object containing original event parameters
+     * @param Observer|mixed              $observer object containing original event parameters
      *
      * @return void
      */
@@ -77,7 +77,7 @@ class AddressCollectTotalsObserverPlugin
      *
      * @param CollectTotalsObserver $subject  original observer instance
      * @param void                  $result   result of the original method call
-     * @param Observer              $observer object containing original event parameters
+     * @param Observer|mixed              $observer object containing original event parameters
      *
      * @return void
      */
@@ -87,7 +87,7 @@ class AddressCollectTotalsObserverPlugin
         $shippingAssignment = $observer->getShippingAssignment();
         /** @var Address $address */
         $address = $shippingAssignment->getShipping()->getAddress();
-        /** @var Quote $quote */
+        /** @var Quote|mixed $quote */
         $quote = $observer->getQuote();
 
         $customer = $quote->getCustomer();

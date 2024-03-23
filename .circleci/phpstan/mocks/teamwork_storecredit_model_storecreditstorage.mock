@@ -1,0 +1,4 @@
+<?php
+namespace Teamwork\StoreCredit\Model {
+    class StoreCreditStorage{};
+}

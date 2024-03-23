@@ -45,7 +45,7 @@ class Geolocation extends AbstractHelper
     private $bugsnag;
 
     /**
-     * @var HttpClientAdapterFactory
+     * @var HttpClientAdapterFactory|mixed
      */
     private $httpClientAdapterFactory;
 
@@ -62,7 +62,7 @@ class Geolocation extends AbstractHelper
      * @param Context $context
      * @param Config $configHelper
      * @param Bugsnag $bugsnag
-     * @param HttpClientAdapterFactory $httpClientFactory
+     * @param HttpClientAdapterFactory $httpClientAdapterFactory
      * @param CacheInterface $cache
      */
     public function __construct(

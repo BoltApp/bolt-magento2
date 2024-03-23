@@ -26,9 +26,9 @@ class DeleteAction extends \Magento\Backend\Block\Widget\Grid\Column\Renderer\Ac
     public function render(\Magento\Framework\DataObject $row)
     {
         $action = [
-            'url' => $this->getUrl('boltpay/customer/deletecreditcard', ['id' => $row->getId()]),
-            'confirm' => __('Do you really want to delete the credit card'),
-            'caption' => __('Delete')
+            'url' => $this->getUrl('boltpay/customer/deletecreditcard', ['id' => $row->getData('id')]),
+            'confirm' => __('Do you really want to delete the credit card'), /** @phpstan-ignore-line */
+            'caption' => __('Delete') /** @phpstan-ignore-line */
         ];
 
         return $this->_toLinkHtml($action, $row);

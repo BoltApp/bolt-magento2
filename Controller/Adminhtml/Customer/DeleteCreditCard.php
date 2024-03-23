@@ -24,7 +24,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 class DeleteCreditCard extends Action
 {
     /**
-     * @var \Bolt\Boltpay\Model\CustomerCreditCard
+     * @var \Bolt\Boltpay\Model\CustomerCreditCardFactory
      */
     private $customerCreditCardFactory;
 

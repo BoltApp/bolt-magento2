@@ -42,7 +42,7 @@ class Route
     private $cache;
     
     /**
-     * @var BoltSession
+     * @var BoltSession|mixed
      */
     private $boltSessionHelper;
     
@@ -75,13 +75,12 @@ class Route
     }
 
     /**
-     * @param array|array[]|int[] $result containing collected cart items, total amount and diff
-     * @param RouteDataHelper     $routeDataHelper
-     * @param Quote               $quote
-     * @param int                 $storeId
-     *
-     * @return array|array[]|int[] changed or unchanged $result
-     * @throws \Exception
+     * @param $result
+     * @param $routeDataHelper
+     * @param $quote
+     * @param $storeId
+     * @return array
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function filterCartItems($result, $routeDataHelper, $quote, $storeId)
     {
@@ -148,16 +147,14 @@ class Route
         
         return $cart;
     }
-    
+
     /**
      * Filter the transaction before Create Order functionality is executed
      * Remove a dummy product representing the Route Fee additional total, also update cache if Route fee is enabled
-     *
      * @see \Bolt\Boltpay\Model\Api\CreateOrder::createOrder
      *
-     * @param array $cart the transaction object from Bolt
-     *
-     * @return array either changed or unchanged $transaction object
+     * @param $transaction
+     * @return mixed
      */
     public function filterCartBeforeCreateOrder($transaction)
     {
@@ -165,33 +162,29 @@ class Route
         
         return $transaction;
     }
-    
+
     /**
      * Filter the item before adding to cart.
-     *
      * @see \Bolt\Boltpay\Model\Api\UpdateCart::execute
-     * 
-     * @param bool $flag
-     * @param array $addItem
-     * @param \Magento\Checkout\Model\Session $checkoutSession
      *
-     * @return bool if return true, then move to next item, if return false, just process the normal execution.
+     * @param $result
+     * @param $addItem
+     * @param $checkoutSession
+     * @return mixed|true
      */
     public function filterAddItemBeforeUpdateCart($result, $addItem, $checkoutSession)
     {
         return $this->saveRouteFeeEnabledBeforeUpdateCart($result, $addItem, $checkoutSession, '1');
     }
-    
+
     /**
      * Filter the item before removing from cart.
-     *
      * @see \Bolt\Boltpay\Model\Api\UpdateCart::execute
-     * 
-     * @param bool $flag
-     * @param array $removeItem
-     * @param \Magento\Checkout\Model\Session $checkoutSession
      *
-     * @return bool if return true, then move to next item, if return false, just process the normal execution.
+     * @param $result
+     * @param $removeItem
+     * @param $checkoutSession
+     * @return mixed|true
      */
     public function filterRemoveItemBeforeUpdateCart($result, $removeItem, $checkoutSession)
     {
@@ -201,7 +194,7 @@ class Route
     /**
      * Get insured value of Route from cache and set to checkout session.
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      */
     public function afterLoadSession($quote)
     {
@@ -226,14 +219,12 @@ class Route
             $this->cache->save($routeFeeEnabled, self::ROUTE_PRODUCT_ID . $parentQuoteId, [], 86400);
         }
     }
-    
+
     /**
      * Remove a dummy product representing the Route Fee additional total, also update cache if Route fee is enabled
-     *
-     * @param array|object $cartItems
-     * @param string $parentQuoteId
-     *
-     * @return array|object
+     * @param $cartItems
+     * @param $parentQuoteId
+     * @return mixed
      */
     private function filterCartItemsInTransaction($cartItems, $parentQuoteId)
     {
@@ -252,17 +243,14 @@ class Route
 
         return $cartItems;
     }
-    
+
     /**
      * Add Route fee for Bolt PPC
-     *
-     * @see \Bolt\Boltpay\Model\Api\UpdateCart::execute
-     *
-     * @param \Route\Route\Model\Route\Merchant $merchantClient
-     * @param \Route\Route\Helper\Data $routeDataHelper
-     * @param Quote $quote
-     * @param \Magento\Checkout\Model\Session $checkoutSession
-     *
+     * @param $merchantClient
+     * @param $routeDataHelper
+     * @param $quote
+     * @param $checkoutSession
+     * @return false|void
      */
     public function beforeGetCartDataForCreateCart($merchantClient, $routeDataHelper, $quote, $checkoutSession)
     {

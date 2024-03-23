@@ -26,7 +26,7 @@ use Bolt\Boltpay\Api\RouteInsuranceManagementInterface;
 class GuestPaymentInformationManagementPlugin
 {
     /**
-     * @var \Magento\Checkout\Model\Session
+     * @var \Magento\Checkout\Model\Session|mixed
      */
     private $checkoutSession;
 

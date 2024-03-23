@@ -1,0 +1,4 @@
+<?php
+namespace Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount {
+    class Collection{};
+}

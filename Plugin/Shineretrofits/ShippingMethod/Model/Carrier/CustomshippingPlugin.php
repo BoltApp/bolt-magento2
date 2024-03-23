@@ -25,12 +25,12 @@ use Shineretrofits\ShippingMethod\Model\Carrier\Customshipping as Shineretrofits
 class CustomshippingPlugin
 {    
     /**
-     * @var \Magento\Shipping\Model\Rate\ResultFactory
+     * @var \Magento\Shipping\Model\Rate\ResultFactory|mixed
      */
     private $_rateResultFactory;
 
     /**
-     * @var \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory
+     * @var \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory|mixed
      */
     private $_rateMethodFactory;
 
@@ -94,6 +94,7 @@ class CustomshippingPlugin
         ShineretrofitsCustomshipping $subject,
         $result
     ) {
+        /** @var mixed $subject */
         if ($result !== false) {
             return $result;
         }       

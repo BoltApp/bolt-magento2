@@ -39,7 +39,7 @@ class Extrafee
 
     /**
      * @param array|array[]|int[] $result containing collected cart items, total amount and diff
-     * @param Quote               $quote
+     * @param Quote|mixed               $quote
      * @param int                 $storeId
      *
      * @return array|array[]|int[] changed or unchanged $result

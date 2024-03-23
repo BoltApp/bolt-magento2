@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Model\Api;
 use Bolt\Boltpay\Api\Data\ExtendWarrantyPlanInterface;
 use Bolt\Boltpay\Api\ExtendWarrantyManagementInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Model\Api\Data\ExtendWarrantyPlan;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\Framework\Webapi\Rest\Response;
 use Magento\Framework\Module\Manager;
@@ -28,6 +29,7 @@ use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Quote\Model\Quote;
 
 /**
  * Extend_Warranty module management data
@@ -107,12 +109,14 @@ class ExtendWarrantyManagement implements ExtendWarrantyManagementInterface
     public function addWarrantyPlan(string $cartId, ExtendWarrantyPlanInterface $plan)
     {
         try {
+            /** @var ExtendWarrantyPlanInterface|mixed $plan */
             if (!$this->isModuleEnabled()) {
                 $responseBody = [
                     'message' => sprintf("%s is not installed on merchant's site", self::MODULE_NAME)
                 ];
                 $httpResponseCode = self::RESPONSE_FAIL_STATUS;
             } else {
+                /** @var Quote $cart */
                 $cart = $this->cartRepository->get($cartId);
                 $warrantyProduct = $this->getWarrantyProduct();
                 $orderItem = $cart->addProduct($warrantyProduct, $plan->getBuyRequest());
@@ -134,7 +138,7 @@ class ExtendWarrantyManagement implements ExtendWarrantyManagementInterface
             throw $e;
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);// @phpstan-ignore-line
         }
     }
 

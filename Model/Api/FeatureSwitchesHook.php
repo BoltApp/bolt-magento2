@@ -70,12 +70,12 @@ class FeatureSwitchesHook implements FeatureSwitchesHookInterface
 
     /**
      * @param HookHelper $hookHelper
-     * @param OrderHelper $orderHelper
+     * @param StoreManagerInterface $storeManager
      * @param LogHelper $logHelper
      * @param MetricsClient $metricsClient
      * @param Response $response
-     * @param Config $configHelper
-     * @param Manager $fsManager,
+     * @param ConfigHelper $configHelper
+     * @param Manager $fsManager
      * @param BoltErrorResponse $errorResponse
      */
     public function __construct(

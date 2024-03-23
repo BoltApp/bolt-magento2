@@ -165,7 +165,9 @@ class JsProductPage extends Js
 
     public function getStoreCurrencyCode()
     {
-        return $this->_storeManager->getStore()->getCurrentCurrencyCode();
+        /** @var \Magento\Store\Model\Store $store */
+        $store = $this->_storeManager->getStore();
+        return $store->getCurrentCurrencyCode();
     }
 
     public function isSaveHintsInSections()
@@ -187,7 +189,7 @@ class JsProductPage extends Js
 
         // By this point we know that the Select flag is true, the parent check is true, so
         // all that remains is to check if this product has the ppc attribute or not.
-        if ($this->getProduct()->getBoltPpc()) {
+        if ($this->getProduct()->getData('bolt_ppc')) {
                 return true;
         }
 

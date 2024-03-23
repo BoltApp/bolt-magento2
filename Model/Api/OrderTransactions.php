@@ -30,7 +30,7 @@ use Magento\Sales\Api\TransactionRepositoryInterface;
 class OrderTransactions implements OrderTransactionsInterface
 {
     /**
-     * @var TransactionRepositoryInterface
+     * @var TransactionRepositoryInterface|mixed
      */
     private $transactionRepository;
 
@@ -45,10 +45,17 @@ class OrderTransactions implements OrderTransactionsInterface
     /**
      * @inheritDoc
      */
+
+    /**
+     * @param TransactionInterface $transaction
+     * @param $additionalInformation
+     * @return int
+     */
     public function execute(
         TransactionInterface $transaction,
         $additionalInformation
     ): int {
+        /** @var mixed $transaction */
         $transaction->setData(
             TransactionInterface::ADDITIONAL_INFORMATION,
             $additionalInformation

@@ -89,10 +89,10 @@ class GetProductImageUrl implements GetProductImageUrlInterface
             $this->emulation->stopEnvironmentEmulation();
             return $image;
         } catch (NoSuchEntityException $e) {
-            throw new NoSuchEntityException(__('Product not found with given identifier.'));
+            throw new NoSuchEntityException(__('Product not found with given identifier.')); // @phpstan-ignore-line
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR); // @phpstan-ignore-line
         }
     }
 }

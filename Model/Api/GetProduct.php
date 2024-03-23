@@ -25,9 +25,12 @@ use Bolt\Boltpay\Model\Api\Data\ProductInventoryInfo;
 use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Api\Data\ProductInterface;
+use Magento\Catalog\Model\Product;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
+use Magento\Store\Model\Store;
+use Magento\Store\Model\StoreManager;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\CatalogInventory\Model\Spi\StockRegistryProviderInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
@@ -43,7 +46,7 @@ class GetProduct implements GetProductInterface
     private const BUNDLE_PRODUCT_TYPE_CODE = 'bundle';
 
     /**
-     * @var GetProductDataInterface
+     * @var GetProductDataInterface|mixed
      */
     private $productData;
 
@@ -179,13 +182,16 @@ class GetProduct implements GetProductInterface
         } elseif ($sku != "") {
             $product = $this->productRepositoryInterface->get($sku, false, $this->storeID, false);    
         }
-        $productInventory->setProduct($product);
-        $productInventory->setStock($this->getStockStatus($product));
-        $this->productData->setProductInventory($productInventory);
+        if (isset($product)) {
+            $productInventory->setProduct($product);
+            $productInventory->setStock($this->getStockStatus($product));
+            $this->productData->setProductInventory($productInventory);
+        }
     }
 
 
     private function getProductFamily(){
+        /** @var Product|mixed $product */
         $product = $this->productData->getProductInventory()->getProduct();
         $configurableParent = $this->configurable->getParentIdsByChild($product->getId());
         $bundleParents = ($this->bundleSelection != null)
@@ -193,6 +199,7 @@ class GetProduct implements GetProductInterface
             : [];
         if (isset($configurableParent[0])){
             $parentProductInventory = new ProductInventoryInfo();
+            /** @var Product|mixed $parentProduct */
             $parentProduct = $this->productRepositoryInterface->getById($configurableParent[0], false, $this->storeID, false);
             $parentProductInventory->setProduct($parentProduct);
             $parentProductInventory->setStock($this->getStockStatus($parentProduct));
@@ -257,15 +264,15 @@ class GetProduct implements GetProductInterface
     public function execute($productID = '', $sku = '')
     {
         if (!$this->featureSwitches->isProductEndpointEnabled()) {
-            throw new WebapiException(__('The product endpoint disabled'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__('The product endpoint disabled'), 0, WebapiException::HTTP_INTERNAL_ERROR); // @phpstan-ignore-line
         }
-
+        /** @var Store $store */
         $store = $this->storeManager->getStore();
         $this->storeID = $store->getId();
         $this->hookHelper->preProcessWebhook($this->storeID);
 
         if ($productID === '' && $sku ==='') {
-            throw new WebapiException(__('Missing a product ID or a sku in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST);
+            throw new WebapiException(__('Missing a product ID or a sku in the request parameters.'), 0, WebapiException::HTTP_BAD_REQUEST); // @phpstan-ignore-line
         }
 
         try {
@@ -276,21 +283,21 @@ class GetProduct implements GetProductInterface
             $this->getProductFamily();
             return $this->productData;
         } catch (NoSuchEntityException $nse) {
-            throw new NoSuchEntityException(__('Product not found with given identifier.'));
+            throw new NoSuchEntityException(__('Product not found with given identifier.')); // @phpstan-ignore-line
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR); // @phpstan-ignore-line
         }
     }
 
     /**
      * Collects configurable options (super attributes) available for the provided configurable product
      *
-     * @param ProductInterface $product for which to collect configurable options
+     * @param ProductInterface|mixed $product for which to collect configurable options
      *
      * @return void
      */
-    protected function collectConfigurableProductOptions(ProductInterface $product)
+    protected function collectConfigurableProductOptions($product)
     {
         foreach ($product->getTypeInstance()->getConfigurableOptions($product) as $attribute) {
             $i = 0;

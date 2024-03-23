@@ -49,7 +49,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
 <?php else: ?>
     <style>.bolt-product-checkout-button-disabled svg[class*="__bolt"] rect.brect{opacity:.5 !important;cursor:default!important;pointer-events:none!important;}</style>
     <div data-tid="instant-bolt-checkout-button" class="bolt-product-checkout-button-disabled <?= /* @noEscape */ $additionalClass;?>">
-        <object data="<?=$block->getCheckoutCdnUrl();?>/v1/checkout_button?publishable_key=<?=$block->getCheckoutKey();?><?=$block->getVariantForInstantButton("PPC");?>" class="bolt-product-checkout-button">
+        <object data="<?= /* @noEscape */ $block->getCheckoutCdnUrl();?>/v1/checkout_button?publishable_key=<?= /* @noEscape */$block->getCheckoutKey();?><?= /* @noEscape */ $block->getVariantForInstantButton("PPC");?>" class="bolt-product-checkout-button">
         </object>
     </div>
 <?php endif; ?>
@@ -383,7 +383,7 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                         let childProducts = new Map();
                         // collect child product id's and sku's
                         <?php foreach ($block->getGroupedProductChildren() as $childProduct):?>
-                            childProducts.set(<?= $childProduct->getId() ?>, { sku: '<?= $childProduct->getSku() ?>'});
+                            childProducts.set(<?= /* @noEscape */ $childProduct->getId() ?>, { sku: '<?= /* @noEscape */ $childProduct->getSku() ?>'});
                         <?php endforeach; ?>
                         childProducts.forEach((product, productId) => {
                             // get warranty plan configuration instance for current child product
@@ -404,13 +404,13 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
                     <?php else: ?>
                         // get warranty plan configuration instance for current non-group product
                         // the "#warranty-offers" part is hardcoded in module
-                        let extendWarrantyInstance = Extend.buttons.instance('#warranty-offers-<?= $block->getProduct()->getId() ?>');
+                        let extendWarrantyInstance = Extend.buttons.instance('#warranty-offers-<?= /* @noEscape */ $block->getProduct()->getId() ?>');
                         if (extendWarrantyInstance) {
                             // get warranty plan selected
                             let extendWarrantyPlan = extendWarrantyInstance.getPlanSelection();
                             if (extendWarrantyPlan) {
                                 // fill product sku to warranty plan, The key should be product it is module restriction
-                                extendWarrantyPlan.product = '<?= $block->getProduct()->getSku() ?>';
+                                extendWarrantyPlan.product = '<?= /* @noEscape */ $block->getProduct()->getSku() ?>';
                                 extendWarrantyPlanItems.push(extendWarrantyPlan);
                             }
                         }

@@ -47,7 +47,7 @@ class GiftCard
     protected $mageplazaGiftCardFactory;
     
     /**
-     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
+     * @var \Bolt\Boltpay\Helper\FeatureSwitch\Decider
      */
     private $featureSwitches;
 
@@ -191,7 +191,7 @@ class GiftCard
                 'status' => 'success',
                 'discount_code' => $code,
                 'discount_amount' => abs(CurrencyUtils::toMinor($giftAmount, $immutableQuote->getQuoteCurrencyCode())),
-                'description' => __('Gift Card'),
+                'description' => __('Gift Card'), /** @phpstan-ignore-line */
                 'discount_type' => Discount::BOLT_DISCOUNT_TYPE_FIXED,
             ];
             return $result;
@@ -265,7 +265,7 @@ class GiftCard
      * Load Magplaza Gift Card account object
      * @param $code
      * @param $storeId
-     * @return |null
+     * @return null
      */
     private function loadMageplazaGiftCard($code, $storeId)
     {

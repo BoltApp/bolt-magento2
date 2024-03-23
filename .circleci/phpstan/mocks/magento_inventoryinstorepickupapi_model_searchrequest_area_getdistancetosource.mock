@@ -1,0 +1,4 @@
+<?php
+namespace Magento\InventoryInStorePickup\Model\SearchRequest\Area {
+    class GetDistanceToSources{};
+}

@@ -25,6 +25,7 @@ use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\App\Request\Http;
 use Magento\Framework\Composer\ComposerFactory;
 use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Framework\Module\ResourceInterface;
@@ -1586,7 +1587,9 @@ class Config extends AbstractHelper
             'HTTP_FORWARDED',
             'REMOTE_ADDR'
         ] as $key) {
-            if ($ips = $this->_request->getServer($key, false)) {
+            /** @var \Magento\Framework\App\Request\Http $request */
+            $request = $this->_request;
+            if ($ips = $request->getServer($key, false)) {
                 foreach (explode(',', $ips) as $ip) {
                     $ip = trim($ip); // just to be safe
                     if (filter_var(
@@ -1858,7 +1861,7 @@ class Config extends AbstractHelper
     /**
      * Get all bolt configuration settings
      *
-     * @return BoltConfigSetting[]
+     * @return BoltConfigSettingFactory[]
      */
     public function getAllConfigSettings()
     {
@@ -2059,7 +2062,7 @@ class Config extends AbstractHelper
         // instant button variant field
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('instant_button_variant')
-            ->setValue($this->getInstantButtonVariant(), true);
+            ->setValue($this->getInstantButtonVariant());
         // instant button variant field ppc
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('instant_button_variant_ppc')
@@ -2310,7 +2313,9 @@ class Config extends AbstractHelper
      */
     public function isTestEnvSet()
     {
-        return isset($_SERVER['TEST_ENV']);
+        /** @var Http $request */
+        $request = $this->_request;
+        return $request->getServer('TEST_ENV');
     }
 
     /**

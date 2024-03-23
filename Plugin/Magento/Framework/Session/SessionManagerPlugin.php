@@ -301,11 +301,11 @@ class SessionManagerPlugin
     /**
      * Set bolt session param to the magento session
      *
-     * @param SessionManagerInterface $sessionManager
+     * @param $sessionManager
      * @param array $boltSessionParam
      * @return void
      */
-    private function processParam(SessionManagerInterface $sessionManager, array $boltSessionParam): void
+    private function processParam($sessionManager, array $boltSessionParam): void
     {
         // if current session is not of required session type, skipping new param processing
         if (isset($boltSessionParam[self::BOLT_SESSION_PARAM_SESSION_CLASS_NAME_KEY]) &&

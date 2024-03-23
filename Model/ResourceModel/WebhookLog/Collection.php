@@ -36,7 +36,7 @@ class Collection extends AbstractCollection
     /**
      * @param $transactionId
      * @param $hookType
-     * @return bool|\Magento\Framework\DataObject
+     * @return false|\Bolt\Boltpay\Model\WebhookLog|mixed
      */
     public function getWebhookLogByTransactionId($transactionId, $hookType)
     {

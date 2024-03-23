@@ -31,6 +31,8 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Model\Response;
 use Magento\Catalog\Helper\ImageFactory;
 use Magento\Catalog\Model\Config\Source\Product\Thumbnail as ThumbnailSource;
+use Magento\Catalog\Model\Product;
+use Magento\Catalog\Model\Product\Configuration\Item\Option\OptionInterface;
 use Magento\Catalog\Model\ProductRepository;
 use Magento\Checkout\Helper\Data as CheckoutHelper;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
@@ -97,7 +99,7 @@ class Cart extends AbstractHelper
     /** @var CartInterface */
     private $lastImmutableQuote = null;
 
-    /** @var CheckoutSession */
+    /** @var CheckoutSession|mixed */
     private $checkoutSession;
 
     /** @var CustomerSession */
@@ -129,7 +131,7 @@ class Cart extends AbstractHelper
     private $bugsnag;
 
     /**
-     * @var DataObjectFactory
+     * @var DataObjectFactory|mixed
      */
     private $dataObjectFactory;
 
@@ -287,7 +289,7 @@ class Cart extends AbstractHelper
     private $quoteIdMaskResourceModel;
 
     /**
-     * @var QuoteIdMaskFactory
+     * @var QuoteIdMaskFactory|mixed
      */
     private $quoteIdMaskFactory;
 
@@ -417,7 +419,7 @@ class Cart extends AbstractHelper
     /**
      * Load Quote by id
      * @param $quoteId
-     * @return \Magento\Quote\Model\Quote|false
+     * @return \Magento\Quote\Model\Quote|false|mixed
      */
     public function getQuoteById($quoteId)
     {
@@ -458,7 +460,7 @@ class Cart extends AbstractHelper
      * @param string $incrementId
      * @param bool   $forceLoad - use it if needed to load data without cache.
      *
-     * @return OrderInterface|false
+     * @return OrderInterface|mixed
      */
     public function getOrderByIncrementId($incrementId, $forceLoad = false)
     {
@@ -687,7 +689,7 @@ class Cart extends AbstractHelper
     }
 
     /**
-     * @param Quote $immutableQuote
+     * @param Quote|mixed $immutableQuote
      * @return string
      */
     protected function convertExternalFieldsToCacheIdentifier($immutableQuote)
@@ -804,7 +806,7 @@ class Cart extends AbstractHelper
      * Get the id of the quote Bolt order was created for
      * The same as getImmutableQuoteIdFromBoltOrder but cart is in array format
      *
-     * @param Response $boltOrder
+     * @param Response $boltCart
      * @return mixed
      */
     public function getImmutableQuoteIdFromBoltCartArray($boltCart)
@@ -848,7 +850,7 @@ class Cart extends AbstractHelper
         try {
             // get table name with prefix
             $tableName = $this->resourceConnection->getTableName('quote');
-
+            // phpcs:ignore
             $sql = "UPDATE {$tableName} SET updated_at = CURRENT_TIMESTAMP WHERE entity_id = :entity_id";
             $bind = [
                 'entity_id' => $quoteId
@@ -898,7 +900,7 @@ class Cart extends AbstractHelper
         if ($this->doesOrderExist($cart, $quote)) {
             $this->deactivateSessionQuote($quote);
             throw new LocalizedException(
-                __('Order was created. Please reload the page and try again')
+                __('Order was created. Please reload the page and try again') /** @phpstan-ignore-line */
             );
         }
 
@@ -918,6 +920,7 @@ class Cart extends AbstractHelper
 
             if ($boltOrderData = $this->loadFromCache($cacheIdentifier)) {
                 // re-create response object from the cached response
+                /** @var Response|mixed $boltOrder */
                 $boltOrder = new Response(
                     [
                         'store_id' => $boltOrderData['store_id'],
@@ -1035,7 +1038,6 @@ class Cart extends AbstractHelper
      */
     public function getHints($cartReference = null, $checkoutType = 'admin')
     {
-        /** @var Quote */
         if ($checkoutType != 'product') {
             $quote = $cartReference ?
                 $this->getQuoteById($cartReference) :
@@ -1105,6 +1107,7 @@ class Cart extends AbstractHelper
                 $signRequest = [
                     'merchant_user_id' => $customer->getId(),
                 ];
+                /** @var Response|mixed $signResponse */
                 $signResponse = $this->getSignResponse(
                     $signRequest,
                     $quote ? $quote->getStoreId() : null
@@ -1234,6 +1237,7 @@ class Cart extends AbstractHelper
         $destination->removeAllItems();
 
         foreach ($source->getAllVisibleItems() as $item) {
+            /** @var \Magento\Quote\Model\Quote\Item|mixed $item */
             $newItem = clone $item;
             $destination->addItem($newItem);
             if ($item->getHasChildren()) {
@@ -1244,11 +1248,14 @@ class Cart extends AbstractHelper
                 }
             }
         }
+        /** @var \Magento\Quote\Model\Quote\Address|mixed $destinationBillingAddress */
+        $destinationBillingAddress = $destination->getBillingAddress();
+        $destinationBillingAddress->setShouldIgnoreValidation(true);
+        $this->transferData($source->getBillingAddress(), $destinationBillingAddress);
 
-        $destination->getBillingAddress()->setShouldIgnoreValidation(true);
-        $this->transferData($source->getBillingAddress(), $destination->getBillingAddress());
-
-        $destination->getShippingAddress()->setShouldIgnoreValidation(true);
+        /** @var \Magento\Quote\Model\Quote\Address|mixed $destinationShippingAddress */
+        $destinationShippingAddress = $destination->getShippingAddress();
+        $destinationShippingAddress->setShouldIgnoreValidation(true);
         $this->transferData($source->getShippingAddress(), $destination->getShippingAddress());
 
         $this->transferData($source, $destination, false);
@@ -1271,8 +1278,8 @@ class Cart extends AbstractHelper
      * Reason: Some 3rd party plugins read this value and if set
      * consider the quote to be a complete order.
      *
-     * @param Quote $immutableQuote
-     * @param Quote $quote
+     * @param Quote|mixed $immutableQuote
+     * @param Quote|mixed $quote
      * @throws \Magento\Framework\Exception\AlreadyExistsException
      */
     protected function reserveOrderId($immutableQuote, $quote)
@@ -1294,7 +1301,7 @@ class Cart extends AbstractHelper
      * Set the BoltParentQuoteId to the parent quote, if not set already,
      * so it can be replicated to immutable quote in replicateQuoteData.
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      * @return Quote
      * @throws \Magento\Framework\Exception\AlreadyExistsException
      */
@@ -1374,6 +1381,7 @@ class Cart extends AbstractHelper
             return [];
         }
         try {
+            /** @var Product $product */
             $product = $this->productRepository->get($sku, false, $storeId);
         } catch (NoSuchEntityException $e) {
             $this->bugsnag->notifyException($e);
@@ -1699,7 +1707,7 @@ class Cart extends AbstractHelper
     /**
      * Return the selected customizable options of quote item.
      *
-     * @param Quote/Item $item
+     * @param Quote\Item $item
      *
      * @return array
      */
@@ -1713,8 +1721,10 @@ class Cart extends AbstractHelper
         $customizableOptions = [];
         $product = $item->getProduct();
         foreach (explode(',', ($optionIds->getValue() ?: '')) as $optionId) {
+            /** @var Product\Option|mixed $option */
             $option = $product->getOptionById($optionId);
             if ($option) {
+                /** @var OptionInterface|mixed $confItemOption */
                 $confItemOption = $product->getCustomOption(\Magento\Catalog\Model\Product\Type\AbstractType::OPTION_PREFIX . $optionId);
                 $itemOption = $item->getOptionByCode(\Magento\Catalog\Model\Product\Type\AbstractType::OPTION_PREFIX . $option->getId());
                 $group = $option->groupFactory($option->getType())
@@ -1787,6 +1797,7 @@ class Cart extends AbstractHelper
         $parentProduct = $item->getProduct();
         /** @var \Magento\Quote\Model\Quote\Item\Option $option */
         $option = $item->getOptionByCode('simple_product');
+        /** @var Product|mixed $childProduct */
         $childProduct = $option ? $option->getProduct() : $parentProduct;
         $configValue = $this->configHelper->getScopeConfig()->getValue(
             'checkout/cart/configurable_product_image',
@@ -1871,7 +1882,7 @@ class Cart extends AbstractHelper
      * @param bool        $paymentOnly       flag that represents the type of checkout
      * @param string|null $placeOrderPayload additional data collected from the (one page checkout) page,
      *                                       i.e. billing address to be saved with the order
-     * @param Quote|null  $immutableQuote    If passed do not create new clone, get data existing one data.
+     * @param Quote|mixed  $immutableQuote    If passed do not create new clone, get data existing one data.
      *                                       discount validation, bugsnag report
      *
      * @return array
@@ -1882,7 +1893,7 @@ class Cart extends AbstractHelper
 
         // If the immutable quote is passed (i.e. discount code validation, bugsnag report generation)
         // load the parent quote, otherwise load the session quote
-        /** @var Quote $quote */
+        /** @var Quote|mixed $quote */
         $quote = ($immutableQuote && $immutableQuote->getBoltParentQuoteId() != $immutableQuote->getId()) ?
             $this->getQuoteById($immutableQuote->getBoltParentQuoteId()) :
             $this->checkoutSession->getQuote();
@@ -2122,7 +2133,7 @@ class Cart extends AbstractHelper
                     );
 
                     throw new LocalizedException(
-                        __('Billing address is missing. Please input all required fields in billing address form and try again')
+                        __('Billing address is missing. Please input all required fields in billing address form and try again') /** @phpstan-ignore-line */
                     );
                 }
             } else {
@@ -2138,7 +2149,7 @@ class Cart extends AbstractHelper
                     );
 
                     throw new LocalizedException(
-                        __('Shipping method is missing. Please select shipping method and try again')
+                        __('Shipping method is missing. Please select shipping method and try again') /** @phpstan-ignore-line */
                     );
                 }
 
@@ -2160,7 +2171,7 @@ class Cart extends AbstractHelper
                     );
 
                     throw new LocalizedException(
-                        __('Billing address is missing. Please input all required fields in billing address form and try again')
+                        __('Billing address is missing. Please input all required fields in billing address form and try again') /** @phpstan-ignore-line */
                     );
                 }
 
@@ -2213,7 +2224,7 @@ class Cart extends AbstractHelper
                     );
 
                     throw new LocalizedException(
-                        __('Shipping address is missing. Please input all required fields in shipping address form and try again')
+                        __('Shipping address is missing. Please input all required fields in shipping address form and try again') /** @phpstan-ignore-line */
                     );
                 }
             }
@@ -2274,11 +2285,8 @@ class Cart extends AbstractHelper
     }
 
     /**
-     * Email validator
-     *
-     * @param string $email
+     * @param $email
      * @return bool
-     * @throws \Magento\Framework\Validator\ValidateException
      */
     public function validateEmail($email)
     {
@@ -2310,8 +2318,8 @@ class Cart extends AbstractHelper
      *
      * @param int $totalAmount
      * @param float $diff
-     * @param AddressTotal[] $totals
      * @param bool $paymentOnly
+     * @param Quote|mixed $quote
      * @return array
      * @throws NoSuchEntityException
      */
@@ -2368,7 +2376,7 @@ class Cart extends AbstractHelper
                         }
                         $discounts[] = [
                             'rule_id'           => $rule->getRuleId(),
-                            'description'       => trim(__('Discount ') . $description),
+                            'description'       => trim(__('Discount ') . $description), /** @phpstan-ignore-line */
                             'amount'            => $roundedAmount,
                             'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_AUTO_PROMO,
                             'discount_type'     => $discountType, // For v1/discounts.code.apply and v2/cart.update
@@ -2493,6 +2501,7 @@ class Cart extends AbstractHelper
         // Process other discounts, stored in totals array
         /////////////////////////////////////////////////////////////////////////////////
         foreach ($this->discountTypes as $discount => $description) {
+            /** @var mixed $totalDiscount */
             $totalDiscount = $totals[$discount] ?? null;
             if ($totalDiscount && $amount = $totalDiscount->getValue()) {
                 $roundedDiscountAmount = 0;
@@ -2588,7 +2597,6 @@ class Cart extends AbstractHelper
      * Properties are checked with getters specified in configuration.
      *
      * @param Quote|null $quote
-     * @param null|int   $storeId
      *
      * @return bool
      * @throws NoSuchEntityException
@@ -2615,8 +2623,8 @@ class Cart extends AbstractHelper
             return false;
         }
 
+        /** @var \Magento\Quote\Model\Quote\Item $item */
         foreach ($quote->getAllVisibleItems() as $item) {
-            /** @var \Magento\Quote\Model\Quote\Item $item */
             // call every method on item, if returns true, do restrict
             foreach ($itemRestrictionMethods as $method) {
                 if ($item->$method()) {
@@ -2696,8 +2704,8 @@ class Cart extends AbstractHelper
     public function createCart($items, $metadata = null, $storeId = null)
     {
         $quoteId = $this->quoteManagement->createEmptyCart();
+        /** @var Quote|mixed $quote */
         $quote = $this->quoteFactory->create()->load($quoteId);
-
         $quote->setBoltParentQuoteId($quoteId);
         $quote->setBoltCheckoutType(self::BOLT_CHECKOUT_TYPE_PPC);
 
@@ -2731,13 +2739,13 @@ class Cart extends AbstractHelper
                 $error_message = $e->getMessage();
                 if ($error_message == 'Product that you are trying to add is not available.') {
                     throw new BoltException(
-                        __($error_message),
+                        __($error_message), /** @phpstan-ignore-line */
                         null,
                         BoltErrorResponse::ERR_PPC_OUT_OF_STOCK
                     );
                 } else {
                     throw new BoltException(
-                        __('The requested qty is not available'),
+                        __('The requested qty is not available'), /** @phpstan-ignore-line */
                         null,
                         BoltErrorResponse::ERR_PPC_INVALID_QUANTITY
                     );
@@ -2770,7 +2778,7 @@ class Cart extends AbstractHelper
     {
         $metadata = json_decode((string)$encrypted_user_id);
         if (! $metadata || ! isset($metadata->user_id) || ! isset($metadata->timestamp) || ! isset($metadata->signature)) {
-            throw new WebapiException(__('Incorrect encrypted_user_id'), 6306, 422);
+            throw new WebapiException(__('Incorrect encrypted_user_id'), 6306, 422); /** @phpstan-ignore-line */
         }
 
         $payload = [
@@ -2779,17 +2787,17 @@ class Cart extends AbstractHelper
         ];
 
         if (!$this->hookHelper->verifySignature(json_encode($payload), $metadata->signature)) {
-            throw new WebapiException(__('Incorrect signature'), 6306, 422);
+            throw new WebapiException(__('Incorrect signature'), 6306, 422); /** @phpstan-ignore-line */
         }
 
         if (time() - $metadata->timestamp > 3600) {
-            throw new WebapiException(__('Outdated encrypted_user_id'), 6306, 422);
+            throw new WebapiException(__('Outdated encrypted_user_id'), 6306, 422); /** @phpstan-ignore-line */
         }
 
         try {
             $customer = $this->customerRepository->getById($metadata->user_id);
         } catch (\Exception $e) {
-            throw new WebapiException(__('Incorrect user_id'), 6306, 422);
+            throw new WebapiException(__('Incorrect user_id'), 6306, 422); /** @phpstan-ignore-line */
         }
         $quote->assignCustomer($customer); // Assign quote to Customer
     }
@@ -2801,13 +2809,14 @@ class Cart extends AbstractHelper
 
         try {
             if ($this->hasProductRestrictions()) {
-                throw new BoltException(__('The cart has products not allowed for Bolt checkout'));
+                throw new BoltException(__('The cart has products not allowed for Bolt checkout')); /** @phpstan-ignore-line */
             }
 
             if (! $this->isCheckoutAllowed()) {
-                throw new BoltException(__('Guest checkout is not allowed.'));
+                throw new BoltException(__('Guest checkout is not allowed.')); /** @phpstan-ignore-line */
             }
 
+            /** @var Response|mixed $boltpayOrder */
             // call the Bolt API
             $boltpayOrder = $this->getBoltpayOrder($paymentOnly, $placeOrderPayload);
 
@@ -2923,7 +2932,7 @@ class Cart extends AbstractHelper
     /**
      * Collect address total.
      *
-     * @param \Magento\Quote\Model\Quote   $quote
+     * @param \Magento\Quote\Model\Quote|mixed   $quote
      * @param \Magento\Quote\Model\Quote\Address $address
      *
      */
@@ -3037,10 +3046,15 @@ class Cart extends AbstractHelper
         $saleRuleDiscountsDetails = [];
         // If the Magento version < 2.3.4, we still collect discounts details via plugin methods.
         if ($this->isCollectDiscountsByPlugin($quote)) {
-            $saleRuleDiscountsDetails = $this->sessionHelper->getCheckoutSession()->getBoltCollectSaleRuleDiscounts([]);
+            /** @var CheckoutSession|mixed $checkoutSession */
+            $checkoutSession = $this->sessionHelper->getCheckoutSession();
+            $saleRuleDiscountsDetails = $checkoutSession->getBoltCollectSaleRuleDiscounts([]);
         } else {
-            /* @var \Magento\SalesRule\Api\Data\RuleDiscountInterface $ruleDiscounts */
-            $extensionSaleRuleDiscounts = $address->getExtensionAttributes()->getDiscounts();
+            /** @var \Magento\Quote\Api\Data\AddressExtensionInterface|mixed $addressExtensionAttribute */
+            $addressExtensionAttribute = $address->getExtensionAttributes();
+            /* @var \Magento\SalesRule\Api\Data\RuleDiscountInterface $extensionSaleRuleDiscounts */
+            $extensionSaleRuleDiscounts = $addressExtensionAttribute->getDiscounts();
+            /** @var mixed $cartFixedRules */
             $cartFixedRules = $address->getCartFixedRules();
             if ($extensionSaleRuleDiscounts && is_array($extensionSaleRuleDiscounts)) {
                 foreach ($extensionSaleRuleDiscounts as $value) {

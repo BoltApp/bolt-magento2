@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Model\Api;
 use Bolt\Boltpay\Api\Data\ShippingTaxDataInterface;
 use Bolt\Boltpay\Helper\Hook as HookHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Model\Quote;
@@ -108,12 +109,12 @@ abstract class ShippingTax
     protected $response;
 
     /**
-     * @var Quote
+     * @var Quote|mixed
      */
     protected $quote;
 
     /**
-     * @var Quote
+     * @var Quote|mixed
      */
     protected $immutableQuote;
 
@@ -128,12 +129,12 @@ abstract class ShippingTax
     protected $shippingOptionFactory;
 
     /**
-     * @var ShipToStoreOptionInterfaceFactory
+     * @var \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterfaceFactory
      */
     protected $shipToStoreOptionFactory;
 
     /**
-     * @var StoreAddressInterfaceFactory
+     * @var \Bolt\Boltpay\Api\Data\StoreAddressInterfaceFactory|mixed
      */
     protected $storeAddressFactory;
 
@@ -188,7 +189,7 @@ abstract class ShippingTax
     {
         if (!$this->cartHelper->validateEmail($email)) {
             throw new BoltException(
-                __('Invalid email: %1', $email),
+                __('Invalid email: %1', $email), //@phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_UNIQUE_EMAIL_REQUIRED
             );
@@ -214,7 +215,7 @@ abstract class ShippingTax
     protected function throwUnknownQuoteIdException($quoteId)
     {
         throw new LocalizedException(
-            __('Unknown quote id: %1.', $quoteId)
+            __('Unknown quote id: %1.', $quoteId) //@phpstan-ignore-line
         );
     }
 
@@ -346,7 +347,7 @@ abstract class ShippingTax
             $this->catchExceptionAndSendError($e, $e->getMessage(), $e->getCode());
         } catch (\Exception $e) {
             $this->metricsClient->processMetric(static::METRICS_FAILURE_KEY, 1, static::METRICS_LATENCY_KEY, $startTime);
-            $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
+            $msg = __('Unprocessable Entity') . ': ' . $e->getMessage(); //@phpstan-ignore-line
             $this->catchExceptionAndSendError($e, $msg, self::E_BOLT_GENERAL_ERROR, 422);
         }
     }
@@ -377,6 +378,7 @@ abstract class ShippingTax
 
         // get the parent quote
         $parentQuoteId = $cart['order_reference'];
+        /** @var Quote|mixed $parentQuote */
         $parentQuote = $this->loadQuote($parentQuoteId);
 
         $this->cartHelper->replicateQuoteData($immutableQuote, $parentQuote);

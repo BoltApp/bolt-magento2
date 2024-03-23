@@ -130,10 +130,10 @@ class HttpClientAdapter
     }
 
     /**
-     * Send client request
-     *
-     * @param string $methodType
-     * @return \Laminas\Http\Response|void
+     * @param $methodType
+     * @return \Laminas\Http\Response|null
+     * @throws \Laminas\Http\Client\Exception\RuntimeException
+     * @throws \Laminas\Http\Exception\RuntimeException
      */
     public function request($methodType)
     {

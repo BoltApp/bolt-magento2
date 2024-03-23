@@ -66,29 +66,30 @@ class Email extends Action
         $this->cartHelper = $cartHelper;
     }
 
+
     /**
      * @return void
-     * @throws Exception
+     * @throws \Exception
      */
     public function execute()
     {
         try {
 
-            /** @var Quote */
+            /** @var Quote $quote */
             $quote = $this->checkoutSession->getQuote();
 
             if (!$quote || !$quote->getId()) {
-                throw new LocalizedException(__('Quote does not exist.'));
+                throw new LocalizedException(__('Quote does not exist.')); /** @phpstan-ignore-line */
             }
 
             $email = $this->getRequest()->getParam('email');
 
             if (!$email) {
-                throw new LocalizedException(__('No email received.'));
+                throw new LocalizedException(__('No email received.')); /** @phpstan-ignore-line */
             }
 
             if (!$this->cartHelper->validateEmail($email)) {
-                throw new LocalizedException(__('Invalid email: %1', $email));
+                throw new LocalizedException(__('Invalid email: %1', $email)); /** @phpstan-ignore-line */
             }
 
             $quote->setCustomerEmail($email);

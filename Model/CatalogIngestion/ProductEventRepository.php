@@ -91,7 +91,7 @@ class ProductEventRepository implements ProductEventRepositoryInterface
         $this->productEventResource->load($productEvent, $id);
         if (!$productEvent->getId()) {
             throw new NoSuchEntityException(
-                __("The bolt product event that was requested doesn't exist.")
+                __("The bolt product event that was requested doesn't exist.") // @phpstan-ignore-line
             );
         }
         return $productEvent;
@@ -110,7 +110,7 @@ class ProductEventRepository implements ProductEventRepositoryInterface
         );
         if (!$productEvent->getId()) {
             throw new NoSuchEntityException(
-                __("The bolt product event that was requested doesn't exist.")
+                __("The bolt product event that was requested doesn't exist.") // @phpstan-ignore-line
             );
         }
         return $productEvent;
@@ -124,7 +124,7 @@ class ProductEventRepository implements ProductEventRepositoryInterface
         try {
             $this->productEventResource->save($productEvent);
         } catch (\Exception $e) {
-            throw new CouldNotSaveException(__($e->getMessage()));
+            throw new CouldNotSaveException(__($e->getMessage())); // @phpstan-ignore-line
         }
         return $productEvent;
     }
@@ -137,7 +137,7 @@ class ProductEventRepository implements ProductEventRepositoryInterface
         try {
             $this->productEventResource->delete($productEvent);
         } catch (\Exception $e) {
-            throw new StateException(__($e->getMessage()));
+            throw new StateException(__($e->getMessage())); // @phpstan-ignore-line
         }
         return true;
     }

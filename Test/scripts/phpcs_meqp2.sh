@@ -12,7 +12,7 @@ composer create-project magento/magento-coding-standard --stability=dev magento-
 
 cd magento-coding-standard
 
-vendor/bin/phpcs ../project --standard=Magento2 --colors --severity=10 -p
+vendor/bin/phpcs ../project --standard=Magento2 --colors --severity=9 -p
 
 cd ../project
 export MAGENTO_VERSION="2.3.0"
@@ -40,4 +40,4 @@ for file in $MOCK_FILES
 do
   mv -- "$file" "${file%.mock}.php"
 done
-php -dmemory_limit=5G ./phpstan.phar analyse --level=0 --xdebug
+php -dmemory_limit=5G ./phpstan.phar analyse --level=2 --xdebug

@@ -52,6 +52,7 @@ class AmastyGiftCardRemovePlugin
      */
     public function afterExecute(Action $subject, $result)
     {
+        /** @var Action|mixed $subject */
         // Get the code id from the original request
         $codeId = $subject->getRequest()->getParam('code_id');
 

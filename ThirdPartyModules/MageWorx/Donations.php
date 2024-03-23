@@ -145,7 +145,7 @@ class Donations
         try {
             $cartItems = array_filter(
                 $cartItems,
-                function ($item) use ($parentQuoteId) {
+                function ($item) use ($parentQuoteId) { // @phpstan-ignore-line
                     $itemReference = ArrayHelper::getValueFromArray($item, 'reference');
                     return strpos($itemReference, self::MAGEWORX_DONATION) === false;
                 }

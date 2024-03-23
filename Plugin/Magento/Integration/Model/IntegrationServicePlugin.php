@@ -40,7 +40,7 @@ class IntegrationServicePlugin
     protected $cache;
     
     /**
-     * @var Bolt\Boltpay\Helper\Bugsnag
+     * @var \Bolt\Boltpay\Helper\Bugsnag
      */
     protected $bugsnag;
     

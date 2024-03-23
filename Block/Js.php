@@ -25,6 +25,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Exception;
 use Magento\Framework\App\Http\Context as HttpContext;
+use Magento\Framework\App\Request\Http;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Session\SessionManager as CheckoutSession;
 use Magento\Framework\View\Element\Template;
@@ -173,7 +174,7 @@ class Js extends Template
      */
     public function getReplaceSelectors()
     {
-        $isCheckoutPageAction = $this->_request->getFullActionName() == Config::CHECKOUT_PAGE_ACTION;
+        $isCheckoutPageAction = $this->getRequestObject()->getFullActionName() == Config::CHECKOUT_PAGE_ACTION;
         $isBoltUsedInCheckoutPage = $this->configHelper->isPaymentOnlyCheckoutEnabled() && $isCheckoutPageAction;
         $subject = $isBoltUsedInCheckoutPage ? '' : trim($this->configHelper->getReplaceSelectors());
         return array_filter(explode(',', preg_replace('/\s+/', ' ', $subject)));
@@ -338,12 +339,7 @@ class Js extends Template
         $contact_email = $this->_scopeConfig->getValue('trans_email/ident_support/email')
             ?: $this->_scopeConfig->getValue('trans_email/ident_general/email')
                 ?: '';
-        return __(
-            'Your payment was successful and we\'re now processing your order. ' .
-            'If you don\'t receive order confirmation email in next 30 minutes, please contact us at ' .
-            $contact_email .
-            '.'
-        );
+        return __('Your payment was successful and we\'re now processing your order. ' . 'If you don\'t receive order confirmation email in next 30 minutes, please contact us at ' . $contact_email . '.'); /** @phpstan-ignore-line */
     }
 
     /**
@@ -406,12 +402,14 @@ class Js extends Template
         }
     }
 
+
+
     /**
      * Return true if we are on cart page or checkout page
      */
     public function isOnPageFromWhiteList()
     {
-        $currentPage = $this->getRequest()->getFullActionName();
+        $currentPage = $this->getRequestObject()->getFullActionName();
         return in_array($currentPage, $this->getPageWhitelist());
     }
 
@@ -444,7 +442,7 @@ class Js extends Template
      */
     public function isOnCartPage()
     {
-        $currentPage = $this->getRequest()->getFullActionName();
+        $currentPage = $this->getRequestObject()->getFullActionName();
         return $currentPage == 'checkout_cart_index';
     }
 
@@ -453,7 +451,7 @@ class Js extends Template
      */
     public function isOnCheckoutPage()
     {
-        $currentPage = $this->getRequest()->getFullActionName();
+        $currentPage = $this->getRequestObject()->getFullActionName();
         return $currentPage == 'checkout_index_index';
     }
 
@@ -462,7 +460,7 @@ class Js extends Template
      */
     public function isOnProductPage()
     {
-        $currentPage = $this->getRequest()->getFullActionName();
+        $currentPage = $this->getRequestObject()->getFullActionName();
         return $currentPage == 'catalog_product_view';
     }
 
@@ -471,7 +469,7 @@ class Js extends Template
      */
     public function isOnHomePage()
     {
-        return $this->getRequest()->getFullActionName() == Config::HOME_PAGE_ACTION;
+        return $this->getRequestObject()->getFullActionName() == Config::HOME_PAGE_ACTION;
     }
 
     /**

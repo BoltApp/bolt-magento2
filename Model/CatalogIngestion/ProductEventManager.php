@@ -24,6 +24,7 @@ use Bolt\Boltpay\Api\Data\ProductEventInterfaceFactory;
 use Bolt\Boltpay\Helper\Api as ApiHelper;
 use Bolt\Boltpay\Logger\Logger;
 use Bolt\Boltpay\Helper\Config;
+use Magento\Catalog\Model\Product;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Stdlib\DateTime;
@@ -180,12 +181,14 @@ class ProductEventManager implements ProductEventManagerInterface
      */
     public function sendProductEvent(ProductEventInterface $productEvent): bool
     {
+        $websiteIds = [];
         if ($productEvent->getType() == ProductEventInterface::TYPE_DELETE) {
             $websites = $this->storeManager->getWebsites();
             foreach ($websites as $website) {
                 $websiteIds[] = $website->getId();
             }
         } else {
+            /** @var Product $product */
             $product = $this->productRepository->getById($productEvent->getProductId());
             $websiteIds = $product->getWebsiteIds();
         }
@@ -197,7 +200,7 @@ class ProductEventManager implements ProductEventManagerInterface
                 return true;
             } else {
                 throw new LocalizedException(
-                    __(
+                    __( // @phpstan-ignore-line
                         'Error response status during %1 request, status: %2',
                         ProductEventRequestBuilder::API_REQUEST_API_URL,
                         $responseStatus

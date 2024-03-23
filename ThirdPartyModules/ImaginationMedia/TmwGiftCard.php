@@ -30,9 +30,6 @@ class TmwGiftCard
      */
     private $bugsnagHelper;
 
-    /**
-     * @var  \ImaginationMedia\TmwGiftCard\Helper\Data
-     */
     private $tmwGiftCardHelper;
 
     /**
@@ -48,7 +45,7 @@ class TmwGiftCard
 
     /**
      * @param $result
-     * @param \ImaginationMedia\TmwGiftCard\Helper\Data $tmwGiftCardHelper
+     * @param $tmwGiftCardHelper
      * @param $quote
      * @param $parentQuote
      * @param $paymentOnly

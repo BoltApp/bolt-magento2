@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace Bolt\Boltpay\Observer;
 
 use Bolt\Boltpay\Model\CatalogIngestion\ProductEventProcessor;
+use Magento\Framework\Event;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Catalog\Model\Product;
@@ -51,8 +52,10 @@ class PublishBoltProductEventObserver implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
+        /** @var Event|mixed $event */
+        $event = $observer->getEvent();
         /** @var Product $product */
-        $product = $observer->getEvent()->getProduct();
+        $product = $event->getProduct();
         $this->productEventProcessor->processProductEventUpdateByProduct($product);
     }
 }

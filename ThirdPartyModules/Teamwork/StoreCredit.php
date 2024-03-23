@@ -54,7 +54,7 @@ class StoreCredit
 
     /**
      * @param array $result
-     * @param \Teamwork\StoreCredit\Model\StoreCreditStorage $teamworkStoreCreditStorage
+     * @param $teamworkStoreCreditStorage
      * @param $quote
      * @param $parentQuote
      * @param $paymentOnly

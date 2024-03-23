@@ -1,0 +1,9 @@
+<?php
+namespace Amasty\GiftCard\Model {
+    class Account{
+        const STATE_UNUSED = 0;
+        public function getCurrentValue(...$args) {}
+        public function getCode(...$args) {}
+        public function getCodeId(...$args) {}
+    };
+}

@@ -79,12 +79,12 @@ class DataProcessor
     private $config;
 
     /**
-     * @var ProductRepositoryInterface
+     * @var ProductRepositoryInterface|mixed
      */
     private $productRepository;
 
     /**
-     * @var StoreManagerInterface
+     * @var StoreManagerInterface|mixed
      */
     private $storeManager;
 
@@ -119,7 +119,7 @@ class DataProcessor
     private $getSalableQuantityDataBySku;
 
     /**
-     * @var ProductLinkManagementInterface
+     * @var ProductLinkManagementInterface|mixed
      */
     private $productLinkManagement;
 
@@ -226,13 +226,13 @@ class DataProcessor
      * Return product variants for website
      *
      * @param int $productId
-     * @param WebsiteInterface $website
+     * @param WebsiteInterface|mixed $website
      * @return array
      * @throws FileSystemException
      * @throws LocalizedException
      * @throws NoSuchEntityException
      */
-    private function getVariants(int $productId, WebsiteInterface $website): array
+    private function getVariants(int $productId, $website): array
     {
         $variants = [];
         $variantProductIds = [];
@@ -244,7 +244,7 @@ class DataProcessor
             $defaultStore->getId()
         );
 
-        if (in_array($product->getTypeId(), $this->availableProductTypesForVariants) && empty($variantProductIds)) {
+        if (in_array($product->getTypeId(), $this->availableProductTypesForVariants)) {
             $variantProductIds = $this->getChildProductIds($product);
             foreach ($variantProductIds as $variantProductId) {
                 $variants[] = $this->getBoltProductData($variantProductId, (int)$defaultStore->getId());
@@ -257,12 +257,12 @@ class DataProcessor
     /**
      * Get child product ids from diff product types
      *
-     * @param ProductInterface $product
+     * @param ProductInterface|mixed $product
      * @return array
      * @throws InputException
      * @throws NoSuchEntityException
      */
-    private function getChildProductIds(ProductInterface $product): array
+    private function getChildProductIds($product): array
     {
         $childProductIds = [];
         switch ($product->getTypeId()) {
@@ -305,12 +305,12 @@ class DataProcessor
     /**
      * Get grouped product type child products
      *
-     * @param ProductInterface $product
+     * @param ProductInterface|mixed $product
      * @return array
      * @throws NoSuchEntityException
      * @throws InputException
      */
-    private function getGroupedChildProductIds(ProductInterface $product): array
+    private function getGroupedChildProductIds($product): array
     {
         if ($product->getTypeId() != Grouped::TYPE_CODE) {
             return [];
@@ -424,10 +424,10 @@ class DataProcessor
     /**
      * Returns bundle product options
      *
-     * @param ProductInterface $product
+     * @param ProductInterface|mixed $product
      * @return array
      */
-    private function getBundleOptions(ProductInterface $product): array
+    private function getBundleOptions($product): array
     {
         if ($product->getTypeId() !== ProductType::TYPE_BUNDLE) {
             return [];
@@ -471,10 +471,10 @@ class DataProcessor
     /**
      * Returns configurable product options
      *
-     * @param ProductInterface $product
+     * @param ProductInterface|mixed $product
      * @return array
      */
-    private function getConfigurableOptions(ProductInterface $product): array
+    private function getConfigurableOptions($product): array
     {
         if ($product->getTypeId() !== Configurable::TYPE_CODE) {
             return [];
@@ -518,10 +518,10 @@ class DataProcessor
     /**
      * Returns product custom options
      *
-     * @param ProductInterface $product
+     * @param ProductInterface|mixed $product
      * @return array
      */
-    private function getCustomOptions(ProductInterface $product): array
+    private function getCustomOptions($product): array
     {
         $customOptions = $product->getOptions();
         if (empty($customOptions)) {
@@ -554,10 +554,10 @@ class DataProcessor
     /**
      * Returns product properties
      *
-     * @param ProductInterface $product
+     * @param ProductInterface|mixed $product
      * @return array
      */
-    private function getProperties(ProductInterface $product): array
+    private function getProperties($product): array
     {
         $properties = [];
         $productAttributes = $product->getAttributes();
@@ -592,11 +592,11 @@ class DataProcessor
     /**
      * Returns product attribute display value
      *
-     * @param ProductInterface $product
+     * @param ProductInterface|mixed $product
      * @param EavAttribute $attribute
      * @return string|null
      */
-    private function getAttributeDisplayValue(ProductInterface $product, EavAttribute $attribute): ?string
+    private function getAttributeDisplayValue($product, EavAttribute $attribute): ?string
     {
         try {
             $value = $product->getResource()
@@ -615,11 +615,11 @@ class DataProcessor
     /**
      * Returns media gallery data
      *
-     * @param ProductInterface $product
+     * @param ProductInterface|mixed $product
      * @return array
      * @throws FileSystemException
      */
-    private function getMedia(ProductInterface $product): array
+    private function getMedia($product): array
     {
         $media = [];
         $mediaGalleryImages = $product->getMediaGalleryImages();
@@ -647,10 +647,10 @@ class DataProcessor
     /**
      * Returns product inventories data
      *
-     * @param ProductInterface $product
+     * @param ProductInterface|mixed $product
      * @return array
      */
-    private function getInventories(ProductInterface $product): array
+    private function getInventories($product): array
     {
         $inventories = [];
         $stockItems = [];
@@ -677,11 +677,11 @@ class DataProcessor
     /**
      * Returns product prices data
      *
-     * @param ProductInterface $product
+     * @param ProductInterface|mixed $product
      * @return array[]
      * @throws LocalizedException
      */
-    private function getPrices(ProductInterface $product): array
+    private function getPrices($product): array
     {
         $currencyCode = $this->storeManager->getStore()->getCurrentCurrency()->getCode();
         $price = CurrencyUtils::toMinor($product->getPriceInfo()->getPrice('final_price')->getValue(), $currencyCode);
@@ -699,10 +699,10 @@ class DataProcessor
     /**
      * Returns product backorder status
      *
-     * @param ProductInterface $product
+     * @param ProductInterface|mixed $product
      * @return string
      */
-    private function getBackorderStatus(ProductInterface $product): string
+    private function getBackorderStatus($product): string
     {
         $backOrders = $product->getExtensionAttributes()->getStockItem()->getBackorders();
         $result = '';
@@ -735,10 +735,10 @@ class DataProcessor
     /**
      * Returns product stock status
      *
-     * @param ProductInterface $product
+     * @param ProductInterface|mixed $product
      * @return string
      */
-    private function getProductAvailability(ProductInterface $product): string
+    private function getProductAvailability($product): string
     {
         $stockItem = $product->getExtensionAttributes()->getStockItem();
         if (!$stockItem) {

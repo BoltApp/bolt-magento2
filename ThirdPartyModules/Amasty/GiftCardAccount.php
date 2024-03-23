@@ -47,7 +47,7 @@ class GiftCardAccount
     private $resourceConnection;
     
     /**
-     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
+     * @var \Bolt\Boltpay\Helper\FeatureSwitch\Decider
      */
     private $featureSwitches;
 
@@ -71,10 +71,10 @@ class GiftCardAccount
 
     /**
      * Restores Amasty Giftcard balances used in an order that is going to be deleted
-     *
-     * @param \Amasty\GiftCardAccount\Model\GiftCardAccount\Repository         $giftcardRepository
-     * @param \Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Repository $giftcardOrderRepository
-     * @param Order                                                            $order
+     * @param $giftcardRepository
+     * @param $giftcardOrderRepository
+     * @param $order
+     * @return void
      */
     public function beforeFailedPaymentOrderSave($giftcardRepository, $giftcardOrderRepository, $order)
     {
@@ -101,12 +101,12 @@ class GiftCardAccount
     }
 
     /**
-     * @param array                                                          $result
-     * @param \Amasty\GiftCardAccount\Api\GiftCardAccountRepositoryInterface $giftcardAccountRepository
-     * @param \Amasty\GiftCardAccount\Api\GiftCardQuoteRepositoryInterface   $giftcardQuoteRepository
-     * @param \Magento\Quote\Model\Quote                                     $quote
-     * @param \Magento\Quote\Model\Quote                                     $parentQuote
-     * @param bool                                                           $paymentOnly
+     * @param $result
+     * @param $giftcardAccountRepository
+     * @param $giftcardQuoteRepository
+     * @param $quote
+     * @param $parentQuote
+     * @param $paymentOnly
      * @return array
      */
     public function collectDiscounts(
@@ -121,7 +121,6 @@ class GiftCardAccount
 
         try {
             $currencyCode = $quote->getQuoteCurrencyCode();
-            /** @var \Magento\Quote\Model\Quote\Address\Total[] */
             $totals = $quote->getTotals();
             $totalDiscount = $totals[Discount::AMASTY_GIFTCARD] ?? null;
             $roundedDiscountAmount = 0;
@@ -160,7 +159,7 @@ class GiftCardAccount
                 foreach ($appliedGiftCardItems as $appliedGiftCardItem) {
                     $roundedAmount = CurrencyUtils::toMinor($appliedGiftCardItem['amount'], $currencyCode);
                     $discountItem = [
-                        'description'       => __('Gift Card ') . $appliedGiftCardItem['code'],
+                        'description'       => __('Gift Card ') . $appliedGiftCardItem['code'], /** @phpstan-ignore-line */
                         'amount'            => $roundedAmount,
                         'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
                         'reference'         => $appliedGiftCardItem['code'],
@@ -183,11 +182,11 @@ class GiftCardAccount
     }
 
     /**
-     * @param null                                                           $result
-     * @param \Amasty\GiftCardAccount\Api\GiftCardAccountRepositoryInterface $giftcardAccountRepository
-     * @param string                                                         $couponCode
-     * @param Quote                                                          $quote
-     * @return GiftCardAccountInterface|null
+     * @param $result
+     * @param $giftcardAccountRepository
+     * @param $couponCode
+     * @param $quote
+     * @return \Exception|mixed|null
      */
     public function loadGiftcard($result, $giftcardAccountRepository, $couponCode, $quote)
     {
@@ -210,16 +209,13 @@ class GiftCardAccount
     }
 
     /**
-     * @see \Bolt\Boltpay\Model\Api\DiscountCodeValidation::applyingGiftCardCode
-     *
-     *
-     * @param null                                                                $result
-     * @param \Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardCartProcessor $giftcardProcessor
-     * @param string                                                              $code
-     * @param GiftCardAccountInterface                                            $giftCard
-     * @param Quote                                                               $immutableQuote
-     * @param Quote                                                               $parentQuote
-     * @return array
+     * @param $result
+     * @param $giftcardProcessor
+     * @param $code
+     * @param $giftCard
+     * @param $immutableQuote
+     * @param $parentQuote
+     * @return array|mixed
      */
     public function applyGiftcard(
         $result,
@@ -254,7 +250,7 @@ class GiftCardAccount
                 'discount_amount' => abs(
                     CurrencyUtils::toMinor($giftCard->getCurrentValue(), $parentQuote->getQuoteCurrencyCode())
                 ),
-                'description'     => __('Gift Card (%1)', $code),
+                'description'     => __('Gift Card (%1)', $code), /** @phpstan-ignore-line */
                 'discount_type'   => 'fixed_amount',
             ];
         } catch (\Exception $e) {
@@ -266,12 +262,12 @@ class GiftCardAccount
     }
 
     /**
-     * @param bool                           $result
-     * @param GiftCardCartProcessor          $giftcardProcessor
-     * @param string                         $couponCode
-     * @param mixed|GiftCardAccountInterface $giftCard
-     * @param Quote                          $quote
-     * @return bool
+     * @param $result
+     * @param $giftcardProcessor
+     * @param $couponCode
+     * @param $giftCard
+     * @param $quote
+     * @return mixed|true
      */
     public function filterApplyingGiftCardCode(
         $result,
@@ -292,12 +288,11 @@ class GiftCardAccount
     }
 
     /**
-     * @param bool                     $result
-     * @param GiftCardCartProcessor    $giftcardProcessor
-     * @param GiftCardAccountInterface $giftCard
-     * @param Quote                    $quote
-     *
-     * @return bool
+     * @param $result
+     * @param $giftcardProcessor
+     * @param $giftCard
+     * @param $quote
+     * @return mixed|true
      */
     public function filterRemovingGiftCardCode(
         $result,
@@ -332,13 +327,13 @@ class GiftCardAccount
         $giftCardTable = $this->resourceConnection->getTableName('amasty_giftcard_quote');
 
         // Clear previously applied gift cart codes from the immutable quote
+        // phpcs:ignore
         $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :destination_quote_id";
         $connection->query($sql, ['destination_quote_id' => $destination->getId()]);
 
         // Copy all gift cart codes applied to the parent quote to the immutable quote
-        $sql = "INSERT INTO {$giftCardTable} (quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used)
-                        SELECT :destination_quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used
-                        FROM {$giftCardTable} WHERE quote_id = :source_quote_id";
+        // phpcs:ignore
+        $sql = "INSERT INTO {$giftCardTable} (quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used) SELECT :destination_quote_id, gift_cards, gift_amount, base_gift_amount, gift_amount_used, base_gift_amount_used FROM {$giftCardTable} WHERE quote_id = :source_quote_id";
 
         $connection->query(
             $sql,
@@ -356,7 +351,7 @@ class GiftCardAccount
         try {
             $connection = $this->resourceConnection->getConnection();
             $giftCardTable = $this->resourceConnection->getTableName('amasty_giftcard_quote');
-
+            // phpcs:ignore
             $sql = "DELETE FROM {$giftCardTable} WHERE quote_id = :quote_id";
             $bind = [
                 'quote_id' => $quote->getId()
@@ -369,7 +364,7 @@ class GiftCardAccount
     }
     
     /**
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      */
     public function deleteRedundantDiscounts($quote)
     {
@@ -377,7 +372,7 @@ class GiftCardAccount
             $connection = $this->resourceConnection->getConnection();
             $giftCardTable = $this->resourceConnection->getTableName('amasty_giftcard_quote');
             $quoteTable = $this->resourceConnection->getTableName('quote');
-
+            // phpcs:ignore
             $sql = "DELETE FROM {$giftCardTable} WHERE quote_id IN 
                     (SELECT entity_id FROM {$quoteTable} 
                     WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
@@ -397,7 +392,7 @@ class GiftCardAccount
      * Remove Amasty Gift Card and update quote totals
      *
      * @param int $codeId
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      */
     public function removeAmastyGiftCard($amastyGiftCardAccountManagement, $codeId, $quote)
     {
@@ -423,13 +418,14 @@ class GiftCardAccount
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * Clone the gift card info to the latest updated order.
      *
-     * @param \Magento\Sales\Model\Order $result
-     * @param \Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Handlers\SaveHandler $giftCardAccountRepository
-     * @param \Magento\Sales\Model\Order $order
+     * @param $result
+     * @param $giftCardAccountSaveHandler
+     * @param $order
+     * @return mixed
      */
     public function beforeGetOrderByIdProcessNewOrder($result, $giftCardAccountSaveHandler, $order)
     {
@@ -452,10 +448,10 @@ class GiftCardAccount
     /**
      * Complete the transaction of Amasty Gift Card once the order is created.
      *
-     * @param \Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardAccountTransactionProcessor $giftCardAccountTransactionProcessor
-     * @param \Amasty\GiftCardAccount\Model\GiftCardAccount\Repository $giftCardAccountRepository
-     * @param \Magento\Sales\Model\Order $order
-     * @param Quote $quote
+     * @param $giftCardAccountTransactionProcessor
+     * @param $giftCardAccountRepository
+     * @param \Magento\Sales\Model\Order|mixed $order
+     * @param Quote|mixed $quote
      * @param \stdClass $transaction
      */
     public function orderPostprocess($giftCardAccountTransactionProcessor, $giftCardAccountRepository, $order, $quote, $transaction)
@@ -463,7 +459,6 @@ class GiftCardAccount
         if (!$order->getExtensionAttributes() || !$order->getExtensionAttributes()->getAmGiftcardOrder()) {
             return;
         }
-        /** @var GiftCardOrderInterface $gCardOrder */
         $gCardOrder = $order->getExtensionAttributes()->getAmGiftcardOrder();
         try {
             foreach ($gCardOrder->getAppliedAccounts() as $appliedAccount) {

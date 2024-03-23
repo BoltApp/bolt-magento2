@@ -23,7 +23,7 @@ use Bolt\Boltpay\ThirdPartyModules\Mirasvit\Rewards as BoltMirasvitRewards;
 class ApplyPointsPostPlugin
 {
     /**
-     * @var CustomerSession
+     * @var CustomerSession|mixed
      */
     private $customerSession;
     
@@ -45,7 +45,8 @@ class ApplyPointsPostPlugin
         if (!$this->customerSession->isLoggedIn()) {
             return null;
         }
-        
+
+        /** @var mixed $subject */
         if ($subject->getRequest()->isXmlHttpRequest()) {
             $points_all = $subject->getRequest()->getParam('points_all');
 

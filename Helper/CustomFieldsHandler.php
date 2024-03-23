@@ -46,8 +46,8 @@ class CustomFieldsHandler extends AbstractHelper
 
     /**
      * @param Context $context
-     * @param OrderHelper $orderHelper
      * @param Bugsnag $bugsnag
+     * @param SubscriberFactory $subscriberFactory
      */
     public function __construct(
         Context $context,
@@ -62,7 +62,7 @@ class CustomFieldsHandler extends AbstractHelper
     /**
      * Handle custom fields
      *
-     * @param OrderModel $order
+     * @param \Magento\Sales\Model\Order $order
      * @param array $customFields
      */
     public function handle($order, $customFields)
@@ -94,7 +94,7 @@ class CustomFieldsHandler extends AbstractHelper
      * - If order for logged in user subscribe by userId
      * - If order for guest user subscribe by email
      *
-     * @param OrderModel $order
+     * @param \Magento\Sales\Model\Order $order
      */
     public function subscribeToNewsletter($order)
     {

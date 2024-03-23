@@ -30,7 +30,7 @@ interface UniversalApiInterface
      * @param string $event
      * @param mixed $data
      *
-     * @return Bolt\Boltpay\Api\Data\UniversalApiResultInterface
+     * @return \Bolt\Boltpay\Api\Data\UniversalApiResultInterface
      */
     public function execute(
         $event = null,

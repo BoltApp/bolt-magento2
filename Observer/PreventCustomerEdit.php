@@ -6,6 +6,7 @@ use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\ActionFlag;
+use Magento\Framework\App\Request\Http;
 use Magento\Framework\App\Response\RedirectInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -82,16 +83,16 @@ class PreventCustomerEdit implements ObserverInterface
             return;
         }
 
-        /** @var Request $request */
+        /** @var Http $request */
         $request = $observer->getData('request');
 
-        /** @var \Magento\Framework\App\Action\AbstractAction $action */
+        /** @var \Magento\Framework\App\Action\AbstractAction|mixed $action */
         $action = $observer->getData('controller_action');
 
         if (in_array($request->getFullActionName(), Config::PROHIBITED_CUSTOMER_ROUTES_WITH_SSO)) {
             $this->actionFlag->set('', Action::FLAG_NO_DISPATCH, true);
             $this->messageManager->addErrorMessage(
-                __('Account editing not supported.')
+                __('Account editing not supported.') /** @phpstan-ignore-line */
             );
             $action->getResponse()->setRedirect($this->redirect->error($this->urlManager->getUrl('customer/account')));
         }

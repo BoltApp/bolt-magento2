@@ -31,7 +31,7 @@ class Attributes implements OptionSourceInterface
     private $eavConfig;
 
     /**
-     * @var []
+     * @var array
      */
     private $disabledFrontendInputTypes = [
         'gallery'

@@ -173,9 +173,9 @@ class Discount extends AbstractHelper
     
     /**
      * Collect and update quote totals.
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      */
-    public function updateTotals(Quote $quote)
+    public function updateTotals($quote)
     {
         $quote->getShippingAddress()->setCollectShippingRates(true);
         $quote->setTotalsCollectedFlag(false);
@@ -274,7 +274,7 @@ class Discount extends AbstractHelper
     {
         $result = 0;
 
-        /** @var \Unirgy\Giftcert\Model\Cert $giftCert */
+        /** @var \Unirgy\Giftcert\Model\Cert $unirgyInstance */
         $unirgyInstance = $this->unirgyCertRepository->getInstance();
 
         if ($unirgyInstance) {
@@ -304,13 +304,11 @@ class Discount extends AbstractHelper
     {
         $this->eventsForThirdPartyModules->dispatchEvent("applyExternalDiscountData", $quote);
     }
-    
+
     /**
-     * Load the coupon data by code
-     *
+     * Load the coupon data by cod
      * @param $couponCode
-     *
-     * @return Coupon
+     * @return \Magento\SalesRule\Model\Coupon|mixed
      */
     public function loadCouponCodeData($couponCode)
     {
@@ -342,7 +340,7 @@ class Discount extends AbstractHelper
     }
     
     /**
-     * @param Magento\SalesRule\Model\Rule $rule
+     * @param \Magento\SalesRule\Model\Rule|mixed $rule
      * @return string
      */
     public function getBoltDiscountType($rule)
@@ -371,6 +369,7 @@ class Discount extends AbstractHelper
      */
     public function setCouponCode($quote, $couponCode)
     {
+        /** @var Quote\Address|mixed $address */
         $address = $quote->isVirtual() ?
                 $quote->getBillingAddress() :
                 $quote->getShippingAddress();

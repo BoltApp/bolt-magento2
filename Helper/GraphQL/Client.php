@@ -43,7 +43,7 @@ class Client extends AbstractHelper
     const MERCHANT_API_GQL_ENDPOINT = 'v2/merchant/api';
 
     /**
-     * @var HttpClientAdapterFactory
+     * @var HttpClientAdapterFactory|mixed
      */
     private $httpClientAdapterFactory;
 
@@ -60,7 +60,7 @@ class Client extends AbstractHelper
     /**
      * Response factory
      *
-     * @var ResponseFactory
+     * @var ResponseFactory|mixed
      */
     private $responseFactory;
 
@@ -167,19 +167,19 @@ class Client extends AbstractHelper
                 ]);
             });
         } catch (\Exception $e) {
-            throw new LocalizedException(__($e->getMessage()));
+            throw new LocalizedException(__($e->getMessage())); /** @phpstan-ignore-line */
         }
 
         if ($responseBody) {
             try {
                 $resultFromJSON = ApiUtils::getJSONFromResponseBody($responseBody);
             } catch (\Exception $e) {
-                throw new LocalizedException(__('Something went wrong when talking to Bolt.'));
+                throw new LocalizedException(__('Something went wrong when talking to Bolt.')); /** @phpstan-ignore-line */
             }
 
             $result->setResponse($resultFromJSON);
         } else {
-            throw new LocalizedException(__('Something went wrong when talking to Bolt.'));
+            throw new LocalizedException(__('Something went wrong when talking to Bolt.')); /** @phpstan-ignore-line */
         }
         return $result;
     }
@@ -188,7 +188,6 @@ class Client extends AbstractHelper
      * This Method makes a call to Bolt and returns the feature switches and their values for this server with
      * its current version and the current merchant in question.
      *
-     * @return mixed
      * @throws LocalizedException
      */
     public function getFeatureSwitches()

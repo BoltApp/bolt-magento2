@@ -52,7 +52,7 @@ class ShippingData implements ShippingDataInterface, \JsonSerializable
      * Set available shipping options.
      *
      * @api
-     * @param ShippingOptionInterface[]
+     * @param ShippingOptionInterface[] $shippingOptions
      * @return $this
      */
     public function setShippingOptions($shippingOptions)
@@ -76,7 +76,7 @@ class ShippingData implements ShippingDataInterface, \JsonSerializable
      * Set available ship to store options.
      *
      * @api
-     * @param \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface[]
+     * @param \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface[] $shipToStoreOptions
      * @return $this
      */
     public function setShipToStoreOptions($shipToStoreOptions)

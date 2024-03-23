@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Helper;
 
+use Bolt\Boltpay\Model\Response;
 use Exception;
 use Magento\Config\Model\ResourceModel\Config as ResourceConfig;
 use Magento\Framework\App\Cache\TypeListInterface as Cache;
@@ -101,17 +102,17 @@ class IntegrationManagement extends AbstractHelper
     protected $oauthService;
 
     /**
-     * @var Bolt\Boltpay\Helper\Bugsnag
+     * @var \Bolt\Boltpay\Helper\Bugsnag
      */
     protected $bugsnag;
 
     /**
-     * @var Bolt\Boltpay\Helper\Config
+     * @var \Bolt\Boltpay\Helper\Config
      */
     protected $configHelper;
 
     /**
-     * @var DataObjectFactory
+     * @var DataObjectFactory|mixed
      */
     private $dataObjectFactory;
 
@@ -126,7 +127,7 @@ class IntegrationManagement extends AbstractHelper
     protected $cache;
 
     /**
-     * @var HttpClientAdapterFactory
+     * @var HttpClientAdapterFactory|mixed
      */
     protected $httpClientAdapterFactory;
 
@@ -136,7 +137,7 @@ class IntegrationManagement extends AbstractHelper
     protected $dataHelper;
 
     /**
-     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
+     * @var \Bolt\Boltpay\Helper\FeatureSwitch\Decider
      */
     protected $deciderHelper;
 
@@ -161,7 +162,8 @@ class IntegrationManagement extends AbstractHelper
      * @param DataObjectFactory $dataObjectFactory
      * @param ResourceConfig $resourceConfig
      * @param Cache $cache
-     * @param HttpClientAdapterFactory $httpClient
+     * @param HttpClientAdapterFactory $httpClientAdapterFactory
+     * @param IntegrationOauthHelper $dataHelper
      * @param DeciderHelper $deciderHelper
      * @param UrlInterface $urlBuilder
      * @param StoreManagerInterface $storeManager
@@ -292,7 +294,7 @@ class IntegrationManagement extends AbstractHelper
                 $integrationData = $this->integrationService->delete($integrationId);
                 if (!$integrationData[Info::DATA_ID]) {
                     throw new Exception(
-                        __('The Bolt integration no longer exists.')
+                        __('The Bolt integration no longer exists.') /** @phpstan-ignore-line */
                     );
                 } else {
                     //Integration deleted successfully, now safe to delete the associated consumer data
@@ -303,7 +305,7 @@ class IntegrationManagement extends AbstractHelper
                 }
             } else {
                 throw new Exception(
-                    __('The Bolt integration no longer exists.')
+                    __('The Bolt integration no longer exists.') /** @phpstan-ignore-line */
                 );
             }
         } catch (Exception $e) {
@@ -373,10 +375,7 @@ class IntegrationManagement extends AbstractHelper
             $consumer = $this->oauthService->loadConsumer($boltIntegration->getConsumerId());
             if (!$consumer->getId()) {
                 throw new Exception(
-                    __(
-                        'A consumer with "%1" ID doesn\'t exist. Verify the ID and try again.',
-                        $boltIntegration->getConsumerId()
-                    )
+                    __('A consumer with "%1" ID doesn\'t exist. Verify the ID and try again.', $boltIntegration->getConsumerId()) /** @phpstan-ignore-line */
                 );
             }
 
@@ -412,7 +411,7 @@ class IntegrationManagement extends AbstractHelper
             if ( (method_exists($response, 'getStatus') && $response->getStatus() != 200) ||
                 (method_exists($response, 'getStatusCode') && $response->getStatusCode() != 200)
             ) {
-                $errorLog[$key . ' attempt'] = $response->getMessage();
+                $errorLog[$key . ' attempt'] = $response->getMessage(); /** @phpstan-ignore-line */
             } else {
                 return true;
             }
@@ -436,6 +435,7 @@ class IntegrationManagement extends AbstractHelper
     {
         $loginSuccessCallbackArray = [];
         $adminBaseUrl = $this->urlBuilder->getUrl();
+        /** @var \Magento\Store\Model\Store $store */
         foreach ($this->storeManager->getStores(true) as $store) {
             if (strpos($adminBaseUrl, $store->getBaseUrl()) === false) {
                 $loginSuccessCallbackArray[] = $this->urlBuilder->getUrl(
@@ -465,7 +465,7 @@ class IntegrationManagement extends AbstractHelper
             $errorDetails .= sprintf('%s: %s%s', $attempt, $errorMessage, PHP_EOL);
         }
 
-        return __(
+        return __( /** @phpstan-ignore-line */
             'An error occurred while processing token exchange: "%1".',
             $errorDetails
         );

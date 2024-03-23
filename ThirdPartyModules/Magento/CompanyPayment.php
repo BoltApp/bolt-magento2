@@ -45,8 +45,8 @@ class CompanyPayment
     
     /**
      * @param bool $result
-     * @param Magento\CompanyPayment\Model\Payment\Checks\CanUseForCompany $canUseForCompany
-     * @param Magento\Quote\Model\Quote $quote
+     * @param $canUseForCompany
+     * @param \Magento\Quote\Model\Quote|mixed $quote
      * @return bool
      */
     public function filterShouldDisableBoltCheckout(

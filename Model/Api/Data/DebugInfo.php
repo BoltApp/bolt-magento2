@@ -132,7 +132,7 @@ class DebugInfo implements \JsonSerializable
     }
 
     /**
-     * @param \Bolt\Boltpay\Model\Api\Data\BoltConfigSetting[]
+     * @param \Bolt\Boltpay\Model\Api\Data\BoltConfigSetting[] $boltConfigSettings
      *
      * @return $this
      */
@@ -151,7 +151,7 @@ class DebugInfo implements \JsonSerializable
     }
 
     /**
-     * @param \Bolt\Boltpay\Model\Api\Data\PluginVersion[]
+     * @param \Bolt\Boltpay\Model\Api\Data\PluginVersion[] $otherPluginVersions
      *
      * @return $this
      */

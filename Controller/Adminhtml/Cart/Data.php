@@ -163,10 +163,10 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
         try {
             $storeId = $this->_getSession()->getStoreId();
             if (!$storeId) {
-                throw new LocalizedException(__('Order creation not initialized'));
+                throw new LocalizedException(__('Order creation not initialized')); /** @phpstan-ignore-line */
             }
             $this->_initSession();
-
+            /** @var mixed $quote */
             $quote = $this->_getOrderCreateModel()->getQuote();
             $this->storeManager->setCurrentStore($storeId);
 
@@ -215,7 +215,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
             if (!$quote->getCustomerId()) {
                 if ($this->cartHelper->getCustomerByEmail($customerEmail)) {
                     throw new LocalizedException(
-                        __('A customer with the same email address already exists in an associated website.')
+                        __('A customer with the same email address already exists in an associated website.') /** @phpstan-ignore-line */
                     );
                 }
                 $this->_getOrderCreateModel()->getBillingAddress()->setEmail($customerEmail);
@@ -225,6 +225,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
 
             $this->eventsForThirdPartyModules->dispatchEvent("beforeGetBoltpayOrderForBackofficeOrder", $this);
             // call the Bolt API
+            /** @var mixed $boltpayOrder */
             $boltpayOrder = $this->cartHelper->getBoltpayOrder(true);
             // If empty cart - order_token not fetched because doesn't exist. Not a failure.
             if ($boltpayOrder) {
@@ -241,7 +242,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
 
             if (!$boltpayOrder || !$boltpayOrder->getResponse() || !$boltpayOrder->getResponse()->token) {
                 throw new LocalizedException(
-                    __('Bolt order was not created successfully')
+                    __('Bolt order was not created successfully') /** @phpstan-ignore-line */
                 );
             }
             return $this->resultJsonFactory->create()
@@ -263,7 +264,7 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
                     'hints'          => $hints ?? [],
                     'backOfficeKey'  => $backOfficeKey ?? '',
                     'paymentOnlyKey' => $paymentOnlyKey ?? '',
-                    'storeId'        => $storeId ?? '',
+                    'storeId'        => $storeId,
                     'isPreAuth'      => $isPreAuth ?? '',
                     'connectUrl'     => $connectUrl ?? '',
                 ]

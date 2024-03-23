@@ -61,9 +61,11 @@ class MetadataProviderPlugin
         $fields,
         $options
     ): array {
+
         if (!$this->config->getShowCcTypeInOrderGrid()) {
             return $result;
         }
+        /** @var DocumentInterface|mixed $document */
         $paymentMethodFieldKeyArr = array_keys($fields, self::PAYMENT_METHOD_KEY);
         $paymentMethodFieldKey = null;
         if (!empty($paymentMethodFieldKeyArr)) {

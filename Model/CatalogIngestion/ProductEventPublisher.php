@@ -129,7 +129,7 @@ class ProductEventPublisher
     {
         if (!$this->operationFactory || !$this->bulkManagement) {
             throw new LocalizedException(
-                __(
+                __( // @phpstan-ignore-line
                     'Magento Asynchronous Operations is not supported on your magento version, please verify.'
                 )
             );
@@ -137,13 +137,13 @@ class ProductEventPublisher
         $topicName = (version_compare($this->boltConfig->getStoreVersion(), '2.4.0', '<')) ?
             self::TOPIC_NAME_V1 : self::TOPIC_NAME;
 
-        $description = __('Publish product event, product_id: %1', $productId);
+        $description = __('Publish product event, product_id: %1', $productId); //@phpstan-ignore-line
         $userId = $this->userContext->getUserId();
         $bulkId = $this->identityGenerator->generateId();
         try {
             if (!$this->bulkManagement->scheduleBulk($bulkId, [], $description, $userId)) {
                 throw new LocalizedException(
-                    __(
+                    __( // @phpstan-ignore-line
                         'Something went wrong while scheduling product event bulk %1 Check logs for details.',
                         $description
                     )
@@ -177,7 +177,7 @@ class ProductEventPublisher
             $operations[] = $this->operationFactory->create($data);
             if (!$this->bulkManagement->scheduleBulk($bulkId, $operations, $description, $userId)) {
                 throw new LocalizedException(
-                    __(
+                    __( // @phpstan-ignore-line
                         'Something went wrong while scheduling product event bulk %1 Check logs for details.',
                         $description
                     )
@@ -188,7 +188,7 @@ class ProductEventPublisher
                 $this->bulkManagement->deleteBulk($bulkId);
             }
             throw new LocalizedException(
-                __(
+                __( // @phpstan-ignore-line
                     'Error during publishing product event bulk "%1". Message: %2',
                     $description,
                     $e->getMessage()

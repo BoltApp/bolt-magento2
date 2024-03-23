@@ -62,6 +62,15 @@ class Odoomagentoconnect
      *
      * @return void
      */
+
+    /**
+     * @param $observer
+     * @param $order
+     * @param $transaction
+     * @param $transactionState
+     * @param $prevTransactionState
+     * @return void
+     */
     public function afterUpdateOrderPayment($observer, $order, $transaction, $transactionState, $prevTransactionState)
     {
         if ($transactionState == OrderHelper::TS_AUTHORIZED && $prevTransactionState != OrderHelper::TS_AUTHORIZED) {

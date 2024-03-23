@@ -1,0 +1,19 @@
+<?php
+namespace Mirasvit\Credit\Helper {
+    class Data{
+        public function getBalance(...$args) {}
+        public function getBalance(...$args) {}
+    };
+    class Calculation{
+        public function calc(...$args) {}
+        public function convertToCurrency(...$args) {}
+        public function getCards(...$args) {}
+    };
+}
+
+namespace Mirasvit\Credit\Api\Config {
+    class CalculationConfigInterface{
+        public function IsShippingIncluded(...$args) {}
+        public function isTaxIncluded(...$args) {}
+    };
+}

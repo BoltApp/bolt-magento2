@@ -39,8 +39,8 @@ class GetDefaultOrderStatuses implements \Bolt\Boltpay\Api\GetDefaultOrderStatus
     private $defaultOrderStatusFactory;
 
     /**
-     * @param OrderConfig               $orderConfig
-     * @param DefaultOrderStatusFactory $DefaultOrderStatusFactory
+     * @param OrderConfig $orderConfig
+     * @param DefaultOrderStatusFactory $defaultOrderStatusFactory
      */
     public function __construct(
         OrderConfig               $orderConfig,

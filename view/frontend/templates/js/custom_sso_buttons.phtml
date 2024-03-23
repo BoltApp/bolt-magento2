@@ -38,7 +38,7 @@ $customSSOSelectors = $block->getCustomSSOSelectors();
     var boltSSOCustomClass = 'bolt-sso-custom';
     require(['Bolt_Boltpay/js/utils/when-defined'], function (whenDefined) {
     whenDefined(window, 'BoltAccount', function () {
-        var selectors = <?php echo json_encode($customSSOSelectors); ?>;
+        var selectors = <?php /* @noEscape */ echo json_encode($customSSOSelectors); ?>;
 
         /**
          * Converts all present elements matching {@see loginSelectors} and {@see logoutSelectors}

@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Model\Api;
 
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Webapi\Exception as WebApiException;
+use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Webapi\Rest\Request;
@@ -26,6 +27,7 @@ use Magento\Framework\Webapi\Rest\Response;
 use Magento\Quote\Api\CartRepositoryInterface as CartRepository;
 use Magento\Directory\Model\Region as RegionModel;
 use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Quote\Model\Quote\Address;
 use Magento\SalesRule\Model\RuleRepository;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Bugsnag;
@@ -128,7 +130,7 @@ abstract class UpdateCartCommon
     protected $sessionHelper;
 
     /**
-     * @var ProductRepositoryInterface
+     * @var \Magento\Catalog\Api\ProductRepositoryInterface
      */
     protected $productRepository;
 
@@ -138,12 +140,12 @@ abstract class UpdateCartCommon
     protected $featureSwitches;
     
     /**
-     * @var ShippingAssignmentProcessor
+     * @var \Magento\Quote\Model\Quote\ShippingAssignment\ShippingAssignmentProcessor
      */
     protected $shippingAssignmentProcessor;
 
     /**
-     * @var CartExtensionFactory
+     * @var \Magento\Quote\Api\Data\CartExtensionFactory
      */
     protected $cartExtensionFactory;
 
@@ -190,7 +192,7 @@ abstract class UpdateCartCommon
         $immutableQuote = $this->cartHelper->getQuoteById($immutableQuoteId);
         if (!$immutableQuote) {
             throw new BoltException(
-                __(sprintf('The cart reference [%s] cannot be found.', $immutableQuoteId)),
+                __(sprintf('The cart reference [%s] cannot be found.', $immutableQuoteId)), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
             );
@@ -204,13 +206,12 @@ abstract class UpdateCartCommon
                 'Parent quote does not exist'
             );
             throw new BoltException(
-                __('Parent quote does not exist'),
+                __('Parent quote does not exist'), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
             );
         }
 
-        /** @var Quote $parentQuote */
         if ($immutableQuoteId == $parentQuoteId) {
             // Product Page Checkout - quotes are created as inactive
             $parentQuote = $this->cartHelper->getQuoteById($parentQuoteId);
@@ -221,7 +222,7 @@ abstract class UpdateCartCommon
         // check if the order has already been created
         if ($this->orderHelper->getExistingOrder(null, $parentQuoteId)) {
             throw new BoltException(
-                __(sprintf('The order with quote #%s has already been created ', $parentQuoteId)),
+                __(sprintf('The order with quote #%s has already been created ', $parentQuoteId)), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
             );
@@ -230,7 +231,7 @@ abstract class UpdateCartCommon
         // check if cart is empty
         if (!$immutableQuote->getItemsCount()) {
             throw new BoltException(
-                __(sprintf('The cart for order reference [%s] is empty.', $immutableQuoteId)),
+                __(sprintf('The cart for order reference [%s] is empty.', $immutableQuoteId)), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
             );
@@ -256,6 +257,7 @@ abstract class UpdateCartCommon
      */
     public function setShipment($shipment, $immutableQuote)
     {
+        /** @var Address|mixed $shippingAddress */
         $shippingAddress = $immutableQuote->getShippingAddress();
         $address = $shipment['shipping_address'];
         $address = $this->cartHelper->handleSpecialAddressCases($address);
@@ -307,7 +309,7 @@ abstract class UpdateCartCommon
 
     /**
      * Collect and update quote totals.
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      */
     protected function updateTotals($quote)
     {
@@ -320,7 +322,7 @@ abstract class UpdateCartCommon
 
     /**
      * Create cart data items array.
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      */
     protected function getCartItems($quote)
     {
@@ -374,7 +376,7 @@ abstract class UpdateCartCommon
      */
     public function updateSession($quote, $metadata = [])
     {
-        $this->sessionHelper->loadSession($quote, $metadata ?? []);
+        $this->sessionHelper->loadSession($quote, $metadata);
         $this->cartHelper->resetCheckoutSession($this->sessionHelper->getCheckoutSession());
     }
     
@@ -417,7 +419,7 @@ abstract class UpdateCartCommon
     /**
      * Create shipping assignment for shopping cart
      *
-     * @param CartInterface $quote
+     * @param Quote $quote
      */
     public function setShippingAssignments($quote)
     {

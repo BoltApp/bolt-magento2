@@ -86,7 +86,7 @@ class RemoveBlocksObserver implements ObserverInterface
     public function execute(Observer $observer)
     {
         $fullActionName = $observer->getData('full_action_name');
-        $layout = $observer->getLayout();
+        $layout = $observer->getData('layout');
         $BoltSSOPages = [ConfigHelper::LOGIN_PAGE_ACTION, ConfigHelper::CREATE_ACCOUNT_PAGE_ACTION];
         $showParam = $this->request->getParam(self::URL_SHOW_PARAM);
         if (in_array($fullActionName, $BoltSSOPages)) {

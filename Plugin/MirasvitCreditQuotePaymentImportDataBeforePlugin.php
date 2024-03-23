@@ -17,6 +17,7 @@
 
 namespace Bolt\Boltpay\Plugin;
 
+use Magento\Framework\Event;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Event\Observer;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
@@ -51,7 +52,9 @@ class MirasvitCreditQuotePaymentImportDataBeforePlugin
     public function beforeExecute(ObserverInterface $subject, Observer $observer)
     {
         if ($this->eventsForThirdPartyModules->runFilter("checkMirasvitCreditAdminQuoteUsed", false, $observer)) {
-            $observer->getEvent()->getInput()->setUseCredit(true);
+            /** @var Event|mixed $event */
+            $event = $observer->getEvent();
+            $event->getInput()->setUseCredit(true);
         }
 
         return [$observer];

@@ -1,4 +1,8 @@
 <?php
 namespace Mageplaza\GiftCard\Model {
-    class GiftCard{};
+    class GiftCard{
+        public function getId(...$args) {}
+        public function getBalance(...$args) {}
+        public function getCode(...$args) {}
+    };
 }

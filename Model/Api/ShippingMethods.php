@@ -154,7 +154,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
     private $taxAdjusted = false;
 
-    /** @var Quote */
+    /** @var Quote|mixed */
     protected $quote;
 
     /**
@@ -285,6 +285,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $quoteItems['total'][$sku] += CurrencyUtils::toMinor($unitPrice * $quantity, $this->quote->getQuoteCurrencyCode());
         }
 
+
         $total = $this->quote->getTotals();
         if (isset($total['giftwrapping']) && ($total['giftwrapping']->getGwId() || $total['giftwrapping']->getGwItemIds())) {
             $giftWrapping = $total['giftwrapping'];
@@ -306,7 +307,7 @@ class ShippingMethods implements ShippingMethodsInterface
 
         if (!$quoteItems['quantity'] && !$quoteItems['total']) {
             throw new BoltException(
-                __('The cart is empty. Please reload the page and checkout again.'),
+                __('The cart is empty. Please reload the page and checkout again.'), // @phpstan-ignore-line
                 null,
                 self::E_BOLT_CUSTOM_ERROR
             );
@@ -331,13 +332,13 @@ class ShippingMethods implements ShippingMethodsInterface
             });
             if ($cartItems['quantity'] != $quoteItems['quantity']) {
                 throw new BoltException(
-                    __('The quantity of items in your cart has changed and needs to be revised. Please reload the page and checkout again.'),
+                    __('The quantity of items in your cart has changed and needs to be revised. Please reload the page and checkout again.'), // @phpstan-ignore-line
                     null,
                     self::E_BOLT_CUSTOM_ERROR
                 );
             } else {
                 throw new BoltException(
-                    __('Your cart total has changed and needs to be revised. Please reload the page and checkout again.'),
+                    __('Your cart total has changed and needs to be revised. Please reload the page and checkout again.'), // @phpstan-ignore-line
                     null,
                     self::E_BOLT_CUSTOM_ERROR
                 );
@@ -366,7 +367,7 @@ class ShippingMethods implements ShippingMethodsInterface
     {
         if (!$this->cartHelper->validateEmail($email)) {
             throw new BoltException(
-                __('Invalid email: %1', $email),
+                __('Invalid email: %1', $email), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_UNIQUE_EMAIL_REQUIRED
             );
@@ -402,7 +403,7 @@ class ShippingMethods implements ShippingMethodsInterface
             $this->catchExceptionAndSendError($e, $msg, $e->getCode());
         } catch (\Exception $e) {
             $this->metricsClient->processMetric("ship_tax.failure", 1, "ship_tax.latency", $startTime);
-            $msg = __('Unprocessable Entity') . ': ' . $e->getMessage();
+            $msg = __('Unprocessable Entity') . ': ' . $e->getMessage(); // @phpstan-ignore-line
             $this->catchExceptionAndSendError($e, $msg, self::E_BOLT_GENERAL_ERROR, 422);
         }
     }
@@ -426,7 +427,7 @@ class ShippingMethods implements ShippingMethodsInterface
         $immutableQuote = $this->getQuoteById($immutableQuoteId);
         if (!$immutableQuote) {
             throw new BoltException(
-                __('Unknown quote id: %1.', $immutableQuoteId),
+                __('Unknown quote id: %1.', $immutableQuoteId), // @phpstan-ignore-line
                 null,
                 self::E_BOLT_CUSTOM_ERROR
             );
@@ -503,13 +504,13 @@ class ShippingMethods implements ShippingMethodsInterface
     protected function throwUnknownQuoteIdException($quoteId)
     {
         throw new LocalizedException(
-            __('Unknown quote id: %1.', $quoteId)
+            __('Unknown quote id: %1.', $quoteId) // @phpstan-ignore-line
         );
     }
 
     /**
      * @param $quoteId
-     * @return \Magento\Quote\Api\Data\CartInterface
+     * @return \Magento\Quote\Api\Data\CartInterface|mixed
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function getQuoteById($quoteId)
@@ -531,7 +532,7 @@ class ShippingMethods implements ShippingMethodsInterface
      * Fetch and apply external quote data, not stored within a quote or totals (third party modules DB tables)
      * If data is applied it is used as a part of the cache identifier.
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      * @return string
      */
     public function applyExternalQuoteData($quote)
@@ -548,7 +549,7 @@ class ShippingMethods implements ShippingMethodsInterface
     /**
      * Get Shipping and Tax from cache or run the Shipping options collection routine, store it in cache and return.
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      * @param array $addressData
      *
      * @return ShippingOptionsInterface
@@ -720,7 +721,7 @@ class ShippingMethods implements ShippingMethodsInterface
     /**
      * Collects shipping options for the quote and received address data
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      * @param array $addressData
      *
      * @return ShippingOptionInterface[]
@@ -748,7 +749,7 @@ class ShippingMethods implements ShippingMethodsInterface
         }
 
         $appliedQuoteCouponCode = $quote->getCouponCode();
-
+        /** @var Quote\Address|mixed $shippingAddress */
         $shippingAddress = $quote->getShippingAddress();
         $shippingAddress->addData($addressData);
         $shippingAddress->setCollectShippingRates(true);
@@ -907,7 +908,7 @@ class ShippingMethods implements ShippingMethodsInterface
             });
 
             throw new BoltException(
-                __('No Shipping Methods retrieved'),
+                __('No Shipping Methods retrieved'), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_SERVICE
             );

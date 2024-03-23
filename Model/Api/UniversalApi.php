@@ -40,7 +40,7 @@ class UniversalApi implements UniversalApiInterface
     protected $createOrder;
 
     /**
-     * @var OrderManagementInterface
+     * @var OrderManagementInterface|mixed
      */
     protected $orderManagement;
 
@@ -201,11 +201,10 @@ class UniversalApi implements UniversalApiInterface
                     break;
                 default:
                     throw new BoltException(
-                        __('Invalid webhook type %1', $event),
+                        __('Invalid webhook type %1', $event), // @phpstan-ignore-line
                         null,
                         BoltErrorResponse::ERR_SERVICE
                     );
-                    break;
             }
 
             //not everything returns a value for result here. They send their own responses for now.

@@ -23,7 +23,7 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 class CreditPlugin
 {
     /**
-     * @var CheckoutSession
+     * @var CheckoutSession|mixed
      */
     private $checkoutSession;
     

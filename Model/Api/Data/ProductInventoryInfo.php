@@ -27,7 +27,7 @@ use Bolt\Boltpay\Api\Data\ProductInventoryInfoInterface;
 class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerializable
 {
     /**
-     * @var Bolt\Boltpay\Api\Data\ProductInterface
+     * @var \Bolt\Boltpay\Api\Data\ProductInterface
      */
     private $product;
 
@@ -41,7 +41,7 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
      * Get product info.
      *
      * @api
-     * @return Bolt\Boltpay\Api\Data\ProductInterface
+     * @return \Bolt\Boltpay\Api\Data\ProductInterface
      */
     public function getProduct()
     {
@@ -52,7 +52,7 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
      * Set product info.
      *
      * @api
-     * @param Bolt\Boltpay\Api\Data\ProductInterface $product
+     * @param \Bolt\Boltpay\Api\Data\ProductInterface $product
      *
      * @return $this
      */
@@ -77,7 +77,7 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
      * Get stock info.
      *
      * @api
-     * @param \Magento\CatalogInventory\Api\Data\StockStatusInterface $stockItem
+     * @param \Magento\CatalogInventory\Api\Data\StockStatusInterface $stockStatus
      * @return $this
      */
     public function setStock($stockStatus)
@@ -85,8 +85,6 @@ class ProductInventoryInfo implements ProductInventoryInfoInterface, \JsonSerial
         $this->stockStatus = $stockStatus;
         return $this;
     }
-
-
 
     /**
      * @inheritDoc

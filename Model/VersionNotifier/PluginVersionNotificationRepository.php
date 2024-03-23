@@ -37,7 +37,7 @@ use Magento\Framework\Exception\StateException;
 class PluginVersionNotificationRepository implements PluginVersionNotificationRepositoryInterface
 {
     /**
-     * @var PluginVersionNotificationInterfaceFactory
+     * @var PluginVersionNotificationInterfaceFactory|mixed
      */
     private $pluginVersionNotificationInterfaceFactory;
 
@@ -91,7 +91,7 @@ class PluginVersionNotificationRepository implements PluginVersionNotificationRe
         $this->pluginVersionNotificationInterfaceFactory->load($pluginNotification, $version);
         if (!$pluginNotification->getLetestVersion()) {
             throw new NoSuchEntityException(
-                __("The bolt product event that was requested doesn't exist.")
+                __("The bolt product event that was requested doesn't exist.") //@phpstan-ignore-line
             );
         }
         return $pluginNotification;
@@ -105,7 +105,7 @@ class PluginVersionNotificationRepository implements PluginVersionNotificationRe
         try {
             $this->pluginVersionNotificationRecource->save($pluginNotification);
         } catch (\Exception $e) {
-            throw new CouldNotSaveException(__($e->getMessage()));
+            throw new CouldNotSaveException(__($e->getMessage())); //@phpstan-ignore-line
         }
         return $pluginNotification;
     }
@@ -118,7 +118,7 @@ class PluginVersionNotificationRepository implements PluginVersionNotificationRe
         try {
             $this->pluginVersionNotificationRecource->delete($pluginNotification);
         } catch (\Exception $e) {
-            throw new StateException(__($e->getMessage()));
+            throw new StateException(__($e->getMessage())); //@phpstan-ignore-line
         }
         return true;
     }

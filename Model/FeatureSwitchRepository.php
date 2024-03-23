@@ -52,7 +52,7 @@ class FeatureSwitchRepository implements \Bolt\Boltpay\Api\FeatureSwitchReposito
             $this->getSwitchesToCache();
         }
         if (!isset($this->cache[$name])) {
-            throw new NoSuchEntityException(__('Unable to find switch with name "%1"', $name));
+            throw new NoSuchEntityException(__('Unable to find switch with name "%1"', $name)); // @phpstan-ignore-line
         }
         return $this->cache[$name];
     }
@@ -82,7 +82,7 @@ class FeatureSwitchRepository implements \Bolt\Boltpay\Api\FeatureSwitchReposito
         return $this->save($switch);
     }
 
-    public function save(\Bolt\Boltpay\Api\Data\FeatureSwitchInterface $switch)
+    public function save($switch)
     {
         $switch->getResource()->save($switch);
         if ($this->cache) {
@@ -91,7 +91,7 @@ class FeatureSwitchRepository implements \Bolt\Boltpay\Api\FeatureSwitchReposito
         return $switch;
     }
 
-    public function delete(\Bolt\Boltpay\Api\Data\FeatureSwitchInterface $switch)
+    public function delete($switch)
     {
         $switch->getResource()->delete($switch);
         if ($this->cache) {

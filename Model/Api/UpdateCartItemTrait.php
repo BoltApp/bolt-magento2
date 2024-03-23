@@ -23,6 +23,7 @@ use Magento\CatalogInventory\Api\StockStateInterface as StockState;
 use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
+use Magento\Quote\Model\Quote;
 
 /**
  * Trait UpdateCartItemTrait
@@ -66,7 +67,7 @@ trait UpdateCartItemTrait
      * @param string $productId
      * @param string $storeId
      *
-     * @return \Magento\Catalog\Api\Data\ProductInterface
+     * @return \Magento\Catalog\Api\Data\ProductInterface|mixed
      */
     protected function getProduct($productId, $storeId)
     {
@@ -92,15 +93,15 @@ trait UpdateCartItemTrait
         
         return $product;
     }
-    
+
     /**
      * Verify if the item to add is valid
      *
-     * @param Product $product
-     * @param array $itemToAdd
-     * @param string $websiteId
-     *
-     * @return boolean
+     * @param $product
+     * @param $updateItem
+     * @param $quoteItem
+     * @param $websiteId
+     * @return bool
      */
     protected function verifyItemData($product, $updateItem, $quoteItem, $websiteId)
     {
@@ -135,6 +136,7 @@ trait UpdateCartItemTrait
 
             // The module Magento_InventorySales has plugin to replace legacy quote item check,
             // so we send $qtyToCheck as $itemQty to follow its logic
+            /** @var mixed $checkQty */
             $checkQty = $this->stockState->checkQuoteItemQty(
                 $updateItem['product_id'],
                 $qtyToCheck,
@@ -201,8 +203,8 @@ trait UpdateCartItemTrait
     /**
      * Add item to quote
      *
-     * @param Product $product
-     * @param Quote $quote
+     * @param \Magento\Catalog\Api\Data\ProductInterface|mixed $product
+     * @param Quote|mixed $quote
      * @param array $itemToAdd
      *
      * @return boolean
@@ -250,7 +252,7 @@ trait UpdateCartItemTrait
     /**
      * Remove item from quote
      *
-     * @param array $cartItems
+     * @param array $quoteItem
      * @param array $itemToRemove
      * @param Quote $quote
      *

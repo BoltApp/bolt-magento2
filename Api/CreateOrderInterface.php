@@ -33,7 +33,7 @@ interface CreateOrderInterface
      * @param mixed  $order - which contain token and cart nodes.
      * @param string $currency
      *
-     * @return void
+     * @return mixed
      */
     public function execute(
         $type = null,

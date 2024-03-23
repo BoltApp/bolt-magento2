@@ -30,6 +30,7 @@ class QuotePlugin
      */
     public function aroundAfterSave(\Magento\Quote\Model\Quote $subject, callable $proceed)
     {
+        /** @var \Magento\Quote\Model\Quote|mixed $subject */
         if ($subject->getBoltParentQuoteId() && $subject->getBoltParentQuoteId() != $subject->getId()) {
             return $subject;
         }
@@ -51,6 +52,7 @@ class QuotePlugin
      */
     public function afterGetIsActive(\Magento\Quote\Model\Quote $subject, $result)
     {
+        /** @var \Magento\Quote\Model\Quote|mixed $subject */
         if ($subject->getBoltCheckoutType() == CartHelper::BOLT_CHECKOUT_TYPE_PPC) {
             return true;
         }
@@ -68,6 +70,7 @@ class QuotePlugin
      */
     public function afterValidateMinimumAmount(\Magento\Quote\Model\Quote $subject, $result)
     {
+        /** @var \Magento\Quote\Model\Quote|mixed $subject */
         if ($subject->getBoltCheckoutType() == \Bolt\Boltpay\Helper\Cart::BOLT_CHECKOUT_TYPE_BACKOFFICE
             && $subject->getPayment()->getMethod() == \Bolt\Boltpay\Model\Payment::METHOD_CODE) {
             return true;

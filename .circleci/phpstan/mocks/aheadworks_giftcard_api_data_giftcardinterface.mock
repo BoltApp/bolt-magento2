@@ -1,4 +1,7 @@
 <?php
 namespace Aheadworks\Giftcard\Api\Data {
-    class GiftcardInterface{};
+    class GiftcardInterface {
+    public function getCode(...$args) {}
+    public function getBalance(...$args) {}
+    };
 }

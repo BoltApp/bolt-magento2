@@ -204,7 +204,7 @@ class Debug implements DebugInterface
      * This method will handle universal api debug requests based on the type of request it is.
      *
      * @param array $data
-     * @return \Bolt\Boltpay\Api\Data\DebugInfo
+     * @return \Bolt\Boltpay\Model\Api\Data\DebugInfo
      * @throws BoltException
      * **/
     public function universalDebug($data){
@@ -215,7 +215,7 @@ class Debug implements DebugInterface
         // If debug v2 is not enabled then throw an error to be returned.
         if (!$this->configHelper->isBoltDebugUniversalEnabled()) {
             throw new BoltException(
-                __('Not allowed to fetch debug Data.'),
+                __('Not allowed to fetch debug Data.'), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_SERVICE
             );

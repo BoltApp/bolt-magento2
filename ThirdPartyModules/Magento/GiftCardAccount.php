@@ -38,18 +38,15 @@ class GiftCardAccount
     private $cartHelper;
     
     /**
-     * @var Magento\GiftCardAccount\Helper\Data
+     * @var \Magento\GiftCardAccount\Helper\Data
      */
     private $magentoGiftCardAccountHelper;
     
     /**
-     * @var Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection
+     * @var \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection
      */
     private $magentoGiftCardAccount;
-    
-    /**
-     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
-     */
+
     private $featureSwitches;
 
     /**
@@ -68,11 +65,11 @@ class GiftCardAccount
     }
 
     /**
-     * @param array                                $result
-     * @param \Magento\GiftCardAccount\Helper\Data $magentoGiftCardAccountHelper
-     * @param \Magento\Quote\Model\Quote           $quote
-     * @param \Magento\Quote\Model\Quote           $parentQuote
-     * @param bool                                 $paymentOnly
+     * @param $result
+     * @param $magentoGiftCardAccountHelper
+     * @param $quote
+     * @param $parentQuote
+     * @param $paymentOnly
      * @return array
      */
     public function collectDiscounts(
@@ -121,7 +118,7 @@ class GiftCardAccount
     /**
      * Get the Magento_GiftCardAccount Gift Card data from quote
      *
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      *
      * @return array
      */
@@ -148,13 +145,13 @@ class GiftCardAccount
             return [];
         }
     }
-    
+
     /**
-     * @param null                                                                    $result
-     * @param \Magento\GiftCardAccount\Model\ResourceModel\Giftcardaccount\Collection $magentoGiftCardAccount
-     * @param string                                                                  $couponCode
-     * @param Quote                                                                   $quote
-     * @return GiftCardAccountInterface|null
+     * @param $result
+     * @param $magentoGiftCardAccount
+     * @param $couponCode
+     * @param $quote
+     * @return \Exception|\Magento\GiftCardAccount\Model\Giftcardaccount|mixed|null
      */
     public function loadGiftcard($result, $magentoGiftCardAccount, $couponCode, $quote)
     {
@@ -199,17 +196,14 @@ class GiftCardAccount
         }';
         return $result;
     }
-    
+
     /**
-     * @see \Bolt\Boltpay\Model\Api\DiscountCodeValidation::applyingGiftCardCode
-     *
-     *
-     * @param mixed                                            $result
-     * @param string                                           $code
-     * @param \Magento\GiftCardAccount\Model\Giftcardaccount   $giftCard
-     * @param Quote                                            $immutableQuote
-     * @param Quote                                            $parentQuote
-     * @return array
+     * @param $result
+     * @param $code
+     * @param $giftCard
+     * @param $immutableQuote
+     * @param $parentQuote
+     * @return array|mixed
      */
     public function applyGiftcard(
         $result,
@@ -256,7 +250,7 @@ class GiftCardAccount
                 'discount_amount' => abs(
                     CurrencyUtils::toMinor($giftAmount, $currencyCode)
                 ),
-                'description'     => __('Gift Card (%1)', $code),
+                'description'     => __('Gift Card (%1)', $code), /** @phpstan-ignore-line */
                 'discount_type'   => 'fixed_amount',
             ];
         } catch (\Exception $e) {
@@ -266,13 +260,13 @@ class GiftCardAccount
             ];
         }
     }
-    
+
     /**
-     * @param bool                                           $result
-     * @param string                                         $couponCode
-     * @param \Magento\GiftCardAccount\Model\Giftcardaccount $giftCard
-     * @param Quote                                          $quote
-     * @return bool
+     * @param $result
+     * @param $couponCode
+     * @param $giftCard
+     * @param $quote
+     * @return mixed|true
      */
     public function filterApplyingGiftCardCode(
         $result,
@@ -295,13 +289,12 @@ class GiftCardAccount
             return true;
         }
     }
-    
+
     /**
-     * @param bool                                          $result
-     * @param Magento\GiftCardAccount\Model\Giftcardaccount $giftCard
-     * @param Quote                                         $quote
-     *
-     * @return bool
+     * @param $result
+     * @param $giftCard
+     * @param $quote
+     * @return bool|mixed
      */
     public function filterRemovingGiftCardCode(
         $result,

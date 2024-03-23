@@ -27,7 +27,7 @@ use Magento\Sales\Model\Service\InvoiceService;
 class CreateInvoiceForRechargedOrder implements ObserverInterface
 {
     /**
-     * @var InvoiceService
+     * @var InvoiceService|mixed
      */
     private $invoiceService;
 
@@ -58,7 +58,9 @@ class CreateInvoiceForRechargedOrder implements ObserverInterface
     public function execute(Observer $observer)
     {
         try {
-            $order = $observer->getEvent()->getOrder();
+            /** @var mixed $event */
+            $event = $observer->getEvent();
+            $order = $event->getOrder();
             $isRechargedOrder = $order->getIsRechargedOrder();
             if ($isRechargedOrder && $order->canInvoice()) {
                 $invoice = $this->invoiceService
@@ -72,7 +74,7 @@ class CreateInvoiceForRechargedOrder implements ObserverInterface
                 }
                 //Add notification comment to order
                 $order->addStatusHistoryComment(
-                    __('Invoice #%1 is created. Notification email is sent to customer.', $invoice->getId())
+                    __('Invoice #%1 is created. Notification email is sent to customer.', $invoice->getId()) /** @phpstan-ignore-line */
                 )->setIsCustomerNotified(true);
             }
             return $this;

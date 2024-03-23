@@ -24,13 +24,13 @@ class InvoiceService extends \Magento\Sales\Model\Service\InvoiceService
     /**
      * Prepare order invoice without any items
      *
-     * @param \Magento\Sales\Api\Data\OrderInterface $order
+     * @param \Magento\Sales\Api\Data\OrderInterface|mixed $order
      * @param                                        $amount
      *
      * @return \Magento\Sales\Model\Order\Invoice
      * @throws \Exception
      */
-    public function prepareInvoiceWithoutItems(OrderInterface $order, $amount)
+    public function prepareInvoiceWithoutItems($order, $amount)
     {
         $invoice = $this->orderConverter->toInvoice($order);
         $invoice->setSubtotal($amount);

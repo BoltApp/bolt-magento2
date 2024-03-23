@@ -38,14 +38,14 @@ interface FeatureSwitchRepositoryInterface
     public function upsertByName($name, $value, $defaultValue, $rolloutPercentage);
 
     /**
-     * @param \Bolt\Boltpay\Api\Data\FeatureSwitchInterface $switch
+     * @param \Bolt\Boltpay\Api\Data\FeatureSwitchInterface|mixed $switch
      * @return \Bolt\Boltpay\Api\Data\FeatureSwitchInterface
      */
-    public function save(\Bolt\Boltpay\Api\Data\FeatureSwitchInterface $switch);
+    public function save($switch);
 
     /**
-     * @param \Bolt\Boltpay\Api\Data\FeatureSwitchInterface $switch
+     * @param \Bolt\Boltpay\Api\Data\FeatureSwitchInterface|mixed $switch
      * @return void
      */
-    public function delete(\Bolt\Boltpay\Api\Data\FeatureSwitchInterface $switch);
+    public function delete($switch);
 }

@@ -47,7 +47,7 @@ class ProductEventRequestBuilder
     private $apiHelper;
 
     /**
-     * @var DataObjectFactory
+     * @var DataObjectFactory|mixed
      */
     private $dataObjectFactory;
 
@@ -57,7 +57,7 @@ class ProductEventRequestBuilder
     private $productDataProcessor;
 
     /**
-     * @var StoreManagerInterface
+     * @var StoreManagerInterface|mixed
      */
     private $storeManager;
 
@@ -127,7 +127,7 @@ class ProductEventRequestBuilder
             $publishKey = $this->config->getPublishableKeyCheckout($defaultStore->getId());
             if (!$apiKey || !$publishKey) {
                 throw new LocalizedException(
-                    __('Bolt API Key or Publishable Key - Multi Step is not configured')
+                    __('Bolt API Key or Publishable Key - Multi Step is not configured') // @phpstan-ignore-line
                 );
             }
             $requestData = $this->dataObjectFactory->create();
@@ -153,7 +153,7 @@ class ProductEventRequestBuilder
             return $requestData;
         } catch (\Exception $e) {
             throw new LocalizedException(
-                __('Error during sending product event request, product_id: %1. Error message: %2',
+                __('Error during sending product event request, product_id: %1. Error message: %2', // @phpstan-ignore-line
                     $productEvent->getProductId(),
                     $e->getMessage()
                 )

@@ -23,7 +23,7 @@ use Magento\Customer\Model\Session;
 class GroupVerification
 {
     /**
-     * @var Session
+     * @var Session|mixed
      */
     private $customerSession;
 

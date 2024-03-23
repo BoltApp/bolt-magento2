@@ -21,6 +21,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Helper\Discount;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Service\OrderService;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
@@ -37,7 +38,7 @@ class Giftcard
     private $bugsnagHelper;
 
     /**
-     * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
+     * @var \Bolt\Boltpay\Helper\FeatureSwitch\Decider
      */
     private $featureSwitches;
 
@@ -78,7 +79,7 @@ class Giftcard
             ) {
                 $giftCardQuotations = $quoteExtensionAttributes->getAwGiftcardCodes();
             } else {
-                throw new LocalizedException(__('No AW GiftCards Quotations found, quote_id %', $quote->getId()));
+                throw new LocalizedException(__('No AW GiftCards Quotations found, quote_id %', $quote->getId())); /** @phpstan-ignore-line */
             }
 
             foreach ($giftCardQuotations as $giftcardQuote) {
@@ -168,7 +169,7 @@ class Giftcard
                 'discount_amount' => abs(
                     CurrencyUtils::toMinor($giftCard->getBalance(), $parentQuote->getQuoteCurrencyCode())
                 ),
-                'description'     => __('Gift Card (%1)', $giftCard->getCode()),
+                'description'     => __('Gift Card (%1)', $giftCard->getCode()), /** @phpstan-ignore-line */
                 'discount_type'   => 'fixed_amount',
             ];
             return $result;
@@ -251,8 +252,8 @@ class Giftcard
     }
 
     /**
-     * @param \Aheadworks\Giftcard\Model\Service\GiftcardCartService $aheadworksGiftcardOrderServicePlugin
-     * @param \Aheadworks\Giftcard\Model\ResourceModel\Giftcard\Quote\CollectionFactory $aheadworksGiftcardQuoteCollectionFactory
+     * @param \Aheadworks\Giftcard\Model\Service\GiftcardCartService|mixed $aheadworksGiftcardOrderServicePlugin
+     * @param \Aheadworks\Giftcard\Model\ResourceModel\Giftcard\Quote\CollectionFactory|mixed $aheadworksGiftcardQuoteCollectionFactory
      * @param Quote $sourceQuote
      * @param Quote $destinationQuote
      */
@@ -291,7 +292,7 @@ class Giftcard
     }
 
     /**
-     * @param Quote $quote
+     * @param Quote|mixed $quote
      */
     private function getAppliedAwGiftcardCodes($quote) {
         $awGiftcardCodes = [];

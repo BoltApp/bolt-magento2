@@ -32,7 +32,7 @@ if (!$orderCommentModel->shouldDisplayForOrder($order)) {
     </div>
     <div class="admin__page-section-content">
         <div class="admin__page-section-item">
-            <?php echo nl2br($block->escapeHtml($orderCommentModel->getCommentForOrder($order))); ?>
+            <?php /* @noEscape */ echo nl2br($block->escapeHtml($orderCommentModel->getCommentForOrder($order))); ?>
         </div>
     </div>
 </section>

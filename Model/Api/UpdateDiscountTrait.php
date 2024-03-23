@@ -61,7 +61,7 @@ trait UpdateDiscountTrait
     protected $usageFactory;
 
     /**
-     * @var DataObjectFactory
+     * @var DataObjectFactory|mixed
      */
     protected $objectFactory;
 
@@ -142,7 +142,7 @@ trait UpdateDiscountTrait
         // Check if empty coupon was sent
         if ($couponCode === '') {
             throw new BoltException(
-                __('No coupon code provided'),
+                __('No coupon code provided'), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_CODE_INVALID
             );
@@ -152,15 +152,14 @@ trait UpdateDiscountTrait
         $websiteId = $quote->getStore()->getWebsiteId();
 
         // Load the Unirgy_GiftCert object
-        if (empty($giftCard)) {
-            $giftCard = $this->discountHelper->loadUnirgyGiftCertData($couponCode, $storeId);
-        }
+        $giftCard = $this->discountHelper->loadUnirgyGiftCertData($couponCode, $storeId);
+
 
         if (empty($giftCard)) {
             $giftCard = $this->eventsForThirdPartyModules->runFilter("loadGiftcard", null, $couponCode, $quote);
             if ($giftCard instanceof \Exception) {
                 throw new BoltException(
-                    __($giftCard->getMessage()),
+                    __($giftCard->getMessage()),// @phpstan-ignore-line
                     null,
                     BoltErrorResponse::ERR_SERVICE
                 );
@@ -176,7 +175,7 @@ trait UpdateDiscountTrait
         // Check if the coupon and gift card does not exist.
         if ((empty($coupon) || $coupon->isObjectNew()) && empty($giftCard)) {
             throw new BoltException(
-                __(sprintf('The coupon code %s is not found', $couponCode)),
+                __(sprintf('The coupon code %s is not found', $couponCode)),// @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_CODE_INVALID
             );
@@ -202,7 +201,7 @@ trait UpdateDiscountTrait
         } elseif ($giftCard && $giftCard->getId()) {
             $result = $this->applyGiftCardCode($couponCode, $giftCard, $quote);
         } else {
-            throw new WebApiException(__('Something happened with current code.'));
+            throw new WebApiException(__('Something happened with current code.')); // @phpstan-ignore-line
         }
 
         return $result;
@@ -241,7 +240,7 @@ trait UpdateDiscountTrait
             $rule = $this->ruleRepository->getById($coupon->getRuleId());
         } catch (NoSuchEntityException $e) {
             throw new BoltException(
-                __('The coupon code %1 is not found', $couponCode),
+                __('The coupon code %1 is not found', $couponCode), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_CODE_INVALID,
                 $quote
@@ -253,7 +252,7 @@ trait UpdateDiscountTrait
         if (!in_array($websiteId, $ruleWebsiteIDs)) {
             $this->logHelper->addInfoLog('Error: coupon from another website.');
             throw new BoltException(
-                __('The coupon code %1 is not found', $couponCode),
+                __('The coupon code %1 is not found', $couponCode), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_CODE_INVALID,
                 $quote
@@ -263,7 +262,7 @@ trait UpdateDiscountTrait
         if (!$rule->getIsActive()) {
             $this->logHelper->addInfoLog('Error: coupon is inactive.');
             throw new BoltException(
-                __('The coupon code %1 is inactive', $couponCode),
+                __('The coupon code %1 is inactive', $couponCode), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_CODE_INVALID,
                 $quote
@@ -278,7 +277,7 @@ trait UpdateDiscountTrait
             $date = $rule->getToDate();
             if ($date && date('Y-m-d', strtotime($date)) < date('Y-m-d')) {
                 throw new BoltException(
-                    __('The code [%1] has expired', $couponCode),
+                    __('The code [%1] has expired', $couponCode), // @phpstan-ignore-line
                     null,
                     BoltErrorResponse::ERR_CODE_EXPIRED,
                     $quote
@@ -293,7 +292,7 @@ trait UpdateDiscountTrait
                     \IntlDateFormatter::MEDIUM
                 );
                 throw new BoltException(
-                    __($desc),
+                    __($desc), // @phpstan-ignore-line
                     null,
                     BoltErrorResponse::ERR_CODE_NOT_AVAILABLE,
                     $quote
@@ -304,7 +303,7 @@ trait UpdateDiscountTrait
         // Check coupon usage limits.
         if ($coupon->getUsageLimit() && $coupon->getTimesUsed() >= $coupon->getUsageLimit()) {
             throw new BoltException(
-                __('The code [%1] has exceeded usage limit.', $couponCode),
+                __('The code [%1] has exceeded usage limit.', $couponCode), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
                 $quote
@@ -323,7 +322,7 @@ trait UpdateDiscountTrait
                 );
                 if ($couponUsage->getCouponId() && $couponUsage->getTimesUsed() >= $usagePerCustomer) {
                     throw new BoltException(
-                        __('The code [%1] has exceeded usage limit', $couponCode),
+                        __('The code [%1] has exceeded usage limit', $couponCode), // @phpstan-ignore-line
                         null,
                         BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
                         $quote
@@ -335,7 +334,7 @@ trait UpdateDiscountTrait
                 $ruleCustomer = $this->customerFactory->create()->loadByCustomerRule($customerId, $ruleId);
                 if ($ruleCustomer->getId() && $ruleCustomer->getTimesUsed() >= $usesPerCustomer) {
                     throw new BoltException(
-                        __('The code [%1] has exceeded usage limit', $couponCode),
+                        __('The code [%1] has exceeded usage limit', $couponCode), // @phpstan-ignore-line
                         null,
                         BoltErrorResponse::ERR_CODE_LIMIT_REACHED,
                         $quote
@@ -348,7 +347,7 @@ trait UpdateDiscountTrait
             if (!in_array(0, $groupIds)) {
                 $this->logHelper->addInfoLog('Error: coupon requires login.');
                 throw new BoltException(
-                    __('The coupon code %1 requires login', $couponCode),
+                    __('The coupon code %1 requires login', $couponCode), // @phpstan-ignore-line
                     null,
                     BoltErrorResponse::ERR_CODE_REQUIRES_LOGIN,
                     $quote
@@ -365,7 +364,7 @@ trait UpdateDiscountTrait
         if ($quote->getCouponCode() === '') {
             $this->logHelper->addInfoLog('Error: quote does not meet rule\'s conditions.');
             throw new BoltException(
-                __('The quote does not meet rule\'s conditions of coupon code %1.', $couponCode),
+                __('The quote does not meet rule\'s conditions of coupon code %1.', $couponCode), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_CODE_INVALID,
                 $quote
@@ -374,7 +373,7 @@ trait UpdateDiscountTrait
 
         if ($quote->getCouponCode() != $couponCode) {
             throw new BoltException(
-                __('Coupon code %1 does not equal with the quote code %2.', $couponCode, $quote->getCouponCode()),
+                __('Coupon code %1 does not equal with the quote code %2.', $couponCode, $quote->getCouponCode()), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_SERVICE,
                 $quote
@@ -390,7 +389,7 @@ trait UpdateDiscountTrait
         if (!isset($ruleDiscountDetails[$ruleId])) {
             $this->discountHelper->setCouponCode($quote, '');
             throw new BoltException(
-                __('Failed to apply the coupon code %1', $couponCode),
+                __('Failed to apply the coupon code %1', $couponCode), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_SERVICE,
                 $quote
@@ -479,7 +478,7 @@ trait UpdateDiscountTrait
                     $this->removeGiftCardCode($couponCode, $giftCard, $quote);
                 }
             } else {
-                throw new \Exception(__('Coupon code %1 does not exist!', $couponCode));
+                throw new \Exception(__('Coupon code %1 does not exist!', $couponCode)); // @phpstan-ignore-line
             }
         } catch (\Exception $e) {
             $this->sendErrorResponse(
@@ -542,7 +541,7 @@ trait UpdateDiscountTrait
                 return true;
             }
 
-            throw new \Exception(__('Failed to apply the GiftCard %1', $couponCode));
+            throw new \Exception(__('Failed to apply the GiftCard %1', $couponCode)); // @phpstan-ignore-line
         } catch (\Exception $e) {
             $this->sendErrorResponse(
                 BoltErrorResponse::ERR_SERVICE,

@@ -48,37 +48,37 @@ class InStorePickupShipping
     private $config;
     
     /**
-     * @var Magento\InventoryInStorePickupApi\Model\SearchRequestBuilderInterface
+     * @var \Magento\InventoryInStorePickupApi\Model\SearchRequestBuilderInterface
      */
     protected $searchRequestBuilder;
     
     /**
-     * @var Magento\InventoryInStorePickupApi\Api\GetPickupLocationsInterface
+     * @var \Magento\InventoryInStorePickupApi\Api\GetPickupLocationsInterface
      */
     protected $getPickupLocations;
     
     /**
-     * @var Magento\InventoryInStorePickupApi\Api\Data\SearchRequest\ProductInfoInterfaceFactory
+     * @var \Magento\InventoryInStorePickupApi\Api\Data\SearchRequest\ProductInfoInterfaceFactory
      */
     protected $productInfo;
     
     /**
-     * @var Magento\InventoryInStorePickupApi\Api\Data\SearchRequestExtensionFactory
+     * @var \Magento\InventoryInStorePickupApi\Api\Data\SearchRequestExtensionFactory
      */
     protected $searchRequestExtension;
     
     /**
-     * @var Magento\InventoryInStorePickup\Model\SearchRequest\Area\GetDistanceToSources
+     * @var \Magento\InventoryInStorePickup\Model\SearchRequest\Area\GetDistanceToSources
      */
     protected $getDistanceToSources;
     
     private const SEARCH_RADIUS = 'carriers/instore/search_radius';
-    
+
     /**
-     * @param Bugsnag     $bugsnagHelper Bugsnag helper instance
-     * @param Discount    $discountHelper
-     * @param Cart        $cartHelper
-     * @param Decider     $featureSwitches
+     * @param Bugsnag $bugsnagHelper
+     * @param StoreAddressInterfaceFactory $storeAddressFactory
+     * @param ShipToStoreOptionInterfaceFactory $shipToStoreOptionFactory
+     * @param ScopeConfigInterface $config
      */
     public function __construct(
         Bugsnag  $bugsnagHelper,
@@ -91,18 +91,18 @@ class InStorePickupShipping
         $this->shipToStoreOptionFactory = $shipToStoreOptionFactory;
         $this->config = $config;
     }
-    
+
     /**
-     * @param array $result
-     * @param Magento\InventoryInStorePickupApi\Model\SearchRequestBuilderInterface $searchRequestBuilder
-     * @param Magento\InventoryInStorePickupApi\Api\GetPickupLocationsInterface     $getPickupLocations
-     * @param Magento\InventoryInStorePickupApi\Api\Data\SearchRequest\ProductInfoInterfaceFactory $productInfo
-     * @param Magento\InventoryInStorePickupApi\Api\Data\SearchRequestExtensionFactory $searchRequestExtension
-     * @param Magento\InventoryInStorePickup\Model\SearchRequest\Area\GetDistanceToSources $getDistanceToSources
-     * @param Magento\Quote\Model\Quote $quote
-     * @param array $shippingOptions
-     * @param array $addressData
-     * @return array
+     * @param $result
+     * @param $searchRequestBuilder
+     * @param $getPickupLocations
+     * @param $productInfo
+     * @param $searchRequestExtension
+     * @param $getDistanceToSources
+     * @param $quote
+     * @param $shippingOptions
+     * @param $addressData
+     * @return array[]|mixed
      */
     public function getShipToStoreOptions(
         $result,
@@ -197,14 +197,15 @@ class InStorePickupShipping
             return $result;
         }
     }
-    
+
     /**
-     * @param Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation $setAddressPickupLocation
-     * @param Magento\Checkout\Api\Data\TotalsInformationInterface $addressInformation
-     * @param Magento\Quote\Model\Quote $quote
-     * @param array                     $shipping_option
-     * @param array                     $ship_to_store_option
-     * @param array                     $addressData
+     * @param $setAddressPickupLocation
+     * @param $addressInformation
+     * @param $quote
+     * @param $shipping_option
+     * @param $ship_to_store_option
+     * @param $addressData
+     * @return void
      */
     public function setExtraAddressInformation(
         $setAddressPickupLocation,
@@ -231,13 +232,13 @@ class InStorePickupShipping
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
-     * @param array                     $result
-     * @param Magento\Quote\Model\Quote $quote
-     * @param array                     $ship_to_store_option
-     * @param array                     $addressData
-     * @return array
+     * @param $result
+     * @param $quote
+     * @param $ship_to_store_option
+     * @param $addressData
+     * @return array|mixed
      */
     public function getShipToStoreCarrierMethodCodes(
         $result,
@@ -252,11 +253,12 @@ class InStorePickupShipping
         
         return $result;
     }
-    
+
     /**
-     * @param Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation $setAddressPickupLocation
-     * @param Magento\Quote\Model\Quote $quote
-     * @param \stdClass                 $transaction
+     * @param $setAddressPickupLocation
+     * @param $quote
+     * @param $transaction
+     * @return void
      */
     public function setInStoreShippingMethodForPrepareQuote(
         $setAddressPickupLocation,
@@ -282,12 +284,13 @@ class InStorePickupShipping
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
-     * @param Magento\InventoryInStorePickupQuote\Model\ToQuoteAddress $addressConverter
-     * @param Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface $getPickupLocation
-     * @param Magento\Quote\Model\Quote $quote
-     * @param \stdClass                 $transaction
+     * @param $addressConverter
+     * @param $getPickupLocation
+     * @param $quote
+     * @param $transaction
+     * @return void
      */
     public function setInStoreShippingAddressForPrepareQuote(
         $addressConverter,
@@ -299,7 +302,7 @@ class InStorePickupShipping
             $shippingAddress = $quote->getShippingAddress();
             if (isset($transaction->order->cart->in_store_shipments[0]->shipment)) {
                 $shipment = $transaction->order->cart->in_store_shipments[0]->shipment;
-                $shippingAddress->setData('firstname', $transaction->order->cart->in_store_shipments[0]->store_name);
+                $shippingAddress->setData('firstname', $transaction->order->cart->in_store_shipments[0]->store_name); // @phpstan-ignore-line
                 $shippingAddress->setData('lastname', 'Store');
                 $shippingAddress->save();
                 $pickupLocationCode = substr_replace(
@@ -326,13 +329,12 @@ class InStorePickupShipping
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
-     * @param Magento\InventoryInStorePickupQuote\Model\ToQuoteAddress $addressConverter
-     * @param Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface $getPickupLocation
-     * @param Magento\Quote\Model\Quote $quote
-     * @param \stdClass                 $transaction
-     * @return array
+     * @param $result
+     * @param $quote
+     * @param $transaction
+     * @return mixed|null
      */
     public function isInStorePickupShipping(
         $result,
@@ -340,7 +342,7 @@ class InStorePickupShipping
         $transaction
     ) {
         if (isset($transaction->order->cart->in_store_shipments[0]->shipment->shipping_address)) {
-            $referenceCodes = explode('_', $transaction->order->cart->in_store_shipments[0]->shipment->reference);
+            $referenceCodes = explode('_', $transaction->order->cart->in_store_shipments[0]->shipment->reference); // @phpstan-ignore-line
             if ($this->checkIfMagentoInStorePickupByCode($referenceCodes)) {
                 $address = $transaction->order->cart->in_store_shipments[0]->shipment->shipping_address ?? null;
                 return $address;

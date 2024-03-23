@@ -91,12 +91,12 @@ class GetAccount implements GetAccountInterface
     {
         if (!$this->hookHelper->verifyRequest()) {
             $this->bugsnag->notifyError('Get Account Error', 'Request is not authenticated.');
-            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED);
+            throw new WebapiException(__('Request is not authenticated.'), 0, WebapiException::HTTP_UNAUTHORIZED); // @phpstan-ignore-line
         }
 
         if ($email === '') {
             $this->bugsnag->notifyError('Get Account Error', 'Missing email in the request body.');
-            throw new WebapiException(__('Missing email in the request body.'), 0, WebapiException::HTTP_BAD_REQUEST);
+            throw new WebapiException(__('Missing email in the request body.'), 0, WebapiException::HTTP_BAD_REQUEST); // @phpstan-ignore-line
         }
 
         try {
@@ -108,10 +108,10 @@ class GetAccount implements GetAccountInterface
             $this->response->sendResponse();
         } catch (NoSuchEntityException $nsee) {
             $this->bugsnag->notifyException($nsee);
-            throw new NoSuchEntityException(__('Customer not found with given email.'));
+            throw new NoSuchEntityException(__('Customer not found with given email.')); // @phpstan-ignore-line
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__('Internal Server Error'), 0, WebapiException::HTTP_INTERNAL_ERROR); // @phpstan-ignore-line
         }
     }
 }

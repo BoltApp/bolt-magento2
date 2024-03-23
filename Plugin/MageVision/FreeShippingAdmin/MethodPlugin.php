@@ -24,12 +24,12 @@ use Magento\Framework\Webapi\Rest\Request;
 class MethodPlugin
 {
     /**
-     * @var \Magento\Shipping\Model\Rate\ResultFactory
+     * @var \Magento\Shipping\Model\Rate\ResultFactory|mixed
      */
     protected $_rateResultFactory;
 
     /**
-     * @var \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory
+     * @var \Magento\Quote\Model\Quote\Address\RateResult\MethodFactory|mixed
      */
     protected $_resultMethodFactory;
 
@@ -89,6 +89,7 @@ class MethodPlugin
         if ($result !== false) {
             return $result;
         }
+        /** @var mixed $subject */
         if (!$subject->getConfigFlag('active')) {
             return false;
         }

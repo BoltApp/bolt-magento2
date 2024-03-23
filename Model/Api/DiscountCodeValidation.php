@@ -26,6 +26,8 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebApiException;
 use Bolt\Boltpay\Exception\BoltException;
+use Magento\Quote\Model\Quote;
+use Magento\SalesRule\Model\Coupon;
 
 /**
  * Discount Code Validation class
@@ -131,7 +133,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
             }
         } else {
             throw new BoltException(
-                __('The cart.order_reference is not set or empty.'),
+                __('The cart.order_reference is not set or empty.'), /** @phpstan-ignore-line */
                 null,
                 BoltErrorResponse::ERR_INSUFFICIENT_INFORMATION
             );
@@ -144,7 +146,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         // Check if empty coupon was sent
         if ($couponCode === '') {
             throw new BoltException(
-                __('No coupon code provided'),
+                __('No coupon code provided'), /** @phpstan-ignore-line */
                 null,
                 BoltErrorResponse::ERR_CODE_INVALID
             );
@@ -193,7 +195,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         } elseif ($giftCard && $giftCard->getId()) {
             $result = $this->applyingGiftCardCode($couponCode, $giftCard, $immutableQuote, $parentQuote);
         } else {
-            throw new WebApiException(__('Something happened with current code.'));
+            throw new WebApiException(__('Something happened with current code.')); /** @phpstan-ignore-line */
         }
 
         // we shouldn't be able to get inside this if statement. Anything resulting in it
@@ -265,7 +267,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                 'status'          => 'success',
                 'discount_code'   => $code,
                 'discount_amount' => abs(CurrencyUtils::toMinor($giftAmount, $immutableQuote->getQuoteCurrencyCode())),
-                'description'     =>  __('Gift Card'),
+                'description'     =>  __('Gift Card'),// @phpstan-ignore-line
                 'discount_type'   => Discount::BOLT_DISCOUNT_TYPE_FIXED,
             ];
         }
@@ -383,7 +385,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
             $rule = $this->ruleRepository->getById($coupon->getRuleId());
         } catch (NoSuchEntityException $e) {
             throw new BoltException(
-                __('The coupon code %s was not found', $couponCode),
+                __('The coupon code %s was not found', $couponCode), // @phpstan-ignore-line
                 null,
                 BoltErrorResponse::ERR_CODE_INVALID
             );

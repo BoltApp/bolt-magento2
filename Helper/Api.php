@@ -121,7 +121,7 @@ class Api extends AbstractHelper
 
 
     /**
-     * @var HttpClientAdapterFactory
+     * @var HttpClientAdapterFactory|mixed
      */
     private $httpClientAdapterFactory;
 
@@ -138,14 +138,14 @@ class Api extends AbstractHelper
     /**
      * Response factory
      *
-     * @var ResponseFactory
+     * @var ResponseFactory|mixed
      */
     private $responseFactory;
 
     /**
      * Request factory
      *
-     * @var RequestFactory
+     * @var RequestFactory|mixed
      */
     private $requestFactory;
 
@@ -156,7 +156,7 @@ class Api extends AbstractHelper
 
     /**
      * @param Context           $context
-     * @param HttpClientAdapterFactory $httpClientFactory
+     * @param HttpClientAdapterFactory $httpClientAdapterFactory
      * @param ConfigHelper      $configHelper
      * @param ResponseFactory   $responseFactory
      * @param RequestFactory    $requestFactory
@@ -184,9 +184,9 @@ class Api extends AbstractHelper
     /**
      * Send request to Bolt Gateway and return response
      *
-     * @param Request $request
+     * @param Request|mixed $request
      *
-     * @return Response|int
+     * @return Response|mixed
      * @throws LocalizedException
      */
     public function sendRequest($request)
@@ -241,7 +241,7 @@ class Api extends AbstractHelper
                 ]);
             });
         } catch (Exception $e) {
-            throw new LocalizedException(__('Gateway error: %1', $e->getMessage()));
+            throw new LocalizedException(__('Gateway error: %1', $e->getMessage())); /** @phpstan-ignore-line */
         }
 
         if ($request->getStatusOnly() && $response) {
@@ -252,7 +252,7 @@ class Api extends AbstractHelper
             $resultFromJSON = ApiUtils::getJSONFromResponseBody($responseBody);
             $result->setResponse($resultFromJSON);
         } else {
-            throw new LocalizedException(__('Something went wrong in the payment gateway.'));
+            throw new LocalizedException(__('Something went wrong in the payment gateway.')); /** @phpstan-ignore-line */
         }
         return $result;
     }
@@ -260,7 +260,7 @@ class Api extends AbstractHelper
     /**
      * Build request
      *
-     * @param DataObject $requestData
+     * @param DataObject|mixed $requestData
      *
      * @return Request
      */

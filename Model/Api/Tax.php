@@ -63,7 +63,7 @@ class Tax extends ShippingTax implements TaxInterface
     protected $shippingTaxContext;
 
     /**
-     * @var TotalsInformationInterface
+     * @var TotalsInformationInterface|mixed
      */
     protected $addressInformation;
 
@@ -80,7 +80,7 @@ class Tax extends ShippingTax implements TaxInterface
     /**
      * Quote repository.
      *
-     * @var \Magento\Quote\Api\CartRepositoryInterface
+     * @var \Magento\Quote\Api\CartRepositoryInterface|mixed
      */
     protected $cartRepository;
 
@@ -201,7 +201,7 @@ class Tax extends ShippingTax implements TaxInterface
      * @param TotalsInterface $totalsInformation
      * @param string $currencyCode
      * @param array $ship_to_store_option
-     * @return ShipToStoreOptionInterface
+     * @return \Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface
      * @throws \Exception
      */
     public function createInstorePickOption($totalsInformation, $currencyCode, $ship_to_store_option)
@@ -276,11 +276,12 @@ class Tax extends ShippingTax implements TaxInterface
     }
 
     /**
-     * @param array $addressData
-     * @param array|null $shipping_option
-     * @param array|null $ship_to_store_option
-     * @return TaxDataInterface
-     * @throws \Exception
+     * @param $addressData
+     * @param $shipping_option
+     * @param $ship_to_store_option
+     * @return \Bolt\Boltpay\Api\Data\TaxDataInterface
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function generateResult($addressData, $shipping_option, $ship_to_store_option)
     {

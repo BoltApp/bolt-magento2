@@ -1,4 +1,7 @@
 <?php
 namespace Amasty\GiftCardAccount\Api\Data {
-    class GiftCardAccountInterface{};
+    class GiftCardAccountInterface{
+        public function getAccountId(...$args) {}
+        public function getCurrentValue(...$args) {}
+    };
 }

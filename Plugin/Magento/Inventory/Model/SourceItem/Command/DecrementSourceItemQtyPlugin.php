@@ -90,7 +90,7 @@ class DecrementSourceItemQtyPlugin
     ): void
     {
         if (!$this->featureSwitches->isCatalogIngestionEnabled() ||
-            empty($sourceItems) ||
+            empty($sourceItemDecrementData) ||
             empty($this->beforeProductStatuses)
         ) {
             return;

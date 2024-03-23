@@ -138,7 +138,6 @@ class UpdateSettings implements UpdateSettingsInterface
      * @param int        $errCode
      * @param string     $message
      * @param int        $httpStatusCode
-     * @param null|Quote $quote
      *
      * @return void
      * @throws \Exception

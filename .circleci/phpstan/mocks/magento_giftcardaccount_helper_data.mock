@@ -1,0 +1,6 @@
+<?php
+namespace Magento\GiftCardAccount\Helper {
+    class Data{
+    public function getCards(...$args) {}
+    };
+}

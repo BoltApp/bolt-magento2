@@ -60,7 +60,7 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
     private $quoteRepository;
 
     /**
-     * @var CheckoutSession
+     * @var CheckoutSession|mixed
      */
     private $checkoutSession;
 
@@ -114,7 +114,7 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
             throw $e;
         } catch (Exception $e) {
             $this->bugsnag->notifyException($e);
-            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR);
+            throw new WebapiException(__($e->getMessage()), 0, WebapiException::HTTP_INTERNAL_ERROR); // @phpstan-ignore-line
         }
     }
 
@@ -122,7 +122,7 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
         $quote = $this->cartHelper->getQuoteById($cartId);
         if (!$quote)
         {
-            throw new WebapiException(__('Quote does not found by given ID'), 0, WebapiException::HTTP_NOT_FOUND);
+            throw new WebapiException(__('Quote does not found by given ID'), 0, WebapiException::HTTP_NOT_FOUND); // @phpstan-ignore-line
         }
         $this->setRouteAndQuoteDataToSession($cartId, $routeIsInsured);
         $quote->collectTotals();

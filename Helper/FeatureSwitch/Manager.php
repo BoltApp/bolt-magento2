@@ -41,7 +41,7 @@ class Manager extends AbstractHelper
     private $gql;
 
     /**
-     * @var fsRepo
+     * @var FeatureSwitchRepository
      */
     private $fsRepo;
 
@@ -84,9 +84,9 @@ class Manager extends AbstractHelper
             if (isset($fs->name)) {
                 $this->fsRepo->upsertByName(
                     $fs->name,
-                    $fs->value,
-                    $fs->defaultValue,
-                    $fs->rolloutPercentage
+                    $fs->value, /** @phpstan-ignore-line */
+                    $fs->defaultValue, /** @phpstan-ignore-line */
+                    $fs->rolloutPercentage /** @phpstan-ignore-line */
                 );
             }
         }

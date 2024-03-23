@@ -40,14 +40,13 @@ class Preorder
     /**
      * Add Amasty preorder note to the value of additional attribute when needed.
      *
-     * @param array $result
-     * @param \Amasty\Preorder\Helper\Data $preOrderHelper
-     * @param string $sku
-     * @param string $storeId
-     * @param string $attributeName
-     * @param \Magento\Catalog\Api\Data\ProductInterface $product
-     *
-     * @return array
+     * @param $result
+     * @param $preOrderHelper
+     * @param $sku
+     * @param $storeId
+     * @param $attributeName
+     * @param $product
+     * @return mixed
      */
     public function filterCartItemsAdditionalAttributeValue(
         $result,

@@ -40,15 +40,14 @@ class AbstractActionPlugin
     protected $httpContext;
 
     /**
-     * @var Bolt\Boltpay\Model\EventsForThirdPartyModules
+     * @var \Bolt\Boltpay\Model\EventsForThirdPartyModules
      */
     protected $eventsForThirdPartyModules;
 
     /**
-     * AbstractActionPlugin constructor.
-     * @param Bolt\Boltpay\Model\EventsForThirdPartyModules $eventsForThirdPartyModules
-     * @param \Magento\Customer\Model\Session $customerSession
-     * @param \Magento\Framework\App\Http\Context $httpContext
+     * @param EventsForThirdPartyModules $eventsForThirdPartyModules
+     * @param Session $customerSession
+     * @param Context $httpContext
      */
     public function __construct(
         EventsForThirdPartyModules $eventsForThirdPartyModules,
@@ -61,9 +60,12 @@ class AbstractActionPlugin
     }
 
     /**
-     * @param \Magento\Framework\App\ActionInterface $subject
+     * @param ActionInterface $subject
      * @param callable $proceed
-     * @param \Magento\Framework\App\RequestInterface $request
+     * @param RequestInterface $request
+     * @return mixed
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
     public function aroundDispatch(
         ActionInterface $subject,

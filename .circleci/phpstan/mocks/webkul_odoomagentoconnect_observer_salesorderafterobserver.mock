@@ -1,0 +1,7 @@
+<?php
+namespace \Webkul\Odoomagentoconnect\Observer {
+    class SalesOrderAfterObserver{
+        public function execute(...$args) {}
+    };
+
+}

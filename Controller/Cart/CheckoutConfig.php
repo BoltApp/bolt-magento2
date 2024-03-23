@@ -59,7 +59,8 @@ class CheckoutConfig extends \Magento\Framework\App\Action\Action
     public function execute()
     {
         $config = $this->checkoutSession->getQuoteId() ? $this->configProvider->getConfig() : [];
-        return $this->resultFactory->create(\Magento\Framework\Controller\ResultFactory::TYPE_JSON)
-            ->setData($config);
+        /** @var \Magento\Framework\Controller\Result\Json $resultFactory */
+        $resultFactory = $this->resultFactory->create(\Magento\Framework\Controller\ResultFactory::TYPE_JSON);
+        return $resultFactory->setData($config);
     }
 }

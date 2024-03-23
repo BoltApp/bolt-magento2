@@ -42,12 +42,12 @@ class ConfigPlugin
     private $boltConfig;
 
     /**
-     * @var WebsiteRepositoryInterface
+     * @var WebsiteRepositoryInterface|mixed
      */
     private $websiteRepository;
 
     /**
-     * @var StoreRepositoryInterface
+     * @var StoreRepositoryInterface|mixed
      */
     private $storeRepository;
 
@@ -88,12 +88,12 @@ class ConfigPlugin
     /**
      * Send request to bolt after magento configuration update
      *
-     * @param Config $subject
+     * @param Config|mixed $subject
      * @param mixed $result
      * @return mixed
      */
     public function afterSave(
-        Config $subject,
+        $subject,
         $result
     ) {
         if (!$this->featureSwitches->isStoreConfigurationWebhookEnabled()) {

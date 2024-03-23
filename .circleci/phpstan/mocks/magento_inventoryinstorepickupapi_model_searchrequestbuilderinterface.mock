@@ -1,0 +1,4 @@
+<?php
+namespace Magento\InventoryInStorePickupApi\Model {
+    class SearchRequestBuilderInterface{};
+}

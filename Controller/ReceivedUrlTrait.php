@@ -51,7 +51,7 @@ trait ReceivedUrlTrait
      */
     private $cartHelper;
     /**
-     * @var CheckoutSession
+     * @var CheckoutSession|mixed
      */
     private $checkoutSession;
     /**
@@ -110,12 +110,7 @@ trait ReceivedUrlTrait
                         $this->bugsnag->notifyException($e);
                     }
                     // Save reference to the Bolt transaction with the order
-                    $order->addStatusHistoryComment(
-                        __(
-                            'Bolt transaction: %1',
-                            $this->orderHelper->formatReferenceUrl($reference)
-                        )
-                    )->save();
+                    $order->addStatusHistoryComment(__('Bolt transaction: %1', $this->orderHelper->formatReferenceUrl($reference)))->save(); /** @phpstan-ignore-line */
                 } else {
                     $this->bugsnag->notifyError(
                         "Pre-Auth redirect wrong order state",
@@ -161,7 +156,7 @@ trait ReceivedUrlTrait
                 });
                 $this->bugsnag->notifyError('NoSuchEntityException: ', $logMessage);
 
-                $errorMessage = __('Something went wrong. Please contact the seller.');
+                $errorMessage = __('Something went wrong. Please contact the seller.'); /** @phpstan-ignore-line */
                 $this->messageManager->addErrorMessage($errorMessage);
 
                 $this->_redirect($this->getErrorRedirectUrl());
@@ -169,7 +164,7 @@ trait ReceivedUrlTrait
                 $logMessage = $e->getMessage();
                 $this->logHelper->addInfoLog('LocalizedException:' . $logMessage);
 
-                $errorMessage = __('Something went wrong. Please contact the seller.');
+                $errorMessage = __('Something went wrong. Please contact the seller.'); /** @phpstan-ignore-line */
                 $this->messageManager->addErrorMessage($errorMessage);
 
                 $this->bugsnag->registerCallback(function ($report) use ($boltSignature, $boltPayload, $storeId) {
@@ -196,7 +191,7 @@ trait ReceivedUrlTrait
             });
             $this->bugsnag->notifyError('OrderReceivedUrl Error', $logMessage);
 
-            $errorMessage = __('Something went wrong. Please contact the seller.');
+            $errorMessage = __('Something went wrong. Please contact the seller.');/** @phpstan-ignore-line */
             $this->messageManager->addErrorMessage($errorMessage);
             $this->_redirect($this->getErrorRedirectUrl());
         }
@@ -234,9 +229,7 @@ trait ReceivedUrlTrait
         $order = $this->orderHelper->getExistingOrder($incrementId);
 
         if (!$order) {
-            throw new NoSuchEntityException(
-                __('Could not find the order data.')
-            );
+            throw new NoSuchEntityException(__('Could not find the order data.')); /** @phpstan-ignore-line */
         }
 
         return $order;
