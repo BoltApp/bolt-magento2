@@ -31,6 +31,10 @@ class MetadataProviderPlugin
 
     private const CC_TYPE_KEY = 'cc_type';
 
+    private const CC_TRANS_ID_KEY = 'cc_trans_id';
+
+    private const ADDITIONAL_DATA_KEY = 'additional_data';
+
     /**
      * @var Config
      */
@@ -68,6 +72,8 @@ class MetadataProviderPlugin
 
         if ($this->config->getShowCcTypeInOrderGrid() && $this->isSupportedCcType($document)) {
             $result[$paymentMethodFieldKey] = 'Bolt-' . BoltOrderHelper::SUPPORTED_CC_TYPES[$document->getData(self::CC_TYPE_KEY)];
+        } elseif ($this->isApiFlow($document)) {
+            $result[$paymentMethodFieldKey] = $document->getData(self::ADDITIONAL_DATA_KEY);
         }
 
         return $result;
@@ -106,5 +112,16 @@ class MetadataProviderPlugin
     private function isSupportedCcType(DocumentInterface $document): bool
     {
         return $document->getData(self::CC_TYPE_KEY) && array_key_exists($document->getData(self::CC_TYPE_KEY), BoltOrderHelper::SUPPORTED_CC_TYPES);
+    }
+
+    /**
+     * Check if the document is from API flow
+     *
+     * @param DocumentInterface $document
+     * @return bool
+     */
+    private function isApiFlow(DocumentInterface $document): bool
+    {
+        return $document->getData(self::CC_TRANS_ID_KEY) && $document->getData(self::ADDITIONAL_DATA_KEY);
     }
 }
