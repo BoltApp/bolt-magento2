@@ -412,7 +412,7 @@ class IntegrationManagement extends AbstractHelper
             if ( (method_exists($response, 'getStatus') && $response->getStatus() != 200) ||
                 (method_exists($response, 'getStatusCode') && $response->getStatusCode() != 200)
             ) {
-                $errorLog[$key . ' attempt'] = $response->getMessage();
+                $errorLog[$key . ' attempt'] = (method_exists($response, 'getMessage')) ? $response->getMessage() : $response->getReasonPhrase();
             } else {
                 return true;
             }
