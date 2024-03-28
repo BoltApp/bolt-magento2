@@ -412,7 +412,9 @@ class IntegrationManagement extends AbstractHelper
             if ( (method_exists($response, 'getStatus') && $response->getStatus() != 200) ||
                 (method_exists($response, 'getStatusCode') && $response->getStatusCode() != 200)
             ) {
-                $errorLog[$key . ' attempt'] = $response->getMessage();
+                $errorLog[$key . ' attempt'] = (method_exists($response, 'getMessage'))
+                    ? $response->getMessage()
+                    : (method_exists($response, 'getReasonPhrase') ? $response->getReasonPhrase() : 'error response code for token exchange request');
             } else {
                 return true;
             }
