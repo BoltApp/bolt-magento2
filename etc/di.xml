@@ -347,4 +347,7 @@
     <!--Extend_Warranty module support-->
     <preference for="Bolt\Boltpay\Api\Data\ExtendWarrantyPlanInterface" type="Bolt\Boltpay\Model\Api\Data\ExtendWarrantyPlan" />
     <preference for="Bolt\Boltpay\Api\ExtendWarrantyManagementInterface" type="Bolt\Boltpay\Model\Api\ExtendWarrantyManagement" />
+    <type name="Magento\Framework\HTTP\PhpEnvironment\RemoteAddress">
+        <plugin name="boltRequestRemoteAddress" type="Bolt\Boltpay\Plugin\Magento\Framework\HTTP\PhpEnvironment\RemoteAddressPlugin" />
+    </type>
 </config>
