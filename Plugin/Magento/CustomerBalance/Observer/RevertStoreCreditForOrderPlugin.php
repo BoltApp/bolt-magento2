@@ -60,7 +60,7 @@ class RevertStoreCreditForOrderPlugin
      * @param Order $order
      * @return RevertStoreCreditForOrder
      */
-    public function aroundExecute(RevertStoreCreditForOrder $subject, callable $proceed, Order $order)
+    public function aroundExecute($subject, callable $proceed, Order $order)
     {
         if ($order->getPayment()->getMethod() !== Payment::METHOD_CODE || !$this->configHelper->isActive()) {
             return $proceed($order);
