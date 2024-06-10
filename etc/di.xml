@@ -350,4 +350,8 @@
     <type name="Magento\Framework\HTTP\PhpEnvironment\RemoteAddress">
         <plugin name="boltRequestRemoteAddress" type="Bolt\Boltpay\Plugin\Magento\Framework\HTTP\PhpEnvironment\RemoteAddressPlugin" />
     </type>
+    <!--Customer_Balance module multiple amounts of store credit reverting fix for bolt orders-->
+    <type name="Magento\CustomerBalance\Observer\RevertStoreCreditForOrder">
+        <plugin name="boltRevertStoreCreditForOrder" type="Bolt\Boltpay\Plugin\Magento\CustomerBalance\Observer\RevertStoreCreditForOrderPlugin" sortOrder="1"/>
+    </type>
 </config>
