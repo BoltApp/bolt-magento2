@@ -66,11 +66,11 @@ class RevertStoreCreditForOrderPlugin
             return $proceed($order);
         }
 
-        $order->getIsStoreCreditReverted();
         if (!$order->getIsStoreCreditReverted()) {
             $order->setIsStoreCreditReverted(true);
             return $proceed($order);
         }
+
         return $subject;
     }
 }
