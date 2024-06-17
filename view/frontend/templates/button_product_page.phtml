@@ -476,5 +476,11 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
             $(document).on('validationcreate', '#product_addtocart_form', function () {
                 $(".bolt-product-checkout-button-disabled").removeClass("bolt-product-checkout-button-disabled")
             });
+
+            // If the form has the novalidate attribute, remove the disabled class. This means that form validation is already initialized,
+            // and we don't need to wait for the validationcreate event to be triggered, as it might have already been triggered before this script loaded.
+            if ($('#product_addtocart_form').is('[novalidate]')) {
+                $(".bolt-product-checkout-button-disabled").removeClass("bolt-product-checkout-button-disabled")
+            }
         });
     </script>
