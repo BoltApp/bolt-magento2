@@ -23,33 +23,41 @@
 if ($block->shouldDisableBoltCheckout()) { return;
 }
 ?>
-<style>
-    <?= /* @noEscape */ $block->getGlobalCSS(); ?>
-    <?php if ($block->isBoltSSOEnabled() && $block->isPreventSSOCustomersFromEditingAccountInformation()): ?>
-        .customer-account-index .action.edit,
-        .customer-account-index .action.change-password{
-            display: none;
-        }
-        
-        .customer-account-edit #change-email {
-            display: none;
-        }
-        
-        .customer-account-edit #change-email + label {
-            display: none;
-        }
-        
-        .customer-account-edit #change-password {
-            display: none;
-        }
-        
-        .customer-account-edit #change-password + label {
-            display: none;
-        }
-        
-        .customer-address-form .column.main * {
-            display: none;
-        }
-    <?php endif; ?>
-</style>
+<?php
+$styles = <<<STYLE
+{$block->getGlobalCSS()}
+STYLE;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('style', [], $styles, false) ?>
 
+<?php if ($block->isBoltSSOEnabled() && $block->isPreventSSOCustomersFromEditingAccountInformation()): ?>
+<?php
+$styles = <<<STYLE
+.customer-account-index .action.edit,
+.customer-account-index .action.change-password{
+    display: none;
+}
+
+.customer-account-edit #change-email {
+    display: none;
+}
+
+.customer-account-edit #change-email + label {
+    display: none;
+}
+
+.customer-account-edit #change-password {
+    display: none;
+}
+
+.customer-account-edit #change-password + label {
+    display: none;
+}
+
+.customer-address-form .column.main * {
+    display: none;
+}
+STYLE;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('style', [], $styles, false) ?>
+<?php endif; ?>

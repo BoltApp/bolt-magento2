@@ -21,25 +21,38 @@
  * Maintains Bolt checkout functionality.
  *
  * @var $block \Bolt\Boltpay\Block\Js
+ * @var $secureRenderer \Magento\Framework\View\Helper\SecureHtmlRenderer
  */
 if (!$block->isEnabled()) { return;
 }
+
+$conditionalScript= '';
+if (version_compare($block->getMagentoVersion(), '2.4.0') >= 0) {
+    $conditionalScript = 'onElementReady("#order-shipping_same_as_billing", function(element) {
+        if (document.getElementById("order-shipping_same_as_billing").checked) {
+            order.disableShippingAddress(true); 
+        } else {
+            order.disableShippingAddress(false); 
+        }
+    });';
+}
+$prototypeScript = '/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g';
 ?>
 
-<script type="text/javascript">
+<?php $scriptString = <<<script
 
 // If we have multi-website, we need current quote store_id
 // Store the configuration parameters passed from the php block
 // in the global object. Used in this file and on the payment page
 // in payment method renderer, vendor/boltpay/bolt-magento2/view/frontend/web/js/view/payment/method-renderer/boltpay.js
-window.boltConfig = <?= /* @noEscape */ $block->getSettings(); ?>;
+window.boltConfig = {$block->getSettings()}
 
 ///////////////////////
 // String.trim Polyfill
 ///////////////////////
 if (!String.prototype.trim) {
     String.prototype.trim = function () {
-        return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+        return this.replace({$prototypeScript}, '');
     };
 }
 ///////////////////////
@@ -288,7 +301,7 @@ require([
                 isShippingMethodSelected = $('input[name="order[shipping_method]"][type=radio]:checked').length;
 
             if (create_request) {
-                throw '<?= /* @noEscape */ __('There is a pending Bolt Cart creation request, please wait.'); ?>';
+                throw '{__("There is a pending Bolt Cart creation request, please wait.")}';
             }
 
             if (cart.errorMessage) {
@@ -296,7 +309,7 @@ require([
             }
 
             if (shippingRequired && !isShippingMethodSelected) {
-                throw '<?= /* @noEscape */ __('Please specify the "Shipping Method"!'); ?>';
+                throw '{__("Please specify the "Shipping Method"!")}';
             }
             return true;
         } catch (e) {
@@ -554,20 +567,10 @@ require([
             }
             return result;
         }
-        <?php
-        if (version_compare($block->getMagentoVersion(), '2.4.0') >= 0) {
-        ?>
-        onElementReady("#order-shipping_same_as_billing", function(element) {
-            if (document.getElementById('order-shipping_same_as_billing').checked) {
-                order.disableShippingAddress(true); 
-            } else {
-                order.disableShippingAddress(false); 
-            }
-        });
-        <?php
-        }
-        ?>
+        {$conditionalScript}
     });
 });
 
-</script>
+script;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/javascript'], $scriptString, false) ?>

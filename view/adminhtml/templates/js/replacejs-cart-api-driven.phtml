@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 /**
  * Bolt magento2 plugin
  *
@@ -17,14 +17,19 @@
 /**
  * @var \Bolt\Boltpay\Block\MinifiedJsCartApiDriven $block
  * @var \Magento\Framework\Escaper $escaper
+ * @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer
  */
 ?>
-<script type="text/x-magento-init">
+
+<?php $scriptString = <<<script
     {
         "*": {
             "Bolt_Boltpay/js/bolt-api-driven-checkout":{
-                "boltConfig": <?= /* @noEscape */ $block->getSettings(); ?>
+                "boltConfig": {$block->getSettings()}
             }
         }
     }
-</script>
+
+script;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/x-magento-init'], $scriptString, false) ?>

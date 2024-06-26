@@ -44,5 +44,19 @@
                 <value id="sessions_bugsnag" type="host">sessions.bugsnag.com</value>
             </values>
         </policy>
+        <policy id="img-src">
+            <values>
+                <value id="connect_bolt" type="host">connect.bolt.com</value>
+                <value id="connect-sandbox_bolt" type="host">connect-sandbox.bolt.com</value>
+            </values>
+        </policy>
+        <policy id="object-src">
+            <values>
+                <value id="connect_bolt" type="host">connect.bolt.com</value>
+                <value id="connect-sandbox_bolt" type="host">connect-sandbox.bolt.com</value>
+                <value id="account_bolt" type="host">account.bolt.com</value>
+                <value id="account-sandbox_bolt" type="host">account-sandbox.bolt.com</value>
+            </values>
+        </policy>
     </policies>
 </csp_whitelist>

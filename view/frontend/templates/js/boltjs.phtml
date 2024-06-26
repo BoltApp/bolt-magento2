@@ -19,12 +19,17 @@
  * Track, OpenReplay and Connect js template
  *
  * @var $block \Bolt\Boltpay\Block\Js
+ * @var $secureRenderer \Magento\Framework\View\Helper\SecureHtmlRenderer
  */
 if ($block->shouldDisableBoltCheckout()) {
     return;
 }
 ?>
-<script>console.log("Bolt M2 Version: <?= /* @noEscape */ $block->getModuleVersion()?>");</script>
+<?php $scriptString = <<<script
+console.log("Bolt M2 Version: {$block->getModuleVersion()}");
+script;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/javascript'], $scriptString, false) ?>
 <?php
 $checkoutKey = $block->getCheckoutKey();
 $isLoadConnectJs = $block->isLoadConnectJs();

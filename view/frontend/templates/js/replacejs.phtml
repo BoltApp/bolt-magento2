@@ -21,6 +21,7 @@
  * Maintains Bolt checkout functionality.
  *
  * @var $block \Bolt\Boltpay\Block\MinifiedJs
+ * @var $secureRenderer \Magento\Framework\View\Helper\SecureHtmlRenderer
  */
 if ($block->shouldDisableBoltCheckout()) { return;
 }
@@ -40,9 +41,47 @@ $isLoadConnectJsDynamic = $block->isLoadConnectJsDynamic();
 $isLoadTrackJsDynamic = $block->isDisableTrackJsOnNonBoltPages() && $isLoadConnectJsDynamic;
 $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
 $isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDisabled();
-?>
 
-<script type="text/javascript">
+if ($isAjaxAddToCartSuccessTimeoutDisabled) {
+    $conditionScriptCallConfigureWithPromises = "callConfigureWithPromises();";
+} else {
+    $conditionScriptCallConfigureWithPromises = "setTimeout(callConfigureWithPromises, 0);";
+}
+
+if ($isLoadConnectJsDynamic) {
+    if ($isLoadTrackJsDynamic) {
+        $conditionScriptLoadJsDynamic = 'insertTrackScript();';
+    }        
+    if ($isLoadOpenReplayJsDynamic) {
+        $conditionScriptLoadJsDynamic .= 'insertOpenReplayScript();';
+    }
+    if (insertConnectScriptWithoutSrc()) {
+        $conditionScriptLoadJsDynamic .= '$.getScript("'. $connectJsUrl .'", function(data, textStatus, jqxhr) {
+            callBoltAfterAddToCart();
+        });';
+    } else {
+        $conditionScriptLoadJsDynamic .= 'callBoltAfterAddToCart();';
+    }
+} else {
+    $conditionScriptLoadJsDynamic = 'callBoltAfterAddToCart();';
+}
+
+$conditionScriptLoadJsConfig = '';
+if ($isLoadConnectJsDynamic) {
+    $conditionScriptLoadJsConfig = 'magentoCartDataListenerLoadConnectJs = function(data) {
+            if (data.items !== undefined && data.items.length > 0) {';
+    if ($isLoadTrackJsDynamic) {
+        $conditionScriptLoadJsConfig .= 'insertTrackScript();';
+    }
+    $conditionScriptLoadJsConfig .= 'insertConnectScript();
+        }
+    }
+    customerData.get("cart").subscribe(magentoCartDataListenerLoadConnectJs);';
+}
+
+?>
+<?php $scriptString = <<<script
+
     ///////////////////////
     // String.trim Polyfill
     ///////////////////////
@@ -886,7 +925,7 @@ $isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDi
                 return;
             }
 
-            <?= /* @noEscape */ $block->getAdditionalInvalidateBoltCartJavascript(); ?>
+            {$block->getAdditionalInvalidateBoltCartJavascript()}
         }
 
         var callConfigureAfterAddingNewButton = function() {
@@ -1300,7 +1339,7 @@ $isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDi
                 processButtons();
             }
 
-            <?= /* @noEscape */ $block->getAdditionalJavascript(); ?>
+            {$block->getAdditionalJavascript()}
 
             // For now all JS code is loaded, we made all necessary settings and can call Boltcheckout.Configure()
             BoltState.codeIsLoaded.resolve();
@@ -1525,45 +1564,13 @@ $isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDi
                 expectCartRendering = true;
                 // If merchant shows popup after add to cart
                 // delay 0 allows to render bolt button before we call configure
-                <?php if ($isAjaxAddToCartSuccessTimeoutDisabled): ?>
-                    callConfigureWithPromises();
-                <?php else: ?>
-                    setTimeout(callConfigureWithPromises, 0);
-                <?php endif; ?>
+                {$conditionScriptCallConfigureWithPromises}
                 // set flag to animate always present button when we catch cart updating
                 if (boltConfig.always_present_checkout) {
                     newItemAddedToCart = true;
                 }
             }
-            <?php
-            if ($isLoadConnectJsDynamic) {
-                if ($isLoadTrackJsDynamic) {
-                ?>
-            insertTrackScript();
-                <?php
-                }
-                ?>
-            <?php
-            if ($isLoadOpenReplayJsDynamic) {
-                ?>
-            insertOpenReplayScript();
-                <?php
-                }
-                ?>
-            if (insertConnectScriptWithoutSrc()) {
-                $.getScript("<?= /* @noEscape */ $connectJsUrl; ?>", function(data, textStatus, jqxhr) {
-                    callBoltAfterAddToCart();
-                });
-            } else {
-                callBoltAfterAddToCart();
-            }
-                <?php
-            } else {
-                ?>
-            callBoltAfterAddToCart();
-                <?php
-            }
-            ?>
+            {$conditionScriptLoadJsDynamic}
         });
         $(document).on("ajax:addToCart:error", function () {
             invalidateBoltCart();
@@ -1627,25 +1634,7 @@ $isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDi
         boltCheckoutSetup();
         ////////////////////////////////////////////////////
 
-        <?php
-        if ($isLoadConnectJsDynamic) {
-            ?>
-        magentoCartDataListenerLoadConnectJs = function(data) {
-            if (data.items !== undefined && data.items.length > 0) {
-                <?php
-                if ($isLoadTrackJsDynamic) {
-                ?>
-                insertTrackScript();
-                <?php
-                }
-                ?>
-                insertConnectScript();
-            }
-        }
-        customerData.get('cart').subscribe(magentoCartDataListenerLoadConnectJs);
-            <?php
-        }
-        ?>
+        {$conditionScriptLoadJsConfig}
     });
 
     if ((trim(location.pathname, '/') === 'checkout/cart') || (trim(location.pathname, '/') === 'checkout')) {
@@ -1691,7 +1680,7 @@ $isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDi
                             expectCartRendering = false;
                             try {
                                 if ((totals.base_subtotal+totals.base_discount_amount) * 100 == BoltState.boltCart.total_amount.amount
-                                    <?= /* @noEscape */ $block->getAdditionalQuoteTotalsConditions(); ?>) {
+                                    {$block->getAdditionalQuoteTotalsConditions()}) {
                                     return;
                                 }
                             } catch(err) {}
@@ -1717,9 +1706,12 @@ $isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDi
             })
        })
     }
-</script>
+
+script;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/javascript'], $scriptString, false) ?>
 <?php if ($block->displayRewardPointsInMinicartConfig()): ?>
-<script>
+<?php $scriptString = <<<script
     require.config({
         config: {
             mixins: {
@@ -1729,5 +1721,7 @@ $isAjaxAddToCartSuccessTimeoutDisabled = $block->isAjaxAddToCartSuccessTimeoutDi
             }
         }
     });
-</script>
+script;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/javascript'], $scriptString, false) ?>
 <?php endif; ?>
