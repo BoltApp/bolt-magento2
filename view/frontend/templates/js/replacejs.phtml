@@ -79,6 +79,8 @@ if ($isLoadConnectJsDynamic) {
     customerData.get("cart").subscribe(magentoCartDataListenerLoadConnectJs);';
 }
 
+$prototypeScript = '/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g';
+
 ?>
 <?php $scriptString = <<<script
 
@@ -87,7 +89,7 @@ if ($isLoadConnectJsDynamic) {
     ///////////////////////
     if (!String.prototype.trim) {
         String.prototype.trim = function () {
-            return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+            return this.replace({$prototypeScript}, '');
         };
     }
     ///////////////////////

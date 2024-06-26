@@ -48,6 +48,7 @@
             <values>
                 <value id="connect_bolt" type="host">connect.bolt.com</value>
                 <value id="connect-sandbox_bolt" type="host">connect-sandbox.bolt.com</value>
+                <value id="amazonaws_bolt" type="host">s3-us-west-1.amazonaws.com</value>
             </values>
         </policy>
         <policy id="object-src">

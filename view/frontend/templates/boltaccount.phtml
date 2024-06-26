@@ -19,6 +19,7 @@
  * Bolt Account button
  *
  * @var $block \Bolt\Boltpay\Block\Js
+ * @var $secureRenderer \Magento\Framework\View\Helper\SecureHtmlRenderer
  */
 if ($block->shouldDisableBoltCheckout()) {
     return;
@@ -37,7 +38,7 @@ $accountJsUrl = $block->getAccountJsUrl();
 $checkoutKey = $block->getCheckoutKey();
 ?>
 <div class="bolt-account-login"></div>
-<script>
+<?php $scriptString = <<<script
     require([
         'jquery',
         'matchMedia',
@@ -50,9 +51,9 @@ $checkoutKey = $block->getCheckoutKey();
             scriptTag = document.createElement('script');
             scriptTag.setAttribute('type', 'text/javascript');
             scriptTag.setAttribute('async', '');
-            scriptTag.setAttribute('src', '<?= /* @noEscape */ $accountJsUrl; ?>');
+            scriptTag.setAttribute('src', '{$accountJsUrl}');
             scriptTag.setAttribute('id', 'bolt-account');
-            scriptTag.setAttribute('data-publishable-key', '<?= /* @noEscape */ $checkoutKey; ?>');
+            scriptTag.setAttribute('data-publishable-key', '{$checkoutKey}');
             document.head.appendChild(scriptTag);
         }
         mediaCheck({
@@ -64,9 +65,9 @@ $checkoutKey = $block->getCheckoutKey();
                 var ATTEMPT_LIMIT = 3;
                 var attempts = 0;
                 var timerId = setTimeout(function boltAccountLookup() {
-                    var $account_div = $("div.bolt-account-login");
-                    if ($account_div.length==2) {
-                        $account_div.eq(0).remove();
+                    var account_div = $("div.bolt-account-login");
+                    if (account_div.length==2) {
+                        account_div.eq(0).remove();
                         insertAccountScript();
                     } else {
                         if(attempts === ATTEMPT_LIMIT){
@@ -84,4 +85,6 @@ $checkoutKey = $block->getCheckoutKey();
         });
 
     });
-</script>
+script;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptString, false) ?>
