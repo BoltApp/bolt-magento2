@@ -85,5 +85,4 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
 script;
 ?>
 <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptString, false) ?>
-<?php } ?>
-
+<?php endif; ?>
