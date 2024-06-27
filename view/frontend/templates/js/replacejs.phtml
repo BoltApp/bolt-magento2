@@ -51,7 +51,7 @@ if ($isAjaxAddToCartSuccessTimeoutDisabled) {
 if ($isLoadConnectJsDynamic) {
     if ($isLoadTrackJsDynamic) {
         $conditionScriptLoadJsDynamic = 'insertTrackScript();';
-    }        
+    }
     if ($isLoadOpenReplayJsDynamic) {
         $conditionScriptLoadJsDynamic .= 'insertOpenReplayScript();';
     }
@@ -82,7 +82,7 @@ if ($isLoadConnectJsDynamic) {
 $prototypeScript = '/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g';
 
 ?>
-<?php $scriptString = <<<script
+<?php $mainScript = <<<mainScript
 
     ///////////////////////
     // String.trim Polyfill
@@ -1709,11 +1709,11 @@ $prototypeScript = '/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g';
        })
     }
 
-script;
+mainScript;
 ?>
-<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/javascript'], $scriptString, false) ?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/javascript'], $mainScript, false) ?>
 <?php if ($block->displayRewardPointsInMinicartConfig()): ?>
-<?php $scriptString = <<<script
+<?php $requireConfigJs = <<<requireConfigJs
     require.config({
         config: {
             mixins: {
@@ -1723,7 +1723,7 @@ script;
             }
         }
     });
-script;
+requireConfigJs;
 ?>
-<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/javascript'], $scriptString, false) ?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/javascript'], $requireConfigJs, false) ?>
 <?php endif; ?>
