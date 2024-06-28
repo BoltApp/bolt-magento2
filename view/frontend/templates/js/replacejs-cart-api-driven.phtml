@@ -17,9 +17,10 @@
 /**
  * @var \Bolt\Boltpay\Block\MinifiedJsCartApiDriven $block
  * @var \Magento\Framework\Escaper $escaper
+ * @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer
  */
 ?>
-<script type="text/x-magento-init">
+<?php $scriptString = <<<script
     {
         "*": {
             "Bolt_Boltpay/js/bolt-api-driven-checkout":{
@@ -27,9 +28,11 @@
             }
         }
     }
-</script>
+script;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/x-magento-init'], $scriptString, false) ?>
 <?php if ($block->displayRewardPointsInMinicartConfig()): ?>
-<script>
+<?php $scriptString = <<<script
     require.config({
         config: {
             mixins: {
@@ -39,5 +42,7 @@
             }
         }
     });
-</script>
+script;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptString, false) ?>
 <?php endif; ?>

@@ -20,12 +20,13 @@
  * -- setting anchor target attribute is not an option because Magento removes all the attributes --
  *
  * @var $block \Bolt\Boltpay\Block\Js
+ * @var $secureRenderer \Magento\Framework\View\Helper\SecureHtmlRenderer
  */
 if (!$block->isEnabled()) { return;
 }
 ?>
 
-<script type="text/javascript">
+<?php $scriptString = <<<script
 
     require([
         'jquery'
@@ -37,4 +38,6 @@ if (!$block->isEnabled()) { return;
         });
     });
 
-</script>
+script;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/javascript'], $scriptString, false) ?>
