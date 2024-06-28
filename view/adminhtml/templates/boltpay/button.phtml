@@ -1,6 +1,7 @@
 <?php
 /**
  * @var \Bolt\Boltpay\Block\Form $block
+ * @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer
  */
 $code = $block->escapeHtml($block->getMethodCode());
 $backofficePublishableKey = $block->getPublishableKeyBackOffice();
@@ -56,31 +57,32 @@ foreach ($block->getAdditionalCheckoutButtonAttributes() as $attrName => $attrVa
 </fieldset>
 
     <?php if ($isAdminReorderForLoggedInCustomerFeatureEnabled && $customerCreditCardInfos): ?>
-    <script>
+    <?php $scriptString = <<<script
         require(['jquery', 'jquery/ui'], function($){
             $(document).on('change', 'select[name="bolt-credit-cards"]', function(e){
                 e.stopImmediatePropagation();
-                var $creditCardsValue = $(this).val();
-                var $boltRequiredField = $('#bolt-required-field');
+                var creditCardsValue = $(this).val();
+                var boltRequiredField = $('#bolt-required-field');
 
-                if($creditCardsValue){
+                if(creditCardsValue){
                     // If the administrator chooses a credit card option,
                     // we hide the Bolt checkout button and force them to use the Magento submit order button
                     $('.bolt-checkout-button.with-cards').hide();
-                    if($boltRequiredField.hasClass('required-entry')){
-                        $boltRequiredField.removeClass('required-entry');
+                    if(boltRequiredField.hasClass('required-entry')){
+                        boltRequiredField.removeClass('required-entry');
                     }
                 }else {
                     // If the administrator chooses the 'Add New Card' option,
                     // we show the Bolt checkout button and force them to use the Bolt checkout button
-                    if(!$boltRequiredField.hasClass('required-entry')){
-                        $boltRequiredField.addClass('required-entry');
+                    if(!boltRequiredField.hasClass('required-entry')){
+                        boltRequiredField.addClass('required-entry');
                     }
                     $('.bolt-checkout-button.with-cards').show();
                     $('.bolt-checkout-button.with-cards div[data-tid="bolt-checkout-button"]').click();
                 }
             });
         });
-    </script>
+script;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptString, false) ?>
 <?php endif; ?>
-
