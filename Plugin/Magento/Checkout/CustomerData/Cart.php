@@ -116,7 +116,7 @@ class Cart
      */
     public function afterGetSectionData(CustomerDataCart $subject, array $customerData)
     {
-        if (!$this->featureSwitches->isEnabledFetchCartViaApi()) {
+        if (!$this->featureSwitches->isEnabledFetchCartViaApi() || !$this->configHelper->isActive()) {
             return $customerData;
         }
         $quote = $this->getQuote();
