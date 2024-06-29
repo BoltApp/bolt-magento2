@@ -54,6 +54,9 @@ define([
         ],
         callbacks: {
             close: function () {
+                if(!$('#bolt-required-field').hasClass('required-entry')){
+                    $('#bolt-required-field').addClass('required-entry');
+                }
                 // redirect on success order save
                 if (BoltCheckoutApiDriven.callbacks.success_url) {
                     location.href = BoltCheckoutApiDriven.callbacks.success_url;
@@ -105,7 +108,10 @@ define([
             // the Bolt order is created right after the checkout button is clicked
             // and the checkout modal popup is opened only if order creation was successfull
             check: function () {
-                return BoltCheckoutApiDriven.isValidToken();
+                if($('#bolt-required-field').hasClass('required-entry')){
+                    $('#bolt-required-field').removeClass('required-entry');
+                }
+                return $('#edit_form').valid() && BoltCheckoutApiDriven.isValidToken();
             }
         },
 
