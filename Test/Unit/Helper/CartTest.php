@@ -156,6 +156,7 @@ class CartTest extends BoltTestCase
         'locality'        => "New York",
         'street_address1' => "228 5th Avenue",
         'postal_code'     => "10001",
+        'region' => 'CA',
         'country_code'    => "US",
         'email'           => self::EMAIL_ADDRESS,
     ];
