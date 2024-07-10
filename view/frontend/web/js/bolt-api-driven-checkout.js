@@ -70,6 +70,7 @@ define([
         createRequest: false,
         cartRestricted: false,
         allowAutoOpen: true,
+        quotation: null,
         inputNameToHintsPrefill: {
             'firstname': 'firstName',
             'lastname':  'lastName',
@@ -1086,6 +1087,12 @@ define([
             BoltCheckoutApiDriven.readyStatusBarrier = BoltCheckoutApiDriven.initBarrier();
             BoltCheckoutApiDriven.initiateCheckout = window.boltConfig.initiate_checkout && BoltCheckoutApiDriven.getInitiateCheckoutCookie();
             BoltCheckoutApiDriven.customerCart = customerData.get('cart');
+            // Cart2Quote_Quotation 3-th arty module compatibility. It uses additional customer-section = 'quote' for quotation carts.
+            // We need to subscribe to it as well.
+            BoltCheckoutApiDriven.quotation = customerData.get('quote');
+            if (BoltCheckoutApiDriven.quotation) {
+                BoltCheckoutApiDriven.quotation.subscribe(BoltCheckoutApiDriven.magentoCartDataListener);
+            }
             //subscription of 'customer-data' cart
             BoltCheckoutApiDriven.customerCart.subscribe(BoltCheckoutApiDriven.magentoCartDataListener);
 
