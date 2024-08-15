@@ -494,7 +494,7 @@ define([
             //resolve hints promise if not resolved or prepare hints data for bolt config call
             if (magentoCart.boltCartHints !== undefined &&
                 magentoCart.boltCartHints !== null &&
-                !_.isEqual(BoltCheckoutApiDriven.boltCartHints, magentoCart.boltCartHints)
+                (!_.isEqual(BoltCheckoutApiDriven.boltCartHints, magentoCart.boltCartHints) || !BoltCheckoutApiDriven.hintsBarrier.isResolved()) // it makes sense to compare hints objects only if hints was resolved
             ) {
                 let prefill = BoltCheckoutApiDriven.isObject(magentoCart.boltCartHints.prefill)
                     ? BoltCheckoutApiDriven.deepMergeObjects(BoltCheckoutApiDriven.boltCartHints.prefill, magentoCart.boltCartHints.prefill) : magentoCart.boltCartHints.prefill;
