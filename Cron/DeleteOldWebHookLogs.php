@@ -16,7 +16,7 @@
  */
 
 namespace Bolt\Boltpay\Cron;
-
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 class DeleteOldWebHookLogs
 {
     /**
@@ -25,13 +25,20 @@ class DeleteOldWebHookLogs
     protected $webhookLogFactory;
 
     /**
+     * @var Decider
+     */
+    private $featureSwitches;
+
+    /**
      * DeleteOldWebHookLogs constructor.
      * @param \Bolt\Boltpay\Model\ResourceModel\WebhookLogFactory $webhookLogFactory
      */
     public function __construct(
-        \Bolt\Boltpay\Model\ResourceModel\WebhookLogFactory $webhookLogFactory
+        \Bolt\Boltpay\Model\ResourceModel\WebhookLogFactory $webhookLogFactory,
+        Decider $featureSwitches
     ) {
         $this->webhookLogFactory = $webhookLogFactory;
+        $this->featureSwitches = $featureSwitches;
     }
 
     /**
@@ -40,6 +47,10 @@ class DeleteOldWebHookLogs
      */
     public function execute()
     {
+        if ($this->featureSwitches->isAPIDrivenIntegrationEnabled()) {
+            return $this;
+        }
+
         $this->webhookLogFactory->create()->deleteOldAttempts();
         return $this;
     }

@@ -17,9 +17,11 @@
 
 namespace Bolt\Boltpay\Test\Unit\Helper;
 
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\WebhookLogFactory;
 use Bolt\Boltpay\Cron\DeleteOldWebHookLogs;
+use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Bolt\Boltpay\Model\ResourceModel\WebhookLog\CollectionFactory;
@@ -55,6 +57,7 @@ class DeleteOldWebHookLogsTest extends BoltTestCase
      * @var DateTime
      */
     private $coreDate;
+    private $featureSwitches;
 
     public function setUpInternal()
     {
@@ -66,6 +69,8 @@ class DeleteOldWebHookLogsTest extends BoltTestCase
         $this->webhookLogFactory = $this->objectManager->create(WebhookLogFactory::class);
         $this->collectionFactory = $this->objectManager->create(CollectionFactory::class);
         $this->coreDate = $this->objectManager->create(DateTime::class);
+        $this->featureSwitches = $this->createMock(Decider::class);
+        TestHelper::setProperty($this->deleteOldWebHookLogs, 'featureSwitches', $this->featureSwitches);
     }
 
     /**
@@ -73,6 +78,7 @@ class DeleteOldWebHookLogsTest extends BoltTestCase
      */
     public function execute()
     {
+        $this->featureSwitches->method('isAPIDrivenIntegrationEnabled')->willReturn(false);
         $this->webhookLogFactory->create()->setTransactionId('XXXX')
             ->setHookType('pending')
             ->setNumberOfMissingQuoteFailedHooks(1)
