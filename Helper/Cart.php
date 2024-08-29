@@ -82,13 +82,14 @@ class Cart extends AbstractHelper
     const ITEM_TYPE_PHYSICAL = 'physical';
     const ITEM_TYPE_DIGITAL  = 'digital';
     const BOLT_ORDER_TAG = 'Bolt_Order';
+    const ADDRESS_COUNTRY_CODE_KEY = 'country_code';
+    const ADDRESS_REGION_KEY = 'region';
+    const ADDRESS_COUNTRY_CODE_US = 'US';
     const BOLT_ORDER_CACHE_LIFETIME = 3600; // one hour
-
     const BOLT_CHECKOUT_TYPE_MULTISTEP = 1;
     const BOLT_CHECKOUT_TYPE_PPC = 2;
     const BOLT_CHECKOUT_TYPE_BACKOFFICE = 3;
     const BOLT_CHECKOUT_TYPE_PPC_COMPLETE = 4;
-
     const MAGENTO_SKU_DELIMITER = '-';
 
     /** @var CacheInterface */
@@ -1331,6 +1332,13 @@ class Cart extends AbstractHelper
             if (empty($address[$field])) {
                 return false;
             }
+        }
+        // the region field is required for US addresses
+        if (isset($address[self::ADDRESS_COUNTRY_CODE_KEY]) &&
+            $address[self::ADDRESS_COUNTRY_CODE_KEY] == self::ADDRESS_COUNTRY_CODE_US &&
+            empty($address[self::ADDRESS_REGION_KEY])
+        ) {
+            return false;
         }
         return true;
     }
