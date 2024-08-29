@@ -91,6 +91,11 @@ trait ReceivedUrlTrait
 
                 /** @var Quote $quote */
                 $quote = $this->getQuoteById($order->getQuoteId());
+                $featureSwitchHelper = $this->cartHelper->getFeatureSwitchDeciderHelper();
+                if ($featureSwitchHelper->isAPIDrivenIntegrationEnabled() && $featureSwitchHelper->isSaveCustomerCreditCardEnabled()) {
+                    $reference = $this->getReferenceFromPayload($payloadArray);
+                    $this->orderHelper->saveCustomerCreditCard($reference, $storeId);
+                }
 
                 if ($this->redirectToAdminIfNeeded($quote)) {
                     // redirected
@@ -101,7 +106,7 @@ trait ReceivedUrlTrait
                     $reference = $this->getReferenceFromPayload($payloadArray);
                     try {
                         if (
-                            $this->cartHelper->getFeatureSwitchDeciderHelper()->isSetOrderPaymentInfoDataOnSuccessPage()
+                            $featureSwitchHelper->isSetOrderPaymentInfoDataOnSuccessPage()
                             && ($orderPayment = $order->getPayment())
                             && ($transaction = $this->orderHelper->fetchTransactionInfo($reference))) {
                             $this->orderHelper->setOrderPaymentInfoData($orderPayment, $transaction);
