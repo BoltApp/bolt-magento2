@@ -77,4 +77,4 @@ else
         --magento-init-params="MAGE_MODE=developer"
 fi
 
-COMPOSER_MEMORY_LIMIT=5G composer require --dev "mikey179/vfsstream:^1.6"
+#COMPOSER_MEMORY_LIMIT=5G composer require --dev "mikey179/vfsstream:^1.6"
