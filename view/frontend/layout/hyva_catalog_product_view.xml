@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <!-- override the template files to this module -->
+        <referenceBlock name="bolt.button" template="Bolt_Boltpay::hyva/button_product_page.phtml" />
+        <referenceBlock name="bolt.button.additional" template="Bolt_Boltpay::hyva/button_product_page.phtml" />
+
+        <!-- move the bolt button out of the default "product.info.addtocart" block to the block for extra payment methods -->
+        <move element="bolt.button" destination="addtocart.shortcut.buttons" />
+    </body>
+</page>

@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2017-2024 Bolt Financial, Inc (https://www.bolt.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <!-- Move the JS to the footer -->
+        <move element="boltjs" destination="before.body.end" />
+        <move element="boltglobaljs" destination="before.body.end" />
+        <move element="replacejs" destination="before.body.end" />
+        <move element="bolt_custom_sso_buttons_js" destination="before.body.end" />
+
+        <!-- override this file with our own implementation -->
+        <referenceBlock name="boltjs" template="Bolt_Boltpay::hyva/js/boltjs.phtml"/>
+        <referenceBlock name="replacejs" template="Bolt_Boltpay::hyva/js/replacejs.phtml"/>
+        <referenceBlock name="boltglobaljs" template="Bolt_Boltpay::hyva/js/boltglobaljs.phtml"/>
+        <referenceBlock name="replacejs-cart-api-driven" template="Bolt_Boltpay::hyva/js/replacejs-cart-api-driven.phtml"/>
+        <referenceBlock name="bolt_custom_sso_buttons_js" template="Bolt_Boltpay::hyva/js/custom_sso_buttons.phtml"/>
+
+        <!-- todo: re-implement these features -->
+        <referenceBlock name="boltaccount_luna" remove="true" />
+        <referenceBlock name="boltaccount_blank" remove="true" />
+        <referenceBlock name="bolt_minicart_additions" remove="true" />
+
+        <!-- Remove unneeded blocks -->
+        <referenceBlock name="bolt_popup" remove="true" />
+    </body>
+</page>
