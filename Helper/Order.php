@@ -1238,6 +1238,19 @@ class Order extends AbstractHelper
             $this->cancelFailedPaymentOrder($display_id, $immutableQuoteId);
             return 'Order was canceled: ' . $display_id;
         }
+
+        $order = $this->getExistingOrder($display_id);
+
+        if (!$order) {
+            return 'Order is already deleted: ' . $display_id;
+        }
+
+        // the order may already be in a canceled state due to the rejected_irreversible hook before authorization.
+        // in this case, we don't need to delete it.
+        if ($order->isCanceled()) {
+            return 'Order is already canceled:' . $display_id;
+        }
+
         $this->deleteOrderByIncrementId($display_id, $immutableQuoteId);
         return 'Order was deleted: ' . $display_id;
     }
@@ -1526,7 +1539,7 @@ class Order extends AbstractHelper
     }
 
     /**
-     * @param $displayId
+     * @param $incrementId
      * @throws \Exception
      */
     public function deleteOrderByIncrementId($incrementId, $immutableQuoteId)
