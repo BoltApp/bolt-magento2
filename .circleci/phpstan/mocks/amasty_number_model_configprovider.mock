@@ -1,0 +1,22 @@
+<?php
+namespace Amasty\Number\Model {
+    class ConfigProvider{
+        const PART_NUMBER_FORMAT = '/format';
+        const PART_NUMBER_COUNTER = '/counter';
+        const PART_NUMBER_SAME = '/same';
+        const PART_NUMBER_PREFIX = '/prefix';
+        const PART_NUMBER_PREFIX_REPLACE = '/replace';
+        const PART_COUNTER_FROM = '/start';
+        const PART_INCREMENT_STEP = '/increment';
+        const PART_COUNTER_PAD = '/pad';
+        const PART_COUNTER_RESET_DATE = '/reset';
+        const PART_SEPARATE_WEBSITE = '/per_website';
+        const PART_SEPARATE_STORE = '/per_store';
+
+        const DEFAULT_COUNTER_STEP = 1;
+        const ORDER_TYPE = 'order';
+        const INVOICE_TYPE = 'invoice';
+        const SHIPMENT_TYPE = 'shipment';
+        const CREDITMEMO_TYPE = 'creditmemo';
+    };
+}
