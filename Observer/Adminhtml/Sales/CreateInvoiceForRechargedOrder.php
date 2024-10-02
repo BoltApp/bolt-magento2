@@ -23,6 +23,7 @@ use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Service\InvoiceService;
+use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 
 class CreateInvoiceForRechargedOrder implements ObserverInterface
 {
@@ -42,22 +43,31 @@ class CreateInvoiceForRechargedOrder implements ObserverInterface
     private $bugsnag;
 
     /**
-     * CreateInvoiceForRechargedOrder constructor.
-     *
-     * @param InvoiceService $invoiceService
-     * @param InvoiceSender  $invoiceSender
-     * @param Bugsnag        $bugsnag
+     * @var Decider
      */
-    public function __construct(InvoiceService $invoiceService, InvoiceSender $invoiceSender, Bugsnag $bugsnag)
+    private $featureSwitches;
+
+    /**
+     * @param InvoiceService $invoiceService
+     * @param InvoiceSender $invoiceSender
+     * @param Bugsnag $bugsnag
+     * @param Decider $featureSwitches
+     */
+    public function __construct(InvoiceService $invoiceService, InvoiceSender $invoiceSender, Bugsnag $bugsnag, Decider $featureSwitches)
     {
         $this->bugsnag = $bugsnag;
         $this->invoiceService = $invoiceService;
         $this->invoiceSender = $invoiceSender;
+        $this->featureSwitches = $featureSwitches;
     }
 
     public function execute(Observer $observer)
     {
         try {
+            if ($this->featureSwitches->isAPIDrivenIntegrationEnabled()) {
+                return $this;
+            }
+
             $order = $observer->getEvent()->getOrder();
             $isRechargedOrder = $order->getIsRechargedOrder();
             if ($isRechargedOrder && $order->canInvoice()) {
