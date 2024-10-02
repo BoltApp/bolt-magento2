@@ -48,4 +48,8 @@
         <plugin name="bolt_boltpay_webapirest_magento_error_processor"
                 type="Bolt\Boltpay\Plugin\WebapiRest\Magento\Framework\Webapi\ErrorProcessorPlugin"/>
     </type>
+    <type name="Amasty\Number\Model\ConfigProvider">
+        <plugin name="Bolt_Boltpay_Amasty_Number_Model_ConfigProvider"
+                type="Bolt\Boltpay\Plugin\Amasty\Number\Model\ConfigProviderPlugin" sortOrder="10"/>
+    </type>
 </config>
