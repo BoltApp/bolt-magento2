@@ -19,11 +19,12 @@
 namespace Bolt\Boltpay\Observer\Adminhtml\Sales;
 
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Service\InvoiceService;
-use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use Bolt\Boltpay\Helper\Order as OrderHelper;
 
 class CreateInvoiceForRechargedOrder implements ObserverInterface
 {
@@ -43,15 +44,22 @@ class CreateInvoiceForRechargedOrder implements ObserverInterface
     private $bugsnag;
 
     /**
+     * @var OrderHelper
+     */
+    private $orderHelper;
+
+    /**
      * @param InvoiceService $invoiceService
      * @param InvoiceSender $invoiceSender
      * @param Bugsnag $bugsnag
+     * @param OrderHelper $orderHelper
      */
-    public function __construct(InvoiceService $invoiceService, InvoiceSender $invoiceSender, Bugsnag $bugsnag)
+    public function __construct(InvoiceService $invoiceService, InvoiceSender $invoiceSender, Bugsnag $bugsnag, OrderHelper $orderHelper)
     {
         $this->bugsnag = $bugsnag;
         $this->invoiceService = $invoiceService;
         $this->invoiceSender = $invoiceSender;
+        $this->orderHelper = $orderHelper;
     }
 
     public function execute(Observer $observer)
@@ -70,11 +78,14 @@ class CreateInvoiceForRechargedOrder implements ObserverInterface
                     $this->invoiceSender->send($invoice);
                 }
 
-                //BOLTPAY INFO :: Payment status: CAPTURED Amount $115.00
+                $msg = __('BOLTPAY INFO :: Invoice created: #%1', $invoice->getIncrementId());
+                $order->addStatusHistoryComment($msg);
+                if ($transaction = $order->getRechargedTransaction()) {
+                    $amount  = $order->formatPrice(CurrencyUtils::toMajor($transaction->amount->amount, $transaction->amount->currency));
+                    $msg = __('BOLTPAY INFO :: Payment status: %1 Amount %2 <br /> Bolt transaction: %3', strtoupper($transaction->status), $amount, $this->orderHelper->formatReferenceUrl($transaction->reference));
+                }
                 //Add notification comment to order
-                $order->addStatusHistoryComment(
-                    __('BOLTPAY INFO :: Payment status: CAPTURED Amount .', $invoice->getGrandTotal())
-                )->setIsCustomerNotified(true);
+                $order->addStatusHistoryComment($msg)->setIsCustomerNotified(true);
                 $order->save();
             }
             return $this;

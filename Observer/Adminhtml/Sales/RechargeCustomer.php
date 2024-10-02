@@ -87,6 +87,7 @@ class RechargeCustomer implements ObserverInterface
                 $responseData = $response->getResponse();
                 $reference = $responseData->transaction->reference ?? null;
                 if ($reference) {
+                    $order->setData('recharged_transaction', $responseData->transaction);
                     $order->addStatusHistoryComment(
                         __(
                             'Bolt recharged transaction: %1',
