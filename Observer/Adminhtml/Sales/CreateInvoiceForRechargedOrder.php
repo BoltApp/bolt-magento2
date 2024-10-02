@@ -83,9 +83,10 @@ class CreateInvoiceForRechargedOrder implements ObserverInterface
                 if ($transaction = $order->getRechargedTransaction()) {
                     $amount  = $order->formatPrice(CurrencyUtils::toMajor($transaction->amount->amount, $transaction->amount->currency));
                     $msg = __('BOLTPAY INFO :: Payment status: %1 Amount %2 <br /> Bolt transaction: %3', strtoupper($transaction->status), $amount, $this->orderHelper->formatReferenceUrl($transaction->reference));
+                    $order->addStatusHistoryComment($msg);
                 }
                 //Add notification comment to order
-                $order->addStatusHistoryComment($msg)->setIsCustomerNotified(true);
+                $order->setIsCustomerNotified(true);
                 $order->save();
             }
             return $this;
