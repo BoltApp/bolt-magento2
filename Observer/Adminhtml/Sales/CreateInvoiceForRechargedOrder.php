@@ -43,31 +43,20 @@ class CreateInvoiceForRechargedOrder implements ObserverInterface
     private $bugsnag;
 
     /**
-     * @var Decider
-     */
-    private $featureSwitches;
-
-    /**
      * @param InvoiceService $invoiceService
      * @param InvoiceSender $invoiceSender
      * @param Bugsnag $bugsnag
-     * @param Decider $featureSwitches
      */
-    public function __construct(InvoiceService $invoiceService, InvoiceSender $invoiceSender, Bugsnag $bugsnag, Decider $featureSwitches)
+    public function __construct(InvoiceService $invoiceService, InvoiceSender $invoiceSender, Bugsnag $bugsnag)
     {
         $this->bugsnag = $bugsnag;
         $this->invoiceService = $invoiceService;
         $this->invoiceSender = $invoiceSender;
-        $this->featureSwitches = $featureSwitches;
     }
 
     public function execute(Observer $observer)
     {
         try {
-            if ($this->featureSwitches->isAPIDrivenIntegrationEnabled()) {
-                return $this;
-            }
-
             $order = $observer->getEvent()->getOrder();
             $isRechargedOrder = $order->getIsRechargedOrder();
             if ($isRechargedOrder && $order->canInvoice()) {
@@ -80,10 +69,13 @@ class CreateInvoiceForRechargedOrder implements ObserverInterface
                 if (!$invoice->getEmailSent()) {
                     $this->invoiceSender->send($invoice);
                 }
+
+                //BOLTPAY INFO :: Payment status: CAPTURED Amount $115.00
                 //Add notification comment to order
                 $order->addStatusHistoryComment(
-                    __('Invoice #%1 is created. Notification email is sent to customer.', $invoice->getId())
+                    __('BOLTPAY INFO :: Payment status: CAPTURED Amount .', $invoice->getGrandTotal())
                 )->setIsCustomerNotified(true);
+                $order->save();
             }
             return $this;
         } catch (\Exception $e) {
