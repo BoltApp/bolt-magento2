@@ -88,7 +88,7 @@ class CreateInvoiceForRechargedOrderTest extends BoltTestCase
         $invoiceSender->method('send')->withAnyParameters()->willReturnSelf();
         TestHelper::setProperty($this->createInvoiceForRechargedOrderTest, 'invoiceSender', $invoiceSender);
         $this->createInvoiceForRechargedOrderTest->execute($observer);
-        self::assertEquals('Invoice #%1 is created. Notification email is sent to customer.', $order->getStatusHistories()[0]->getComment()->getText());
+        self::assertEquals('BOLTPAY INFO :: Invoice created: #%1', $order->getStatusHistories()[0]->getComment()->getText());
         TestUtils::cleanupSharedFixtures([$order]);
     }
 

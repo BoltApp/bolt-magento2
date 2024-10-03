@@ -19,10 +19,12 @@
 namespace Bolt\Boltpay\Observer\Adminhtml\Sales;
 
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Service\InvoiceService;
+use Bolt\Boltpay\Helper\Order as OrderHelper;
 
 class CreateInvoiceForRechargedOrder implements ObserverInterface
 {
@@ -42,17 +44,22 @@ class CreateInvoiceForRechargedOrder implements ObserverInterface
     private $bugsnag;
 
     /**
-     * CreateInvoiceForRechargedOrder constructor.
-     *
-     * @param InvoiceService $invoiceService
-     * @param InvoiceSender  $invoiceSender
-     * @param Bugsnag        $bugsnag
+     * @var OrderHelper
      */
-    public function __construct(InvoiceService $invoiceService, InvoiceSender $invoiceSender, Bugsnag $bugsnag)
+    private $orderHelper;
+
+    /**
+     * @param InvoiceService $invoiceService
+     * @param InvoiceSender $invoiceSender
+     * @param Bugsnag $bugsnag
+     * @param OrderHelper $orderHelper
+     */
+    public function __construct(InvoiceService $invoiceService, InvoiceSender $invoiceSender, Bugsnag $bugsnag, OrderHelper $orderHelper)
     {
         $this->bugsnag = $bugsnag;
         $this->invoiceService = $invoiceService;
         $this->invoiceSender = $invoiceSender;
+        $this->orderHelper = $orderHelper;
     }
 
     public function execute(Observer $observer)
@@ -70,10 +77,17 @@ class CreateInvoiceForRechargedOrder implements ObserverInterface
                 if (!$invoice->getEmailSent()) {
                     $this->invoiceSender->send($invoice);
                 }
+
+                $msg = __('BOLTPAY INFO :: Invoice created: #%1', $invoice->getIncrementId());
+                $order->addStatusHistoryComment($msg);
+                if ($transaction = $order->getRechargedTransaction()) {
+                    $amount  = $order->formatPrice(CurrencyUtils::toMajor($transaction->amount->amount, $transaction->amount->currency));
+                    $msg = __('BOLTPAY INFO :: Payment status: %1 Amount %2 <br /> Bolt transaction: %3', strtoupper($transaction->status), $amount, $this->orderHelper->formatReferenceUrl($transaction->reference));
+                    $order->addStatusHistoryComment($msg);
+                }
                 //Add notification comment to order
-                $order->addStatusHistoryComment(
-                    __('Invoice #%1 is created. Notification email is sent to customer.', $invoice->getId())
-                )->setIsCustomerNotified(true);
+                $order->setIsCustomerNotified(true);
+                $order->save();
             }
             return $this;
         } catch (\Exception $e) {
