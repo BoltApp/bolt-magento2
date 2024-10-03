@@ -47,6 +47,7 @@ class Discount extends AbstractHelper
 
     // Discount totals key identifiers
     const AMASTY_GIFTCARD = 'amasty_giftcard';
+    const AMASTY_GIFTCARD_V2 = 'amgiftcard'; // amasty giftcard 2.13.0 and above have different totals key
     const GIFT_VOUCHER_AFTER_TAX = 'giftvoucheraftertax';
     const GIFT_VOUCHER = 'giftvoucher';
     const GIFT_CARD_ACCOUNT = 'giftcardaccount';
@@ -54,13 +55,13 @@ class Discount extends AbstractHelper
     const MAGEPLAZA_GIFTCARD = 'gift_card';
     const MAGEPLAZA_GIFTCARD_QUOTE_KEY = 'mp_gift_cards';
     const AHEADWORKS_STORE_CREDIT = 'aw_store_credit';
-    
+
     // Bolt discount category
     const BOLT_DISCOUNT_CATEGORY_STORE_CREDIT = 'store_credit';
     const BOLT_DISCOUNT_CATEGORY_COUPON = 'coupon';
     const BOLT_DISCOUNT_CATEGORY_GIFTCARD = 'giftcard';
     const BOLT_DISCOUNT_CATEGORY_AUTO_PROMO = 'automatic_promotion';
-    
+
     // In Magento 2, 0.005 would be converted into 0.01 which is greater than 0 while 0.0049999 would be converted into 0,
     // so we can treat 0.005 as the closest number to zero in M2.
     const MIN_NONZERO_VALUE = 0.005;
@@ -74,7 +75,7 @@ class Discount extends AbstractHelper
      * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Model\GiftcertRepository
      */
     protected $unirgyCertRepository;
-    
+
     /**
      * @var ThirdPartyModuleFactory|\Unirgy\Giftcert\Helper\Data
      */
@@ -109,12 +110,12 @@ class Discount extends AbstractHelper
      * @var LogHelper
      */
     private $logHelper;
-    
+
     /**
      * @var CouponFactory
      */
     protected $couponFactory;
-    
+
     /**
      * @var RuleRepository
      */
@@ -170,7 +171,7 @@ class Discount extends AbstractHelper
         $this->ruleRepository = $ruleRepository;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
     }
-    
+
     /**
      * Collect and update quote totals.
      * @param Quote $quote
@@ -239,7 +240,7 @@ class Discount extends AbstractHelper
 
         return $result;
     }
-    
+
     /**
      * Apply Unirgy Gift Cert to quote
      *
@@ -250,7 +251,7 @@ class Discount extends AbstractHelper
     public function addUnirgyGiftCertToQuote($quote, $giftCard)
     {
         $unirgyHelper = $this->unirgyGiftCertHelper->getInstance();
-        
+
         if ($unirgyHelper) {
             if (empty($quote->getData($giftCard::GIFTCERT_CODE))) {
                 $unirgyHelper->addCertificate(
@@ -304,7 +305,7 @@ class Discount extends AbstractHelper
     {
         $this->eventsForThirdPartyModules->dispatchEvent("applyExternalDiscountData", $quote);
     }
-    
+
     /**
      * Load the coupon data by code
      *
@@ -317,7 +318,7 @@ class Discount extends AbstractHelper
         $coupon = $this->eventsForThirdPartyModules->runFilter("loadCouponCodeData", null, $couponCode);
         return $coupon ?: $this->couponFactory->create()->loadByCode($couponCode);
     }
-    
+
     /**
      * @param string $couponCode
      * @return string
@@ -327,20 +328,20 @@ class Discount extends AbstractHelper
         if ($couponCode == "") {
             return self::BOLT_DISCOUNT_TYPE_FIXED;
         }
-        
+
         try {
             $coupon = $this->loadCouponCodeData($couponCode);
             // Load the coupon discount rule
             $rule = $this->eventsForThirdPartyModules->runFilter("getCouponRelatedRule", null, $coupon)
                     ?: $this->ruleRepository->getById($coupon->getRuleId());
-            
+
             return $this->getBoltDiscountType($rule);
         } catch (\Exception $e) {
             $this->bugsnag->notifyException($e);
             throw $e;
         }
     }
-    
+
     /**
      * @param Magento\SalesRule\Model\Rule $rule
      * @return string
@@ -361,7 +362,7 @@ class Discount extends AbstractHelper
 
         return self::BOLT_DISCOUNT_TYPE_FIXED;
     }
-    
+
     /**
      * Set applied coupon code
      *
