@@ -41,7 +41,7 @@ class GiftCard
      * @var \Magento\Framework\App\ResourceConnection
      */
     private $resourceConnection;
-    
+
     /**
      * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
      */
@@ -126,7 +126,7 @@ class GiftCard
             $currencyCode = $quote->getQuoteCurrencyCode();
             /** @var \Magento\Quote\Model\Quote\Address\Total[] */
             $totals = $quote->getTotals();
-            $totalDiscount = $totals[Discount::AMASTY_GIFTCARD] ?? null;
+            $totalDiscount = $totals[Discount::AMASTY_GIFTCARD] ?? $totals[Discount::AMASTY_GIFTCARD_V2] ?? null;
             $roundedDiscountAmount = 0;
             $discountAmount = 0;
             ///////////////////////////////////////////////////////////////////////////
@@ -180,7 +180,7 @@ class GiftCard
         if ($result !== null) {
             return $result;
         }
-        
+
         try {
             $giftcardAccount = $giftcardAccountFactory->create()->loadByCode($couponCode);
             return $giftcardAccount->getAccountId() ? $giftcardAccount : $result;
@@ -344,7 +344,7 @@ class GiftCard
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * @param Quote $quote
      */
@@ -364,7 +364,7 @@ class GiftCard
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * @param Quote $quote
      */
@@ -375,10 +375,10 @@ class GiftCard
             $giftCardTable = $this->resourceConnection->getTableName('amasty_amgiftcard_quote');
             $quoteTable = $this->resourceConnection->getTableName('quote');
 
-            $sql = "DELETE FROM {$giftCardTable} WHERE quote_id IN 
-                    (SELECT entity_id FROM {$quoteTable} 
+            $sql = "DELETE FROM {$giftCardTable} WHERE quote_id IN
+                    (SELECT entity_id FROM {$quoteTable}
                     WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
-            
+
             $bind = [
                 'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
                 'entity_id' => $quote->getBoltParentQuoteId()
@@ -389,7 +389,7 @@ class GiftCard
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * Remove Amasty Gift Card and update quote totals
      *
@@ -407,7 +407,7 @@ class GiftCard
             $connection->query($sql, ['code_id' => $codeId, 'quote_id' => $quote->getId()]);
 
             $this->discountHelper->updateTotals($quote);
-            
+
         } catch (\Zend_Db_Statement_Exception $e) {
             $this->bugsnagHelper->notifyException($e);
         } catch (\Exception $e) {

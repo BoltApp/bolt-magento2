@@ -45,7 +45,7 @@ class GiftCardAccount
      * @var ResourceConnection
      */
     private $resourceConnection;
-    
+
     /**
      * @var Bolt\Boltpay\Helper\FeatureSwitch\Decider
      */
@@ -123,7 +123,7 @@ class GiftCardAccount
             $currencyCode = $quote->getQuoteCurrencyCode();
             /** @var \Magento\Quote\Model\Quote\Address\Total[] */
             $totals = $quote->getTotals();
-            $totalDiscount = $totals[Discount::AMASTY_GIFTCARD] ?? null;
+            $totalDiscount = $totals[Discount::AMASTY_GIFTCARD] ?? $totals[Discount::AMASTY_GIFTCARD_V2] ?? null;
             $roundedDiscountAmount = 0;
             $discountAmount = 0;
             ///////////////////////////////////////////////////////////////////////////
@@ -138,7 +138,7 @@ class GiftCardAccount
                     $giftcardQuote = $giftcardQuoteRepository->getByQuoteId($quote->getId());
                     foreach ($giftcardQuote->getGiftCards() as $appliedGiftcardData) {
                         $giftcard = $giftcardAccountRepository->getById($appliedGiftcardData['id']);
-                        $amount = abs((float)$giftcard->getCurrentValue());               
+                        $amount = abs((float)$giftcard->getCurrentValue());
                         $giftCardCode = $giftcard->getCodeModel()->getCode();
                         $appliedGiftCardItems[] = [
                             'code' => $giftCardCode,
@@ -149,7 +149,7 @@ class GiftCardAccount
                     $extension = $quote->getExtensionAttributes();
                     $appliedGiftCards = $extension->getAmAppliedGiftCards();
                     foreach ($appliedGiftCards as $appliedGiftCard) {
-                        $amount = abs((float)$appliedGiftCard[\Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardCartProcessor::GIFT_CARD_AMOUNT]);               
+                        $amount = abs((float)$appliedGiftCard[\Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardCartProcessor::GIFT_CARD_AMOUNT]);
                         $giftCardCode = $appliedGiftCard[\Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardCartProcessor::GIFT_CARD_CODE];
                         $appliedGiftCardItems[] = [
                             'code' => $giftCardCode,
@@ -194,7 +194,7 @@ class GiftCardAccount
         if ($result !== null) {
             return $result;
         }
-        
+
         try {
             return $giftcardAccountRepository->getByCode($couponCode);
         } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
@@ -347,7 +347,7 @@ class GiftCardAccount
 
         $connection->commit();
     }
-    
+
     /**
      * @param Quote $quote
      */
@@ -367,7 +367,7 @@ class GiftCardAccount
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * @param Quote $quote
      */
@@ -378,10 +378,10 @@ class GiftCardAccount
             $giftCardTable = $this->resourceConnection->getTableName('amasty_giftcard_quote');
             $quoteTable = $this->resourceConnection->getTableName('quote');
 
-            $sql = "DELETE FROM {$giftCardTable} WHERE quote_id IN 
-                    (SELECT entity_id FROM {$quoteTable} 
+            $sql = "DELETE FROM {$giftCardTable} WHERE quote_id IN
+                    (SELECT entity_id FROM {$quoteTable}
                     WHERE bolt_parent_quote_id = :bolt_parent_quote_id AND entity_id != :entity_id)";
-            
+
             $bind = [
                 'bolt_parent_quote_id' => $quote->getBoltParentQuoteId(),
                 'entity_id' => $quote->getBoltParentQuoteId()
@@ -392,7 +392,7 @@ class GiftCardAccount
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * Remove Amasty Gift Card and update quote totals
      *
@@ -415,7 +415,7 @@ class GiftCardAccount
                     break;
                 }
             }
-            
+
             if ($giftCodeExists) {
                 $amastyGiftCardAccountManagement->removeGiftCardFromCart($quote->getId(), $giftCode);
             }
@@ -423,7 +423,7 @@ class GiftCardAccount
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * Clone the gift card info to the latest updated order.
      *
@@ -448,7 +448,7 @@ class GiftCardAccount
             return $result;
         }
     }
-    
+
     /**
      * Complete the transaction of Amasty Gift Card once the order is created.
      *
