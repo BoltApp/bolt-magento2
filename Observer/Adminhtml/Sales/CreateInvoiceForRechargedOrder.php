@@ -25,6 +25,7 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\Sales\Model\Service\InvoiceService;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
+use Magento\Sales\Model\Order;
 
 class CreateInvoiceForRechargedOrder implements ObserverInterface
 {
@@ -77,6 +78,10 @@ class CreateInvoiceForRechargedOrder implements ObserverInterface
                 if (!$invoice->getEmailSent()) {
                     $this->invoiceSender->send($invoice);
                 }
+
+                $state = $order->getIsVirtual() ? Order::STATE_COMPLETE : Order::STATE_PROCESSING;
+                $order->setState($state);
+                $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
 
                 $msg = __('BOLTPAY INFO :: Invoice created: #%1', $invoice->getIncrementId());
                 $order->addStatusHistoryComment($msg);
