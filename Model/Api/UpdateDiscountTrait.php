@@ -229,11 +229,11 @@ trait UpdateDiscountTrait
             $quote,
             $addQuote
         );
-        
+
         if ($result) {
             return $result;
         }
-        
+
         // get coupon entity id and load the coupon discount rule
         $couponId = $coupon->getId();
         try {
@@ -396,7 +396,7 @@ trait UpdateDiscountTrait
                 $quote
             );
         }
-        
+
         $description = $rule->getDescription();
         $display = $description != '' ? $description : 'Discount (' . $couponCode . ')';
 
@@ -430,9 +430,7 @@ trait UpdateDiscountTrait
                 $quote
             );
 
-            if ($result) {
-                return true;
-            }
+            return (bool)$result;
         } catch (\Exception $e) {
             throw new BoltException(
                 $e->getMessage(),
@@ -440,8 +438,6 @@ trait UpdateDiscountTrait
                 BoltErrorResponse::ERR_SERVICE
             );
         }
-
-        return true;
     }
 
     /**
