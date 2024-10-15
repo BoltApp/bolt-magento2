@@ -69,6 +69,7 @@ class UpgradeSchemaTest extends BoltTestCase
                     'dropColumn',
                     'addIndex',
                     'isTableExists',
+                    'getIndexList',
                     'setComment',
                     'createTable',
                     'newTable',
