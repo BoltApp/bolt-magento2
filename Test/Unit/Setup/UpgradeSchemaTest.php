@@ -221,6 +221,8 @@ class UpgradeSchemaTest extends BoltTestCase
             ->method('isTableExists')
             ->willReturn(true);
 
+        $this->schemaSetup->expects(static::atLeastOnce())->method('getIndexList')->willReturn([]);
+
         $this->schemaSetup->expects(static::once())->method('endSetup');
 
         $this->currentMock->upgrade($this->schemaSetup, $moduleContextMock);
