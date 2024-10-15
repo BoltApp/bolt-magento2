@@ -308,18 +308,18 @@
 - New:
     - Added support for Magento versions 2.4.6-p5 and 2.4.7. Specifically, whitelisted Bolt inline script and style for CSP, ensuring compatibility with the latest Magento security patch.
 - Additional:
-    - Resolved an issue where Magento back-office orders would fail due to incomplete form validation. Now, Bolt checkout popup will not open unless all required fields are filled in.
+    - Fixed an issue where Magento back-office orders would fail due to incomplete form validation. Now, Bolt checkout popup will not open unless all required fields are filled in.
     - Fixed an issue with saving credit card functionality in M2 API. The bug impacted the correct saving of customer payment details.
     - Fixed an issue where Bolt Fetch Cart flow continued even when Bolt was disabled in the Magento admin.
     - Fixed an issue where Bolt Product Page Checkout would fail when a customer’s information was missing, ensuring smoother operations for guest shoppers.
     - Fixed compatibility issues with legacy PHP systems causing Bolt plugin errors after PHP and Bolt module updates.
-    - Corrected a bug where customer payment details were not shown in the frontend for certain orders.
+    - Fixed a bug where customer payment details were not shown in the frontend for certain orders.
     - Stopped unnecessary execution of Bolt cron jobs when the M2 API approach is enabled.
     - Fixed an issue where Amasty Promotion items were not updated correctly in the cart.
     - Fixed an issue where Amasty Gift Card discounts were not applied to orders in Bolt legacy mode.
-    - Addressed an issue where logged-in customers’ first and last names were not autofilled in the Bolt modal, improving the checkout experience.
+    - Fixed an issue where logged-in customers’ first and last names were not autofilled in the Bolt modal, improving the checkout experience.
     - Fixed an issue where session quotes were not properly deactivated, causing multiple orders for the same cart.
-    - Resolved a bug in the order grid where payment method types like ‘Bolt-Visa’ were not shown correctly.
+    - Fixed a bug in the order grid where payment method types like ‘Bolt-Visa’ were not shown correctly.
     - Fixed an issue where multiple store credit reversals occurred due to failed payment authorizations.
     - Resolved a race condition causing the Bolt Product Page button to occasionally fail to render.
 
