@@ -69,6 +69,7 @@ class UpgradeSchemaTest extends BoltTestCase
                     'dropColumn',
                     'addIndex',
                     'isTableExists',
+                    'getIndexList',
                     'setComment',
                     'createTable',
                     'newTable',
@@ -220,6 +221,8 @@ class UpgradeSchemaTest extends BoltTestCase
         $this->schemaSetup->expects(static::atLeastOnce())
             ->method('isTableExists')
             ->willReturn(true);
+
+        $this->schemaSetup->expects(static::atLeastOnce())->method('getIndexList')->willReturn([]);
 
         $this->schemaSetup->expects(static::once())->method('endSetup');
 
