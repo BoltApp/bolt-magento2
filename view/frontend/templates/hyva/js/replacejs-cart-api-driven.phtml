@@ -849,7 +849,7 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                         };
                         // ajax call to the update order transaction data endpoint.
                         // passes the bolt transaction reference
-                        window.fetch(settings.save_order_url, {
+                        window.fetch(window.boltConfig.save_order_url, {
                             signal,
                             "headers": {
                                 "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -922,7 +922,7 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                     onEmailEnter: function(email) {
                         window.boltConfig.trackCallbacks.onEmailEnter(email);
                         if (BoltCheckoutApiDriven.boltCallbacks.email !== email) {
-                            window.fetch(settings.save_email_url, {
+                            window.fetch(window.boltConfig.save_email_url, {
                                 "headers": {
                                     "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
                                 },
