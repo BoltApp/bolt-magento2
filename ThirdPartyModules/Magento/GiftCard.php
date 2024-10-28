@@ -40,7 +40,7 @@ class GiftCard
      */
     public function __construct(
         Bugsnag  $bugsnagHelper,
-        Escaper $escaper,
+        Escaper $escaper
     ) {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->escaper = $escaper;
