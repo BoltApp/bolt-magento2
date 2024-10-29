@@ -56,8 +56,10 @@ class GiftCard
         $item
     ) {
         try {
+            $giftCardType = defined('\Magento\GiftCard\Model\Catalog\Product\Type\Giftcard::TYPE_GIFTCARD') ?
+                                \Magento\GiftCard\Model\Catalog\Product\Type\Giftcard::TYPE_GIFTCARD : 'giftcard';
             $productType = $item instanceof Item ? $item->getProductType() : $item->getTypeId();
-            if ($productType == \Magento\GiftCard\Model\Catalog\Product\Type\Giftcard::TYPE_GIFTCARD) {
+            if ($productType == $giftCardType) {
                 $allowedOptions = [
                     'giftcard_sender_name',
                     'giftcard_recipient_name',
