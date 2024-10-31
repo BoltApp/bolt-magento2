@@ -24,7 +24,7 @@
 if ($block->shouldDisableBoltCheckout()) { return;
 }
 ?>
-<div id="bolt-modal" style="display:none;">
+<div id="bolt-modal" style="display:none;" data-mage-init='{"Bolt_Boltpay/js/view/popup": {}}'>
     <div class="bolt-modal-content" data-role="content"></div>
 </div>
 <?php
@@ -48,33 +48,3 @@ $styles = <<<STYLE
 STYLE;
 ?>
 <?= /* @noEscape */ $secureRenderer->renderTag('style', [], $styles, false) ?>
-
-<?php $scriptString = <<<script
-var boltErrorPopup;
-require(
-    [
-        'jquery',
-        'Magento_Ui/js/modal/modal'
-    ],
-    function($, modal) {
-        var options = {
-            type: 'popup',
-            responsive: true,
-            innerScroll: true,
-            modalClass: 'bolt-error-modal',
-            title: '',
-            buttons: [{
-                text: $.mage.__('Close'),
-                class: 'bolt-error-close-button',
-                click: function () {
-                    this.closeModal();
-                }
-            }]
-        };
-
-        boltErrorPopup = modal(options, $('#bolt-modal'));
-    }
-);
-script;
-?>
-<?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptString, false) ?>

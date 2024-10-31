@@ -31,7 +31,7 @@ define([], function () {
      * @param {Function} callback function to be called when {@see property} gets defined on {@see object}
      * @param {null} key deprecated parameter used for setting multiple callbacks per property
      */
-    function whenDefined (object, property, callback, key) {
+    window.whenDefined = function (object, property, callback, key) {
         if (object.hasOwnProperty(property) && typeof object[property] !== 'undefined') {
             callback();
             return;
@@ -72,6 +72,5 @@ define([], function () {
         }
         whenDefinedCallbacks.get(object).get(property).set(key, callback);
     }
-
-    return whenDefined;
+    return window.whenDefined;
 });
