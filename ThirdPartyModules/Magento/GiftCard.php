@@ -20,7 +20,6 @@ namespace Bolt\Boltpay\ThirdPartyModules\Magento;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\Escaper;
 use Magento\Quote\Model\Quote\Item;
-use Magento\GiftCard\Model\Catalog\Product\Type\Giftcard;
 
 class GiftCard
 {
@@ -58,7 +57,7 @@ class GiftCard
     ) {
         try {
             $productType = $item instanceof Item ? $item->getProductType() : $item->getTypeId();
-            if ($productType == Giftcard::TYPE_GIFTCARD) {
+            if ($productType == \Magento\GiftCard\Model\Catalog\Product\Type\Giftcard::TYPE_GIFTCARD) {
                 $allowedOptions = [
                     'giftcard_sender_name',
                     'giftcard_recipient_name',

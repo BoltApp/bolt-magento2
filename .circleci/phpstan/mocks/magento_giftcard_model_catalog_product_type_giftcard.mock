@@ -1,0 +1,8 @@
+<?php
+namespace Magento\GiftCard\Model\Catalog\Product\Type {
+    class Giftcard{
+        const TYPE_GIFTCARD = 'giftcard';
+    };
+}
+
+
