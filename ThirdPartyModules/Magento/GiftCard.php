@@ -20,7 +20,7 @@ namespace Bolt\Boltpay\ThirdPartyModules\Magento;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\Escaper;
 use Magento\Quote\Model\Quote\Item;
-use Magento\GiftCard\Model\Catalog\Product\Type\Giftcard
+use Magento\GiftCard\Model\Catalog\Product\Type\Giftcard;
 
 class GiftCard
 {
