@@ -18,7 +18,8 @@
 /**
  * Track and Connect js template
  *
- * @var $block \Bolt\Boltpay\Block\Js
+ * @var \Bolt\Boltpay\Block\Js $block
+ * @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer
  */
 if ($block->shouldDisableBoltCheckout()) {
     return;
@@ -32,75 +33,16 @@ if (!$block->featureSwitches->isInitializeBoltCustomSsoButtons()) {
     return;
 }
 
-$customSSOSelectors = $block->getCustomSSOSelectors();
+$customSSOSelectors = json_encode($block->getCustomSSOSelectors());
 ?>
-<script>
-    var boltSSOCustomClass = 'bolt-sso-custom';
-    require(['Bolt_Boltpay/js/utils/when-defined'], function (whenDefined) {
-    whenDefined(window, 'BoltAccount', function () {
-        var selectors = <?php echo json_encode($customSSOSelectors); ?>;
-
-        /**
-         * Converts all present elements matching {@see loginSelectors} and {@see logoutSelectors}
-         * to custom Bolt SSO buttons
-         */
-        function initializeBoltSSOCustomLinks () {
-            var selectorConfig, link, linkIndex, links, selector;
-            for (selector in selectors) {
-                links = document.querySelectorAll(selector);
-                for (linkIndex = 0; linkIndex < links.length; linkIndex++) {
-                    link = links[linkIndex];
-                    selectorConfig = selectors[selector];
-                    if (selectorConfig.hasOwnProperty('logout') && selectorConfig.logout) {
-                        link.setAttribute('data-logged-in', 'true');
-                    }
-                    if (selectorConfig.hasOwnProperty('redirect') && selectorConfig.redirect) {
-                        link.setAttribute('data-destination-on-success', selectorConfig.redirect);
-                    }
-
-                    link.removeAttribute('href');
-                    link.removeAttribute('data-post');
-
-                    // add {@see boltSSOCustomClass} only once
-                    link.setAttribute(
-                        'class',
-                        (link.getAttribute('class') ?? '').replace(boltSSOCustomClass, '') + ' ' + boltSSOCustomClass
-                    );
-                    link.setAttribute('style', 'cursor:pointer;');
-                }
+<?php $scriptString = <<<script
+    {
+        "*": {
+            "Bolt_Boltpay/js/view/custom-sso-buttons": {
+                "selectors": "{$customSSOSelectors}"
             }
-            BoltAccount.injectButtons();
         }
-
-        initializeBoltSSOCustomLinks();
-        require(['domReady!'], initializeBoltSSOCustomLinks);
-
-        require(['jquery'], function ($) {
-
-            /**
-             * Handles buttons matching configured selectors that weren't converted to Custom Bolt SSO buttons
-             */
-            $(document).on('click', Object.keys(selectors).join(','), function (e) {
-                if ($(e.currentTarget).hasClass(boltSSOCustomClass)) {
-                    return;
-                }
-                var redirect;
-                for (var selector in selectors) {
-                    if (e.currentTarget.matches(selector)) {
-                        var selectorConfig = selectors[selector];
-                        if (selectorConfig.hasOwnProperty('redirect') && selectorConfig.redirect) {
-                            redirect = selectorConfig.redirect;
-                        }
-                        if (selectorConfig.hasOwnProperty('logout') && selectorConfig.logout) {
-                            BoltAccount.logoutButtonClicked(redirect);
-                        } else {
-                            BoltAccount.loginButtonClicked(redirect);
-                        }
-                        return false; // event stop propagation and prevent default
-                    }
-                }
-            });
-        });
-    });
-    });
-</script>
+    }
+script;
+?>
+<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/x-magento-init'], $scriptString, false) ?>

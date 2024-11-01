@@ -17,7 +17,7 @@
 /**
  * Product page Bolt Checkout button
  *
- * @var $block \Bolt\Boltpay\Block\JsProductPage
+ * @var \Bolt\Boltpay\Block\JsProductPage $block
  * @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer
  */
 if ($block->shouldDisableBoltCheckout()) { return;
@@ -86,7 +86,7 @@ $childGroupedProducts = json_encode($childGroupedProducts);
 <?php $scriptString = <<<script
     {
         "*": {
-            "Bolt_Boltpay/js/view/pdpButton": {
+            "Bolt_Boltpay/js/view/pdp-button": {
                 "isGuestCheckoutAllowed": "{$isGuestCheckoutAllowed}",
                 "itemPrice": "{$itemPrice}",
                 "storeId": "{$storeId}",

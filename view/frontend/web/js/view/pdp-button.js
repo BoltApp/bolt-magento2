@@ -49,32 +49,32 @@ define([
         },
 
         _init: function () {
-            var customer = customerData.get('customer');
-            var isGuestCheckoutAllowed = this.options.isGuestCheckoutAllowed;
-            var itemPrice = this.options.itemPrice;
-            var storeId = this.options.storeId;
-            var currency = this.options.currency;
-            var productId = this.options.productId;
-            var productSku = this.options.productSku;
-            var productName = this.options.productName;
-            var productType = this.options.productType;
-            var basePrice = this.options.basePrice;
-            var isGrouped = this.options.isGrouped;
-            var isBoltOrderCachingEnabled = this.options.isBoltOrderCachingEnabled;
-            var childGroupedProducts = this.options.childGroupedProducts;
-            var isSaveHintsInSections = this.options.isSaveHintsInSections;
-            var isExtendWarrantyModuleEnabled = this.options.isExtendWarrantyModuleEnabled;
-            var cart;
+            let customer = customerData.get('customer');
+            let isGuestCheckoutAllowed = this.options.isGuestCheckoutAllowed;
+            let itemPrice = this.options.itemPrice;
+            let storeId = this.options.storeId;
+            let currency = this.options.currency;
+            let productId = this.options.productId;
+            let productSku = this.options.productSku;
+            let productName = this.options.productName;
+            let productType = this.options.productType;
+            let basePrice = this.options.basePrice;
+            let isGrouped = this.options.isGrouped;
+            let isBoltOrderCachingEnabled = this.options.isBoltOrderCachingEnabled;
+            let childGroupedProducts = this.options.childGroupedProducts;
+            let isSaveHintsInSections = this.options.isSaveHintsInSections;
+            let isExtendWarrantyModuleEnabled = this.options.isExtendWarrantyModuleEnabled;
+            let cart;
 
-            var settings = window.boltConfig;
-            var trackCallbacks = settings.trackCallbacks;
+            let settings = window.boltConfig;
+            let trackCallbacks = settings.trackCallbacks;
 
             // On multiple checkout open/close actions the success event remains registered
             // resulting in making the success call multiple times. This variable stores
             // the last request to be aborted before new one is sent.
-            var save_request;
+            let save_request;
 
-            var callbacks = {
+            let callbacks = {
 
                 close: function () {
                     trackCallbacks.onClose();
@@ -113,7 +113,7 @@ define([
                      * param object data    response from the non-preauth order/save controller, optional
                      * return void
                      */
-                    var processSuccess = function (data) {
+                    let processSuccess = function (data) {
                         customerData.invalidate(['bolthints']);
                         try {
                             if (typeof data !== 'undefined') {
@@ -133,14 +133,14 @@ define([
                     // abort previously sent save order request.
                     if (save_request) save_request.abort();
                     // get thr transaction reference
-                    var parameters = [];
+                    let parameters = [];
                     parameters.push('form_key=' + $('[name="form_key"]').val());
                     parameters.push('reference=' + transaction.reference);
                     parameters = parameters.join('&');
                     // update order ajax request callback
                     // sets the success order page redirect url from received data
                     // and calls the final Bolt defined callback
-                    var onSuccess = function(data){
+                    let onSuccess = function(data){
                         if (data.status !== 'success') {
                             if (data.message) {
                                 showBoltErrorMessage('', data.reference);
@@ -164,12 +164,12 @@ define([
                         extendWarrantyCollectPlans();
                     }
 
-                    var showBoltSSOPopup = function() {
+                    let showBoltSSOPopup = function() {
                         // set a cookie for auto opening Bolt checkout after login
                         $('#bolt-sso-popup .bolt-account-sso [data-tid="shopperDashboardButton"]').click();
                     }
 
-                    var showMagentoAuthenticationPopup = function () {
+                    let showMagentoAuthenticationPopup = function () {
                         authenticationPopup.showModal();
                     }
 
@@ -206,7 +206,7 @@ define([
                     if (isBoltOrderCachingEnabled) {
                         //if order caching is enabled cart request must contain a valid form key
                         try {
-                            var options = cart['items'][0]['options'];
+                            let options = cart['items'][0]['options'];
                             if (!JSON.parse(options)['form_key']) {
                                 return false;
                             }
@@ -226,27 +226,27 @@ define([
                 }
             };
 
-            var getQty = function() {
-                var quantity = Number($('#qty').val());
+            let getQty = function() {
+                let quantity = Number($('#qty').val());
                 return quantity > 0 ? quantity : 1;
             };
 
-            var getGroupedProductChildQty = function(productId) {
+            let getGroupedProductChildQty = function(productId) {
                 return Number($('input[name="super_group['+productId+']').val());
             };
 
             if (isSaveHintsInSections) {
-                var hintsSection = customerData.get('bolthints');
-                var hints = hintsSection.data !== undefined ? hintsSection.data : {};
+                let hintsSection = customerData.get('bolthints');
+                let hints = hintsSection.data !== undefined ? hintsSection.data : {};
                 customerData.get('bolthints').subscribe(function (newValue) {
-                    var newHints = newValue.data !== undefined ? newValue.data : {};
+                    let newHints = newValue.data !== undefined ? newValue.data : {};
                     if (JSON.stringify(newHints) !== JSON.stringify(hints)) {
                         hints = newHints;
                         setupProductPage();
                     }
                 });
             } else {
-                var hints = new Promise(function (resolve, reject) {
+                let hints = new Promise(function (resolve, reject) {
                     $.get(settings.get_hints_url)
                         .done(function (data) {
                             resolve(data.hints);
@@ -261,19 +261,19 @@ define([
                 });
             }
 
-            var getItemsData = function (additionalData) {
-                var options = {};
-                var compositeAttributes = ['super_attribute', 'options', 'bundle_option', 'bundle_option_qty'];
-                var checkboxAttributes = ['links'];
-                var formData = $("#product_addtocart_form").serializeArray();
+            let getItemsData = function (additionalData) {
+                let options = {};
+                let compositeAttributes = ['super_attribute', 'options', 'bundle_option', 'bundle_option_qty'];
+                let checkboxAttributes = ['links'];
+                let formData = $("#product_addtocart_form").serializeArray();
                 $.each( formData, function( key, input ) {
-                    var name = input.name, value = input.value;
-                    var matchResult;
-                    for (var index in compositeAttributes) {
+                    let name = input.name, value = input.value;
+                    let matchResult;
+                    for (let index in compositeAttributes) {
                         if (!compositeAttributes.hasOwnProperty(index)) {
                             continue;
                         }
-                        var compositeAttribute = compositeAttributes[index];
+                        let compositeAttribute = compositeAttributes[index];
                         if (matchResult = name.match(compositeAttribute+'\\[(\\d+)\\]')) {
                             if (!(compositeAttribute in options)) {
                                 options[compositeAttribute] = {};
@@ -287,11 +287,11 @@ define([
                             return;
                         }
                     }
-                    for (var index in checkboxAttributes) {
+                    for (let index in checkboxAttributes) {
                         if (!checkboxAttributes.hasOwnProperty(index)) {
                             continue;
                         }
-                        var checkboxAttribute = checkboxAttributes[index];
+                        let checkboxAttribute = checkboxAttributes[index];
                         if (name === checkboxAttribute+'[]') {
                             if (!(checkboxAttribute in options)) {
                                 options[checkboxAttribute] = [];
@@ -312,15 +312,15 @@ define([
                 }
 
                 options['storeId'] = storeId;
-                var formKey = $.mage.cookies.get('form_key');
+                let formKey = $.mage.cookies.get('form_key');
                 if (!formKey && $('[name="form_key"]').length) {
                     formKey = $('[name="form_key"]').val();
                 }
                 options['form_key'] = formKey;
-                var items = [];
+                let items = [];
                 if (isGrouped) {
                     childGroupedProducts.forEach((childProduct) => {
-                        var childProductQty = getGroupedProductChildQty(childProduct.id);
+                        let childProductQty = getGroupedProductChildQty(childProduct.id);
                         if (childProductQty > 0) {
                             items.push({
                                 reference: childProduct.id,
@@ -347,7 +347,7 @@ define([
             };
 
 
-            var setupProductPage = function (additionalData) {
+            let setupProductPage = function (additionalData) {
                 cart = {
                     currency: currency,
                     items: getItemsData(additionalData)
@@ -361,7 +361,7 @@ define([
             if (isExtendWarrantyModuleEnabled) {
                 // Extend_Warranty 3-th party module support
                 // collecting selected warranty plans and add as additional product options in request
-                var extendWarrantyCollectPlans = function () {
+                let extendWarrantyCollectPlans = function () {
                     // check if Extend_Warranty global variable = "Extend" is defined
                     if (window.Extend === undefined || window.Extend.buttons === undefined) {
                         return;
@@ -421,7 +421,7 @@ define([
             // The properties are added / updated on custom
             // options change in updatePrice event listened below.
             // The final item price is the sum of all prices stored here.
-            var itemPrices = {
+            let itemPrices = {
                 basePrice: basePrice
         };
 
@@ -430,7 +430,7 @@ define([
              * @param obj
              * @returns {number}
              */
-            var sum = function (obj) {
+            let sum = function (obj) {
                 return Object.keys(obj).reduce(
                     function(sum,key) {
                         return sum+(parseFloat(obj[key])||0);
@@ -442,11 +442,11 @@ define([
                 if (data) {
                     // the name of the property that holds the price data
                     // varies depending on the product type, eg. prices, options
-                    for (var index in data) {
+                    for (let index in data) {
                         if (!data.hasOwnProperty(index) || !data[index].hasOwnProperty('finalPrice')) {
                             continue;
                         }
-                        var finalPrice = data[index].finalPrice;
+                        let finalPrice = data[index].finalPrice;
                         itemPrices[index] =
                             finalPrice && typeof finalPrice === 'object' && finalPrice.amount ? finalPrice.amount : 0;
                         itemPrice = sum(itemPrices);
