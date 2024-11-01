@@ -58,6 +58,7 @@ use Bolt\Boltpay\ThirdPartyModules\Amasty\Promo as Amasty_Promo;
 use Bolt\Boltpay\ThirdPartyModules\Mexbs\Tieredcoupon as Mexbs_Tieredcoupon;
 use Bolt\Boltpay\ThirdPartyModules\Magento\CompanyPayment as Magento_CompanyPayment;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Affiliate as Amasty_Affiliate;
+use Bolt\Boltpay\ThirdPartyModules\Magento\GiftCard as Magento_GiftCard;
 use Exception;
 
 class EventsForThirdPartyModules
@@ -1384,6 +1385,17 @@ class EventsForThirdPartyModules
                     'module'      => 'Magento_CompanyPayment',
                     'sendClasses' => ['Magento\CompanyPayment\Model\Payment\Checks\CanUseForCompany'],
                     'boltClass'   => Magento_CompanyPayment::class,
+                ],
+            ],
+        ],
+        'filterCartItemsProperties' => [
+            "listeners" => [
+                [
+                    "module" => "Magento_GiftCard",
+                    "checkClasses" => [
+                        "Magento\GiftCard\Model\Giftcard",
+                    ],
+                    "boltClass" => Magento_GiftCard::class,
                 ],
             ],
         ],

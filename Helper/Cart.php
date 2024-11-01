@@ -1654,6 +1654,12 @@ class Cart extends AbstractHelper
                     $properties[] = $attribute;
                 }
 
+                $properties = $this->eventsForThirdPartyModules->runFilter(
+                    'filterCartItemsProperties',
+                    $properties,
+                    $item
+                );
+
                 if ($properties) {
                     $product['properties'] = $properties;
                 }
