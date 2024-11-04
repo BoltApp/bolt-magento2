@@ -235,9 +235,10 @@ define([
                 return Number($('input[name="super_group['+productId+']').val());
             };
 
+            let hints = null;
             if (isSaveHintsInSections) {
                 let hintsSection = customerData.get('bolthints');
-                let hints = hintsSection.data !== undefined ? hintsSection.data : {};
+                hints = hintsSection.data !== undefined ? hintsSection.data : {};
                 customerData.get('bolthints').subscribe(function (newValue) {
                     let newHints = newValue.data !== undefined ? newValue.data : {};
                     if (JSON.stringify(newHints) !== JSON.stringify(hints)) {
@@ -246,7 +247,7 @@ define([
                     }
                 });
             } else {
-                let hints = new Promise(function (resolve, reject) {
+                hints = new Promise(function (resolve, reject) {
                     $.get(settings.get_hints_url)
                         .done(function (data) {
                             resolve(data.hints);
