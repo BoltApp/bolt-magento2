@@ -3795,32 +3795,6 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
-    public function validateCaptureAmount_captureAmountAndGrandTotalMismatch_throwsException()
-    {
-        $order = TestUtils::createDumpyOrder([
-            'total_invoiced' => 200,
-            'grand_total' => 100,
-            'increment_id' => '100000008'
-        ]);
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage(sprintf(
-            'Capture amount is invalid: capture amount [%s], previously captured [%s], grand total [%s]',
-            10000,
-            20000,
-            10000
-        ));
-        TestHelper::invokeMethod($this->orderHelper, 'validateCaptureAmount', [$order, 100]);
-        TestUtils::cleanupSharedFixtures([$order]);
-    }
-
-    /**
-     * @test
-     *
-     * @covers ::validateCaptureAmount
-     *
-     * @throws ReflectionException
-     */
     public function validateCaptureAmount_captureAmountAndGrandTotalMatch_doesNothing()
     {
 

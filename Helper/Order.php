@@ -2356,14 +2356,18 @@ class Order extends AbstractHelper
         if (!$this->featureSwitches->isIgnoreHookForInvoiceCreationEnabled() && ($this->isCaptureHookRequest($newCapture) || $this->isZeroAmountHook($transactionState))) {
             $currencyCode = $order->getOrderCurrencyCode();
             $this->validateCaptureAmount($order, CurrencyUtils::toMajor($amount, $currencyCode));
-            $notify = $this->scopeConfig->isSetFlag(
-                InvoiceEmailIdentity::XML_PATH_EMAIL_ENABLED,
-                ScopeInterface::SCOPE_STORE,
-                $order->getStoreId());
-            $invoice = $this->createOrderInvoice($order, CurrencyUtils::toMajor($amount, $currencyCode), $notify, $realTransactionId);
+            $captureAmount = $this->prepareCaptureAmountForInvoice($order, CurrencyUtils::toMajor($amount, $currencyCode));
+            if ($captureAmount > 0) {
+                $notify = $this->scopeConfig->isSetFlag(
+                    InvoiceEmailIdentity::XML_PATH_EMAIL_ENABLED,
+                    ScopeInterface::SCOPE_STORE,
+                    $order->getStoreId());
+                $invoice = $this->createOrderInvoice($order, $captureAmount, $notify, $realTransactionId);
+            }
             $payment->setAdditionalInformation(
                 array_merge((array)$payment->getAdditionalInformation(), ['captures' => implode(',', $processedCaptures)])
             );
+
         }
 
         if (!$order->getTotalDue()) {
@@ -2615,49 +2619,27 @@ class Order extends AbstractHelper
         if (!isset($captureAmount) || !is_numeric($captureAmount) || $captureAmount < 0) {
             throw new \Exception(__('Capture amount is invalid'));
         }
+    }
 
+    /**
+     * @param OrderInterface $order
+     * @param $captureAmount
+     * @return int|mixed
+     * @throws \Exception
+     */
+    protected function prepareCaptureAmountForInvoice(OrderInterface $order, $captureAmount)
+    {
         $currencyCode = $order->getOrderCurrencyCode();
-        // Due to grand total sent to Bolt is rounded, the same operation should be used when validating captured amount.
-        // Rounding operations are applied to each operand in order to avoid cases when the grand total
-        // is formally less (before it has been rounded) than the sum of the captured amount and the total invoiced.
         $previouslyCaptured = CurrencyUtils::toMinor($order->getTotalInvoiced(), $currencyCode);
         $captureAmountMinor = CurrencyUtils::toMinor($captureAmount, $currencyCode);
         $totalInvoicedAfterCurrentCapture = $previouslyCaptured + $captureAmountMinor;
         $grandTotal = CurrencyUtils::toMinor($order->getGrandTotal(), $currencyCode);
 
         if ($totalInvoicedAfterCurrentCapture > $grandTotal) {
-            $this->bugsnag->registerCallback(
-                function (\Bugsnag\Report $report) use ($order, $grandTotal, $totalInvoicedAfterCurrentCapture, $previouslyCaptured, $captureAmount) {
-                    /** @var \Magento\Sales\Model\Order $order */
-                    $report->addMetaData(
-                        [
-                            'Capture amount validation' => [
-                                'capture amount'                       => $captureAmount,
-                                'previously captured'                  => $previouslyCaptured,
-                                'total invoiced after current capture' => $totalInvoicedAfterCurrentCapture,
-                                'grand total'                          => $grandTotal,
-                                'invoices data'                        => $order->getInvoiceCollection()->getData()
-                            ]
-                        ]
-                    );
-                }
-            );
-            if ($previouslyCaptured == $captureAmountMinor) {
-                throw new \Exception(
-                    __(
-                        'The same capture amount was already invoiced'
-                    )
-                );
-            }
-            throw new \Exception(
-                __(
-                    'Capture amount is invalid: capture amount [%1], previously captured [%2], grand total [%3]',
-                    $captureAmountMinor,
-                    $previouslyCaptured,
-                    $grandTotal
-                )
-            );
+            $captureAmount = CurrencyUtils::toMajor($grandTotal - $previouslyCaptured, $currencyCode);
         }
+
+        return $captureAmount;
     }
 
     /**
