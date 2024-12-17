@@ -981,7 +981,7 @@ class Order extends AbstractHelper
         ///////////////////////////////////////////////////////////////
         $immutableQuote = $this->cartHelper->getQuoteById($quoteId);
         if (!$immutableQuote && $parentQuoteId) {
-            // if the immutable quote ID is not found, attempt to load the original quote and use it as immutable.
+            // if the immutable quote is not found, attempt to load the original quote and use it as immutable.
             $immutableQuote = $this->cartHelper->getQuoteById($parentQuoteId);
         }
 
