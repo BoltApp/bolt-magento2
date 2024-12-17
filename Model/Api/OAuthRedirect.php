@@ -189,6 +189,9 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param EmailNotification $emailNotification
      * @param CartManagementInterface $cartManagement
      * @param CartRepositoryInterface $cartRepository
+     * @param SessionConfigInterface $sessionConfig
+     * @param FormKey $formKey
+     * @param CookieFormKey $cookieFormKey
      */
     public function __construct(
         Response $response,
@@ -505,6 +508,17 @@ class OAuthRedirect implements OAuthRedirectInterface
         }
 
         $redirectUrl = $this->url->getUrl('customer/account');
+
+        // redirect to the wishlist or any other action that required login before the user logged in.
+        if ($this->customerSession->getBeforeRequestParams()) {
+            $redirectUrl = $this->url->getUrl(
+                $this->customerSession->getBeforeModuleName() . '/' .
+                $this->customerSession->getBeforeControllerName() . '/' .
+                $this->customerSession->getBeforeAction(),
+                $this->customerSession->getBeforeRequestParams()
+            );
+        }
+
         $checkoutSession = $this->sessionHelper->getCheckoutSession();
 
         if (
@@ -516,6 +530,7 @@ class OAuthRedirect implements OAuthRedirectInterface
                 $redirectUrl = $this->url->getUrl('checkout/cart');
             }
         }
+
         $this->response->setRedirect($redirectUrl)->sendResponse();
     }
 
