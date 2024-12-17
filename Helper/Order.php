@@ -980,6 +980,10 @@ class Order extends AbstractHelper
         // prevent failure and log event to bugsnag.
         ///////////////////////////////////////////////////////////////
         $immutableQuote = $this->cartHelper->getQuoteById($quoteId);
+        if (!$immutableQuote && $parentQuoteId) {
+            // if the immutable quote ID is not found, attempt to load the original quote and use it as immutable.
+            $immutableQuote = $this->cartHelper->getQuoteById($parentQuoteId);
+        }
 
         if (!$immutableQuote) {
             $this->bugsnag->registerCallback(function ($report) use ($incrementId, $quoteId, $storeId) {
