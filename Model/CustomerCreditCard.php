@@ -57,15 +57,14 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
     private $cartHelper;
 
     /**
-     * CustomerCreditCard constructor.
      * @param \Magento\Framework\Model\Context $context
      * @param \Magento\Framework\Registry $registry
-     * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
-     * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
      * @param ConfigHelper $configHelper
      * @param DataObjectFactory $dataObjectFactory
      * @param ApiHelper $apiHelper
      * @param CartHelper $cartHelper
+     * @param \Magento\Framework\Model\ResourceModel\AbstractResource|null $resource
+     * @param \Magento\Framework\Data\Collection\AbstractDb|null $resourceCollection
      * @param array $data
      */
     public function __construct(
@@ -120,7 +119,11 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
                     "display_id" =>  $order->getIncrementId(),
                     'order_reference' => $order->getQuoteId(),
                     'total_amount' => CurrencyUtils::toMinor($order->getGrandTotal(), $orderCurrency),
+                    'tax_amount' => CurrencyUtils::toMinor($order->getTaxAmount(), $orderCurrency),
                     'currency' => $orderCurrency,
+                    'items' => $this->getOrderItems($order),
+                    'shipments' => $this->getOrderShipments($order),
+                    'discounts' => $this->getOrderDiscounts($order)
                 ],
                 'source' => 'direct_payments'
             ]
@@ -140,6 +143,87 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
         }
 
         return $response;
+    }
+
+    /**
+     * Get order discounts
+     *
+     * @param OrderModel $order
+     * @return array
+     * @throws \Exception
+     */
+    public function getOrderDiscounts(OrderModel $order)
+    {
+        $discountAmount = $order->getDiscountAmount() * -1;
+
+        if ($discountAmount <= 0) {
+            return [];
+        }
+
+        return [
+            [
+                'amount' => CurrencyUtils::toMinor($discountAmount, $order->getOrderCurrencyCode()),
+                'code' => $order->getCouponCode(),
+                'discount_category' => ($order->getCouponCode()) ? 'coupon' : 'automatic_promotion',
+                'type' => ($order->getCouponCode()) ? 'coupon' : 'automatic_promotion'
+            ]
+        ];
+    }
+
+    /**
+     * Get order shipments
+     *
+     * @param OrderModel $order
+     * @return array
+     * @throws \Exception
+     */
+    public function getOrderShipments(OrderModel $order)
+    {
+        if ($order->getIsVirtual() || !$order->getShippingAddress()) {
+            return [];
+        }
+
+        return [
+            [
+                'cost' => CurrencyUtils::toMinor($order->getShippingAmount(), $order->getOrderCurrencyCode()),
+                'carrier' => $order->getShippingDescription(),
+                'shipping_address' => [
+                    'first_name' => $order->getShippingAddress()->getFirstname(),
+                    'last_name' => $order->getShippingAddress()->getLastname(),
+                    'street_address1' => $order->getShippingAddress()->getStreetLine(1),
+                    'street_address2' => $order->getShippingAddress()->getStreetLine(2),
+                    'region' => $order->getShippingAddress()->getRegion(),
+                    'region_code' => $order->getShippingAddress()->getRegion(),
+                    'phone' => $order->getShippingAddress()->getTelephone(),
+                    'country_code' => $order->getShippingAddress()->getCountryId(),
+                    'postal_code' => $order->getShippingAddress()->getPostcode(),
+                    'locality' => $order->getShippingAddress()->getCity(),
+                    'email' => $order->getShippingAddress()->getEmail()
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get order items
+     *
+     * @param OrderModel $order
+     * @return array
+     * @throws \Exception
+     */
+    public function getOrderItems(OrderModel $order)
+    {
+        $items = [];
+        foreach ($order->getAllVisibleItems() as $item) {
+            $items[] = [
+                'sku' => $item->getSku(),
+                'name' => $item->getName(),
+                'total_amount' => CurrencyUtils::toMinor($item->getRowTotal(), $order->getOrderCurrencyCode()),
+                'unit_price' => CurrencyUtils::toMinor($item->getPrice(), $order->getOrderCurrencyCode()),
+                'quantity' => $item->getQtyOrdered()
+            ];
+        }
+        return $items;
     }
 
     /**
