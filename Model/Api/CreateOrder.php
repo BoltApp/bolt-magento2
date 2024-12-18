@@ -287,7 +287,7 @@ class CreateOrder implements CreateOrderInterface
             $this->sendResponse(422, [
                 'status' => 'failure',
                 'error' => [[
-                    'code' => 6009,
+                    'code' => ($e->getMessage() && $this->isCustomOutOfStockMsg($e->getMessage())) ? self::E_BOLT_ITEM_OUT_OF_INVENTORY : 6009,
                     'data' => [[
                         'reason' => 'Unprocessable Entity: ' . $e->getMessage(),
                     ]]
@@ -838,5 +838,14 @@ class CreateOrder implements CreateOrderInterface
     protected function getTotalAmountFromTransaction($transaction)
     {
         return $transaction->order->cart->total_amount->amount;
+    }
+
+    /**
+     * @param $msg
+     * @return bool
+     */
+    protected function isCustomOutOfStockMsg($msg)
+    {
+        return strpos(strtolower($msg), 'out of stock') !== false;
     }
 }
