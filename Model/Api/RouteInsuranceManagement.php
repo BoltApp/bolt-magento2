@@ -124,7 +124,7 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
         {
             throw new WebapiException(__('Quote does not found by given ID'), 0, WebapiException::HTTP_NOT_FOUND);
         }
-        $this->setRouteAndQuoteDataToSession($cartId, $routeIsInsured);
+        $this->setRouteAndQuoteDataToSession($cartId, $quote, $routeIsInsured);
         $quote->collectTotals();
         $this->quoteRepository->save($quote);
 
@@ -134,12 +134,12 @@ class RouteInsuranceManagement implements \Bolt\Boltpay\Api\RouteInsuranceManage
         ];
     }
 
-    private function setRouteAndQuoteDataToSession($cartId, $routeIsInsured)
+    private function setRouteAndQuoteDataToSession($cartId, $quote, $routeIsInsured)
     {
+        $isInsured = filter_var($routeIsInsured, FILTER_VALIDATE_BOOLEAN);
         $this->checkoutSession->setQuoteId($cartId);
-        $this->checkoutSession->setInsured(
-            filter_var($routeIsInsured, FILTER_VALIDATE_BOOLEAN)
-        );
+        $this->checkoutSession->setInsured($isInsured);
+        $quote->setRouteIsInsured($isInsured);
     }
 
     private function getResponseMessage($routeIsInsured) {
