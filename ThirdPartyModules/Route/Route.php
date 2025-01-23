@@ -25,6 +25,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
+use Magento\Quote\Model\QuoteRepository;
 
 /**
  * Class Route
@@ -35,43 +36,51 @@ class Route
 {
     const ROUTE_PRODUCT_ID = 'ROUTEINS';
     const ROUTE_FEE = 'route_fee';
-    
+
     /**
      * @var CacheInterface
      */
     private $cache;
-    
+
     /**
      * @var BoltSession
      */
     private $boltSessionHelper;
-    
+
     /**
      * @var State
      */
     private $appState;
-    
+
     /**
      * @var Bugsnag Bugsnag helper instance
      */
     private $bugsnagHelper;
 
     /**
-     * @param CacheInterface  $cache
-     * @param BoltSession     $boltSessionHelper
-     * @param State           $appState
-     * @param Bugsnag         $bugsnagHelper
+     * @var QuoteRepository
+     */
+    private $quoteRepository;
+
+    /**
+     * @param CacheInterface $cache
+     * @param BoltSession $boltSessionHelper
+     * @param State $appState
+     * @param Bugsnag $bugsnagHelper
+     * @param QuoteRepository $quoteRepository
      */
     public function __construct(
         CacheInterface  $cache,
         BoltSession     $boltSessionHelper,
         State           $appState,
-        Bugsnag         $bugsnagHelper
+        Bugsnag         $bugsnagHelper,
+        QuoteRepository $quoteRepository
     ) {
         $this->cache = $cache;
         $this->boltSessionHelper = $boltSessionHelper;
         $this->appState = $appState;
         $this->bugsnagHelper = $bugsnagHelper;
+        $this->quoteRepository = $quoteRepository;
     }
 
     /**
@@ -111,7 +120,7 @@ class Route
         if ($this->appState->getAreaCode() !== Area::AREA_WEBAPI_REST) {
             $this->saveRouteFeeEnabledToCache(self::ROUTE_PRODUCT_ID, $quote->getBoltParentQuoteId(), $routeFeeEnabled);
         }
-            
+
         return [$products, $totalAmount, $diff];
     }
 
@@ -128,10 +137,10 @@ class Route
     public function filterCartBeforeLegacyShippingAndTax($cart)
     {
         $cart['items'] = $this->filterCartItemsInTransaction($cart['items'], $cart['order_reference']);
-        
+
         return $cart;
     }
-    
+
     /**
      * Filter the Cart portion of the transaction before Split Shipping and Tax functionality is executed
      * Remove a dummy product representing the Route Fee additional total, also update cache if Route fee is enabled
@@ -145,10 +154,10 @@ class Route
     public function filterCartBeforeSplitShippingAndTax($cart)
     {
         $cart['items'] = $this->filterCartItemsInTransaction($cart['items'], $cart['order_reference']);
-        
+
         return $cart;
     }
-    
+
     /**
      * Filter the transaction before Create Order functionality is executed
      * Remove a dummy product representing the Route Fee additional total, also update cache if Route fee is enabled
@@ -162,15 +171,15 @@ class Route
     public function filterCartBeforeCreateOrder($transaction)
     {
         $transaction->order->cart->items = $this->filterCartItemsInTransaction($transaction->order->cart->items, $transaction->order->cart->order_reference);
-        
+
         return $transaction;
     }
-    
+
     /**
      * Filter the item before adding to cart.
      *
      * @see \Bolt\Boltpay\Model\Api\UpdateCart::execute
-     * 
+     *
      * @param bool $flag
      * @param array $addItem
      * @param \Magento\Checkout\Model\Session $checkoutSession
@@ -181,12 +190,12 @@ class Route
     {
         return $this->saveRouteFeeEnabledBeforeUpdateCart($result, $addItem, $checkoutSession, '1');
     }
-    
+
     /**
      * Filter the item before removing from cart.
      *
      * @see \Bolt\Boltpay\Model\Api\UpdateCart::execute
-     * 
+     *
      * @param bool $flag
      * @param array $removeItem
      * @param \Magento\Checkout\Model\Session $checkoutSession
@@ -197,7 +206,7 @@ class Route
     {
         return $this->saveRouteFeeEnabledBeforeUpdateCart($result, $removeItem, $checkoutSession, '0');
     }
-    
+
     /**
      * Get insured value of Route from cache and set to checkout session.
      *
@@ -212,7 +221,7 @@ class Route
             $checkoutSession->setInsured(filter_var($routeFeeEnabled, FILTER_VALIDATE_BOOLEAN));
         }
     }
-    
+
     /**
      * If Route fee is enabled, save '1' into cache; if disabled, then save '0'.
      *
@@ -226,7 +235,7 @@ class Route
             $this->cache->save($routeFeeEnabled, self::ROUTE_PRODUCT_ID . $parentQuoteId, [], 86400);
         }
     }
-    
+
     /**
      * Remove a dummy product representing the Route Fee additional total, also update cache if Route fee is enabled
      *
@@ -252,7 +261,7 @@ class Route
 
         return $cartItems;
     }
-    
+
     /**
      * Add Route fee for Bolt PPC
      *
@@ -269,18 +278,25 @@ class Route
         if (!$routeDataHelper->isRouteModuleEnable() || (!$routeDataHelper->isFullCoverage() && !$merchantClient->isOptOut())) {
             return false;
         }
-        
+
         $checkoutSession->setInsured(true);
     }
-    
+
     private function saveRouteFeeEnabledBeforeUpdateCart($flag, $item, $checkoutSession, $routeFeeEnabled)
     {
         if ($item['product_id'] == self::ROUTE_PRODUCT_ID) {
-            $checkoutSession->setInsured(filter_var($routeFeeEnabled, FILTER_VALIDATE_BOOLEAN));
+            $isInsured = filter_var($routeFeeEnabled, FILTER_VALIDATE_BOOLEAN);
+            $checkoutSession->setInsured($isInsured);
+            $quote = $checkoutSession->getQuote();
+
+            $quote->setRouteIsInsured($isInsured);
+            $quote->collectTotals();
+            $this->quoteRepository->save($quote);
+
             $this->saveRouteFeeEnabledToCache(self::ROUTE_PRODUCT_ID, $checkoutSession->getQuote()->getBoltParentQuoteId(), $routeFeeEnabled);
             return true;
         }
-        
+
         return $flag;
     }
 }
