@@ -313,7 +313,15 @@ define([
 
             // set cart and hints data in a response callback
             let onSuccess = function(data) {
-
+                if (typeof data == 'string') {
+                    try {
+                        data = $.parseJSON(data);
+                    } catch(err) {
+                        BoltCheckoutApiDriven.createRequest = null;
+                        console.error(err);
+                        return;
+                    }     
+                }
                 BoltCheckoutApiDriven.cart = data.cart;
                 let prefill = BoltCheckoutApiDriven.isObject(data.hints.prefill)
                     ? BoltCheckoutApiDriven.deepMergeObjects(BoltCheckoutApiDriven.hints.prefill, data.hints.prefill)
