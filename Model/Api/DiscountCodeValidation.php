@@ -262,11 +262,12 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
 
         if (!$result) {
             $result = [
-                'status'          => 'success',
-                'discount_code'   => $code,
-                'discount_amount' => abs(CurrencyUtils::toMinor($giftAmount, $immutableQuote->getQuoteCurrencyCode())),
-                'description'     =>  __('Gift Card'),
-                'discount_type'   => Discount::BOLT_DISCOUNT_TYPE_FIXED,
+                'status'            => 'success',
+                'discount_code'     => $code,
+                'discount_amount'   => abs(CurrencyUtils::toMinor($giftAmount, $immutableQuote->getQuoteCurrencyCode())),
+                'description'       =>  __('Gift Card'),
+                'discount_type'     => Discount::BOLT_DISCOUNT_TYPE_FIXED,
+                'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_GIFTCARD,
             ];
         }
 
@@ -410,11 +411,12 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         $description = $description !== '' ? $description : 'Discount (' . $couponCode . ')'; // coupon code fallback
 
         return $result = [
-            'status'          => 'success',
-            'discount_code'   => $couponCode,
-            'discount_amount' => abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $parentQuote->getQuoteCurrencyCode())),
-            'description'     => $description,
-            'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
+            'status'            => 'success',
+            'discount_code'     => $couponCode,
+            'discount_amount'   => abs(CurrencyUtils::toMinor($address->getDiscountAmount(), $parentQuote->getQuoteCurrencyCode())),
+            'description'       => $description,
+            'discount_type'     => $this->discountHelper->convertToBoltDiscountType($couponCode),
+            'discount_category' => Discount::BOLT_DISCOUNT_CATEGORY_COUPON,
         ];
     }
 }

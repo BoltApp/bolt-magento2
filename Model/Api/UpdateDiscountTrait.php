@@ -401,11 +401,12 @@ trait UpdateDiscountTrait
         $display = $description != '' ? $description : 'Discount (' . $couponCode . ')';
 
         $result = [
-            'status'          => 'success',
-            'discount_code'   => $couponCode,
-            'discount_amount' => abs(CurrencyUtils::toMinor($ruleDiscountDetails[$ruleId], $quote->getQuoteCurrencyCode())),
-            'description'     => $display,
-            'discount_type'   => $this->discountHelper->convertToBoltDiscountType($couponCode),
+            'status'            => 'success',
+            'discount_code'     => $couponCode,
+            'discount_amount'   => abs(CurrencyUtils::toMinor($ruleDiscountDetails[$ruleId], $quote->getQuoteCurrencyCode())),
+            'description'       => $display,
+            'discount_type'     => $this->discountHelper->convertToBoltDiscountType($couponCode),
+            'discount_category' => DiscountHelper::BOLT_DISCOUNT_CATEGORY_COUPON,
         ];
 
         return $result;
