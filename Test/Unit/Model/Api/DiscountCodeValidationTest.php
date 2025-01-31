@@ -628,12 +628,13 @@ class DiscountCodeValidationTest extends BoltTestCase
         ];
 
         $result = [
-            'status'          => 'success',
-            'discount_code'   => self::COUPON_CODE,
-            'discount_amount' => $shippingDiscountAmount * 100,
-            'description'     => 'Test Shipping Discount Description',
-            'discount_type'   => 'fixed_amount',
-            'cart'            => [
+            'status'            => 'success',
+            'discount_code'     => self::COUPON_CODE,
+            'discount_amount'   => $shippingDiscountAmount * 100,
+            'description'       => 'Test Shipping Discount Description',
+            'discount_type'     => 'fixed_amount',
+            'discount_category' => 'coupon',
+            'cart'              => [
                 'total_amount' => 10000,
                 'tax_amount' => 0,
                 'discounts' => $shippingDiscountAmount * 100

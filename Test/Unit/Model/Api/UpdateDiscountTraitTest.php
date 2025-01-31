@@ -826,11 +826,12 @@ class UpdateDiscountTraitTest extends BoltTestCase
         );
         static::assertEquals(
             [
-                'status'          => 'success',
-                'discount_code'   => 'testcoupon',
-                'discount_amount' => 1000,
-                'description'     => 'Discount (testcoupon)',
-                'discount_type'   => 'fixed_amount',
+                'status'            => 'success',
+                'discount_code'     => 'testcoupon',
+                'discount_amount'   => 1000,
+                'description'       => 'Discount (testcoupon)',
+                'discount_type'     => 'fixed_amount',
+                'discount_category' => 'coupon',
             ],
             $result
         );
