@@ -33,17 +33,5 @@ script;
 ?>
 <?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/x-magento-init'], $scriptString, false) ?>
 <?php if ($block->displayRewardPointsInMinicartConfig()): ?>
-<?php $scriptString = <<<script
-    require.config({
-        config: {
-            mixins: {
-                'Magento_Reward/js/view/payment/reward': {
-                    'Bolt_Boltpay/js/mixins/payment/reward': true
-                }
-            }
-        }
-    });
-script;
-?>
 <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptString, false) ?>
 <?php endif; ?>

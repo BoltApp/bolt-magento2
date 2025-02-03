@@ -26,18 +26,8 @@
 if ($block->shouldDisableBoltCheckout()) { return;
 }
 ?>
-
 <?php $scriptString = <<<script
-    ////////////////////////////////////////////////////////////////////////
-    // Wait for an object to be defined and
-    // execute a callback when it becomes available
-    ////////////////////////////////////////////////////////////////////////
-    require(['Bolt_Boltpay/js/utils/when-defined'], function (whenDefined) {
-        window['whenDefined'] = whenDefined;
-    });
-
     {$block->getGlobalJS()}
-
 script;
 ?>
 <?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/javascript'], $scriptString, false) ?>
