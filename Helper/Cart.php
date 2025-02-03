@@ -1123,11 +1123,13 @@ class Cart extends AbstractHelper
                 }
             }
 
-            if ($quote && $quote->isVirtual()) {
-                $prefillHints($customer->getDefaultBillingAddress());
-            } else {
-                // TODO: use billing address for checkout on product page and virtual products
-                $prefillHints($customer->getDefaultShippingAddress());
+            if (!$this->deciderHelper->ifShouldDisablePrefillAddressForLoggedInCustomer()) {
+                if ($quote && $quote->isVirtual()) {
+                    $prefillHints($customer->getDefaultBillingAddress());
+                } else {
+                    // TODO: use billing address for checkout on product page and virtual products
+                    $prefillHints($customer->getDefaultShippingAddress());
+                }
             }
 
             $hints['prefill']['email'] = $customer->getEmail();
