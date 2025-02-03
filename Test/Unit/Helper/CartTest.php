@@ -6100,7 +6100,7 @@ ORDER
             'getDefaultShippingAddress'
             ]
         );
-        $this->deciderHelper->expects(self::once())->method('ifShouldDisablePrefillAddressForLoggedInCustomer')->willReturn(false);
+        $this->deciderHelper->expects(self::exactly(2))->method('ifShouldDisablePrefillAddressForLoggedInCustomer')->willReturn(false);
         $customerMock->expects(self::atLeastOnce())->method('getId')->willReturn(self::CUSTOMER_ID);
         $customerMock->expects(self::atLeastOnce())->method('getEmail')->willReturn('test@bolt.com');
         $this->customerSession->expects(static::once())->method('isLoggedIn')->willReturn(true);
@@ -6178,55 +6178,57 @@ ORDER
             $responseMock->expects(static::once())->method('getResponse')->willReturn((object)$signedMerchantUserId);
         }
 
-        $shippingAddressMock = $this->createPartialMock(
-            Address::class,
-            [
-            'getFirstname',
-            'getLastname',
-            'getEmail',
-            'getTelephone',
-            'getStreetLine',
-            'getCity',
-            'getRegion',
-            'getPostcode',
-            'getCountryId',
-            ]
-        );
-        $shippingAddressMock->expects(static::once())->method('getFirstname')->willReturn('IntegrationBolt');
-        $shippingAddressMock->expects(static::once())->method('getLastname')->willReturn('BoltTest');
-        $shippingAddressMock->expects(static::once())->method('getEmail')->willReturn(self::EMAIL_ADDRESS);
-        $shippingAddressMock->expects(static::once())->method('getTelephone')->willReturn('132 231 1234');
-        $shippingAddressMock->expects(static::exactly(2))->method('getStreetLine')->willReturnOnConsecutiveCalls(
-            '228 7th Avenue',
-            '228 7th Avenue1'
-        );
-        $shippingAddressMock->expects(static::once())->method('getCity')->willReturn('New York');
-        $shippingAddressMock->expects(static::once())->method('getRegion')->willReturn('New York');
-        $shippingAddressMock->expects(static::once())->method('getPostcode')->willReturn('10011');
-        $shippingAddressMock->expects(static::once())->method('getCountryId')->willReturn('1111');
-        $customerMock->expects(static::once())->method('getDefaultShippingAddress')->willReturn($shippingAddressMock);
+        if (!$ifShouldDisablePrefillAddressForLoggedInCustomer) {
+            $shippingAddressMock = $this->createPartialMock(
+                Address::class,
+                [
+                    'getFirstname',
+                    'getLastname',
+                    'getEmail',
+                    'getTelephone',
+                    'getStreetLine',
+                    'getCity',
+                    'getRegion',
+                    'getPostcode',
+                    'getCountryId',
+                ]
+            );
+            $shippingAddressMock->expects(static::once())->method('getFirstname')->willReturn('IntegrationBolt');
+            $shippingAddressMock->expects(static::once())->method('getLastname')->willReturn('BoltTest');
+            $shippingAddressMock->expects(static::once())->method('getEmail')->willReturn(self::EMAIL_ADDRESS);
+            $shippingAddressMock->expects(static::once())->method('getTelephone')->willReturn('132 231 1234');
+            $shippingAddressMock->expects(static::exactly(2))->method('getStreetLine')->willReturnOnConsecutiveCalls(
+                '228 7th Avenue',
+                '228 7th Avenue1'
+            );
+            $shippingAddressMock->expects(static::once())->method('getCity')->willReturn('New York');
+            $shippingAddressMock->expects(static::once())->method('getRegion')->willReturn('New York');
+            $shippingAddressMock->expects(static::once())->method('getPostcode')->willReturn('10011');
+            $shippingAddressMock->expects(static::once())->method('getCountryId')->willReturn('1111');
+            $customerMock->expects(static::once())->method('getDefaultShippingAddress')->willReturn($shippingAddressMock);
+        }
+
         $hints = $this->getCurrentMock()->getHints(null, 'product');
 
-        static::assertEquals(
-            (object) [
-            'firstName'    => 'IntegrationBolt',
-            'lastName'     => 'BoltTest',
-            'email'        => self::EMAIL_ADDRESS,
-            'phone'        => '132 231 1234',
-            'addressLine1' => '228 7th Avenue',
-            'addressLine2' => '228 7th Avenue1',
-            'city'         => 'New York',
-            'state'        => 'New York',
-            'zip'          => '10011',
-            'country'      => '1111',
-            ],
-            $hints['prefill']
-        );
-
-
         if (!$ifShouldDisablePrefillAddressForLoggedInCustomer) {
+            static::assertEquals(
+                (object) [
+                    'firstName'    => 'IntegrationBolt',
+                    'lastName'     => 'BoltTest',
+                    'email'        => self::EMAIL_ADDRESS,
+                    'phone'        => '132 231 1234',
+                    'addressLine1' => '228 7th Avenue',
+                    'addressLine2' => '228 7th Avenue1',
+                    'city'         => 'New York',
+                    'state'        => 'New York',
+                    'zip'          => '10011',
+                    'country'      => '1111',
+                ],
+                $hints['prefill']
+            );
             static::assertEquals($signedMerchantUserId, $hints['signed_merchant_user_id']);
         }
+
         $encryptedUserId = json_decode($hints['metadata']['encrypted_user_id'], true);
         self::assertEquals(self::CUSTOMER_ID, $encryptedUserId['user_id']);
     }
@@ -6258,7 +6260,7 @@ ORDER
             'getDefaultShippingAddress'
             ]
         );
-        $this->deciderHelper->expects(self::once())->method('ifShouldDisablePrefillAddressForLoggedInCustomer')->willReturn(false);
+        $this->deciderHelper->expects(self::exactly(2))->method('ifShouldDisablePrefillAddressForLoggedInCustomer')->willReturn(false);
         $customerMock->expects(self::atLeastOnce())->method('getId')->willReturn(self::CUSTOMER_ID);
         $customerMock->expects(self::atLeastOnce())->method('getEmail')->willReturn(self::EMAIL_ADDRESS);
         $this->customerSession->expects(static::once())->method('isLoggedIn')->willReturn(true);
