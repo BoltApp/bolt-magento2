@@ -39,7 +39,7 @@ $customSSOSelectors = json_encode($block->getCustomSSOSelectors());
     {
         "*": {
             "Bolt_Boltpay/js/view/custom-sso-buttons": {
-                "selectors": "<?= $customSSOSelectors ?>"
+                "selectors": <?= $customSSOSelectors ?>
             }
         }
     }
