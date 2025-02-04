@@ -35,14 +35,12 @@ if (!$block->featureSwitches->isInitializeBoltCustomSsoButtons()) {
 
 $customSSOSelectors = json_encode($block->getCustomSSOSelectors());
 ?>
-<?php $scriptString = <<<script
+<script type="text/x-magento-init">
     {
         "*": {
             "Bolt_Boltpay/js/view/custom-sso-buttons": {
-                "selectors": "{$customSSOSelectors}"
+                "selectors": "<?= $customSSOSelectors ?>"
             }
         }
     }
-script;
-?>
-<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/x-magento-init'], $scriptString, false) ?>
+</script>

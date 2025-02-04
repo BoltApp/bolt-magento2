@@ -86,20 +86,18 @@ $conditionScriptLoadJsConfig = json_encode($conditionScriptLoadJsConfig);
 $additionalQuoteTotalsConditions = json_encode($block->getAdditionalQuoteTotalsConditions());
 ?>
 
-<?php $scriptString = <<<script
+<script type="text/x-magento-init">
     {
         "*": {
             "Bolt_Boltpay/js/bolt-legacy": {
-                "additionalInvalidateBoltCartJavascript": {$additionalInvalidateBoltCartJavascript},
-                "additionalJavascript": {$additionalJavascript},
-                "conditionScriptCallConfigureWithPromises": {$conditionScriptCallConfigureWithPromises},
-                "conditionScriptLoadJsDynamic": {$conditionScriptLoadJsDynamic},
-                "conditionScriptLoadJsConfig": {$conditionScriptLoadJsConfig},
-                "additionalQuoteTotalsConditions": {$additionalQuoteTotalsConditions}
+                "additionalInvalidateBoltCartJavascript": <?= $additionalInvalidateBoltCartJavascript ?>,
+                "additionalJavascript": <?= $additionalJavascript ?>,
+                "conditionScriptCallConfigureWithPromises": <?= $conditionScriptCallConfigureWithPromises ?>,
+                "conditionScriptLoadJsDynamic": <?= $conditionScriptLoadJsDynamic ?>,
+                "conditionScriptLoadJsConfig": <?= $conditionScriptLoadJsConfig ?>,
+                "additionalQuoteTotalsConditions": <?= $additionalQuoteTotalsConditions ?>
             }
         }
     }
-script;
-?>
-<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/x-magento-init'], $scriptString, false) ?>
+</script>
 

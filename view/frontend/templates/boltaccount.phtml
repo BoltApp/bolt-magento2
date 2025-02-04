@@ -37,15 +37,13 @@ $accountJsUrl = $block->getAccountJsUrl();
 $checkoutKey = $block->getCheckoutKey();
 ?>
 <div class="bolt-account-login"></div>
-<?php $scriptString = <<<script
+<script type="text/x-magento-init">
     {
         "*": {
             "Bolt_Boltpay/js/view/account": {
-                "accountJsUrl": "{$accountJsUrl}",
-                "checkoutKey": "{$checkoutKey}",
+                "accountJsUrl": "<?= $accountJsUrl ?>",
+                "checkoutKey": "<?= $checkoutKey ?>"
             }
         }
     }
-script;
-?>
-<?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptString, false) ?>
+</script>
