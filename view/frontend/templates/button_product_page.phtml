@@ -83,27 +83,25 @@ if ($block->isGrouped()) {
 $childGroupedProducts = json_encode($childGroupedProducts);
 ?>
 
-<?php $scriptString = <<<script
+<script type="text/x-magento-init">
     {
         "*": {
             "Bolt_Boltpay/js/view/pdp-button": {
-                "isGuestCheckoutAllowed": "{$isGuestCheckoutAllowed}",
-                "itemPrice": "{$itemPrice}",
-                "storeId": "{$storeId}",
-                "currency": "{$currency}",
-                "productId": "{$productId}",
-                "productSku": "{$productSku}",
-                "productName": "{$productName}",
-                "productType": "{$productType}",
-                "basePrice": "{$basePrice}",
-                "isGrouped": "{$isGrouped}",
-                "isBoltOrderCachingEnabled": "{$isBoltOrderCachingEnabled}",
-                "childGroupedProducts": {$childGroupedProducts},
-                "isSaveHintsInSections": "{$isSaveHintsInSections}",
-                "isExtendWarrantyModuleEnabled": "{$isExtendWarrantyModuleEnabled}"
+                "isGuestCheckoutAllowed": "<?= $isGuestCheckoutAllowed ?>",
+                "itemPrice": "<?= $itemPrice ?>",
+                "storeId": "<?= $storeId ?>",
+                "currency": "<?= $currency ?>",
+                "productId": "<?= $productId ?>",
+                "productSku": "<?= $productSku ?>",
+                "productName": "<?= $productName ?>",
+                "productType": "<?= $productType ?>",
+                "basePrice": "<?= $basePrice ?>",
+                "isGrouped": "<?= $isGrouped ?>",
+                "isBoltOrderCachingEnabled": "<?= $isBoltOrderCachingEnabled ?>",
+                "childGroupedProducts": <?= $childGroupedProducts ?>,
+                "isSaveHintsInSections": "<?= $isSaveHintsInSections ?>",
+                "isExtendWarrantyModuleEnabled": "<?= $isExtendWarrantyModuleEnabled ?>"
             }
         }
     }
-script;
-?>
-<?= /* @noEscape */ $secureRenderer->renderTag('script', ['type' => 'text/x-magento-init'], $scriptString, false) ?>
+</script>
