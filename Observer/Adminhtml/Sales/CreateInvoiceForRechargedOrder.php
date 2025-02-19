@@ -69,30 +69,23 @@ class CreateInvoiceForRechargedOrder implements ObserverInterface
             $order = $observer->getEvent()->getOrder();
             $isRechargedOrder = $order->getIsRechargedOrder();
             if ($isRechargedOrder && $order->canInvoice()) {
+                $rechargedTransaction = $order->getRechargedTransaction();
+                if (!$rechargedTransaction) {
+                    throw new \Exception('Recharged transaction not found');
+                }
                 $invoice = $this->invoiceService
                     ->prepareInvoice($order)
                     ->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE)
-                    ->register()
-                    ->save();
+                    ->register();
+
+                $invoice->setTransactionId($rechargedTransaction->id);
+                $invoice->save();
+
                 $order->addRelatedObject($invoice);
                 if (!$invoice->getEmailSent()) {
                     $this->invoiceSender->send($invoice);
                 }
-
-                $state = $order->getIsVirtual() ? Order::STATE_COMPLETE : Order::STATE_PROCESSING;
-                $order->setState($state);
-                $order->setStatus($order->getConfig()->getStateDefaultStatus($state));
-
-                $msg = __('BOLTPAY INFO :: Invoice created: #%1', $invoice->getIncrementId());
-                $order->addStatusHistoryComment($msg);
-                if ($transaction = $order->getRechargedTransaction()) {
-                    $amount  = $order->formatPrice(CurrencyUtils::toMajor($transaction->amount->amount, $transaction->amount->currency));
-                    $msg = __('BOLTPAY INFO :: Payment status: %1 Amount %2 <br /> Bolt transaction: %3', strtoupper($transaction->status), $amount, $this->orderHelper->formatReferenceUrl($transaction->reference));
-                    $order->addStatusHistoryComment($msg);
-                }
-                //Add notification comment to order
-                $order->setIsCustomerNotified(true);
-                $order->save();
+                $this->orderHelper->updateOrderPayment($order, $rechargedTransaction);
             }
             return $this;
         } catch (\Exception $e) {
