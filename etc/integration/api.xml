@@ -60,6 +60,7 @@
             <resource name="Magento_Catalog::attributes_attributes" />
             <resource name="Magento_Backend::store" />
             <resource name="Magento_GiftCardAccount::customer_giftcardaccount"/>
+            <resource name="Magento_Sales::api_actions"/>
             <resource name="Aheadworks_Giftcard::giftcard_codes"/>
         </resources>
     </integration>
