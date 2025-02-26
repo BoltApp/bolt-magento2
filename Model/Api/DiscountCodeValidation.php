@@ -288,7 +288,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         $payload = $this->createPayloadForVirtualQuote($quote, $this->requestArray);
         // if a quote is virtual and the payload has shipment it doesn't mean it is the payment only checkout
         // virtual quote can have shipment if the quote was physical and then become to virtual in case with addons flow for example
-        if (!$quote->getIsVirtual()) {
+        if ($quote->getIsVirtual()) {
             $is_has_shipment = false;
         }
         $cart = $this->cartHelper->getCartData($is_has_shipment, $payload, $quote);
