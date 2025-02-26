@@ -280,7 +280,8 @@ class UpdateCartTest extends BoltTestCase
                     'save',
                     'getGiftCardsAmount',
                     'setCurrentCurrencyCode',
-                    'setTotalsCollectedFlag'
+                    'setTotalsCollectedFlag',
+                    'getIsVirtual'
                 ]
             )
             ->disableOriginalConstructor()
@@ -307,6 +308,7 @@ class UpdateCartTest extends BoltTestCase
         $quote->method('save')->willReturnSelf();
         $quote->method('setCurrentCurrencyCode')->with('USD')->willReturnSelf();
         $quote->method('setTotalsCollectedFlag')->with(false);
+        $quote->method('getIsVirtual')->willReturn(false);
 
         return $quote;
     }
