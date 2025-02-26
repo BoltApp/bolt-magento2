@@ -85,49 +85,49 @@ class OrderManagementTest extends BoltTestCase
     const PROCESSOR_VANTIV = 'vantiv';
     const TT_PAYMENT = 'cc_payment';
     const TT_CREDIT = 'cc_credit';
-    
+
     const TRACE_ID_HEADER = 'KdekiEGku3j1mU21Mnsx5g==';
 
     const SECRET = '42425f51e0614482e17b6e913d74788eedb082e2e6f8067330b98ffa99adc809';
     const APIKEY = '3c2d5104e7f9d99b66e1c9c550f6566677bf81de0d6f25e121fdb57e47c2eafc';
-    
+
     const PRODUCT_PRICE = 100;
     const PRODUCT_NAME = 'SIMPLE 1';
     const PRODUCT_SKU = 'simple_1';
     const PRODUCT_QTY = 100;
-    
+
     const QUOTE_SUBTOTAL = 100;
     const QUOTE_TOTAL = 105;
     const QUOTE_SHIPPING_TOTAL = 5;
     const QUOTE_SHIPPING_TAX_TOTAL = 0;
     const QUOTE_TAX_TOTAL = 0;
     const QUOTE_PRODUCT_QTY = 1;
-    
+
     const ORDER_SUBTOTAL = 100;
     const ORDER_SHIPPING_TOTAL = 5;
     const ORDER_TAX = 0;
     const ORDER_SHIPPING_TAX = 0;
     const ORDER_TOTAL = 105;
     const ORDER_INCREMENTID = '100000001';
-    
+
     const FLAT_SHIPPING_CODE = 'flatrate_flatrate';
     const FLAT_SHIPPING_COST = 5.00;
-    
+
     /** @var Response */
     private $response;
-    
+
     /** @var Request */
     private $request;
-    
+
     /**
      * @var ObjectManagerInterface
      */
     private $objectManager;
-    
+
     private $storeId;
-    
+
     private $websiteId;
-    
+
     /**
      * @inheritdoc
      */
@@ -136,7 +136,7 @@ class OrderManagementTest extends BoltTestCase
         if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
             return;
         }
-        
+
         $this->objectManager = Bootstrap::getObjectManager();
 
         $registry = $this->objectManager->get(Registry::class);
@@ -146,17 +146,17 @@ class OrderManagementTest extends BoltTestCase
         $this->resetRequest();
         $this->resetResponse();
         $this->resetTestObj();
-        
+
         $store = $this->objectManager->get(StoreManagerInterface::class);
         $this->storeId = $store->getStore()->getId();
-        
+
         $websiteRepository = $this->objectManager->get(WebsiteRepositoryInterface::class);
         $this->websiteId = $websiteRepository->get('base')->getId();
-        
+
         $encryptor = $this->objectManager->get(EncryptorInterface::class);
         $secret = $encryptor->encrypt(self::SECRET);
         $apikey = $encryptor->encrypt(self::APIKEY);
-        
+
         $configData = [
             [
                 'path'    => 'payment/boltpay/signing_secret',
@@ -180,22 +180,22 @@ class OrderManagementTest extends BoltTestCase
         TestUtils::setupBoltConfig($configData);
         $this->getResponse();
     }
-    
+
     protected function tearDownInternal()
     {
         if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
             return;
         }
-        
+
         $this->resetRequest();
         $this->resetResponse();
         $this->resetTestObj();
-        
+
         $registry = $this->objectManager->get(Registry::class);
         $registry->unregister('isSecureArea');
         $registry->register('isSecureArea', false);
     }
-    
+
     /**
      * Response getter
      *
@@ -206,12 +206,12 @@ class OrderManagementTest extends BoltTestCase
         if (!$this->response) {
             $this->response = $this->objectManager->get(Response::class);
         }
-        
+
         $this->response->sendResponse();
-        
+
         return $this->response;
     }
-    
+
     /**
      * Request getter
      *
@@ -224,9 +224,9 @@ class OrderManagementTest extends BoltTestCase
         if (!$this->request) {
             $this->request = $this->objectManager->get(Request::class);
         }
-        
+
         $requestContent = json_encode($bodyParams);
-         
+
         $computed_signature  = base64_encode(hash_hmac('sha256', $requestContent, self::SECRET, true));
 
         $this->request->getHeaders()->clearHeaders();
@@ -237,60 +237,60 @@ class OrderManagementTest extends BoltTestCase
         $this->request->setParams($bodyParams);
         $this->request->setContent($requestContent);
         $this->request->setMethod("POST");
-      
+
         return $this->request;
     }
-    
+
     public function resetRequest()
     {
         if (!$this->request) {
             $this->request = $this->objectManager->get(Request::class);
         }
-     
+
         $this->objectManager->removeSharedInstance(Request::class);
         $this->request = null;
     }
-    
+
     public function resetResponse()
     {
         if (!$this->response) {
             $this->response = $this->objectManager->get(Response::class);
         }
-     
+
         $this->objectManager->removeSharedInstance(Response::class);
         $this->response = null;
     }
-    
+
     public function resetTestObj()
     {
         $quoteCollection = $this->objectManager->create(QuoteCollection::class);
         foreach ($quoteCollection as $quote) {
             $quote->delete();
         }
-        
+
         /** @var $order \Magento\Sales\Model\Order */
         $orderCollection = $this->objectManager->create(OrderCollection::class);
         foreach ($orderCollection as $order) {
             $order->delete();
         }
-        
+
         /** @var $product \Magento\Catalog\Model\Product */
         $productCollection = $this->objectManager->create(ProductCollection::class);
         foreach ($productCollection as $product) {
             $product->delete();
         }
-        
+
         $customerCollection = $this->objectManager->create(CustomerCollection::class);
         foreach ($customerCollection as $customer) {
             $customer->delete();
         }
-        
+
         /** @var \Magento\CatalogInventory\Model\StockRegistryStorage $stockRegistryStorage */
         $stockRegistryStorage = $this->objectManager->get(StockRegistryStorage::class);
         //$stockRegistryStorage->clean();
         $stockRegistryStorage->removeStockItem(1);
     }
-    
+
     private function createRequestData($quoteId, $immutableQuoteId, $status, $display_id = '', $captures = null, $type = self::TT_PAYMENT)
     {
         $addressInfo = TestUtils::createSampleAddress();
@@ -374,35 +374,35 @@ class OrderManagementTest extends BoltTestCase
                 ]
             ]
         ];
-        
+
         return $requetData;
     }
-    
+
     private function createProduct()
     {
         $product = TestUtils::createSimpleProduct();
         $productRepository = $this->objectManager->create(ProductRepositoryInterface::class);
-        
+
         $product->setName(self::PRODUCT_NAME)
             ->setSku(self::PRODUCT_SKU)
             ->setPrice(self::PRODUCT_PRICE)
             ->setStoreId($this->storeId)
             ->setIsObjectNew(true);
-        
+
         TestUtils::createStockItemForProduct($product, self::PRODUCT_QTY);
-        
+
         $product = $productRepository->save($product);
-        
+
         return $product;
     }
-    
+
     private function createQuote($product, $parentQuoteId = null)
     {
         $addressData = TestUtils::createMagentoSampleAddress();
-        
+
         $quote = TestUtils::createQuote();
         $quoteRepository = $this->objectManager->get(\Magento\Quote\Model\QuoteRepository::class);
-        
+
         $quoteBillingAddress = TestUtils::createQuoteAddress($addressData, QuoteAddress::ADDRESS_TYPE_BILLING);
         $quoteShippingAddress = TestUtils::createQuoteAddress($addressData, QuoteAddress::ADDRESS_TYPE_SHIPPING);
 
@@ -417,34 +417,34 @@ class OrderManagementTest extends BoltTestCase
             ->setShippingAddress($quoteShippingAddress)
             ->setBoltParentQuoteId($parentQuoteId ?: $quoteId)
             ->addProduct($product, self::QUOTE_PRODUCT_QTY);
-            
+
         $quote->setItems($quote->getAllItems())->save();
-        
+
         $quoteShippingAddress = $quote->getShippingAddress();
 
         TestUtils::createQuoteShippingRate(self::FLAT_SHIPPING_CODE, self::FLAT_SHIPPING_COST, $quoteShippingAddress->getId());
-        
+
         $quoteShippingAddress->setShippingMethod(self::FLAT_SHIPPING_CODE)
                              ->setCollectShippingRates(true);
 
         $quote->setTotalsCollectedFlag(false)->collectTotals()->setDataChanges(true);
         $quoteRepository->save($quote);
-        
+
         $quote = TestUtils::setQuotePayment($quote, self::BOLT_METHOD_CODE);
-        
+
         return $quote;
     }
-    
+
     private function createOrder($quote, $product, $payment, $orderStatus)
     {
         $quoteId = $quote->getId();
-        
+
         $addressData = TestUtils::createMagentoSampleAddress();
-        
+
         $orderItems = [];
         $orderItem = TestUtils::createOrderItemByProduct($product, 1);
         $orderItems[] = $orderItem;
-        
+
         $order = TestUtils::createDumpyOrder([], $addressData, $orderItems, $orderStatus, $orderStatus, $payment);
 
         $order->setIncrementId(self::ORDER_INCREMENTID)
@@ -470,18 +470,18 @@ class OrderManagementTest extends BoltTestCase
             ->isObjectNew(true);
 
         $order->save();
-          
+
         $orderRepository = $this->objectManager->create(OrderRepositoryInterface::class);
         $orderRepository->save($order);
-       
+
         return $order;
     }
-    
-        
+
+
     private function createOrderHelperStubProperty($boltOrderManagement)
     {
         $orderHelper = $this->objectManager->create(OrderHelper::class);
-        
+
         $stubApiHelper = new stubBoltApiHelper();
         $apiHelperProperty = new \ReflectionProperty(
             OrderHelper::class,
@@ -489,14 +489,14 @@ class OrderManagementTest extends BoltTestCase
         );
         $apiHelperProperty->setAccessible(true);
         $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
-        
+
         $orderHelperProperty = new \ReflectionProperty(
             BoltOrderManagement::class,
             'orderHelper'
         );
         $orderHelperProperty->setAccessible(true);
         $orderHelperProperty->setValue($boltOrderManagement, $orderHelper);
-        
+
         return $boltOrderManagement;
     }
 
@@ -509,24 +509,24 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonPending()
     {
         global $apiRequestResult;
-        
+
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
-        
+
         $addressInfo = TestUtils::createSampleAddress();
         TestUtils::createCustomer($this->websiteId, $this->storeId, $addressInfo);
-        
+
         $customerRepository = $this->objectManager->get(CustomerRepositoryInterface::class);
         $customer = $customerRepository->get($addressInfo['email_address']);
-        
+
         $quote->setCustomer($customer);
         $quoteRepository = $this->objectManager->get(\Magento\Quote\Model\QuoteRepository::class);
         $quoteRepository->save($quote);
-        
+
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
         $immutableQuote = $quoteFactory->create();
         $boltCartHelper = $this->objectManager->create(CartHelper::class);
@@ -544,11 +544,11 @@ class OrderManagementTest extends BoltTestCase
             'status' => 'authorized',
             'display_id' => '',
         ];
-        
+
         $this->createRequest($requestbodyParams);
-            
+
         $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
-        
+
         $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'authorized');
         $apiRequestResult = json_decode(json_encode($requetData));
 
@@ -561,7 +561,7 @@ class OrderManagementTest extends BoltTestCase
             self::CURRENCY,
             'authorized'
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
         $orderIncrementId = $responseData['display_id'];
@@ -572,7 +572,7 @@ class OrderManagementTest extends BoltTestCase
         $this->assertEquals(Order::STATE_PAYMENT_REVIEW, $order->getState());
         $this->assertMatchesRegularExpression('/update was successful/', $responseData['message']);
     }
-    
+
     /**
      * @test
      *
@@ -582,14 +582,14 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonAuth()
     {
         global $apiRequestResult;
-        
+
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
-        
+
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
         $immutableQuote = $quoteFactory->create();
         $boltCartHelper = $this->objectManager->create(CartHelper::class);
@@ -607,22 +607,22 @@ class OrderManagementTest extends BoltTestCase
             'status' => 'authorized',
             'display_id' => self::ORDER_INCREMENTID,
         ];
-        
+
         $this->createRequest($requestbodyParams);
-        
+
         $payment = $this->objectManager->create(OrderPayment::class);
         $payment->setMethod(self::BOLT_METHOD_CODE);
-        
+
         $paymentData = [
             'transaction_reference' => self::REFERENCE,
             'transaction_state' => 'cc_payment:pending',
         ];
         $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
-        
+
         $order = $this->createOrder($quote, $product, $payment, Order::STATE_PAYMENT_REVIEW);
-          
+
         $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
-        
+
         $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'authorized', self::ORDER_INCREMENTID);
         $apiRequestResult = json_decode(json_encode($requetData));
 
@@ -636,18 +636,18 @@ class OrderManagementTest extends BoltTestCase
             'authorized',
             self::ORDER_INCREMENTID
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
         $orderIncrementId = $responseData['display_id'];
         $order = $this->objectManager->create(Order::class);
         $order = $order->loadByIncrementId($orderIncrementId);
-        
+
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_PROCESSING, $order->getState());
         $this->assertMatchesRegularExpression('/update was successful/', $responseData['message']);
     }
-    
+
     /**
      * @test
      *
@@ -657,14 +657,14 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonCapture()
     {
         global $apiRequestResult;
-        
+
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
-        
+
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
         $immutableQuote = $quoteFactory->create();
         $boltCartHelper = $this->objectManager->create(CartHelper::class);
@@ -682,22 +682,22 @@ class OrderManagementTest extends BoltTestCase
             'status' => 'completed',
             'display_id' => self::ORDER_INCREMENTID,
         ];
-        
+
         $this->createRequest($requestbodyParams);
-        
+
         $payment = $this->objectManager->create(OrderPayment::class);
         $payment->setMethod(self::BOLT_METHOD_CODE);
-        
+
         $paymentData = [
             'transaction_reference' => self::REFERENCE,
             'transaction_state' => 'cc_payment:authorized',
         ];
         $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
-        
+
         $order = $this->createOrder($quote, $product, $payment, Order::STATE_PAYMENT_REVIEW);
-          
+
         $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
-        
+
         $captures = [
             [
                 'id' => 'CA4TxELPMng12',
@@ -722,18 +722,18 @@ class OrderManagementTest extends BoltTestCase
             'completed',
             self::ORDER_INCREMENTID
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
         $orderIncrementId = $responseData['display_id'];
         $order = $this->objectManager->create(Order::class);
         $order = $order->loadByIncrementId($orderIncrementId);
-        
+
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_PROCESSING, $order->getState());
         $this->assertMatchesRegularExpression('/update was successful/', $responseData['message']);
     }
-    
+
     /**
      * @test
      *
@@ -743,14 +743,14 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonCaptureIgnoreHookForInvoiceCreationIsEnabled()
     {
         global $apiRequestResult;
-        
+
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
-        
+
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
         $immutableQuote = $quoteFactory->create();
         $boltCartHelper = $this->objectManager->create(CartHelper::class);
@@ -768,35 +768,36 @@ class OrderManagementTest extends BoltTestCase
             'status' => 'completed',
             'display_id' => self::ORDER_INCREMENTID,
         ];
-        
+
         $this->createRequest($requestbodyParams);
-        
+
         $payment = $this->objectManager->create(OrderPayment::class);
         $payment->setMethod(self::BOLT_METHOD_CODE);
-        
+
         $paymentData = [
             'transaction_reference' => self::REFERENCE,
             'transaction_state' => 'cc_payment:authorized',
         ];
         $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
-        
+
         $order = $this->createOrder($quote, $product, $payment, Order::STATE_PAYMENT_REVIEW);
-          
+
         $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
-        
+
         $featureSwitch = $this->getMockBuilder(Decider::class)
             ->disableOriginalConstructor()
-            ->setMethods(['isIgnoreHookForInvoiceCreationEnabled'])
+            ->setMethods(['isIgnoreHookForInvoiceCreationEnabled', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isIgnoreHookForInvoiceCreationEnabled')->willReturn(true);
-        
+        $featureSwitch->expects($this->any())->method('isAPIDrivenIntegrationEnabled')->willReturn(false);
+
         $featureSwitchProperty = new \ReflectionProperty(
             BoltOrderManagement::class,
             'decider'
         );
         $featureSwitchProperty->setAccessible(true);
         $featureSwitchProperty->setValue($boltOrderManagement, $featureSwitch);
-        
+
         $captures = [
             [
                 'id' => 'CA4TxELPMng12',
@@ -821,18 +822,18 @@ class OrderManagementTest extends BoltTestCase
             'completed',
             self::ORDER_INCREMENTID
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
-        
+
         $orderHelper = $this->objectManager->create(OrderHelper::class);
         $order = $orderHelper->getExistingOrder(self::ORDER_INCREMENTID);
-        
+
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals('Ignore the capture hook for the invoice creation', $responseData['message']);
         $this->assertEquals(Order::STATE_PAYMENT_REVIEW, $order->getState());
     }
-    
+
     /**
      * @test
      *
@@ -842,14 +843,14 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonFailedPayment()
     {
         global $apiRequestResult;
-        
+
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
-        
+
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
         $immutableQuote = $quoteFactory->create();
         $boltCartHelper = $this->objectManager->create(CartHelper::class);
@@ -867,19 +868,19 @@ class OrderManagementTest extends BoltTestCase
             'status' => 'failed',
             'display_id' => self::ORDER_INCREMENTID,
         ];
-        
+
         $this->createRequest($requestbodyParams);
-        
+
         $payment = $this->objectManager->create(OrderPayment::class);
         $payment->setMethod(self::BOLT_METHOD_CODE);
-        
+
         $paymentData = [];
         $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
-        
+
         $order = $this->createOrder($quote, $product, $payment, Order::STATE_PENDING_PAYMENT);
-          
+
         $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
-        
+
         $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'failed', self::ORDER_INCREMENTID);
         $apiRequestResult = json_decode(json_encode($requetData));
 
@@ -893,18 +894,18 @@ class OrderManagementTest extends BoltTestCase
             'failed',
             self::ORDER_INCREMENTID
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
 
         $orderHelper = $this->objectManager->create(OrderHelper::class);
         $order = $orderHelper->getExistingOrder(self::ORDER_INCREMENTID);
-        
+
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals('Order was deleted: '.self::ORDER_INCREMENTID, $responseData['message']);
         $this->assertTrue(empty($order));
     }
-    
+
     /**
      * @test
      *
@@ -914,14 +915,14 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonFailedPaymentCancelled()
     {
         global $apiRequestResult;
-        
+
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
-        
+
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
         $immutableQuote = $quoteFactory->create();
         $boltCartHelper = $this->objectManager->create(CartHelper::class);
@@ -939,21 +940,21 @@ class OrderManagementTest extends BoltTestCase
             'status' => 'failed',
             'display_id' => self::ORDER_INCREMENTID,
         ];
-        
+
         $this->createRequest($requestbodyParams);
-        
+
         $payment = $this->objectManager->create(OrderPayment::class);
         $payment->setMethod(self::BOLT_METHOD_CODE);
-        
+
         $paymentData = [];
         $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
-        
+
         $order = $this->createOrder($quote, $product, $payment, Order::STATE_PENDING_PAYMENT);
-          
+
         $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
-        
+
         $orderHelper = $this->objectManager->create(OrderHelper::class);
-        
+
         $stubApiHelper = new stubBoltApiHelper();
         $apiHelperProperty = new \ReflectionProperty(
             OrderHelper::class,
@@ -961,27 +962,28 @@ class OrderManagementTest extends BoltTestCase
         );
         $apiHelperProperty->setAccessible(true);
         $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
-        
+
         $featureSwitch = $this->getMockBuilder(Decider::class)
             ->disableOriginalConstructor()
-            ->setMethods(['isCancelFailedPaymentOrderInsteadOfDeleting'])
+            ->setMethods(['isCancelFailedPaymentOrderInsteadOfDeleting', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isCancelFailedPaymentOrderInsteadOfDeleting')->willReturn(true);
-        
+        $featureSwitch->expects($this->any())->method('isAPIDrivenIntegrationEnabled')->willReturn(false);
+
         $featureSwitchProperty = new \ReflectionProperty(
             OrderHelper::class,
             'featureSwitches'
         );
         $featureSwitchProperty->setAccessible(true);
         $featureSwitchProperty->setValue($orderHelper, $featureSwitch);
-        
+
         $orderHelperProperty = new \ReflectionProperty(
             BoltOrderManagement::class,
             'orderHelper'
         );
         $orderHelperProperty->setAccessible(true);
         $orderHelperProperty->setValue($boltOrderManagement, $orderHelper);
-        
+
         $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'failed', self::ORDER_INCREMENTID);
         $apiRequestResult = json_decode(json_encode($requetData));
 
@@ -995,14 +997,14 @@ class OrderManagementTest extends BoltTestCase
             'failed',
             self::ORDER_INCREMENTID
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
-       
+
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals('Order was canceled: '.self::ORDER_INCREMENTID, $responseData['message']);
     }
-    
+
     /**
      * @test
      *
@@ -1012,14 +1014,14 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonFailedPaymentCancelledInvalidOrderState()
     {
         global $apiRequestResult;
-        
+
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
-        
+
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
         $immutableQuote = $quoteFactory->create();
         $boltCartHelper = $this->objectManager->create(CartHelper::class);
@@ -1037,33 +1039,34 @@ class OrderManagementTest extends BoltTestCase
             'status' => 'failed',
             'display_id' => self::ORDER_INCREMENTID,
         ];
-        
+
         $this->createRequest($requestbodyParams);
-        
+
         $payment = $this->objectManager->create(OrderPayment::class);
         $payment->setMethod(self::BOLT_METHOD_CODE);
-        
+
         $paymentData = [];
         $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
-        
+
         $order = $this->createOrder($quote, $product, $payment, Order::STATE_PROCESSING);
-          
+
         $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
-        
+
         $orderHelper = $this->objectManager->create(OrderHelper::class);
         $featureSwitch = $this->getMockBuilder(Decider::class)
             ->disableOriginalConstructor()
-            ->setMethods(['isCancelFailedPaymentOrderInsteadOfDeleting'])
+            ->setMethods(['isCancelFailedPaymentOrderInsteadOfDeleting', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isCancelFailedPaymentOrderInsteadOfDeleting')->willReturn(true);
-        
+        $featureSwitch->expects($this->any())->method('isAPIDrivenIntegrationEnabled')->willReturn(false);
+
         $featureSwitchProperty = new \ReflectionProperty(
             OrderHelper::class,
             'featureSwitches'
         );
         $featureSwitchProperty->setAccessible(true);
         $featureSwitchProperty->setValue($orderHelper, $featureSwitch);
-        
+
         $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'failed', self::ORDER_INCREMENTID);
         $apiRequestResult = json_decode(json_encode($requetData));
 
@@ -1077,10 +1080,10 @@ class OrderManagementTest extends BoltTestCase
             'failed',
             self::ORDER_INCREMENTID
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
-       
+
         $this->assertEquals('failure', $responseData['status']);
         $this->assertEquals(2001001, $responseData['error']['code']);
         $errMsg = __(
@@ -1091,7 +1094,7 @@ class OrderManagementTest extends BoltTestCase
         );
         $this->assertEquals($errMsg, $responseData['error']['message']);
     }
-    
+
     /**
      * @test
      *
@@ -1101,14 +1104,14 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonRejectedIrreversible()
     {
         global $apiRequestResult;
-        
+
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
-        
+
         $quoteFactory = $this->objectManager->create(QuoteFactory::class);
         $immutableQuote = $quoteFactory->create();
         $boltCartHelper = $this->objectManager->create(CartHelper::class);
@@ -1126,19 +1129,19 @@ class OrderManagementTest extends BoltTestCase
             'status' => 'rejected_irreversible',
             'display_id' => self::ORDER_INCREMENTID,
         ];
-        
+
         $this->createRequest($requestbodyParams);
-        
+
         $payment = $this->objectManager->create(OrderPayment::class);
         $payment->setMethod(self::BOLT_METHOD_CODE);
-        
+
         $paymentData = [];
         $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
-        
+
         $order = $this->createOrder($quote, $product, $payment, Order::STATE_PENDING_PAYMENT);
-          
+
         $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
-        
+
         $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'rejected_irreversible', self::ORDER_INCREMENTID);
         $apiRequestResult = json_decode(json_encode($requetData));
 
@@ -1152,14 +1155,14 @@ class OrderManagementTest extends BoltTestCase
             'rejected_irreversible',
             self::ORDER_INCREMENTID
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
 
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals('Order was canceled due to declined payment: '.self::ORDER_INCREMENTID, $responseData['message']);
     }
-    
+
     /**
      * @test
      *
@@ -1169,11 +1172,11 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonRejectedIrreversibleOrderNotExist()
     {
         global $apiRequestResult;
-        
+
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
 
@@ -1188,14 +1191,14 @@ class OrderManagementTest extends BoltTestCase
             'status' => 'rejected_irreversible',
             'display_id' => self::ORDER_INCREMENTID,
         ];
-        
+
         $this->createRequest($requestbodyParams);
-          
+
         $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
 
         $requetData = $this->createRequestData($quoteId, $quoteId, 'rejected_irreversible', self::ORDER_INCREMENTID);
         $apiRequestResult = json_decode(json_encode($requetData));
-        
+
         $boltOrderManagement->manage(
             self::TRANSACTION_ID,
             self::REFERENCE,
@@ -1206,7 +1209,7 @@ class OrderManagementTest extends BoltTestCase
             'rejected_irreversible',
             self::ORDER_INCREMENTID
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
 
@@ -1219,7 +1222,7 @@ class OrderManagementTest extends BoltTestCase
         );
         $this->assertEquals($errMsg, $responseData['error']['message']);
     }
-    
+
     /**
      * @test
      *
@@ -1229,11 +1232,11 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonCredit()
     {
         global $apiRequestResult;
-        
+
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
 
@@ -1248,18 +1251,18 @@ class OrderManagementTest extends BoltTestCase
             'status' => 'completed',
             'display_id' => self::ORDER_INCREMENTID,
         ];
-        
+
         $this->createRequest($requestbodyParams);
-        
+
         $payment = $this->objectManager->create(OrderPayment::class);
         $payment->setMethod(self::BOLT_METHOD_CODE);
-        
+
         $paymentData = [
             'transaction_reference' => self::REFERENCE,
             'transaction_state' => 'cc_payment:completed',
         ];
         $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
-        
+
         $order = $this->createOrder($quote, $product, $payment, Order::STATE_PROCESSING);
         foreach ($order->getAllItems() as $orderItem) {
             $orderItem->setQtyInvoiced(1)
@@ -1275,12 +1278,12 @@ class OrderManagementTest extends BoltTestCase
               ->setBaseShippingRefunded(0)
               ->setShippingTaxRefunded(0)
               ->save();
-        
+
         $orderRepository = $this->objectManager->create(OrderRepositoryInterface::class);
         $orderRepository->save($order);
-          
+
         $orderHelper = $this->objectManager->create(OrderHelper::class);
-        
+
         $stubApiHelper = new stubBoltApiHelper();
         $apiHelperProperty = new \ReflectionProperty(
             OrderHelper::class,
@@ -1288,14 +1291,15 @@ class OrderManagementTest extends BoltTestCase
         );
         $apiHelperProperty->setAccessible(true);
         $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
-        
+
         $featureSwitch = $this->getMockBuilder(Decider::class)
             ->disableOriginalConstructor()
-            ->setMethods(['isCreatingCreditMemoFromWebHookEnabled', 'isIgnoreHookForInvoiceCreationEnabled','isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled'])
+            ->setMethods(['isCreatingCreditMemoFromWebHookEnabled', 'isIgnoreHookForInvoiceCreationEnabled','isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isCreatingCreditMemoFromWebHookEnabled')->willReturn(true);
         $featureSwitch->expects($this->any())->method('isIgnoreHookForInvoiceCreationEnabled')->willReturn(false);
         $featureSwitch->expects($this->any())->method('isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled')->willReturn(false);
+        $featureSwitch->expects($this->any())->method('isAPIDrivenIntegrationEnabled')->willReturn(false);
 
         $featureSwitchProperty = new \ReflectionProperty(
             OrderHelper::class,
@@ -1303,14 +1307,14 @@ class OrderManagementTest extends BoltTestCase
         );
         $featureSwitchProperty->setAccessible(true);
         $featureSwitchProperty->setValue($orderHelper, $featureSwitch);
-        
+
         $orderHelperProperty = new \ReflectionProperty(
             BoltOrderManagement::class,
             'orderHelper'
         );
         $orderHelperProperty->setAccessible(true);
         $orderHelperProperty->setValue($boltOrderManagement, $orderHelper);
-        
+
         $requetData = $this->createRequestData($quoteId, $quoteId, 'completed', self::ORDER_INCREMENTID, null, self::TT_CREDIT);
         $apiRequestResult = json_decode(json_encode($requetData));
 
@@ -1324,7 +1328,7 @@ class OrderManagementTest extends BoltTestCase
             'completed',
             self::ORDER_INCREMENTID
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
         $orderIncrementId = $responseData['display_id'];
@@ -1335,7 +1339,7 @@ class OrderManagementTest extends BoltTestCase
         $this->assertEquals(Order::STATE_CLOSED, $order->getState());
         $this->assertMatchesRegularExpression('/update was successful/', $responseData['message']);
     }
-    
+
     /**
      * @test
      *
@@ -1345,11 +1349,11 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonCreditIgnoreHookForCreditMemoCreationIsEnabled()
     {
         global $apiRequestResult;
-        
+
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
 
@@ -1364,18 +1368,18 @@ class OrderManagementTest extends BoltTestCase
             'status' => 'completed',
             'display_id' => self::ORDER_INCREMENTID,
         ];
-        
+
         $this->createRequest($requestbodyParams);
-        
+
         $payment = $this->objectManager->create(OrderPayment::class);
         $payment->setMethod(self::BOLT_METHOD_CODE);
-        
+
         $paymentData = [
             'transaction_reference' => self::REFERENCE,
             'transaction_state' => 'cc_payment:completed',
         ];
         $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
-        
+
         $order = $this->createOrder($quote, $product, $payment, Order::STATE_PROCESSING);
         foreach ($order->getAllItems() as $orderItem) {
             $orderItem->setQtyInvoiced(1)
@@ -1391,12 +1395,12 @@ class OrderManagementTest extends BoltTestCase
               ->setBaseShippingRefunded(0)
               ->setShippingTaxRefunded(0)
               ->save();
-        
+
         $orderRepository = $this->objectManager->create(OrderRepositoryInterface::class);
         $orderRepository->save($order);
-          
+
         $orderHelper = $this->objectManager->create(OrderHelper::class);
-        
+
         $stubApiHelper = new stubBoltApiHelper();
         $apiHelperProperty = new \ReflectionProperty(
             OrderHelper::class,
@@ -1404,27 +1408,28 @@ class OrderManagementTest extends BoltTestCase
         );
         $apiHelperProperty->setAccessible(true);
         $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
-        
+
         $featureSwitch = $this->getMockBuilder(Decider::class)
             ->disableOriginalConstructor()
-            ->setMethods(['isIgnoreHookForCreditMemoCreationEnabled'])
+            ->setMethods(['isIgnoreHookForCreditMemoCreationEnabled', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isIgnoreHookForCreditMemoCreationEnabled')->willReturn(true);
-        
+        $featureSwitch->expects($this->any())->method('isAPIDrivenIntegrationEnabled')->willReturn(false);
+
         $featureSwitchProperty = new \ReflectionProperty(
             BoltOrderManagement::class,
             'decider'
         );
         $featureSwitchProperty->setAccessible(true);
         $featureSwitchProperty->setValue($boltOrderManagement, $featureSwitch);
-        
+
         $orderHelperProperty = new \ReflectionProperty(
             BoltOrderManagement::class,
             'orderHelper'
         );
         $orderHelperProperty->setAccessible(true);
         $orderHelperProperty->setValue($boltOrderManagement, $orderHelper);
-        
+
         $requetData = $this->createRequestData($quoteId, $quoteId, 'completed', self::ORDER_INCREMENTID, null, self::TT_CREDIT);
         $apiRequestResult = json_decode(json_encode($requetData));
 
@@ -1438,18 +1443,18 @@ class OrderManagementTest extends BoltTestCase
             'completed',
             self::ORDER_INCREMENTID
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
-        
+
         $orderHelper = $this->objectManager->create(OrderHelper::class);
         $order = $orderHelper->getExistingOrder(self::ORDER_INCREMENTID);
-        
+
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals('Ignore the credit hook for the credit memo creation', $responseData['message']);
         $this->assertEquals(Order::STATE_PROCESSING, $order->getState());
     }
-    
+
     /**
      * @test
      *
@@ -1459,11 +1464,11 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonVoid()
     {
         global $apiRequestResult;
-        
+
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
 
@@ -1478,22 +1483,22 @@ class OrderManagementTest extends BoltTestCase
             'status' => 'cancelled',
             'display_id' => self::ORDER_INCREMENTID,
         ];
-        
+
         $this->createRequest($requestbodyParams);
-        
+
         $payment = $this->objectManager->create(OrderPayment::class);
         $payment->setMethod(self::BOLT_METHOD_CODE);
-        
+
         $paymentData = [
             'transaction_reference' => self::REFERENCE,
             'transaction_state' => 'cc_payment:authorized',
         ];
         $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
-        
+
         $order = $this->createOrder($quote, $product, $payment, Order::STATE_PROCESSING);
-        
+
         $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
-        
+
         $requetData = $this->createRequestData($quoteId, $quoteId, 'cancelled', self::ORDER_INCREMENTID);
         $apiRequestResult = json_decode(json_encode($requetData));
 
@@ -1507,7 +1512,7 @@ class OrderManagementTest extends BoltTestCase
             'cancelled',
             self::ORDER_INCREMENTID
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
         $orderIncrementId = $responseData['display_id'];
@@ -1518,7 +1523,7 @@ class OrderManagementTest extends BoltTestCase
         $this->assertEquals(Order::STATE_CANCELED, $order->getState());
         $this->assertMatchesRegularExpression('/update was successful/', $responseData['message']);
     }
-    
+
     /**
      * @test
      *
@@ -1528,11 +1533,11 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonRejectedReversible()
     {
         global $apiRequestResult;
-        
+
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $quote = $this->createQuote($product);
         $quoteId = $quote->getId();
 
@@ -1547,25 +1552,25 @@ class OrderManagementTest extends BoltTestCase
             'status' => 'rejected_reversible',
             'display_id' => self::ORDER_INCREMENTID,
         ];
-        
+
         $this->createRequest($requestbodyParams);
-        
+
         $payment = $this->objectManager->create(OrderPayment::class);
         $payment->setMethod(self::BOLT_METHOD_CODE);
-        
+
         $paymentData = [
             'transaction_reference' => self::REFERENCE,
             'transaction_state' => 'cc_payment:pending',
         ];
         $payment->setAdditionalInformation(array_merge((array)$payment->getAdditionalInformation(), $paymentData));
-        
+
         $order = $this->createOrder($quote, $product, $payment, Order::STATE_PAYMENT_REVIEW);
-        
+
         $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
-        
+
         $requetData = $this->createRequestData($quoteId, $quoteId, 'rejected_reversible', self::ORDER_INCREMENTID);
         $apiRequestResult = json_decode(json_encode($requetData));
-        
+
         $boltOrderManagement->manage(
             self::TRANSACTION_ID,
             self::REFERENCE,
@@ -1576,7 +1581,7 @@ class OrderManagementTest extends BoltTestCase
             'rejected_reversible',
             self::ORDER_INCREMENTID
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
         $orderIncrementId = $responseData['display_id'];
@@ -1587,7 +1592,7 @@ class OrderManagementTest extends BoltTestCase
         $this->assertEquals(Order::STATE_PAYMENT_REVIEW, $order->getState());
         $this->assertMatchesRegularExpression('/update was successful/', $responseData['message']);
     }
-    
+
     /**
      * @test
      *
@@ -1597,9 +1602,9 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonCartCreate()
     {
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $productOptions = [
             'product' => $product->getId(),
             'selected_configurable_option' => '',
@@ -1609,7 +1614,7 @@ class OrderManagementTest extends BoltTestCase
             'qty'      => self::QUOTE_PRODUCT_QTY,
             'storeId'  => $this->storeId,
         ];
-        
+
         $requestbodyParams = [
             'type'  => 'cart.create',
             'items' => [
@@ -1627,9 +1632,9 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'metadata' => null,
         ];
-        
+
         $this->createRequest($requestbodyParams);
-        
+
         $boltOrderManagement->manage(
             null,
             null,
@@ -1638,7 +1643,7 @@ class OrderManagementTest extends BoltTestCase
             null,
             self::CURRENCY
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
 
@@ -1650,7 +1655,7 @@ class OrderManagementTest extends BoltTestCase
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(CurrencyUtils::toMinor($totals['subtotal']['value'], self::CURRENCY), CurrencyUtils::toMinor(self::QUOTE_SUBTOTAL, self::CURRENCY));
     }
-    
+
     /**
      * @test
      *
@@ -1660,7 +1665,7 @@ class OrderManagementTest extends BoltTestCase
     public function testManageCommonCartCreateError()
     {
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $productOptions = [
             'product' => 1010,
             'selected_configurable_option' => '',
@@ -1670,7 +1675,7 @@ class OrderManagementTest extends BoltTestCase
             'qty'      => 101,
             'storeId'  => $this->storeId,
         ];
-        
+
         $requestbodyParams = [
             'type'  => 'cart.create',
             'items' => [
@@ -1688,9 +1693,9 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'metadata' => null,
         ];
-        
+
         $this->createRequest($requestbodyParams);
-        
+
         $boltOrderManagement->manage(
             null,
             null,
@@ -1699,7 +1704,7 @@ class OrderManagementTest extends BoltTestCase
             null,
             self::CURRENCY
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
 
@@ -1707,7 +1712,7 @@ class OrderManagementTest extends BoltTestCase
         $this->assertEquals(6009, $responseData['code']);
         $this->assertMatchesRegularExpression('/Unprocessable Entity/', $responseData['message']);
     }
-    
+
     /**
      * @test
      *
@@ -1717,13 +1722,13 @@ class OrderManagementTest extends BoltTestCase
     public function testManagePreconditionFailed()
     {
         global $apiRequestResult;
-        
+
         $apiRequestResult = 'exception';
-        
+
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-      
+
         $product = $this->createProduct();
-        
+
         $productOptions = [
             'product' => $product->getId(),
             'selected_configurable_option' => '',
@@ -1733,7 +1738,7 @@ class OrderManagementTest extends BoltTestCase
             'qty'      => self::QUOTE_PRODUCT_QTY,
             'storeId'  => $this->storeId,
         ];
-        
+
         $requestbodyParams = [
             'type'  => 'cart.create',
             'items' => [
@@ -1751,13 +1756,13 @@ class OrderManagementTest extends BoltTestCase
             'currency' => self::CURRENCY,
             'metadata' => null,
         ];
-        
+
         if (!$this->request) {
             $this->request = $this->objectManager->get(Request::class);
         }
-        
+
         $requestContent = json_encode($requestbodyParams);
-         
+
         $computed_signature  = base64_encode(hash_hmac('sha256', $requestContent, '12425f51e0614482e17b6e913d74788eedb082e2e6f8067330b98ffa99adc809', true));
 
         $this->request->getHeaders()->addHeaderLine('X-Bolt-Hmac-Sha256', $computed_signature);
@@ -1767,9 +1772,9 @@ class OrderManagementTest extends BoltTestCase
         $this->request->setParams($requestbodyParams);
         $this->request->setContent($requestContent);
         $this->request->setMethod("POST");
-        
+
         $hookHelper = $this->objectManager->create(HookHelper::class);
-        
+
         $stubApiHelper = new stubBoltApiHelper();
         $apiHelperProperty = new \ReflectionProperty(
             HookHelper::class,
@@ -1777,14 +1782,14 @@ class OrderManagementTest extends BoltTestCase
         );
         $apiHelperProperty->setAccessible(true);
         $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
-        
+
         $orderHelperProperty = new \ReflectionProperty(
             BoltOrderManagement::class,
             'hookHelper'
         );
         $orderHelperProperty->setAccessible(true);
         $orderHelperProperty->setValue($boltOrderManagement, $hookHelper);
-        
+
         $boltOrderManagement->manage(
             null,
             null,
@@ -1793,15 +1798,15 @@ class OrderManagementTest extends BoltTestCase
             null,
             self::CURRENCY
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
-       
+
         $this->assertEquals('error', $responseData['status']);
         $this->assertEquals(6001, $responseData['code']);
         $this->assertEquals('Precondition Failed', $responseData['message']);
     }
-    
+
     /**
      * @test
      *
@@ -1810,7 +1815,7 @@ class OrderManagementTest extends BoltTestCase
     public function testManageEmptyReference()
     {
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
-        
+
         $requestbodyParams =  [
             'id' => self::TRANSACTION_ID,
             'reference' => '',
@@ -1822,9 +1827,9 @@ class OrderManagementTest extends BoltTestCase
             'status' => 'authorized',
             'display_id' => '',
         ];
-        
+
         $this->createRequest($requestbodyParams);
-        
+
         $boltOrderManagement->manage(
             self::TRANSACTION_ID,
             null,
@@ -1834,10 +1839,10 @@ class OrderManagementTest extends BoltTestCase
             self::CURRENCY,
             'authorized'
         );
-        
+
         $schema = $this->getResponse()->getBody();
         $responseData = json_decode($schema, true);
-        
+
         $this->assertEquals('error', $responseData['status']);
         $this->assertEquals('6009', $responseData['code']);
         $this->assertEquals('Unprocessable Entity: Missing required parameters.', $responseData['message']);
@@ -2001,22 +2006,22 @@ class stubBoltApiHelper
     public function sendRequest($request)
     {
         global $apiRequestResult;
-        
+
         if ($apiRequestResult == 'exception') {
             throw new \Exception('Request fails');
         }
-        
+
         $result = Bootstrap::getObjectManager()->create(BoltResponseFactory::class)->create();
-        
+
         $result->setResponse($apiRequestResult);
-        
+
         return $result;
     }
-    
+
     public function buildRequest($requestData)
     {
         $request = Bootstrap::getObjectManager()->create(BoltRequestFactory::class);
-        
+
         return $request;
     }
 }

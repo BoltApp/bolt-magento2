@@ -1808,7 +1808,7 @@ class Order extends AbstractHelper
         // legacy code when order was created, no state recorded) put it in TS_PENDING state.
         // It can correlate with the $transactionState or not in case the hook is late due connection problems and
         // the status has changed in the meanwhile.
-        if (!$prevTransactionState && !$transactionReference && !$transactionId) {
+        if (!$this->featureSwitches->isAPIDrivenIntegrationEnabled() && !$prevTransactionState && !$transactionReference && !$transactionId) {
             if (in_array($transactionState, [self::TS_ZERO_AMOUNT, self::TS_COMPLETED, self::TS_CREDIT_COMPLETED])) {
                 return $transactionState;
             }

@@ -330,7 +330,7 @@ class Payment extends AbstractMethod
 
             $order = $payment->getOrder();
 
-            $this->orderHelper->updateOrderPayment($order, null, $response->reference);
+            $this->orderHelper->updateOrderPayment($order, $response, $response->reference);
 
             $this->metricsClient->processMetric("order_void.success", 1, "order_void.latency", $startTime);
             return $this;
