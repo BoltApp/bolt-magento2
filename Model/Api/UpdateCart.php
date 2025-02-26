@@ -418,7 +418,7 @@ class UpdateCart extends UpdateCartCommon implements UpdateCartInterface
         $payload = $this->createPayloadForVirtualQuote($quote, $this->cartRequest);
         // if a quote is virtual and the payload has shipment it doesn't mean it is the payment only checkout
         // virtual quote can have shipment if the quote was physical and then become to virtual in case with addons flow for example
-        if ($quote->getIsVirtual() && $has_shipment) {
+        if ($quote->getIsVirtual()) {
             $has_shipment = false;
         }
         $cart = $this->cartHelper->getCartData($has_shipment, $payload, $quote);
