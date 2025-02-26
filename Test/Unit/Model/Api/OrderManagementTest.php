@@ -18,7 +18,6 @@
 namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Bolt\Boltpay\Exception\BoltException;
-use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Order as OrderHelper;
@@ -787,9 +786,10 @@ class OrderManagementTest extends BoltTestCase
 
         $featureSwitch = $this->getMockBuilder(Decider::class)
             ->disableOriginalConstructor()
-            ->setMethods(['isIgnoreHookForInvoiceCreationEnabled'])
+            ->setMethods(['isIgnoreHookForInvoiceCreationEnabled', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isIgnoreHookForInvoiceCreationEnabled')->willReturn(true);
+        $featureSwitch->expects($this->any())->method('isAPIDrivenIntegrationEnabled')->willReturn(false);
 
         $featureSwitchProperty = new \ReflectionProperty(
             BoltOrderManagement::class,
@@ -965,9 +965,10 @@ class OrderManagementTest extends BoltTestCase
 
         $featureSwitch = $this->getMockBuilder(Decider::class)
             ->disableOriginalConstructor()
-            ->setMethods(['isCancelFailedPaymentOrderInsteadOfDeleting'])
+            ->setMethods(['isCancelFailedPaymentOrderInsteadOfDeleting', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isCancelFailedPaymentOrderInsteadOfDeleting')->willReturn(true);
+        $featureSwitch->expects($this->any())->method('isAPIDrivenIntegrationEnabled')->willReturn(false);
 
         $featureSwitchProperty = new \ReflectionProperty(
             OrderHelper::class,
@@ -1054,9 +1055,10 @@ class OrderManagementTest extends BoltTestCase
         $orderHelper = $this->objectManager->create(OrderHelper::class);
         $featureSwitch = $this->getMockBuilder(Decider::class)
             ->disableOriginalConstructor()
-            ->setMethods(['isCancelFailedPaymentOrderInsteadOfDeleting'])
+            ->setMethods(['isCancelFailedPaymentOrderInsteadOfDeleting', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isCancelFailedPaymentOrderInsteadOfDeleting')->willReturn(true);
+        $featureSwitch->expects($this->any())->method('isAPIDrivenIntegrationEnabled')->willReturn(false);
 
         $featureSwitchProperty = new \ReflectionProperty(
             OrderHelper::class,
@@ -1229,8 +1231,6 @@ class OrderManagementTest extends BoltTestCase
      */
     public function testManageCommonCredit()
     {
-        $apiDrivenFeatureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_ENABLE_API_DRIVEN_INTEGRAION, false);
-
         global $apiRequestResult;
 
         $boltOrderManagement = $this->objectManager->create(BoltOrderManagement::class);
@@ -1294,11 +1294,12 @@ class OrderManagementTest extends BoltTestCase
 
         $featureSwitch = $this->getMockBuilder(Decider::class)
             ->disableOriginalConstructor()
-            ->setMethods(['isCreatingCreditMemoFromWebHookEnabled', 'isIgnoreHookForInvoiceCreationEnabled','isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled'])
+            ->setMethods(['isCreatingCreditMemoFromWebHookEnabled', 'isIgnoreHookForInvoiceCreationEnabled','isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isCreatingCreditMemoFromWebHookEnabled')->willReturn(true);
         $featureSwitch->expects($this->any())->method('isIgnoreHookForInvoiceCreationEnabled')->willReturn(false);
         $featureSwitch->expects($this->any())->method('isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled')->willReturn(false);
+        $featureSwitch->expects($this->any())->method('isAPIDrivenIntegrationEnabled')->willReturn(false);
 
         $featureSwitchProperty = new \ReflectionProperty(
             OrderHelper::class,
@@ -1333,8 +1334,6 @@ class OrderManagementTest extends BoltTestCase
         $orderIncrementId = $responseData['display_id'];
         $order = $this->objectManager->create(Order::class);
         $order = $order->loadByIncrementId($orderIncrementId);
-
-        TestUtils::cleanupFeatureSwitch($apiDrivenFeatureSwitch);
 
         $this->assertEquals('success', $responseData['status']);
         $this->assertEquals(Order::STATE_CLOSED, $order->getState());
@@ -1412,9 +1411,10 @@ class OrderManagementTest extends BoltTestCase
 
         $featureSwitch = $this->getMockBuilder(Decider::class)
             ->disableOriginalConstructor()
-            ->setMethods(['isIgnoreHookForCreditMemoCreationEnabled'])
+            ->setMethods(['isIgnoreHookForCreditMemoCreationEnabled', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isIgnoreHookForCreditMemoCreationEnabled')->willReturn(true);
+        $featureSwitch->expects($this->any())->method('isAPIDrivenIntegrationEnabled')->willReturn(false);
 
         $featureSwitchProperty = new \ReflectionProperty(
             BoltOrderManagement::class,
