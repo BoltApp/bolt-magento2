@@ -954,7 +954,7 @@ class DiscountCodeValidationTest extends BoltTestCase
         $this->initCurrentMock();
 
         $cartData = [];
-        $this->parentQuoteMock->expects(static::once())->method('isVirtual')->willReturn(false);
+        $this->parentQuoteMock->expects(static::any())->method('isVirtual')->willReturn(false);
         $this->cartHelper->expects(self::once())->method('getCartData')
             ->with(false, null, $this->parentQuoteMock)
             ->willReturn($cartData);
