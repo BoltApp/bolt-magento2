@@ -118,7 +118,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
         if (isset($requestArray['data'])) {
             $requestArray = $requestArray['data'];
         }
-        
+
         if (isset($requestArray['cart']['currency']) && isset($requestArray['cart']['currency']['currency'])) {
             $this->cartHelper->setCurrentCurrencyCode($requestArray['cart']['currency']['currency']);
         }
@@ -172,7 +172,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
                     // If a customer applies a cart rule (fixed amount for whole cart and apply to shipping) via the cart page,
                     // the function Magento\SalesRule\Helper\CartFixedDiscount::calculateShippingAmountWhenAppliedToShipping does not return correct value for tax calculation,
                     // it is because the $address->getShippingAmount() still returns shipping amount of last selected shipping method.
-                    // So we need to correct the shipping amount.   
+                    // So we need to correct the shipping amount.
                     $shippingCost = CurrencyUtils::toMajor($requestArray['cart']['shipments'][0]['cost']['amount'], $immutableQuote->getQuoteCurrencyCode());
                     $immutableQuote->getShippingAddress()->setShippingAmount($shippingCost);
             }
@@ -286,6 +286,11 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
     {
         $is_has_shipment = !empty($this->requestArray['cart']['shipments'][0]['reference']);
         $payload = $this->createPayloadForVirtualQuote($quote, $this->requestArray);
+        // if a quote is virtual and the payload has shipment it doesn't mean it is the payment only checkout
+        // virtual quote can have shipment if the quote was physical and then become to virtual in case with addons flow for example
+        if ($quote->getIsVirtual() && $is_has_shipment) {
+            $is_has_shipment = false;
+        }
         $cart = $this->cartHelper->getCartData($is_has_shipment, $payload, $quote);
         if (empty($cart)) {
             throw new \Exception('Something went wrong when getting cart data.');
