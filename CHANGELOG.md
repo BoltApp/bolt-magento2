@@ -323,3 +323,17 @@
     - Fixed an issue where multiple store credit reversals occurred due to failed payment authorizations.
     - Resolved a race condition causing the Bolt Product Page button to occasionally fail to render.
 
+## [v2.27.6](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.6) 2025-02-28
+- New:
+    - Added support for Magento versions 2.4.6-p9 and 2.4.7-p4, ensuring compatibility with the latest Magento security patch. Specifically, the ACL list for the Bolt API has been updated.
+- Additional:
+    - Fixed an issue where disabling address pre-filling for logged-in customers was not working as expected.
+    - Removed Bolt inline script usage on the frontend, which could cause bugs with certain environment configurations.
+    - Fixed merchant Bolt dashboard information when BO orders were placed using customers' saved cards.
+    - Fixed redirects after SSO login—now they lead to the previously forbidden actions, such as adding items to the wishlist.
+    - Fixed the void action from the admin panel in API mode.
+    - Fixed the discount label issue where, in some cases, it displayed categories instead of coupon codes.
+    - Fixed out-of-stock error messages.
+    - Fixed capture webhooks for specific cases in legacy mode when an order had already been partially invoiced offline.
+### Important Notice:
+**All merchants using API integration with Bolt must resend the API keys from the Magento Admin Bolt Payment Method settings page after the upgrade.**
