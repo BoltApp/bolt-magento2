@@ -329,11 +329,11 @@
 - Additional:
     - Fixed an issue where disabling address pre-filling for logged-in customers was not working as expected.
     - Removed Bolt inline script usage on the frontend, which could cause bugs with certain environment configurations.
-    - Fixed merchant Bolt dashboard information when BO orders were placed using customers' saved cards.
-    - Fixed redirects after SSO login—now they lead to the previously forbidden actions, such as adding items to the wishlist.
-    - Fixed the void action from the admin panel in API mode.
+    - Fixed Bolt merchant dashboard information when BO orders were placed using customers' saved cards.
+    - Fixed redirects after SSO login. Now they lead to the previously forbidden actions, such as adding items to the wishlist.
+    - Fixed the void action not working from the admin panel in API mode.
     - Fixed the discount label issue where, in some cases, it displayed categories instead of coupon codes.
-    - Fixed out-of-stock error messages.
+    - Fixed missing out-of-stock error messages for certain custom inventory implementations.
     - Fixed capture webhooks for specific cases in legacy mode when an order had already been partially invoiced offline.
 ### Important Notice:
 **All merchants using API integration with Bolt must resend the API keys from the Magento Admin Bolt Payment Method settings page after the upgrade.**
