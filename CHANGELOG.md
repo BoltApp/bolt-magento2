@@ -323,7 +323,7 @@
     - Fixed an issue where multiple store credit reversals occurred due to failed payment authorizations.
     - Resolved a race condition causing the Bolt Product Page button to occasionally fail to render.
 
-## [v2.27.6](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.6) 2025-03-01
+## [v2.27.6](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.6) 2025-03-03
 - New:
     - Added support for Magento versions 2.4.6-p9 and 2.4.7-p4, ensuring compatibility with the latest Magento security patch. Specifically, the ACL list for the Bolt API has been updated.
 - Additional:
