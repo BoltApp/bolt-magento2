@@ -18,6 +18,9 @@
 namespace Bolt\Boltpay\Helper;
 
 use Exception;
+use Magento\Authorization\Model\ResourceModel\Role\CollectionFactory as RoleCollectionFactory;
+use Magento\Authorization\Model\ResourceModel\Rules\CollectionFactory as RulesCollectionFactory;
+use Magento\Authorization\Model\RulesFactory;
 use Magento\Config\Model\ResourceModel\Config as ResourceConfig;
 use Magento\Framework\App\Cache\TypeListInterface as Cache;
 use Magento\Framework\App\Helper\AbstractHelper;
@@ -151,6 +154,22 @@ class IntegrationManagement extends AbstractHelper
     protected $storeManager;
 
     /**
+     * @var RulesCollectionFactory
+     */
+    protected $rulesCollectionFactory;
+
+    /**
+     * @var RoleCollectionFactory
+     */
+    protected $roleCollectionFactory;
+
+    /**
+     * @var RulesFactory
+     */
+    protected $rulesFactory;
+
+
+    /**
      * @param Context $context
      * @param ConfigBasedIntegrationManager $integrationManager
      * @param IntegrationServiceInterface $integrationService
@@ -181,7 +200,10 @@ class IntegrationManagement extends AbstractHelper
         IntegrationOauthHelper $dataHelper,
         DeciderHelper $deciderHelper,
         UrlInterface $urlBuilder,
-        StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        RulesCollectionFactory $rulesCollectionFactory,
+        RoleCollectionFactory $roleCollectionFactory,
+        RulesFactory $rulesFactory
     ) {
         parent::__construct($context);
         $this->integrationManager = $integrationManager;
@@ -198,6 +220,9 @@ class IntegrationManagement extends AbstractHelper
         $this->deciderHelper = $deciderHelper;
         $this->urlBuilder = $urlBuilder;
         $this->storeManager = $storeManager;
+        $this->rulesCollectionFactory = $rulesCollectionFactory;
+        $this->roleCollectionFactory = $roleCollectionFactory;
+        $this->rulesFactory = $rulesFactory;
     }
 
     /**
@@ -524,5 +549,56 @@ class IntegrationManagement extends AbstractHelper
         $integrationMode = $this->configHelper->getConnectIntegrationMode();
         $boltMode = $this->configHelper->isSandboxModeSet($storeId) ? self::BOLT_INTEGRATION_MODE_SANDBOX : self::BOLT_INTEGRATION_MODE_PRODUCTION;
         return empty($integrationMode) ? self::BOLT_INTEGRATION_STATUS_NONEXISTENT : ($integrationMode == $boltMode ? self::BOLT_INTEGRATION_STATUS_CREATED : self::BOLT_INTEGRATION_STATUS_EXPIRED);
+    }
+
+    /**
+     * Sync existing integration ACL resources configuration in database
+     *
+     * @return void
+     * @throws \Magento\Framework\Exception\IntegrationException
+     */
+    public function syncExistingIntegrationAclResources()
+    {
+        $integration = $this->integrationService->findByName(IntegrationManagement::BOLT_INTEGRATION_NAME);
+        if (!$integration && !$integration->getId()) {
+            return;
+        }
+
+        $integrationWithResources = $this->integrationService->get($integration->getId());
+        $requiredResources = $integrationWithResources->getData('resource');
+        if (empty($requiredResources)) {
+            return;
+        }
+
+        $roleCollection = $this->roleCollectionFactory->create()
+            ->addFieldToFilter('user_id', $integration->getConsumerId())
+            ->addFieldToFilter('parent_id', 0);
+
+        if ($roleCollection->getSize() === 0) {
+            return;
+        }
+
+        $roleId = $roleCollection->getFirstItem()->getId();
+        foreach ($requiredResources as $resource) {
+            $rulesCollection = $this->rulesCollectionFactory->create()
+                ->addFieldToFilter('role_id', $roleId)
+                ->addFieldToFilter('resource_id', $resource);
+            if ($rulesCollection->getSize() === 0) {
+                $rule = $this->rulesFactory->create();
+                $rule->setData([
+                    'role_id' => $roleId,
+                    'resource_id' => $resource,
+                    'permission' => 'allow'
+                ]);
+                $rule->save();
+                continue;
+            }
+
+            $existingRule = $rulesCollection->getFirstItem();
+            if ($existingRule->getPermission() === 'deny') {
+                $existingRule->setPermission('allow');
+                $existingRule->save();
+            }
+        }
     }
 }
