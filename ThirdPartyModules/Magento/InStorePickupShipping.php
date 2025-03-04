@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bolt magento2 plugin
  *
@@ -31,49 +32,49 @@ class InStorePickupShipping
      * @var Bugsnag Bugsnag helper instance
      */
     private $bugsnagHelper;
-    
+
     /**
      * @var StoreAddressInterfaceFactory
      */
     protected $storeAddressFactory;
-    
+
     /**
      * @var ShipToStoreOptionInterfaceFactory
      */
     protected $shipToStoreOptionFactory;
-    
+
     /**
      * @var ScopeConfigInterface
      */
     private $config;
-    
+
     /**
      * @var Magento\InventoryInStorePickupApi\Model\SearchRequestBuilderInterface
      */
     protected $searchRequestBuilder;
-    
+
     /**
      * @var Magento\InventoryInStorePickupApi\Api\GetPickupLocationsInterface
      */
     protected $getPickupLocations;
-    
+
     /**
      * @var Magento\InventoryInStorePickupApi\Api\Data\SearchRequest\ProductInfoInterfaceFactory
      */
     protected $productInfo;
-    
+
     /**
      * @var Magento\InventoryInStorePickupApi\Api\Data\SearchRequestExtensionFactory
      */
     protected $searchRequestExtension;
-    
+
     /**
      * @var Magento\InventoryInStorePickup\Model\SearchRequest\Area\GetDistanceToSources
      */
     protected $getDistanceToSources;
-    
+
     private const SEARCH_RADIUS = 'carriers/instore/search_radius';
-    
+
     /**
      * @param Bugsnag     $bugsnagHelper Bugsnag helper instance
      * @param Discount    $discountHelper
@@ -91,7 +92,7 @@ class InStorePickupShipping
         $this->shipToStoreOptionFactory = $shipToStoreOptionFactory;
         $this->config = $config;
     }
-    
+
     /**
      * @param array $result
      * @param Magento\InventoryInStorePickupApi\Model\SearchRequestBuilderInterface $searchRequestBuilder
@@ -119,7 +120,7 @@ class InStorePickupShipping
             if (empty($shippingOptions)) {
                 return $result;
             }
-          
+
             $tmpShippingOptions = [];
             $inStorePickupCost = 0;
             $hasInStorePickup = false;
@@ -131,17 +132,17 @@ class InStorePickupShipping
                     $tmpShippingOptions[] = $shippingOption;
                 }
             }
-             
+
             if (!$hasInStorePickup) {
                 return $result;
             }
-            
+
             $this->searchRequestBuilder = $searchRequestBuilder;
             $this->getPickupLocations = $getPickupLocations;
             $this->productInfo = $productInfo;
             $this->searchRequestExtension = $searchRequestExtension;
             $this->getDistanceToSources = $getDistanceToSources;
-        
+
             $productsInfo = [];
             $items = $quote->getAllVisibleItems();
             foreach ($items as $item) {
@@ -156,12 +157,12 @@ class InStorePickupShipping
             );
             $searchTerm = $addressData['postal_code'] . ':' . $addressData['country_code'];
             $searchRequest = $this->searchRequestBuilder->setScopeCode($quote->getStore()->getWebsite()->getCode())
-                        ->setScopeType(SalesChannelInterface::TYPE_WEBSITE)
-                        ->setAreaRadius($searchRadius)
-                        ->setAreaSearchTerm($searchTerm)
-                        ->setSearchRequestExtension($extensionAttributes)
-                        ->setPageSize(50)
-                        ->create();
+                ->setScopeType(SalesChannelInterface::TYPE_WEBSITE)
+                ->setAreaRadius($searchRadius)
+                ->setAreaSearchTerm($searchTerm)
+                ->setSearchRequestExtension($extensionAttributes)
+                ->setPageSize(50)
+                ->create();
             $searchResult = $this->getPickupLocations->execute($searchRequest);
             $distanceToSources = $this->getDistanceToSources->execute($searchRequest->getArea());
             $shipToStoreOptions = [];
@@ -175,7 +176,7 @@ class InStorePickupShipping
                     $storeAddress->setRegion($item->getRegion());
                     $storeAddress->setPostalCode($item->getPostcode());
                     $storeAddress->setCountryCode($item->getCountryId());
-                    
+
                     $shipToStoreOption = $this->shipToStoreOptionFactory->create();
                     $pickupLocationCode = $item->getPickupLocationCode();
 
@@ -185,11 +186,11 @@ class InStorePickupShipping
                     $shipToStoreOption->setAddress($storeAddress);
                     $shipToStoreOption->setDistance($distanceToSources[$pickupLocationCode]);
                     $shipToStoreOption->setDistanceUnit('km');
-                    
+
                     $shipToStoreOptions[] = $shipToStoreOption;
                 }
             }
-            
+
             $result = [$shipToStoreOptions, $tmpShippingOptions];
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
@@ -197,7 +198,7 @@ class InStorePickupShipping
             return $result;
         }
     }
-    
+
     /**
      * @param Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation $setAddressPickupLocation
      * @param Magento\Checkout\Api\Data\TotalsInformationInterface $addressInformation
@@ -231,7 +232,7 @@ class InStorePickupShipping
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * @param array                     $result
      * @param Magento\Quote\Model\Quote $quote
@@ -249,10 +250,10 @@ class InStorePickupShipping
         if ($this->checkIfMagentoInStorePickupByCode($referenceCodes)) {
             return [$referenceCodes[0], $referenceCodes[1]];
         }
-        
+
         return $result;
     }
-    
+
     /**
      * @param Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation $setAddressPickupLocation
      * @param Magento\Quote\Model\Quote $quote
@@ -282,7 +283,7 @@ class InStorePickupShipping
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * @param Magento\InventoryInStorePickupQuote\Model\ToQuoteAddress $addressConverter
      * @param Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface $getPickupLocation
@@ -296,6 +297,10 @@ class InStorePickupShipping
         $transaction
     ) {
         try {
+            $referenceCodes = explode('_', $transaction->order->cart->in_store_shipments[0]->shipment->reference);
+            if (!$this->checkIfMagentoInStorePickupByCode($referenceCodes)) {
+                return;
+            }
             $shippingAddress = $quote->getShippingAddress();
             if (isset($transaction->order->cart->in_store_shipments[0]->shipment)) {
                 $shipment = $transaction->order->cart->in_store_shipments[0]->shipment;
@@ -318,7 +323,7 @@ class InStorePickupShipping
                     SalesChannelInterface::TYPE_WEBSITE,
                     $quote->getStore()->getWebsite()->getCode()
                 );
-                $extraData = ['telephone'=>$pickupLocation->getPhone()];
+                $extraData = ['telephone' => $pickupLocation->getPhone()];
                 $shippingAddress = $addressConverter->convert($pickupLocation, $shippingAddress, $extraData);
                 $quote->setShippingAddress($shippingAddress)->save();
             }
@@ -326,7 +331,7 @@ class InStorePickupShipping
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * @param Magento\InventoryInStorePickupQuote\Model\ToQuoteAddress $addressConverter
      * @param Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface $getPickupLocation
@@ -352,21 +357,23 @@ class InStorePickupShipping
                 return $address;
             }
         }
-        
+
         return $result;
     }
-    
+
     /**
      * @param array $referenceCodes
      * @return bool
      */
     private function checkIfMagentoInStorePickupByCode($referenceCodes)
     {
-        if (count($referenceCodes) > 2 &&
-            $referenceCodes[0] . '_' . $referenceCodes[1] == InStorePickup::DELIVERY_METHOD) {
+        if (
+            count($referenceCodes) > 2 &&
+            $referenceCodes[0] . '_' . $referenceCodes[1] == InStorePickup::DELIVERY_METHOD
+        ) {
             return true;
         }
-        
+
         return false;
     }
 }

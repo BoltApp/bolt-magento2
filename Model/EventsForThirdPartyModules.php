@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Bolt magento2 plugin
  *
@@ -54,6 +55,7 @@ use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMe
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Preorder as Amasty_Preorder;
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\RewardPoints as MageWorx_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\ShippingRules as MageWorx_ShippingRules;
+use Bolt\Boltpay\ThirdPartyModules\MageWorx\Pickup as MageWorx_Pickup;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Promo as Amasty_Promo;
 use Bolt\Boltpay\ThirdPartyModules\Mexbs\Tieredcoupon as Mexbs_Tieredcoupon;
 use Bolt\Boltpay\ThirdPartyModules\Magento\CompanyPayment as Magento_CompanyPayment;
@@ -153,8 +155,10 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "MW_RewardPoints",
-                    "sendClasses" => ["MW\RewardPoints\Helper\Data",
-                                      "MW\RewardPoints\Model\CustomerFactory"],
+                    "sendClasses" => [
+                        "MW\RewardPoints\Helper\Data",
+                        "MW\RewardPoints\Model\CustomerFactory"
+                    ],
                     "boltClass" => MW_RewardPoints::class,
                 ],
                 [
@@ -170,8 +174,10 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Aheadworks_Giftcard",
-                    "sendClasses" => ["Aheadworks\Giftcard\Model\Service\GiftcardCartService",
-                                      "Aheadworks\Giftcard\Model\ResourceModel\Giftcard\Quote\CollectionFactory"],
+                    "sendClasses" => [
+                        "Aheadworks\Giftcard\Model\Service\GiftcardCartService",
+                        "Aheadworks\Giftcard\Model\ResourceModel\Giftcard\Quote\CollectionFactory"
+                    ],
                     "boltClass" => Aheadworks_Giftcard::class,
                 ],
                 'Amasty Giftcard V2' => [
@@ -185,8 +191,10 @@ class EventsForThirdPartyModules
                 ],
                 [
                     "module" => "Amasty_Rewards",
-                    "sendClasses" => ["Amasty\Rewards\Model\ResourceModel\Quote",
-                                      "Amasty\Rewards\Model\Quote"],
+                    "sendClasses" => [
+                        "Amasty\Rewards\Model\ResourceModel\Quote",
+                        "Amasty\Rewards\Model\Quote"
+                    ],
                     "boltClass" => Amasty_Rewards::class,
                 ],
                 'Amasty_Extrafee' => [
@@ -204,17 +212,21 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Mirasvit_Rewards",
-                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase",
-                                      "Mirasvit\Rewards\Helper\Balance",
-                                      "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
-                                      "Mirasvit\Rewards\Model\Config",
-                                      "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"],
+                    "sendClasses" => [
+                        "Mirasvit\Rewards\Helper\Purchase",
+                        "Mirasvit\Rewards\Helper\Balance",
+                        "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
+                        "Mirasvit\Rewards\Model\Config",
+                        "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"
+                    ],
                     "boltClass" => Mirasvit_Rewards::class,
                 ],
                 [
                     "module" => "Amasty_Rewards",
-                    "sendClasses" => ["Amasty\Rewards\Model\ResourceModel\Quote",
-                                      "Amasty\Rewards\Model\Quote"],
+                    "sendClasses" => [
+                        "Amasty\Rewards\Model\ResourceModel\Quote",
+                        "Amasty\Rewards\Model\Quote"
+                    ],
                     "boltClass" => Amasty_Rewards::class,
                 ],
             ]
@@ -238,8 +250,10 @@ class EventsForThirdPartyModules
                 ],
                 [
                     "module" => "Amasty_Rewards",
-                    "sendClasses" => ["Amasty\Rewards\Api\CheckoutRewardsManagementInterface",
-                                      "Amasty\Rewards\Model\Quote"],
+                    "sendClasses" => [
+                        "Amasty\Rewards\Api\CheckoutRewardsManagementInterface",
+                        "Amasty\Rewards\Model\Quote"
+                    ],
                     "boltClass" => Amasty_Rewards::class,
                 ],
                 [
@@ -249,14 +263,18 @@ class EventsForThirdPartyModules
                 ],
                 [
                     "module" => "Mirasvit_Rewards",
-                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase",
-                                      "Mirasvit\Rewards\Helper\Checkout"],
+                    "sendClasses" => [
+                        "Mirasvit\Rewards\Helper\Purchase",
+                        "Mirasvit\Rewards\Helper\Checkout"
+                    ],
                     "boltClass" => Mirasvit_Rewards::class,
                 ],
                 [
                     "module" => "Mirasvit_Credit",
-                    "sendClasses" => ["Mirasvit\Credit\Helper\Data",
-                                      "Mirasvit\Credit\Service\Calculation"],
+                    "sendClasses" => [
+                        "Mirasvit\Credit\Helper\Data",
+                        "Mirasvit\Credit\Service\Calculation"
+                    ],
                     "boltClass" => Mirasvit_Credit::class,
                 ],
                 [
@@ -283,12 +301,14 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Mirasvit_Rewards",
-                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase",
-                                      "Mirasvit\Rewards\Helper\Balance",
-                                      "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
-                                      "Mirasvit\Rewards\Model\Config",
-                                      "Mirasvit\Rewards\Helper\Checkout",
-                                      "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"],
+                    "sendClasses" => [
+                        "Mirasvit\Rewards\Helper\Purchase",
+                        "Mirasvit\Rewards\Helper\Balance",
+                        "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
+                        "Mirasvit\Rewards\Model\Config",
+                        "Mirasvit\Rewards\Helper\Checkout",
+                        "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"
+                    ],
                     "boltClass" => Mirasvit_Rewards::class,
                 ],
                 [
@@ -383,6 +403,13 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
                 ],
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
             ],
         ],
         "setInStoreShippingMethodForPrepareQuote" => [
@@ -398,17 +425,28 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker"],
                     "checkClasses" => ["Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
-                ]
+                ],
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
             ],
         ],
         "setInStoreShippingAddressForPrepareQuote" => [
             "listeners" => [
                 [
                     "module" => "Magento_InventoryInStorePickup",
-                    "sendClasses" => ["Magento\InventoryInStorePickupQuote\Model\ToQuoteAddress",
-                                      "Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface"],
-                    "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup",
-                                       "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
+                    "sendClasses" => [
+                        "Magento\InventoryInStorePickupQuote\Model\ToQuoteAddress",
+                        "Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface"
+                    ],
+                    "checkClasses" => [
+                        "Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup",
+                        "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"
+                    ],
                     "boltClass" => Magento_InStorePickupShipping::class,
                 ],
                 'SomethingDigital_InStorePickupBoltIntegration' => [
@@ -421,7 +459,17 @@ class EventsForThirdPartyModules
                         "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver",
                     ],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
-                ]
+                ],
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "sendClasses" => [
+                        "MageWorx\Locations\Api\LocationRepositoryInterface"
+                    ],
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
             ],
         ],
         'afterUpdateOrderPayment' => [
@@ -438,8 +486,10 @@ class EventsForThirdPartyModules
                 'Route_Route' => [
                     'module'      => 'Route_Route',
                     'checkClasses' => ['Route\Route\Model\Quote\Total\RouteFee'],
-                    'sendClasses' => ['Route\Route\Model\Route\Merchant',
-                        'Route\Route\Helper\Data'],
+                    'sendClasses' => [
+                        'Route\Route\Model\Route\Merchant',
+                        'Route\Route\Helper\Data'
+                    ],
                     'boltClass'   => Route_Route::class,
                 ],
             ],
@@ -458,8 +508,10 @@ class EventsForThirdPartyModules
                 'Amasty Giftcard V2.5' => [
                     "module"       => "Amasty_GiftCardAccount",
                     "checkClasses" => self::AMASTY_GIFTCARD_V25_CHECK_CLASSES,
-                    'sendClasses'  => ['Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardAccountTransactionProcessor',
-                                       'Amasty\GiftCardAccount\Model\GiftCardAccount\Repository'],
+                    'sendClasses'  => [
+                        'Amasty\GiftCardAccount\Model\GiftCardAccount\GiftCardAccountTransactionProcessor',
+                        'Amasty\GiftCardAccount\Model\GiftCardAccount\Repository'
+                    ],
                     "boltClass"    => Amasty_GiftCardAccount::class,
                 ],
             ],
@@ -538,11 +590,13 @@ class EventsForThirdPartyModules
                 ],
                 [
                     "module" => "Mirasvit_Rewards",
-                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase",
-                                      "Mirasvit\Rewards\Helper\Balance",
-                                      "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
-                                      "Mirasvit\Rewards\Model\Config",
-                                      "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"],
+                    "sendClasses" => [
+                        "Mirasvit\Rewards\Helper\Purchase",
+                        "Mirasvit\Rewards\Helper\Balance",
+                        "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
+                        "Mirasvit\Rewards\Model\Config",
+                        "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"
+                    ],
                     "checkClasses" => ["Mirasvit\Rewards\Helper\Balance\SpendCartRangeData"],
                     "boltClass" => Mirasvit_Rewards::class,
                 ],
@@ -553,29 +607,36 @@ class EventsForThirdPartyModules
                 ],
                 [
                     "module" => "Mirasvit_Credit",
-                    "sendClasses" => ["Mirasvit\Credit\Helper\Data",
-                                      "Mirasvit\Credit\Service\Calculation",
-                                      // For old version of Mirasvit Store Credit plugin,
-                                      // \Magento\Framework\ObjectManagerInterface can not create instance of \Mirasvit\Credit\Api\Config\CalculationConfigInterface properly,
-                                      // so we use \Mirasvit\Credit\Service\Config\CalculationConfig instead.
-                                      ["Mirasvit\Credit\Api\Config\CalculationConfigInterface",
-                                      "Mirasvit\Credit\Service\Config\CalculationConfig"],],
+                    "sendClasses" => [
+                        "Mirasvit\Credit\Helper\Data",
+                        "Mirasvit\Credit\Service\Calculation",
+                        // For old version of Mirasvit Store Credit plugin,
+                        // \Magento\Framework\ObjectManagerInterface can not create instance of \Mirasvit\Credit\Api\Config\CalculationConfigInterface properly,
+                        // so we use \Mirasvit\Credit\Service\Config\CalculationConfig instead.
+                        [
+                            "Mirasvit\Credit\Api\Config\CalculationConfigInterface",
+                            "Mirasvit\Credit\Service\Config\CalculationConfig"
+                        ],
+                    ],
                     "boltClass" => Mirasvit_Credit::class,
                 ],
                 [
                     "module" => "Amasty_Rewards",
                     "sendClasses" => [
-                                        [
-                                            "Amasty\Rewards\Model\RewardsPropertyProvider",
-                                            "Amasty\Rewards\Helper\Data"
-                                        ],
-                                      "Amasty\Rewards\Model\ResourceModel\Quote"],
+                        [
+                            "Amasty\Rewards\Model\RewardsPropertyProvider",
+                            "Amasty\Rewards\Helper\Data"
+                        ],
+                        "Amasty\Rewards\Model\ResourceModel\Quote"
+                    ],
                     "boltClass" => Amasty_Rewards::class,
                 ],
                 [
                     "module" => "MW_RewardPoints",
-                    "sendClasses" => ["MW\RewardPoints\Helper\Data",
-                                      "MW\RewardPoints\Model\CustomerFactory"],
+                    "sendClasses" => [
+                        "MW\RewardPoints\Helper\Data",
+                        "MW\RewardPoints\Model\CustomerFactory"
+                    ],
                     "boltClass" => MW_RewardPoints::class,
                 ],
                 [
@@ -734,8 +795,10 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Mirasvit_Credit",
-                    "sendClasses" => [["Mirasvit\Credit\Api\Config\CalculationConfigInterface",
-                                      "Mirasvit\Credit\Service\Config\CalculationConfig"]],
+                    "sendClasses" => [[
+                        "Mirasvit\Credit\Api\Config\CalculationConfigInterface",
+                        "Mirasvit\Credit\Service\Config\CalculationConfig"
+                    ]],
                     "boltClass" => Mirasvit_Credit::class,
                 ],
             ],
@@ -862,11 +925,13 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Mirasvit_Rewards",
-                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase",
-                                      "Mirasvit\Rewards\Helper\Balance",
-                                      "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
-                                      "Mirasvit\Rewards\Model\Config",
-                                      "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"],
+                    "sendClasses" => [
+                        "Mirasvit\Rewards\Helper\Purchase",
+                        "Mirasvit\Rewards\Helper\Balance",
+                        "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
+                        "Mirasvit\Rewards\Model\Config",
+                        "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"
+                    ],
                     "boltClass" => Mirasvit_Rewards::class,
                 ],
             ],
@@ -927,11 +992,13 @@ class EventsForThirdPartyModules
                 ],
                 [
                     "module" => "Mirasvit_Rewards",
-                    "sendClasses" => ["Mirasvit\Rewards\Helper\Purchase",
-                                      "Mirasvit\Rewards\Helper\Balance",
-                                      "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
-                                      "Mirasvit\Rewards\Model\Config",
-                                      "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"],
+                    "sendClasses" => [
+                        "Mirasvit\Rewards\Helper\Purchase",
+                        "Mirasvit\Rewards\Helper\Balance",
+                        "Mirasvit\Rewards\Helper\Balance\SpendRulesList",
+                        "Mirasvit\Rewards\Model\Config",
+                        "Mirasvit\Rewards\Helper\Balance\Spend\RuleQuoteSubtotalCalc"
+                    ],
                     "checkClasses" => ["Mirasvit\Rewards\Helper\Balance\SpendCartRangeData"],
                     "boltClass" => Mirasvit_Rewards::class,
                 ],
@@ -1074,13 +1141,17 @@ class EventsForThirdPartyModules
             "listeners" => [
                 [
                     "module" => "Magento_InventoryInStorePickup",
-                    "sendClasses" => ["Magento\InventoryInStorePickupApi\Model\SearchRequestBuilderInterface",
-                                      "Magento\InventoryInStorePickupApi\Api\GetPickupLocationsInterface",
-                                      "Magento\InventoryInStorePickupApi\Api\Data\SearchRequest\ProductInfoInterfaceFactory",
-                                      "Magento\InventoryInStorePickupApi\Api\Data\SearchRequestExtensionFactory",
-                                      "Magento\InventoryInStorePickup\Model\SearchRequest\Area\GetDistanceToSources"],
-                    "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup",
-                                       "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
+                    "sendClasses" => [
+                        "Magento\InventoryInStorePickupApi\Model\SearchRequestBuilderInterface",
+                        "Magento\InventoryInStorePickupApi\Api\GetPickupLocationsInterface",
+                        "Magento\InventoryInStorePickupApi\Api\Data\SearchRequest\ProductInfoInterfaceFactory",
+                        "Magento\InventoryInStorePickupApi\Api\Data\SearchRequestExtensionFactory",
+                        "Magento\InventoryInStorePickup\Model\SearchRequest\Area\GetDistanceToSources"
+                    ],
+                    "checkClasses" => [
+                        "Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup",
+                        "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"
+                    ],
                     "boltClass" => Magento_InStorePickupShipping::class,
                 ],
                 "SomethingDigital_InStorePickupBoltIntegration" => [
@@ -1093,6 +1164,17 @@ class EventsForThirdPartyModules
                         "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"
                     ],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
+                ],
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "sendClasses" => [
+                        "MageWorx\Locations\Api\LocationRepositoryInterface",
+                        "MageWorx\StoreLocator\Helper\Data"
+                    ],
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
                 ],
             ],
         ],
@@ -1112,6 +1194,13 @@ class EventsForThirdPartyModules
                         "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"
                     ],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
+                ],
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
                 ],
             ],
         ],
@@ -1242,6 +1331,13 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
                 ],
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
             ],
         ],
         'filterCartItemsAdditionalAttributeValue' => [
@@ -1359,8 +1455,10 @@ class EventsForThirdPartyModules
                 ],
                 'MW_Affiliate' => [
                     "module" => "MW_Affiliate",
-                    "sendClasses" => ["MW\Affiliate\Helper\Data",
-                                      "MW\Affiliate\Observer\SalesOrderAfter"],
+                    "sendClasses" => [
+                        "MW\Affiliate\Helper\Data",
+                        "MW\Affiliate\Observer\SalesOrderAfter"
+                    ],
                     "boltClass" => MW_Affiliate::class,
                 ],
                 'Amasty_Affiliate' => [
@@ -1471,7 +1569,7 @@ class EventsForThirdPartyModules
                     return $this->doesClassExist($className);
                 });
                 if (empty($existClasses)) {
-                    return [false,null];
+                    return [false, null];
                 }
             }
         }
@@ -1492,7 +1590,7 @@ class EventsForThirdPartyModules
                 }
 
                 if (empty($classInstance)) {
-                    return [false,null];
+                    return [false, null];
                 }
 
                 $sendClasses[] = $classInstance;
@@ -1515,7 +1613,7 @@ class EventsForThirdPartyModules
             foreach (static::filterListeners[$filterName]["listeners"] as $listener) {
                 // By default, we create instance for running filter
                 $createInstance = isset($listener["createInstance"]) ? $listener["createInstance"] : true;
-                list ($active, $sendClasses) = $this->prepareForListenerRun($listener, $createInstance);
+                list($active, $sendClasses) = $this->prepareForListenerRun($listener, $createInstance);
                 if (!$active) {
                     continue;
                 }
@@ -1545,7 +1643,7 @@ class EventsForThirdPartyModules
         }
         try {
             foreach (static::eventListeners[$eventName]["listeners"] as $listener) {
-                list ($active, $sendClasses) = $this->prepareForListenerRun($listener);
+                list($active, $sendClasses) = $this->prepareForListenerRun($listener);
                 if (!$active) {
                     continue;
                 }
