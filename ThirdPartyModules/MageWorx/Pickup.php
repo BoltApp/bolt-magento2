@@ -22,11 +22,15 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Api\Data\StoreAddressInterfaceFactory;
 use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterfaceFactory;
 
+use GuzzleHttp\ClientFactory;
+use GuzzleHttp\Exception\GuzzleException;
 use Magento\Directory\Model\RegionFactory;
 use Magento\Framework\HTTP\Header;
+use Magento\Framework\Serialize\SerializerInterface;
 use Magento\Framework\Session\SessionManagerInterface;
 use Magento\Framework\Stdlib\CookieManagerInterface;
 use Magento\Framework\Stdlib\Cookie\CookieMetadataFactory;
+use Magento\Framework\Webapi\Rest\Request;
 use Magento\Store\Model\StoreManagerInterface;
 
 class Pickup
@@ -77,6 +81,16 @@ class Pickup
     protected $httpHeader;
 
     /**
+     * @var ClientFactory
+     */
+    private $clientFactory;
+
+    /**
+     * @var SerializerInterface
+     */
+    private $serializer;
+
+    /**
      * @var string
      */
     private const DELIVERY_METHOD = 'mageworxpickup_mageworxpickup';
@@ -95,6 +109,8 @@ class Pickup
      * @param CookieMetadataFactory        $cookieMetadataFactory
      * @param Header                       $httpHeader
      * @param StoreManagerInterface        $storeManager
+     * @param ClientFactory                $clientFactory
+     * @param SerializerInterface          $serializer
      */
     public function __construct(
         Bugsnag  $bugsnagHelper,
@@ -105,7 +121,9 @@ class Pickup
         CookieMetadataFactory $cookieMetadataFactory,
         Header $httpHeader,
         RegionFactory $regionFactory,
-        StoreManagerInterface $storeManager
+        StoreManagerInterface $storeManager,
+        ClientFactory $clientFactory,
+        SerializerInterface $serializer
     ) {
         $this->bugsnagHelper            = $bugsnagHelper;
         $this->storeAddressFactory      = $storeAddressFactory;
@@ -116,6 +134,8 @@ class Pickup
         $this->httpHeader               = $httpHeader;
         $this->regionFactory            = $regionFactory;
         $this->storeManager             = $storeManager;
+        $this->clientFactory            = $clientFactory;
+        $this->serializer               = $serializer;
     }
 
     /**
@@ -363,9 +383,28 @@ class Pickup
         $radiusUnit = $mageWorxHelper->getRadiusUnit();
         $googleMapApiKey = $mageWorxHelper->getMapApiKey();
         $address = ($addressData['street_address1'] ?? '') . ',' . ($addressData['locality'] ?? '') . ',' . ($addressData['region'] ?? '') . ' ' . ($addressData['postal_code'] ?? '') . ',' . ($addressData['country_code'] ?? '');
-        $coordinates = file_get_contents('https://maps.googleapis.com/maps/api/geocode/json?address=' . urlencode($address) . '&sensor=false&key=' . $googleMapApiKey);
-        $coordinates = json_decode($coordinates, true);
-        if (!empty($coordinates) && is_array($coordinates) && isset($coordinates['status']) && $coordinates['status'] == 'OK') {
+        $client = $this->clientFactory->create(['config' => [
+            'base_uri' => 'https://maps.googleapis.com/'
+        ]]);
+        $uriEndpoint = 'maps/api/geocode/json?address=' . urlencode($address) . '&sensor=false&key=' . $googleMapApiKey;
+        try {
+            $response = $client->request(
+                Request::HTTP_METHOD_GET,
+                $uriEndpoint,
+                []
+            );
+        } catch (GuzzleException $e) {
+            $this->bugsnagHelper->notifyException($e);
+            return $filters;
+        }
+        $status = $response->getStatusCode();
+        if ($status !== 200) {
+            return $filters;
+        }
+        $responseBody = $response->getBody();
+        $responseContent = $responseBody->getContents();
+        $content = $this->serializer->unserialize($responseContent);
+        if (!empty($content) && is_array($content) && isset($content['status']) && $content['status'] == 'OK') {
             $filters['radius']       = $radius;
             $filters['autocomplete'] = [
                 'small_city' => $addressData['locality'] ?? '',
@@ -373,8 +412,8 @@ class Pickup
                 'region' => $addressData['region'] ?? '',
                 'postcode' => $addressData['postal_code'] ?? '',
                 'country_id' => $addressData['country_code'] ?? '',
-                'lat' => $coordinates['results'][0]['geometry']['location']['lat'],
-                'lng' => $coordinates['results'][0]['geometry']['location']['lng'],
+                'lat' => $content['results'][0]['geometry']['location']['lat'],
+                'lng' => $content['results'][0]['geometry']['location']['lng'],
                 'skip_radius' => false,
             ];
             $filters['unit'] = $radiusUnit;
