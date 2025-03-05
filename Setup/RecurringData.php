@@ -24,6 +24,7 @@ use Bolt\Boltpay\Model\ErrorResponse as BoltErrorResponse;
 use Magento\Framework\Setup\InstallDataInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
+use Bolt\Boltpay\Helper\IntegrationManagement;
 
 class RecurringData implements InstallDataInterface
 {
@@ -47,16 +48,30 @@ class RecurringData implements InstallDataInterface
      */
     protected $_errorResponse;
 
+    /**
+     * @var IntegrationManagement
+     */
+    protected $_integrationManagement;
+
+    /**
+     * @param Manager $fsManager
+     * @param LogHelper $logHelper
+     * @param MetricsClient $metricsClient
+     * @param BoltErrorResponse $errorResponse
+     * @param IntegrationManagement $integrationManagement
+     */
     public function __construct(
         Manager $fsManager,
         LogHelper $logHelper,
         MetricsClient $metricsClient,
-        BoltErrorResponse $errorResponse
+        BoltErrorResponse $errorResponse,
+        IntegrationManagement $integrationManagement
     ) {
         $this->_fsManager = $fsManager;
         $this->_logHelper = $logHelper;
         $this->_metricsClient = $metricsClient;
         $this->_errorResponse = $errorResponse;
+        $this->_integrationManagement = $integrationManagement;
     }
 
     /**
@@ -70,18 +85,19 @@ class RecurringData implements InstallDataInterface
     {
         $startTime = $this->_metricsClient->getCurrentTime();
         try {
+            $this->_integrationManagement->syncExistingIntegrationAclResources();
             $this->_fsManager->updateSwitchesFromBolt();
         } catch (\Exception $e) {
             $encodedError = $this->_errorResponse->prepareErrorMessage(
                 BoltErrorResponse::ERR_SERVICE,
                 $e->getMessage()
             );
-            $this->_logHelper->addInfoLog('RecurringData: failed updating feature switches');
+            $this->_logHelper->addInfoLog('RecurringData: failed updating');
             $this->_logHelper->addInfoLog($encodedError);
             $this->_metricsClient->processMetric(
-                'feature_switch.recurring.failure',
+                'bolt.recurring.failure',
                 1,
-                'feature_switch.recurring.latency',
+                'bolt.recurring.latency',
                 $startTime
             );
             return;
