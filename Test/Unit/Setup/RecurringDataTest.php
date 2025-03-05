@@ -26,7 +26,7 @@ use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
-
+use Bolt\Boltpay\Helper\IntegrationManagement;
 /**
  * Class RecurringDataTest
  * @coversDefaultClass \Bolt\Boltpay\Setup\RecurringData
@@ -37,6 +37,11 @@ class RecurringDataTest extends BoltTestCase
      * @var Manager
      */
     private $fsManager;
+
+    /**
+     * @var IntegrationManagement
+     */
+    private $integrationManagement;
 
     /**
      * @var LogHelper
@@ -71,6 +76,7 @@ class RecurringDataTest extends BoltTestCase
     protected function setUpInternal()
     {
         $this->fsManager = $this->createPartialMock(Manager::class, ['updateSwitchesFromBolt']);
+        $this->integrationManagement = $this->createPartialMock(IntegrationManagement::class, ['syncExistingIntegrationAclResources']);
         $this->logHelper = $this->createPartialMock(LogHelper::class, ['addInfoLog']);
         $this->metricsClient = $this->createPartialMock(MetricsClient::class, ['getCurrentTime', 'processMetric']);
         $this->errorResponse = $this->createPartialMock(ErrorResponse::class, ['prepareErrorMessage']);
@@ -82,7 +88,8 @@ class RecurringDataTest extends BoltTestCase
                 $this->fsManager,
                 $this->logHelper,
                 $this->metricsClient,
-                $this->errorResponse
+                $this->errorResponse,
+                $this->integrationManagement,
             ])
             ->enableProxyingToOriginalMethods()
             ->getMock();
@@ -95,6 +102,7 @@ class RecurringDataTest extends BoltTestCase
     public function install()
     {
         $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturnSelf();
+        $this->integrationManagement->expects(self::once())->method('syncExistingIntegrationAclResources')->willReturnSelf();
         $this->fsManager->expects(self::once())->method('updateSwitchesFromBolt')->willReturnSelf();
         $this->currentMock->install($this->setup, $this->context);
     }
