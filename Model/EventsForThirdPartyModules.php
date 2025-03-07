@@ -1168,7 +1168,6 @@ class EventsForThirdPartyModules
                 "MageWorx_Pickup" => [
                     "module" => "MageWorx_Pickup",
                     "sendClasses" => [
-                        "MageWorx\Locations\Api\LocationRepositoryInterface",
                         "MageWorx\StoreLocator\Helper\Data"
                     ],
                     "checkClasses" => [

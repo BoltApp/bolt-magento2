@@ -140,7 +140,6 @@ class Pickup
 
     /**
      * @param  array                                              $result
-     * @param  MageWorx\Locations\Api\LocationRepositoryInterface $locationRepository
      * @param  MageWorx\StoreLocator\Helper\Data                  $mageWorxHelper
      * @param  \Magento\Quote\Model\Quote                         $quote
      * @param  $shippingOptions
@@ -149,7 +148,6 @@ class Pickup
      */
     public function getShipToStoreOptions(
         $result,
-        $locationRepository,
         $mageWorxHelper,
         $quote,
         $shippingOptions,
@@ -179,16 +177,12 @@ class Pickup
                 if (empty($filters)) {
                     return $result;
                 }
-                $locations = $locationRepository->getListLocationForFront(
-                    $this->getStoreId(),
-                    $filters
-                );
+                $locations = $mageWorxHelper->getLocationsForCurrentQuote($filters);
                 if (count($locations)) {
-                    if ($filters['radius'] > 0 && $filters['unit'] == 'miles') {
-                        $filters['radius'] = $filters['radius'] * 1.609344; // approximately 1.6 km in 1 mile
-                    }
+                    $distanceUnit = ($filters['unit'] == 'miles') ? 'mile' : 'km';
                     foreach ($locations as $location) {
                         $distance = ($this->calculateCircleDistance($location->getLatitude(), $location->getLongitude(), $filters['autocomplete']['lat'], $filters['autocomplete']['lng'])) / 1000;
+                        $distance = round((($distanceUnit == 'km') ?: $distance * 0.621371), 2);
                         if ($filters['radius'] > 0 && $distance > $filters['radius']) {
                             continue;
                         }
@@ -209,8 +203,13 @@ class Pickup
                         $shipToStoreOption->setStoreName($locationName);
                         $shipToStoreOption->setAddress($storeAddress);
                         $shipToStoreOption->setDistance($distance);
-                        $shipToStoreOption->setDistanceUnit('km');
+                        $shipToStoreOption->setDistanceUnit($distanceUnit);
                         $shipToStoreOptions[] = $shipToStoreOption;
+                    }
+                    if (!empty($shipToStoreOptions)) {
+                        usort($shipToStoreOptions, function ($first, $second) {
+                            return $first->getDistance() - $second->getDistance();
+                        });
                     }
                 }
             }
