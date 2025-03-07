@@ -140,7 +140,6 @@ class Pickup
 
     /**
      * @param  array                                              $result
-     * @param  MageWorx\Locations\Api\LocationRepositoryInterface $locationRepository
      * @param  MageWorx\StoreLocator\Helper\Data                  $mageWorxHelper
      * @param  \Magento\Quote\Model\Quote                         $quote
      * @param  $shippingOptions
@@ -149,7 +148,6 @@ class Pickup
      */
     public function getShipToStoreOptions(
         $result,
-        $locationRepository,
         $mageWorxHelper,
         $quote,
         $shippingOptions,
