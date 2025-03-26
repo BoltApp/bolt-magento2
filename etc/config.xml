@@ -76,6 +76,7 @@ tr.shipping.totals td.amount span.price,
                 <enable_store_pickup_feature>0</enable_store_pickup_feature>
                 <always_present_checkout>0</always_present_checkout>
                 <bolt_sso>0</bolt_sso>
+                <bolt_sso_redirect_referer>0</bolt_sso_redirect_referer>
                 <universal_debug>1</universal_debug>
                 <aheadworks_reward_points_on_cart>1</aheadworks_reward_points_on_cart>
                 <mageworx_reward_points_on_cart>1</mageworx_reward_points_on_cart>
