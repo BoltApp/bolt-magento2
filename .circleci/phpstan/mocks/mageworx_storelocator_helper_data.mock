@@ -1,0 +1,4 @@
+<?php
+namespace MageWorx\StoreLocator\Helper{
+    class Data{};
+}
