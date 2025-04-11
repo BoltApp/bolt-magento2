@@ -33,6 +33,7 @@ class StoreAddressTest extends BoltTestCase
     const REGION = 'New York';
     const POSTALCODE = '11234';
     const COUNTRYCODE = 'US';
+    const PHONE = '12345'
 
     /**
      * @var StoreAddress
@@ -48,6 +49,7 @@ class StoreAddressTest extends BoltTestCase
         $this->storeAddress->setRegion(self::REGION);
         $this->storeAddress->setPostalCode(self::POSTALCODE);
         $this->storeAddress->setCountryCode(self::COUNTRYCODE);
+        $this->storeAddress->setPhone(self::PHONE);
     }
 
     /**
@@ -112,6 +114,16 @@ class StoreAddressTest extends BoltTestCase
 
     /**
      * @test
+     * that getPhone would return phone
+     * @covers ::getPhone
+     */
+    public function getPhone_always_returnsPhone()
+    {
+        $this->assertEquals(self::PHONE, $this->storeAddress->getPhone());
+    }
+
+    /**
+     * @test
      * that jsonSerialize would return an associative array of values
      * @covers ::jsonSerialize
      */
@@ -124,7 +136,8 @@ class StoreAddressTest extends BoltTestCase
             'locality' => self::LOCALITY,
             'region' => self::REGION,
             'postal_code' => self::POSTALCODE,
-            'country_code' => self::COUNTRYCODE
+            'country_code' => self::COUNTRYCODE,
+            'phone' => self::PHONE,
         ], $result);
     }
 }
