@@ -98,7 +98,7 @@ class ShippingInformationManagementPlugin
         Session $checkoutSession,
         Bugsnag $bugsnagHelper,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
-        CustomerSession $customerSession = null,
+        CustomerSession $customerSession = null
     ) {
         $this->appState = $appState;
         $this->moduleManager = $moduleManager;

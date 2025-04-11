@@ -96,7 +96,7 @@ class PaymentInformationManagementPlugin
         QuoteIdMaskFactory $quoteIdMaskFactory,
         SessionManagerInterface $sessionManager,
         Bugsnag $bugsnagHelper,
-        CustomerSession $customerSession = null,
+        CustomerSession $customerSession = null
     ) {
         $this->appState = $appState;
         $this->moduleManager = $moduleManager;

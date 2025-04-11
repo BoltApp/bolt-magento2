@@ -56,7 +56,7 @@ class DataPlugin
         Bugsnag $bugsnagHelper,
         Session $checkoutSession,
         State $appState,
-        CartRepositoryInterface $quoteRepository,
+        CartRepositoryInterface $quoteRepository
     ) {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->checkoutSession = $checkoutSession;
@@ -73,7 +73,7 @@ class DataPlugin
      */
     public function afterGetQuote(
         \MageWorx\StoreLocator\Helper\Data $subject,
-        \Magento\Quote\Model\Quote $result,
+        \Magento\Quote\Model\Quote $result
     ) {
         if ($this->appState->getAreaCode() !== \Magento\Framework\App\Area::AREA_WEBAPI_REST) {
             return $result;

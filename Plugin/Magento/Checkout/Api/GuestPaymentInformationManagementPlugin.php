@@ -87,7 +87,7 @@ class GuestPaymentInformationManagementPlugin
         Session $checkoutSession,
         QuoteIdMaskFactory $quoteIdMaskFactory,
         SessionManagerInterface $sessionManager,
-        Bugsnag $bugsnagHelper,
+        Bugsnag $bugsnagHelper
     ) {
         $this->appState = $appState;
         $this->moduleManager = $moduleManager;
