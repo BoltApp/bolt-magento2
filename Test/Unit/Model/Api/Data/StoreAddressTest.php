@@ -33,7 +33,7 @@ class StoreAddressTest extends BoltTestCase
     const REGION = 'New York';
     const POSTALCODE = '11234';
     const COUNTRYCODE = 'US';
-    const PHONE = '12345'
+    const PHONE = '12345';
 
     /**
      * @var StoreAddress
