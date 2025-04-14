@@ -20,10 +20,7 @@ namespace Bolt\Boltpay\Plugin\Magento\Checkout\Model;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Model\RestApiRequestValidator;
-use Magento\Checkout\Api\Data\ShippingInformationInterface;
-use Magento\Checkout\Model\ShippingInformationManagement;
 use Magento\Framework\App\Area;
-use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\State;
 use Magento\Framework\Webapi\Rest\Request;
 
@@ -83,16 +80,16 @@ class ShippingInformationManagementPlugin
 
     /**
      *
-     * @param ShippingInformationManagement $subject
+     * @param \Magento\Checkout\Model\ShippingInformationManagement $subject
      * @param int $cartId
-     * @param ShippingInformationInterface $addressInformation
+     * @param \Magento\Checkout\Api\Data\ShippingInformationInterface $addressInformation
      *
      * @return array
      */
     public function beforeSaveAddressInformation(
-        ShippingInformationManagement $subject,
+        \Magento\Checkout\Model\ShippingInformationManagement $subject,
         $cartId,
-        ShippingInformationInterface $addressInformation
+        \Magento\Checkout\Api\Data\ShippingInformationInterface $addressInformation
     ) {
         try {
             if ($this->appState->getAreaCode() !== Area::AREA_WEBAPI_REST ||

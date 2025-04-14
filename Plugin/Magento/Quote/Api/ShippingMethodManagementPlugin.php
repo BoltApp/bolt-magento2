@@ -20,8 +20,6 @@ namespace Bolt\Boltpay\Plugin\Magento\Quote\Api;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
 use Magento\Framework\Webapi\Rest\Request;
-use Magento\Quote\Api\ShipmentEstimationInterface;
-use Magento\Quote\Api\Data\AddressInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Model\RestApiRequestValidator;
@@ -82,16 +80,16 @@ class ShippingMethodManagementPlugin
 
     /**
      *
-     * @param ShipmentEstimationInterface   $subject    original ShippingMethodManagement instance.
-     * @param int                           $cartId     The shopping cart ID.
-     * @param AddressInterface              $address    The estimate address
+     * @param \Magento\Quote\Api\ShipmentEstimationInterface $subject
+     * @param int $cartId
+     * @param \Magento\Quote\Api\Data\AddressInterface $address
      *
      * @return array
      */
     public function beforeEstimateByExtendedAddress(
-        ShipmentEstimationInterface $subject,
+        \Magento\Quote\Api\ShipmentEstimationInterface $subject,
         $cartId,
-        AddressInterface $address
+        \Magento\Quote\Api\Data\AddressInterface $address
     ) {
         if ($this->appState->getAreaCode() !== Area::AREA_WEBAPI_REST ||
             !$this->boltRestApiRequestValidator->isValidBoltRequest($this->request) ||
@@ -114,18 +112,18 @@ class ShippingMethodManagementPlugin
 
     /**
      *
-     * @param ShipmentEstimationInterface   $subject    original ShippingMethodManagement instance.
-     * @param \Magento\Quote\Api\Data\ShippingMethodInterface[]     $result     result of the original method call.
-     * @param int                           $cartId     The shopping cart ID.
-     * @param AddressInterface              $address    The estimate address
+     * @param \Magento\Quote\Api\ShipmentEstimationInterface $subject
+     * @param \Magento\Quote\Api\Data\ShippingMethodInterface[] $result
+     * @param int $cartId
+     * @param \Magento\Quote\Api\Data\AddressInterface $address
      *
-     * @return \Magento\Quote\Api\Data\ShippingMethodInterface[] An array of shipping methods.
+     * @return \Magento\Quote\Api\Data\ShippingMethodInterface[]
      */
     public function afterEstimateByExtendedAddress(
-        ShipmentEstimationInterface $subject,
+        \Magento\Quote\Api\ShipmentEstimationInterface $subject,
         $result,
         $cartId,
-        AddressInterface $address
+        \Magento\Quote\Api\Data\AddressInterface $address
     ) {
         if ($this->appState->getAreaCode() !== Area::AREA_WEBAPI_REST ||
             !$this->boltRestApiRequestValidator->isValidBoltRequest($this->request) ||
