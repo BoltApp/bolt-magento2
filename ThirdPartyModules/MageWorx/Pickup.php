@@ -19,18 +19,27 @@
 namespace Bolt\Boltpay\ThirdPartyModules\MageWorx;
 
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Bolt\Boltpay\Api\Data\StoreAddressInterfaceFactory;
 use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterfaceFactory;
+use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 
 use GuzzleHttp\ClientFactory;
 use GuzzleHttp\Exception\GuzzleException;
+use Magento\Checkout\Model\Session;
+use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Directory\Model\Region as RegionModel;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\HTTP\Header;
 use Magento\Framework\Serialize\SerializerInterface;
+use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Framework\Session\SessionManagerInterface;
 use Magento\Framework\Stdlib\CookieManagerInterface;
 use Magento\Framework\Stdlib\Cookie\CookieMetadataFactory;
 use Magento\Framework\Webapi\Rest\Request;
+use Magento\Quote\Api\CartRepositoryInterface;
+use Magento\Quote\Api\Data\ShippingMethodExtensionFactory;
+use Magento\Quote\Model\QuoteIdMaskFactory;
 use Magento\Store\Model\StoreManagerInterface;
 
 class Pickup
@@ -91,6 +100,41 @@ class Pickup
     private $serializer;
 
     /**
+     * @var \Magento\Checkout\Model\Session
+     */
+    private $checkoutSession;
+
+    /**
+     * @var CustomerSession
+     */
+    private $customerSession;
+
+    /**
+     * @var CartRepositoryInterface
+     */
+    private $quoteRepository;
+
+    /**
+     * @var ShippingOptionInterfaceFactory
+     */
+    private $shippingOptionFactory;
+
+    /**
+     * @var \Magento\Catalog\Api\Data\ShippingMethodExtensionFactory
+     */
+    private $extensionFactory;
+
+    /**
+     * @var Json
+     */
+    private $json;
+
+    /**
+     * @var \Magento\Quote\Model\QuoteIdMaskFactory
+     */
+    private $quoteIdMaskFactory;
+
+    /**
      * @var string
      */
     public const MAGEWORX_PICKUP_MODULE_NAME = 'MageWorx_Pickup';
@@ -111,16 +155,24 @@ class Pickup
     public const COOKIE_NAME = 'mageworx_location_id';
 
     /**
-     * @param Bugsnag                      $bugsnagHelper
-     * @param StoreAddressInterfaceFactory $storeAddressFactory
-     * @param RegionModel                  $regionModel
-     * @param SessionManagerInterface      $sessionManager
-     * @param CookieManagerInterface       $cookieManager
-     * @param CookieMetadataFactory        $cookieMetadataFactory
-     * @param Header                       $httpHeader
-     * @param StoreManagerInterface        $storeManager
-     * @param ClientFactory                $clientFactory
-     * @param SerializerInterface          $serializer
+     * @param Bugsnag                        $bugsnagHelper
+     * @param StoreAddressInterfaceFactory   $storeAddressFactory
+     * @param ShipToStoreOptionInterfaceFactory $shipToStoreOptionFactory
+     * @param RegionModel                    $regionModel
+     * @param SessionManagerInterface        $sessionManager
+     * @param CookieManagerInterface         $cookieManager
+     * @param CookieMetadataFactory          $cookieMetadataFactory
+     * @param Header                         $httpHeader
+     * @param StoreManagerInterface          $storeManager
+     * @param ClientFactory                  $clientFactory
+     * @param SerializerInterface            $serializer
+     * @param Session                        $checkoutSession
+     * @param CartRepositoryInterface        $quoteRepository
+     * @param ShippingOptionInterfaceFactory $shippingOptionFactory
+     * @param ShippingMethodExtensionFactory $extensionFactory
+     * @param QuoteIdMaskFactory             $quoteIdMaskFactory
+     * @param CustomerSession|null           $customerSession
+     * @param Json|null                      $json
      */
     public function __construct(
         Bugsnag  $bugsnagHelper,
@@ -133,7 +185,14 @@ class Pickup
         RegionModel $regionModel,
         StoreManagerInterface $storeManager,
         ClientFactory $clientFactory,
-        SerializerInterface $serializer
+        SerializerInterface $serializer,
+        Session $checkoutSession,
+        CartRepositoryInterface $quoteRepository,
+        ShippingOptionInterfaceFactory $shippingOptionFactory,
+        ShippingMethodExtensionFactory $extensionFactory,
+        QuoteIdMaskFactory $quoteIdMaskFactory,
+        CustomerSession $customerSession = null,
+        Json $json = null
     ) {
         $this->bugsnagHelper            = $bugsnagHelper;
         $this->storeAddressFactory      = $storeAddressFactory;
@@ -146,6 +205,13 @@ class Pickup
         $this->storeManager             = $storeManager;
         $this->clientFactory            = $clientFactory;
         $this->serializer               = $serializer;
+        $this->checkoutSession          = $checkoutSession;
+        $this->quoteRepository          = $quoteRepository;
+        $this->shippingOptionFactory    = $shippingOptionFactory;
+        $this->extensionFactory         = $extensionFactory;
+        $this->quoteIdMaskFactory       = $quoteIdMaskFactory;
+        $this->customerSession          = $customerSession ?? ObjectManager::getInstance()->get(CustomerSession::class);
+        $this->json                     = $json ?: ObjectManager::getInstance()->get(Json::class);
     }
 
     /**
@@ -370,13 +436,11 @@ class Pickup
     }
 
     /**
-     * @param StoreAddressInterface|null $result
      * @param MageWorx\Locations\Api\LocationRepositoryInterface $locationRepository
      * @param int $locationId
      * @return StoreAddressInterface|null
      */
     public function getInStoreShippingStoreAddress(
-        $result,
         $locationRepository,
         $locationId
     ) {
@@ -395,6 +459,219 @@ class Pickup
     }
 
     /**
+     * @param int $cartId
+     * @param \Magento\Quote\Api\Data\AddressInterface $address
+     */
+    public function beforeEstimateByExtendedAddress(
+        $cartId,
+        $address
+    ) {
+        try {
+            $quote = $this->quoteRepository->getActive($cartId);
+            if ($quote) {
+                $quoteCustomerGroupId = $quote->getCustomerGroupId();
+                $customerGroupId = $this->customerSession->getCustomerGroupId();
+                if ($quoteCustomerGroupId !== $customerGroupId) {
+                    $this->checkoutSession->setMageWorxPickupQuoteId($cartId);
+                } else {
+                    $this->checkoutSession->setQuoteId($cartId);
+                }
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+
+    /**
+     * @param ShippingMethodInterface[] $result
+     * @param MageWorx\StoreLocator\Helper\Data $mageWorxHelper
+     * @param int $cartId
+     * @param \Magento\Quote\Api\Data\AddressInterface $address
+     *
+     * @return ShippingMethodInterface[] An array of shipping methods.
+     */
+    public function afterEstimateByExtendedAddress(
+        $result,
+        $mageWorxHelper,
+        $cartId,
+        $address
+    ) {
+        try {
+            $tmpResult = [];
+            foreach ($result as $shippingMethod) {
+                if ($shippingMethod->getCarrierCode() == self::MAGEWORX_PICKUP_CARRIER_CODE) {
+                    $shippingOptions = [];
+                    $service = $shippingMethod->getCarrierTitle() . ' - ' . $shippingMethod->getMethodTitle();
+                    $method  = $shippingMethod->getCarrierCode() . '_' . $shippingMethod->getMethodCode();
+                    $majorAmount = $shippingMethod->getAmount();
+                    $quote = $this->quoteRepository->getActive($cartId);
+                    $currencyCode = $quote->getQuoteCurrencyCode();
+                    $cost = CurrencyUtils::toMinor($majorAmount, $currencyCode);
+                    $shippingOptions[] = $this->shippingOptionFactory
+                                            ->create()
+                                            ->setService($service)
+                                            ->setCost($cost)
+                                            ->setReference($method);
+                    $shippingAddress = $quote->getShippingAddress();
+                    if ($shippingAddress &&
+                        ($country_code = $shippingAddress->getCountryId()) &&
+                        ($postal_code  = $shippingAddress->getPostcode())
+                    ) {
+                        $addressData = [
+                            'country_code' => $country_code,
+                            'postal_code'  => $postal_code,
+                            'region'       => $shippingAddress->getRegion(),
+                            'locality'     => $shippingAddress->getCity(),
+                            'street_address1' => $shippingAddress->getStreetLine(1),
+                            'street_address2' => $shippingAddress->getStreetLine(2),
+                        ];
+                        list($shipToStoreOptions, $shippingOptions) = $this->getShipToStoreOptions(
+                            [[],$shippingOptions],
+                            $mageWorxHelper,
+                            $quote,
+                            $shippingOptions,
+                            $addressData
+                        );
+                        if (!empty($shipToStoreOptions)) {
+                            $extensibleAttribute =  ($shippingMethod->getExtensionAttributes())
+                                ? $shippingMethod->getExtensionAttributes()
+                                : $this->extensionFactory->create();
+                            $locations = $this->json->serialize($shipToStoreOptions);
+                            $extensibleAttribute->setMageWorxPickupLocations($locations);
+                            $shippingMethod->setExtensionAttributes($extensibleAttribute);
+                        }
+                    }
+                }
+                $tmpResult[] = $shippingMethod;
+            }
+            $result = $tmpResult;
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param MageWorx\Locations\Api\LocationRepositoryInterface $locationRepository
+     * @param int $cartId
+     * @param \Magento\Quote\Api\Data\AddressInterface $address
+     */
+    public function beforeSaveAddressInformation(
+        $locationcartIdRepository,
+        $cartId,
+        $addressInformation
+    ) {
+        try {
+            $quote = $this->quoteRepository->getActive($cartId);
+            if ($quote->isVirtual() || !$quote->getItemsCount()) {
+                return;
+            }
+            $carrierCode = $addressInformation->getShippingCarrierCode();
+            if ($carrierCode != self::MAGEWORX_PICKUP_CARRIER_CODE) {
+                return;
+            }
+            $methodCode = $addressInformation->getShippingMethodCode();
+            $mixCodes = explode('_', $methodCode);
+            if (count($mixCodes) != 2 || $mixCodes[0] != self::MAGEWORX_PICKUP_CARRIER_CODE) {
+                return;
+            }
+
+            $locationId = $mixCodes[1];
+            $this->sessionManager->setData('mageworx_pickup_location_id', $locationId);
+            $_COOKIE[self::COOKIE_NAME] = $locationId;
+
+            $storeAddress = $this->getInStoreShippingStoreAddress($locationcartIdRepository, $locationId);
+            if ($storeAddress->getPhone()) {
+                $address = $addressInformation->getShippingAddress();
+                $address->setTelephone($storeAddress->getPhone());
+            }
+            $addressInformation->setShippingMethodCode(self::MAGEWORX_PICKUP_CARRIER_CODE);
+            
+            $quoteCustomerGroupId = $quote->getCustomerGroupId();
+            $customerGroupId = $this->customerSession->getCustomerGroupId();
+            if ($quoteCustomerGroupId !== $customerGroupId) {
+                $this->checkoutSession->setMageWorxPickupQuoteId($cartId);
+            } else {
+                $this->checkoutSession->setQuoteId($cartId);
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+
+    /**
+     * @param string $cartId
+     * @param string $email
+     * @param \Magento\Quote\Api\Data\PaymentInterface $paymentMethod
+     * @param \Magento\Quote\Api\Data\AddressInterface|null $billingAddress
+     */
+    public function beforeSavePaymentInformationAndPlaceOrder(
+        $cartId,
+        $email,
+        \Magento\Quote\Api\Data\PaymentInterface $paymentMethod,
+        ?\Magento\Quote\Api\Data\AddressInterface $billingAddress = null
+    ) {
+        try {
+            $additionalData = $paymentMethod->getAdditionalData();
+            if (empty($additionalData) ||
+                !isset($additionalData['shippingMethod']) ||
+                $additionalData['shippingMethod'] != self::DELIVERY_METHOD
+            ) {
+                return;
+            }
+            $quoteIdMask = $this->quoteIdMaskFactory->create()->load($cartId, 'masked_id');
+            $quoteId = $quoteIdMask->getQuoteId();
+            $quote = $this->quoteRepository->getActive($quoteId);
+            $this->checkoutSession->setQuoteId($quoteId);
+            $locationId = $quote->getMageworxPickupLocationId();
+            if ($locationId) {
+                $this->sessionManager->setData('mageworx_pickup_location_id', $locationId);
+                $_COOKIE[self::COOKIE_NAME] = $locationId;
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+
+    /**
+     * @param string $cartId
+     * @param \Magento\Quote\Api\Data\PaymentInterface $paymentMethod
+     * @param \Magento\Quote\Api\Data\AddressInterface|null $billingAddress
+     */
+    public function beforeSavePaymentInformation(
+        $cartId,
+        \Magento\Quote\Api\Data\PaymentInterface $paymentMethod,
+        ?\Magento\Quote\Api\Data\AddressInterface $billingAddress = null
+    ) {
+        try {
+            $additionalData = $paymentMethod->getAdditionalData();
+            if (empty($additionalData) ||
+                !isset($additionalData['shippingMethod']) ||
+                $additionalData['shippingMethod'] != self::DELIVERY_METHOD
+            ) {
+                return;
+            }
+            $quote = $this->quoteRepository->getActive($cartId);
+            $quoteCustomerGroupId = $quote->getCustomerGroupId();
+            $customerGroupId = $this->customerSession->getCustomerGroupId();
+            if ($quoteCustomerGroupId !== $customerGroupId) {
+                $this->checkoutSession->setMageWorxPickupQuoteId($cartId);
+            } else {
+                $this->checkoutSession->setQuoteId($cartId);
+            }
+            $locationId = $quote->getMageworxPickupLocationId();
+            if ($locationId) {
+                $this->sessionManager->setData('mageworx_pickup_location_id', $locationId);
+                $_COOKIE[self::COOKIE_NAME] = $locationId;
+            }
+        } catch (\Exception $e) {
+            $this->bugsnagHelper->notifyException($e);
+        }
+    }
+
+    /**
+     *
      * @param array $referenceCodes
      * @return int
      */

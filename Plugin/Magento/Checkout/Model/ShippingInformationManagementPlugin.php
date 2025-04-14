@@ -17,20 +17,15 @@
 
 namespace Bolt\Boltpay\Plugin\Magento\Checkout\Model;
 
+use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Model\RestApiRequestValidator;
 use Magento\Checkout\Api\Data\ShippingInformationInterface;
-use Magento\Checkout\Api\ShippingInformationManagementInterface;
 use Magento\Checkout\Model\ShippingInformationManagement;
-use Magento\Checkout\Model\Session;
-use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\State;
-use Magento\Framework\Module\Manager;
-use Magento\Framework\Session\SessionManagerInterface;
-use Magento\Quote\Api\CartRepositoryInterface;
-use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Model\EventsForThirdPartyModules;
-use Bolt\Boltpay\ThirdPartyModules\MageWorx\Pickup as MageWorxPickup;
+use Magento\Framework\Webapi\Rest\Request;
 
 /**
  * Plugin for {@see \Magento\Checkout\Model\ShippingInformationManagement}
@@ -43,31 +38,6 @@ class ShippingInformationManagementPlugin
     private $appState;
 
     /**
-     * @var \Magento\Checkout\Model\Session
-     */
-    private $checkoutSession;
-
-    /**
-     * @var \Magento\Customer\Model\Session
-     */
-    private $customerSession;
-
-    /**
-     * @var \Magento\Framework\Module\Manager
-     */
-    private $moduleManager;
-
-    /**
-     * @var \Magento\Quote\Api\CartRepositoryInterface
-     */
-    private $quoteRepository;
-
-    /**
-     * @var \Magento\Framework\Session\SessionManagerInterface
-     */
-    private $sessionManager;
-
-    /**
      * @var Bolt\Boltpay\Helper\Bugsnag
      */
     private $bugsnagHelper;
@@ -78,36 +48,37 @@ class ShippingInformationManagementPlugin
     private $eventsForThirdPartyModules;
 
     /**
+     * @var Magento\Framework\Webapi\Rest\Request
+     */
+    private $request;
+
+    /**
+     * @var Bolt\Boltpay\Model\RestApiRequestValidator
+     */
+    private $boltRestApiRequestValidator;
+
+    /**
      * ShippingInformationManagementPlugin constructor.
      *
-     * @param \Magento\Framework\App\State $appState
-     * @param \Magento\Framework\Module\Manager $moduleManager
-     * @param \Magento\Quote\Api\CartRepositoryInterface $quoteRepository
-     * @param \Magento\Framework\Session\SessionManagerInterface $sessionManager
-     * @param \Magento\Checkout\Model\Session $checkoutSession
      * @param Bolt\Boltpay\Helper\Bugsnag $bugsnagHelper
      * @param Bolt\Boltpay\Model\EventsForThirdPartyModules $eventsForThirdPartyModules
-     * @param \Magento\Customer\Model\Session|null $customerSession
+     * @param Bolt\Boltpay\Model\RestApiRequestValidator $boltRestApiRequestValidator
+     * @param \Magento\Framework\App\State $appState
+     * @param \Magento\Framework\Webapi\Rest\Request $request
      *
      */
     public function __construct(
-        State $appState,
-        Manager $moduleManager,
-        CartRepositoryInterface $quoteRepository,
-        SessionManagerInterface $sessionManager,
-        Session $checkoutSession,
         Bugsnag $bugsnagHelper,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
-        CustomerSession $customerSession = null
+        RestApiRequestValidator $boltRestApiRequestValidator,
+        State $appState,
+        Request $request
     ) {
-        $this->appState = $appState;
-        $this->moduleManager = $moduleManager;
-        $this->quoteRepository = $quoteRepository;
-        $this->sessionManager  = $sessionManager;
-        $this->checkoutSession = $checkoutSession;
         $this->bugsnagHelper = $bugsnagHelper;
         $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
-        $this->customerSession = $customerSession ?? ObjectManager::getInstance()->get(CustomerSession::class);
+        $this->boltRestApiRequestValidator = $boltRestApiRequestValidator;
+        $this->appState = $appState;
+        $this->request = $request;
     }
 
     /**
@@ -118,48 +89,23 @@ class ShippingInformationManagementPlugin
      *
      * @return array
      */
-    public function beforeSaveAddressInformation(ShippingInformationManagement $subject, $cartId, ShippingInformationInterface $addressInformation)
-    {
+    public function beforeSaveAddressInformation(
+        ShippingInformationManagement $subject,
+        $cartId,
+        ShippingInformationInterface $addressInformation
+    ) {
         try {
             if ($this->appState->getAreaCode() !== Area::AREA_WEBAPI_REST ||
-                !$this->moduleManager->isEnabled(MageWorxPickup::MAGEWORX_PICKUP_MODULE_NAME) ||
+                !$this->boltRestApiRequestValidator->isValidBoltRequest($this->request) ||
                 !$cartId || !filter_var($cartId, FILTER_VALIDATE_INT)
             ) {
                 return [$cartId, $addressInformation];
             }
-
-            $quote = $this->quoteRepository->getActive($cartId);
-            if ($quote->isVirtual() || !$quote->getItemsCount()) {
-                return [$cartId, $addressInformation];
-            }
-            $carrierCode = $addressInformation->getShippingCarrierCode();
-            if ($carrierCode != MageWorxPickup::MAGEWORX_PICKUP_CARRIER_CODE) {
-                return [$cartId, $addressInformation];
-            }
-            $methodCode = $addressInformation->getShippingMethodCode();
-            $mixCodes = explode('_', $methodCode);
-            if (count($mixCodes) != 2 || $mixCodes[0] != MageWorxPickup::MAGEWORX_PICKUP_CARRIER_CODE) {
-                return [$cartId, $addressInformation];
-            }
-
-            $locationId = $mixCodes[1];
-            $this->sessionManager->setData('mageworx_pickup_location_id', $locationId);
-            $_COOKIE[MageWorxPickup::COOKIE_NAME] = $locationId;
-
-            $storeAddress = $this->eventsForThirdPartyModules->runFilter("getInStoreShippingStoreAddress", null, $locationId);
-            if ($storeAddress->getPhone()) {
-                $address = $addressInformation->getShippingAddress();
-                $address->setTelephone($storeAddress->getPhone());
-            }
-            $addressInformation->setShippingMethodCode(MageWorxPickup::MAGEWORX_PICKUP_CARRIER_CODE);
-            
-            $quoteCustomerGroupId = $quote->getCustomerGroupId();
-            $customerGroupId = $this->customerSession->getCustomerGroupId();
-            if ($quoteCustomerGroupId !== $customerGroupId) {
-                $this->checkoutSession->setMageWorxPickupQuoteId($cartId);
-            } else {
-                $this->checkoutSession->setQuoteId($cartId);
-            }
+            $this->eventsForThirdPartyModules->dispatchEvent(
+                "beforeSaveAddressInformation",
+                $cartId,
+                $addressInformation
+            );
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
         }

@@ -17,16 +17,13 @@
 
 namespace Bolt\Boltpay\Plugin\Magento\Checkout\Api;
 
-use Magento\Checkout\Model\Session;
+use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use Bolt\Boltpay\Model\Payment;
+use Bolt\Boltpay\Model\RestApiRequestValidator;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
-use Magento\Framework\Module\Manager;
-use Magento\Framework\Session\SessionManagerInterface;
-use Magento\Quote\Api\CartRepositoryInterface;
-use Magento\Quote\Model\QuoteIdMaskFactory;
-use Bolt\Boltpay\Helper\Bugsnag;
-use Bolt\Boltpay\Model\Payment;
-use Bolt\Boltpay\ThirdPartyModules\MageWorx\Pickup as MageWorxPickup;
+use Magento\Framework\Webapi\Rest\Request;
 
 /**
  * Plugin for {@see \Magento\Checkout\Api\GuestPaymentInformationManagementInterface}
@@ -39,63 +36,47 @@ class GuestPaymentInformationManagementPlugin
     private $appState;
 
     /**
-     * @var \Magento\Quote\Api\CartRepositoryInterface
-     */
-    private $cartRepository;
-
-    /**
-     * @var \Magento\Checkout\Model\Session
-     */
-    private $checkoutSession;
-
-    /**
-     * @var \Magento\Framework\Module\Manager
-     */
-    private $moduleManager;
-
-    /**
-     * @var \Magento\Quote\Model\QuoteIdMaskFactory
-     */
-    private $quoteIdMaskFactory;
-
-    /**
-     * @var \Magento\Framework\Session\SessionManagerInterface
-     */
-    private $sessionManager;
-
-    /**
      * @var \Bolt\Boltpay\Helper\Bugsnag
      */
     private $bugsnagHelper;
 
     /**
+     * @var Bolt\Boltpay\Model\EventsForThirdPartyModules
+     */
+    private $eventsForThirdPartyModules;
+
+    /**
+     * @var Magento\Framework\Webapi\Rest\Request
+     */
+    private $request;
+
+    /**
+     * @var Bolt\Boltpay\Model\RestApiRequestValidator
+     */
+    private $boltRestApiRequestValidator;
+
+    /**
      * GuestPaymentInformationManagementPlugin constructor.
      *
-     * @param \Magento\Framework\App\State $appState
-     * @param \Magento\Framework\Module\Manager $moduleManager
-     * @param \Magento\Quote\Api\CartRepositoryInterface $cartRepository
-     * @param \Magento\Checkout\Model\Session $checkoutSession
-     * @param \Magento\Quote\Model\QuoteIdMaskFactory $quoteIdMaskFactory
-     * @param \Magento\Framework\Session\SessionManagerInterface $sessionManager
      * @param Bolt\Boltpay\Helper\Bugsnag $bugsnagHelper
+     * @param Bolt\Boltpay\Model\EventsForThirdPartyModules $eventsForThirdPartyModules
+     * @param Bolt\Boltpay\Model\RestApiRequestValidator $boltRestApiRequestValidator
+     * @param \Magento\Framework\App\State $appState
+     * @param \Magento\Framework\Webapi\Rest\Request $request
      *
      */
     public function __construct(
+        Bugsnag $bugsnagHelper,
+        EventsForThirdPartyModules $eventsForThirdPartyModules,
+        RestApiRequestValidator $boltRestApiRequestValidator,
         State $appState,
-        Manager $moduleManager,
-        CartRepositoryInterface $cartRepository,
-        Session $checkoutSession,
-        QuoteIdMaskFactory $quoteIdMaskFactory,
-        SessionManagerInterface $sessionManager,
-        Bugsnag $bugsnagHelper
+        Request $request
     ) {
-        $this->appState = $appState;
-        $this->moduleManager = $moduleManager;
-        $this->cartRepository = $cartRepository;
-        $this->checkoutSession = $checkoutSession;
-        $this->quoteIdMaskFactory = $quoteIdMaskFactory;
-        $this->sessionManager  = $sessionManager;
         $this->bugsnagHelper = $bugsnagHelper;
+        $this->eventsForThirdPartyModules = $eventsForThirdPartyModules;
+        $this->boltRestApiRequestValidator = $boltRestApiRequestValidator;
+        $this->appState = $appState;
+        $this->request = $request;
     }
 
     /**
@@ -116,27 +97,18 @@ class GuestPaymentInformationManagementPlugin
     ) {
         try {
             if ($this->appState->getAreaCode() !== Area::AREA_WEBAPI_REST ||
-                !$this->moduleManager->isEnabled(MageWorxPickup::MAGEWORX_PICKUP_MODULE_NAME) ||
+                !$this->boltRestApiRequestValidator->isValidBoltRequest($this->request) ||
                 $paymentMethod->getMethod() != Payment::METHOD_CODE
             ) {
                 return [$cartId, $email, $paymentMethod, $billingAddress];
             }
-            
-            $additionalData = $paymentMethod->getAdditionalData();
-            if (!empty($additionalData) &&
-                isset($additionalData['shippingMethod']) &&
-                $additionalData['shippingMethod'] == MageWorxPickup::DELIVERY_METHOD
-            ) {
-                $quoteIdMask = $this->quoteIdMaskFactory->create()->load($cartId, 'masked_id');
-                $quoteId = $quoteIdMask->getQuoteId();
-                $quote = $this->cartRepository->getActive($quoteId);
-                $this->checkoutSession->setQuoteId($quoteId);
-                $locationId = $quote->getMageworxPickupLocationId();
-                if ($locationId) {
-                    $this->sessionManager->setData('mageworx_pickup_location_id', $locationId);
-                    $_COOKIE[MageWorxPickup::COOKIE_NAME] = $locationId;
-                }
-            }
+            $this->eventsForThirdPartyModules->dispatchEvent(
+                "beforeSavePaymentInformationAndPlaceOrder",
+                $cartId,
+                $email,
+                $paymentMethod,
+                $billingAddress
+            );
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
         }

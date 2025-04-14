@@ -498,6 +498,53 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
+        "beforeEstimateByExtendedAddress" => [
+            "listeners" => [
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
+            ],
+        ],
+        "beforeSaveAddressInformation" => [
+            "listeners" => [
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "sendClasses" => [
+                        "MageWorx\Locations\Api\LocationRepositoryInterface"
+                    ],
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
+            ],
+        ],
+        "beforeSavePaymentInformationAndPlaceOrder" => [
+            "listeners" => [
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
+            ],
+        ],
+        "beforeSavePaymentInformation" => [
+            "listeners" => [
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
+            ],
+        ],
     ];
 
     const filterListeners = [
@@ -1448,12 +1495,12 @@ class EventsForThirdPartyModules
                 ],
             ],
         ],
-        "getInStoreShippingStoreAddress" => [
+        "afterEstimateByExtendedAddress" => [
             "listeners" => [
                 "MageWorx_Pickup" => [
                     "module" => "MageWorx_Pickup",
                     "sendClasses" => [
-                        "MageWorx\Locations\Api\LocationRepositoryInterface"
+                        "MageWorx\StoreLocator\Helper\Data"
                     ],
                     "checkClasses" => [
                         "MageWorx\Pickup\Model\Carrier\PickupShipping"
