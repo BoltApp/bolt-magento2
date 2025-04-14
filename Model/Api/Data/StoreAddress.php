@@ -55,6 +55,11 @@ class StoreAddress implements StoreAddressInterface, \JsonSerializable
      * @var string
      */
     private $countryCode;
+
+    /**
+     * @var string
+     */
+    private $phone;
     
     
     /**
@@ -206,6 +211,31 @@ class StoreAddress implements StoreAddressInterface, \JsonSerializable
         $this->countryCode = $countryCode;
         return $this;
     }
+
+    /**
+     * Get phone number.
+     *
+     * @api
+     * @return string
+     */
+    public function getPhone()
+    {
+        return $this->phone;
+    }
+
+    /**
+     * Set phone number.
+     *
+     * @api
+     * @param $phone
+     *
+     * @return $this
+     */
+    public function setPhone($phone)
+    {
+        $this->phone = $phone;
+        return $this;
+    }
     
     /**
      * @inheritDoc
@@ -219,6 +249,7 @@ class StoreAddress implements StoreAddressInterface, \JsonSerializable
             'region' => $this->region,
             'postal_code' => $this->postalCode,
             'country_code' => $this->countryCode,
+            'phone' => $this->phone,
         ];
     }
 }
