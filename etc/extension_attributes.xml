@@ -18,6 +18,6 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Api/etc/extension_attributes.xsd">
     <extension_attributes for="Magento\Quote\Api\Data\ShippingMethodInterface">
-        <attribute code="mageworx_pickup_locations" type="string" />
+        <attribute code="mage_worx_pickup_locations" type="string" />
     </extension_attributes>
 </config>
