@@ -471,7 +471,7 @@ class Pickup
             if ($quote) {
                 $quoteCustomerGroupId = $quote->getCustomerGroupId();
                 $customerGroupId = $this->customerSession->getCustomerGroupId();
-                if ($quoteCustomerGroupId !== $customerGroupId) {
+                if ($quoteCustomerGroupId != $customerGroupId) {
                     $this->checkoutSession->setMageWorxPickupQuoteId($cartId);
                 } else {
                     $this->checkoutSession->setQuoteId($cartId);
@@ -590,7 +590,7 @@ class Pickup
             
             $quoteCustomerGroupId = $quote->getCustomerGroupId();
             $customerGroupId = $this->customerSession->getCustomerGroupId();
-            if ($quoteCustomerGroupId !== $customerGroupId) {
+            if ($quoteCustomerGroupId != $customerGroupId) {
                 $this->checkoutSession->setMageWorxPickupQuoteId($cartId);
             } else {
                 $this->checkoutSession->setQuoteId($cartId);
@@ -655,7 +655,7 @@ class Pickup
             $quote = $this->quoteRepository->getActive($cartId);
             $quoteCustomerGroupId = $quote->getCustomerGroupId();
             $customerGroupId = $this->customerSession->getCustomerGroupId();
-            if ($quoteCustomerGroupId !== $customerGroupId) {
+            if ($quoteCustomerGroupId != $customerGroupId) {
                 $this->checkoutSession->setMageWorxPickupQuoteId($cartId);
             } else {
                 $this->checkoutSession->setQuoteId($cartId);
