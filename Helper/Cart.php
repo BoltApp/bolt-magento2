@@ -1605,7 +1605,7 @@ class Cart extends AbstractHelper
                 $product['quantity']     = $quantity;
                 $product['sku']          = $this->getSkuFromQuoteItem($item);
 
-                if ($this->msrpHelper->canApplyMsrp($_product) && $_product->getMsrp() !== null) {
+                if (!$this->deciderHelper->isMSRPPriceDisabled() && $this->msrpHelper->canApplyMsrp($_product) && $_product->getMsrp() !== null) {
                     $product['msrp']     = CurrencyUtils::toMinor($_product->getMsrp(), $currencyCode);
                 }
 
