@@ -296,6 +296,10 @@ class InStorePickupShipping
         $transaction
     ) {
         try {
+            $referenceCodes = explode('_', $transaction->order->cart->in_store_shipments[0]->shipment->reference);
+            if (!$this->checkIfMagentoInStorePickupByCode($referenceCodes)) {
+                return;
+            }
             $shippingAddress = $quote->getShippingAddress();
             if (isset($transaction->order->cart->in_store_shipments[0]->shipment)) {
                 $shipment = $transaction->order->cart->in_store_shipments[0]->shipment;
