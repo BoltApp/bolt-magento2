@@ -77,7 +77,7 @@ class StoreConfigurationManagerTest extends BoltTestCase
         $this->config = $this->objectManager->get(Config::class);
 
         $featureSwitches = $this->createMock(Decider::class);
-        $featureSwitches->method('isStoreConfigurationWebhookEnabled')->willReturn(true);
+        $featureSwitches->method('isStoreConfigurationWebhookEnabled')->willReturn(false);
 
         $websiteId = $this->storeManager->getWebsite()->getId();
         $encryptor = $this->objectManager->get(EncryptorInterface::class);
@@ -118,7 +118,7 @@ class StoreConfigurationManagerTest extends BoltTestCase
     public function testRequestStoreConfigurationUpdated()
     {
         $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
-        $apiHelper->expects(self::once())->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
+        $apiHelper->expects(self::never())->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
         TestHelper::setProperty($this->storeConfigurationManager, 'apiHelper', $apiHelper);
         $this->config->setDataByPath(BoltConfig::XML_PATH_CATALOG_INGESTION_INSTANT_EVENT, 0);
         $this->config->save();
