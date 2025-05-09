@@ -609,4 +609,15 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_DO_NOT_POSTPONE_ORDER_PLACE_CALL);
     }
+
+    /**
+     * Determines if the MSRP price feature is disabled.
+     *
+     * @return bool
+     * @throws LocalizedException
+     */
+    public function isMSRPPriceDisabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_DISABLE_MSRP_PRICE);
+    }
 }
