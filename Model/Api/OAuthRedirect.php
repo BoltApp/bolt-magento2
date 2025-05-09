@@ -27,6 +27,7 @@ use Bolt\Boltpay\Helper\Hook;
 use Bolt\Boltpay\Helper\Log as LogHelper;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Helper\SSOHelper;
+use Bolt\Boltpay\Helper\Config;
 use Exception;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Customer\Api\Data\CustomerInterface;
@@ -49,6 +50,7 @@ use Magento\Framework\Session\Config\ConfigInterface as SessionConfigInterface;
 use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\App\PageCache\FormKey as CookieFormKey;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\App\Response\RedirectInterface;
 
 class OAuthRedirect implements OAuthRedirectInterface
 {
@@ -162,11 +164,30 @@ class OAuthRedirect implements OAuthRedirectInterface
      */
     private $cartRepository;
 
+    /**
+     * @var SessionConfigInterface
+     */
     private $sessionConfig;
 
+    /**
+     * @var FormKey
+     */
     private $formKey;
 
+    /**
+     * @var CookieFormKey
+     */
     private $cookieFormKey;
+
+    /**
+     * @var Config
+     */
+    private $config;
+
+    /**
+     * @var RedirectInterface
+     */
+    private $redirect;
 
     /**
      * @param Response $response
@@ -192,6 +213,8 @@ class OAuthRedirect implements OAuthRedirectInterface
      * @param SessionConfigInterface $sessionConfig
      * @param FormKey $formKey
      * @param CookieFormKey $cookieFormKey
+     * @param Config $config
+     * @param RedirectInterface $redirect
      */
     public function __construct(
         Response $response,
@@ -216,7 +239,9 @@ class OAuthRedirect implements OAuthRedirectInterface
         CartRepositoryInterface $cartRepository,
         SessionConfigInterface $sessionConfig,
         FormKey $formKey,
-        CookieFormKey $cookieFormKey
+        CookieFormKey $cookieFormKey,
+        Config $config,
+        RedirectInterface $redirect
     ) {
         $this->response = $response;
         $this->deciderHelper = $deciderHelper;
@@ -241,6 +266,8 @@ class OAuthRedirect implements OAuthRedirectInterface
         $this->sessionConfig = $sessionConfig;
         $this->formKey = $formKey;
         $this->cookieFormKey = $cookieFormKey;
+        $this->config = $config;
+        $this->redirect = $redirect;
     }
 
     /**
@@ -529,6 +556,10 @@ class OAuthRedirect implements OAuthRedirectInterface
             if (!$this->deciderHelper->ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn()) {
                 $redirectUrl = $this->url->getUrl('checkout/cart');
             }
+        }
+
+        if ($this->config->isBoltSSORedirectRefererEnabled() && ($referer = $this->redirect->getRefererUrl())) {
+            $redirectUrl = $referer;
         }
 
         $this->response->setRedirect($redirectUrl)->sendResponse();
