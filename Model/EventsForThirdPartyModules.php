@@ -511,6 +511,14 @@ class EventsForThirdPartyModules
         ],
         "beforeSaveAddressInformation" => [
             "listeners" => [
+                "Magento_InventoryInStorePickup" => [
+                    "module" => "Magento_InventoryInStorePickup",
+                    "sendClasses" => ["Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation",
+                                      "Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface"],
+                    "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup",
+                                       "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
+                    "boltClass" => Magento_InStorePickupShipping::class,
+                ],
                 "MageWorx_Pickup" => [
                     "module" => "MageWorx_Pickup",
                     "sendClasses" => [
@@ -1497,6 +1505,17 @@ class EventsForThirdPartyModules
         ],
         "afterEstimateByExtendedAddress" => [
             "listeners" => [
+                "Magento_InStorePickupShipping" => [
+                    "module" => "Magento_InventoryInStorePickup",
+                    "sendClasses" => ["Magento\InventoryInStorePickupApi\Model\SearchRequestBuilderInterface",
+                                      "Magento\InventoryInStorePickupApi\Api\GetPickupLocationsInterface",
+                                      "Magento\InventoryInStorePickupApi\Api\Data\SearchRequest\ProductInfoInterfaceFactory",
+                                      "Magento\InventoryInStorePickupApi\Api\Data\SearchRequestExtensionFactory",
+                                      "Magento\InventoryInStorePickup\Model\SearchRequest\Area\GetDistanceToSources"],
+                    "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup",
+                                       "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
+                    "boltClass" => Magento_InStorePickupShipping::class,
+                ],
                 "MageWorx_Pickup" => [
                     "module" => "MageWorx_Pickup",
                     "sendClasses" => [

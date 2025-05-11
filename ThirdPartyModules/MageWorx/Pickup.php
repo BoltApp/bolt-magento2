@@ -537,7 +537,7 @@ class Pickup
                                 ? $shippingMethod->getExtensionAttributes()
                                 : $this->extensionFactory->create();
                             $locations = $this->json->serialize($shipToStoreOptions);
-                            $extensibleAttribute->setMageWorxPickupLocations($locations);
+                            $extensibleAttribute->setBoltShipToStoreOptions($locations);
                             $shippingMethod->setExtensionAttributes($extensibleAttribute);
                         }
                     }
