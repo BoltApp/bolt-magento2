@@ -800,6 +800,10 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                         let processSuccess = function (data) {
                             hyva.setCookie('mage-cache-sessid', '', -1, true);
                             try {
+                                 window.dispatchEvent(new CustomEvent("reload-customer-section-data"));
+                                 setTimeout(() => {
+                                    window.dispatchEvent(new CustomEvent('reload-cart'));
+                                 }, 200);
                                 if (typeof data !== 'undefined') {
                                     BoltCheckoutApiDriven.boltCallbacks.success_url = data.success_url;
                                 }
