@@ -141,42 +141,42 @@ class UpdateCartContext
      * @var TotalsCollector
      */
     protected $totalsCollector;
-    
+
     /**
      * @var SessionHelper
      */
     protected $sessionHelper;
-    
+
     /**
      * @var CacheInterface
      */
     protected $cache;
-    
+
     /**
      * @var EventsForThirdPartyModules
      */
     protected $eventsForThirdPartyModules;
-    
+
     /**
      * @var ProductRepositoryInterface
      */
     protected $productRepositoryInterface;
-    
+
     /**
      * @var StockStateInterface
      */
     protected $stockStateInterface;
-    
+
     /**
      * @var CartRepositoryInterface
      */
     protected $cartRepositoryInterface;
-    
+
     /**
      * @var Decider
      */
     protected $featureSwitches;
-    
+
     /**
      * @var ShippingAssignmentProcessor
      */
@@ -245,9 +245,9 @@ class UpdateCartContext
         StockStateInterface         $stockStateInterface,
         CartRepositoryInterface     $cartRepositoryInterface,
         Decider                     $featureSwitches,
-        CacheInterface              $cache = null,
-        CartExtensionFactory        $cartExtensionFactory = null,
-        ShippingAssignmentProcessor $shippingAssignmentProcessor = null
+        ?CacheInterface              $cache = null,
+        ?CartExtensionFactory        $cartExtensionFactory = null,
+        ?ShippingAssignmentProcessor $shippingAssignmentProcessor = null
     ) {
         $this->request = $request;
         $this->response = $response;
@@ -296,7 +296,7 @@ class UpdateCartContext
     {
         return $this->response;
     }
-    
+
     /**
      * @return HookHelper
      */
@@ -304,7 +304,7 @@ class UpdateCartContext
     {
         return $this->hookHelper;
     }
-    
+
     /**
      * @return BoltErrorResponse
      */
@@ -320,7 +320,7 @@ class UpdateCartContext
     {
         return $this->logHelper;
     }
-    
+
     /**
      * @return Bugsnag
      */
@@ -328,7 +328,7 @@ class UpdateCartContext
     {
         return $this->bugsnag;
     }
-    
+
     /**
      * @return RegionModel
      */
@@ -344,7 +344,7 @@ class UpdateCartContext
     {
         return $this->orderHelper;
     }
-    
+
     /**
      * @return CartHelper
      */
@@ -424,7 +424,7 @@ class UpdateCartContext
     {
         return $this->totalsCollector;
     }
-    
+
     /**
      * @return SessionHelper
      */
@@ -432,7 +432,7 @@ class UpdateCartContext
     {
         return $this->sessionHelper;
     }
-    
+
     /**
      * @return Cache
      */
@@ -440,7 +440,7 @@ class UpdateCartContext
     {
         return $this->cache;
     }
-    
+
     /**
      * @return EventsForThirdPartyModules
      */
@@ -448,7 +448,7 @@ class UpdateCartContext
     {
         return $this->eventsForThirdPartyModules;
     }
-    
+
     /**
      * @return ProductRepositoryInterface
      */
@@ -456,7 +456,7 @@ class UpdateCartContext
     {
         return $this->productRepositoryInterface;
     }
-    
+
     /**
      * @return StockStateInterface
      */
@@ -464,7 +464,7 @@ class UpdateCartContext
     {
         return $this->stockStateInterface;
     }
-    
+
     /**
      * @return CartRepositoryInterface
      */
@@ -472,7 +472,7 @@ class UpdateCartContext
     {
         return $this->cartRepositoryInterface;
     }
-    
+
     /**
      * @return Decider
      */
@@ -480,7 +480,7 @@ class UpdateCartContext
     {
         return $this->featureSwitches;
     }
-    
+
     /**
      * @return CartExtensionFactory
      */
@@ -488,7 +488,7 @@ class UpdateCartContext
     {
         return $this->cartExtensionFactory;
     }
-    
+
     /**
      * @return ShippingAssignmentProcessor
      */

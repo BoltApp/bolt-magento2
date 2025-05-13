@@ -46,7 +46,7 @@ class QuotePlugin
      */
     public function __construct(
         State $appState,
-        Decider $featureSwitches = null
+        ?Decider $featureSwitches = null
     ) {
         $this->featureSwitches = $featureSwitches ?? \Magento\Framework\App\ObjectManager::getInstance()
                 ->get(\Bolt\Boltpay\Helper\FeatureSwitch\Decider::class);

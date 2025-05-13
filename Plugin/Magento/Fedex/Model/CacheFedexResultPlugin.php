@@ -32,32 +32,32 @@ class CacheFedexResultPlugin
 {
     const BOLT_CACHE_FEDEX_PREFIX  = 'BOLT_CACHE_FEDEX_';
     const CACHE_LIFE_TIME = 1800;
-    
+
     /**
      * @var Bugsnag
      */
     private $bugsnag;
-    
+
     /**
      * @var CacheInterface
      */
     private $cache;
-    
+
     /**
      * @var Json
      */
     private $json;
-    
+
     /**
      * @var SessionHelper
      */
     private $sessionHelper;
-    
+
     /**
      * @var Closure proxy
      */
     private $methodCaller;
-    
+
     /**
      * @param Bugsnag          $bugsnag
      * @param SessionHelper    $sessionHelper
@@ -68,7 +68,7 @@ class CacheFedexResultPlugin
         Bugsnag $bugsnag,
         CacheInterface $cache,
         SessionHelper $sessionHelper,
-        Json $json = null
+        ?Json $json = null
     ) {
         $this->bugsnag = $bugsnag;
         $this->sessionHelper = $sessionHelper;
@@ -77,12 +77,12 @@ class CacheFedexResultPlugin
         // Call protected method with a Closure proxy
         $this->methodCaller = function ($methodName, ...$params) {
             return $this->$methodName(...$params);
-        }; 
+        };
     }
-    
+
     /**
      * Restore cache of Fedex API response.
-     * 
+     *
      * @param \Magento\Fedex\Model\Carrier $subject
      * @param \Magento\Fedex\Model\Carrier $result
      * @param \Magento\Quote\Model\Quote\Address\RateRequest $request
@@ -94,14 +94,14 @@ class CacheFedexResultPlugin
             return $result;
         }
         $this->restoreFedexResponseFromCacheIfExist($subject, \Magento\Fedex\Model\Carrier::RATE_REQUEST_GENERAL);
-        $this->restoreFedexResponseFromCacheIfExist($subject, \Magento\Fedex\Model\Carrier::RATE_REQUEST_SMARTPOST); 
-        
+        $this->restoreFedexResponseFromCacheIfExist($subject, \Magento\Fedex\Model\Carrier::RATE_REQUEST_SMARTPOST);
+
         return $result;
     }
-    
+
     /**
      * Save Fedex API response into cache.
-     * 
+     *
      * @param \Magento\Fedex\Model\Carrier $subject
      * @param \Magento\Shipping\Model\Rate\Result|bool|null $result
      * @param \Magento\Quote\Model\Quote\Address\RateRequest $request
@@ -111,13 +111,13 @@ class CacheFedexResultPlugin
     {
         if (!HookHelper::$fromBolt || !$subject->canCollectRates() || !$result || $result->getError()) {
             return $result;
-        }       
+        }
         $this->saveFedexResponseToCacheIfExist($subject, \Magento\Fedex\Model\Carrier::RATE_REQUEST_GENERAL);
         $this->saveFedexResponseToCacheIfExist($subject, \Magento\Fedex\Model\Carrier::RATE_REQUEST_SMARTPOST);
-        
+
         return $result;
     }
-    
+
     /**
      * Forming request for rate estimation depending to the purpose
      *
@@ -129,10 +129,10 @@ class CacheFedexResultPlugin
     {
         $ratesRequest = $this->methodCaller->call($subject, '_formRateRequest', $purpose);
         unset($ratesRequest['RequestedShipment']['ShipTimestamp']);
-        
+
         return $this->json->serialize($ratesRequest);
     }
-    
+
     /**
      * Save Fedex API results into cache.
      *
@@ -151,7 +151,7 @@ class CacheFedexResultPlugin
             $this->cache->save($this->json->serialize($responseStructure), $cacheId . 'structure', [], self::CACHE_LIFE_TIME);
         }
     }
-    
+
     /**
      * Restore cache of Fedex API results.
      *

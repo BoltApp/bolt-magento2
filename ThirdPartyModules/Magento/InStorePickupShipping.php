@@ -37,42 +37,42 @@ class InStorePickupShipping
      * @var Bugsnag Bugsnag helper instance
      */
     private $bugsnagHelper;
-    
+
     /**
      * @var StoreAddressInterfaceFactory
      */
     protected $storeAddressFactory;
-    
+
     /**
      * @var ShipToStoreOptionInterfaceFactory
      */
     protected $shipToStoreOptionFactory;
-    
+
     /**
      * @var ScopeConfigInterface
      */
     private $config;
-    
+
     /**
      * @var Magento\InventoryInStorePickupApi\Model\SearchRequestBuilderInterface
      */
     protected $searchRequestBuilder;
-    
+
     /**
      * @var Magento\InventoryInStorePickupApi\Api\GetPickupLocationsInterface
      */
     protected $getPickupLocations;
-    
+
     /**
      * @var Magento\InventoryInStorePickupApi\Api\Data\SearchRequest\ProductInfoInterfaceFactory
      */
     protected $productInfo;
-    
+
     /**
      * @var Magento\InventoryInStorePickupApi\Api\Data\SearchRequestExtensionFactory
      */
     protected $searchRequestExtension;
-    
+
     /**
      * @var Magento\InventoryInStorePickup\Model\SearchRequest\Area\GetDistanceToSources
      */
@@ -97,13 +97,13 @@ class InStorePickupShipping
      * @var Json
      */
     private $json;
-    
+
     private const SEARCH_RADIUS = 'carriers/instore/search_radius';
 
     private const CARRIER_CODE = 'instore';
 
     private const METHOD_CODE  = 'pickup';
-    
+
     /**
      * @param Bugsnag     $bugsnagHelper Bugsnag helper instance
      * @param Discount    $discountHelper
@@ -122,7 +122,7 @@ class InStorePickupShipping
         CartRepositoryInterface $quoteRepository,
         ShippingMethodExtensionFactory $extensionFactory,
         ShippingOptionInterfaceFactory $shippingOptionFactory,
-        Json $json = null
+        ?Json $json = null
     ) {
         $this->bugsnagHelper = $bugsnagHelper;
         $this->storeAddressFactory = $storeAddressFactory;
@@ -133,7 +133,7 @@ class InStorePickupShipping
         $this->shippingOptionFactory    = $shippingOptionFactory;
         $this->json                     = $json ?: ObjectManager::getInstance()->get(Json::class);
     }
-    
+
     /**
      * @param array $result
      * @param Magento\InventoryInStorePickupApi\Model\SearchRequestBuilderInterface $searchRequestBuilder
@@ -161,7 +161,7 @@ class InStorePickupShipping
             if (empty($shippingOptions)) {
                 return $result;
             }
-          
+
             $tmpShippingOptions = [];
             $inStorePickupCost = 0;
             $hasInStorePickup = false;
@@ -173,17 +173,17 @@ class InStorePickupShipping
                     $tmpShippingOptions[] = $shippingOption;
                 }
             }
-             
+
             if (!$hasInStorePickup) {
                 return $result;
             }
-            
+
             $this->searchRequestBuilder = $searchRequestBuilder;
             $this->getPickupLocations = $getPickupLocations;
             $this->productInfo = $productInfo;
             $this->searchRequestExtension = $searchRequestExtension;
             $this->getDistanceToSources = $getDistanceToSources;
-        
+
             $productsInfo = [];
             $items = $quote->getAllVisibleItems();
             foreach ($items as $item) {
@@ -217,7 +217,7 @@ class InStorePickupShipping
                     $storeAddress->setRegion($item->getRegion());
                     $storeAddress->setPostalCode($item->getPostcode());
                     $storeAddress->setCountryCode($item->getCountryId());
-                    
+
                     $shipToStoreOption = $this->shipToStoreOptionFactory->create();
                     $pickupLocationCode = $item->getPickupLocationCode();
 
@@ -227,11 +227,11 @@ class InStorePickupShipping
                     $shipToStoreOption->setAddress($storeAddress);
                     $shipToStoreOption->setDistance($distanceToSources[$pickupLocationCode]);
                     $shipToStoreOption->setDistanceUnit('km');
-                    
+
                     $shipToStoreOptions[] = $shipToStoreOption;
                 }
             }
-            
+
             $result = [$shipToStoreOptions, $tmpShippingOptions];
         } catch (\Exception $e) {
             $this->bugsnagHelper->notifyException($e);
@@ -239,7 +239,7 @@ class InStorePickupShipping
             return $result;
         }
     }
-    
+
     /**
      * @param Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation $setAddressPickupLocation
      * @param Magento\Checkout\Api\Data\TotalsInformationInterface $addressInformation
@@ -273,7 +273,7 @@ class InStorePickupShipping
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * @param array                     $result
      * @param Magento\Quote\Model\Quote $quote
@@ -291,10 +291,10 @@ class InStorePickupShipping
         if ($this->checkIfMagentoInStorePickupByCode($referenceCodes)) {
             return [$referenceCodes[0], $referenceCodes[1]];
         }
-        
+
         return $result;
     }
-    
+
     /**
      * @param Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation $setAddressPickupLocation
      * @param Magento\Quote\Model\Quote $quote
@@ -324,7 +324,7 @@ class InStorePickupShipping
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * @param Magento\InventoryInStorePickupQuote\Model\ToQuoteAddress $addressConverter
      * @param Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface $getPickupLocation
@@ -372,7 +372,7 @@ class InStorePickupShipping
             $this->bugsnagHelper->notifyException($e);
         }
     }
-    
+
     /**
      * @param Magento\InventoryInStorePickupQuote\Model\ToQuoteAddress $addressConverter
      * @param Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface $getPickupLocation
@@ -398,10 +398,10 @@ class InStorePickupShipping
                 return $address;
             }
         }
-        
+
         return $result;
     }
-    
+
     /**
      * @param array $referenceCodes
      * @return bool
@@ -412,7 +412,7 @@ class InStorePickupShipping
             $referenceCodes[0] . '_' . $referenceCodes[1] == InStorePickup::DELIVERY_METHOD) {
             return true;
         }
-        
+
         return false;
     }
 

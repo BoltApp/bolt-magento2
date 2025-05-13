@@ -26,7 +26,7 @@ use ReflectionException;
 use ReflectionObject;
 use ReflectionProperty;
 
-if (PHPUnitVersion::id() < 9) {
+if (version_compare(PHPUnitVersion::id(), '9.0.0', '<')) {
     // phpcs:ignore
     class BoltTestCase extends TestCase
     {

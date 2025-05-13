@@ -125,12 +125,12 @@ class Data extends \Magento\Sales\Controller\Adminhtml\Order\Create
         DataObjectFactory $dataObjectFactory,
         Registry $coreRegistry,
         EventsForThirdPartyModules $eventsForThirdPartyModules,
-        Product $productHelper = null,
-        Escaper $escaper = null,
-        PageFactory $resultPageFactory = null,
-        ForwardFactory $resultForwardFactory = null,
-        StoreManagerInterface $storeManager = null,
-        Decider $decider = null
+        ?Product $productHelper = null,
+        ?Escaper $escaper = null,
+        ?PageFactory $resultPageFactory = null,
+        ?ForwardFactory $resultForwardFactory = null,
+        ?StoreManagerInterface $storeManager = null,
+        ?Decider $decider = null
     ) {
         parent::__construct(
             $context,

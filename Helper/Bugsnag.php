@@ -104,7 +104,7 @@ class Bugsnag extends AbstractHelper
      *
      * @return void
      */
-    public function notifyException($throwable, callable $callback = null)
+    public function notifyException($throwable, ?callable $callback = null)
     {
         $this->bugsnag->notifyException($throwable, $callback);
         $this->boltLogger->addErrorLog($throwable->getMessage());
@@ -119,7 +119,7 @@ class Bugsnag extends AbstractHelper
      *
      * @return void
      */
-    public function notifyError($name, $message, callable $callback = null)
+    public function notifyError($name, $message, ?callable $callback = null)
     {
         $this->bugsnag->notifyError($name, $message, $callback);
         $this->boltLogger->addErrorLog($message);

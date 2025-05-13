@@ -363,8 +363,8 @@ class Cart extends AbstractHelper
         MsrpHelper $msrpHelper,
         PriceHelper $priceHelper,
         Store $store,
-        QuoteIdMaskResourceModel $quoteIdMaskResourceModel = null,
-        QuoteIdMaskFactory $quoteIdMaskFactory = null
+        ?QuoteIdMaskResourceModel $quoteIdMaskResourceModel = null,
+        ?QuoteIdMaskFactory $quoteIdMaskFactory = null
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;

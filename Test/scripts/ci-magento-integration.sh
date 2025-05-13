@@ -25,6 +25,9 @@ mysql -uroot -h 127.0.0.1 -e 'CREATE DATABASE magento_integration_tests;'
 
 cd magento/dev/tests/integration/
 cp etc/install-config-mysql.php.dist etc/install-config-mysql.php
+if [ "${MAGENTO_VERSION}" == "2.4.8" ]; then
+cp etc/post-install-setup-command-config.php.dist etc/post-install-setup-command-config.php
+fi
 sed -i 's/localhost/127.0.0.1/g' etc/install-config-mysql.php
 sed -i 's/123123q//g' etc/install-config-mysql.php
 sed -i '/amqp/d' etc/install-config-mysql.php

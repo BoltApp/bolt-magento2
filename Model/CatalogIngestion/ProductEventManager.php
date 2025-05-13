@@ -211,7 +211,7 @@ class ProductEventManager implements ProductEventManagerInterface
     /**
      * @inheritDoc
      */
-    public function runInstantProductEvent(int $productId, string $type, int $websiteId = null): void
+    public function runInstantProductEvent(int $productId, string $type, ?int $websiteId = null): void
     {
         if (in_array($productId, $this->alreadySentInstantProductIds)) {
             return;

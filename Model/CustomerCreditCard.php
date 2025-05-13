@@ -74,8 +74,8 @@ class CustomerCreditCard extends AbstractModel implements \Magento\Framework\Dat
         DataObjectFactory $dataObjectFactory,
         ApiHelper $apiHelper,
         CartHelper $cartHelper,
-        \Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
-        \Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
+        ?\Magento\Framework\Model\ResourceModel\AbstractResource $resource = null,
+        ?\Magento\Framework\Data\Collection\AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         $this->cartHelper = $cartHelper;
