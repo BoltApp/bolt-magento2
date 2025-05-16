@@ -75,7 +75,7 @@ class ApiUtils
         $contentType,
         $additionalHeaders = []
     ) {
-        return [
+        $defaultHeaders = [
             'User-Agent'            => 'BoltPay/Magento-'.$storeVersion . '/' . $moduleVersion,
             'X-Bolt-Plugin-Version' => $moduleVersion,
             'Content-Type'          => $contentType,
@@ -84,6 +84,10 @@ class ApiUtils
             'X-Nonce'               => rand(100000000000, 999999999999),
             'X-BOLT-SOURCE-NAME'    => 'magento2',
             'X-BOLT-SOURCE-VERSION' => $moduleVersion
-        ] + $additionalHeaders;
+        ];
+        if ($requestData) {
+            $defaultHeaders['Content-Length'] = strlen($requestData);
+        }
+        return $defaultHeaders + $additionalHeaders;
     }
 }
