@@ -96,7 +96,9 @@ class HttpClientAdapter
             $isVersionWithFixedHeaders = version_compare($this->boltConfigHelper->getStoreVersion(), '2.4.8', '>=');
             foreach ($headers as $headerName => $headerValue) {
                 $value = $isVersionWithFixedHeaders ? $headerValue : $headerName . ':' . $headerValue;
-                $headersObject->addHeaderLine($headerName, $value);
+                if ($value !== null) {
+                    $headersObject->addHeaderLine($headerName, $value);
+                }
             }
             $this->client->setHeaders($headersObject);
         } else {
