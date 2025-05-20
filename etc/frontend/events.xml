@@ -9,6 +9,6 @@
                   instance="Bolt\Boltpay\Observer\PreventCustomerEdit" />
     </event>
     <event name="checkout_cart_product_add_after">
-        <observer name="boltpaycustomprice" instance="Webkul\Hello\Observer\CustomPrice" />
+        <observer name="boltpaycustomprice" instance="Bolt\Boltpay\Observer\CustomPrice" />
     </event>
 </config>
