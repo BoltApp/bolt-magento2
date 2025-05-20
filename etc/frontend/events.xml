@@ -8,4 +8,7 @@
         <observer name="bolt_boltpay_controller_action_predispatch_prevent_customer_edit"
                   instance="Bolt\Boltpay\Observer\PreventCustomerEdit" />
     </event>
+    <event name="checkout_cart_product_add_after">
+        <observer name="boltpaycustomprice" instance="Webkul\Hello\Observer\CustomPrice" />
+    </event>
 </config>
