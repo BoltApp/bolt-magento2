@@ -18,15 +18,51 @@
 
 namespace Bolt\Boltpay\Observer;
 
+use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Pricing\PriceCurrencyInterface;
 
 class CustomPrice implements ObserverInterface
 {
-    public function execute(\Magento\Framework\Event\Observer $observer) {
+    /** @var RequestInterface */
+    private $request;
+
+    /** @var PriceCurrencyInterface */
+    private $priceCurrency;
+
+    public function __construct(
+        RequestInterface $request,
+        PriceCurrencyInterface $priceCurrency
+    ) {
+        $this->request       = $request;
+        $this->priceCurrency = $priceCurrency;
+    }
+    /**
+     * Set custom price for Bolt item in cart
+     *
+     * @param Observer $observer
+     */
+    public function execute(Observer $observer)
+    {
         $quote = $observer->getEvent()->getQuote();
         if (!$quote || !$quote->getId()) {
             return;
+        }
+
+        // Attempt to read price from parsed params
+        $cartItem = $this->request->getParam('cartItem', []);
+        $sentPrice = isset($cartItem['price'])
+            ? (float) $cartItem['price']
+            : null;
+
+        // Fallback: read raw JSON body if not in params
+        if ($sentPrice === null) {
+            $body = $this->request->getContent();
+            $data = json_decode($body, true) ?: [];
+            if (isset($data['cartItem']['price'])) {
+                $sentPrice = (float) $data['cartItem']['price'];
+            }
         }
 
         $subtotal = 0;
@@ -41,7 +77,12 @@ class CustomPrice implements ObserverInterface
         }
 
         if ($boltItem && $subtotal > 0) {
-            $customPrice = round($subtotal * 0.01, 2); // 1% fee
+            // If client sent a price, use that; otherwise 1% fee
+            $customPrice = $sentPrice !== null
+                ? $sentPrice
+                : $this->priceCurrency->round($subtotal * 0.01);
+
+
             $boltItem->setCustomPrice($customPrice);
             $boltItem->setOriginalCustomPrice($customPrice);
             $boltItem->getProduct()->setIsSuperMode(true);
