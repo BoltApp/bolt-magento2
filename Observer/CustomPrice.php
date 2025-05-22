@@ -46,7 +46,7 @@ class CustomPrice implements ObserverInterface
     public function execute(Observer $observer)
     {
         // not a Bolt API request → do nothing
-        if (strpos($path, '/rest/') === false || strpos($path, '/V1/boltpay/') === false) {
+        if (strpos($path, '/rest/') === false || strpos($path, '/V1/bolt/boltpay/') === false) {
             return;
         }
 
