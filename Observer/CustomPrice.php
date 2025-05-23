@@ -45,31 +45,19 @@ class CustomPrice implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        // not a Bolt API request → do nothing
-        if (strpos($path, '/rest/') === false || strpos($path, '/V1/bolt/boltpay/') === false) {
-            return;
-        }
-
         $quote = $observer->getEvent()->getQuote();
         if (!$quote || !$quote->getId()) {
             return;
         }
 
-        // Attempt to read price from parsed params
-        $cartItem = $this->request->getParam('cartItem', []);
-        $sentPrice = isset($cartItem['price'])
-            ? (float) $cartItem['price']
-            : null;
-
-        // Fallback: read raw JSON body if not in params
-        if ($sentPrice === null) {
-            $body = $this->request->getContent();
-            $data = json_decode($body, true) ?: [];
-            if (isset($data['cartItem']['price'])) {
-                $sentPrice = (float) $data['cartItem']['price'];
-            }
+        // Attempt to read fee from parsed params
+        $body = $this->request->getContent();
+        $data = json_decode($body, true) ?: [];
+        $sentFee = 0; // by default
+        if (isset($data['cart_item']['sku']) && $data['cart_item']['sku'] == 'BOLT_PRIVATE_CHECKOUT' &&
+            isset($data['cart_item']['extension_attributes']['bolt_private_item_fee'])) {
+            $sentFee = (float) $data['cart_item']['extension_attributes']['bolt_private_item_fee'];
         }
-
         $subtotal = 0;
         $boltItem = null;
 
@@ -81,13 +69,9 @@ class CustomPrice implements ObserverInterface
             $subtotal += $item->getRowTotal();
         }
 
-        if ($boltItem && $subtotal > 0) {
+        if ($boltItem && $subtotal > 0 && $sentFee > 0) {
             // If client sent a price, use that; otherwise 1% fee
-            $customPrice = $sentPrice !== null
-                ? $sentPrice
-                : $this->priceCurrency->round($subtotal * 0.01);
-
-
+            $customPrice = $this->priceCurrency->round($subtotal * $sentFee);
             $boltItem->setCustomPrice($customPrice);
             $boltItem->setOriginalCustomPrice($customPrice);
             $boltItem->getProduct()->setIsSuperMode(true);
