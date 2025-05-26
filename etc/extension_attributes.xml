@@ -21,6 +21,6 @@
         <attribute code="mage_worx_pickup_locations" type="string" />
     </extension_attributes>
     <extension_attributes for="Magento\Quote\Api\Data\CartItemInterface">
-        <attribute code="bolt_private_item_fee" type="string" />
+        <attribute code="bolt_privacy_fee" type="string" />
     </extension_attributes>
 </config>

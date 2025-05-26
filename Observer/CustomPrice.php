@@ -55,8 +55,8 @@ class CustomPrice implements ObserverInterface
         $data = json_decode($body, true) ?: [];
         $sentFee = 0; // by default
         if (isset($data['cart_item']['sku']) && $data['cart_item']['sku'] == 'BOLT_PRIVATE_CHECKOUT' &&
-            isset($data['cart_item']['extension_attributes']['bolt_private_item_fee'])) {
-            $sentFee = (float) $data['cart_item']['extension_attributes']['bolt_private_item_fee'];
+            isset($data['cart_item']['extension_attributes']['bolt_privacy_fee'])) {
+            $sentFee = (float) $data['cart_item']['extension_attributes']['bolt_privacy_fee'];
         }
         $subtotal = 0;
         $boltItem = null;
@@ -69,9 +69,9 @@ class CustomPrice implements ObserverInterface
             $subtotal += $item->getRowTotal();
         }
 
-        if ($boltItem && $subtotal > 0 && $sentFee > 0) {
-            // If client sent a price, use that; otherwise 1% fee
-            $customPrice = $this->priceCurrency->round($subtotal * $sentFee);
+        // If client sent a price, use that; otherwise 1% fee
+        if ($boltItem && $subtotal > 0) {
+            $customPrice = ($sentFee > 0) ? $sentFee : $this->priceCurrency->round($subtotal * 0.01);
             $boltItem->setCustomPrice($customPrice);
             $boltItem->setOriginalCustomPrice($customPrice);
             $boltItem->getProduct()->setIsSuperMode(true);
