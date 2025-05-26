@@ -89,8 +89,16 @@ class HttpClientAdapter
     {
         if ($this->client instanceof LaminasClient) {
             $headersObject = new Headers();
+            // see ACP2E-3096 https://experienceleague.adobe.com/en/docs/commerce-operations/release/notes/magento-open-source/2-4-8
+            // commit: https://github.com/magento/magento2/commit/60c6de12627f520916ca0e3acea9b552b5c5d3f7
+            // line: https://github.com/magento/magento2/blob/94b8544e82fd84d1443060cddb5481b7fd462de2/lib/internal/Magento/Framework/HTTP/Adapter/Curl.php#L193
+            // for more details about the magento headers fix
+            $isVersionWithFixedHeaders = version_compare($this->boltConfigHelper->getStoreVersion(), '2.4.8', '>=');
             foreach ($headers as $headerName => $headerValue) {
-                $headersObject->addHeaderLine($headerName, $headerName . ':' . $headerValue);
+                $value = $isVersionWithFixedHeaders ? $headerValue : $headerName . ':' . $headerValue;
+                if ($value !== null) {
+                    $headersObject->addHeaderLine($headerName, $value);
+                }
             }
             $this->client->setHeaders($headersObject);
         } else {

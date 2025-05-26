@@ -340,6 +340,35 @@
     <type name="Magento\Sales\Model\InvoiceOrder">
         <plugin name="BoltBoltpayInvoiceOrderPlugin" type="Bolt\Boltpay\Plugin\Magento\Sales\Model\InvoiceOrderPlugin" sortOrder="1"/>
     </type>
+    <type name="Magento\Quote\Api\ShipmentEstimationInterface">
+        <plugin name="fetchBopisShippingOptionsEstimateByAddress"
+                type="Bolt\Boltpay\Plugin\Magento\Quote\Api\ShippingMethodManagementPlugin"
+                sortOrder="100"
+        />
+    </type>
+    <type name="Magento\Checkout\Model\ShippingInformationManagement">
+        <plugin name="setBopisShippingInfoSaveAddressInformation"
+                type="Bolt\Boltpay\Plugin\Magento\Checkout\Model\ShippingInformationManagementPlugin"
+                sortOrder="-1"
+        />
+    </type>
+    <type name="Magento\Checkout\Api\GuestPaymentInformationManagementInterface">
+        <plugin name="setBopisShippingInfoGuestPaymentInformationManagement"
+                type="Bolt\Boltpay\Plugin\Magento\Checkout\Api\GuestPaymentInformationManagementPlugin"
+                sortOrder="-1"
+        />
+    </type>
+    <type name="Magento\Checkout\Api\PaymentInformationManagementInterface">
+        <plugin name="setBopisShippingInfoPaymentInformationManagement"
+                type="Bolt\Boltpay\Plugin\Magento\Checkout\Api\PaymentInformationManagementPlugin"
+                sortOrder="-1"
+        />
+    </type>
+    <type name="MageWorx\StoreLocator\Helper\Data">
+        <plugin name="setQuoteIdToGetLocationsForCurrentQuote"
+                type="Bolt\Boltpay\Plugin\MageWorx\StoreLocator\Helper\DataPlugin"
+        />
+    </type>
 
     <preference for="Bolt\Boltpay\Api\Data\PluginVersionNotificationInterface" type="Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotification" />
     <preference for="Bolt\Boltpay\Api\PluginVersionNotificationRepositoryInterface" type="Bolt\Boltpay\Model\VersionNotifier\PluginVersionNotificationRepository" />

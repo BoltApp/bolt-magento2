@@ -393,6 +393,11 @@ class Config extends AbstractHelper
     const XML_PATH_BOLT_SSO = 'payment/boltpay/bolt_sso';
 
     /**
+     * Enable Bolt SSO redirect referer
+     */
+    const XML_PATH_BOLT_SSO_REDIRECT_REFERER = 'payment/boltpay/bolt_sso_redirect_referer';
+
+    /**
      * Enable Bolt Universal debug requests
      */
     const XML_PATH_DEBUG_UNIVERSAL = 'payment/boltpay/universal_debug';
@@ -2232,6 +2237,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_BOLT_SSO,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        );
+    }
+
+    /**
+     * Get config value for whether or not Bolt SSO redirect referer is enabled
+     *
+     * @param int|string|Store $storeId
+     *
+     * @return boolean
+     */
+    public function isBoltSSORedirectRefererEnabled($storeId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_BOLT_SSO_REDIRECT_REFERER,
             ScopeInterface::SCOPE_STORE,
             $storeId
         );

@@ -337,6 +337,11 @@ class Definitions
      */
     const M2_DO_NOT_POSTPONE_ORDER_PLACE_CALL = 'M2_DO_NOT_POSTPONE_ORDER_PLACE_CALL';
 
+    /**
+     * Disable MSRP price on bolt modal
+     */
+    const M2_DISABLE_MSRP_PRICE = 'M2_DISABLE_MSRP_PRICE';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -642,7 +647,7 @@ class Definitions
             self::NAME_KEY        => self::M2_STORE_CONFIGURATION_WEBHOOK,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
-            self::ROLLOUT_KEY     => 100
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_ENABLE_SHOPPER_ASSISTANT => [
             self::NAME_KEY        => self::M2_ENABLE_SHOPPER_ASSISTANT,
@@ -694,6 +699,12 @@ class Definitions
         ],
         self::M2_DO_NOT_POSTPONE_ORDER_PLACE_CALL => [
             self::NAME_KEY        => self::M2_DO_NOT_POSTPONE_ORDER_PLACE_CALL,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_DISABLE_MSRP_PRICE => [
+            self::NAME_KEY        => self::M2_DISABLE_MSRP_PRICE,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0

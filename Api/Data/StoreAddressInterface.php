@@ -126,4 +126,22 @@ interface StoreAddressInterface
      * @return $this
      */
     public function setCountryCode($countryCode);
+
+    /**
+     * Get phone number.
+     *
+     * @api
+     * @return string
+     */
+    public function getPhone();
+
+    /**
+     * Set phone number.
+     *
+     * @api
+     * @param $phone
+     *
+     * @return $this
+     */
+    public function setPhone($phone);
 }

@@ -54,6 +54,7 @@ use Bolt\Boltpay\ThirdPartyModules\ImaginationMedia\TmwGiftCard as ImaginationMe
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Preorder as Amasty_Preorder;
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\RewardPoints as MageWorx_RewardPoints;
 use Bolt\Boltpay\ThirdPartyModules\MageWorx\ShippingRules as MageWorx_ShippingRules;
+use Bolt\Boltpay\ThirdPartyModules\MageWorx\Pickup as MageWorx_Pickup;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Promo as Amasty_Promo;
 use Bolt\Boltpay\ThirdPartyModules\Mexbs\Tieredcoupon as Mexbs_Tieredcoupon;
 use Bolt\Boltpay\ThirdPartyModules\Magento\CompanyPayment as Magento_CompanyPayment;
@@ -383,6 +384,13 @@ class EventsForThirdPartyModules
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
                 ],
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
             ],
         ],
         "setInStoreShippingMethodForPrepareQuote" => [
@@ -398,7 +406,14 @@ class EventsForThirdPartyModules
                     "sendClasses" => ["SomethingDigital\InStorePickupBoltIntegration\Helper\PickupStoreChecker"],
                     "checkClasses" => ["Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
-                ]
+                ],
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
             ],
         ],
         "setInStoreShippingAddressForPrepareQuote" => [
@@ -421,7 +436,17 @@ class EventsForThirdPartyModules
                         "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver",
                     ],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
-                ]
+                ],
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "sendClasses" => [
+                        "MageWorx\Locations\Api\LocationRepositoryInterface"
+                    ],
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
             ],
         ],
         'afterUpdateOrderPayment' => [
@@ -470,6 +495,61 @@ class EventsForThirdPartyModules
                     'module'      => 'Magento_CompanyPayment',
                     'checkClasses' => ['Magento\CompanyPayment\Model\Payment\Checks\CanUseForCompany'],
                     'boltClass'   => Magento_CompanyPayment::class,
+                ],
+            ],
+        ],
+        "beforeEstimateByExtendedAddress" => [
+            "listeners" => [
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
+            ],
+        ],
+        "beforeSaveAddressInformation" => [
+            "listeners" => [
+                "Magento_InventoryInStorePickup" => [
+                    "module" => "Magento_InventoryInStorePickup",
+                    "sendClasses" => ["Magento\InventoryInStorePickupQuote\Model\Address\SetAddressPickupLocation",
+                                      "Magento\InventoryInStorePickupApi\Model\GetPickupLocationInterface"],
+                    "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup",
+                                       "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
+                    "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "sendClasses" => [
+                        "MageWorx\Locations\Api\LocationRepositoryInterface"
+                    ],
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
+            ],
+        ],
+        "beforeSavePaymentInformationAndPlaceOrder" => [
+            "listeners" => [
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
+            ],
+        ],
+        "beforeSavePaymentInformation" => [
+            "listeners" => [
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
                 ],
             ],
         ],
@@ -569,7 +649,7 @@ class EventsForThirdPartyModules
                                             "Amasty\Rewards\Model\RewardsPropertyProvider",
                                             "Amasty\Rewards\Helper\Data"
                                         ],
-                                      "Amasty\Rewards\Model\ResourceModel\Quote"],
+                                        "Amasty\Rewards\Model\ResourceModel\Quote"],
                     "boltClass" => Amasty_Rewards::class,
                 ],
                 [
@@ -1094,6 +1174,16 @@ class EventsForThirdPartyModules
                     ],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
                 ],
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "sendClasses" => [
+                        "MageWorx\StoreLocator\Helper\Data"
+                    ],
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
+                ],
             ],
         ],
         "getShipToStoreCarrierMethodCodes" => [
@@ -1112,6 +1202,13 @@ class EventsForThirdPartyModules
                         "Magedelight\Storepickup\Model\Observer\SaveDeliveryDateToOrderObserver"
                     ],
                     "boltClass" => SomethingDigital_InStorePickupBoltIntegration::class,
+                ],
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
                 ],
             ],
         ],
@@ -1241,6 +1338,13 @@ class EventsForThirdPartyModules
                     "module" => "Magento_InventoryInStorePickup",
                     "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup"],
                     "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
                 ],
             ],
         ],
@@ -1396,6 +1500,31 @@ class EventsForThirdPartyModules
                         "Magento\GiftCard\Model\Giftcard",
                     ],
                     "boltClass" => Magento_GiftCard::class,
+                ],
+            ],
+        ],
+        "afterEstimateByExtendedAddress" => [
+            "listeners" => [
+                "Magento_InStorePickupShipping" => [
+                    "module" => "Magento_InventoryInStorePickup",
+                    "sendClasses" => ["Magento\InventoryInStorePickupApi\Model\SearchRequestBuilderInterface",
+                                      "Magento\InventoryInStorePickupApi\Api\GetPickupLocationsInterface",
+                                      "Magento\InventoryInStorePickupApi\Api\Data\SearchRequest\ProductInfoInterfaceFactory",
+                                      "Magento\InventoryInStorePickupApi\Api\Data\SearchRequestExtensionFactory",
+                                      "Magento\InventoryInStorePickup\Model\SearchRequest\Area\GetDistanceToSources"],
+                    "checkClasses" => ["Magento\InventoryInStorePickupShippingApi\Model\Carrier\InStorePickup",
+                                       "Magento\InventorySalesApi\Api\Data\SalesChannelInterface"],
+                    "boltClass" => Magento_InStorePickupShipping::class,
+                ],
+                "MageWorx_Pickup" => [
+                    "module" => "MageWorx_Pickup",
+                    "sendClasses" => [
+                        "MageWorx\StoreLocator\Helper\Data"
+                    ],
+                    "checkClasses" => [
+                        "MageWorx\Pickup\Model\Carrier\PickupShipping"
+                    ],
+                    "boltClass" => MageWorx_Pickup::class,
                 ],
             ],
         ],
