@@ -358,6 +358,7 @@ class Js extends Template
             'shipping_options_complete' => $this->getOnShippingOptionsComplete(),
             'payment_submit'            => $this->getOnPaymentSubmit(),
             'success'                   => $this->getOnSuccess(),
+            'notify'                    => $this->getOnNotify(),
             'close'                     => $this->getOnClose(),
         ];
     }
@@ -786,6 +787,14 @@ function($argName) {
     protected function getOnSuccess()
     {
         return $this->configHelper->getOnSuccess();
+    }
+
+    /**
+     * @return string
+     */
+    protected function getOnNotify()
+    {
+        return $this->configHelper->getOnNotify();
     }
 
     /**

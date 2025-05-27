@@ -101,6 +101,10 @@ define([
                     trackCallbacks.onPaymentSubmit();
                 },
 
+                onNotify: function() {
+                    trackCallbacks.onNotify();
+                },
+
                 success: function (transaction, callback) {
                     /**
                      * Success transaction handler.

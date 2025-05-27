@@ -307,6 +307,8 @@ class Config extends AbstractHelper
 
     const XML_PATH_TRACK_PAYMENT_SUBMIT = 'payment/boltpay/track_on_payment_submit';
 
+    const XML_PATH_TRACK_NOTIFY = 'payment/boltpay/track_on_notify';
+
     const XML_PATH_TRACK_SUCCESS = 'payment/boltpay/track_on_success';
 
     const XML_PATH_TRACK_CLOSE = 'payment/boltpay/track_on_close';
@@ -488,6 +490,7 @@ class Config extends AbstractHelper
         'track_on_shipping_options_complete' => self::XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE,
         'track_on_payment_submit'            => self::XML_PATH_TRACK_PAYMENT_SUBMIT,
         'track_on_success'                   => self::XML_PATH_TRACK_SUCCESS,
+        'track_on_notify'                    => self::XML_PATH_TRACK_NOTIFY,
         'track_on_close'                     => self::XML_PATH_TRACK_CLOSE,
         'additional_config'                  => self::XML_PATH_ADDITIONAL_CONFIG,
         'minicart_support'                   => self::XML_PATH_MINICART_SUPPORT,
@@ -1344,6 +1347,20 @@ class Config extends AbstractHelper
      *
      * @return string
      */
+    public function getOnNotify($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_TRACK_NOTIFY,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        ) ?: '';
+    }
+
+    /**
+     * @param int|string $storeId
+     *
+     * @return string
+     */
     public function getOnClose($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
@@ -1985,6 +2002,10 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('track_on_payment_submit')
             ->setValue($this->getOnPaymentSubmit());
+        // Tracking: onNotify
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+            ->setName('track_on_notify')
+            ->setValue($this->getOnNotify());
         // Tracking: onSuccess
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('track_on_success')

@@ -651,6 +651,10 @@ define([
                     window.boltConfig.trackCallbacks.onPaymentSubmit();
                 },
 
+                onNotify: function () {
+                    window.boltConfig.trackCallbacks.onNotify();
+                },
+
                 success: function (transaction, callback) {
                     /**
                      * Success transaction handler.

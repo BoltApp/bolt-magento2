@@ -680,6 +680,11 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                         window.boltConfig.trackCallbacks.onPaymentSubmit();
                         BoltCheckoutApiDriven.boltCallbacks?.gaCheckoutData('add_payment_info');
                     },
+
+                    onNotify: function() {
+                        window.boltConfig.trackCallbacks.onNotify();11
+                    },
+
                     includeKlaviyo: function (address) {
                         if (window.klaviyo) {
                             try {

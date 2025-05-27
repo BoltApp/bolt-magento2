@@ -251,17 +251,21 @@
                         <config_path>payment/boltpay/track_on_payment_submit</config_path>
                         <comment>The javascript code executed when the user clicks the pay button.</comment>
                     </field>
-                    <field id="track_on_success" translate="label" type="textarea" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="track_on_notify" translate="label" type="textarea" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Tracking: onNotify</label>
+                        <config_path>payment/boltpay/track_on_notify</config_path>
+                    </field>
+                    <field id="track_on_success" translate="label" type="textarea" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Tracking: onSuccess</label>
                         <config_path>payment/boltpay/track_on_success</config_path>
                         <comment>The javascript code executed when the Bolt checkout transaction is successful.</comment>
                     </field>
-                    <field id="track_on_close" translate="label" type="textarea" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="track_on_close" translate="label" type="textarea" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Tracking: onClose</label>
                         <config_path>payment/boltpay/track_on_close</config_path>
                         <comment>The javascript code executed when the Bolt checkout modal is closed.</comment>
                     </field>
-                    <field id="additional_config" translate="label" type="textarea" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="additional_config" translate="label" type="textarea" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Additional Configuration</label>
                         <config_path>payment/boltpay/additional_config</config_path>
                     </field>
