@@ -357,9 +357,14 @@ define([
                     currency: currency,
                     items: getItemsData(additionalData)
                 };
+
+                const parameters = {
+                    isWebView: window.boltConfig.is_web_view
+                }
+
                 // if connect.js is not loaded postpone until it is
                 whenDefined(window, 'BoltCheckout', function(){
-                    BoltCheckout.configureProductCheckout(cart, hints, callbacks);
+                    BoltCheckout.configureProductCheckout(cart, hints, callbacks, parameters);
                 }, 'configureProductCheckout');
             };
 
