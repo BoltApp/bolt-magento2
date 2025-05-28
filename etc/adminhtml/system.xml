@@ -162,6 +162,11 @@
                         <config_path>payment/boltpay/show_cc_type_in_order_grid</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
+                    <field id="is_web_view" translate="label" type="select" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>isWebView Parameter enabled</label>
+                        <config_path>payment/boltpay/is_web_view</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
                 </group>
                 <group id="boltpay_advanced" translate="label" type="text" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Advanced options</label>
@@ -254,6 +259,7 @@
                     <field id="track_on_notify" translate="label" type="textarea" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Tracking: onNotify</label>
                         <config_path>payment/boltpay/track_on_notify</config_path>
+                        <comment>The "event" variable is available as a parameter within the current scope.</comment>
                     </field>
                     <field id="track_on_success" translate="label" type="textarea" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Tracking: onSuccess</label>

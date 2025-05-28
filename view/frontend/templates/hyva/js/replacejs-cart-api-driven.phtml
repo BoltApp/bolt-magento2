@@ -681,8 +681,8 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                         BoltCheckoutApiDriven.boltCallbacks?.gaCheckoutData('add_payment_info');
                     },
 
-                    onNotify: function() {
-                        window.boltConfig.trackCallbacks.onNotify();11
+                    onNotify: function(event) {
+                        window.boltConfig.trackCallbacks.onNotify(event);
                     },
 
                     includeKlaviyo: function (address) {
@@ -1056,6 +1056,7 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                 if (window.BoltCheckout === undefined) {
                     throw new Error('BoltCheckout is undefined');
                 }
+                BoltCheckoutApiDriven.boltParameters.isWebView = window.boltConfig.is_web_view;
                 BoltCheckoutApiDriven.boltConfigure = window.BoltCheckout.configure(
                     boltCart,
                     boltHints,

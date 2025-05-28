@@ -445,6 +445,8 @@ class Config extends AbstractHelper
 
     const XML_PATH_INSTANT_BUTTON_VARIANT_PPC = 'payment/boltpay/instant_button_variant_ppc';
 
+    const XML_PATH_IS_WEB_VIEW = 'payment/boltpay/is_web_view';
+
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
@@ -507,7 +509,8 @@ class Config extends AbstractHelper
         'track_checkout_funnel'              => self::XML_PATH_TRACK_CHECKOUT_FUNNEL,
         'connect_magento_integration_mode'   => self::XML_PATH_CONNECT_INTEGRATION_MODE,
         'instant_button_variant'             => self::XML_PATH_INSTANT_BUTTON_VARIANT,
-        'instant_button_variant_ppc'         => self::XML_PATH_INSTANT_BUTTON_VARIANT_PPC
+        'instant_button_variant_ppc'         => self::XML_PATH_INSTANT_BUTTON_VARIANT_PPC,
+        'is_web_view'                        => self::XML_PATH_IS_WEB_VIEW,
     ];
 
     /**
@@ -2728,5 +2731,21 @@ class Config extends AbstractHelper
             return $this->getMerchantDashboardUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_API, self::API_URL_SANDBOX);
         }
         return self::API_URL_PRODUCTION;
+    }
+
+    /**
+     * Is web view parameter enabled
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return bool
+     */
+    public function isWebView($websiteId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_IS_WEB_VIEW,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
     }
 }

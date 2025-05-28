@@ -615,8 +615,8 @@ define([
                         trackCallbacks.onPaymentSubmit();
                     },
 
-                    onNotify: function () {
-                        trackCallbacks.onNotify();
+                    onNotify: function (event) {
+                        trackCallbacks.onNotify(event);
                     },
 
                     success: function (transaction, callback) {
@@ -811,6 +811,7 @@ define([
                             return;
                         }
                         toggleCheckoutIfNeeded();
+                        parameters.isWebView = window.boltConfig.is_web_view;
                         BC = BoltCheckout.configure(cart, hints, callback, parameters);
                     }
                     callConfigure();

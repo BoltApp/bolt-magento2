@@ -651,8 +651,8 @@ define([
                     window.boltConfig.trackCallbacks.onPaymentSubmit();
                 },
 
-                onNotify: function () {
-                    window.boltConfig.trackCallbacks.onNotify();
+                onNotify: function (event) {
+                    window.boltConfig.trackCallbacks.onNotify(event);
                 },
 
                 success: function (transaction, callback) {
@@ -1049,6 +1049,7 @@ define([
             if (window.BoltCheckout === undefined) {
                 throw new Error('BoltCheckout is undefined');
             }
+            BoltCheckoutApiDriven.boltParameters.isWebView = window.boltConfig.is_web_view;
             BoltCheckoutApiDriven.boltConfigure = window.BoltCheckout.configure(
                 boltCart,
                 boltHints,
