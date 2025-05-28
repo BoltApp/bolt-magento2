@@ -307,6 +307,8 @@ class Config extends AbstractHelper
 
     const XML_PATH_TRACK_PAYMENT_SUBMIT = 'payment/boltpay/track_on_payment_submit';
 
+    const XML_PATH_TRACK_NOTIFY = 'payment/boltpay/track_on_notify';
+
     const XML_PATH_TRACK_SUCCESS = 'payment/boltpay/track_on_success';
 
     const XML_PATH_TRACK_CLOSE = 'payment/boltpay/track_on_close';
@@ -443,6 +445,8 @@ class Config extends AbstractHelper
 
     const XML_PATH_INSTANT_BUTTON_VARIANT_PPC = 'payment/boltpay/instant_button_variant_ppc';
 
+    const XML_PATH_IS_WEB_VIEW = 'payment/boltpay/is_web_view';
+
     /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
@@ -488,6 +492,7 @@ class Config extends AbstractHelper
         'track_on_shipping_options_complete' => self::XML_PATH_TRACK_SHIPPING_OPTIONS_COMPLETE,
         'track_on_payment_submit'            => self::XML_PATH_TRACK_PAYMENT_SUBMIT,
         'track_on_success'                   => self::XML_PATH_TRACK_SUCCESS,
+        'track_on_notify'                    => self::XML_PATH_TRACK_NOTIFY,
         'track_on_close'                     => self::XML_PATH_TRACK_CLOSE,
         'additional_config'                  => self::XML_PATH_ADDITIONAL_CONFIG,
         'minicart_support'                   => self::XML_PATH_MINICART_SUPPORT,
@@ -504,7 +509,8 @@ class Config extends AbstractHelper
         'track_checkout_funnel'              => self::XML_PATH_TRACK_CHECKOUT_FUNNEL,
         'connect_magento_integration_mode'   => self::XML_PATH_CONNECT_INTEGRATION_MODE,
         'instant_button_variant'             => self::XML_PATH_INSTANT_BUTTON_VARIANT,
-        'instant_button_variant_ppc'         => self::XML_PATH_INSTANT_BUTTON_VARIANT_PPC
+        'instant_button_variant_ppc'         => self::XML_PATH_INSTANT_BUTTON_VARIANT_PPC,
+        'is_web_view'                        => self::XML_PATH_IS_WEB_VIEW,
     ];
 
     /**
@@ -1344,6 +1350,20 @@ class Config extends AbstractHelper
      *
      * @return string
      */
+    public function getOnNotify($storeId = null)
+    {
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_TRACK_NOTIFY,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        ) ?: '';
+    }
+
+    /**
+     * @param int|string $storeId
+     *
+     * @return string
+     */
     public function getOnClose($storeId = null)
     {
         return $this->getScopeConfig()->getValue(
@@ -1985,6 +2005,10 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('track_on_payment_submit')
             ->setValue($this->getOnPaymentSubmit());
+        // Tracking: onNotify
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+            ->setName('track_on_notify')
+            ->setValue($this->getOnNotify());
         // Tracking: onSuccess
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('track_on_success')
@@ -2707,5 +2731,21 @@ class Config extends AbstractHelper
             return $this->getMerchantDashboardUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_API, self::API_URL_SANDBOX);
         }
         return self::API_URL_PRODUCTION;
+    }
+
+    /**
+     * Is web view parameter enabled
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return bool
+     */
+    public function isWebView($websiteId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_IS_WEB_VIEW,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
     }
 }

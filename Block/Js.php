@@ -326,7 +326,8 @@ class Js extends Template
             'order_management_selector'             => $this->getOrderManagementSelector(),
             'api_integration'                       => $this->featureSwitches->isAPIDrivenIntegrationEnabled(),
             'shopper_widget_url'                    => $this->getShopperWidgetJsUrl(),
-            'is_sso_enabled'                        => $this->isBoltSSOEnabled()
+            'is_sso_enabled'                        => $this->isBoltSSOEnabled(),
+            'is_web_view'                           => $this->isWebView()
         ]);
     }
 
@@ -358,6 +359,7 @@ class Js extends Template
             'shipping_options_complete' => $this->getOnShippingOptionsComplete(),
             'payment_submit'            => $this->getOnPaymentSubmit(),
             'success'                   => $this->getOnSuccess(),
+            'notify'                    => $this->getOnNotify(),
             'close'                     => $this->getOnClose(),
         ];
     }
@@ -791,6 +793,14 @@ function($argName) {
     /**
      * @return string
      */
+    protected function getOnNotify()
+    {
+        return $this->configHelper->getOnNotify();
+    }
+
+    /**
+     * @return string
+     */
     protected function getOnClose()
     {
         return $this->configHelper->getOnClose();
@@ -900,5 +910,15 @@ function($argName) {
     public function displayRewardPointsInMinicartConfig()
     {
         return $this->configHelper->displayRewardPointsInMinicartConfig();
+    }
+
+    /**
+     * Is web view
+     *
+     * @return bool
+     */
+    public function isWebView()
+    {
+        return $this->configHelper->isWebView();
     }
 }

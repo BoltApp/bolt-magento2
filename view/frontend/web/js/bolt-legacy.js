@@ -615,6 +615,10 @@ define([
                         trackCallbacks.onPaymentSubmit();
                     },
 
+                    onNotify: function (event) {
+                        trackCallbacks.onNotify(event);
+                    },
+
                     success: function (transaction, callback) {
                         /**
                          * Success transaction handler.
@@ -807,6 +811,7 @@ define([
                             return;
                         }
                         toggleCheckoutIfNeeded();
+                        parameters.isWebView = window.boltConfig.is_web_view;
                         BC = BoltCheckout.configure(cart, hints, callback, parameters);
                     }
                     callConfigure();
