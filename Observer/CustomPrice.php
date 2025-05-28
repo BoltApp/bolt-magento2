@@ -86,7 +86,7 @@ class CustomPrice implements ObserverInterface
         }
         // If client sent a price, use that; otherwise 1% fee
         if ($boltItem && $subtotal > 0) {
-            $customPrice = ($sentFee > 0) ? $sentFee : (int) floor((float) $subtotal * 100 * 0.01); // convert to cents and find 1%
+            $customPrice = ($sentFee > 0) ? $sentFee : (floor((float) $subtotal * 0.01 * 100) / 100);
             $boltItem->setCustomPrice($customPrice);
             $boltItem->setOriginalCustomPrice($customPrice);
             $boltItem->getProduct()->setIsSuperMode(true);
