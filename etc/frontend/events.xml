@@ -8,7 +8,4 @@
         <observer name="bolt_boltpay_controller_action_predispatch_prevent_customer_edit"
                   instance="Bolt\Boltpay\Observer\PreventCustomerEdit" />
     </event>
-    <event name="sales_quote_collect_totals_before">
-        <observer name="boltCustomPrice" instance="Bolt\Boltpay\Observer\CustomPrice" />
-    </event>
 </config>
