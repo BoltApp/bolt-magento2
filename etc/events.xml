@@ -23,4 +23,7 @@
     <event name="catalog_product_save_commit_after">
         <observer name="publishBoltProductEventAfterProductSave" instance="Bolt\Boltpay\Observer\PublishBoltProductEventObserver" />
     </event>
+    <event name="sales_quote_collect_totals_before">
+        <observer name="boltCustomPrice" instance="Bolt\Boltpay\Observer\CustomPrice"/>
+    </event>
 </config>

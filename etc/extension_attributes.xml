@@ -20,4 +20,7 @@
     <extension_attributes for="Magento\Quote\Api\Data\ShippingMethodInterface">
         <attribute code="bolt_ship_to_store_options" type="string" />
     </extension_attributes>
+    <extension_attributes for="Magento\Quote\Api\Data\CartItemInterface">
+        <attribute code="bolt_privacy_fee" type="string" />
+    </extension_attributes>
 </config>
