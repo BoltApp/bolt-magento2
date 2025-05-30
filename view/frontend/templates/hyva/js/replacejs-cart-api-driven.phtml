@@ -680,6 +680,11 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                         window.boltConfig.trackCallbacks.onPaymentSubmit();
                         BoltCheckoutApiDriven.boltCallbacks?.gaCheckoutData('add_payment_info');
                     },
+
+                    onNotify: function(event) {
+                        window.boltConfig.trackCallbacks.onNotify(event);
+                    },
+
                     includeKlaviyo: function (address) {
                         if (window.klaviyo) {
                             try {
@@ -1051,6 +1056,7 @@ $isLoadOpenReplayJsDynamic = $block->isDisableOpenReplayJs();
                 if (window.BoltCheckout === undefined) {
                     throw new Error('BoltCheckout is undefined');
                 }
+                BoltCheckoutApiDriven.boltParameters.isWebView = window.boltConfig.is_web_view;
                 BoltCheckoutApiDriven.boltConfigure = window.BoltCheckout.configure(
                     boltCart,
                     boltHints,

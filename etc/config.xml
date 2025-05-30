@@ -89,6 +89,7 @@ tr.shipping.totals td.amount span.price,
                 <catalog_ingestion_instant_events>product_stock_status</catalog_ingestion_instant_events>
                 <instant_button_variant></instant_button_variant>
                 <instant_button_variant_ppc></instant_button_variant_ppc>
+                <is_web_view>0</is_web_view>
             </boltpay>
         </payment>
     </default>

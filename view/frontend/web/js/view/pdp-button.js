@@ -101,6 +101,10 @@ define([
                     trackCallbacks.onPaymentSubmit();
                 },
 
+                onNotify: function(event) {
+                    trackCallbacks.onNotify(event);
+                },
+
                 success: function (transaction, callback) {
                     /**
                      * Success transaction handler.
@@ -353,9 +357,14 @@ define([
                     currency: currency,
                     items: getItemsData(additionalData)
                 };
+
+                const parameters = {
+                    isWebView: window.boltConfig.is_web_view
+                }
+
                 // if connect.js is not loaded postpone until it is
                 whenDefined(window, 'BoltCheckout', function(){
-                    BoltCheckout.configureProductCheckout(cart, hints, callbacks);
+                    BoltCheckout.configureProductCheckout(cart, hints, callbacks, parameters);
                 }, 'configureProductCheckout');
             };
 

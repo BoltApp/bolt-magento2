@@ -67,12 +67,12 @@ class JsTest extends BoltTestCase
     /**
      * @var int expected number of settings returned by {@see \Bolt\Boltpay\Block\Js::getSettings}
      */
-    const SETTINGS_NUMBER = 31;
+    const SETTINGS_NUMBER = 32;
 
     /**
      * @var int expeced number of tracking callback returned by {@see \Bolt\Boltpay\Block\Js::getTrackCallbacks}
      */
-    const TRACK_CALLBACK_NUMBER = 7;
+    const TRACK_CALLBACK_NUMBER = 8;
 
     /**
      * @var int test store id
@@ -862,6 +862,7 @@ class JsTest extends BoltTestCase
         $this->assertArrayHasKey('account_url', $array, $message . 'account_url');
         $this->assertArrayHasKey('order_management_selector', $array, $message . 'order_management_selector');
         $this->assertArrayHasKey('api_integration', $array, $message . 'api_integration');
+        $this->assertArrayHasKey('is_web_view', $array, $message . 'is_web_view');
     }
 
     /**
@@ -1043,6 +1044,7 @@ class JsTest extends BoltTestCase
         $onPaymentSubmit = "dataLayer.push({'event': 'on_payment_submit'});";
         $onSuccess = "dataLayer.push({'event': 'on_success'});";
         $onClose = "dataLayer.push({'event': 'on_close'});";
+        $onNotify = "dataLayer.push({'event': 'on_notify'});";
         $onShippingDetailsComplete = "dataLayer.push({'event': 'on_shipping_details_complete'});";
         $onShippingOptionsComplete = "dataLayer.push({'event': 'on_shipping_options_complete'});";
 
@@ -1088,6 +1090,12 @@ class JsTest extends BoltTestCase
                 'value' => $onShippingOptionsComplete,
                 'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
                 'scopeId' => $this->storeId,
+            ],
+            [
+                'path' => Config::XML_PATH_TRACK_NOTIFY,
+                'value' => $onNotify,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
             ]
         ];
         TestUtils::setupBoltConfig($configData);
@@ -1103,6 +1111,7 @@ class JsTest extends BoltTestCase
                 'shipping_options_complete' => $onShippingOptionsComplete,
                 'payment_submit'            => $onPaymentSubmit,
                 'success'                   => $onSuccess,
+                'notify'                    => $onNotify,
                 'close'                     => $onClose,
             ],
             $result

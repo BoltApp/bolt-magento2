@@ -116,6 +116,7 @@ $onSuccessCode = $block->getJavascriptSuccess() . $trackCallbackCode['success'];
         onPaymentSubmit: {$block->wrapWithCatch($trackCallbackCode['payment_submit'])},
         onSuccess: {$block->wrapWithCatch($onSuccessCode, 'data')},
         onClose: {$block->wrapWithCatch($trackCallbackCode['close'])},
+        onNotify: {$block->wrapWithCatch($trackCallbackCode['notify'])},
     };
 script;
 ?>
