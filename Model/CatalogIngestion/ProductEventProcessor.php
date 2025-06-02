@@ -240,7 +240,7 @@ class ProductEventProcessor
      */
     public function processProductEventStockItemBased(
         StockItemInterface $stockItem,
-        StockItemInterface $oldStockItem = null
+        ?StockItemInterface $oldStockItem = null
     ): void
     {
         if (!$this->featureSwitches->isCatalogIngestionEnabled()) {
@@ -351,8 +351,8 @@ class ProductEventProcessor
         bool $newStatus,
         int $newQty,
         int $websiteId,
-        bool $oldStatus = null,
-        int $oldQty = null
+        ?bool $oldStatus = null,
+        ?int $oldQty = null
     ): void {
         if ($this->isCatalogIngestionInstantUpdateByStockStatusAvailable($newStatus, $websiteId, $oldStatus)) {
             $this->productEventManager->runInstantProductEvent(
@@ -380,8 +380,8 @@ class ProductEventProcessor
     private function isInventoryChanged(
         string $newStatus,
         int $newQty,
-        string $oldStatus = null,
-        int $oldQty = null
+        ?string $oldStatus = null,
+        ?int $oldQty = null
     ): bool {
         return ($oldQty != $newQty) || ($oldStatus != $newStatus);
     }
@@ -397,7 +397,7 @@ class ProductEventProcessor
     private function isCatalogIngestionInstantUpdateByStockStatusAvailable(
         string $newStatus,
         int $websiteId,
-        string $oldStatus = null
+        ?string $oldStatus = null
     ): bool {
         if (!$this->config->getIsCatalogIngestionInstantEnabled($websiteId) ||
             !in_array(Events::STOCK_STATUS_CHANGES, $this->config->getCatalogIngestionEvents($websiteId)) ||

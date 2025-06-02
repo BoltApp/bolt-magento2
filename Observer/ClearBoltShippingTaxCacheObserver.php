@@ -44,8 +44,8 @@ class ClearBoltShippingTaxCacheObserver implements ObserverInterface
      * @param Decider $featureSwitches
      */
     public function __construct(
-        CacheInterface $cache = null,
-        Decider $featureSwitches
+        Decider $featureSwitches,
+        ?CacheInterface $cache = null
     )
     {
         $this->cache = $cache ?: \Magento\Framework\App\ObjectManager::getInstance()->get(CacheInterface::class);

@@ -38,8 +38,8 @@ class BoltException extends LocalizedException
      * @param int $code
      * @param null|Quote $quote
      */
- 
-    public function __construct(Phrase $phrase, \Exception $cause = null, $code = 0, $quote = null)
+
+    public function __construct(Phrase $phrase, ?\Exception $cause = null, $code = 0, $quote = null)
     {
         parent::__construct($phrase, $cause);
         $this->code = (int) $code;

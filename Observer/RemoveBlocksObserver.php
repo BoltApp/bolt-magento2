@@ -70,7 +70,7 @@ class RemoveBlocksObserver implements ObserverInterface
         ConfigHelper $configHelper,
         LogHelper $logHelper,
         RequestInterface $request,
-        Decider $featureSwitches = null
+        ?Decider $featureSwitches = null
     ) {
         $this->configHelper = $configHelper;
         $this->logHelper = $logHelper;

@@ -228,8 +228,8 @@ class Payment extends AbstractMethod
         CartHelper $cartHelper,
         TransactionRepository $transactionRepository,
         AuthSession $authSession,
-        AbstractResource $resource = null,
-        AbstractDb $resourceCollection = null,
+        ?AbstractResource $resource = null,
+        ?AbstractDb $resourceCollection = null,
         array $data = []
     ) {
         parent::__construct(
@@ -563,7 +563,7 @@ class Payment extends AbstractMethod
      *
      * @return bool
      */
-    public function isAvailable(\Magento\Quote\Api\Data\CartInterface $quote = null)
+    public function isAvailable(?\Magento\Quote\Api\Data\CartInterface $quote = null)
     {
         // check for product restrictions
         if ($this->cartHelper->hasProductRestrictions($quote)) {

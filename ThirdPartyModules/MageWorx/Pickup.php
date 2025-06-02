@@ -191,8 +191,8 @@ class Pickup
         ShippingOptionInterfaceFactory $shippingOptionFactory,
         ShippingMethodExtensionFactory $extensionFactory,
         QuoteIdMaskFactory $quoteIdMaskFactory,
-        CustomerSession $customerSession = null,
-        Json $json = null
+        ?CustomerSession $customerSession = null,
+        ?Json $json = null
     ) {
         $this->bugsnagHelper            = $bugsnagHelper;
         $this->storeAddressFactory      = $storeAddressFactory;
@@ -454,7 +454,7 @@ class Pickup
         if ($location->getPhoneNumber()) {
             $result->setPhone($location->getPhoneNumber());
         }
-        
+
         return $result;
     }
 
@@ -587,7 +587,7 @@ class Pickup
                 $address->setTelephone($storeAddress->getPhone());
             }
             $addressInformation->setShippingMethodCode(self::MAGEWORX_PICKUP_CARRIER_CODE);
-            
+
             $quoteCustomerGroupId = $quote->getCustomerGroupId();
             $customerGroupId = $this->customerSession->getCustomerGroupId();
             if ($quoteCustomerGroupId != $customerGroupId) {

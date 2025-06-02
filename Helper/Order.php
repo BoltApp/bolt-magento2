@@ -367,9 +367,9 @@ class Order extends AbstractHelper
         EventsForThirdPartyModules $eventsForThirdPartyModules,
         GiftOptionsHandler $giftOptionsHandler,
         TransactionRepositoryInterface $transactionRepository,
-        OrderManagementInterface $orderManagement = null,
-        OrderIncrementIdChecker $orderIncrementIdChecker = null,
-        Create $adminOrderCreateModel = null
+        ?OrderManagementInterface $orderManagement = null,
+        ?OrderIncrementIdChecker $orderIncrementIdChecker = null,
+        ?Create $adminOrderCreateModel = null
     ) {
         parent::__construct($context);
         $this->apiHelper = $apiHelper;

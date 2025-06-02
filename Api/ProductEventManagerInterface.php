@@ -75,5 +75,5 @@ interface ProductEventManagerInterface
      * @throws LocalizedException
      * @throws \Zend_Http_Client_Exception
      */
-    public function runInstantProductEvent(int $productId, string $type, int $websiteId = null): void;
+    public function runInstantProductEvent(int $productId, string $type, ?int $websiteId = null): void;
 }

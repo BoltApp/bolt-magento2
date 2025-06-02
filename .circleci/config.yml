@@ -24,11 +24,11 @@ commands:
       m2_version:
         type: enum
         default: "2.3.0"
-        enum: ["2.2.8", "2.3.0", "2.4.2"]
+        enum: ["2.2.8", "2.3.0", "2.4.2", "2.4.8"]
       php_version:
         type: enum
         default: "php72"
-        enum: ["php71", "php72", "php74"]
+        enum: ["php71", "php72", "php74", "php84"]
       is_integration:
         type: boolean
         default: false
@@ -121,6 +121,30 @@ commands:
             .circleci/scripts/test-merchant-branches.sh "github" "BoltApp" "bolt-magento2"
 
 jobs:
+  integration-magento-php84-magento248:
+    docker:
+      - image: boltdev/m2-installed-plugin-ci-php84:2.4.8
+        auth:
+          username: $DOCKERHUB_USER
+          password: $DOCKERHUB_PASS
+      - image: cimg/mysql:8.0
+        command: --default-authentication-plugin=mysql_native_password
+        environment:
+          MYSQL_ROOT_PASSWORD: ""
+      - image: opensearchproject/opensearch:2.5.0
+        environment:
+          discovery.type: single-node
+          OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+          plugins.security.disabled: "true"
+    resource_class: 2xlarge
+    environment:
+      MAGENTO_DIR: magento
+    steps:
+      - m2-php-test:
+          cache_key_separator: php84mag24installed
+          m2_version: "2.4.8"
+          php_version: "php84"
+          is_magento_integration: true
   integration-magento-php74-magento24:
     docker:
       - image: boltdev/m2-installed-plugin-ci-php74:2.4.6
@@ -244,6 +268,7 @@ workflows:
   build:
     when: << pipeline.parameters.run_default_workflow >>
     jobs:
+#      - integration-magento-php84-magento248 # temporarily disabled due to php unit v10 incompatibility with our tests
       - integration-magento-php74-magento24
       - integration-magento-php72-magento23
       - integration-magento-php71-magento22
