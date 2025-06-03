@@ -811,6 +811,7 @@ define([
                             return;
                         }
                         toggleCheckoutIfNeeded();
+                        parameters = parameters || {};
                         parameters.isWebView = window.boltConfig.is_web_view;
                         BC = BoltCheckout.configure(cart, hints, callback, parameters);
                     }
