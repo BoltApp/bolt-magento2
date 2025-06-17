@@ -16,14 +16,16 @@
 define([
     'jquery',
     'matchMedia',
-    'jquery-ui-modules/widget'
-], function ($, mediaCheck) {
+    'jquery-ui-modules/widget',
+    'Magento_Customer/js/customer-data'
+], function ($, mediaCheck, customerData) {
     'use strict';
 
     $.widget('bolt.account', {
         options: {
             accountJsUrl: '',
             checkoutKey: '',
+            boltSsoQueryParam: 'isBoltSso',
         },
 
         /** @inheritdoc */
@@ -60,6 +62,11 @@ define([
                     self.insertAccountScript();
                 }
             });
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get(this.options.boltSsoQueryParam) === '1') {
+                customerData.invalidate(['customer']);
+                customerData.reload(['customer'], true);
+            }
         },
         insertAccountScript: function () {
             let scriptTag = document.getElementById('bolt-account');

@@ -51,6 +51,7 @@ use Magento\Framework\Data\Form\FormKey;
 use Magento\Framework\App\PageCache\FormKey as CookieFormKey;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\App\Response\RedirectInterface;
+use Bolt\Boltpay\Block\Js;
 
 class OAuthRedirect implements OAuthRedirectInterface
 {
@@ -560,6 +561,8 @@ class OAuthRedirect implements OAuthRedirectInterface
 
         if ($this->config->isBoltSSORedirectRefererEnabled() && ($referer = $this->redirect->getRefererUrl())) {
             $redirectUrl = $referer;
+            $separator = (parse_url($redirectUrl, PHP_URL_QUERY)) ? '&' : '?';
+            $redirectUrl .= $separator . Js::BOLT_SSO_QUERY_PARAM . '=1';
         }
 
         $this->response->setRedirect($redirectUrl)->sendResponse();

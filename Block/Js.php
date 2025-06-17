@@ -29,6 +29,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Session\SessionManager as CheckoutSession;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
+use Bolt\Boltpay\Model\Api\OAuthRedirect;
 
 /**
  * Js Block. The block class used in boltjs.phtml block.
@@ -38,6 +39,8 @@ use Magento\Framework\View\Element\Template\Context;
 class Js extends Template
 {
     use BlockTrait;
+
+    public const BOLT_SSO_QUERY_PARAM = 'isBoltSso';
 
     /**
      * @var array
@@ -921,4 +924,5 @@ function($argName) {
     {
         return $this->configHelper->isWebView();
     }
+
 }
