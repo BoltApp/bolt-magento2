@@ -52,4 +52,7 @@
         <plugin name="Bolt_Boltpay_Amasty_Number_Model_ConfigProvider"
                 type="Bolt\Boltpay\Plugin\Amasty\Number\Model\ConfigProviderPlugin" sortOrder="10"/>
     </type>
+    <type name="Magento\Sales\Model\OrderRepository">
+        <plugin name="route_order_repository_plugin" disabled="true"/>
+    </type>
 </config>
