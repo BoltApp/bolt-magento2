@@ -127,6 +127,13 @@
                         <config_path>payment/boltpay/bolt_sso</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
+                    <field id="bolt_sso_redirect_referer" translate="label" type="select" sortOrder="85" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>(BETA) SSO Redirect To Previous Page</label>
+                        <depends><field id="bolt_sso">1</field></depends>
+                        <comment>Redirects customer to the previous page after successful SSO login</comment>
+                        <config_path>payment/boltpay/bolt_sso_redirect_referer</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
                     <field id="disabled_customer_groups" translate="label comment" type="multiselect" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
                         <label>Disable for Customer Groups</label>
                         <comment>Chosen customer groups won't be able to use Bolt</comment>
@@ -153,6 +160,11 @@
                     <field id="show_cc_type_in_order_grid" translate="label" type="select" sortOrder="110" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Show card type in the order grid</label>
                         <config_path>payment/boltpay/show_cc_type_in_order_grid</config_path>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
+                    <field id="is_web_view" translate="label" type="select" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>isWebView Parameter enabled</label>
+                        <config_path>payment/boltpay/is_web_view</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                     </field>
                 </group>
@@ -244,17 +256,22 @@
                         <config_path>payment/boltpay/track_on_payment_submit</config_path>
                         <comment>The javascript code executed when the user clicks the pay button.</comment>
                     </field>
-                    <field id="track_on_success" translate="label" type="textarea" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="track_on_notify" translate="label" type="textarea" sortOrder="190" showInDefault="1" showInWebsite="1" showInStore="0">
+                        <label>Tracking: onNotify</label>
+                        <config_path>payment/boltpay/track_on_notify</config_path>
+                        <comment>The "event" variable is available as a parameter within the current scope.</comment>
+                    </field>
+                    <field id="track_on_success" translate="label" type="textarea" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Tracking: onSuccess</label>
                         <config_path>payment/boltpay/track_on_success</config_path>
                         <comment>The javascript code executed when the Bolt checkout transaction is successful.</comment>
                     </field>
-                    <field id="track_on_close" translate="label" type="textarea" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="track_on_close" translate="label" type="textarea" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Tracking: onClose</label>
                         <config_path>payment/boltpay/track_on_close</config_path>
                         <comment>The javascript code executed when the Bolt checkout modal is closed.</comment>
                     </field>
-                    <field id="additional_config" translate="label" type="textarea" sortOrder="210" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <field id="additional_config" translate="label" type="textarea" sortOrder="220" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>Additional Configuration</label>
                         <config_path>payment/boltpay/additional_config</config_path>
                     </field>
