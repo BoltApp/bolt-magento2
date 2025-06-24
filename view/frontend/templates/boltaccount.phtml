@@ -42,7 +42,8 @@ $checkoutKey = $block->getCheckoutKey();
         "*": {
             "Bolt_Boltpay/js/view/account": {
                 "accountJsUrl": "<?= $accountJsUrl ?>",
-                "checkoutKey": "<?= $checkoutKey ?>"
+                "checkoutKey": "<?= $checkoutKey ?>",
+                "boltSsoQueryParam": "<?= $block::BOLT_SSO_QUERY_PARAM ?>"
             }
         }
     }

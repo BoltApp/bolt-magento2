@@ -29,6 +29,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Session\SessionManager as CheckoutSession;
 use Magento\Framework\View\Element\Template;
 use Magento\Framework\View\Element\Template\Context;
+use Bolt\Boltpay\Model\Api\OAuthRedirect;
 
 /**
  * Js Block. The block class used in boltjs.phtml block.
@@ -38,6 +39,8 @@ use Magento\Framework\View\Element\Template\Context;
 class Js extends Template
 {
     use BlockTrait;
+
+    public const BOLT_SSO_QUERY_PARAM = 'isBoltSso';
 
     /**
      * @var array
@@ -326,7 +329,8 @@ class Js extends Template
             'order_management_selector'             => $this->getOrderManagementSelector(),
             'api_integration'                       => $this->featureSwitches->isAPIDrivenIntegrationEnabled(),
             'shopper_widget_url'                    => $this->getShopperWidgetJsUrl(),
-            'is_sso_enabled'                        => $this->isBoltSSOEnabled()
+            'is_sso_enabled'                        => $this->isBoltSSOEnabled(),
+            'is_web_view'                           => $this->isWebView()
         ]);
     }
 
@@ -358,6 +362,7 @@ class Js extends Template
             'shipping_options_complete' => $this->getOnShippingOptionsComplete(),
             'payment_submit'            => $this->getOnPaymentSubmit(),
             'success'                   => $this->getOnSuccess(),
+            'notify'                    => $this->getOnNotify(),
             'close'                     => $this->getOnClose(),
         ];
     }
@@ -791,6 +796,14 @@ function($argName) {
     /**
      * @return string
      */
+    protected function getOnNotify()
+    {
+        return $this->configHelper->getOnNotify();
+    }
+
+    /**
+     * @return string
+     */
     protected function getOnClose()
     {
         return $this->configHelper->getOnClose();
@@ -901,4 +914,15 @@ function($argName) {
     {
         return $this->configHelper->displayRewardPointsInMinicartConfig();
     }
+
+    /**
+     * Is web view
+     *
+     * @return bool
+     */
+    public function isWebView()
+    {
+        return $this->configHelper->isWebView();
+    }
+
 }
