@@ -323,7 +323,7 @@
     - Fixed an issue where multiple store credit reversals occurred due to failed payment authorizations.
     - Resolved a race condition causing the Bolt Product Page button to occasionally fail to render.
 
-## [v2.27.7](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.6) 2025-03-05
+## [v2.27.7](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.7) 2025-03-05
 - New:
     - Added support for Magento versions 2.4.6-p9 and 2.4.7-p4, ensuring compatibility with the latest Magento security patch. Specifically, the ACL list for the Bolt API has been updated.
 - Additional:
@@ -335,3 +335,5 @@
     - Fixed the discount label issue where, in some cases, it displayed categories instead of coupon codes.
     - Fixed missing out-of-stock error messages for certain custom inventory implementations.
     - Fixed capture webhooks for specific cases in legacy mode when an order had already been partially invoiced offline.
+## [v2.27.8](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.8) 2025-08-07
+- Added support for Magento version 2.4.8 and PHP 8.4.

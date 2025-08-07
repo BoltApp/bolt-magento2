@@ -1407,7 +1407,7 @@ class JsTest extends BoltTestCase
      */
     public function getModuleVersion_always_returnsModuleVersion()
     {
-        $moduleVersion = '2.27.7';
+        $moduleVersion = '2.27.8';
         static::assertEquals($moduleVersion, $this->block->getModuleVersion());
     }
 
