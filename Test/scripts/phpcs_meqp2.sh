@@ -1,14 +1,41 @@
 #!/usr/bin/env bash
-
-set -e
-set -u
+# Exit immediately on error, treat unset variables as errors, and print commands
+set -euo pipefail
 set -x
 
-composer show -i
+# ================================
+# Composer 2 installation & setup
+# ================================
+# Use /tmp for Composer cache and home (writable in CircleCI containers)
+export COMPOSER_CACHE_DIR=/tmp/composer-cache
+export COMPOSER_HOME=/tmp/composer-home
+export XDG_CONFIG_HOME=/tmp/composer-home
+mkdir -p "$COMPOSER_CACHE_DIR" "$COMPOSER_HOME"
+
+# Choose installation directory for Composer binary
+if [ -w /usr/local/bin ]; then
+  INSTALL_DIR="/usr/local/bin"
+else
+  INSTALL_DIR="$HOME/bin"
+  mkdir -p "$INSTALL_DIR"
+  export PATH="$INSTALL_DIR:$PATH"
+fi
+
+# Download and install Composer 2
+php -r "copy('https://getcomposer.org/installer','composer-setup.php');"
+php composer-setup.php --2 --install-dir="$INSTALL_DIR" --filename=composer
+rm -f composer-setup.php
+
+# Verify Composer installation
+composer --version
 
 cd ..
 
-composer create-project magento/magento-coding-standard --stability=dev magento-coding-standard
+# ================================
+# Magento coding standard checks
+# ================================
+
+composer create-project magento/magento-coding-standard magento-coding-standard
 
 cd magento-coding-standard
 
