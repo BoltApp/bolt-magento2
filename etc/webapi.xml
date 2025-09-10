@@ -226,4 +226,11 @@
             <resource ref="Magento_Cart::manage" />
         </resources>
     </route>
+    <!--Estimate Shipping and Tax by Extended Address - used in Apple Pay when we need to collect shipping method prices and taxes in a single API call without affecting the main quote.-->
+    <route url="/V1/bolt/boltpay/carts/:cartId/estimate-shipping-and-tax" method="POST">
+        <service class="Bolt\Boltpay\Api\ShipmentEstimationInterface" method="estimateMethodsWithTaxesByExtendedAddress"/>
+        <resources>
+            <resource ref="Magento_Cart::manage" />
+        </resources>
+    </route>
 </routes>
