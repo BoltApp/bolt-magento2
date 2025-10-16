@@ -620,4 +620,15 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_DISABLE_MSRP_PRICE);
     }
+
+    /**
+     * Determines if the auto-opening of the Bolt modal is disabled.
+     *
+     * @return bool
+     * @throws LocalizedException
+     */
+    public function isAutoOpeningDisabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_DISABLE_AUTO_OPENING_BOLT_MODAL);
+    }
 }
