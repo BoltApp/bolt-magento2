@@ -332,7 +332,8 @@ class Js extends Template
             'is_sso_enabled'                        => $this->isBoltSSOEnabled(),
             'is_web_view'                           => $this->isWebView(),
             'is_authentication_popup_enabled'       => $this->isAuthenticationPopupEnabled(),
-            'customer_account_login_url'            => $this->getUrl(Config::CUSTOMER_ACCOUNT_LOGIN)
+            'customer_account_login_url'            => $this->getUrl(Config::CUSTOMER_ACCOUNT_LOGIN),
+            'is_auto_opening_disabled'              => $this->featureSwitches->isAutoOpeningDisabled()
         ]);
     }
 

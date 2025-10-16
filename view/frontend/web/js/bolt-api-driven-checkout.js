@@ -69,7 +69,7 @@ define([
         boltConfigure: null,
         createRequest: false,
         cartRestricted: false,
-        allowAutoOpen: true,
+        allowAutoOpen: true && !window.boltConfig.is_auto_opening_disabled,
         quotation: null,
         isAuthenticationPopupEnabled: window.boltConfig.is_authentication_popup_enabled,
         customerAccountLoginUrl: window.boltConfig.customer_account_login_url,
