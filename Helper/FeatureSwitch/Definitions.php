@@ -342,6 +342,11 @@ class Definitions
      */
     const M2_DISABLE_MSRP_PRICE = 'M2_DISABLE_MSRP_PRICE';
 
+    /**
+     * Disable auto opening bolt modal
+     */
+    const M2_DISABLE_AUTO_OPENING_BOLT_MODAL = 'M2_DISABLE_AUTO_OPENING_BOLT_MODAL';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -705,6 +710,12 @@ class Definitions
         ],
         self::M2_DISABLE_MSRP_PRICE => [
             self::NAME_KEY        => self::M2_DISABLE_MSRP_PRICE,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_DISABLE_AUTO_OPENING_BOLT_MODAL => [
+            self::NAME_KEY        => self::M2_DISABLE_AUTO_OPENING_BOLT_MODAL,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0

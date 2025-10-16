@@ -330,7 +330,8 @@ class Js extends Template
             'api_integration'                       => $this->featureSwitches->isAPIDrivenIntegrationEnabled(),
             'shopper_widget_url'                    => $this->getShopperWidgetJsUrl(),
             'is_sso_enabled'                        => $this->isBoltSSOEnabled(),
-            'is_web_view'                           => $this->isWebView()
+            'is_web_view'                           => $this->isWebView(),
+            'is_auto_opening_disabled'              => $this->featureSwitches->isAutoOpeningDisabled()
         ]);
     }
 

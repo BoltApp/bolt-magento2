@@ -69,7 +69,7 @@ define([
         boltConfigure: null,
         createRequest: false,
         cartRestricted: false,
-        allowAutoOpen: true,
+        allowAutoOpen: true && !window.boltConfig.is_auto_opening_disabled,
         quotation: null,
         inputNameToHintsPrefill: {
             'firstname': 'firstName',

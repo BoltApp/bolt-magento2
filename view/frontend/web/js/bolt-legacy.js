@@ -781,7 +781,7 @@ define([
                 // Create Bolt order and configure BoltCheckout
                 /////////////////////////////////////////////////////
                 var createRequest = false;
-                var allowAutoOpen = true;
+                var allowAutoOpen = true && !settings.is_auto_opening_disabled;
                 var oldBoltCartValue = "";
                 var BC;
                 var hintBarrier;
