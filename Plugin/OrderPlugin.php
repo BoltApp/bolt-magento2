@@ -16,10 +16,14 @@
  */
 namespace Bolt\Boltpay\Plugin;
 
+use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Sales\Model\Order;
+use Bolt\Boltpay\Model\BoltAdditionalRequestParamsReader;
 
 class OrderPlugin
 {
+    private const BOLT_ADDITIONAL_PARAM_CLIENT_IP_KEY = 'client_ip';
+
     /**
      * @var string|null
      */
@@ -41,15 +45,29 @@ class OrderPlugin
     private $disallowedOrderStates;
 
     /**
+     * @var BoltAdditionalRequestParamsReader
+     */
+    private $boltAdditionalRequestParamsReader;
+
+    /**
+     * @var Bugsnag
+     */
+    private $bugsnag;
+
+    /**
      * OrderPlugin constructor.
      * @param \Magento\Framework\App\RequestInterface $request
      */
     public function __construct(
         \Magento\Framework\App\RequestInterface $request,
-        \Bolt\Boltpay\Helper\FeatureSwitch\Decider $featureSwitches
+        \Bolt\Boltpay\Helper\FeatureSwitch\Decider $featureSwitches,
+        BoltAdditionalRequestParamsReader $boltAdditionalRequestParamsReader,
+        Bugsnag $bugsnag
     ) {
         $this->request = $request;
         $this->featureSwitches = $featureSwitches;
+        $this->boltAdditionalRequestParamsReader = $boltAdditionalRequestParamsReader;
+        $this->bugsnag = $bugsnag;
         $this->disallowedOrderStates = [
             Order::STATE_PROCESSING,
             Order::STATE_COMPLETE,
@@ -262,5 +280,47 @@ class OrderPlugin
             $subject->place();
         }
         return $result;
+    }
+
+    /**
+     * Replace remote IP with data from bolt additional request params
+     *
+     * @param Order $subject
+     * @param $remoteIp
+     * @return array
+     */
+    public function beforeSetRemoteIp(Order $subject, $remoteIp)
+    {
+        try {
+            $boltAdditionalParams = $this->boltAdditionalRequestParamsReader->getBoltAdditionalParams();
+            if (isset($boltAdditionalParams[self::BOLT_ADDITIONAL_PARAM_CLIENT_IP_KEY])) {
+                $remoteIp = $boltAdditionalParams[self::BOLT_ADDITIONAL_PARAM_CLIENT_IP_KEY];
+            }
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+        }
+
+        return [$remoteIp];
+    }
+
+    /**
+     * Replace x-forwarded-for IP with data from bolt additional request params
+     *
+     * @param Order $subject
+     * @param $xForwardedFor
+     * @return array
+     */
+    public function beforeSetXForwardedFor(Order $subject, $xForwardedFor)
+    {
+        try {
+            $boltAdditionalParams = $this->boltAdditionalRequestParamsReader->getBoltAdditionalParams();
+            if (isset($boltAdditionalParams[self::BOLT_ADDITIONAL_PARAM_CLIENT_IP_KEY])) {
+                $xForwardedFor = $boltAdditionalParams[self::BOLT_ADDITIONAL_PARAM_CLIENT_IP_KEY];
+            }
+        } catch (\Exception $e) {
+            $this->bugsnag->notifyException($e);
+        }
+
+        return [$xForwardedFor];
     }
 }
