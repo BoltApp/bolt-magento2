@@ -393,7 +393,8 @@ class Storepickup
             /*
              * Filter store enabled
              */
-            $collection->addFieldToFilter('status', \Magestore\Storepickup\Model\Status::STATUS_ENABLED); // phpcs:ignore
+            // phpcs:ignore
+            $collection->addFieldToFilter('status', \Magestore\Storepickup\Model\Status::STATUS_ENABLED); 
             /*
              * filter by store information
              */
