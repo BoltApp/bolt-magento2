@@ -309,7 +309,7 @@ class Storepickup
                 $distanceUnit = ($systemConfig->getDistanceUnit() == 'Km') ? 'km' : 'mile';
                 $shippingGeoData = $this->calShippingAddressGeo($addressData, $mageStoreHelper);
                 if (empty($shippingGeoData)) {
-                    $this->bugsnag->notifyError('Fail to get geolocation', var_export($store, true));
+                    $this->bugsnagHelper->notifyError('Fail to get geolocation', var_export($addressData, true));
                 }
                 $collectionstore = $storeCollection->create();
                 foreach ($stores as $store) {
@@ -393,7 +393,7 @@ class Storepickup
             /*
              * Filter store enabled
              */
-            $collection->addFieldToFilter('status', \Magestore\Storepickup\Model\Status::STATUS_ENABLED);
+            $collection->addFieldToFilter('status', \Magestore\Storepickup\Model\Status::STATUS_ENABLED); // phpcs:ignore
             /*
              * filter by store information
              */
