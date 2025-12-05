@@ -60,6 +60,7 @@ use Bolt\Boltpay\ThirdPartyModules\Mexbs\Tieredcoupon as Mexbs_Tieredcoupon;
 use Bolt\Boltpay\ThirdPartyModules\Magento\CompanyPayment as Magento_CompanyPayment;
 use Bolt\Boltpay\ThirdPartyModules\Amasty\Affiliate as Amasty_Affiliate;
 use Bolt\Boltpay\ThirdPartyModules\Magento\GiftCard as Magento_GiftCard;
+use Bolt\Boltpay\ThirdPartyModules\Magestore\Storepickup as Magestore_Storepickup;
 use Exception;
 
 class EventsForThirdPartyModules
@@ -528,6 +529,13 @@ class EventsForThirdPartyModules
                         "MageWorx\Pickup\Model\Carrier\PickupShipping"
                     ],
                     "boltClass" => MageWorx_Pickup::class,
+                ],
+                "Magestore_Storepickup" => [
+                    "module" => "Magestore_Storepickup",
+                    "checkClasses" => [
+                        "Magestore\Storepickup\Model\Carrier\Method"
+                    ],
+                    "boltClass" => Magestore_Storepickup::class,
                 ],
             ],
         ],
@@ -1525,6 +1533,19 @@ class EventsForThirdPartyModules
                         "MageWorx\Pickup\Model\Carrier\PickupShipping"
                     ],
                     "boltClass" => MageWorx_Pickup::class,
+                ],
+                "Magestore_Storepickup" => [
+                    "module" => "Magestore_Storepickup",
+                    "sendClasses" => [
+                        "Magestore\Storepickup\Model\SystemConfig",
+                        "Magestore\Storepickup\Model\ResourceModel\Store\CollectionFactory",
+                        "Magestore\Storepickup\Helper\Data",
+                        "Magestore\Storepickup\Model\StoreFactory"
+                    ],
+                    "checkClasses" => [
+                        "Magestore\Storepickup\Model\Carrier\Method"
+                    ],
+                    "boltClass" => Magestore_Storepickup::class,
                 ],
             ],
         ],
