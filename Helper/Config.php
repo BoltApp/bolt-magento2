@@ -193,6 +193,11 @@ class Config extends AbstractHelper
     const SAVE_EMAIL_ACTION = 'boltpay/cart/email';
 
     /**
+     * Customer account login URL path
+     */
+    const CUSTOMER_ACCOUNT_LOGIN = 'customer/account/login';
+
+    /**
      * Save order
      */
     const XML_PATH_SUCCESS_PAGE_REDIRECT = 'payment/boltpay/success_page';
@@ -448,6 +453,11 @@ class Config extends AbstractHelper
     const XML_PATH_IS_WEB_VIEW = 'payment/boltpay/is_web_view';
 
     /**
+     *
+     */
+    const XML_PATH_IS_AUTHENTICATION_POPUP_ENABLED = 'payment/boltpay/is_authentication_popup_enabled';
+
+    /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
      */
@@ -511,6 +521,7 @@ class Config extends AbstractHelper
         'instant_button_variant'             => self::XML_PATH_INSTANT_BUTTON_VARIANT,
         'instant_button_variant_ppc'         => self::XML_PATH_INSTANT_BUTTON_VARIANT_PPC,
         'is_web_view'                        => self::XML_PATH_IS_WEB_VIEW,
+        'is_authentication_popup_enabled'    => self::XML_PATH_IS_AUTHENTICATION_POPUP_ENABLED
     ];
 
     /**
@@ -2744,6 +2755,22 @@ class Config extends AbstractHelper
     {
         return $this->getScopeConfig()->isSetFlag(
             self::XML_PATH_IS_WEB_VIEW,
+            ScopeInterface::SCOPE_WEBSITES,
+            $websiteId
+        );
+    }
+
+    /**
+     * Is authentication popup enabled
+     *
+     * @param int|string|null $websiteId
+     *
+     * @return bool
+     */
+    public function isAuthenticationPopupEnabled($websiteId = null)
+    {
+        return $this->getScopeConfig()->isSetFlag(
+            self::XML_PATH_IS_AUTHENTICATION_POPUP_ENABLED,
             ScopeInterface::SCOPE_WEBSITES,
             $websiteId
         );

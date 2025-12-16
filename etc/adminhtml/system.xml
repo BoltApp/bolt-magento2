@@ -427,6 +427,12 @@
                         <config_path>payment/boltpay/instant_button_variant_ppc</config_path>
                         <comment>The name of a button variant to be used for PPC pages.</comment>
                     </field>
+                    <field id="is_authentication_popup_enabled" translate="label" type="select" sortOrder="410" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Authentication Popup Enabled</label>
+                        <config_path>payment/boltpay/is_authentication_popup_enabled</config_path>
+                        <comment>If guest checkout is not allowed, an authentication popup will be shown; otherwise, the user will be redirected to the customer login page.</comment>
+                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    </field>
                 </group>
                 <group id="third_party_modules" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Third Party Modules Support</label>

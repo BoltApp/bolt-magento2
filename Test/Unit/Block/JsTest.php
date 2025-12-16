@@ -67,7 +67,7 @@ class JsTest extends BoltTestCase
     /**
      * @var int expected number of settings returned by {@see \Bolt\Boltpay\Block\Js::getSettings}
      */
-    const SETTINGS_NUMBER = 32;
+    const SETTINGS_NUMBER = 34;
 
     /**
      * @var int expeced number of tracking callback returned by {@see \Bolt\Boltpay\Block\Js::getTrackCallbacks}
@@ -863,6 +863,8 @@ class JsTest extends BoltTestCase
         $this->assertArrayHasKey('order_management_selector', $array, $message . 'order_management_selector');
         $this->assertArrayHasKey('api_integration', $array, $message . 'api_integration');
         $this->assertArrayHasKey('is_web_view', $array, $message . 'is_web_view');
+        $this->assertArrayHasKey('is_authentication_popup_enabled', $array, $message . 'is_authentication_popup_enabled');
+        $this->assertArrayHasKey('customer_account_login_url', $array, $message . 'customer_account_login_url');
     }
 
     /**

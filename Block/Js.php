@@ -330,7 +330,9 @@ class Js extends Template
             'api_integration'                       => $this->featureSwitches->isAPIDrivenIntegrationEnabled(),
             'shopper_widget_url'                    => $this->getShopperWidgetJsUrl(),
             'is_sso_enabled'                        => $this->isBoltSSOEnabled(),
-            'is_web_view'                           => $this->isWebView()
+            'is_web_view'                           => $this->isWebView(),
+            'is_authentication_popup_enabled'       => $this->isAuthenticationPopupEnabled(),
+            'customer_account_login_url'            => $this->getUrl(Config::CUSTOMER_ACCOUNT_LOGIN)
         ]);
     }
 
@@ -925,4 +927,13 @@ function($argName) {
         return $this->configHelper->isWebView();
     }
 
+    /**
+     * Is authentication popup enabled
+     *
+     * @return bool
+     */
+    public function isAuthenticationPopupEnabled()
+    {
+        return $this->configHelper->isAuthenticationPopupEnabled();
+    }
 }
