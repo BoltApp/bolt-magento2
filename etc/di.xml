@@ -89,9 +89,6 @@
     <preference for="Bolt\Boltpay\Api\Data\ExternalCustomerEntityInterface" type="Bolt\Boltpay\Model\ExternalCustomerEntity"/>
     <preference for="Bolt\Boltpay\Api\ExternalCustomerEntityRepositoryInterface" type="Bolt\Boltpay\Model\ExternalCustomerEntityRepository"/>
 
-    <!-- For debug save endpoint -->
-    <preference for="Bolt\Boltpay\Api\UpdateSettingsInterface" type="Bolt\Boltpay\Model\Api\UpdateSettings" />
-
     <!-- For update cart endpoint -->
     <preference for="Bolt\Boltpay\Api\UpdateCartInterface" type="Bolt\Boltpay\Model\Api\UpdateCart" />
     <preference for="Bolt\Boltpay\Api\Data\CartDataInterface"   type="Bolt\Boltpay\Model\Api\Data\CartData" />
