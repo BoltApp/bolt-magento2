@@ -302,25 +302,4 @@ class OrderPlugin
 
         return [$remoteIp];
     }
-
-    /**
-     * Replace x-forwarded-for IP with data from bolt additional request params
-     *
-     * @param Order $subject
-     * @param $xForwardedFor
-     * @return array
-     */
-    public function beforeSetXForwardedFor(Order $subject, $xForwardedFor)
-    {
-        try {
-            $boltAdditionalParams = $this->boltAdditionalRequestParamsReader->getBoltAdditionalParams();
-            if (isset($boltAdditionalParams[self::BOLT_ADDITIONAL_PARAM_CLIENT_IP_KEY])) {
-                $xForwardedFor = $boltAdditionalParams[self::BOLT_ADDITIONAL_PARAM_CLIENT_IP_KEY];
-            }
-        } catch (\Exception $e) {
-            $this->bugsnag->notifyException($e);
-        }
-
-        return [$xForwardedFor];
-    }
 }
