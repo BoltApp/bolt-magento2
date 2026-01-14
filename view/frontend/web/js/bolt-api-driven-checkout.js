@@ -71,6 +71,8 @@ define([
         cartRestricted: false,
         allowAutoOpen: true,
         quotation: null,
+        isAuthenticationPopupEnabled: window.boltConfig.is_authentication_popup_enabled,
+        customerAccountLoginUrl: window.boltConfig.customer_account_login_url,
         inputNameToHintsPrefill: {
             'firstname': 'firstName',
             'lastname':  'lastName',
@@ -761,6 +763,10 @@ define([
                             if (window.boltConfig.is_sso_enabled) {
                                 BoltCheckoutApiDriven.showBoltSSOPopup()
                             } else {
+                                if (!BoltCheckoutApiDriven.isAuthenticationPopupEnabled && BoltCheckoutApiDriven.customerAccountLoginUrl) {
+                                    window.location.href = BoltCheckoutApiDriven.customerAccountLoginUrl;
+                                    return;
+                                }
                                 BoltCheckoutApiDriven.showAuthenticationPopup();
                             }
 
