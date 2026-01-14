@@ -159,7 +159,7 @@ class Cart
      */
     private function preFetchCart(Quote $quote, array $customerData): void
     {
-        // skip pre-fetch cart request if feature is disabled, quote is not exist or quote has no items
+        // skip pre-fetch cart request if feature is disabled, quote does not exist or quote has no items
         if (!$this->featureSwitches->isEnabledPreFetchCartViaApi() || !$quote->getId() || empty($quote->getAllItems())) {
             return;
         }
