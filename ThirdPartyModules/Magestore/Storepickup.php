@@ -126,7 +126,7 @@ class Storepickup
      * @param ShippingMethodExtensionFactory    $extensionFactory
      * @param Session                           $checkoutSession
      * @param Geolocation                       $geolocation
-     * @param Json|null                         $json
+     * @param Json                         $json
      */
     public function __construct(
         Bugsnag  $bugsnagHelper,
@@ -140,7 +140,7 @@ class Storepickup
         ShippingMethodExtensionFactory $extensionFactory,
         Session $checkoutSession,
         Geolocation $geolocation,
-        Json $json = null
+        Json $json
     ) {
         $this->bugsnagHelper            = $bugsnagHelper;
         $this->storeAddressFactory      = $storeAddressFactory;
@@ -153,7 +153,7 @@ class Storepickup
         $this->extensionFactory         = $extensionFactory;
         $this->checkoutSession          = $checkoutSession;
         $this->geolocation              = $geolocation;
-        $this->json                     = $json ?: ObjectManager::getInstance()->get(Json::class);
+        $this->json                     = $json;
     }
 
     /**
@@ -241,13 +241,13 @@ class Storepickup
                 return;
             }
             $carrierCode = $addressInformation->getShippingCarrierCode();
-            
+
             if ($carrierCode != self::MAGESTORE_STOREPICKUP_CARRIER_CODE) {
                 return;
             }
             $methodCode = $addressInformation->getShippingMethodCode();
             $mixCodes = explode('_', $methodCode);
-            
+
             if (count($mixCodes) != 2 || $mixCodes[0] != self::MAGESTORE_STOREPICKUP_CARRIER_CODE) {
                 return;
             }
@@ -315,7 +315,7 @@ class Storepickup
                 foreach ($stores as $store) {
                     $distance = ($this->geolocation->calculateCircleDistance($store['latitude'], $store['longitude'], $shippingGeoData['lat'], $shippingGeoData['lng'])) / 1000;
                     $distance = round((($distanceUnit == 'km') ? $distance : $distance * 0.621371), 2);
-                    
+
                     if ($radius > 0 && $distance > $radius) {
                         continue;
                     }
@@ -454,7 +454,7 @@ class Storepickup
                 'lng' => $content['results'][0]['geometry']['location']['lng'],
             ];
         }
-        
+
         return $geoData;
     }
 }
