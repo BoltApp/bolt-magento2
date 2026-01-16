@@ -159,7 +159,8 @@ class Cart
      */
     private function preFetchCart(Quote $quote, array $customerData): void
     {
-        if (!$this->featureSwitches->isEnabledPreFetchCartViaApi()) {
+        // skip pre-fetch cart request if feature is disabled, quote does not exist or quote has no items
+        if (!$this->featureSwitches->isEnabledPreFetchCartViaApi() || !$quote->getId() || empty($quote->getAllItems())) {
             return;
         }
         $customerDataHash = $this->getCustomerDataHash($customerData);
