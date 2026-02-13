@@ -368,7 +368,8 @@ class CartTest extends BoltTestCase
             'getData',
             'getStore',
             'save',
-            'getCouponCode'
+            'getCouponCode',
+            'setCustomerIsGuest',
         ];
         $this->immutableQuoteMock = $this->createPartialMock(Quote::class, $quoteMethods);
 
@@ -400,7 +401,7 @@ class CartTest extends BoltTestCase
             'getData','isVirtual','getId','getShippingAddress',
             'getBillingAddress','reserveOrderId','addProduct',
             'assignCustomer','setIsActive','getGiftMessageId',
-            'getGwId', 'getCustomerGroupId'
+            'getGwId', 'getCustomerGroupId','setCustomerIsGuest',
         ]);
         $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote', 'getBoltCollectSaleRuleDiscounts', 'getOrderId']);
         $this->productRepository = $this->createPartialMock(ProductRepository::class, ['get', 'getbyId']);
@@ -5512,6 +5513,7 @@ ORDER
         $customer = $this->createMock(CustomerInterface::class);
         $this->customerRepository->method('getById')->willReturn($customer);
         $this->quoteMock->expects(static::once())->method('assignCustomer')->with($customer);
+        $this->quoteMock->expects(static::once())->method('setCustomerIsGuest')->with(0);
 
         $this->store->expects(static::once())->method('setCurrentCurrencyCode')->with(CartTest::CURRENCY_CODE);
 
@@ -6014,6 +6016,7 @@ ORDER
         $customer = $this->createMock(CustomerInterface::class);
         $this->customerRepository->method('getById')->willReturn($customer);
         $this->quoteMock->expects(static::once())->method('assignCustomer')->with($customer);
+        $this->quoteMock->expects(static::once())->method('setCustomerIsGuest')->with(0);
 
         static::assertEquals($expectedCartData, $currentMock->createCart($items, $metadata));
     }
@@ -6643,6 +6646,7 @@ ORDER
         $customerMock = $this->createMock(\Magento\Customer\Model\Data\Customer::class);
         $this->customerRepository->expects(self::once())->method('getById')->willReturn($customerMock);
         $this->quoteMock->expects(self::once())->method('assignCustomer')->with($customerMock);
+        $this->quoteMock->expects(self::once())->method('setCustomerIsGuest')->with(0);
         TestHelper::invokeMethod(
             $this->currentMock,
             'assignQuoteCustomerByEncryptedUserId',
