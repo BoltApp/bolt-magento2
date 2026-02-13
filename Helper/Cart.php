@@ -2808,6 +2808,7 @@ class Cart extends AbstractHelper
             throw new WebapiException(__('Incorrect user_id'), 6306, 422);
         }
         $quote->assignCustomer($customer); // Assign quote to Customer
+        $quote->setCustomerIsGuest(0);
     }
 
     public function calculateCartAndHints($paymentOnly = false, $placeOrderPayload = [])
