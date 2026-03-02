@@ -66,6 +66,10 @@ class Info extends \Magento\Payment\Block\Info
             if ($avsResponse = $info->getAdditionalInformation('avs_response')) {
                 $data[(string)__('AVS Response')]  = $avsResponse;
             }
+
+            if ($source = $info->getAdditionalInformation('source')) {
+                $data[(string)__('Source')]  = $source;
+            }
         }
 
         if ($data) {
