@@ -472,6 +472,12 @@
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <if_module_enabled>MageWorx_RewardPoints</if_module_enabled>
                     </field>
+                    <field id="magestore_storepickup_google_maps_key" translate="label" type="obscure" sortOrder="248" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Google Maps Key for Magestore Storepickup</label>
+                        <config_path>payment/boltpay/magestore_storepickup_google_maps_key</config_path>
+                        <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                        <if_module_enabled>Magestore_Storepickup</if_module_enabled>
+                    </field>
                 </group>
                 <group id="catalog_ingestion" translate="label" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Catalog Ingestion</label>

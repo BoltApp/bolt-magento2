@@ -22,6 +22,7 @@ use Bolt\Boltpay\Api\Data\ShippingOptionInterfaceFactory;
 use Bolt\Boltpay\Api\Data\StoreAddressInterfaceFactory;
 use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterfaceFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
+use Bolt\Boltpay\Helper\Config;
 use Bolt\Boltpay\Helper\Geolocation;
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 
@@ -94,6 +95,11 @@ class Storepickup
     private $geolocation;
 
     /**
+     * @var Config
+     */
+    private $configHelper;
+
+    /**
      * @var Json
      */
     private $json;
@@ -126,6 +132,7 @@ class Storepickup
      * @param ShippingMethodExtensionFactory    $extensionFactory
      * @param Session                           $checkoutSession
      * @param Geolocation                       $geolocation
+     * @param Config                            $configHelper
      * @param Json|null                         $json
      */
     public function __construct(
@@ -140,6 +147,7 @@ class Storepickup
         ShippingMethodExtensionFactory $extensionFactory,
         Session $checkoutSession,
         Geolocation $geolocation,
+        Config $configHelper,
         Json $json = null
     ) {
         $this->bugsnagHelper            = $bugsnagHelper;
@@ -153,6 +161,7 @@ class Storepickup
         $this->extensionFactory         = $extensionFactory;
         $this->checkoutSession          = $checkoutSession;
         $this->geolocation              = $geolocation;
+        $this->configHelper             = $configHelper;
         $this->json                     = $json ?: ObjectManager::getInstance()->get(Json::class);
     }
 
@@ -307,7 +316,7 @@ class Storepickup
             if (!empty($stores)) {
                 $radius = $systemConfig->getDefaultRadius();
                 $distanceUnit = ($systemConfig->getDistanceUnit() == 'Km') ? 'km' : 'mile';
-                $shippingGeoData = $this->calShippingAddressGeo($addressData, $mageStoreHelper);
+                $shippingGeoData = $this->calShippingAddressGeo($addressData, $mageStoreHelper, $quote);
                 if (empty($shippingGeoData)) {
                     $this->bugsnagHelper->notifyError('Fail to get geolocation', var_export($addressData, true));
                 }
@@ -421,11 +430,12 @@ class Storepickup
      *
      * @return array
      */
-    protected function calShippingAddressGeo($addressData, $mageStoreHelper)
+    protected function calShippingAddressGeo($addressData, $mageStoreHelper, $quote)
     {
         $geoData = [];
         $address = ($addressData['street_address1'] ?? '') . ',' . ($addressData['locality'] ?? '') . ',' . ($addressData['region'] ?? '') . ' ' . ($addressData['postal_code'] ?? '') . ',' . ($addressData['country_code'] ?? '');
-        $googleMapApiKey = $mageStoreHelper->getGoogleApiKey();
+        $storeId = $quote->getStoreId();
+        $googleMapApiKey = $this->configHelper->getMagestoreStorepickupGoogleMapsKey($storeId) ?: $mageStoreHelper->getGoogleApiKey();
         $client = $this->clientFactory->create(['config' => [
             'base_uri' => 'https://maps.googleapis.com/'
         ]]);

@@ -448,6 +448,11 @@ class Config extends AbstractHelper
     const XML_PATH_IS_WEB_VIEW = 'payment/boltpay/is_web_view';
 
     /**
+     * Google Maps Key for Magestore Storepickup
+     */
+    const XML_PATH_MAGESTORE_STOREPICKUP_GOOGLE_MAPS_KEY = 'payment/boltpay/magestore_storepickup_google_maps_key';
+
+    /**
      * Default whitelisted shopping cart and checkout pages "Full Action Name" identifiers, <router_controller_action>
      * Pages allowed to load Bolt javascript / show checkout button
      */
@@ -511,6 +516,7 @@ class Config extends AbstractHelper
         'instant_button_variant'             => self::XML_PATH_INSTANT_BUTTON_VARIANT,
         'instant_button_variant_ppc'         => self::XML_PATH_INSTANT_BUTTON_VARIANT_PPC,
         'is_web_view'                        => self::XML_PATH_IS_WEB_VIEW,
+        'magestore_storepickup_google_maps_key' => self::XML_PATH_MAGESTORE_STOREPICKUP_GOOGLE_MAPS_KEY,
     ];
 
     /**
@@ -675,7 +681,7 @@ class Config extends AbstractHelper
     {
         if ($this->isSandboxModeSet()) {
             $url = $this->getCdnUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_SANDBOX);
-        } else if ($isAllowCustomURLForProduction) {
+        } elseif ($isAllowCustomURLForProduction) {
             $url = $this->getCdnUrlFromAdditionalConfig($storeId) ?: $this->getCustomURLValueOrDefault(self::XML_PATH_CUSTOM_CDN, self::CDN_URL_PRODUCTION);
         } else {
             $url = self::CDN_URL_PRODUCTION ?: '';
@@ -2093,6 +2099,10 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('instant_button_variant_ppc')
             ->setValue($this->getInstantPPCButtonVariant());
+        // Google Maps Key for Magestore Storepickup (obscured)
+        $boltSettings[] = $this->boltConfigSettingFactory->create()
+            ->setName('magestore_storepickup_google_maps_key')
+            ->setValue(SecretObscurer::obscure($this->getApiKey()));
 
         return $boltSettings;
     }
@@ -2747,5 +2757,17 @@ class Config extends AbstractHelper
             ScopeInterface::SCOPE_WEBSITES,
             $websiteId
         );
+    }
+
+    /**
+     * Get Google Maps Key for Magestore Storepickup from config
+     *
+     * @param int|string $storeId
+     *
+     * @return string
+     */
+    public function getMagestoreStorepickupGoogleMapsKey($storeId = null)
+    {
+        return $this->getEncryptedKey(self::XML_PATH_MAGESTORE_STOREPICKUP_GOOGLE_MAPS_KEY, $storeId) ?: '';
     }
 }
