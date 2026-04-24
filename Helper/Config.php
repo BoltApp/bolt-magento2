@@ -2099,10 +2099,9 @@ class Config extends AbstractHelper
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('instant_button_variant_ppc')
             ->setValue($this->getInstantPPCButtonVariant());
-        // Google Maps Key for Magestore Storepickup (obscured)
         $boltSettings[] = $this->boltConfigSettingFactory->create()
             ->setName('magestore_storepickup_google_maps_key')
-            ->setValue(SecretObscurer::obscure($this->getApiKey()));
+            ->setValue($this->getMagestoreStorepickupGoogleMapsKey());
 
         return $boltSettings;
     }
@@ -2768,6 +2767,10 @@ class Config extends AbstractHelper
      */
     public function getMagestoreStorepickupGoogleMapsKey($storeId = null)
     {
-        return $this->getEncryptedKey(self::XML_PATH_MAGESTORE_STOREPICKUP_GOOGLE_MAPS_KEY, $storeId) ?: '';
+        return $this->getScopeConfig()->getValue(
+            self::XML_PATH_MAGESTORE_STOREPICKUP_GOOGLE_MAPS_KEY,
+            ScopeInterface::SCOPE_STORE,
+            $storeId
+        ) ?: '';
     }
 }
