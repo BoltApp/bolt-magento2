@@ -427,12 +427,6 @@
                         <config_path>payment/boltpay/instant_button_variant_ppc</config_path>
                         <comment>The name of a button variant to be used for PPC pages.</comment>
                     </field>
-                    <field id="is_authentication_popup_enabled" translate="label" type="select" sortOrder="410" showInDefault="1" showInWebsite="1" showInStore="1">
-                        <label>Authentication Popup Enabled</label>
-                        <config_path>payment/boltpay/is_authentication_popup_enabled</config_path>
-                        <comment>If guest checkout is not allowed, an authentication popup will be shown; otherwise, the user will be redirected to the customer login page.</comment>
-                        <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    </field>
                 </group>
                 <group id="third_party_modules" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Third Party Modules Support</label>
@@ -477,6 +471,11 @@
                         <config_path>payment/boltpay/mageworx_reward_points_on_cart</config_path>
                         <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                         <if_module_enabled>MageWorx_RewardPoints</if_module_enabled>
+                    </field>
+                    <field id="magestore_storepickup_google_maps_key" translate="label" type="text" sortOrder="248" showInDefault="1" showInWebsite="1" showInStore="1">
+                        <label>Google Maps Key for Magestore Storepickup</label>
+                        <config_path>payment/boltpay/magestore_storepickup_google_maps_key</config_path>
+                        <if_module_enabled>Magestore_Storepickup</if_module_enabled>
                     </field>
                 </group>
                 <group id="catalog_ingestion" translate="label" type="text" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="0">
