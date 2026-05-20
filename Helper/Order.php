@@ -1222,6 +1222,13 @@ class Order extends AbstractHelper
             ]
         );
 
+        // Release the reserved increment id after a successful submit so any
+        // subsequent getBoltpayOrder call on the same (admin) session reserves
+        // a fresh one and does not trip doesOrderExist() on the placed order.
+        // Must run AFTER checkout_submit_all_after so observers still see the id.
+        $quote->setBoltReservedOrderId(null);
+        $quote->setReservedOrderId(null);
+
         // Set dispatched to be true. Prevents dispatching more then once.
         $quote->setBoltDispatched(true);
         $this->cartHelper->quoteResourceSave($quote);
@@ -2779,6 +2786,17 @@ class Order extends AbstractHelper
             $parentQuote->setBoltCheckoutType(CartHelper::BOLT_CHECKOUT_TYPE_PPC);
             $this->cartHelper->quoteResourceSave($parentQuote->setIsActive(false));
         }
+
+        // Release the reserved increment id so a retry on the same session
+        // reserves a fresh one. Without this, doesOrderExist() keeps finding
+        // the canceled order by increment_id and the merchant sees the
+        // "Order was created. Please reload the page and try again" popup.
+        if ($parentQuote) {
+            $parentQuote->setBoltReservedOrderId(null);
+            $parentQuote->setReservedOrderId(null);
+            $this->cartHelper->quoteResourceSave($parentQuote);
+        }
+
         $this->eventsForThirdPartyModules->dispatchEvent("beforeFailedPaymentOrderSave", $order);
 
         $order->addData(['quote_id' => null]);
