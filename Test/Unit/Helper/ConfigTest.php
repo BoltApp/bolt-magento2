@@ -1422,4 +1422,45 @@ Room 4000',
         $result = $this->configHelper->getIntegrationBaseUrl();
         self::assertEquals(BoltConfig::API_URL_PRODUCTION, $result);
     }
+
+    /**
+     * @test
+     * that getMagestoreStorepickupGoogleMapsKey returns the configured key when set
+     *
+     * @covers ::getMagestoreStorepickupGoogleMapsKey
+     */
+    public function getMagestoreStorepickupGoogleMapsKey_ifSetInConfiguration_returnsKey()
+    {
+        $googleMapsKey = 'test_google_maps_api_key_12345';
+        $configData = [
+            [
+                'path' => BoltConfig::XML_PATH_MAGESTORE_STOREPICKUP_GOOGLE_MAPS_KEY,
+                'value' => $googleMapsKey,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $this->assertEquals($googleMapsKey, $this->configHelper->getMagestoreStorepickupGoogleMapsKey($this->storeId));
+    }
+
+    /**
+     * @test
+     * that getMagestoreStorepickupGoogleMapsKey returns empty string when not configured
+     *
+     * @covers ::getMagestoreStorepickupGoogleMapsKey
+     */
+    public function getMagestoreStorepickupGoogleMapsKey_ifNotSetInConfiguration_returnsEmptyString()
+    {
+        $configData = [
+            [
+                'path' => BoltConfig::XML_PATH_MAGESTORE_STOREPICKUP_GOOGLE_MAPS_KEY,
+                'value' => null,
+                'scope' => \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                'scopeId' => $this->storeId,
+            ]
+        ];
+        TestUtils::setupBoltConfig($configData);
+        $this->assertEquals('', $this->configHelper->getMagestoreStorepickupGoogleMapsKey($this->storeId));
+    }
 }
