@@ -148,7 +148,7 @@ class Storepickup
         Session $checkoutSession,
         Geolocation $geolocation,
         Config $configHelper,
-        Json $json = null
+        ?Json $json = null
     ) {
         $this->bugsnagHelper            = $bugsnagHelper;
         $this->storeAddressFactory      = $storeAddressFactory;
