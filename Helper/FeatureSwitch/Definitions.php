@@ -347,6 +347,12 @@ class Definitions
      */
     const M2_DISABLE_AUTO_OPENING_BOLT_MODAL = 'M2_DISABLE_AUTO_OPENING_BOLT_MODAL';
 
+    /**
+     * Seed hints.shipping.Country from the store config so the Bolt phone
+     * country-code selector defaults to the merchant's country.
+     */
+    const M2_DEFAULT_PHONE_COUNTRY_HINT = 'M2_DEFAULT_PHONE_COUNTRY_HINT';
+
     const DEFAULT_SWITCH_VALUES = [
         self::M2_SAMPLE_SWITCH_NAME => [
             self::NAME_KEY        => self::M2_SAMPLE_SWITCH_NAME,
@@ -716,6 +722,12 @@ class Definitions
         ],
         self::M2_DISABLE_AUTO_OPENING_BOLT_MODAL => [
             self::NAME_KEY        => self::M2_DISABLE_AUTO_OPENING_BOLT_MODAL,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
+        ],
+        self::M2_DEFAULT_PHONE_COUNTRY_HINT => [
+            self::NAME_KEY        => self::M2_DEFAULT_PHONE_COUNTRY_HINT,
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 0

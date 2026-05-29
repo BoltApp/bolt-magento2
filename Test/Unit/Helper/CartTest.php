@@ -457,11 +457,12 @@ class CartTest extends BoltTestCase
             ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical',
              'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata', 'isCustomizableOptionsSupport',
              'isPreventBoltCartForQuotesWithError','isAPIDrivenIntegrationEnabled','isUseRuleNameIfDescriptionEmpty',
-             'isEnabledFetchCartViaApi', 'isMSRPPriceDisabled'
+             'isEnabledFetchCartViaApi', 'isMSRPPriceDisabled', 'isDefaultPhoneCountryHintEnabled'
             ]
         );
         $this->deciderHelper->method('isEnabledFetchCartViaApi')->willReturn(false);
         $this->deciderHelper->method('isMSRPPriceDisabled')->willReturn(false);
+        $this->deciderHelper->method('isDefaultPhoneCountryHintEnabled')->willReturn(false);
         $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
         $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();

@@ -631,4 +631,15 @@ class Decider extends AbstractHelper
     {
         return $this->isSwitchEnabled(Definitions::M2_DISABLE_AUTO_OPENING_BOLT_MODAL);
     }
+
+    /**
+     * Determines if the default phone country hint is enabled.
+     *
+     * @return bool
+     * @throws LocalizedException
+     */
+    public function isDefaultPhoneCountryHintEnabled()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_DEFAULT_PHONE_COUNTRY_HINT);
+    }
 }

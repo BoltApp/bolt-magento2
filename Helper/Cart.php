@@ -36,6 +36,7 @@ use Magento\Checkout\Helper\Data as CheckoutHelper;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Customer\Model\Address;
 use Magento\Customer\Model\Session as CustomerSession;
+use Magento\Directory\Model\CountryFactory;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
@@ -293,6 +294,11 @@ class Cart extends AbstractHelper
     private $quoteIdMaskFactory;
 
     /**
+     * @var CountryFactory
+     */
+    private $countryFactory;
+
+    /**
      * @param Context $context
      * @param CheckoutSession $checkoutSession
      * @param ProductRepository $productRepository
@@ -328,6 +334,7 @@ class Cart extends AbstractHelper
      * @param Store $store
      * @param QuoteIdMaskResourceModel|null $quoteIdMaskResourceModel
      * @param QuoteIdMaskFactory|null $quoteIdMaskFactory
+     * @param CountryFactory|null $countryFactory
      */
     public function __construct(
         Context $context,
@@ -364,7 +371,8 @@ class Cart extends AbstractHelper
         PriceHelper $priceHelper,
         Store $store,
         ?QuoteIdMaskResourceModel $quoteIdMaskResourceModel = null,
-        ?QuoteIdMaskFactory $quoteIdMaskFactory = null
+        ?QuoteIdMaskFactory $quoteIdMaskFactory = null,
+        ?CountryFactory $countryFactory = null
     ) {
         parent::__construct($context);
         $this->checkoutSession = $checkoutSession;
@@ -403,6 +411,8 @@ class Cart extends AbstractHelper
             ObjectManager::getInstance()->get(QuoteIdMaskResourceModel::class);
         $this->quoteIdMaskFactory = $quoteIdMaskFactory ?:
             ObjectManager::getInstance()->get(QuoteIdMaskFactory::class);
+        $this->countryFactory = $countryFactory ?:
+            ObjectManager::getInstance()->get(CountryFactory::class);
     }
 
     /**
@@ -1150,6 +1160,28 @@ class Cart extends AbstractHelper
 
         if ($checkoutType === 'admin') {
             $hints['virtual_terminal_mode'] = true;
+        }
+
+        // Default the Bolt phone country-code selector to the merchant's country.
+        if ($checkoutType !== 'admin' && $this->deciderHelper->isDefaultPhoneCountryHintEnabled()) {
+            $storeId = $quote ? $quote->getStoreId() : null;
+            $scopeConfig = $this->configHelper->getScopeConfig();
+            $countryCode = ($hints['prefill']['country'] ?? null)
+                ?: $scopeConfig->getValue(
+                    'general/country/default',
+                    ScopeInterface::SCOPE_STORE,
+                    $storeId
+                );
+            if ($countryCode) {
+                $countryName = $this->countryFactory->create()->loadByCode($countryCode)->getName('en_US');
+                $hints['shipping'] = [
+                    'Country'     => $countryName ?: $countryCode,
+                    'CountryCode' => $countryCode,
+                ];
+                if (empty($hints['prefill']['country'])) {
+                    $hints['prefill']['country'] = $countryCode;
+                }
+            }
         }
 
         $hints['prefill'] = (object)$hints['prefill'];
