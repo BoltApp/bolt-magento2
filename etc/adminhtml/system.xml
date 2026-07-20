@@ -35,7 +35,7 @@
                 </field>
                 <group id="keys" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Keys</label>
-                    <comment><![CDATA[Keys and URL Configurations can be found at <a target="_blank" href="https://merchant.boltapp.com/settings">merchant.boltapp.com/settings</a> or <a target="_blank" href="https://merchant-sandbox.boltapp.com/settings">merchant-sandbox.boltapp.com/settings</a>.]]></comment>
+                    <comment><![CDATA[Keys and URL Configurations can be found at <a target="_blank" href="https://merchant.bolt.com/settings">merchant.bolt.com/settings</a> or <a target="_blank" href="https://merchant-sandbox.bolt.com/settings">merchant-sandbox.bolt.com/settings</a>.]]></comment>
                     <attribute type="expanded">1</attribute>
                     <field id="api_key" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>API Key</label>
@@ -409,7 +409,7 @@
                         <label>Bolt Authentication</label>
                         <config_path>payment/boltpay/connect_magento_integration_mode</config_path>
                         <frontend_model>Bolt\Boltpay\Block\System\Config\IntegrationConnection</frontend_model>
-                        <comment><![CDATA[ This will create an integration with the required permissions for your Magento installation to be used by Bolt.<br><a target="_blank" href="https://docs.boltapp.com/developers/guides/checkout-guides/managed-checkout/adobe-commerce-setup-guide/adobe-installation/#why-do-i-need-to-send-my-magento-2-api-keys-to-bolt">Why does Bolt need my Magento API keys?</a>]]></comment>
+                        <comment><![CDATA[ This will create an integration with the required permissions for your Magento installation to be used by Bolt.<br><a target="_blank" href="https://docs.bolt.com/developers/guides/checkout-guides/managed-checkout/adobe-commerce-setup-guide/adobe-installation/#why-do-i-need-to-send-my-magento-2-api-keys-to-bolt">Why does Bolt need my Magento API keys?</a>]]></comment>
                     </field>
                     <field id="new_plugin_version_notification" translate="label" type="select" sortOrder="115" showInDefault="1" showInWebsite="1" showInStore="0">
                         <label>New plugin version notification</label>
