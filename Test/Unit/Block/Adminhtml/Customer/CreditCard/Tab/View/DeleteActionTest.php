@@ -23,7 +23,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 class DeleteActionTest extends BoltTestCase
 {
     const ID = '1';
-    const DELETE_BUTTON_HTML = '<a href="https://www.bolt.com/admin/boltpay/customer/deletecreditcard/id/1/">Delete</a>';
+    const DELETE_BUTTON_HTML = '<a href="https://www.boltapp.com/admin/boltpay/customer/deletecreditcard/id/1/">Delete</a>';
 
     /** @var DeleteAction */
     private $block;
