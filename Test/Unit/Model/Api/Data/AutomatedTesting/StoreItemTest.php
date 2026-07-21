@@ -28,7 +28,7 @@ class StoreItemTest extends BoltTestCase
 {
     const STORE_ITEM_NAME = 'name';
     const STORE_PRICE = '10.000';
-    const STORE_ITEM_URL = 'https:bolt.com';
+    const STORE_ITEM_URL = 'https:boltapp.com';
     const STORE_TYPE = 'item_type';
 
     /**

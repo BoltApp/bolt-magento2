@@ -235,42 +235,42 @@ class Config extends AbstractHelper
     /**
      * Bolt sandbox url
      */
-    const API_URL_SANDBOX = 'https://api-sandbox.bolt.com/';
+    const API_URL_SANDBOX = 'https://api-sandbox.boltapp.com/';
 
     /**
      * Bolt production url
      */
-    const API_URL_PRODUCTION = 'https://api.bolt.com/';
+    const API_URL_PRODUCTION = 'https://api.boltapp.com/';
 
     /**
      * Bolt sandbox cdn url
      */
-    const CDN_URL_SANDBOX = 'https://connect-sandbox.bolt.com';
+    const CDN_URL_SANDBOX = 'https://connect-sandbox.boltapp.com';
 
     /**
      * Bolt production cdn url
      */
-    const ACCOUNT_URL_PRODUCTION = 'https://account.bolt.com';
+    const ACCOUNT_URL_PRODUCTION = 'https://account.boltapp.com';
 
     /**
      * Bolt sandbox cdn url
      */
-    const ACCOUNT_URL_SANDBOX = 'https://account-sandbox.bolt.com';
+    const ACCOUNT_URL_SANDBOX = 'https://account-sandbox.boltapp.com';
 
     /**
      * Bolt production cdn url
      */
-    const CDN_URL_PRODUCTION = 'https://connect.bolt.com';
+    const CDN_URL_PRODUCTION = 'https://connect.boltapp.com';
 
     /**
      * Bolt merchant sandbox url
      */
-    const MERCHANT_DASH_SANDBOX = 'https://merchant-sandbox.bolt.com';
+    const MERCHANT_DASH_SANDBOX = 'https://merchant-sandbox.boltapp.com';
 
     /**
      * Bolt merchant production url
      */
-    const MERCHANT_DASH_PRODUCTION = 'https://merchant.bolt.com';
+    const MERCHANT_DASH_PRODUCTION = 'https://merchant.boltapp.com';
 
     /**
      * Path for API Key
@@ -2607,7 +2607,7 @@ class Config extends AbstractHelper
      * Get Bolt additional configuration for CDN URL, stored in the following format:
      *
      * {
-     *   "cdnURL": "https://api-sandbox.bolt.com/"
+     *   "cdnURL": "https://api-sandbox.boltapp.com/"
      * }
      * defaults to empty string if not set
      *
@@ -2624,7 +2624,7 @@ class Config extends AbstractHelper
      * Get Bolt additional configuration for account URL, stored in the following format:
      *
      * {
-     *   "accountURL": "https://api-sandbox.bolt.com/"
+     *   "accountURL": "https://api-sandbox.boltapp.com/"
      * }
      * defaults to empty string if not set
      *
@@ -2641,7 +2641,7 @@ class Config extends AbstractHelper
      * Get Bolt additional configuration for api URL, stored in the following format:
      *
      * {
-     *   "apiURL": "https://api-sandbox.bolt.com/"
+     *   "apiURL": "https://api-sandbox.boltapp.com/"
      * }
      * defaults to empty string if not set
      *
@@ -2658,7 +2658,7 @@ class Config extends AbstractHelper
      * Get Bolt additional configuration for merchant dashboard URL, stored in the following format:
      *
      * {
-     *   "merchantDashboardURL": "https://api-sandbox.bolt.com/"
+     *   "merchantDashboardURL": "https://api-sandbox.boltapp.com/"
      * }
      * defaults to empty string if not set
      *
