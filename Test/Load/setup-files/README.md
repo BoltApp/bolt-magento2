@@ -1,7 +1,7 @@
 # Load Test Setup 
 1. Setup M2 store on LightSail: [M2 LightSail Setup](https://www.notion.so/boltteam/Remote-dev-server-with-lightsail-8a053570b68c4ac78561cf04cbde8405)
 
-2. Configure your M2 store with Bolt: [M2 Bolt Configuration](https://docs.bolt.com/docs/magento-2-integration#section-2-plugin-configuration)
+2. Configure your M2 store with Bolt: [M2 Bolt Configuration](https://docs.boltapp.com/docs/magento-2-integration#section-2-plugin-configuration)
 
 3. Add the line below in `bolt-magento2/etc/di.xml`: 
 	```
