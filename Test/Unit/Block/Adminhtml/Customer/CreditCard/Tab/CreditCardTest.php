@@ -33,7 +33,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 class CreditCardTest extends BoltTestCase
 {
     const CUSTOMER_ID = '11111';
-    const URL = 'https://www.bolt.com/boltpay/customer/creditcard';
+    const URL = 'https://www.boltapp.com/boltpay/customer/creditcard';
 
     /** @var ObjectManager */
     private $objectManager;

@@ -302,9 +302,9 @@ class JsTest extends BoltTestCase
         return [
             [
                 'sandboxMode'    => true,
-                'customValue'    => 'https://brand.bolt.com',
+                'customValue'    => 'https://brand.boltapp.com',
                 'featureSwitch'  => false,
-                'expectedResult' => 'https://brand.bolt.com' . '/checkout',
+                'expectedResult' => 'https://brand.boltapp.com' . '/checkout',
             ],
             [
                 'sandboxMode'    => true,
@@ -320,15 +320,15 @@ class JsTest extends BoltTestCase
             ],
             [
                 'sandboxMode'    => false,
-                'customValue'    => 'https://brand.bolt.com',
+                'customValue'    => 'https://brand.boltapp.com',
                 'featureSwitch'  => false,
                 'expectedResult' => HelperConfig::CDN_URL_PRODUCTION . '/checkout',
             ],
             [
                 'sandboxMode'    => false,
-                'customValue'    => 'https://brand.bolt.com',
+                'customValue'    => 'https://brand.boltapp.com',
                 'featureSwitch'  => true,
-                'expectedResult' => 'https://brand.bolt.com' . '/checkout',
+                'expectedResult' => 'https://brand.boltapp.com' . '/checkout',
             ],
             [
                 'sandboxMode'    => false,

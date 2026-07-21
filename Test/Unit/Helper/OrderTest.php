@@ -1842,7 +1842,7 @@ class OrderTest extends BoltTestCase
     {
         static::assertEquals(
             sprintf(
-                '<a href="https://merchant-sandbox.bolt.com/transaction/%1$s">%1$s</a>',
+                '<a href="https://merchant-sandbox.boltapp.com/transaction/%1$s">%1$s</a>',
                 self::REFERENCE_ID
             ),
             $this->orderHelper->formatReferenceUrl(self::REFERENCE_ID)
@@ -2988,7 +2988,7 @@ class OrderTest extends BoltTestCase
         $order = TestUtils::createDumpyOrder([], [], [], Order::STATE_PAYMENT_REVIEW, Order::STATE_PAYMENT_REVIEW, $payment);
         $orderHelper->updateOrderPayment($order, $transaction, self::REFERENCE_ID, self::HOOK_TYPE_AUTH);
         self::assertEquals(
-            'BOLTPAY INFO :: PAYMENT Status: AUTHORIZED Amount: $0.10<br>Bolt transaction: <a href="https://merchant-sandbox.bolt.com/transaction/1123123123">1123123123</a> Transaction ID: "ABCD-1234-XXXX-auth"',
+            'BOLTPAY INFO :: PAYMENT Status: AUTHORIZED Amount: $0.10<br>Bolt transaction: <a href="https://merchant-sandbox.boltapp.com/transaction/1123123123">1123123123</a> Transaction ID: "ABCD-1234-XXXX-auth"',
             $order->getStatusHistories()[0]->getComment());
         self::assertNull($payment->getIsTransactionApproved());
         TestUtils::cleanupSharedFixtures([$order]);
@@ -3048,7 +3048,7 @@ class OrderTest extends BoltTestCase
         $order = TestUtils::createDumpyOrder([], [], [], Order::STATE_PENDING_PAYMENT, Order::STATE_PENDING_PAYMENT, $payment);
         $orderHelper->updateOrderPayment($order, $transaction, self::REFERENCE_ID, self::HOOK_TYPE_PENDING);
         self::assertEquals(
-            'BOLTPAY INFO :: PAYMENT Status: AUTHORIZED Amount: $0.10<br>Bolt transaction: <a href="https://merchant-sandbox.bolt.com/transaction/1123123123">1123123123</a> Transaction ID: "ABCD-1234-XXXX-auth"',
+            'BOLTPAY INFO :: PAYMENT Status: AUTHORIZED Amount: $0.10<br>Bolt transaction: <a href="https://merchant-sandbox.boltapp.com/transaction/1123123123">1123123123</a> Transaction ID: "ABCD-1234-XXXX-auth"',
             $order->getStatusHistories()[2]->getComment());
         self::assertNull($payment->getIsTransactionApproved());
         TestUtils::cleanupSharedFixtures([$order]);
