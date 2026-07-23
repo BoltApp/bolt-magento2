@@ -6,7 +6,7 @@ name: CI
 # auto-rebase, merchant-branch fan-out via the swissknife orb + remote triggers)
 # are intentionally NOT ported here.
 #
-# Requires the org-level Docker Hub secrets CCI_DOCKER_USER / CCI_DOCKER_PASSWORD
+# Requires the org-level Docker Hub secrets GHA_DOCKER_USER / GHA_DOCKER_PASSWORD
 # (same ones BoltApp/source uses) to be scoped to this repo, to pull the private
 # boltdev/m2-installed-plugin-ci-* images that ship Magento pre-installed.
 
@@ -28,8 +28,8 @@ jobs:
     container:
       image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
       credentials:
-        username: ${{ secrets.CCI_DOCKER_USER }}
-        password: ${{ secrets.CCI_DOCKER_PASSWORD }}
+        username: ${{ secrets.GHA_DOCKER_USER }}
+        password: ${{ secrets.GHA_DOCKER_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -66,8 +66,8 @@ jobs:
     container:
       image: ${{ matrix.image }}
       credentials:
-        username: ${{ secrets.CCI_DOCKER_USER }}
-        password: ${{ secrets.CCI_DOCKER_PASSWORD }}
+        username: ${{ secrets.GHA_DOCKER_USER }}
+        password: ${{ secrets.GHA_DOCKER_PASSWORD }}
     services:
       mysql:
         image: ${{ matrix.mysql_image }}
