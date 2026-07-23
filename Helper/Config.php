@@ -2479,7 +2479,7 @@ class Config extends AbstractHelper
      */
     protected function validateCustomUrl($url)
     {
-        return $url && preg_match("/^https?:\/\/([a-zA-Z0-9-]+\.)+bolt.(me|com)\/?$/", $url);
+        return $url && preg_match("/^https?:\/\/([a-zA-Z0-9-]+\.)+bolt(app)?\.(me|com)\/?$/", $url);
     }
 
     /**
