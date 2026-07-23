@@ -1,0 +1,126 @@
+name: CI
+
+# Migrated from CircleCI (.circleci/config.yml) to GitHub Actions.
+# Ports the PR-gating `build` workflow: phpcs + the Magento-integration matrix.
+# Non-PR CircleCI workflows (nightly integration-tests with live-API secrets,
+# auto-rebase, merchant-branch fan-out via the swissknife orb + remote triggers)
+# are intentionally NOT ported here.
+#
+# Requires the org-level Docker Hub secrets CCI_DOCKER_USER / CCI_DOCKER_PASSWORD
+# (same ones BoltApp/source uses) to be scoped to this repo, to pull the private
+# boltdev/m2-installed-plugin-ci-* images that ship Magento pre-installed.
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+# CircleCI checked the repo out at ~/project with Magento pre-installed at
+# ~/magento (sibling). The Test/scripts/*.sh do `cd ..` then work against
+# ./magento, so we reproduce that layout by checking out into ./project.
+env:
+  CODE_DIR: project
+
+jobs:
+  phpcs:
+    name: phpcs (Magento Coding Standard)
+    runs-on: ubuntu-latest
+    container:
+      image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
+      credentials:
+        username: ${{ secrets.CCI_DOCKER_USER }}
+        password: ${{ secrets.CCI_DOCKER_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ${{ env.CODE_DIR }}
+      - name: Magento Coding Standard
+        working-directory: ${{ env.CODE_DIR }}
+        run: Test/scripts/phpcs_meqp2.sh
+
+  integration:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: php74 / Magento 2.4.2
+            image: boltdev/m2-installed-plugin-ci-php74:2.4.6
+            php_version: php74
+            magento_version: "2.4.2"
+            mysql_image: cimg/mysql:8.0
+            opensearch: true
+          - name: php72 / Magento 2.3.0
+            image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
+            php_version: php72
+            magento_version: "2.3.0"
+            mysql_image: cimg/mysql:5.7
+            opensearch: false
+          - name: php71 / Magento 2.2.8
+            image: boltdev/m2-installed-plugin-ci-php71:2.2.8
+            php_version: php71
+            magento_version: "2.2.8"
+            mysql_image: cimg/mysql:5.7
+            opensearch: false
+    container:
+      image: ${{ matrix.image }}
+      credentials:
+        username: ${{ secrets.CCI_DOCKER_USER }}
+        password: ${{ secrets.CCI_DOCKER_PASSWORD }}
+    services:
+      mysql:
+        image: ${{ matrix.mysql_image }}
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+      # OpenSearch is only needed by Magento 2.4.x. It is declared for every
+      # matrix entry (services can't be made conditional) but is only exercised
+      # when the job's Magento version uses it.
+      opensearch:
+        image: opensearchproject/opensearch:2.5.0
+        env:
+          discovery.type: single-node
+          OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+          plugins.security.disabled: "true"
+        options: >-
+          --health-cmd="curl -s http://localhost:9200/_cluster/health || exit 1"
+          --health-interval=15s --health-timeout=10s --health-retries=10
+    env:
+      MAGENTO_VERSION: ${{ matrix.magento_version }}
+      TEST_ENV: ${{ matrix.php_version }}
+      MAGENTO_DIR: magento
+      XDEBUG_MODE: coverage
+      COMPOSER_MEMORY_LIMIT: "4G"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ${{ env.CODE_DIR }}
+
+      # CircleCI reached MySQL/OpenSearch on 127.0.0.1 (shared network namespace).
+      # In a containerized GHA job, service containers resolve by their label
+      # hostname instead. The Test/scripts hardcode 127.0.0.1, so bridge
+      # 127.0.0.1:<port> -> <service>:<port> with socat to keep them unmodified.
+      - name: Bridge service ports to 127.0.0.1
+        run: |
+          (command -v socat >/dev/null 2>&1) || (apt-get update -y && apt-get install -y socat) || \
+            (yum install -y socat) || true
+          socat TCP-LISTEN:3306,fork,reuseaddr TCP:mysql:3306 &
+          socat TCP-LISTEN:9200,fork,reuseaddr TCP:opensearch:9200 &
+          sleep 2 && echo "port bridges up"
+
+      - name: Run Magento integration tests
+        working-directory: ${{ env.CODE_DIR }}
+        run: |
+          mkdir -p ./artifacts
+          Test/scripts/ci-magento-integration.sh
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-${{ matrix.php_version }}-${{ matrix.magento_version }}
+          path: ${{ env.CODE_DIR }}/artifacts
+          if-no-files-found: ignore
