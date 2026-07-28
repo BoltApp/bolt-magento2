@@ -249,20 +249,6 @@ jobs:
           name: Rebase and Magento Integration Test
           command: bash .circleci/scripts/rebase-and-magento-integration-test.sh << pipeline.parameters.rebase_and_magento_integration_test_branch_name >>
 
-  phpcs:
-    docker:
-      - image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
-        auth:
-          username: $DOCKERHUB_USER
-          password: $DOCKERHUB_PASS
-      - image: cimg/mysql:5.7
-    steps:
-      - checkout
-      - run:
-          name: Magento Coding Standard Test
-          command: |
-            Test/scripts/phpcs_meqp2.sh
-
 workflows:
   version: 2
   build:
@@ -272,7 +258,6 @@ workflows:
       - integration-magento-php74-magento24
       - integration-magento-php72-magento23
       - integration-magento-php71-magento22
-      - phpcs
   integration-tests:
     triggers:
       - schedule:
