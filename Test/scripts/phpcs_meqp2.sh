@@ -49,7 +49,7 @@ cd ..
 
 
 mkdir -p magento/app/code/Bolt/Boltpay
-mv project/.circleci/phpstan/* magento/app/code/Bolt/Boltpay/
+mv project/Test/phpstan/* magento/app/code/Bolt/Boltpay/
 mv project/* magento/app/code/Bolt/Boltpay/
 cd magento
 

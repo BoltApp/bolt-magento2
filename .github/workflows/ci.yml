@@ -1,10 +1,17 @@
 name: CI
 
-# Migrated from CircleCI (.circleci/config.yml) to GitHub Actions.
+# Migrated from CircleCI to GitHub Actions; `.circleci/` has since been deleted.
 # Ports the PR-gating `build` workflow: phpcs + the Magento-integration matrix.
-# Non-PR CircleCI workflows (nightly integration-tests with live-API secrets,
-# auto-rebase, merchant-branch fan-out via the swissknife orb + remote triggers)
-# are intentionally NOT ported here.
+# CircleCI's other workflows were retired rather than ported -- all three were
+# measurably dead (auto-rebase 0/13 green, its two target branches untouched
+# since 2020; merchant-branch fan-out triggering pipelines for those same dead
+# branches; the remote-trigger workflow never invoked).
+#
+# The nightly selenium suite stops running with that deletion too. It has been
+# 0/88 green since April 2026 -- it drives a separate BoltApp/integration-tests
+# repo through an ngrok tunnel, and that ngrok account was suspended. Reviving
+# it means a GHA cron plus an ngrok replacement; Test/scripts/ci-integration.sh
+# is kept as the recipe until that call is made.
 #
 # ---------------------------------------------------------------------------
 # Why `docker run` instead of a job `container:`
