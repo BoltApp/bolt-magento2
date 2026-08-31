@@ -35,6 +35,9 @@ define([
         quoteMaskedId: undefined,
         boltCartHints: {prefill:{}},
         magentoCartTimeStamp: null,
+        // Content signature of the last processed cart, used to de-dupe emissions
+        // that carry no `data_id` (e.g. Salesforce CRM / Cart2Quote built quotes).
+        magentoCartSignature: null,
         cartBarrier: null,
         hintsBarrier: null,
         readyStatusBarrier: null,
@@ -470,6 +473,20 @@ define([
             //if timestamp is the same no checks needed
             if (magentoCart.data_id && magentoCart.data_id === BoltCheckoutApiDriven.magentoCartTimeStamp) {
                 return;
+            }
+            // Carts built server-side (Salesforce CRM / Cart2Quote) emit customer-data
+            // updates with no `data_id`, so the timestamp check above can never short
+            // circuit repeats. Fall back to a content signature to avoid re-configuring
+            // Bolt (and flooding the console with errors) on every identical emission.
+            if (!magentoCart.data_id) {
+                let signature = JSON.stringify({
+                    quoteMaskedId: magentoCart.quoteMaskedId,
+                    boltCartHints: magentoCart.boltCartHints
+                });
+                if (signature === BoltCheckoutApiDriven.magentoCartSignature) {
+                    return;
+                }
+                BoltCheckoutApiDriven.magentoCartSignature = signature;
             }
             //init default values
             let isBoltCheckoutConfigureCallRequired = false,
@@ -1190,7 +1207,10 @@ define([
      *
      * @param {Object|Promise} magentoBoltConfig
      */
-    return function (config) {
+    let entryPoint = function (config) {
         BoltCheckoutApiDriven.init(config);
     };
+    // Exposed for unit tests (Test/Js/bolt-api-driven-checkout-dedupe.test.js); not used by the app.
+    entryPoint.BoltCheckoutApiDriven = BoltCheckoutApiDriven;
+    return entryPoint;
 });
