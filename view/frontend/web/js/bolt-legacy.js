@@ -217,6 +217,9 @@ define([
 
             var expectCartRendering = true;
             var waitingForResolvingPromises = false;
+            // payment-only: signature of the quote totals the last Bolt order was built from
+            var quoteTotalsSignature = '';
+            var lastTriggeredTotalsSignature = null;
 
             /**
              * BoltState contains all global variables we need for interaction between
@@ -786,8 +789,6 @@ define([
                 var paymentOnlyCreateInFlight = false;
                 var paymentOnlyInFlightKey = null;
                 var paymentOnlyQueuedKey = null;
-                var quoteTotalsSignature = '';
-                var lastTriggeredTotalsSignature = null;
                 var allowAutoOpen = true && !settings.is_auto_opening_disabled;
                 var oldBoltCartValue = "";
                 var BC;
@@ -1675,7 +1676,7 @@ define([
                                 }
                                 // Magento re-emits totals on every quote save, including the ones our own
                                 // create-order request causes; only rebuild the Bolt order when something changed.
-                                if (getCheckoutType() === 'payment' && quoteTotalsSignature === lastTriggeredTotalsSignature) {
+                                if (trim(location.pathname, '/') === 'checkout' && quoteTotalsSignature === lastTriggeredTotalsSignature) {
                                     return;
                                 }
                                 if (expectCartRendering) {
