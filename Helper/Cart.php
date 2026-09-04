@@ -1913,6 +1913,51 @@ class Cart extends AbstractHelper
     }
 
     /**
+     * Some custom carriers key their rate to the session or the parent quote id, so re-collecting rates
+     * on the cloned (immutable) quote yields a $0 shipping amount for a method the shopper is really being
+     * charged for. Reuse the parent's already-validated rate so the Bolt cart and the immutable quote
+     * totals match the storefront.
+     *
+     * @param Quote                              $quote       immutable quote
+     * @param \Magento\Quote\Model\Quote\Address $address     shipping address of the immutable quote
+     * @param Quote|null                         $parentQuote
+     */
+    protected function restoreParentShippingRate($quote, $address, $parentQuote)
+    {
+        if (!$parentQuote || !$this->deciderHelper->isRestoreParentShippingRateForImmutableQuote()) {
+            return;
+        }
+        $method = $address->getShippingMethod();
+        $parentAddress = $parentQuote->getShippingAddress();
+        if (!$method
+            || $parentAddress->getShippingMethod() !== $method
+            || $address->getShippingAmount() > 0
+            || $parentAddress->getShippingAmount() <= 0
+        ) {
+            return;
+        }
+        $parentRate = $parentAddress->getShippingRateByCode($method);
+        if (!$parentRate) {
+            return;
+        }
+        $staleRate = $address->getShippingRateByCode($method);
+        if ($staleRate) {
+            $staleRate->isDeleted(true);
+        }
+        $rate = clone $parentRate;
+        $rate->setId(null);
+        $address->addShippingRate($rate);
+        $address->setCollectShippingRates(false);
+        $this->collectAddressTotals($quote, $address);
+        $address->save();
+
+        $this->bugsnag->notifyError(
+            'Immutable quote shipping rate restored from parent',
+            sprintf('method: %s, parent amount: %s', $method, $parentAddress->getShippingAmount())
+        );
+    }
+
+    /**
      * Get cart data.
      * The reference of total methods: dev/tests/api-functional/testsuite/Magento/Quote/Api/CartTotalRepositoryTest.php
      *
@@ -2194,6 +2239,7 @@ class Cart extends AbstractHelper
                     $address->setCollectShippingRates(true);
                     $this->collectAddressTotals($quote, $address);
                     $address->save();
+                    $this->restoreParentShippingRate($quote, $address, $parentQuote);
                 }
 
                 if (
