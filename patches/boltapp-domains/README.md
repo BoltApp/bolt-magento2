@@ -34,32 +34,13 @@ install will fail rather than half-apply.
 ## Applying it
 
 Composer installs this plugin into `vendor/boltpay/bolt-magento2/`, and **anything
-edited there is erased by the next `composer install` or `composer update`.** Pick
-one of these instead.
+edited there is erased by the next `composer install` or `composer update`.** So
+patching `vendor/` directly is not durable — it will work until the day it silently
+reverts.
 
-### Option A — install a pre-patched branch (simplest)
-
-Bolt publishes a branch per version with the change already applied:
-
-```bash
-composer require boltpay/bolt-magento2:dev-boltapp-domains/2.27.8
-```
-
-To freeze it so a later `composer update` cannot move it, pin the commit:
-
-```bash
-composer require boltpay/bolt-magento2:dev-boltapp-domains/2.27.8#<commit>
-```
-
-### Option B — composer-patches
-
-Add [`cweagans/composer-patches`](https://github.com/cweagans/composer-patches) and
-declare the patch under `extra.patches` in your root `composer.json`. It reapplies
-on every install, so the change survives composer operations without a fork.
-
-### Option C — apply it by hand
-
-From the plugin root, on a checkout of the matching version:
+Copy the plugin into `app/code/Bolt/Boltpay/` and apply the patch there instead.
+`app/code` takes precedence over `vendor/`, so the change survives composer
+operations:
 
 ```bash
 git apply bolt-magento2-2.27.8-boltapp-domains.patch
@@ -67,9 +48,11 @@ git apply bolt-magento2-2.27.8-boltapp-domains.patch
 patch -p1 < bolt-magento2-2.27.8-boltapp-domains.patch
 ```
 
-Only durable if the plugin lives in `app/code/Bolt/Boltpay/` rather than `vendor/`.
+Be aware that this makes your store's copy of the plugin a fork: it no longer
+receives updates through composer, so future releases have to be applied by hand
+until you move back to a composer-managed install.
 
-### After applying, either way
+### After applying
 
 ```bash
 php bin/magento setup:upgrade
