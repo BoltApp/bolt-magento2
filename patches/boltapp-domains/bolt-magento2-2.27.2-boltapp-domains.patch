@@ -1,0 +1,573 @@
+Subject: [PATCH] Point functional Bolt URLs at boltapp.com (plugin 2.27.2)
+
+Backport of bolt-magento2 PR #1973 onto the 2.27.2 release tag.
+
+Rewrites the Bolt service hosts the plugin calls at runtime -- api, connect,
+account, merchant and status -- from bolt.com to boltapp.com. Two changes are
+additive rather than replacements, so the plugin keeps working on both apexes
+during the cutover:
+
+  * etc/csp_whitelist.xml gains a boltapp.com twin for every bolt.com host
+    instead of swapping them, so a merchant's CSP allows either origin.
+  * Helper/SSOHelper.php accepts boltapp.com issuers in addition to the
+    bolt.com ones, so SSO tokens minted on either side still validate.
+
+Helper/Config.php::validateCustomUrl is widened to bolt(app)?\.(me|com) so a
+merchant-supplied custom URL on boltapp.com is not rejected.
+
+Left alone on purpose: the www.bolt.com copyright headers, the
+integrations@bolt.com contact address, docs.bolt.com help links
+(docs.boltapp.com does not resolve), and CHANGELOG.md.
+
+Apply from the plugin root:
+
+    git apply bolt-magento2-2.27.2-boltapp-domains.patch
+    # or, without git:
+    patch -p1 < bolt-magento2-2.27.2-boltapp-domains.patch
+
+---
+diff --git a/Helper/Config.php b/Helper/Config.php
+--- a/Helper/Config.php
++++ b/Helper/Config.php
+@@ -230,42 +230,42 @@
+     /**
+      * Bolt sandbox url
+      */
+-    const API_URL_SANDBOX = 'https://api-sandbox.bolt.com/';
++    const API_URL_SANDBOX = 'https://api-sandbox.boltapp.com/';
+ 
+     /**
+      * Bolt production url
+      */
+-    const API_URL_PRODUCTION = 'https://api.bolt.com/';
++    const API_URL_PRODUCTION = 'https://api.boltapp.com/';
+ 
+     /**
+      * Bolt sandbox cdn url
+      */
+-    const CDN_URL_SANDBOX = 'https://connect-sandbox.bolt.com';
++    const CDN_URL_SANDBOX = 'https://connect-sandbox.boltapp.com';
+ 
+     /**
+      * Bolt production cdn url
+      */
+-    const ACCOUNT_URL_PRODUCTION = 'https://account.bolt.com';
++    const ACCOUNT_URL_PRODUCTION = 'https://account.boltapp.com';
+ 
+     /**
+      * Bolt sandbox cdn url
+      */
+-    const ACCOUNT_URL_SANDBOX = 'https://account-sandbox.bolt.com';
++    const ACCOUNT_URL_SANDBOX = 'https://account-sandbox.boltapp.com';
+ 
+     /**
+      * Bolt production cdn url
+      */
+-    const CDN_URL_PRODUCTION = 'https://connect.bolt.com';
++    const CDN_URL_PRODUCTION = 'https://connect.boltapp.com';
+ 
+     /**
+      * Bolt merchant sandbox url
+      */
+-    const MERCHANT_DASH_SANDBOX = 'https://merchant-sandbox.bolt.com';
++    const MERCHANT_DASH_SANDBOX = 'https://merchant-sandbox.boltapp.com';
+ 
+     /**
+      * Bolt merchant production url
+      */
+-    const MERCHANT_DASH_PRODUCTION = 'https://merchant.bolt.com';
++    const MERCHANT_DASH_PRODUCTION = 'https://merchant.boltapp.com';
+ 
+     /**
+      * Path for API Key
+@@ -2419,7 +2419,7 @@
+      */
+     protected function validateCustomUrl($url)
+     {
+-        return $url && preg_match("/^https?:\/\/([a-zA-Z0-9-]+\.)+bolt.(me|com)\/?$/", $url);
++        return $url && preg_match("/^https?:\/\/([a-zA-Z0-9-]+\.)+bolt(app)?\.(me|com)\/?$/", $url);
+     }
+ 
+     /**
+@@ -2527,7 +2527,7 @@
+      * Get Bolt additional configuration for CDN URL, stored in the following format:
+      *
+      * {
+-     *   "cdnURL": "https://api-sandbox.bolt.com/"
++     *   "cdnURL": "https://api-sandbox.boltapp.com/"
+      * }
+      * defaults to empty string if not set
+      *
+@@ -2544,7 +2544,7 @@
+      * Get Bolt additional configuration for account URL, stored in the following format:
+      *
+      * {
+-     *   "accountURL": "https://api-sandbox.bolt.com/"
++     *   "accountURL": "https://api-sandbox.boltapp.com/"
+      * }
+      * defaults to empty string if not set
+      *
+@@ -2561,7 +2561,7 @@
+      * Get Bolt additional configuration for api URL, stored in the following format:
+      *
+      * {
+-     *   "apiURL": "https://api-sandbox.bolt.com/"
++     *   "apiURL": "https://api-sandbox.boltapp.com/"
+      * }
+      * defaults to empty string if not set
+      *
+@@ -2578,7 +2578,7 @@
+      * Get Bolt additional configuration for merchant dashboard URL, stored in the following format:
+      *
+      * {
+-     *   "merchantDashboardURL": "https://api-sandbox.bolt.com/"
++     *   "merchantDashboardURL": "https://api-sandbox.boltapp.com/"
+      * }
+      * defaults to empty string if not set
+      *
+diff --git a/Helper/IntegrationManagement.php b/Helper/IntegrationManagement.php
+--- a/Helper/IntegrationManagement.php
++++ b/Helper/IntegrationManagement.php
+@@ -77,7 +77,7 @@
+     const BOLT_INTEGRATION_NAME = 'boltIntegration';
+ 
+     const BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL = '/v1/magento2/bolt-checkout/authorize';
+-    const BOLT_INTEGRATION_IDENTITY_LINKING_URL = 'https://status.bolt.com/';
++    const BOLT_INTEGRATION_IDENTITY_LINKING_URL = 'https://status.boltapp.com/';
+     const BOLT_INTEGRATION_TOKEN_EXCHANGE_URL = '/v1/magento2/bolt-checkout/exchange';
+ 
+     /**
+diff --git a/Helper/SSOHelper.php b/Helper/SSOHelper.php
+--- a/Helper/SSOHelper.php
++++ b/Helper/SSOHelper.php
+@@ -145,11 +145,16 @@
+             return $e->getMessage();
+         }
+ 
+-        // Issuing authority should be https://bolt.com
++        // Issuing authority should be https://bolt.com or https://boltapp.com
+         if (!isset($payload['iss'])) {
+             return 'iss must be set';
+         }
+-        if ($payload['iss'] !== 'https://bolt.com' && $payload['iss'] !== 'https://api.bolt.com') {
++        if (
++            $payload['iss'] !== 'https://bolt.com'
++            && $payload['iss'] !== 'https://api.bolt.com'
++            && $payload['iss'] !== 'https://boltapp.com'
++            && $payload['iss'] !== 'https://api.boltapp.com'
++        ) {
+             return 'incorrect iss ' . $payload['iss'];
+         }
+ 
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -37,10 +37,10 @@
+ > The Publishable Key is for the multi-step checkout by default. You can find other publishable keys (Payment Only and Back-Office) in the division dropdown at the top-right corner.
+ 
+ > For production, these will be found at:
+-> https://merchant.bolt.com
++> https://merchant.boltapp.com
+ >
+ > For sandbox mode, use the following URL:
+-> https://merchant-sandbox.bolt.com"
++> https://merchant-sandbox.boltapp.com"
+ 
+ 
+ + **API Key**
+@@ -64,9 +64,9 @@
+ >> `|prepend` suffix - *example-selector|prepend*, inserts Bolt button right before the element
+ ### 4. Bolt Merchant Dashboard configuration
+ > #### Login to the Bolt Merchant Dashboard
+-> **Production**: https://merchant.bolt.com
++> **Production**: https://merchant.boltapp.com
+ >
+-> **Sandbox**: https://merchant-sandbox.bolt.com"
++> **Sandbox**: https://merchant-sandbox.boltapp.com"
+ 
+ + Navigate to `Developers`
+ + Click on the `API` tab
+diff --git a/Test/Unit/Block/BlockTraitTest.php b/Test/Unit/Block/BlockTraitTest.php
+--- a/Test/Unit/Block/BlockTraitTest.php
++++ b/Test/Unit/Block/BlockTraitTest.php
+@@ -35,7 +35,7 @@
+  */
+ class BlockTraitTest extends BoltTestCase
+ {
+-    const CDN_URL = 'https://connect-sandbox.bolt.com';
++    const CDN_URL = 'https://connect-sandbox.boltapp.com';
+     const STORE_ID = '1';
+     const PAGE_BLACK_LIST = 'catalog_product_view';
+     const PAGE_WHITE_LIST = 'catalog_product_view';
+diff --git a/Test/Unit/Block/JsTest.php b/Test/Unit/Block/JsTest.php
+--- a/Test/Unit/Block/JsTest.php
++++ b/Test/Unit/Block/JsTest.php
+@@ -302,9 +302,9 @@
+         return [
+             [
+                 'sandboxMode'    => true,
+-                'customValue'    => 'https://brand.bolt.com',
++                'customValue'    => 'https://brand.boltapp.com',
+                 'featureSwitch'  => false,
+-                'expectedResult' => 'https://brand.bolt.com' . '/checkout',
++                'expectedResult' => 'https://brand.boltapp.com' . '/checkout',
+             ],
+             [
+                 'sandboxMode'    => true,
+@@ -320,15 +320,15 @@
+             ],
+             [
+                 'sandboxMode'    => false,
+-                'customValue'    => 'https://brand.bolt.com',
++                'customValue'    => 'https://brand.boltapp.com',
+                 'featureSwitch'  => false,
+                 'expectedResult' => HelperConfig::CDN_URL_PRODUCTION . '/checkout',
+             ],
+             [
+                 'sandboxMode'    => false,
+-                'customValue'    => 'https://brand.bolt.com',
++                'customValue'    => 'https://brand.boltapp.com',
+                 'featureSwitch'  => true,
+-                'expectedResult' => 'https://brand.bolt.com' . '/checkout',
++                'expectedResult' => 'https://brand.boltapp.com' . '/checkout',
+             ],
+             [
+                 'sandboxMode'    => false,
+diff --git a/Test/Unit/Controller/Adminhtml/Cart/DataTest.php b/Test/Unit/Controller/Adminhtml/Cart/DataTest.php
+--- a/Test/Unit/Controller/Adminhtml/Cart/DataTest.php
++++ b/Test/Unit/Controller/Adminhtml/Cart/DataTest.php
+@@ -53,8 +53,8 @@
+     const HINT = 'hint!';
+     const RESPONSE_TOKEN = 'response_token';
+     const CUSTOMER_EMAIL = 'test@bolt.com';
+-    const CDN_URL_SANDBOX = 'https://connect-sandbox.bolt.com';
+-    const CDN_URL_SANDBOX_JS = 'https://connect-sandbox.bolt.com/connect.js';
++    const CDN_URL_SANDBOX = 'https://connect-sandbox.boltapp.com';
++    const CDN_URL_SANDBOX_JS = 'https://connect-sandbox.boltapp.com/connect.js';
+ 
+     /**
+      * @var Context
+diff --git a/Test/Unit/Controller/Order/ReceivedUrlTest.php b/Test/Unit/Controller/Order/ReceivedUrlTest.php
+--- a/Test/Unit/Controller/Order/ReceivedUrlTest.php
++++ b/Test/Unit/Controller/Order/ReceivedUrlTest.php
+@@ -154,7 +154,7 @@
+     ) {
+         $om = new ObjectManager($this);
+         $configHelper = $this->createMock(\Bolt\Boltpay\Helper\Config::class);
+-        $configHelper->expects(static::atMost(1))->method('getCdnUrl')->willReturn('https://connect-sandbox.bolt.com');
++        $configHelper->expects(static::atMost(1))->method('getCdnUrl')->willReturn('https://connect-sandbox.boltapp.com');
+         $instance = $om->getObject(\Bolt\Boltpay\Controller\Order\ReceivedUrl::class, ['configHelper' => $configHelper]);
+         $request = $this->createMock(\Magento\Framework\App\Request\Http::class);
+         $request->expects(static::once())->method('getServer')->with('HTTP_REFERER')->willReturn($referrerUrl);
+@@ -171,11 +171,11 @@
+     {
+         return [
+             [
+-                'referrerUrl'     => 'https://connect-sandbox.bolt.com',
++                'referrerUrl'     => 'https://connect-sandbox.boltapp.com',
+                 'isBoltCDNReferrer' => true
+             ],
+             [
+-                'referrerUrl'     => 'https://connect-sandbox.bolt.com/checkout',
++                'referrerUrl'     => 'https://connect-sandbox.boltapp.com/checkout',
+                 'isBoltCDNReferrer' => true
+             ],
+             [
+diff --git a/Test/Unit/Helper/ApiTest.php b/Test/Unit/Helper/ApiTest.php
+--- a/Test/Unit/Helper/ApiTest.php
++++ b/Test/Unit/Helper/ApiTest.php
+@@ -45,7 +45,7 @@
+     /**
+      * @var string Dummy API url
+      */
+-    const API_URL = 'https://api.bolt.com/';
++    const API_URL = 'https://api.boltapp.com/';
+     /**
+      * @var string Dummy API key
+      */
+@@ -403,7 +403,7 @@
+         $this->configHelper->method('getApiUrl')->willReturn(self::API_URL);
+ 
+         $this->request->expects(self::once())->method('setApiData')->with($apiData);
+-        $this->request->expects(self::once())->method('setApiUrl')->with('https://api.bolt.com/v1/merchant/orders');
++        $this->request->expects(self::once())->method('setApiUrl')->with('https://api.boltapp.com/v1/merchant/orders');
+         $this->request->expects(self::once())->method('setApiKey')->with(self::API_KEY);
+         $this->request->expects(self::once())->method('setRequestMethod')->with($requestMethod);
+         $this->request->expects(self::once())->method('setHeaders')->with($headers);
+diff --git a/Test/Unit/Helper/ConfigTest.php b/Test/Unit/Helper/ConfigTest.php
+--- a/Test/Unit/Helper/ConfigTest.php
++++ b/Test/Unit/Helper/ConfigTest.php
+@@ -82,11 +82,11 @@
+         "IGNORED_SHIPPING_ADDRESS_COUPON"
+     ],
+      "priceFaultTolerance": "10",
+-     "merchantDashboardURL": "https://test-sandbox.bolt.com/",
+-     "apiURL": "https://test-sandbox.bolt.com/",
+-     "accountURL": "https://test-sandbox.bolt.com/",
+-     "cdnURL": "https://test-sandbox.bolt.com/",
+-     "integrationBaseURL": "https://test-sandbox.bolt.com/"
++     "merchantDashboardURL": "https://test-sandbox.boltapp.com/",
++     "apiURL": "https://test-sandbox.boltapp.com/",
++     "accountURL": "https://test-sandbox.boltapp.com/",
++     "cdnURL": "https://test-sandbox.boltapp.com/",
++     "integrationBaseURL": "https://test-sandbox.boltapp.com/"
+ }
+ JSON;
+ 
+@@ -171,7 +171,7 @@
+         ];
+         TestUtils::setupBoltConfig($configData);
+         $result = $this->configHelper->getMerchantDashboardUrl();
+-        self::assertEquals("https://test-sandbox.bolt.com/", $result);
++        self::assertEquals("https://test-sandbox.boltapp.com/", $result);
+     }
+ 
+     /**
+@@ -285,7 +285,7 @@
+         ];
+         TestUtils::setupBoltConfig($configData);
+         $result = $this->configHelper->getCdnUrl();
+-        self::assertEquals("https://test-sandbox.bolt.com/", $result);
++        self::assertEquals("https://test-sandbox.boltapp.com/", $result);
+     }
+ 
+     /**
+@@ -348,7 +348,7 @@
+         ];
+         TestUtils::setupBoltConfig($configData);
+         $result = $this->configHelper->getAccountUrl();
+-        self::assertEquals("https://test-sandbox.bolt.com/", $result);
++        self::assertEquals("https://test-sandbox.boltapp.com/", $result);
+     }
+ 
+     /**
+@@ -409,7 +409,7 @@
+         ];
+         TestUtils::setupBoltConfig($configData);
+         $result = $this->configHelper->getApiUrl();
+-        self::assertEquals("https://test-sandbox.bolt.com/", $result);
++        self::assertEquals("https://test-sandbox.boltapp.com/", $result);
+     }
+ 
+     /**
+@@ -1153,9 +1153,9 @@
+             ['https://test.bolt.me', true],
+             ['https://test.bolt.me/', true],
+             ['https://api.test.bolt.me/', true],
+-            ['https://test.bolt.com', true],
+-            ['https://connect-staging.bolt.com', true],
+-            ['https://test .bolt.com', false],
++            ['https://test.boltapp.com', true],
++            ['https://connect-staging.boltapp.com', true],
++            ['https://test .boltapp.com', false],
+             ['https://testbolt.me', false],
+             ['https://test.com', false],
+             ['test.bolt.me', false],
+@@ -1401,7 +1401,7 @@
+         ];
+         TestUtils::setupBoltConfig($configData);
+         $result = $this->configHelper->getIntegrationBaseUrl();
+-        self::assertEquals("https://test-sandbox.bolt.com/", $result);
++        self::assertEquals("https://test-sandbox.boltapp.com/", $result);
+     }
+ 
+     /**
+diff --git a/Test/Unit/Helper/OrderTest.php b/Test/Unit/Helper/OrderTest.php
+--- a/Test/Unit/Helper/OrderTest.php
++++ b/Test/Unit/Helper/OrderTest.php
+@@ -1842,7 +1842,7 @@
+     {
+         static::assertEquals(
+             sprintf(
+-                '<a href="https://merchant-sandbox.bolt.com/transaction/%1$s">%1$s</a>',
++                '<a href="https://merchant-sandbox.boltapp.com/transaction/%1$s">%1$s</a>',
+                 self::REFERENCE_ID
+             ),
+             $this->orderHelper->formatReferenceUrl(self::REFERENCE_ID)
+@@ -2983,7 +2983,7 @@
+         $order = TestUtils::createDumpyOrder([], [], [], Order::STATE_PAYMENT_REVIEW, Order::STATE_PAYMENT_REVIEW, $payment);
+         $orderHelper->updateOrderPayment($order, $transaction, self::REFERENCE_ID, self::HOOK_TYPE_AUTH);
+         self::assertEquals(
+-            'BOLTPAY INFO :: PAYMENT Status: AUTHORIZED Amount: $0.10<br>Bolt transaction: <a href="https://merchant-sandbox.bolt.com/transaction/1123123123">1123123123</a> Transaction ID: "ABCD-1234-XXXX-auth"',
++            'BOLTPAY INFO :: PAYMENT Status: AUTHORIZED Amount: $0.10<br>Bolt transaction: <a href="https://merchant-sandbox.boltapp.com/transaction/1123123123">1123123123</a> Transaction ID: "ABCD-1234-XXXX-auth"',
+             $order->getStatusHistories()[0]->getComment());
+         self::assertNull($payment->getIsTransactionApproved());
+         TestUtils::cleanupSharedFixtures([$order]);
+@@ -3043,7 +3043,7 @@
+         $order = TestUtils::createDumpyOrder([], [], [], Order::STATE_PENDING_PAYMENT, Order::STATE_PENDING_PAYMENT, $payment);
+         $orderHelper->updateOrderPayment($order, $transaction, self::REFERENCE_ID, self::HOOK_TYPE_PENDING);
+         self::assertEquals(
+-            'BOLTPAY INFO :: PAYMENT Status: AUTHORIZED Amount: $0.10<br>Bolt transaction: <a href="https://merchant-sandbox.bolt.com/transaction/1123123123">1123123123</a> Transaction ID: "ABCD-1234-XXXX-auth"',
++            'BOLTPAY INFO :: PAYMENT Status: AUTHORIZED Amount: $0.10<br>Bolt transaction: <a href="https://merchant-sandbox.boltapp.com/transaction/1123123123">1123123123</a> Transaction ID: "ABCD-1234-XXXX-auth"',
+             $order->getStatusHistories()[2]->getComment());
+         self::assertNull($payment->getIsTransactionApproved());
+         TestUtils::cleanupSharedFixtures([$order]);
+diff --git a/Test/Unit/Helper/SSOHelperTest.php b/Test/Unit/Helper/SSOHelperTest.php
+--- a/Test/Unit/Helper/SSOHelperTest.php
++++ b/Test/Unit/Helper/SSOHelperTest.php
+@@ -245,6 +245,14 @@
+                 'expected' => 'aud must be set'
+             ],
+             [
++                'payload'  => ['iss' => 'https://boltapp.com'],
++                'expected' => 'aud must be set'
++            ],
++            [
++                'payload'  => ['iss' => 'https://api.boltapp.com'],
++                'expected' => 'aud must be set'
++            ],
++            [
+                 'payload'  => ['iss' => 'https://bolt.com', 'aud' => ['blah', 'blah2']],
+                 'expected' => 'aud blah,blah2 does not contain audience test audience'
+             ],
+diff --git a/Test/Unit/Model/Api/CreateOrderTest.php b/Test/Unit/Model/Api/CreateOrderTest.php
+--- a/Test/Unit/Model/Api/CreateOrderTest.php
++++ b/Test/Unit/Model/Api/CreateOrderTest.php
+@@ -866,7 +866,7 @@
+                 "first_name" => "Bolt",
+                 "last_name" => "Team",
+                 "avatar" => [
+-                    "domain" => "img-sandbox.bolt.com",
++                    "domain" => "img-sandbox.boltapp.com",
+                     "resource" => "default.png"
+                 ],
+                 "phones" => [
+@@ -905,7 +905,7 @@
+                 "first_name" => "Leon",
+                 "last_name" => "McCottry",
+                 "avatar" => [
+-                    "domain" => "img-sandbox.bolt.com",
++                    "domain" => "img-sandbox.boltapp.com",
+                     "resource" => "default.png"
+                 ],
+                 "phones" => [
+@@ -1041,7 +1041,7 @@
+                 "public_id" => "NwQxY8yKNDiL",
+                 "description" => "bolt-magento2 - full",
+                 "logo" => [
+-                    "domain" => "img-sandbox.bolt.com",
++                    "domain" => "img-sandbox.boltapp.com",
+                     "resource" => "bolt-magento2_-_full_logo_1559750957154518171.png"
+                 ],
+                 "platform" => "magento",
+@@ -1116,7 +1116,7 @@
+                         "first_name" => "Bolt",
+                         "last_name" => "Team",
+                         "avatar" => [
+-                            "domain" => "img-sandbox.bolt.com",
++                            "domain" => "img-sandbox.boltapp.com",
+                             "resource" => "default.png"
+                         ]
+                     ],
+@@ -1131,7 +1131,7 @@
+                         "first_name" => "Bolt",
+                         "last_name" => "Team",
+                         "avatar" => [
+-                            "domain" => "img-sandbox.bolt.com",
++                            "domain" => "img-sandbox.boltapp.com",
+                             "resource" => "default.png"
+                         ]
+                     ],
+diff --git a/Test/Unit/Observer/Adminhtml/Sales/RechargeCustomerTest.php b/Test/Unit/Observer/Adminhtml/Sales/RechargeCustomerTest.php
+--- a/Test/Unit/Observer/Adminhtml/Sales/RechargeCustomerTest.php
++++ b/Test/Unit/Observer/Adminhtml/Sales/RechargeCustomerTest.php
+@@ -39,7 +39,7 @@
+     const ID = '111';
+     const QUOTE_ID = '112';
+     const REFERENCE = 'DBT9-RL78-TTMM';
+-    const REFERENCE_URL = 'https://merchant-sandbox.bolt.com/transaction/8NLY-4NJQ-KFH6';
++    const REFERENCE_URL = 'https://merchant-sandbox.boltapp.com/transaction/8NLY-4NJQ-KFH6';
+ 
+     /**
+      * @var \Bolt\Boltpay\Observer\Adminhtml\Sales\RechargeCustomer
+diff --git a/docker-container/README.md b/docker-container/README.md
+--- a/docker-container/README.md
++++ b/docker-container/README.md
+@@ -9,7 +9,7 @@
+ [https://ngrok.com/](https://ngrok.com/)
+ [https://ngrok.com/pricing](https://ngrok.com/pricing)
+ 
+-In order for your docker container to communicate with the webhook and shipping & tax url set on [merchant.bolt.com](https://merchant.bolt.com/), one must set up an ngrok account to expose your store's docker ports to a public IP address. In order to do this one must have at least the Basic plan with ngrok to reserve a domain for themselves. 
++In order for your docker container to communicate with the webhook and shipping & tax url set on [merchant.boltapp.com](https://merchant.boltapp.com/), one must set up an ngrok account to expose your store's docker ports to a public IP address. In order to do this one must have at least the Basic plan with ngrok to reserve a domain for themselves. 
+ 
+ Once the initial configuration scripts are ran in your local environment and a public domain is reserved, run the following command 
+ 
+diff --git a/etc/adminhtml/system.xml b/etc/adminhtml/system.xml
+--- a/etc/adminhtml/system.xml
++++ b/etc/adminhtml/system.xml
+@@ -35,7 +35,7 @@
+                 </field>
+                 <group id="keys" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                     <label>Keys</label>
+-                    <comment><![CDATA[Keys and URL Configurations can be found at <a target="_blank" href="https://merchant.bolt.com/settings">merchant.bolt.com/settings</a> or <a target="_blank" href="https://merchant-sandbox.bolt.com/settings">merchant-sandbox.bolt.com/settings</a>.]]></comment>
++                    <comment><![CDATA[Keys and URL Configurations can be found at <a target="_blank" href="https://merchant.boltapp.com/settings">merchant.boltapp.com/settings</a> or <a target="_blank" href="https://merchant-sandbox.boltapp.com/settings">merchant-sandbox.boltapp.com/settings</a>.]]></comment>
+                     <attribute type="expanded">1</attribute>
+                     <field id="api_key" translate="label" type="obscure" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
+                         <label>API Key</label>
+diff --git a/etc/csp_whitelist.xml b/etc/csp_whitelist.xml
+--- a/etc/csp_whitelist.xml
++++ b/etc/csp_whitelist.xml
+@@ -22,25 +22,37 @@
+         <policy id="script-src">
+             <values>
+                 <value id="connect_bolt" type="host">connect.bolt.com</value>
++                <value id="connect_boltapp" type="host">connect.boltapp.com</value>
+                 <value id="connect-sandbox_bolt" type="host">connect-sandbox.bolt.com</value>
++                <value id="connect-sandbox_boltapp" type="host">connect-sandbox.boltapp.com</value>
+                 <value id="account_bolt" type="host">account.bolt.com</value>
++                <value id="account_boltapp" type="host">account.boltapp.com</value>
+                 <value id="account-sandbox_bolt" type="host">account-sandbox.bolt.com</value>
++                <value id="account-sandbox_boltapp" type="host">account-sandbox.boltapp.com</value>
+             </values>
+         </policy>
+         <policy id="frame-src">
+             <values>
+                 <value id="connect_bolt" type="host">connect.bolt.com</value>
++                <value id="connect_boltapp" type="host">connect.boltapp.com</value>
+                 <value id="connect-sandbox_bolt" type="host">connect-sandbox.bolt.com</value>
++                <value id="connect-sandbox_boltapp" type="host">connect-sandbox.boltapp.com</value>
+                 <value id="account_bolt" type="host">account.bolt.com</value>
++                <value id="account_boltapp" type="host">account.boltapp.com</value>
+                 <value id="account-sandbox_bolt" type="host">account-sandbox.bolt.com</value>
++                <value id="account-sandbox_boltapp" type="host">account-sandbox.boltapp.com</value>
+             </values>
+         </policy>
+         <policy id="connect-src">
+             <values>
+                 <value id="connect_bolt" type="host">connect.bolt.com</value>
++                <value id="connect_boltapp" type="host">connect.boltapp.com</value>
+                 <value id="connect-sandbox_bolt" type="host">connect-sandbox.bolt.com</value>
++                <value id="connect-sandbox_boltapp" type="host">connect-sandbox.boltapp.com</value>
+                 <value id="account_bolt" type="host">account.bolt.com</value>
++                <value id="account_boltapp" type="host">account.boltapp.com</value>
+                 <value id="account-sandbox_bolt" type="host">account-sandbox.bolt.com</value>
++                <value id="account-sandbox_boltapp" type="host">account-sandbox.boltapp.com</value>
+                 <value id="sessions_bugsnag" type="host">sessions.bugsnag.com</value>
+             </values>
+         </policy>
+diff --git a/etc/integration/config.xml b/etc/integration/config.xml
+--- a/etc/integration/config.xml
++++ b/etc/integration/config.xml
+@@ -20,7 +20,7 @@
+ <integrations>
+     <integration name="boltIntegration">
+         <email>integrations@bolt.com</email>
+-        <endpoint_url>https://api.bolt.com/v1/magento2/bolt-checkout/authorize</endpoint_url>
+-        <identity_link_url>https://status.bolt.com</identity_link_url>
++        <endpoint_url>https://api.boltapp.com/v1/magento2/bolt-checkout/authorize</endpoint_url>
++        <identity_link_url>https://status.boltapp.com</identity_link_url>
+     </integration>
+ </integrations>
+\ No newline at end of file
+diff --git a/view/adminhtml/templates/boltpay/js/transaction.phtml b/view/adminhtml/templates/boltpay/js/transaction.phtml
+--- a/view/adminhtml/templates/boltpay/js/transaction.phtml
++++ b/view/adminhtml/templates/boltpay/js/transaction.phtml
+@@ -30,7 +30,7 @@
+     require([
+         'jquery'
+     ], function ($) {
+-        $("body").on("click", "a[href*='.bolt.com/transaction/']", function(event) {
++        $("body").on("click", "a[href*='.boltapp.com/transaction/']", function(event) {
+             event.preventDefault();
+             event.stopPropagation();
+             window.open(this.href, '_blank');
