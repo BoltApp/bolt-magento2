@@ -141,7 +141,7 @@ class ReceivedUrlTest extends BoltTestCase
     ) {
         $om = new ObjectManager($this);
         $configHelper = $this->createMock(\Bolt\Boltpay\Helper\Config::class);
-        $configHelper->expects(static::atMost(1))->method('getCdnUrl')->willReturn('https://connect-sandbox.bolt.com');
+        $configHelper->expects(static::atMost(1))->method('getCdnUrl')->willReturn('https://connect-sandbox.boltapp.com');
         $instance = $om->getObject(\Bolt\Boltpay\Controller\Order\ReceivedUrl::class, ['configHelper' => $configHelper]);
         $request = $this->createMock(\Magento\Framework\App\Request\Http::class);
         $request->expects(static::once())->method('getServer')->with('HTTP_REFERER')->willReturn($referrerUrl);
@@ -158,11 +158,11 @@ class ReceivedUrlTest extends BoltTestCase
     {
         return [
             [
-                'referrerUrl'     => 'https://connect-sandbox.bolt.com',
+                'referrerUrl'     => 'https://connect-sandbox.boltapp.com',
                 'isBoltCDNReferrer' => true
             ],
             [
-                'referrerUrl'     => 'https://connect-sandbox.bolt.com/checkout',
+                'referrerUrl'     => 'https://connect-sandbox.boltapp.com/checkout',
                 'isBoltCDNReferrer' => true
             ],
             [
