@@ -16,6 +16,7 @@ rm /tmp/bolt_magento_module/.eslintignore
 rm /tmp/bolt_magento_module/.eslintrc.json
 rm /tmp/bolt_magento_module/*.zip
 rm -r /tmp/bolt_magento_module/Test
+rm -r /tmp/bolt_magento_module/patches
 rm -r /tmp/bolt_magento_module/docker-container
 
 current_dir=$(pwd)
