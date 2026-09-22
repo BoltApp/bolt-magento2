@@ -22,41 +22,59 @@
         <policy id="script-src">
             <values>
                 <value id="connect_bolt" type="host">connect.bolt.com</value>
+                <value id="connect_boltapp" type="host">connect.boltapp.com</value>
                 <value id="connect-sandbox_bolt" type="host">connect-sandbox.bolt.com</value>
+                <value id="connect-sandbox_boltapp" type="host">connect-sandbox.boltapp.com</value>
                 <value id="account_bolt" type="host">account.bolt.com</value>
+                <value id="account_boltapp" type="host">account.boltapp.com</value>
                 <value id="account-sandbox_bolt" type="host">account-sandbox.bolt.com</value>
+                <value id="account-sandbox_boltapp" type="host">account-sandbox.boltapp.com</value>
             </values>
         </policy>
         <policy id="frame-src">
             <values>
                 <value id="connect_bolt" type="host">connect.bolt.com</value>
+                <value id="connect_boltapp" type="host">connect.boltapp.com</value>
                 <value id="connect-sandbox_bolt" type="host">connect-sandbox.bolt.com</value>
+                <value id="connect-sandbox_boltapp" type="host">connect-sandbox.boltapp.com</value>
                 <value id="account_bolt" type="host">account.bolt.com</value>
+                <value id="account_boltapp" type="host">account.boltapp.com</value>
                 <value id="account-sandbox_bolt" type="host">account-sandbox.bolt.com</value>
+                <value id="account-sandbox_boltapp" type="host">account-sandbox.boltapp.com</value>
             </values>
         </policy>
         <policy id="connect-src">
             <values>
                 <value id="connect_bolt" type="host">connect.bolt.com</value>
+                <value id="connect_boltapp" type="host">connect.boltapp.com</value>
                 <value id="connect-sandbox_bolt" type="host">connect-sandbox.bolt.com</value>
+                <value id="connect-sandbox_boltapp" type="host">connect-sandbox.boltapp.com</value>
                 <value id="account_bolt" type="host">account.bolt.com</value>
+                <value id="account_boltapp" type="host">account.boltapp.com</value>
                 <value id="account-sandbox_bolt" type="host">account-sandbox.bolt.com</value>
+                <value id="account-sandbox_boltapp" type="host">account-sandbox.boltapp.com</value>
                 <value id="sessions_bugsnag" type="host">sessions.bugsnag.com</value>
             </values>
         </policy>
         <policy id="img-src">
             <values>
                 <value id="connect_bolt" type="host">connect.bolt.com</value>
+                <value id="connect_boltapp" type="host">connect.boltapp.com</value>
                 <value id="connect-sandbox_bolt" type="host">connect-sandbox.bolt.com</value>
+                <value id="connect-sandbox_boltapp" type="host">connect-sandbox.boltapp.com</value>
                 <value id="amazonaws_bolt" type="host">s3-us-west-1.amazonaws.com</value>
             </values>
         </policy>
         <policy id="object-src">
             <values>
                 <value id="connect_bolt" type="host">connect.bolt.com</value>
+                <value id="connect_boltapp" type="host">connect.boltapp.com</value>
                 <value id="connect-sandbox_bolt" type="host">connect-sandbox.bolt.com</value>
+                <value id="connect-sandbox_boltapp" type="host">connect-sandbox.boltapp.com</value>
                 <value id="account_bolt" type="host">account.bolt.com</value>
+                <value id="account_boltapp" type="host">account.boltapp.com</value>
                 <value id="account-sandbox_bolt" type="host">account-sandbox.bolt.com</value>
+                <value id="account-sandbox_boltapp" type="host">account-sandbox.boltapp.com</value>
             </values>
         </policy>
     </policies>
