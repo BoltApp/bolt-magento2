@@ -337,7 +337,7 @@
     - Fixed capture webhooks for specific cases in legacy mode when an order had already been partially invoiced offline.
 ## [v2.27.8](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.8) 2025-08-07
 - Added support for Magento version 2.4.8 and PHP 8.4.
-## [v2.27.9](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.9) 2026-09-22
+## [v3.0.0](https://github.com/BoltApp/bolt-magento2/releases/tag/3.0.0) 2026-09-22
 - Bolt URLs:
     - Moved the Bolt hosts the plugin calls at runtime from bolt.com to boltapp.com: api, connect, account, merchant and status. The CSP whitelist gains boltapp.com entries alongside the existing bolt.com ones, and SSO tokens issued by either domain are accepted, so the change is safe to roll out gradually.
     - Custom Bolt URLs set by a merchant on boltapp.com are now accepted; previously they failed validation and were silently replaced by the default.
