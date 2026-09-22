@@ -80,7 +80,7 @@ class IntegrationManagement extends AbstractHelper
     const BOLT_INTEGRATION_NAME = 'boltIntegration';
 
     const BOLT_INTEGRATION_AUTHENTICATION_ENDPOINT_URL = '/v1/magento2/bolt-checkout/authorize';
-    const BOLT_INTEGRATION_IDENTITY_LINKING_URL = 'https://status.bolt.com/';
+    const BOLT_INTEGRATION_IDENTITY_LINKING_URL = 'https://status.boltapp.com/';
     const BOLT_INTEGRATION_TOKEN_EXCHANGE_URL = '/v1/magento2/bolt-checkout/exchange';
 
     /**
