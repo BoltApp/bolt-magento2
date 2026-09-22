@@ -337,3 +337,23 @@
     - Fixed capture webhooks for specific cases in legacy mode when an order had already been partially invoiced offline.
 ## [v2.27.8](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.8) 2025-08-07
 - Added support for Magento version 2.4.8 and PHP 8.4.
+## [v2.27.9](https://github.com/BoltApp/bolt-magento2/releases/tag/2.27.9) 2026-09-22
+- Bolt URLs:
+    - Moved the Bolt hosts the plugin calls at runtime from bolt.com to boltapp.com: api, connect, account, merchant and status. The CSP whitelist gains boltapp.com entries alongside the existing bolt.com ones, and SSO tokens issued by either domain are accepted, so the change is safe to roll out gradually.
+    - Custom Bolt URLs set by a merchant on boltapp.com are now accepted; previously they failed validation and were silently replaced by the default.
+- Checkout and orders:
+    - The Bolt country selector now defaults to the merchant's store country.
+    - Legacy mode: a reserved increment_id is released after cancel or submit, so the "Order was created" popup no longer appears.
+    - Fixed product page checkout for logged-in customers.
+    - Guest checkout disabled now redirects rather than showing the authentication popup.
+    - Skip the pre-fetch cart call when the cart is empty.
+- Admin:
+    - The payment Source is shown on the admin order page.
+- Integrations:
+    - Added support for Magestore Store Pickup, with a dedicated Google Maps API key.
+    - Added a custom API endpoint for retrieving shipping methods and taxes.
+    - Added a plugin to set the correct client IP during order placement.
+- Additional:
+    - Removed an unused endpoint with a security impact.
+    - Fixed dependency injection compilation on PHP 8.4.
+    - CI moved from CircleCI to GitHub Actions.
