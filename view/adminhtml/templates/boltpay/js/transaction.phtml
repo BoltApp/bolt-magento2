@@ -31,7 +31,7 @@ if (!$block->isEnabled()) { return;
     require([
         'jquery'
     ], function ($) {
-        $("body").on("click", "a[href*='.bolt.com/transaction/']", function(event) {
+        $("body").on("click", "a[href*='.boltapp.com/transaction/']", function(event) {
             event.preventDefault();
             event.stopPropagation();
             window.open(this.href, '_blank');
