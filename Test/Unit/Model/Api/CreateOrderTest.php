@@ -846,7 +846,7 @@ class CreateOrderTest extends BoltTestCase
                 "first_name" => "Bolt",
                 "last_name" => "Team",
                 "avatar" => [
-                    "domain" => "img-sandbox.bolt.com",
+                    "domain" => "img-sandbox.boltapp.com",
                     "resource" => "default.png"
                 ],
                 "phones" => [
@@ -885,7 +885,7 @@ class CreateOrderTest extends BoltTestCase
                 "first_name" => "Leon",
                 "last_name" => "McCottry",
                 "avatar" => [
-                    "domain" => "img-sandbox.bolt.com",
+                    "domain" => "img-sandbox.boltapp.com",
                     "resource" => "default.png"
                 ],
                 "phones" => [
@@ -1021,7 +1021,7 @@ class CreateOrderTest extends BoltTestCase
                 "public_id" => "NwQxY8yKNDiL",
                 "description" => "bolt-magento2 - full",
                 "logo" => [
-                    "domain" => "img-sandbox.bolt.com",
+                    "domain" => "img-sandbox.boltapp.com",
                     "resource" => "bolt-magento2_-_full_logo_1559750957154518171.png"
                 ],
                 "platform" => "magento",
@@ -1096,7 +1096,7 @@ class CreateOrderTest extends BoltTestCase
                         "first_name" => "Bolt",
                         "last_name" => "Team",
                         "avatar" => [
-                            "domain" => "img-sandbox.bolt.com",
+                            "domain" => "img-sandbox.boltapp.com",
                             "resource" => "default.png"
                         ]
                     ],
@@ -1111,7 +1111,7 @@ class CreateOrderTest extends BoltTestCase
                         "first_name" => "Bolt",
                         "last_name" => "Team",
                         "avatar" => [
-                            "domain" => "img-sandbox.bolt.com",
+                            "domain" => "img-sandbox.boltapp.com",
                             "resource" => "default.png"
                         ]
                     ],
