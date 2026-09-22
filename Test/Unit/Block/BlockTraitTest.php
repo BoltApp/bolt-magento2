@@ -35,7 +35,7 @@ use Magento\Store\Model\ScopeInterface;
  */
 class BlockTraitTest extends BoltTestCase
 {
-    const CDN_URL = 'https://connect-sandbox.bolt.com';
+    const CDN_URL = 'https://connect-sandbox.boltapp.com';
     const STORE_ID = '1';
     const PAGE_BLACK_LIST = 'catalog_product_view';
     const PAGE_WHITE_LIST = 'catalog_product_view';
