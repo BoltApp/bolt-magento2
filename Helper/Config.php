@@ -214,42 +214,42 @@ class Config extends AbstractHelper
     /**
      * Bolt sandbox url
      */
-    const API_URL_SANDBOX = 'https://api-sandbox.bolt.com/';
+    const API_URL_SANDBOX = 'https://api-sandbox.boltapp.com/';
 
     /**
      * Bolt production url
      */
-    const API_URL_PRODUCTION = 'https://api.bolt.com/';
+    const API_URL_PRODUCTION = 'https://api.boltapp.com/';
 
     /**
      * Bolt sandbox cdn url
      */
-    const CDN_URL_SANDBOX = 'https://connect-sandbox.bolt.com';
+    const CDN_URL_SANDBOX = 'https://connect-sandbox.boltapp.com';
 
     /**
      * Bolt production cdn url
      */
-    const ACCOUNT_URL_PRODUCTION = 'https://account.bolt.com';
+    const ACCOUNT_URL_PRODUCTION = 'https://account.boltapp.com';
 
     /**
      * Bolt sandbox cdn url
      */
-    const ACCOUNT_URL_SANDBOX = 'https://account-sandbox.bolt.com';
+    const ACCOUNT_URL_SANDBOX = 'https://account-sandbox.boltapp.com';
 
     /**
      * Bolt production cdn url
      */
-    const CDN_URL_PRODUCTION = 'https://connect.bolt.com';
+    const CDN_URL_PRODUCTION = 'https://connect.boltapp.com';
 
     /**
      * Bolt merchant sandbox url
      */
-    const MERCHANT_DASH_SANDBOX = 'https://merchant-sandbox.bolt.com';
+    const MERCHANT_DASH_SANDBOX = 'https://merchant-sandbox.boltapp.com';
 
     /**
      * Bolt merchant production url
      */
-    const MERCHANT_DASH_PRODUCTION = 'https://merchant.bolt.com';
+    const MERCHANT_DASH_PRODUCTION = 'https://merchant.boltapp.com';
 
     /**
      * Path for API Key
@@ -939,7 +939,7 @@ class Config extends AbstractHelper
     {
         return (
             $url
-            && preg_match("/^https?:\/\/([a-zA-Z0-9-]+\.)+bolt.(me|com)\/?$/", $url)
+            && preg_match("/^https?:\/\/([a-zA-Z0-9-]+\.)+bolt(app)?\.(me|com)\/?$/", $url)
         );
     }
 
