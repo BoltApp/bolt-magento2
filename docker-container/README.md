@@ -84,7 +84,7 @@ If you are changing the composer.json one will need to take down and re-deploy t
     docker-compose up -d
     docker-compose run build cloud-build
     docker-compose run deploy cloud-deploy
-    docker-compose run cron php bin/magento admin:user:create --admin-user=bolt --admin-password=admin123 --admin-email=dev@bolt.com --admin-firstname=admin --admin-lastname=admin
+    docker-compose run cron php bin/magento admin:user:create --admin-user=bolt --admin-password=admin123 --admin-email=dev@boltapp.com --admin-firstname=admin --admin-lastname=admin
     docker-compose run cron php bin/magento config:set payment/boltpay/active 1
     docker-compose run cron php bin/magento config:set payment/boltpay/api_key $boltApiKey
     docker-compose run cron php bin/magento config:set payment/boltpay/signing_secret $boltSigningSecret

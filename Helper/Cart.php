@@ -11,7 +11,7 @@
  *
  * @category   Bolt
  * @package    Bolt_Boltpay
- * @copyright  Copyright (c) 2017-2023 Bolt Financial, Inc (https://www.bolt.com)
+ * @copyright  Copyright (c) 2017-2023 Bolt Financial, Inc (https://www.boltapp.com)
  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
@@ -1094,7 +1094,7 @@ class Cart extends AbstractHelper
             }
 
             // Skip pre-fill for Apple Pay related data.
-            if ($prefill['email'] == 'na@bolt.com' || $prefill['phone'] == '8005550111' || $prefill['addressLine1'] == 'tbd') {
+            if (in_array($prefill['email'], ['na@bolt.com', 'na@boltapp.com']) || $prefill['phone'] == '8005550111' || $prefill['addressLine1'] == 'tbd') {
                 return;
             }
 
