@@ -217,6 +217,9 @@ define([
 
             var expectCartRendering = true;
             var waitingForResolvingPromises = false;
+            // payment-only: signature of the quote totals the last Bolt order was built from
+            var quoteTotalsSignature = '';
+            var lastTriggeredTotalsSignature = null;
 
             /**
              * BoltState contains all global variables we need for interaction between
@@ -781,6 +784,11 @@ define([
                 // Create Bolt order and configure BoltCheckout
                 /////////////////////////////////////////////////////
                 var createRequest = false;
+                // payment-only: one create-order request at a time; an identical request asked for
+                // while one is in flight is dropped, a different one runs once it finishes
+                var paymentOnlyCreateInFlight = false;
+                var paymentOnlyInFlightKey = null;
+                var paymentOnlyQueuedKey = null;
                 var allowAutoOpen = true && !settings.is_auto_opening_disabled;
                 var oldBoltCartValue = "";
                 var BC;
@@ -1091,6 +1099,16 @@ define([
                     }
                     params = params.join('&');
 
+                    // Setup, the billing/email watchers and the totals subscriber all fire on the payment
+                    // step at once; collapse them into one request.
+                    var requestKey = params + '|' + quoteTotalsSignature;
+                    if (paymentOnlyCreateInFlight) {
+                        paymentOnlyQueuedKey = requestKey;
+                        return;
+                    }
+                    paymentOnlyCreateInFlight = true;
+                    paymentOnlyInFlightKey = requestKey;
+
                     hintBarrier = boltBarrier();
                     BoltState.boltCart = new Promise(function (resolve, reject) {
 
@@ -1149,6 +1167,12 @@ define([
                             })
                             .always(function() {
                                 createRequest = false;
+                                paymentOnlyCreateInFlight = false;
+                                var queuedKey = paymentOnlyQueuedKey;
+                                paymentOnlyQueuedKey = null;
+                                if (queuedKey !== null && queuedKey !== paymentOnlyInFlightKey) {
+                                    updateCartPaymentOnly();
+                                }
                             })
                     });
                     boltCheckoutConfigure(BoltState.boltCart, hintBarrier.promise, callbacks);
@@ -1635,7 +1659,24 @@ define([
                         // we should reload the bolt cart since totals are probably now out of sync.
                         if (!jQuery.isEmptyObject(quote)) {
                             quote.totals.subscribe(function (totals) {
+                                var shippingAddress = quote.shippingAddress && quote.shippingAddress();
+                                var shippingMethod = quote.shippingMethod && quote.shippingMethod();
+                                quoteTotalsSignature = JSON.stringify([
+                                    totals.grand_total, totals.base_subtotal, totals.shipping_amount,
+                                    totals.tax_amount, totals.discount_amount,
+                                    shippingMethod && (shippingMethod.carrier_code + '_' + shippingMethod.method_code),
+                                    shippingAddress && [
+                                        shippingAddress.firstname, shippingAddress.lastname, shippingAddress.street,
+                                        shippingAddress.city, shippingAddress.regionId, shippingAddress.postcode,
+                                        shippingAddress.countryId
+                                    ]
+                                ]);
                                 if (waitingForResolvingPromises) {
+                                    return;
+                                }
+                                // Magento re-emits totals on every quote save, including the ones our own
+                                // create-order request causes; only rebuild the Bolt order when something changed.
+                                if (trim(location.pathname, '/') === 'checkout' && quoteTotalsSignature === lastTriggeredTotalsSignature) {
                                     return;
                                 }
                                 if (expectCartRendering) {
@@ -1648,6 +1689,7 @@ define([
                                 }
 
                                 expectCartRendering = false;
+                                lastTriggeredTotalsSignature = quoteTotalsSignature;
                                 $(document).trigger('bolt:createOrder');
                             });
                         }
