@@ -75,12 +75,12 @@ That should print nothing. In a browser, your storefront should load
 order should complete normally.
 
 `etc/csp_whitelist.xml` and `Helper/SSOHelper.php` still mention `bolt.com` on
-purpose — see below.
+purpose — see below. So do a few dummy addresses in the unit tests.
 
 ## What the patch changes
 
-The Bolt hosts the plugin calls at runtime move to `boltapp.com`: `api`,
-`api-sandbox`, `connect`, `connect-sandbox`, `account`, `account-sandbox`,
+**Runtime hosts.** The Bolt hosts the plugin calls at runtime move to `boltapp.com`:
+`api`, `api-sandbox`, `connect`, `connect-sandbox`, `account`, `account-sandbox`,
 `merchant`, `merchant-sandbox` and `status`.
 
 Two changes are **additive rather than replacements**, so your store keeps working
@@ -95,13 +95,28 @@ on both domains while the migration is in flight:
 have set a custom Bolt URL in the admin, it would otherwise be rejected silently
 and replaced with the default.
 
+**Apple Pay placeholder.** `Helper/Cart.php` detects Apple Pay's masked address by
+comparing the prefilled email against `na@bolt.com`. Bolt's checkout still sends
+that value today, so the check now accepts both `na@bolt.com` and `na@boltapp.com`.
+
+**Help link and contacts.** The admin help link that pointed at `docs.bolt.com`,
+which no longer resolves, now points at
+[help.boltapp.com](https://help.boltapp.com/platforms/adobe/adobe-commerce-setup-guide/adobe-installation/).
+The integration contact in `etc/integration/config.xml` reads
+`integrations@boltapp.com`, and the dev and CI addresses in the docker and
+operations scripts move with it.
+
+**Copyright headers.** Every file's header reads `https://www.boltapp.com`. This is
+the bulk of the patch by file count and changes nothing at runtime.
+
 Unit tests are updated alongside the code, so applying a patch does not leave a
 failing build.
 
 ### Deliberately unchanged
 
-Copyright headers, the `integrations@bolt.com` contact address, `CHANGELOG.md`, and
-the `docs.bolt.com` help links in the admin.
+`etc/csp_whitelist.xml` and `Helper/SSOHelper.php` keep their `bolt.com` entries
+next to the `boltapp.com` ones on purpose, dummy test addresses such as
+`test@bolt.com` stay, and `CHANGELOG.md` records history as it was.
 
 ### Version-specific notes
 
@@ -110,4 +125,6 @@ the `docs.bolt.com` help links in the admin.
   all — if your storefront enforces CSP, `connect.boltapp.com` has to be allowed
   wherever that policy is configured.
 - **2.24.0 and 2.24.1** predate `etc/integration/config.xml`, so they carry no
-  `status.bolt.com` change.
+  `status.bolt.com` change and no `integrations@` contact change (2.13.0 likewise).
+- **2.13.0 through 2.25.2** predate the admin help link, so they carry no
+  `help.boltapp.com` change.
