@@ -4,7 +4,7 @@ source config.sh
 cd ../../magento-cloud
 
 # Creates Admin user for magento
-docker-compose run cron php bin/magento admin:user:create --admin-user=bolt --admin-password=admin123 --admin-email=dev@bolt.com --admin-firstname=admin --admin-lastname=admin
+docker-compose run cron php bin/magento admin:user:create --admin-user=bolt --admin-password=admin123 --admin-email=dev@boltapp.com --admin-firstname=admin --admin-lastname=admin
 
 # Sets up Bolt on the Magento 2 store
 docker-compose run cron php bin/magento config:set payment/boltpay/active 1

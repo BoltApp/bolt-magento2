@@ -12,7 +12,7 @@
 #*
 #* @category   Bolt
 #* @package    Bolt_Boltpay
-#* @copyright  Copyright (c) 2017-2023 Bolt Financial, Inc (https://www.bolt.com)
+#* @copyright  Copyright (c) 2017-2023 Bolt Financial, Inc (https://www.boltapp.com)
 #* @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
 #*/
 
@@ -60,7 +60,7 @@ php bin/magento module:disable MSP_ReCaptcha --clear-static-content
 php bin/magento config:set dev/static/sign 0
 
 echo "Create admin user"
-php bin/magento admin:user:create --admin-user=bolt --admin-password=admin123 --admin-email=dev@bolt.com --admin-firstname=admin --admin-lastname=admin
+php bin/magento admin:user:create --admin-user=bolt --admin-password=admin123 --admin-email=dev@boltapp.com --admin-firstname=admin --admin-lastname=admin
 
 cp /home/circleci/.composer/auth.json /home/circleci/magento/auth.json
 echo "Installing sample data"
