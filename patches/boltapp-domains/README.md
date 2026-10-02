@@ -112,6 +112,17 @@ the bulk of the patch by file count and changes nothing at runtime.
 Unit tests are updated alongside the code, so applying a patch does not leave a
 failing build.
 
+### Files with Windows line endings
+
+A few plugin files are stored with Windows (CRLF) line endings:
+`view/adminhtml/layout/adminhtml_system_config_edit.xml`,
+`view/frontend/web/template/payment/boltpay.html` and, from 2.27.5, three Hyva
+templates. Their only change was the copyright header, so they are left out of the
+patches. A hunk carrying CRLF lines fails to apply wherever your copy of those files,
+or the patch file itself, has been normalised to LF — by an editor, a git checkout
+with `autocrlf` or `text=auto`, or a copy and paste. Leaving them out changes nothing
+at runtime.
+
 ### Deliberately unchanged
 
 `etc/csp_whitelist.xml` and `Helper/SSOHelper.php` keep their `bolt.com` entries

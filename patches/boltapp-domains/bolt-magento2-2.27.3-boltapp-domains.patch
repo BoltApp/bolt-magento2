@@ -41,6 +41,11 @@ reference that is not a dummy test fixture:
     not (where the link exists at this version)
   * dev@ and circleci@ addresses in the docker, operations and CI scripts
     move to boltapp.com; www.bolt.com URL fixtures in two unit tests follow
+Files the plugin stores with Windows (CRLF) line endings are left out of this
+patch. Their only change was the copyright header, and a hunk carrying CRLF
+lines fails to apply wherever the store's copy, or this patch file, has been
+normalised to LF -- an editor, a git checkout with autocrlf or text=auto, or a
+copy and paste is enough.
 
 Still left alone: etc/csp_whitelist.xml and Helper/SSOHelper.php keep their
 bolt.com entries beside the boltapp.com ones on purpose, dummy test
@@ -7244,18 +7249,6 @@ diff --git a/registration.php b/registration.php
   * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
   */
  
-diff --git a/view/adminhtml/layout/adminhtml_system_config_edit.xml b/view/adminhtml/layout/adminhtml_system_config_edit.xml
---- a/view/adminhtml/layout/adminhtml_system_config_edit.xml
-+++ b/view/adminhtml/layout/adminhtml_system_config_edit.xml
-@@ -12,7 +12,7 @@
-  *
-  * @category   Bolt
-  * @package    Bolt_Boltpay
-- * @copyright  Copyright (c) 2017-2023 Bolt Financial, Inc (https://www.bolt.com)
-+ * @copyright  Copyright (c) 2017-2023 Bolt Financial, Inc (https://www.boltapp.com)
-  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
-  */
- -->
 diff --git a/view/adminhtml/layout/boltpay_customer_creditcard.xml b/view/adminhtml/layout/boltpay_customer_creditcard.xml
 --- a/view/adminhtml/layout/boltpay_customer_creditcard.xml
 +++ b/view/adminhtml/layout/boltpay_customer_creditcard.xml
@@ -7769,15 +7762,3 @@ diff --git a/view/frontend/web/js/view/payment/method-renderer/boltpay.js b/view
   * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
   */
  
-diff --git a/view/frontend/web/template/payment/boltpay.html b/view/frontend/web/template/payment/boltpay.html
---- a/view/frontend/web/template/payment/boltpay.html
-+++ b/view/frontend/web/template/payment/boltpay.html
-@@ -11,7 +11,7 @@
-  *
-  * @category   Bolt
-  * @package    Bolt_Boltpay
-- * @copyright  Copyright (c) 2017-2023 Bolt Financial, Inc (https://www.bolt.com)
-+ * @copyright  Copyright (c) 2017-2023 Bolt Financial, Inc (https://www.boltapp.com)
-  * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
-  */
- -->
