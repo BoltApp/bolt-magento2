@@ -37,10 +37,10 @@ Select ***Yes*** to enable it.
 > The Publishable Key is for the multi-step checkout by default. You can find other publishable keys (Payment Only and Back-Office) in the division dropdown at the top-right corner.
 
 > For production, these will be found at:
-> https://merchant.bolt.com
+> https://merchant.boltapp.com
 >
 > For sandbox mode, use the following URL:
-> https://merchant-sandbox.bolt.com"
+> https://merchant-sandbox.boltapp.com"
 
 
 + **API Key**
@@ -64,9 +64,9 @@ comma separated list of CSS selectors matching the elements to be replaced with 
 >> `|prepend` suffix - *example-selector|prepend*, inserts Bolt button right before the element
 ### 4. Bolt Merchant Dashboard configuration
 > #### Login to the Bolt Merchant Dashboard
-> **Production**: https://merchant.bolt.com
+> **Production**: https://merchant.boltapp.com
 >
-> **Sandbox**: https://merchant-sandbox.bolt.com"
+> **Sandbox**: https://merchant-sandbox.boltapp.com"
 
 + Navigate to `Developers`
 + Click on the `API` tab
