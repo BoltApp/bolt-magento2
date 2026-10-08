@@ -444,7 +444,7 @@ JSON;
     {
         return [
             [true, 'https://connect.bolt.me/'],
-            [false,'https://connect-sandbox.bolt.com'],
+            [false,'https://connect-sandbox.boltapp.com'],
         ];
     }
 
@@ -535,7 +535,7 @@ JSON;
     {
         return [
             [true, 'https://account.bolt.me/'],
-            [false,'https://account-sandbox.bolt.com'],
+            [false,'https://account-sandbox.boltapp.com'],
         ];
     }
 
@@ -666,7 +666,7 @@ JSON;
     {
         return [
             [true, 'https://api.bolt.me/'],
-            [false,'https://api-sandbox.bolt.com/'],
+            [false,'https://api-sandbox.boltapp.com/'],
         ];
     }
 
@@ -1381,9 +1381,9 @@ Room 4000',
             ['https://test.bolt.me', true],
             ['https://test.bolt.me/', true],
             ['https://api.test.bolt.me/', true],
-            ['https://test.bolt.com', true],
-            ['https://connect-staging.bolt.com', true],
-            ['https://test .bolt.com', false],
+            ['https://test.boltapp.com', true],
+            ['https://connect-staging.boltapp.com', true],
+            ['https://test .boltapp.com', false],
             ['https://testbolt.me', false],
             ['https://test.com', false],
             ['test.bolt.me', false],

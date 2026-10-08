@@ -37,10 +37,10 @@ Select ***Yes*** to enable it.
 > The following four required values, (i.e. `API Key`, `Signing Secret`, `Publishable Key - Multi Step`, and `Publishable Key - Payment Only` can be found in your ***Bolt Merchant Dashboard***  under `Settings` > `Users and Keys`
 >
 > For production, these will be found at:
-> https://merchant.bolt.com
+> https://merchant.boltapp.com
 >
 > For sandbox mode, use the following URL:
-> https://merchant-sandbox.bolt.com"
+> https://merchant-sandbox.boltapp.com"
 
 
 + **API Key**
@@ -62,9 +62,9 @@ comma separated list of CSS selectors matching the elements to be replaced with 
 >> `|prepend` suffix - *example-selector|prepend*, inserts Bolt button right before the element
 ### 4. Bolt Merchant Dashboard configuration
 > #### Login to the Bolt Merchant Dashboard
-> **Production**: https://merchant.bolt.com
+> **Production**: https://merchant.boltapp.com
 >
-> **Sandbox**: https://merchant-sandbox.bolt.com"
+> **Sandbox**: https://merchant-sandbox.boltapp.com"
 
 + Navigate to `Settings` > `Keys and URLs`
 + Scroll down to the `URL Configurations` section
