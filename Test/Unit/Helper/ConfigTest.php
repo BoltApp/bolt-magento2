@@ -82,11 +82,11 @@ class ConfigTest extends BoltTestCase
         "IGNORED_SHIPPING_ADDRESS_COUPON"
     ],
      "priceFaultTolerance": "10",
-     "merchantDashboardURL": "https://test-sandbox.bolt.com/",
-     "apiURL": "https://test-sandbox.bolt.com/",
-     "accountURL": "https://test-sandbox.bolt.com/",
-     "cdnURL": "https://test-sandbox.bolt.com/",
-     "integrationBaseURL": "https://test-sandbox.bolt.com/"
+     "merchantDashboardURL": "https://test-sandbox.boltapp.com/",
+     "apiURL": "https://test-sandbox.boltapp.com/",
+     "accountURL": "https://test-sandbox.boltapp.com/",
+     "cdnURL": "https://test-sandbox.boltapp.com/",
+     "integrationBaseURL": "https://test-sandbox.boltapp.com/"
 }
 JSON;
 
@@ -171,7 +171,7 @@ JSON;
         ];
         TestUtils::setupBoltConfig($configData);
         $result = $this->configHelper->getMerchantDashboardUrl();
-        self::assertEquals("https://test-sandbox.bolt.com/", $result);
+        self::assertEquals("https://test-sandbox.boltapp.com/", $result);
     }
 
     /**
@@ -285,7 +285,7 @@ JSON;
         ];
         TestUtils::setupBoltConfig($configData);
         $result = $this->configHelper->getCdnUrl();
-        self::assertEquals("https://test-sandbox.bolt.com/", $result);
+        self::assertEquals("https://test-sandbox.boltapp.com/", $result);
     }
 
     /**
@@ -348,7 +348,7 @@ JSON;
         ];
         TestUtils::setupBoltConfig($configData);
         $result = $this->configHelper->getAccountUrl();
-        self::assertEquals("https://test-sandbox.bolt.com/", $result);
+        self::assertEquals("https://test-sandbox.boltapp.com/", $result);
     }
 
     /**
@@ -409,7 +409,7 @@ JSON;
         ];
         TestUtils::setupBoltConfig($configData);
         $result = $this->configHelper->getApiUrl();
-        self::assertEquals("https://test-sandbox.bolt.com/", $result);
+        self::assertEquals("https://test-sandbox.boltapp.com/", $result);
     }
 
     /**
@@ -1153,9 +1153,9 @@ Room 4000',
             ['https://test.bolt.me', true],
             ['https://test.bolt.me/', true],
             ['https://api.test.bolt.me/', true],
-            ['https://test.bolt.com', true],
-            ['https://connect-staging.bolt.com', true],
-            ['https://test .bolt.com', false],
+            ['https://test.boltapp.com', true],
+            ['https://connect-staging.boltapp.com', true],
+            ['https://test .boltapp.com', false],
             ['https://testbolt.me', false],
             ['https://test.com', false],
             ['test.bolt.me', false],
@@ -1401,7 +1401,7 @@ Room 4000',
         ];
         TestUtils::setupBoltConfig($configData);
         $result = $this->configHelper->getIntegrationBaseUrl();
-        self::assertEquals("https://test-sandbox.bolt.com/", $result);
+        self::assertEquals("https://test-sandbox.boltapp.com/", $result);
     }
 
     /**
