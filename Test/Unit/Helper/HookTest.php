@@ -100,8 +100,7 @@ class HookTest extends BoltTestCase
      */
     public function initCurrentMock($methods = [])
     {
-        $this->currentMock = $this->getMockBuilder(BoltHook::class)
-            ->setMethods($methods)
+        $this->currentMock = $this->getMockBuilderWithMethods(BoltHook::class, $methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
@@ -171,8 +170,7 @@ class HookTest extends BoltTestCase
         $expectedResult
     ) {
         $this->initCurrentMock(['getStoreId']);
-        $requestData = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['setApiData','setDynamicApiUrl','setApiKey','setHeaders','setStatusOnly'])
+        $requestData = $this->getMockBuilderWithMethods(DataObject::class, ['setApiData','setDynamicApiUrl','setApiKey','setHeaders','setStatusOnly'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->dataObjectFactory->method('create')->willReturn($requestData);
@@ -185,9 +183,12 @@ class HookTest extends BoltTestCase
         $requestData->expects(static::once())->method('setStatusOnly')->with(true);
         $request =  $this->createMock(BoltRequest::class);
         $this->apiHelper->expects(static::once())->method('buildRequest')->with($requestData)->willReturn($request);
-        $this->apiHelper->expects(static::once())->method('sendRequest')->with($request)->will(
-            $expectException ? $this->throwException($response) : $this->returnValue($response)
-        );
+        $sendRequest = $this->apiHelper->expects(static::once())->method('sendRequest')->with($request);
+        if ($expectException) {
+            $sendRequest->willThrowException($response);
+        } else {
+            $sendRequest->willReturn($response);
+        }
         
         $this->assertEquals(
             $expectedResult,
@@ -320,8 +321,7 @@ class HookTest extends BoltTestCase
         $this->verifyWebhook_adjustRequestMock();
 
         //private function verifyWebhookApi
-        $requestData = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['setApiData', 'setDynamicApiUrl', 'setApiKey', 'setHeaders', 'setStatusOnly'])
+        $requestData = $this->getMockBuilderWithMethods(DataObject::class, ['setApiData', 'setDynamicApiUrl', 'setApiKey', 'setHeaders', 'setStatusOnly'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->dataObjectFactory->method('create')->willReturn($requestData);
@@ -372,7 +372,7 @@ class HookTest extends BoltTestCase
         $this->request->method('getHeader')->with('X-bolt-trace-id')->willReturn(self::BOLT_TRACE_ID);
         $this->bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
             function (callable $fn) {
-                $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                $reportMock = $this->createPartialMockWithMethods(\stdClass::class, ['setMetaData']);
                 $reportMock->expects(self::once())->method('setMetaData')->with([
                     'META DATA' => [
                         'bolt_trace_id' => self::BOLT_TRACE_ID

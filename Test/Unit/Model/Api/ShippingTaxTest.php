@@ -547,9 +547,7 @@ class ShippingTaxTest extends BoltTestCase
         $hookHelperProperty->setAccessible(true);
         $hookHelperProperty->setValue($this->shippingTax, $hookHelper);
 
-        $shippingMethodManagement = $this->getMockBuilder(\Magento\Quote\Api\Data\ShippingMethodInterface::class)
-                ->disableOriginalConstructor()
-                ->setMethods([
+        $shippingMethodManagement = $this->getMockBuilderWithMethods(\Magento\Quote\Api\Data\ShippingMethodInterface::class, [
                     'getCarrierTitle',
                     'setCarrierTitle',
                     'getCarrierCode',
@@ -573,15 +571,15 @@ class ShippingTaxTest extends BoltTestCase
                     'getPriceInclTax',
                     'setPriceInclTax'
                 ])
+                ->disableOriginalConstructor()
                 ->getMock();
         $shippingMethodManagement->method('getCarrierTitle')->willReturn('Carrier Title');
         $shippingMethodManagement->method('getMethodTitle')->willReturn('Method Title');
         $shippingMethodManagement->method('getCarrierCode')->willReturn('carrier_code');
         $shippingMethodManagement->method('getMethodCode')->willReturn('method_code');
         $shippingMethodManagement->method('getAmount')->willReturn(100);
-        $shipmentEstimationInterface = $this->getMockBuilder(\Magento\Quote\Api\ShipmentEstimationInterface::class)
+        $shipmentEstimationInterface = $this->getMockBuilderWithMethods(\Magento\Quote\Api\ShipmentEstimationInterface::class, ['estimateByExtendedAddress'])
                 ->disableOriginalConstructor()
-                ->setMethods(['estimateByExtendedAddress'])
                 ->getMock();
         $shipmentEstimationInterface->method('estimateByExtendedAddress')->willReturn([$shippingMethodManagement]);
         $shippingMethodManagement = new \ReflectionProperty(
@@ -649,9 +647,7 @@ class ShippingTaxTest extends BoltTestCase
         $hookHelperProperty->setAccessible(true);
         $hookHelperProperty->setValue($this->shippingTax, $hookHelper);
 
-        $shippingMethodManagement = $this->getMockBuilder(\Magento\Quote\Api\Data\ShippingMethodInterface::class)
-            ->disableOriginalConstructor()
-            ->setMethods([
+        $shippingMethodManagement = $this->getMockBuilderWithMethods(\Magento\Quote\Api\Data\ShippingMethodInterface::class, [
                 'getCarrierTitle',
                 'setCarrierTitle',
                 'getCarrierCode',
@@ -675,15 +671,15 @@ class ShippingTaxTest extends BoltTestCase
                 'getPriceInclTax',
                 'setPriceInclTax'
             ])
+            ->disableOriginalConstructor()
             ->getMock();
         $shippingMethodManagement->method('getCarrierTitle')->willReturn('Carrier Title');
         $shippingMethodManagement->method('getMethodTitle')->willReturn('Method Title');
         $shippingMethodManagement->method('getCarrierCode')->willReturn('carrier_code');
         $shippingMethodManagement->method('getMethodCode')->willReturn('method_code');
         $shippingMethodManagement->method('getAmount')->willReturn(100);
-        $shipmentEstimationInterface = $this->getMockBuilder(\Magento\Quote\Api\ShipmentEstimationInterface::class)
+        $shipmentEstimationInterface = $this->getMockBuilderWithMethods(\Magento\Quote\Api\ShipmentEstimationInterface::class, ['estimateByExtendedAddress'])
             ->disableOriginalConstructor()
-            ->setMethods(['estimateByExtendedAddress'])
             ->getMock();
         $shipmentEstimationInterface->method('estimateByExtendedAddress')->willReturn([$shippingMethodManagement]);
         $shippingMethodManagement = new \ReflectionProperty(

@@ -260,11 +260,11 @@ class PaymentTest extends BoltTestCase
             '{"status": "cancelled", "reference": "ABCD-1234-XXXX"}'
         );
         $this->apiHelper->expects($this->once())->method('buildRequest')
-            ->will($this->returnCallback(
+            ->willReturnCallback(
                 function ($data) {
                     $this->assertTrue($data->getApiData()['skip_hook_notification']);
                 }
-            ));
+            );
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
 
         $this->currentMock->void($this->paymentMock);
@@ -296,8 +296,8 @@ class PaymentTest extends BoltTestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Please wait while transaction gets updated from Bolt.');
 
-        $paymentInfoMock =  $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder', 'getCcTransId'])
-            ->getMockForAbstractClass();
+        $paymentInfoMock =  $this->getMockBuilderWithMethods(InfoInterface::class, ['getId', 'getOrder', 'getCcTransId'])
+            ->getMock();
         $paymentInfoMock->method('getAdditionalInformation')->with('real_transaction_id')
             ->willReturn(null);
 
@@ -332,12 +332,12 @@ class PaymentTest extends BoltTestCase
         );
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
         $this->apiHelper->expects($this->once())->method('buildRequest')
-                        ->will($this->returnCallback(
+                        ->willReturnCallback(
                             function ($data) {
                                 $this->assertEquals("USD", $data->getApiData()['currency']);
                                 $this->assertEquals("10000", $data->getApiData()['amount']);
                             }
-                        ));
+                        );
 
         $this->currentMock->capture($this->paymentMock, 100);
     }
@@ -358,9 +358,8 @@ class PaymentTest extends BoltTestCase
         $this->orderMock->expects($this->once())->method("getStoreCurrencyCode")->willReturn("USD");
         $this->apiHelper->expects($this->never())->method('buildRequest');
         $this->apiHelper->expects($this->never())->method('sendRequest');
-        $paymentMock = $this->getMockBuilder(InfoInterface::class)
-            ->setMethods(['getOrder', 'getCcTransId'])
-            ->getMockForAbstractClass();
+        $paymentMock = $this->getMockBuilderWithMethods(InfoInterface::class, ['getOrder', 'getCcTransId'])
+            ->getMock();
         $paymentMock->expects($this->once())->method('getOrder')->willReturn($this->orderMock);
 
         $this->currentMock->capture($paymentMock, $amount);
@@ -394,12 +393,12 @@ class PaymentTest extends BoltTestCase
         );
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
         $this->apiHelper->expects($this->once())->method('buildRequest')
-                        ->will($this->returnCallback(
+                        ->willReturnCallback(
                             function ($data) {
                                 $this->assertEquals("CAD", $data->getApiData()['currency']);
                                 $this->assertEquals("12345", $data->getApiData()['amount']);
                             }
-                        ));
+                        );
 
         $this->currentMock->capture($this->paymentMock, 100);
     }
@@ -417,11 +416,11 @@ class PaymentTest extends BoltTestCase
         );
 
         $this->apiHelper->expects($this->once())->method('buildRequest')
-            ->will($this->returnCallback(
+            ->willReturnCallback(
                 function ($data) {
                     $this->assertTrue($data->getApiData()['skip_hook_notification']);
                 }
-            ));
+            );
         $this->currentMock->capture($this->paymentMock, 100);
     }
 
@@ -484,8 +483,8 @@ class PaymentTest extends BoltTestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Please wait while transaction gets updated from Bolt.');
 
-        $paymentInfoMock =  $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder','getCcTransId'])
-            ->getMockForAbstractClass();
+        $paymentInfoMock =  $this->getMockBuilderWithMethods(InfoInterface::class, ['getId', 'getOrder','getCcTransId'])
+            ->getMock();
         $paymentInfoMock->method('getAdditionalInformation')->with('real_transaction_id')
             ->willReturn(null);
         $paymentInfoMock->expects($this->once())->method('getOrder')->willReturn($this->orderMock);
@@ -548,7 +547,7 @@ class PaymentTest extends BoltTestCase
         $orderMock = $this->getMockBuilder(Order::class)->disableOriginalConstructor()->getMock();
         $orderMock->method('getId')->willReturn('order-123');
         $orderMock->method('getStoreCurrencyCode')->willReturn('USD');
-        $paymentMock = $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder', 'getCreditMemo', 'getCcTransId' ])->getMockForAbstractClass();
+        $paymentMock = $this->getMockBuilderWithMethods(InfoInterface::class, ['getId', 'getOrder', 'getCreditMemo', 'getCcTransId' ])->getMock();
         $paymentMock->method('getId')->willReturn('payment-1');
         $paymentMock->method('getAdditionalInformation')->with('real_transaction_id')->willReturn('ABCD-1234-XXXX');
         $creditMemoMock = $this->createMock(Order\Creditmemo::class);
@@ -568,11 +567,11 @@ class PaymentTest extends BoltTestCase
         ///////////////////////////////////////////////////////////////////////////////////
         ///  Test rounding amount before sending API. The amount will be rounded to 9999
         $this->apiHelper->expects($this->once())->method('buildRequest')
-            ->will($this->returnCallback(
+            ->willReturnCallback(
                 function ($data) {
                     $this->assertEquals(9999, $data->getApiData()['amount']);
                 }
-            ));
+            );
         //////////////////////////////////////////////////////////////////////////////////
 
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
@@ -593,11 +592,11 @@ class PaymentTest extends BoltTestCase
         );
 
         $this->apiHelper->expects($this->once())->method('buildRequest')
-            ->will($this->returnCallback(
+            ->willReturnCallback(
                 function ($data) {
                     $this->assertTrue($data->getApiData()['skip_hook_notification']);
                 }
-            ));
+            );
 
         $this->currentMock->refund($this->paymentMock, 100);
     }
@@ -615,12 +614,12 @@ class PaymentTest extends BoltTestCase
         );
         $this->orderHelper->expects($this->once())->method('updateOrderPayment');
         $this->apiHelper->expects($this->once())->method('buildRequest')
-                        ->will($this->returnCallback(
+                        ->willReturnCallback(
                             function ($data) {
                                 $this->assertEquals("CAD", $data->getApiData()['currency']);
                                 $this->assertEquals("20000", $data->getApiData()['amount']);
                             }
-                        ));
+                        );
 
         $this->currentMock->refund($this->paymentMock, 100);
     }
@@ -674,9 +673,8 @@ class PaymentTest extends BoltTestCase
         $this->orderMock->expects($this->once())->method('getOrderCurrencyCode')->willReturn('USD');
         $this->apiHelper->expects($this->never())->method('buildRequest');
         $this->apiHelper->expects($this->never())->method('sendRequest');
-        $paymentMock = $this->getMockBuilder(InfoInterface::class)
-            ->setMethods(['getOrder', 'getCreditMemo' ])
-            ->getMockForAbstractClass();
+        $paymentMock = $this->getMockBuilderWithMethods(InfoInterface::class, ['getOrder', 'getCreditMemo' ])
+            ->getMock();
         $paymentMock->expects($this->once())->method('getOrder')->willReturn($this->orderMock);
         $creditMemoMock = $this->createMock(Order\Creditmemo::class);
         $paymentMock->expects($this->once())->method('getCreditMemo')->willReturn($creditMemoMock);
@@ -709,9 +707,8 @@ class PaymentTest extends BoltTestCase
         $this->expectException(LocalizedException::class);
         $this->expectExceptionMessage('Please wait while transaction gets updated from Bolt.');
 
-        $paymentInfoMock =  $this->getMockBuilder(InfoInterface::class)
-            ->setMethods(['getId', 'getOrder', 'getCreditMemo', 'getCcTransId'])
-            ->getMockForAbstractClass();
+        $paymentInfoMock =  $this->getMockBuilderWithMethods(InfoInterface::class, ['getId', 'getOrder', 'getCreditMemo', 'getCcTransId'])
+            ->getMock();
         $paymentInfoMock->method('getAdditionalInformation')->with('real_transaction_id')
             ->willReturn(null);
         $paymentInfoMock->method('getOrder')->willReturn($this->orderMock);
@@ -880,8 +877,8 @@ class PaymentTest extends BoltTestCase
     #[Test]
     public function reviewPayment_noTransaction()
     {
-        $paymentInfoMock =  $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder', 'getCcTransId'])
-            ->getMockForAbstractClass();
+        $paymentInfoMock =  $this->getMockBuilderWithMethods(InfoInterface::class, ['getId', 'getOrder', 'getCcTransId'])
+            ->getMock();
         $paymentInfoMock->method('getAdditionalInformation')->with('real_transaction_id')
             ->willReturn(null);
         $this->bugsnag->expects($this->once())->method('notifyException')
@@ -991,17 +988,14 @@ class PaymentTest extends BoltTestCase
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->metricsClient = $this->createMock(MetricsClient::class);
         $this->cartHelper = $this->createMock(CartHelper::class);
-        $this->transactionRepository = $this->getMockBuilder(TransactionRepository::class)
+        $this->transactionRepository = $this->getMockBuilderWithMethods(TransactionRepository::class, ['getByTransactionId'])
             ->disableOriginalConstructor()
-            ->setMethods(['getByTransactionId'])
             ->getMock();
-        $this->authSession = $this->getMockBuilder(Session::class)
+        $this->authSession = $this->getMockBuilderWithMethods(Session::class, ['getUser'])
             ->disableOriginalConstructor()
-            ->setMethods(['getUser'])
             ->getMock();
-        $this->paymentInfo = $this->getMockBuilder(InfoInterface::class)
-            ->setMethods(['getCcStatusDescription'])
-            ->getMockForAbstractClass();
+        $this->paymentInfo = $this->getMockBuilderWithMethods(InfoInterface::class, ['getCcStatusDescription'])
+            ->getMock();
 
         $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
         $this->dataObjectFactory->method('create')->willReturn(new DataObject());
@@ -1010,9 +1004,8 @@ class PaymentTest extends BoltTestCase
         $this->orderMock = $this->getMockBuilder(Order::class)->disableOriginalConstructor()->getMock();
         $this->orderMock->method('getId')->willReturn('order-123');
         $this->orderMock->method('getStoreCurrencyCode')->willReturn('USD');
-        $this->paymentMock = $this->getMockBuilder(InfoInterface::class)
-            ->setMethods(['getId', 'getOrder', 'getCreditMemo', 'getCcTransId' ])
-            ->getMockForAbstractClass();
+        $this->paymentMock = $this->getMockBuilderWithMethods(InfoInterface::class, ['getId', 'getOrder', 'getCreditMemo', 'getCcTransId' ])
+            ->getMock();
         $this->paymentMock->method('getId')->willReturn('payment-1');
         $this->paymentMock->method('getAdditionalInformation')
             ->with('real_transaction_id')
@@ -1028,8 +1021,7 @@ class PaymentTest extends BoltTestCase
      */
     protected function initCurrentMock()
     {
-        $this->currentMock = $this->getMockBuilder(BoltPayment::class)
-                                  ->setMethods(['getInfoInstance', 'isActive'])
+        $this->currentMock = $this->getMockBuilderWithMethods(BoltPayment::class, ['getInfoInstance', 'isActive'])
                                   ->setConstructorArgs([
                                     $this->context,
                                     $this->registry,
@@ -1054,10 +1046,10 @@ class PaymentTest extends BoltTestCase
                           ->willReturn($this->paymentInfo);
         
         $this->currentMock->method('isActive')
-                          ->will($this->returnCallback(function ($arg) {
+                          ->willReturnCallback(function ($arg) {
                               global $boltPaymentTestActive;
                               return $boltPaymentTestActive;
-                          }));
+                          });
 
         return $this->currentMock;
     }
@@ -1069,12 +1061,12 @@ class PaymentTest extends BoltTestCase
     private function mockApiResponse($path, $responseJSON)
     {
         $this->apiHelper->expects($this->once())->method('buildRequest')
-            ->will($this->returnCallback(
+            ->willReturnCallback(
                 function ($data) use ($path) {
                     $this->assertEquals($path, $data->getDynamicApiUrl());
                     return new Request();
                 }
-            ));
+            );
         $response = new Response();
         $response->setResponse(json_decode($responseJSON));
         $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn($response);

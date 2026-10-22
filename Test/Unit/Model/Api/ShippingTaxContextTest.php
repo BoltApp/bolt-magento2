@@ -144,7 +144,7 @@ class ShippingTaxContextTest extends BoltTestCase
     #[Test]
     public function getBugsnag_always_returnsBugsnag()
     {
-        $this->assertEquals($this->objectManager->create(Bugsnag::class), $this->shippingTaxContext->getBugsnag());
+        $this->assertInstanceOf(Bugsnag::class, $this->shippingTaxContext->getBugsnag());
     }
 
     /**

@@ -132,7 +132,7 @@ class CustomFieldsHandlerTest extends BoltTestCase
     #[DataProvider('handleCustomFieldsDataProvider')]
     public function handle($customFields, $comment, $needSubscribe)
     {
-        $subscriberFactory = $this->createPartialMock(SubscriberFactory::class,['create','subscribeCustomerById']);
+        $subscriberFactory = $this->createPartialMockWithMethods(SubscriberFactory::class,['create','subscribeCustomerById']);
         if ($needSubscribe) {
             $subscriber = $this->createMock(\Magento\Newsletter\Model\Subscriber::class);
             $subscriberFactory->method('create')->willReturn($subscriber);

@@ -273,26 +273,22 @@ class JsProductPageTest extends BoltTestCase
         $contextMock = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);
         $configHelper = $this->createMock(HelperConfig::class);
 
-        $requestMock = $this->getMockBuilder(Http::class)
+        $requestMock = $this->getMockBuilderWithMethods(Http::class, ['getFullActionName'])
             ->disableOriginalConstructor()
-            ->setMethods(['getFullActionName'])
             ->getMock();
 
         $contextMock->method('getRequest')->willReturn($requestMock);
 
-        $product = $this->getMockBuilder(Product::class)
+        $product = $this->getMockBuilderWithMethods(Product::class, ['getExtensionAttributes', 'getStockItem', 'getTypeId', 'getId', 'getTypeInstance', 'getChildrenIds', 'getAttributes','getBoltPpc'])
             ->disableOriginalConstructor()
-            ->setMethods(['getExtensionAttributes', 'getStockItem', 'getTypeId', 'getId', 'getTypeInstance', 'getChildrenIds', 'getAttributes','getBoltPpc'])
             ->getMock();
 
-        $productViewMock = $this->getMockBuilder(ProductView::class)
+        $productViewMock = $this->getMockBuilderWithMethods(ProductView::class, ['getProduct'])
             ->disableOriginalConstructor()
-            ->setMethods(['getProduct'])
             ->getMock();
         $productViewMock->method('getProduct')->willReturn($product);
 
-        $block = $this->getMockBuilder(BlockJsProductPage::class)
-            ->setMethods(['configHelper', 'getUrl', 'getBoltPopupErrorMessage'])
+        $block = $this->getMockBuilderWithMethods(BlockJsProductPage::class, ['configHelper', 'getUrl', 'getBoltPopupErrorMessage'])
             ->setConstructorArgs(
                 [
                     $contextMock,

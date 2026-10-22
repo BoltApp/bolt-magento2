@@ -212,7 +212,7 @@ class UpdateCartContextTest extends BoltTestCase
         $this->cartRepositoryInterface = $this->createMock(CartRepositoryInterface::class);
         $this->featureSwitches = $this->createMock(Decider::class);
 
-        $this->currentMock = $this->getMockBuilder(UpdateCartContext::class)
+        $this->currentMock = $this->getMockBuilderWithMethods(UpdateCartContext::class, null)
             ->setConstructorArgs(
                 [
                     $this->request,
@@ -242,7 +242,6 @@ class UpdateCartContextTest extends BoltTestCase
                     $this->cache
                 ]
             )
-            ->enableProxyingToOriginalMethods()
             ->getMock();
     }
 

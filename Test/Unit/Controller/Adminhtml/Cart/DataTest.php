@@ -236,7 +236,7 @@ class DataTest extends BoltTestCase
             ->with(self::STORE_ID)
             ->willReturn(self::CDN_URL_SANDBOX);
 
-        $this->quoteMock = $this->createPartialMock(
+        $this->quoteMock = $this->createPartialMockWithMethods(
             \Magento\Quote\Model\Quote::class,
             [
                 'getStoreId',
@@ -252,14 +252,13 @@ class DataTest extends BoltTestCase
         $this->resultJsonFactory->method('create')->willReturn($this->resultJsonMock);
 
         $this->dataObjectFactoryMock = $this->createMock(DataObjectFactory::class);
-        $this->sessionMock = $this->createPartialMock(
+        $this->sessionMock = $this->createPartialMockWithMethods(
             \Magento\Backend\Model\Session\Quote::class,
             ['getStoreId', 'getStore']
         );
-        $this->orderCreateModel = $this->getMockBuilder(
+        $this->orderCreateModel = $this->getMockBuilderWithMethods(
             \Magento\Sales\Model\AdminOrder\Create::class
-        )->disableOriginalConstructor()
-            ->setMethods([])
+        , [])->disableOriginalConstructor()
             ->getMock();
         $this->quoteBillingAddressMock = $this->createMock(\Magento\Quote\Model\Quote\Address::class);
         $this->productHelperMock = $this->createMock(Product::class);
@@ -268,13 +267,13 @@ class DataTest extends BoltTestCase
         $this->resultForwardFactoryMock = $this->createMock(ForwardFactory::class);
         $this->storeManagerMock = $this->createMock(StoreManagerInterface::class);
         $this->coreRegistryMock = $this->createMock(Registry::class);
-        $this->coreRegistryMock = $this->createPartialMock(
+        $this->coreRegistryMock = $this->createPartialMockWithMethods(
             Registry::class,
             ['unregister', 'register']
         );
-        $this->eventsForThirdPartyModulesMock = $this->createPartialMock(EventsForThirdPartyModules::class, ['dispatchEvent']);
+        $this->eventsForThirdPartyModulesMock = $this->createPartialMockWithMethods(EventsForThirdPartyModules::class, ['dispatchEvent']);
         $this->eventsForThirdPartyModulesMock->method('dispatchEvent')->willReturnSelf();
-        $this->currentMock = $this->getMockBuilder(Data::class)
+        $this->currentMock = $this->getMockBuilderWithMethods(Data::class, ['_getSession', '_initSession', '_getOrderCreateModel'])
             ->setConstructorArgs(
                 [
                     $this->context,
@@ -288,7 +287,6 @@ class DataTest extends BoltTestCase
                     $this->eventsForThirdPartyModulesMock
                 ]
             )
-            ->setMethods(['_getSession', '_initSession', '_getOrderCreateModel'])
             ->getMock();
         $this->currentMock->method('_getSession')->willReturn($this->sessionMock);
         $this->currentMock->method('_getOrderCreateModel')->willReturn($this->orderCreateModel);
@@ -367,8 +365,7 @@ class DataTest extends BoltTestCase
                 ]
             )
         );
-        $currentMock = $this->getMockBuilder(Data::class)
-            ->setMethods(['getRequest', '_getSession', '_initSession', '_getOrderCreateModel'])
+        $currentMock = $this->getMockBuilderWithMethods(Data::class, ['getRequest', '_getSession', '_initSession', '_getOrderCreateModel'])
             ->setConstructorArgs(
                 [
                     $this->context,
@@ -405,8 +402,7 @@ class DataTest extends BoltTestCase
         $this->sessionMock->method('getStore')->willReturn($storeMock);
         $this->sessionMock->method('getStoreId')->willReturn(self::STORE_ID);
 
-        $boltpayOrder = $this->getMockBuilder(Response::class)
-            ->setMethods(['getResponse'])
+        $boltpayOrder = $this->getMockBuilderWithMethods(Response::class, ['getResponse'])
             ->disableOriginalConstructor()
             ->getMock();
         $boltpayOrder->method('getResponse')
@@ -427,8 +423,7 @@ class DataTest extends BoltTestCase
                 ]
             )
         );
-        $currentMock = $this->getMockBuilder(Data::class)
-            ->setMethods(['getRequest', '_getSession', '_initSession', '_getOrderCreateModel'])
+        $currentMock = $this->getMockBuilderWithMethods(Data::class, ['getRequest', '_getSession', '_initSession', '_getOrderCreateModel'])
             ->setConstructorArgs(
                 [
                     $this->context,
@@ -476,8 +471,7 @@ class DataTest extends BoltTestCase
                 ]
             )
         );
-        $currentMock = $this->getMockBuilder(Data::class)
-            ->setMethods(['getRequest', '_getSession', '_initSession', '_getOrderCreateModel'])
+        $currentMock = $this->getMockBuilderWithMethods(Data::class, ['getRequest', '_getSession', '_initSession', '_getOrderCreateModel'])
             ->setConstructorArgs(
                 [
                     $this->context,

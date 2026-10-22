@@ -130,14 +130,13 @@ class SaveTest extends BoltTestCase
 
         $expectedData = ['success_url' => self::URL];
 
-        $order = $this->getMockBuilder(OrderInterface::class)
-            ->setMethods([
+        $order = $this->getMockBuilderWithMethods(OrderInterface::class, [
                 'getId',
                 'getIncrementId',
                 'getStatus'
             ])
             ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
+            ->getMock();
         $order->method('getId')->willReturn(self::ORDER_ID);
         $order->method('getIncrementId')->willReturn(self::INCREMENT_ID);
         $order->method('getStatus')->willreturn(self::ORDER_STATUS);
@@ -161,10 +160,9 @@ class SaveTest extends BoltTestCase
 
         $request = $this->createMock(RequestInterface::class);
         $request->method('getParam')
-            ->will($this->returnValueMap($map));
+            ->willReturnMap($map);
 
-        $checkout = $this->getMockBuilder(Session::class)
-            ->setMethods([
+        $checkout = $this->getMockBuilderWithMethods(Session::class, [
                 'setLastQuoteId',
                 'setLastSuccessQuoteId',
                 'clearHelperData',
@@ -184,8 +182,7 @@ class SaveTest extends BoltTestCase
         $checkout->expects($this->once())->method('setLastRealOrderId')->with(self::INCREMENT_ID)->willReturnSelf();
         $checkout->expects($this->once())->method('setLastOrderStatus')->with(self::ORDER_STATUS)->willReturnSelf();
 
-        $save = $this->getMockBuilder(Save::class)
-            ->setMethods([
+        $save = $this->getMockBuilderWithMethods(Save::class, [
                 'getRequest'
             ])
             ->setConstructorArgs([
@@ -225,8 +222,7 @@ class SaveTest extends BoltTestCase
 
         $this->bugsnag->expects($this->once())->method('notifyException')->with($exception);
 
-        $save = $this->getMockBuilder(Save::class)
-            ->setMethods(['getRequest'])
+        $save = $this->getMockBuilderWithMethods(Save::class, ['getRequest'])
             ->setConstructorArgs([
                 $this->context,
                 $this->resultJsonFactory,

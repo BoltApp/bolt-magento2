@@ -112,7 +112,7 @@ class ReceivedUrlTest extends BoltTestCase
         $this->logHelper = $this->createMock(LogHelper::class);
         $this->checkoutSession = $this->createMock(CheckoutSession::class);
         $this->orderHelper = $this->createMock(OrderHelper::class);
-        $this->order = $this->createPartialMock(Order::class, ['getStoreId','getId','getStore']);
+        $this->order = $this->createPartialMockWithMethods(Order::class, ['getStoreId','getId','getStore']);
         $this->cache = $this->createMock(CacheInterface::class);
         $this->serialize = $this->createMock(Serialize::class);
         $this->currentMock = $this->getMockBuilder(ReceivedUrl::class)
@@ -127,7 +127,6 @@ class ReceivedUrlTest extends BoltTestCase
                 $this->cache,
                 $this->serialize
             ])
-            ->disableProxyingToOriginalMethods()
             ->getMock();
     }
 
@@ -194,8 +193,8 @@ class ReceivedUrlTest extends BoltTestCase
     public function _processUrlKeys_always_returnsTrue()
     {
         /** @var PHPUnit_Framework_MockObject_MockObject|ReceivedUrl $currentMock */
-        $currentMock = $this->getMockBuilder(ReceivedUrl::class)
-            ->disableOriginalConstructor()->setMethods(null)->getMock();
+        $currentMock = $this->getMockBuilderWithMethods(ReceivedUrl::class, null)
+            ->disableOriginalConstructor()->getMock();
         static::assertTrue($currentMock->_processUrlKeys());
     }
 }

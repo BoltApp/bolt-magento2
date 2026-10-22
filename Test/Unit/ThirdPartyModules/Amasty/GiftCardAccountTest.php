@@ -166,53 +166,46 @@ class GiftCardAccountTest extends BoltTestCase
      */
     protected function setUpInternal()
     {
-        $this->giftcardAccountRepositoryMock = $this->getMockBuilder(
+        $this->giftcardAccountRepositoryMock = $this->getMockBuilderWithMethods(
             '\Amasty\GiftCardAccount\Api\GiftCardAccountRepositoryInterface'
-        )
-            ->disableAutoload()
+        , ['getById'])
             ->disableOriginalClone()
             ->disableOriginalConstructor()
-            ->setMethods(['getById'])
             ->getMock();
-        $this->giftcardQuoteRepositoryMock = $this->getMockBuilder(
+        $this->giftcardQuoteRepositoryMock = $this->getMockBuilderWithMethods(
             '\Amasty\GiftCardAccount\Api\GiftCardQuoteRepositoryInterface'
-        )
-            ->disableAutoload()
+        , ['getByQuoteId'])
             ->disableOriginalClone()
             ->disableOriginalConstructor()
-            ->setMethods(['getByQuoteId'])
             ->getMock();
-        $this->giftcardQuoteMock = $this->getMockBuilder(
+        $this->giftcardQuoteMock = $this->getMockBuilderWithMethods(
             '\Amasty\GiftCardAccount\Api\GiftCardQuoteRepositoryInterface'
-        )
-            ->disableAutoload()
+        , ['getGiftCards'])
             ->disableOriginalClone()
             ->disableOriginalConstructor()
-            ->setMethods(['getGiftCards'])
             ->getMock();
-        $this->productMock = $this->createPartialMock(Product::class, ['getDescription', 'getTypeInstance']);
+        $this->productMock = $this->createPartialMockWithMethods(Product::class, ['getDescription', 'getTypeInstance']);
         $this->productMock->method('getTypeInstance')->willReturnSelf();
         $this->bugsnagHelperMock = $this->createMock(\Bolt\Boltpay\Helper\Bugsnag::class);
         $this->discountHelper = $this->createMock(\Bolt\Boltpay\Helper\Discount::class);
         $this->resourceConnection = $this->createMock(\Magento\Framework\App\ResourceConnection::class);
-        $this->giftcardRepositoryMock = $this->getMockBuilder(
+        $this->giftcardRepositoryMock = $this->getMockBuilderWithMethods(
             '\Amasty\GiftCardAccount\Model\GiftCardAccount\Repository'
-        )->setMethods(['save', 'getById'])->disableOriginalConstructor()->disableAutoload()->getMock();
-        $this->giftcardOrderRepositoryMock = $this->getMockBuilder(
+        , ['save', 'getById'])->disableOriginalConstructor()->getMock();
+        $this->giftcardOrderRepositoryMock = $this->getMockBuilderWithMethods(
             '\Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Repository'
-        )->setMethods(['getByOrderId'])->disableOriginalConstructor()->disableAutoload()->getMock();
+        , ['getByOrderId'])->disableOriginalConstructor()->getMock();
         $this->orderMock = $this->createMock(\Magento\Sales\Model\Order::class);
         $this->orderMock->method('getId')->willReturn(self::ORDER_ID);
-        $this->quoteAddressTotal = $this->createPartialMock(Total::class, ['getValue', 'setValue', 'getTitle']);
+        $this->quoteAddressTotal = $this->createPartialMockWithMethods(Total::class, ['getValue', 'setValue', 'getTitle']);
         $this->featureSwitches = $this->createMock(Decider::class);
 
-        $this->currentMock = $this->getMockBuilder(GiftCardAccount::class)
-            ->setMethods(null)->setConstructorArgs(
+        $this->currentMock = $this->getMockBuilderWithMethods(GiftCardAccount::class, null)->setConstructorArgs(
                 [$this->bugsnagHelperMock, $this->discountHelper, $this->resourceConnection, $this->featureSwitches]
             )->getMock();
-        $this->giftcardOrderExtensionMock = $this->getMockBuilder(
+        $this->giftcardOrderExtensionMock = $this->getMockBuilderWithMethods(
             '\Amasty\GiftCardAccount\Model\GiftCardExtension\Order\Order'
-        )->setMethods(['getGiftCards'])->disableOriginalConstructor()->disableAutoload()->getMock();
+        , ['getGiftCards'])->disableOriginalConstructor()->getMock();
     }
 
     /**
@@ -274,7 +267,7 @@ class GiftCardAccountTest extends BoltTestCase
         $giftcard2 = $this->createGiftcardMock();
         $giftcard3 = $this->createGiftcardMock();
         $this->giftcardRepositoryMock->expects(static::exactly(3))->method('getById')
-            ->withConsecutive([3], [5])->willReturnMap(
+            ->with(...self::consecutiveArgs([3], [5]))->willReturnMap(
                 [
                     [3, $giftcard1],
                     [5, $giftcard2],
@@ -294,7 +287,7 @@ class GiftCardAccountTest extends BoltTestCase
             ->with((float)(232.23 + 521.23))->willThrowException($exception);
         $giftcard3->expects(static::once())->method('getCurrentValue')->willReturn(521.23);
         $this->giftcardRepositoryMock->expects(static::exactly(2))->method('save')
-            ->withConsecutive([$giftcard1], [$giftcard3]);
+            ->with(...self::consecutiveArgs([$giftcard1], [$giftcard3]));
         $this->bugsnagHelperMock->expects(static::once())->method('notifyException')->with($exception);
         $this->currentMock->beforeFailedPaymentOrderSave(
             $this->giftcardRepositoryMock,
@@ -356,7 +349,9 @@ class GiftCardAccountTest extends BoltTestCase
             $this->getQuoteMock(),
             $paymentOnly
         );
-        static::assertEquals($diffResult, $diff);
+        // amounts are floats: PHPUnit 9's assertEquals() let them differ by up to 1e-10, PHPUnit 10+ compares
+        // them exactly
+        static::assertEqualsWithDelta($diffResult, $diff, 1e-10);
         $expectedDiscountAmount = 100 * (12.34 + 543.21 + 1.23);
         $expectedTotalAmount = $totalAmount - $expectedDiscountAmount;
         $expectedDiscount = [
@@ -386,7 +381,7 @@ class GiftCardAccountTest extends BoltTestCase
             ],
         ];
         static::assertEquals($expectedDiscount, $discounts);
-        static::assertEquals($expectedTotalAmount, $totalAmountResult);
+        static::assertEqualsWithDelta($expectedTotalAmount, $totalAmountResult, 1e-10);
     }
 
 
@@ -398,10 +393,8 @@ class GiftCardAccountTest extends BoltTestCase
      */
     private function createGiftcardMock($currentValue = null, $code = null)
     {
-        $accountMock = $this->getMockBuilder('\Amasty\GiftCardAccount\Model\GiftCardAccount\Account')
-            ->setMethods(['setCurrentValue', 'getCurrentValue', 'setStatus', 'getCodeModel', 'getCode'])
+        $accountMock = $this->getMockBuilderWithMethods('\Amasty\GiftCardAccount\Model\GiftCardAccount\Account', ['setCurrentValue', 'getCurrentValue', 'setStatus', 'getCodeModel', 'getCode'])
             ->disableOriginalConstructor()
-            ->disableAutoload()
             ->disableOriginalClone()
             ->getMock();
         if ($currentValue !== null) {
@@ -421,9 +414,7 @@ class GiftCardAccountTest extends BoltTestCase
      */
     private function getAddressMock()
     {
-        $addressMock = $this->getMockBuilder(Quote\Address::class)
-            ->setMethods(
-                [
+        $addressMock = $this->getMockBuilderWithMethods(Quote\Address::class, [
                     'getFirstname',
                     'getLastname',
                     'getCompany',
@@ -437,8 +428,7 @@ class GiftCardAccountTest extends BoltTestCase
                     'getDiscountAmount',
                     'getCouponCode',
                     'getDiscountDescription'
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
         $this->setUpAddressMock($addressMock);
@@ -510,8 +500,7 @@ class GiftCardAccountTest extends BoltTestCase
             'getData',
             'getCouponCode'
         ];
-        $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods($quoteMethods)
+        $quote = $this->getMockBuilderWithMethods(Quote::class, $quoteMethods)
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -535,9 +524,7 @@ class GiftCardAccountTest extends BoltTestCase
      */
     private function getQuoteItemMock()
     {
-        $quoteItem = $this->getMockBuilder(Item::class)
-            ->setMethods(
-                [
+        $quoteItem = $this->getMockBuilderWithMethods(Item::class, [
                     'getSku',
                     'getQty',
                     'getCalculationPrice',
@@ -545,8 +532,7 @@ class GiftCardAccountTest extends BoltTestCase
                     'getIsVirtual',
                     'getProductId',
                     'getProduct'
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
         $quoteItem->method('getName')->willReturn('Test Product');

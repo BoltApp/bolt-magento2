@@ -73,7 +73,7 @@ class LoginPostPluginTest extends BoltTestCase
         $this->customerSession = $this->createMock(CustomerSession::class);
         $this->checkoutSession = $this->createMock(CheckoutSession::class);
         $this->decider = $this->createMock(CheckoutSession::class);
-        $this->resultFactory = $this->createPartialMock(
+        $this->resultFactory = $this->createPartialMockWithMethods(
             ResultFactory::class,
             [
                 'create',
@@ -85,12 +85,11 @@ class LoginPostPluginTest extends BoltTestCase
         $this->storeManager = $this->createMock(StoreManager::class);
         $this->configHelper = $this->createMock(Config::class);
         $this->jsonSerializer = $this->createMock(JsonSerializer::class);
-        $this->decider = $this->createPartialMock(
+        $this->decider = $this->createPartialMockWithMethods(
             Decider::class,
             ['ifShouldDisableRedirectCustomerToCartPageAfterTheyLogIn']
         );
-        $this->plugin = $this->getMockBuilder(LoginPostPlugin::class)
-            ->setMethods([
+        $this->plugin = $this->getMockBuilderWithMethods(LoginPostPlugin::class, [
                 'shouldRedirectToCartPage',
                 'setBoltInitiateCheckout',
                 'notifyException'

@@ -66,8 +66,7 @@ class OrderPluginTest extends BoltTestCase
         $this->plugin = $this->objectManager->create(OrderPlugin::class);
 
         /** @var callable $callback */
-        $this->callback = $callback = $this->getMockBuilder(\stdClass::class)
-            ->setMethods(['__invoke'])->getMock();
+        $this->callback = $callback = $this->getMockBuilderWithMethods(\stdClass::class, ['__invoke'])->getMock();
         $this->proceed = function () use ($callback) {
             return $callback();
         };
@@ -192,10 +191,10 @@ class OrderPluginTest extends BoltTestCase
     #[DataProvider('dataProvider_beforeSetStatus_withPaymentMethodIsBoltPay')]
     public function beforeSetStatus_withPaymentMethodIsBoltPay($stateDefaultStatus, $statusParameter, $orderStatus, $expected)
     {
-        $order = $this->createPartialMock(Order::class, [
+        $order = $this->createPartialMockWithMethods(Order::class, [
             'getPayment', 'getConfig', 'getStateDefaultStatus', 'getStatus',
         ]);
-        $payment = $this->createPartialMock(Payment::class, ['getMethod']);
+        $payment = $this->createPartialMockWithMethods(Payment::class, ['getMethod']);
         $order->expects(self::exactly(2))->method('getPayment')->willReturn($payment);
         $payment->expects(self::once())->method('getMethod')->willReturn('boltpay');
         $order->expects(self::any())->method('getConfig')->willReturnSelf();
@@ -278,8 +277,8 @@ class OrderPluginTest extends BoltTestCase
     #[Test]
     public function aroundPlace_ifBoltPaymentAndStateNew_proceedCallbackCalled()
     {
-        $order = $this->createPartialMock(Order::class, ['getPayment', 'getState']);
-        $payment = $this->createPartialMock(Payment::class, ['getMethod']);
+        $order = $this->createPartialMockWithMethods(Order::class, ['getPayment', 'getState']);
+        $payment = $this->createPartialMockWithMethods(Payment::class, ['getMethod']);
         $payment->method('getMethod')->willReturn('other_method');
         $order->method('getPayment')->willReturn($payment);
         $order->method('getState')->willReturn(Order::STATE_NEW);
@@ -330,8 +329,8 @@ class OrderPluginTest extends BoltTestCase
     #[Test]
     public function afterSetState_ifNotBoltPayment_orderPlaceNotCalled()
     {
-        $order = $this->createPartialMock(Order::class, ['getPayment', 'getState', 'place',]);
-        $payment = $this->createPartialMock(Payment::class, ['getMethod']);
+        $order = $this->createPartialMockWithMethods(Order::class, ['getPayment', 'getState', 'place',]);
+        $payment = $this->createPartialMockWithMethods(Payment::class, ['getMethod']);
         $payment->method('getMethod')->willReturn('other_method');
         $order->method('getPayment')->willReturn($payment);
         $order->method('getState');
@@ -348,8 +347,8 @@ class OrderPluginTest extends BoltTestCase
     #[Test]
     public function afterSetState_ifBoltPaymentAndOrderStateNotNew_orderPlaceNotCalled()
     {
-        $order = $this->createPartialMock(Order::class, ['getPayment', 'getState', 'place',]);
-        $payment = $this->createPartialMock(Payment::class, ['getMethod']);
+        $order = $this->createPartialMockWithMethods(Order::class, ['getPayment', 'getState', 'place',]);
+        $payment = $this->createPartialMockWithMethods(Payment::class, ['getMethod']);
         $payment->method('getMethod')->willReturn(BoltPayment::METHOD_CODE);
         $order->method('getPayment')->willReturn($payment);
         $order->method('getState')->willReturn('other_state');
@@ -366,8 +365,8 @@ class OrderPluginTest extends BoltTestCase
     #[Test]
     public function afterSetState_ifBoltPaymentAndOrderStateNewAndOldOrderStateNotPendingPayment_orderPlaceNotCalled()
     {
-        $order = $this->createPartialMock(Order::class, ['getPayment', 'getState', 'place',]);
-        $payment = $this->createPartialMock(Payment::class, ['getMethod']);
+        $order = $this->createPartialMockWithMethods(Order::class, ['getPayment', 'getState', 'place',]);
+        $payment = $this->createPartialMockWithMethods(Payment::class, ['getMethod']);
         $payment->method('getMethod')->willReturn(BoltPayment::METHOD_CODE);
         $order->method('getPayment')->willReturn($payment);
         $order->method('getState')->willReturn(Order::STATE_NEW);
@@ -385,8 +384,8 @@ class OrderPluginTest extends BoltTestCase
     #[Test]
     public function afterSetState_ifBoltPaymentAndOrderStateNewAndOldOrderStatePendingPayment_orderPlaceCalled()
     {
-        $order = $this->createPartialMock(Order::class, ['getPayment', 'getState', 'place',]);
-        $payment = $this->createPartialMock(Payment::class, ['getMethod']);
+        $order = $this->createPartialMockWithMethods(Order::class, ['getPayment', 'getState', 'place',]);
+        $payment = $this->createPartialMockWithMethods(Payment::class, ['getMethod']);
         $payment->expects(self::once())->method('getMethod')->willReturn(BoltPayment::METHOD_CODE);
         $order->expects(self::exactly(2))->method('getPayment')->willReturn($payment);
         $order->expects(self::once())->method('getState')->willReturn(Order::STATE_NEW);

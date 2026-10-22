@@ -80,8 +80,7 @@ class SSOHelperTest extends BoltTestCase
         $this->storeManager = $this->createMock(StoreManagerInterface::class);
         $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
         $this->apiHelper = $this->createMock(ApiHelper::class);
-        $this->currentMock = $this->getMockBuilder(SSOHelper::class)
-            ->setMethods(['getOAuthConfiguration', 'exchangeToken', 'parseAndValidateJWT', 'getPayload'])
+        $this->currentMock = $this->getMockBuilderWithMethods(SSOHelper::class, ['getOAuthConfiguration', 'exchangeToken', 'parseAndValidateJWT', 'getPayload'])
             ->setConstructorArgs([
                 $this->context,
                 $this->configHelper,
@@ -164,7 +163,7 @@ class SSOHelperTest extends BoltTestCase
         $store->expects(static::once())->method('getId')->willReturn(1);
         $this->storeManager->expects(static::once())->method('getStore')->willReturn($store);
         $this->configHelper->expects(static::once())->method('getApiKey')->with(1)->willReturn('test api key');
-        $dataObject = $this->createPartialMock(DataObject::class, ['setDynamicApiUrl', 'setApiKey', 'setApiData', 'setContentType']);
+        $dataObject = $this->createPartialMockWithMethods(DataObject::class, ['setDynamicApiUrl', 'setApiKey', 'setApiData', 'setContentType']);
         $dataObject->expects(static::once())->method('setDynamicApiUrl')->with('oauth/token');
         $dataObject->expects(static::once())->method('setApiKey')->with('test api key');
         $dataObject->expects(static::once())->method('setApiData')->with('grant_type=authorization_code&code=abc&scope=openid&client_id=clientid&client_secret=clientsecret');
@@ -172,7 +171,7 @@ class SSOHelperTest extends BoltTestCase
         $this->dataObjectFactory->expects(static::once())->method('create')->willReturn($dataObject);
         $request = $this->createMock(Request::class);
         $this->apiHelper->expects(static::once())->method('buildRequest')->with($dataObject)->willReturn($request);
-        $response = $this->createPartialMock(Response::class, ['getResponse']);
+        $response = $this->createPartialMockWithMethods(Response::class, ['getResponse']);
         $response->expects(static::once())->method('getResponse')->willReturn($responseBody);
         $this->apiHelper->expects(static::once())->method('sendRequest')->with($request)->willReturn($response);
         $this->assertEquals($expected, TestHelper::invokeMethod($this->currentMock, 'exchangeToken', ['abc', 'openid', 'clientid', 'clientsecret']));

@@ -116,7 +116,7 @@ class CreditCardTest extends BoltTestCase
     #[Test]
     public function getFormKey()
     {
-        $formKey = $this->createPartialMock(FormKey::class, ['getFormKey']);
+        $formKey = $this->createPartialMockWithMethods(FormKey::class, ['getFormKey']);
         $formKey->method('getFormKey')->willReturn('form_key');
 
         TestHelper::setInaccessibleProperty($this->block, 'formKey', $formKey);

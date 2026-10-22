@@ -113,14 +113,13 @@ class ReceivedUrlTraitTest extends BoltTestCase
 
     public function setUpInternal()
     {
-        $this->currentMock = $this->getMockBuilder(ReceivedUrlTrait::class)
+        $this->currentMock = $this->getMockBuilderForAbstractClass(ReceivedUrlTraitHost::class, ['getRequest', 'redirectToAdminIfNeeded', 'getRedirectUrl', '_redirect'])
             ->enableOriginalConstructor()
-            ->setMethods(['getRequest', 'redirectToAdminIfNeeded', 'getRedirectUrl', '_redirect'])
-            ->getMockForTrait();
-        $this->cartHelper = $this->createPartialMock(Cart::class, ['getQuoteById', 'getFeatureSwitchDeciderHelper']);
-        $this->orderHelper = $this->createPartialMock(OrderHelper::class, ['getExistingOrder', 'fetchTransactionInfo', 'formatReferenceUrl', 'dispatchPostCheckoutEvents']);
-        $this->configHelper = $this->createPartialMock(Config::class, ['getSigningSecret']);
-        $this->checkoutSession = $this->createPartialMock(
+            ->getMock();
+        $this->cartHelper = $this->createPartialMockWithMethods(Cart::class, ['getQuoteById', 'getFeatureSwitchDeciderHelper']);
+        $this->orderHelper = $this->createPartialMockWithMethods(OrderHelper::class, ['getExistingOrder', 'fetchTransactionInfo', 'formatReferenceUrl', 'dispatchPostCheckoutEvents']);
+        $this->configHelper = $this->createPartialMockWithMethods(Config::class, ['getSigningSecret']);
+        $this->checkoutSession = $this->createPartialMockWithMethods(
             CheckoutSession::class,
             ['setLastQuoteId', 'setLastSuccessQuoteId', 'clearHelperData', 'setLastOrderId', 'setRedirectUrl', 'setLastRealOrderId', 'setLastOrderStatus']
         );
@@ -128,8 +127,8 @@ class ReceivedUrlTraitTest extends BoltTestCase
         $this->currentMock->method('getRequest')->willReturn($this->requestMock);
         $this->deciderMock = $this->createMock(\Bolt\Boltpay\Helper\FeatureSwitch\Decider::class);
         $this->cartHelper->method('getFeatureSwitchDeciderHelper')->willReturn($this->deciderMock);
-        $this->quote = $this->createPartialMock(Quote::class, ['getId']);
-        $this->order = $this->createPartialMock(Order::class, ['getId', 'getIncrementId', 'getStatus', 'getState', 'getPayment', 'addStatusHistoryComment', 'save']);
+        $this->quote = $this->createPartialMockWithMethods(Quote::class, ['getId']);
+        $this->order = $this->createPartialMockWithMethods(Order::class, ['getId', 'getIncrementId', 'getStatus', 'getState', 'getPayment', 'addStatusHistoryComment', 'save']);
         $this->paymentMock = $this->createMock(\Magento\Sales\Model\Order\Payment::class);
         $this->cache = $this->createMock(CacheInterface::class);
         $this->serialize = $this->createMock(Serialize::class);

@@ -62,14 +62,11 @@ class RecurringTest extends BoltTestCase
         $this->setup = $this->createMock(ModuleDataSetupInterface::class);
         $this->context = $this->createMock(ModuleContextInterface::class);
 
-        $this->currentMock = $this->getMockBuilder(Recurring::class)
-            ->enableProxyingToOriginalMethods()
+        $this->currentMock = $this->getMockBuilderWithMethods(Recurring::class, null)
             ->getMock();
 
 
-        $this->schemaSetup = $this->getMockBuilder(SchemaSetupInterface::class)
-            ->setMethods(
-                [
+        $this->schemaSetup = $this->getMockBuilderWithMethods(SchemaSetupInterface::class, [
                     'addColumn',
                     'dropColumn',
                     'addIndex',
@@ -77,10 +74,9 @@ class RecurringTest extends BoltTestCase
                     'setComment',
                     'createTable',
                     'newTable',
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
+            ->getMock();
         $this->customTable = $this->getMockBuilder(Table::class)
             ->disableOriginalConstructor()
             ->getMock();
@@ -109,7 +105,7 @@ class RecurringTest extends BoltTestCase
             ->with($boltFeatureSwitchTable)
             ->willReturnSelf();
         $this->schemaSetup->expects(static::exactly(5))->method('addColumn')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 [
                     'id',
                     Table::TYPE_INTEGER,
@@ -145,7 +141,7 @@ class RecurringTest extends BoltTestCase
                     ['nullable' => false, 'default' => '0'],
                     'rollout percentage',
                 ]
-            )->willReturnSelf();
+            ))->willReturnSelf();
         $this->schemaSetup->expects(static::once())
             ->method('setComment')
             ->with('Bolt feature switch table')

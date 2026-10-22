@@ -64,15 +64,15 @@ class SalesRuleQuoteDiscountPluginTest extends BoltTestCase
     public function setUpInternal()
     {
         $this->subject = $this->createMock(Discount::class);
-        $this->cartHelper = $this->createPartialMock(
+        $this->cartHelper = $this->createPartialMockWithMethods(
             CartHelper::class,
             ['isCollectDiscountsByPlugin']
         );
-        $this->sessionHelper = $this->createPartialMock(
+        $this->sessionHelper = $this->createPartialMockWithMethods(
             SessionHelper::class,
             ['getCheckoutSession']
         );
-        $this->checkoutSession = $this->createPartialMock(
+        $this->checkoutSession = $this->createPartialMockWithMethods(
             CheckoutSession::class,
             ['setBoltCollectSaleRuleDiscounts']
         );
@@ -99,7 +99,7 @@ class SalesRuleQuoteDiscountPluginTest extends BoltTestCase
                         ->method('isCollectDiscountsByPlugin')
                         ->with($quote)
                         ->willReturn(true);
-        $shippingAssignment = $this->createPartialMock(
+        $shippingAssignment = $this->createPartialMockWithMethods(
             ShippingAssignment::class,
             ['getItems']
         );
@@ -132,7 +132,7 @@ class SalesRuleQuoteDiscountPluginTest extends BoltTestCase
                         ->method('isCollectDiscountsByPlugin')
                         ->with($quote)
                         ->willReturn(true);
-        $shippingAssignment = $this->createPartialMock(
+        $shippingAssignment = $this->createPartialMockWithMethods(
             ShippingAssignment::class,
             ['getItems']
         );

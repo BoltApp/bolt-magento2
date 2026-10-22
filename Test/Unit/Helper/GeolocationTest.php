@@ -73,13 +73,12 @@ class GeolocationTest extends BoltTestCase
      */
     public function setUpInternal()
     {
-        $this->context = $this->createPartialMock(Context::class, ['getMpGiftCards']);
-        $this->configHelper = $this->createPartialMock(ConfigHelper::class, ['getGeolocationApiKey', 'getClientIp']);
-        $this->bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
-        $this->httpClientAdapterFactory = $this->createPartialMock(HttpClientAdapterFactory::class, ['create', 'setUri', 'setConfig', 'request', 'getBody']);
-        $this->cache = $this->createPartialMock(CacheInterface::class, ['save', 'load', 'getFrontend', 'remove', 'clean']);
-        $this->mock = $this->getMockBuilder(Geolocation::class)
-            ->setMethods(['getLocationJson'])
+        $this->context = $this->createPartialMockWithMethods(Context::class, ['getMpGiftCards']);
+        $this->configHelper = $this->createPartialMockWithMethods(ConfigHelper::class, ['getGeolocationApiKey', 'getClientIp']);
+        $this->bugsnag = $this->createPartialMockWithMethods(Bugsnag::class, ['notifyException']);
+        $this->httpClientAdapterFactory = $this->createPartialMockWithMethods(HttpClientAdapterFactory::class, ['create', 'setUri', 'setConfig', 'request', 'getBody']);
+        $this->cache = $this->createPartialMockWithMethods(CacheInterface::class, ['save', 'load', 'getFrontend', 'remove', 'clean']);
+        $this->mock = $this->getMockBuilderWithMethods(Geolocation::class, ['getLocationJson'])
             ->setConstructorArgs(
                 [
                     $this->context,

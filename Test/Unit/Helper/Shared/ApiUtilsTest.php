@@ -37,7 +37,7 @@ class ApiUtilsTest extends BoltTestCase
     {
         $body = '{"status":"ok"}';
         $parsedBody = ApiUtils::getJSONFromResponseBody($body);
-        $this->assertObjectHasAttribute('status', $parsedBody);
+        $this->assertTrue(property_exists($parsedBody, 'status'));
         $this->assertEquals('ok', $parsedBody->{'status'});
     }
 
@@ -62,7 +62,7 @@ class ApiUtilsTest extends BoltTestCase
     {
         $body = '{"error": {"something": "here"}}';
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessageRegExp('/Bolt API Error.*/');
+        $this->expectExceptionMessageMatches('/Bolt API Error.*/');
         $result = ApiUtils::getJSONFromResponseBody($body);
         $this->assertEquals($result, null);
     }
@@ -75,7 +75,7 @@ class ApiUtilsTest extends BoltTestCase
     {
         $body = '{"errors": [{"message": "here"}]}';
         $this->expectException(LocalizedException::class);
-        $this->expectExceptionMessageRegExp('/here.*/');
+        $this->expectExceptionMessageMatches('/here.*/');
         $result = ApiUtils::getJSONFromResponseBody($body);
         $this->assertEquals($result, null);
     }

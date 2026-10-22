@@ -47,8 +47,8 @@ class CreditCardTest extends BoltTestCase
 
     protected function setUpInternal()
     {
-        $this->_context = $this->createPartialMock(Context::class, ['getView']);
-        $this->_view = $this->createPartialMock(
+        $this->_context = $this->createPartialMockWithMethods(Context::class, ['getView']);
+        $this->_view = $this->createPartialMockWithMethods(
             ViewInterface::class,
             [
                 'loadLayout', 'renderLayout', 'loadLayoutUpdates',
@@ -58,11 +58,10 @@ class CreditCardTest extends BoltTestCase
             ]
         );
         $this->_context->method('getView')->willReturn($this->_view);
-        $this->_mockTest = $this->getMockBuilder(CreditCard::class)
+        $this->_mockTest = $this->getMockBuilderWithMethods(CreditCard::class, null)
             ->setConstructorArgs([
                 $this->_context
             ])
-            ->enableProxyingToOriginalMethods()
             ->getMock();
     }
 

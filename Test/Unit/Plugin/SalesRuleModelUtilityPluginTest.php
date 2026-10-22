@@ -61,15 +61,15 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
     public function setUpInternal()
     {
         $this->subject = $this->createMock(Utility::class);
-        $this->sessionHelper = $this->createPartialMock(
+        $this->sessionHelper = $this->createPartialMockWithMethods(
             SessionHelper::class,
             ['getCheckoutSession']
         );
-        $this->ruleRepository = $this->createPartialMock(
+        $this->ruleRepository = $this->createPartialMockWithMethods(
             RuleRepository::class,
             ['getById']
         );
-        $this->checkoutSession = $this->createPartialMock(
+        $this->checkoutSession = $this->createPartialMockWithMethods(
             CheckoutSession::class,
             ['getBoltNeedCollectSaleRuleDiscounts',
              'setBoltNeedCollectSaleRuleDiscounts',
@@ -78,7 +78,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
              'setBoltDiscountBreakdown',
              'getBoltDiscountBreakdown']
         );
-        $this->cartHelper = $this->createPartialMock(
+        $this->cartHelper = $this->createPartialMockWithMethods(
             CartHelper::class,
             ['isCollectDiscountsByPlugin']
         );
@@ -102,8 +102,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
         $this->checkoutSession->expects(self::once())
                             ->method('getBoltNeedCollectSaleRuleDiscounts')
                             ->willReturn(2);
-        $item = $this->getMockBuilder(Item::class)
-            ->setMethods(['getDiscountAmount', 'getQuote'])
+        $item = $this->getMockBuilderWithMethods(Item::class, ['getDiscountAmount', 'getQuote'])
             ->disableOriginalConstructor()
             ->getMock();
         $item->expects(self::once())
@@ -132,8 +131,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
     #[Test]
     public function afterMinFix_saveSaleRuleDiscountsToCheckoutSession_sessionExists()
     {
-        $item = $this->getMockBuilder(Item::class)
-            ->setMethods(['getQuote'])
+        $item = $this->getMockBuilderWithMethods(Item::class, ['getQuote'])
             ->disableOriginalConstructor()
             ->getMock();
         $quote = $this->getMockBuilder(Quote::class)
@@ -146,8 +144,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
                             ->method('isCollectDiscountsByPlugin')
                             ->with($quote)
                             ->willReturn(true);
-        $discountData = $this->getMockBuilder(DiscountData::class)
-            ->setMethods(['getAmount'])
+        $discountData = $this->getMockBuilderWithMethods(DiscountData::class, ['getAmount'])
             ->disableOriginalConstructor()
             ->getMock();
         $discountData->expects(self::once())
@@ -183,8 +180,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
     #[Test]
     public function afterMinFix_doNotSaveUselessSaleRuleDiscountsToCheckoutSession_sessionExists()
     {
-        $item = $this->getMockBuilder(Item::class)
-            ->setMethods(['getQuote'])
+        $item = $this->getMockBuilderWithMethods(Item::class, ['getQuote'])
             ->disableOriginalConstructor()
             ->getMock();
         $quote = $this->getMockBuilder(Quote::class)
@@ -197,8 +193,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
                             ->method('isCollectDiscountsByPlugin')
                             ->with($quote)
                             ->willReturn(true);
-        $discountData = $this->getMockBuilder(DiscountData::class)
-            ->setMethods(['getAmount'])
+        $discountData = $this->getMockBuilderWithMethods(DiscountData::class, ['getAmount'])
             ->disableOriginalConstructor()
             ->getMock();
         $discountData->expects(self::once())
@@ -208,8 +203,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
                             ->method('getBoltNeedCollectSaleRuleDiscounts')
                             ->willReturn(2);
         $boltDiscountBreakdown = ['item_discount' => 20.0,'rule_id' => 2,];
-        $rule = $this->getMockBuilder(DataObject::class)
-                    ->setMethods(['getSimpleFreeShipping'])
+        $rule = $this->getMockBuilderWithMethods(DataObject::class, ['getSimpleFreeShipping'])
                     ->disableOriginalConstructor()
                     ->getMock();
         $rule->expects(static::once())->method('getSimpleFreeShipping')
@@ -241,8 +235,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
     #[Test]
     public function afterMinFix_saveSaleRuleDiscountsToCheckoutSession_sessionNotExists()
     {
-        $item = $this->getMockBuilder(Item::class)
-            ->setMethods(['getQuote'])
+        $item = $this->getMockBuilderWithMethods(Item::class, ['getQuote'])
             ->disableOriginalConstructor()
             ->getMock();
         $quote = $this->getMockBuilder(Quote::class)
@@ -280,8 +273,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
     #[Test]
     public function afterMinFix_FreeShippingRule_saveDiscountBreakdownToCheckoutSession()
     {
-        $item = $this->getMockBuilder(Item::class)
-            ->setMethods(['getQuote'])
+        $item = $this->getMockBuilderWithMethods(Item::class, ['getQuote'])
             ->disableOriginalConstructor()
             ->getMock();
         $quote = $this->getMockBuilder(Quote::class)
@@ -294,8 +286,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
                             ->method('isCollectDiscountsByPlugin')
                             ->with($quote)
                             ->willReturn(true);
-        $discountData = $this->getMockBuilder(DiscountData::class)
-            ->setMethods(['getAmount'])
+        $discountData = $this->getMockBuilderWithMethods(DiscountData::class, ['getAmount'])
             ->disableOriginalConstructor()
             ->getMock();
         $discountData->expects(self::once())
@@ -309,8 +300,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
                             ->method('getBoltCollectSaleRuleDiscounts')
                             ->willReturn($boltCollectSaleRuleDiscounts);
         $boltDiscountBreakdown = ['item_discount' => 0.0,'rule_id' => 2,];
-        $rule = $this->getMockBuilder(DataObject::class)
-                    ->setMethods(['getSimpleFreeShipping'])
+        $rule = $this->getMockBuilderWithMethods(DataObject::class, ['getSimpleFreeShipping'])
                     ->disableOriginalConstructor()
                     ->getMock();
         $rule->expects(static::once())->method('getSimpleFreeShipping')

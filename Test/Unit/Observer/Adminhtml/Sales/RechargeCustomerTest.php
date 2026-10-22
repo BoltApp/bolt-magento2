@@ -173,57 +173,48 @@ class RechargeCustomerTest extends BoltTestCase
 
     private function initRequiredMocks()
     {
-        $this->requestMock = $this->getMockBuilder(Http::class)
+        $this->requestMock = $this->getMockBuilderWithMethods(Http::class, ['getParam'])
             ->disableOriginalConstructor()
-            ->setMethods(['getParam'])
             ->getMock();
 
-        $this->customerCreditCardFactoryMock = $this->getMockBuilder(CustomerCreditCardFactory::class)
+        $this->customerCreditCardFactoryMock = $this->getMockBuilderWithMethods(CustomerCreditCardFactory::class, ['create', 'load', 'getConsumerId', 'getCreditCardId', 'recharge', 'getResponse'])
             ->disableOriginalConstructor()
-            ->setMethods(['create', 'load', 'getConsumerId', 'getCreditCardId', 'recharge', 'getResponse'])
             ->getMock();
 
-        $this->paymentMock = $this->getMockBuilder(Payment::class)
+        $this->paymentMock = $this->getMockBuilderWithMethods(Payment::class, ['getMethod'])
             ->disableOriginalConstructor()
-            ->setMethods(['getMethod'])
             ->getMock();
 
-        $this->orderMock = $this->getMockBuilder(Order::class)
+        $this->orderMock = $this->getMockBuilderWithMethods(Order::class, ['getPayment', 'addStatusHistoryComment'])
             ->disableOriginalConstructor()
-            ->setMethods(['getPayment', 'addStatusHistoryComment'])
             ->getMock();
 
-        $this->observerMock = $this->getMockBuilder(Observer::class)
+        $this->observerMock = $this->getMockBuilderWithMethods(Observer::class, ['getEvent', 'getOrder'])
             ->disableOriginalConstructor()
-            ->setMethods(['getEvent', 'getOrder'])
             ->getMock();
 
-        $this->bugsnagMock = $this->getMockBuilder(Bugsnag::class)
+        $this->bugsnagMock = $this->getMockBuilderWithMethods(Bugsnag::class, ['notifyException'])
             ->disableOriginalConstructor()
-            ->setMethods(['notifyException'])
             ->getMock();
 
-        $this->orderHelper = $this->getMockBuilder(OrderHelper::class)
+        $this->orderHelper = $this->getMockBuilderWithMethods(OrderHelper::class, ['formatReferenceUrl'])
             ->disableOriginalConstructor()
-            ->setMethods(['formatReferenceUrl'])
             ->getMock();
 
-        $this->responseFactory = $this->getMockBuilder(ResponseFactory::class)
+        $this->responseFactory = $this->getMockBuilderWithMethods(ResponseFactory::class, ['getResponse'])
             ->disableOriginalConstructor()
-            ->setMethods(['getResponse'])
             ->getMock();
     }
 
     private function initCurrentMock()
     {
-        $this->rechargeCustomerMock = $this->getMockBuilder(RechargeCustomer::class)
+        $this->rechargeCustomerMock = $this->getMockBuilderWithMethods(RechargeCustomer::class, ['_init'])
             ->setConstructorArgs([
                 $this->bugsnagMock,
                 $this->requestMock,
                 $this->customerCreditCardFactoryMock,
                 $this->orderHelper
             ])
-            ->setMethods(['_init'])
             ->getMock();
     }
 }

@@ -70,10 +70,9 @@ class OrderPluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
         $this->orderPlugin = $this->objectManager->create(OrderPlugin::class);
         $this->orderModel = $this->objectManager->create(Order::class);
         $this->payment = $this->objectManager->create(\Magento\Sales\Model\Order\Payment::class);
-        $this->proceedMock = $this->getMockBuilder(\stdClass::class)->setMethods(['proceed'])->getMock();
+        $this->proceedMock = $this->getMockBuilderWithMethods(\stdClass::class, ['proceed'])->getMock();
 
         $this->subjectMock = $this->getMockBuilder('\Webkul\Odoomagentoconnect\Model\ResourceModel\Order')
-            ->disableAutoload()
             ->disableOriginalConstructor()
             ->getMock();
     }
@@ -137,7 +136,7 @@ class OrderPluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
         $this->orderModel->setPayment($this->payment);
         $this->orderModel->setState(\Bolt\Boltpay\Helper\Order::BOLT_ORDER_STATE_NEW);
 
-        $proceedMock = $this->getMockBuilder(\stdClass::class)->setMethods(['proceed'])->getMock();
+        $proceedMock = $this->getMockBuilderWithMethods(\stdClass::class, ['proceed'])->getMock();
         $proceedMock->expects(static::once())->method('proceed')
             ->withAnyParameters()
             ->willReturn($odooId);

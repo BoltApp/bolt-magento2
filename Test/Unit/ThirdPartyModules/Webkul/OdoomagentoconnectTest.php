@@ -66,18 +66,15 @@ class OdoomagentoconnectTest extends BoltTestCase
         $this->quoteMock = $this->createMock(Quote::class);
         $this->orderMock = $this->createMock(Order::class);
         $this->quoteRepositoryMock = $this->createMock(QuoteRepository::class);
-        $this->currentMock = $this->getMockBuilder(Odoomagentoconnect::class)
+        $this->currentMock = $this->getMockBuilderWithMethods(Odoomagentoconnect::class, null)
             ->setConstructorArgs(
                 [
                     $this->quoteRepositoryMock
                 ]
             )
-            ->setMethods(null)
             ->getMock();
-        $this->observerMock = $this->getMockBuilder('\Webkul\Odoomagentoconnect\Observer\SalesOrderAfterObserver')
-            ->disableAutoload()
+        $this->observerMock = $this->getMockBuilderWithMethods('\Webkul\Odoomagentoconnect\Observer\SalesOrderAfterObserver', ['execute'])
             ->disableOriginalConstructor()
-            ->setMethods(['execute'])
             ->getMock();
     }
 

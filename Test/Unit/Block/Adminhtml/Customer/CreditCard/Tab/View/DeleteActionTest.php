@@ -31,9 +31,8 @@ class DeleteActionTest extends BoltTestCase
 
     protected function setUpInternal()
     {
-        $this->block = $this->getMockBuilder(DeleteAction::class)
+        $this->block = $this->getMockBuilderWithMethods(DeleteAction::class, ['getId','getUrl','_toLinkHtml'])
             ->disableOriginalConstructor()
-            ->setMethods(['getId','getUrl','_toLinkHtml'])
             ->getMock();
     }
 

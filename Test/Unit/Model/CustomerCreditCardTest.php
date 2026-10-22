@@ -121,7 +121,7 @@ class CustomerCreditCardTest extends BoltTestCase
     {
         $exceptionMsg = "Authentication error. Authorization required.";
 
-        $apiHelper = $this->createPartialMock(ApiHelper::class, ['buildRequest', 'sendRequest']);
+        $apiHelper = $this->createPartialMockWithMethods(ApiHelper::class, ['buildRequest', 'sendRequest']);
         $apiHelper->expects(self::once())->method('buildRequest')->willReturnSelf();
         $apiHelper->expects(self::once())->method('sendRequest')
             ->willThrowException(new LocalizedException(__($exceptionMsg)));
@@ -138,7 +138,7 @@ class CustomerCreditCardTest extends BoltTestCase
     #[Test]
     public function recharge_withEmptyResponse()
     {
-        $apiHelper = $this->createPartialMock(ApiHelper::class, ['buildRequest', 'sendRequest']);
+        $apiHelper = $this->createPartialMockWithMethods(ApiHelper::class, ['buildRequest', 'sendRequest']);
         $apiHelper->expects(self::once())->method('buildRequest')->willReturnSelf();
         $apiHelper->expects(self::once())->method('sendRequest')->willReturn(null);
         TestHelper::setProperty($this->customerCreditCard, 'apiHelper', $apiHelper);
@@ -154,7 +154,7 @@ class CustomerCreditCardTest extends BoltTestCase
     #[Test]
     public function recharge()
     {
-        $apiHelper = $this->createPartialMock(ApiHelper::class, ['buildRequest', 'sendRequest']);
+        $apiHelper = $this->createPartialMockWithMethods(ApiHelper::class, ['buildRequest', 'sendRequest']);
         $apiHelper->expects(self::once())->method('buildRequest')->willReturnSelf();
         $apiHelper->expects(self::once())->method('sendRequest')->willReturn(true);
 

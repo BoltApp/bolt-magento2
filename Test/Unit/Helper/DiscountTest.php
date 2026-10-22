@@ -148,15 +148,14 @@ class DiscountTest extends BoltTestCase
         $this->configHelper = $this->createMock(ConfigHelper::class);
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->appState = $this->createMock(AppState::class);
-        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
-        $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
-        $this->sessionHelper = $this->getMockBuilder(Session::class)
+        $this->eventsForThirdPartyModules = $this->createPartialMockWithMethods(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
+        $this->eventsForThirdPartyModules->method('runFilter')->willReturnArgument(1);
+        $this->sessionHelper = $this->getMockBuilderWithMethods(Session::class, ['getCheckoutSession', 'getGiftCardsData'])
             ->disableOriginalConstructor()
-            ->setMethods(['getCheckoutSession', 'getGiftCardsData'])
             ->getMock();
         $this->logHelper = $this->createMock(LogHelper::class);
-        $this->quote = $this->createPartialMock(Quote::class, ['getMpGiftCards']);
-        $this->connectionMock = $this->createPartialMock(
+        $this->quote = $this->createPartialMockWithMethods(Quote::class, ['getMpGiftCards']);
+        $this->connectionMock = $this->createPartialMockWithMethods(
             Mysql::class,
             ['query', 'beginTransaction', 'commit', 'getConnection', 'getTableName', 'rollBack']
         );
@@ -170,11 +169,10 @@ class DiscountTest extends BoltTestCase
      * based on provided parameters
      *
      * @param array $methods to be mocked
-     * @param bool  $enableProxyingToOriginalMethods configuration flag
      */
-    private function initCurrentMock($methods = null, $enableProxyingToOriginalMethods = false)
+    private function initCurrentMock($methods = null)
     {
-        $builder = $this->getMockBuilder(Discount::class)
+        $builder = $this->getMockBuilderWithMethods(Discount::class, $methods)
             ->setConstructorArgs(
                 [
                     $this->context,
@@ -191,12 +189,7 @@ class DiscountTest extends BoltTestCase
                     $this->ruleRepositoryMock,
                     $this->eventsForThirdPartyModules
                 ]
-            )
-            ->setMethods($methods);
-
-        if ($enableProxyingToOriginalMethods) {
-            $builder->enableProxyingToOriginalMethods();
-        }
+            );
 
         $this->currentMock = $builder->getMock();
     }
@@ -253,7 +246,7 @@ class DiscountTest extends BoltTestCase
     public function updateTotals_always_collectsTotalsAndSavesTheQuote()
     {
         $this->initCurrentMock();
-        $quote = $this->createPartialMock(
+        $quote = $this->createPartialMockWithMethods(
             Quote::class,
             [
                 'getShippingAddress',
@@ -335,12 +328,10 @@ class DiscountTest extends BoltTestCase
         $couponCode = 'godieo1';
         $this->initCurrentMock();
         // mock for class \Unirgy\Giftcert\Model\GiftcertRepository that doesn't not exist
-        $giftCertRepository = $this->getMockBuilder(\stdclass::class)
-            ->setMethods(['get'])
+        $giftCertRepository = $this->getMockBuilderWithMethods(\stdclass::class, ['get'])
             ->disableOriginalConstructor()
             ->getMock();
-        $giftCertMock = $this->getMockBuilder('\Unirgy\Giftcert\Model\Cert')
-            ->setMethods(['getStoreId', 'getData'])
+        $giftCertMock = $this->getMockBuilderWithMethods('\Unirgy\Giftcert\Model\Cert', ['getStoreId', 'getData'])
             ->disableOriginalConstructor()
             ->getMock();
         $giftCertMock->expects(self::once())->method('getStoreId')->willReturn($storeId);
@@ -368,8 +359,7 @@ class DiscountTest extends BoltTestCase
         $couponCode = 'godieo1';
         $this->initCurrentMock();
         // mock for class \Unirgy\Giftcert\Model\GiftcertRepository that doesn't not exist
-        $giftCertRepository = $this->getMockBuilder(\stdclass::class)
-            ->setMethods(['get'])
+        $giftCertRepository = $this->getMockBuilderWithMethods(\stdclass::class, ['get'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -396,8 +386,7 @@ class DiscountTest extends BoltTestCase
         $this->initCurrentMock();
         $giftCertCode = ' qwerty , asdfgh   , zxcvbn,mnbvcx, tyuop';
 
-        $unirgyInstanceMock = $this->getMockBuilder('\Unirgy\Giftcert\Model\Cert')
-            ->setMethods(['get'])
+        $unirgyInstanceMock = $this->getMockBuilderWithMethods('\Unirgy\Giftcert\Model\Cert', ['get'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -415,7 +404,7 @@ class DiscountTest extends BoltTestCase
             );
 
         $result = $this->currentMock->getUnirgyGiftCertBalanceByCode($giftCertCode);
-        static::assertThat($result, static::isType('float'));
+        static::assertIsFloat($result);
         static::assertEquals(5913.46, $result);
     }
 
@@ -433,12 +422,9 @@ class DiscountTest extends BoltTestCase
         $this->initCurrentMock();
         $couponCode = 'testCouponCode';
 
-        $couponMock = $this->getMockBuilder(\Magento\SalesRule\Model\Coupon::class)
-            ->setMethods(
-                [
+        $couponMock = $this->getMockBuilderWithMethods(\Magento\SalesRule\Model\Coupon::class, [
                     'loadByCode'
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -582,19 +568,16 @@ class DiscountTest extends BoltTestCase
         
         $couponCode = 'testcoupon';
         
-        $addressMock = $this->getMockBuilder(Quote\Address::class)
-            ->setMethods(
-                [
+        $addressMock = $this->getMockBuilderWithMethods(Quote\Address::class, [
                     'setAppliedRuleIds',
                     'setCollectShippingRates'
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
         $addressMock->expects(static::once())->method('setAppliedRuleIds')->with('')->willReturnSelf();
         $addressMock->expects(static::once())->method('setCollectShippingRates')->with(true)->willReturnSelf();
 
-        $quote = $this->createPartialMock(
+        $quote = $this->createPartialMockWithMethods(
             Quote::class,
             [
                 'getShippingAddress',

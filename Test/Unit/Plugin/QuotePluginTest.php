@@ -75,8 +75,7 @@ class QuotePluginTest extends BoltTestCase
     public function aroundAfterSave($isSameId, $expectedCalls)
     {
         /** @var callable $callback */
-        $callback = $callback = $this->getMockBuilder(\stdClass::class)
-            ->setMethods(['__invoke'])->getMock();
+        $callback = $callback = $this->getMockBuilderWithMethods(\stdClass::class, ['__invoke'])->getMock();
         $proceed = function () use ($callback) {
             return $callback();
         };

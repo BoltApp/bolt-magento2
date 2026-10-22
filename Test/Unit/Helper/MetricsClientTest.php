@@ -163,8 +163,7 @@ class MetricsClientTest extends BoltTestCase
 
         // Partially Mock the Class we are tesing
         $methods = ['unlockFile', 'lockFile', 'getCurrentTime'];
-        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
-            ->setMethods($methods)
+        $this->currentMock = $this->getMockBuilderWithMethods(MetricsClient::class, $methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
@@ -182,7 +181,7 @@ class MetricsClientTest extends BoltTestCase
 
 
         $this->currentMock->method('getCurrentTime')
-            ->will($this->returnValue($this->timeStamp));
+            ->willReturn($this->timeStamp);
     }
 
     /**
@@ -236,8 +235,7 @@ class MetricsClientTest extends BoltTestCase
 
 
         $methods = ['getFilePath'];
-        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
-            ->setMethods($methods)
+        $this->currentMock = $this->getMockBuilderWithMethods(MetricsClient::class, $methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
@@ -254,7 +252,7 @@ class MetricsClientTest extends BoltTestCase
             ->getMock();
 
         $this->currentMock->method('getFilePath')
-            ->will($this->returnValue($root->url() . '/test/valid.json'));
+            ->willReturn($root->url() . '/test/valid.json');
 
         $outputFile = $this->currentMock->waitForFile();
 
@@ -278,8 +276,7 @@ class MetricsClientTest extends BoltTestCase
 
 
         $methods = ['getFilePath', 'lockFile'];
-        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
-            ->setMethods($methods)
+        $this->currentMock = $this->getMockBuilderWithMethods(MetricsClient::class, $methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
@@ -296,10 +293,10 @@ class MetricsClientTest extends BoltTestCase
             ->getMock();
 
         $this->currentMock->method('lockFile')
-            ->will($this->returnValue(false));
+            ->willReturn(false);
 
         $this->currentMock->method('getFilePath')
-            ->will($this->returnValue($root->url() . '/test/valid.json'));
+            ->willReturn($root->url() . '/test/valid.json');
         $this->assertNull($this->currentMock->waitForFile());
     }
 
@@ -317,8 +314,7 @@ class MetricsClientTest extends BoltTestCase
 
 
         $methods = ['getFilePath'];
-        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
-            ->setMethods($methods)
+        $this->currentMock = $this->getMockBuilderWithMethods(MetricsClient::class, $methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
@@ -335,7 +331,7 @@ class MetricsClientTest extends BoltTestCase
             ->getMock();
 
         $this->currentMock->method('getFilePath')
-            ->will($this->returnValue($root->url() . '/test/nofile.json'));
+            ->willReturn($root->url() . '/test/nofile.json');
 
         $outputFile = $this->currentMock->waitForFile();
 
@@ -367,13 +363,13 @@ class MetricsClientTest extends BoltTestCase
         $this->initWriteMetricToFile();
 
         $this->currentMock->method('getFilePath')
-            ->will($this->returnValue($root->url() . '/test/metrics.json'));
+            ->willReturn($root->url() . '/test/metrics.json');
 
         $this->currentMock->method('getCurrentTime')
-            ->will($this->returnValue($this->timeStamp));
+            ->willReturn($this->timeStamp);
 
         $this->currentMock->method('waitForFile')
-            ->will($this->returnValue($workingFile));
+            ->willReturn($workingFile);
 
         $this->currentMock->writeMetricToFile($testMetric);
 
@@ -398,14 +394,14 @@ class MetricsClientTest extends BoltTestCase
         $this->initWriteMetricToFile();
 
         $this->currentMock->method('getFilePath')
-            ->will($this->returnValue($root->url() . '/test/metrics.json'));
+            ->willReturn($root->url() . '/test/metrics.json');
 
         $this->currentMock->method('getCurrentTime')
-            ->will($this->returnValue($this->timeStamp));
+            ->willReturn($this->timeStamp);
 
 
         $this->currentMock->expects($this->once())->method('waitForFile')
-            ->will($this->returnValue(null));
+            ->willReturn(null);
 
 
         $data = [
@@ -430,7 +426,7 @@ class MetricsClientTest extends BoltTestCase
     {
         $this->configHelper->expects($this->once())
             ->method('shouldCaptureMetrics')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
 
         $this->initProcessMetrics();
@@ -450,7 +446,7 @@ class MetricsClientTest extends BoltTestCase
     {
         $this->configHelper->expects($this->once())
             ->method('shouldCaptureMetrics')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
 
         $this->initProcessMetrics();
@@ -469,7 +465,7 @@ class MetricsClientTest extends BoltTestCase
     public function flagOffProcessCountMetric()
     {
         $this->configHelper->method('shouldCaptureMetrics')
-            ->will($this->returnValue(false));
+            ->willReturn(false);
 
         $this->initProcessMetrics();
 
@@ -486,7 +482,7 @@ class MetricsClientTest extends BoltTestCase
     public function flagOffProcessLatencyMetric()
     {
         $this->configHelper->method('shouldCaptureMetrics')
-            ->will($this->returnValue(false));
+            ->willReturn(false);
 
         $this->initProcessMetrics();
 
@@ -516,21 +512,21 @@ class MetricsClientTest extends BoltTestCase
         $this->initPostMetrics();
 
         $this->currentMock->method('getFilePath')
-            ->will($this->returnValue($root->url() . '/test/valid.json'));
+            ->willReturn($root->url() . '/test/valid.json');
 
         $this->currentMock->method('setClient')
-            ->will($this->returnValue($this->guzzleClient));
+            ->willReturn($this->guzzleClient);
 
         $this->configHelper->expects($this->once())
             ->method('shouldCaptureMetrics')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         $this->configHelper->expects($this->once())
             ->method('getApiKey')
-            ->will($this->returnValue("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b"));
+            ->willReturn("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b");
 
         $this->currentMock->method('waitForFile')
-            ->will($this->returnValue($workingFile));
+            ->willReturn($workingFile);
 
 
 
@@ -561,14 +557,14 @@ class MetricsClientTest extends BoltTestCase
         $this->initPostMetrics();
 
         $this->currentMock->method('getFilePath')
-            ->will($this->returnValue($root->url() . '/test/valid.json'));
+            ->willReturn($root->url() . '/test/valid.json');
 
         $this->currentMock->method('setClient')
-            ->will($this->returnValue($this->guzzleClient));
+            ->willReturn($this->guzzleClient);
 
         $this->configHelper->expects($this->once())
             ->method('shouldCaptureMetrics')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         $this->configHelper->expects($this->never())
             ->method('getApiKey');
@@ -599,22 +595,22 @@ class MetricsClientTest extends BoltTestCase
         $this->initPostMetrics();
 
         $this->currentMock->method('getFilePath')
-            ->will($this->returnValue($root->url() . '/test/valid.json'));
+            ->willReturn($root->url() . '/test/valid.json');
 
         $this->currentMock->method('setClient')
-            ->will($this->returnValue($this->guzzleClient));
+            ->willReturn($this->guzzleClient);
 
         $this->configHelper->method('shouldCaptureMetrics')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         $this->currentMock->method('loadFromCache')
-            ->will($this->returnValue(false));
+            ->willReturn(false);
 
         $this->configHelper->method('getApiKey')
-            ->will($this->returnValue("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b"));
+            ->willReturn("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b");
 
         $this->currentMock->method('waitForFile')
-            ->will($this->returnValue($workingFile));
+            ->willReturn($workingFile);
 
 
 
@@ -645,22 +641,22 @@ class MetricsClientTest extends BoltTestCase
         $this->initPostMetrics();
 
         $this->currentMock->method('getFilePath')
-            ->will($this->returnValue($root->url() . '/test/valid.json'));
+            ->willReturn($root->url() . '/test/valid.json');
 
         $this->currentMock->method('setClient')
-            ->will($this->returnValue($this->guzzleClient));
+            ->willReturn($this->guzzleClient);
 
         $this->configHelper->method('shouldCaptureMetrics')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         $this->currentMock->method('loadFromCache')
-            ->will($this->returnValue(microtime(true) - 40000000));
+            ->willReturn(microtime(true) - 40000000);
 
         $this->configHelper->method('getApiKey')
-            ->will($this->returnValue("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b"));
+            ->willReturn("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b");
 
         $this->currentMock->method('waitForFile')
-            ->will($this->returnValue($workingFile));
+            ->willReturn($workingFile);
 
 
 
@@ -691,22 +687,22 @@ class MetricsClientTest extends BoltTestCase
         $this->initPostMetrics();
 
         $this->currentMock->method('getFilePath')
-            ->will($this->returnValue($root->url() . '/test/valid.json'));
+            ->willReturn($root->url() . '/test/valid.json');
 
         $this->currentMock->method('setClient')
-            ->will($this->returnValue($this->guzzleClient));
+            ->willReturn($this->guzzleClient);
 
         $this->configHelper->method('shouldCaptureMetrics')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         $this->currentMock->method('loadFromCache')
-            ->will($this->returnValue(microtime(true)));
+            ->willReturn(microtime(true));
 
         $this->configHelper->method('getApiKey')
-            ->will($this->returnValue("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b"));
+            ->willReturn("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b");
 
         $this->currentMock->method('waitForFile')
-            ->will($this->returnValue($workingFile));
+            ->willReturn($workingFile);
 
 
 
@@ -738,21 +734,21 @@ class MetricsClientTest extends BoltTestCase
         $this->initPostMetrics();
 
         $this->currentMock->method('getFilePath')
-            ->will($this->returnValue($root->url() . '/test/valid.json'));
+            ->willReturn($root->url() . '/test/valid.json');
 
         $this->currentMock->method('setClient')
-            ->will($this->returnValue($this->guzzleClient));
+            ->willReturn($this->guzzleClient);
 
         $this->configHelper->expects($this->once())
             ->method('shouldCaptureMetrics')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         $this->configHelper->expects($this->once())
             ->method('getApiKey')
-            ->will($this->returnValue("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b"));
+            ->willReturn("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b");
 
         $this->currentMock->method('waitForFile')
-            ->will($this->returnValue($workingFile));
+            ->willReturn($workingFile);
 
 
         $this->assertNull($this->currentMock->postMetrics());
@@ -788,22 +784,22 @@ class MetricsClientTest extends BoltTestCase
         $this->initPostMetrics();
 
         $this->currentMock->method('getFilePath')
-            ->will($this->returnValue($root->url() . '/test/valid.json'));
+            ->willReturn($root->url() . '/test/valid.json');
 
         $this->currentMock->method('setClient')
-            ->will($this->returnValue($this->guzzleClient));
+            ->willReturn($this->guzzleClient);
 
         $this->configHelper->expects($this->once())
             ->method('shouldCaptureMetrics')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
 
         $this->configHelper->expects($this->once())
             ->method('getApiKey')
-            ->will($this->returnValue("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b"));
+            ->willReturn("60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b");
 
         $this->currentMock->method('waitForFile')
-            ->will($this->returnValue($workingFile));
+            ->willReturn($workingFile);
 
 
         $this->assertNull($this->currentMock->postMetrics());
@@ -823,7 +819,7 @@ class MetricsClientTest extends BoltTestCase
 
         $this->configHelper->expects($this->once())
             ->method('shouldCaptureMetrics')
-            ->will($this->returnValue(false));
+            ->willReturn(false);
 
         $this->currentMock->expects($this->never())->method('getFilePath');
 
@@ -920,8 +916,7 @@ class MetricsClientTest extends BoltTestCase
             ->willReturn(true);
 
         $methods = ['processCountMetric', 'processLatencyMetric', 'postMetrics'];
-        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
-            ->setMethods($methods)
+        $this->currentMock = $this->getMockBuilderWithMethods(MetricsClient::class, $methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
@@ -959,8 +954,7 @@ class MetricsClientTest extends BoltTestCase
             ->willReturn(false);
 
         $methods = ['processCountMetric', 'processLatencyMetric', 'postMetrics'];
-        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
-            ->setMethods($methods)
+        $this->currentMock = $this->getMockBuilderWithMethods(MetricsClient::class, $methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
@@ -1005,7 +999,7 @@ class MetricsClientTest extends BoltTestCase
     #[Test]
     public function getCurrentTime()
     {
-        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
+        $this->currentMock = $this->getMockBuilderWithMethods(MetricsClient::class, null)
             ->setConstructorArgs(
                 [
                     $this->context,
@@ -1018,7 +1012,6 @@ class MetricsClientTest extends BoltTestCase
                     $this->deciderMock
                 ]
             )
-            ->enableProxyingToOriginalMethods()
             ->getMock();
 
         $time = $this->currentMock->getCurrentTime();
@@ -1028,8 +1021,7 @@ class MetricsClientTest extends BoltTestCase
     private function initWriteMetricToFile()
     {
         $methods = ['getFilePath', 'waitForFile', 'getCurrentTime'];
-        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
-            ->setMethods($methods)
+        $this->currentMock = $this->getMockBuilderWithMethods(MetricsClient::class, $methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
@@ -1049,8 +1041,7 @@ class MetricsClientTest extends BoltTestCase
     private function initProcessMetrics()
     {
         $methods = ['formatCountMetric', 'formatLatencyMetric', 'writeMetricToFile'];
-        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
-            ->setMethods($methods)
+        $this->currentMock = $this->getMockBuilderWithMethods(MetricsClient::class, $methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
@@ -1070,8 +1061,7 @@ class MetricsClientTest extends BoltTestCase
     private function initPostMetrics()
     {
         $methods = ['getFilePath', 'waitForFile', 'unlockFile', 'setClient', 'loadFromCache'];
-        $this->currentMock = $this->getMockBuilder(MetricsClient::class)
-            ->setMethods($methods)
+        $this->currentMock = $this->getMockBuilderWithMethods(MetricsClient::class, $methods)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [

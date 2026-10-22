@@ -67,16 +67,14 @@ class TogglePaymentMethodsPluginTest extends BoltTestCase
         );
         $this->observer = $observer = $this->createMock(Observer::class);
         /** @var callable $callback */
-        $this->callback = $callback = $this->getMockBuilder(\stdClass::class)
-            ->setMethods(['__invoke'])->getMock();
+        $this->callback = $callback = $this->getMockBuilderWithMethods(\stdClass::class, ['__invoke'])->getMock();
         $this->proceed = function (Observer $obsrvr) use ($observer, $callback) {
             $this->assertEquals($obsrvr, $observer);
             return $callback($obsrvr);
         };
         $this->payment = $this->createMock(PaymentMethodInterface::class);
         $this->result = $this->createMock(DataObject::class);
-        $this->event = $this->getMockBuilder(Event::class)
-            ->setMethods(['getMethodInstance', 'getResult', 'getQuote'])->getMock();
+        $this->event = $this->getMockBuilderWithMethods(Event::class, ['getMethodInstance', 'getResult', 'getQuote'])->getMock();
         $this->event->method('getMethodInstance')->willReturn($this->payment);
         $this->event->method('getResult')->willReturn($this->result);
         $this->observer->method('getEvent')->willReturn($this->event);
@@ -143,8 +141,8 @@ class TogglePaymentMethodsPluginTest extends BoltTestCase
         $this->event->expects(self::once())->method('getResult');
         $this->result->expects(self::once())->method('getData')
             ->with('is_available')->willReturn(false);
-        $quote = $this->getMockBuilder(Quote::class)
-            ->disableOriginalConstructor()->setMethods(['getBaseGrandTotal'])->getMock();
+        $quote = $this->getMockBuilderWithMethods(Quote::class, ['getBaseGrandTotal'])
+            ->disableOriginalConstructor()->getMock();
         $quote->expects(self::once())->method('getBaseGrandTotal')->willReturn(0);
         $this->event->expects(self::once())->method('getQuote')->willReturn($quote);
         $this->result->expects(self::once())->method('setData')

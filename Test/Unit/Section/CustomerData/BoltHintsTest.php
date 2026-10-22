@@ -62,7 +62,7 @@ class BoltHintsTest extends BoltTestCase
         $this->boltHints = $this->objectManager->create(BoltHints::class);
         $store = $this->objectManager->get(StoreManagerInterface::class);
         $this->storeId = $store->getStore()->getId();
-        $this->cartHelper = $this->createPartialMock(CartHelper::class, ['getHints']);
+        $this->cartHelper = $this->createPartialMockWithMethods(CartHelper::class, ['getHints']);
     }
 
     /**

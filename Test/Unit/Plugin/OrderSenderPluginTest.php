@@ -50,8 +50,7 @@ class OrderSenderPluginTest extends BoltTestCase
     public function setUpInternal()
     {
         /** @var callable $callback */
-        $this->callback = $callback = $this->getMockBuilder(\stdClass::class)
-            ->setMethods(['__invoke'])->getMock();
+        $this->callback = $callback = $this->getMockBuilderWithMethods(\stdClass::class, ['__invoke'])->getMock();
         $this->proceed = function ($order, $forceSyncMode) use ($callback) {
             return $callback($order, $forceSyncMode);
         };

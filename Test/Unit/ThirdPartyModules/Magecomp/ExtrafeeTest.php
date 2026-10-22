@@ -49,9 +49,9 @@ class ExtrafeeTest extends BoltTestCase
      */
     protected function setUpInternal()
     {
-        $this->currentMock = $this->getMockBuilder(Extrafee::class)->setMethods()->getMock();
-        $this->quoteMock = $this->createPartialMock(Quote::class, ['getTotals', 'getData', 'getQuoteCurrencyCode']);
-        $this->totalMock = $this->createPartialMock(Total::class, ['getTitle']);
+        $this->currentMock = $this->getMockBuilderWithMethods(Extrafee::class, null)->getMock();
+        $this->quoteMock = $this->createPartialMockWithMethods(Quote::class, ['getTotals', 'getData', 'getQuoteCurrencyCode']);
+        $this->totalMock = $this->createPartialMockWithMethods(Total::class, ['getTitle']);
     }
 
     /**

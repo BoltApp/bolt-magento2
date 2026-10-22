@@ -70,40 +70,35 @@ class DeleteCreditCardTest extends BoltTestCase
     {
         $this->contextMock = $this->createMock(Context::class);
 
-        $this->bugsnagMock = $this->getMockBuilder(Bugsnag::class)
+        $this->bugsnagMock = $this->getMockBuilderWithMethods(Bugsnag::class, ['notifyException'])
             ->disableOriginalConstructor()
-            ->setMethods(['notifyException'])
             ->getMock();
 
-        $this->customerCreditCardFactoryMock = $this->getMockBuilder(CustomerCreditCardFactory::class)
+        $this->customerCreditCardFactoryMock = $this->getMockBuilderWithMethods(CustomerCreditCardFactory::class, ['create', 'load', 'delete','getId'])
             ->disableOriginalConstructor()
-            ->setMethods(['create', 'load', 'delete','getId'])
             ->getMock();
 
-        $this->requestMock = $this->getMockBuilder(Http::class)
+        $this->requestMock = $this->getMockBuilderWithMethods(Http::class, ['getParam'])
             ->disableOriginalConstructor()
-            ->setMethods(['getParam'])
             ->getMock();
 
-        $this->messageMock = $this->getMockBuilder(Manager::class)
+        $this->messageMock = $this->getMockBuilderWithMethods(Manager::class, ['addSuccessMessage','addExceptionMessage','addErrorMessage'])
             ->disableOriginalConstructor()
-            ->setMethods(['addSuccessMessage','addExceptionMessage','addErrorMessage'])
             ->getMock();
 
-        $this->redirectMock = $this->getMockBuilder(Redirect::class)
+        $this->redirectMock = $this->getMockBuilderWithMethods(Redirect::class, ['getRefererUrl'])
             ->disableOriginalConstructor()
-            ->setMethods(['getRefererUrl'])
             ->getMock();
 
         $this->contextMock->method('getMessageManager')->willReturn($this->messageMock);
         $this->contextMock->method('getRedirect')->willReturn($this->redirectMock);
 
-        $this->currentMock = $this->getMockBuilder(DeleteCreditCard::class)
+        $this->currentMock = $this->getMockBuilderWithMethods(DeleteCreditCard::class, ['getRequest', '_redirect'])
             ->setConstructorArgs([
                 $this->contextMock,
                 $this->bugsnagMock,
                 $this->customerCreditCardFactoryMock
-            ])->setMethods(['getRequest', '_redirect'])
+            ])
             ->getMock();
     }
 

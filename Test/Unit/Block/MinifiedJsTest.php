@@ -42,8 +42,8 @@ class MinifiedJsTest extends BoltTestCase
      */
     protected function setUpInternal()
     {
-        $this->block = $this->createPartialMock(MinifiedJs::class, ['minifyJs']);
-        $featureSwitches = $this->createPartialMock(
+        $this->block = $this->createPartialMockWithMethods(MinifiedJs::class, ['minifyJs']);
+        $featureSwitches = $this->createPartialMockWithMethods(
             DeciderHelper::class,
             [
                 'isEnabledFetchCartViaApi'

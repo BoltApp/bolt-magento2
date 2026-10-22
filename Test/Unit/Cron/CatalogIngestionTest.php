@@ -134,7 +134,7 @@ class CatalogIngestionTest extends BoltTestCase
      */
     public function testExecute_sendCorrectRequestsCountEventsRemovedAfterSuccessCalls_withDefaultCronMaxItemsParam()
     {
-        $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
+        $apiHelper = $this->createPartialMockWithMethods(ApiHelper::class, ['sendRequest']);
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
         $apiHelper->expects(self::exactly(2))->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
         $product1 = TestUtils::createSimpleProduct();
@@ -157,7 +157,7 @@ class CatalogIngestionTest extends BoltTestCase
                 'scopeId' => $this->storeManager->getWebsite()->getId(),
             ]
         ];
-        $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
+        $apiHelper = $this->createPartialMockWithMethods(ApiHelper::class, ['sendRequest']);
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
         $apiHelper->expects(self::exactly(self::CRON_MAX_ITEMS_OPTION))->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
         TestUtils::setupBoltConfig($configData);
@@ -177,7 +177,7 @@ class CatalogIngestionTest extends BoltTestCase
      */
     public function testExecute_sendCorrectRequestsCountEventsWasNotRemovedAfterFailCalls_withDefaultCronMaxItemsParam()
     {
-        $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
+        $apiHelper = $this->createPartialMockWithMethods(ApiHelper::class, ['sendRequest']);
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
         $apiHelper->expects(self::exactly(1))->method('sendRequest')->willReturn(self::RESPONSE_FAIL_STATUS);
         $product1 = TestUtils::createSimpleProduct();

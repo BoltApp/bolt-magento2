@@ -216,7 +216,7 @@ class ShippingMethodsTest extends BoltTestCase
     #[Test]
     public function getShippingMethods_fullAddressData()
     {
-        $shippingMethodMock = $this->createPartialMock(
+        $shippingMethodMock = $this->createPartialMockWithMethods(
             ShippingMethods::class,
             ['getShippingAndTax']
         );
@@ -241,7 +241,7 @@ class ShippingMethodsTest extends BoltTestCase
             'street_address1' => "228 5th Avenue",
             'street_address2' => "",
         ];
-        $metricsClient = $this->createPartialMock(
+        $metricsClient = $this->createPartialMockWithMethods(
             MetricsClient::class,
             ['getCurrentTime','processMetric']
         );
@@ -401,9 +401,8 @@ class ShippingMethodsTest extends BoltTestCase
     {
         $quote = TestUtils::createQuote();
         $quote->setAppliedRuleIds('1');
-        $ruleFactory = $this->getMockBuilder(\Magento\SalesRule\Model\RuleFactory::class)
+        $ruleFactory = $this->getMockBuilderWithMethods(\Magento\SalesRule\Model\RuleFactory::class, ['create','load','getApplyToShipping'])
             ->disableOriginalConstructor()
-            ->setMethods(['create','load','getApplyToShipping'])
             ->getMock();
         $ruleFactory->method('create')->willReturnSelf();
         $ruleFactory->method('load')->willReturnSelf();

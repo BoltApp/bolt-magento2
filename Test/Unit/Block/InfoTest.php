@@ -39,7 +39,7 @@ class InfoTest extends BoltTestCase
 
     protected function setUpInternal()
     {
-        $this->mock = $this->createPartialMock(
+        $this->mock = $this->createPartialMockWithMethods(
             Info::class,
             [
                 'getArea',
@@ -101,13 +101,13 @@ class InfoTest extends BoltTestCase
     {
         $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
         $this->mock->expects(self::once())->method('getAdditionalInformation')->willReturn('vantiv');
-        $paymentMock = $this->createPartialMock(
+        $paymentMock = $this->createPartialMockWithMethods(
             BoltPayment::class,
             [
                 'getConfigData',
             ]
         );
-        $orderMock = $this->createPartialMock(
+        $orderMock = $this->createPartialMockWithMethods(
             Order::class,
             [
                 'getStoreId',

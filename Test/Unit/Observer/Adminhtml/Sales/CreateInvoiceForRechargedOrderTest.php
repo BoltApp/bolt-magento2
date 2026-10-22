@@ -87,7 +87,7 @@ class CreateInvoiceForRechargedOrderTest extends BoltTestCase
         $event = $this->objectManager->create(\Magento\Framework\DataObject::class);
         $event->setOrder($order);
         $observer->setEvent($event);
-        $invoiceSender = $this->createPartialMock(InvoiceSender::class, ['send']);
+        $invoiceSender = $this->createPartialMockWithMethods(InvoiceSender::class, ['send']);
         $invoiceSender->method('send')->withAnyParameters()->willReturnSelf();
         TestHelper::setProperty($this->createInvoiceForRechargedOrderTest, 'invoiceSender', $invoiceSender);
         $this->createInvoiceForRechargedOrderTest->execute($observer);
@@ -102,10 +102,10 @@ class CreateInvoiceForRechargedOrderTest extends BoltTestCase
     public function execute_throwsException()
     {
         $e = new Exception('test exception');
-        $observer = $this->createPartialMock(Observer::class, ['getEvent']);
+        $observer = $this->createPartialMockWithMethods(Observer::class, ['getEvent']);
         $observer->expects(self::once())->method('getEvent')->willThrowException($e);
 
-        $bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
+        $bugsnag = $this->createPartialMockWithMethods(Bugsnag::class, ['notifyException']);
         $bugsnag->expects(self::once())->method('notifyException')->with($e);
 
         TestHelper::setProperty($this->createInvoiceForRechargedOrderTest, 'bugsnag', $bugsnag);

@@ -909,8 +909,7 @@ class DiscountCodeValidationTest extends BoltTestCase
             self::PARENT_QUOTE_ID
         );
 
-        $ruleLabelMock = $this->getMockBuilder(RuleLabel::class)
-            ->setMethods(['getStoreLabel'])
+        $ruleLabelMock = $this->getMockBuilderWithMethods(RuleLabel::class, ['getStoreLabel'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -1002,16 +1001,13 @@ class DiscountCodeValidationTest extends BoltTestCase
         if (is_null($shippingAddress)) {
             $shippingAddress = $this->shippingAddressMock;
         }
-        $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
-            ->setMethods(['getSku', 'getQty', 'getCalculationPrice'])
+        $quoteItem = $this->getMockBuilderWithMethods(\Magento\Quote\Model\Quote\Item::class, ['getSku', 'getQty', 'getCalculationPrice'])
             ->disableOriginalConstructor()
             ->getMock();
         $quoteItem->method('getSku')->willReturn('TestProduct');
         $quoteItem->method('getQty')->willReturn(1);
 
-        $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods(
-                [
+        $quote = $this->getMockBuilderWithMethods(Quote::class, [
                     'getId',
                     'getBoltParentQuoteId',
                     'getSubtotal',
@@ -1032,8 +1028,7 @@ class DiscountCodeValidationTest extends BoltTestCase
                     'save',
                     'getGiftCardsAmount',
                     'getGiftCardsAmountUsed'
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -1062,8 +1057,7 @@ class DiscountCodeValidationTest extends BoltTestCase
 
     private function createFactoryMocks()
     {
-        $this->usageFactoryMock = $this->getMockBuilder(UsageFactory::class)
-            ->setMethods(['create', 'loadByCustomerCoupon'])
+        $this->usageFactoryMock = $this->getMockBuilderWithMethods(UsageFactory::class, ['create', 'loadByCustomerCoupon'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->usageFactoryMock->method('create')
@@ -1072,25 +1066,21 @@ class DiscountCodeValidationTest extends BoltTestCase
             ->withAnyParameters()
             ->willReturnSelf();
 
-        $this->dataObjectMock = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['getCouponId', 'getTimesUsed'])
+        $this->dataObjectMock = $this->getMockBuilderWithMethods(DataObject::class, ['getCouponId', 'getTimesUsed'])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->dataObjectFactoryMock = $this->getMockBuilder(DataObjectFactory::class)
-            ->setMethods(['create'])
+        $this->dataObjectFactoryMock = $this->getMockBuilderWithMethods(DataObjectFactory::class, ['create'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->dataObjectFactoryMock->method('create')
             ->willReturn($this->dataObjectMock);
 
-        $this->ruleCustomerMock = $this->getMockBuilder(Rule\Customer::class)
-            ->setMethods(['loadByCustomerRule', 'getId', 'getTimesUsed'])
+        $this->ruleCustomerMock = $this->getMockBuilderWithMethods(Rule\Customer::class, ['loadByCustomerRule', 'getId', 'getTimesUsed'])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->customerFactoryMock = $this->getMockBuilder(CustomerFactory::class)
-            ->setMethods(['create'])
+        $this->customerFactoryMock = $this->getMockBuilderWithMethods(CustomerFactory::class, ['create'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->customerFactoryMock->method('create')
@@ -1106,19 +1096,15 @@ class DiscountCodeValidationTest extends BoltTestCase
 
         $this->logHelper = $this->createMock(LogHelper::class);
 
-        $this->cartHelper = $this->getMockBuilder(CartHelper::class)
-            ->setMethods(
-                [
+        $this->cartHelper = $this->getMockBuilderWithMethods(CartHelper::class, [
                     'getCartData',
                     'getImmutableQuoteIdFromBoltCartArray',
                     'checkIfQuoteHasCartFixedAmountAndApplyToShippingRule'
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->configHelper = $this->getMockBuilder(ConfigHelper::class)
-            ->setMethods(['getIgnoredShippingAddressCoupons'])
+        $this->configHelper = $this->getMockBuilderWithMethods(ConfigHelper::class, ['getIgnoredShippingAddressCoupons'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -1126,23 +1112,17 @@ class DiscountCodeValidationTest extends BoltTestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->orderHelper = $this->getMockBuilder(OrderHelper::class)
-            ->setMethods(
-                [
+        $this->orderHelper = $this->getMockBuilderWithMethods(OrderHelper::class, [
                     'getExistingOrder',
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
-            ->setMethods(['notifyException'])
+        $this->bugsnag = $this->getMockBuilderWithMethods(Bugsnag::class, ['notifyException'])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->cache = $this->getMockBuilder(\Magento\Framework\App\CacheInterface::class)
-            ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
+        $this->cache = $this->createMock(\Magento\Framework\App\CacheInterface::class);
     }
 
     protected function initRequiredMocks()
@@ -1151,12 +1131,10 @@ class DiscountCodeValidationTest extends BoltTestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->request = $this->getMockBuilder(Request::class)
-            ->setMethods(['getContent'])
+        $this->request = $this->getMockBuilderWithMethods(Request::class, ['getContent'])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->response = $this->getMockBuilder(Response::class)
-            ->setMethods(['setHttpResponseCode', 'setBody', 'sendResponse'])
+        $this->response = $this->getMockBuilderWithMethods(Response::class, ['setHttpResponseCode', 'setBody', 'sendResponse'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->errorResponse = $this->getMockBuilder(BoltErrorResponse::class)
@@ -1166,23 +1144,19 @@ class DiscountCodeValidationTest extends BoltTestCase
         $this->timezone = $this->createMock(TimezoneInterface::class);
 
         $this->checkoutSession = $this->createMock(CheckoutSession::class);
-        $this->regionModel = $this->getMockBuilder(RegionModel::class)
-            ->setMethods(['loadByName'])
+        $this->regionModel = $this->getMockBuilderWithMethods(RegionModel::class, ['loadByName'])
             ->disableOriginalConstructor()
             ->getMock();
 
 
-        $this->totalsCollector = $this->getMockBuilder(TotalsCollector::class)
-            ->setMethods(['collectAddressTotals'])
+        $this->totalsCollector = $this->getMockBuilderWithMethods(TotalsCollector::class, ['collectAddressTotals'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->totalsCollector->method('collectAddressTotals')
             ->withAnyParameters()
             ->willReturnSelf();
 
-        $this->ruleMock = $this->getMockBuilder(Rule::class)
-            ->setMethods(
-                [
+        $this->ruleMock = $this->getMockBuilderWithMethods(Rule::class, [
                     'getRuleId',
                     'getToDate',
                     'getFromDate',
@@ -1190,20 +1164,16 @@ class DiscountCodeValidationTest extends BoltTestCase
                     'getWebsiteIds',
                     'getUsesPerCustomer',
                     'getStoreLabels'
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->ruleRepositoryMock = $this->getMockBuilder(RuleRepository::class)
-            ->setMethods(['getRuleId', 'getById'])
+        $this->ruleRepositoryMock = $this->getMockBuilderWithMethods(RuleRepository::class, ['getRuleId', 'getById'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->ruleRepositoryMock->method('getById')->with(self::RULE_ID)->willReturn($this->ruleMock);
 
-        $this->shippingAddressMock = $this->getMockBuilder(\Magento\Quote\Model\Quote\Address::class)
-            ->setMethods(
-                [
+        $this->shippingAddressMock = $this->getMockBuilderWithMethods(\Magento\Quote\Model\Quote\Address::class, [
                     'addData',
                     'setCollectShippingRates',
                     'setShippingMethod',
@@ -1213,8 +1183,7 @@ class DiscountCodeValidationTest extends BoltTestCase
                     'save',
                     'getDiscountAmount',
                     'getDiscountDescription'
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
         $this->shippingAddressMock->method('setShippingMethod')->withAnyParameters()->willReturnSelf();
@@ -1223,9 +1192,7 @@ class DiscountCodeValidationTest extends BoltTestCase
         $this->shippingAddressMock->method('getShippingDiscountAmount')->willReturn(0);
         $this->shippingAddressMock->method('getShippingAmount')->willReturn(5);
 
-        $this->couponMock = $this->getMockBuilder(\Magento\SalesRule\Model\Coupon::class)
-            ->setMethods(
-                [
+        $this->couponMock = $this->getMockBuilderWithMethods(\Magento\SalesRule\Model\Coupon::class, [
                     'isObjectNew',
                     'getCouponId',
                     'getId',
@@ -1233,25 +1200,22 @@ class DiscountCodeValidationTest extends BoltTestCase
                     'getUsageLimit',
                     'getUsagePerCustomer',
                     'getTimesUsed'
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->parentQuoteMock = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getItemsCount', 'getCouponCode', 'getCustomerId', 'isVirtual'])
+        $this->parentQuoteMock = $this->getMockBuilderWithMethods(Quote::class, ['getItemsCount', 'getCouponCode', 'getCustomerId', 'isVirtual'])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->immutableQuoteMock = $this->getMockBuilder(Quote::class)
-            ->setMethods(['getItemsCount', 'getCouponCode'])
+        $this->immutableQuoteMock = $this->getMockBuilderWithMethods(Quote::class, ['getItemsCount', 'getCouponCode'])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
+        $this->eventsForThirdPartyModules = $this->createPartialMockWithMethods(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
         $this->eventsForThirdPartyModules
             ->method('runFilter')
-            ->will($this->returnArgument(1));
+            ->willReturnArgument(1);
 
         $this->createFactoryMocks();
         $this->createHelperMocks();
@@ -1260,15 +1224,13 @@ class DiscountCodeValidationTest extends BoltTestCase
     protected function initCurrentMock($methods = [])
     {
         $methods = array_merge(['getRequestContent','preProcessWebhook'], $methods);
-        $this->currentMock = $this->getMockBuilder(BoltDiscountCodeValidation::class)
-            ->setMethods($methods)
+        $this->currentMock = $this->getMockBuilderWithMethods(BoltDiscountCodeValidation::class, $methods)
             ->setConstructorArgs(
                 [
                     $this->updateCartContext,
                 ]
             )
             ->enableOriginalConstructor()
-            ->disableProxyingToOriginalMethods()
             ->getMock();
 
         TestHelper::setProperty($this->currentMock, 'bugsnag', $this->bugsnag);

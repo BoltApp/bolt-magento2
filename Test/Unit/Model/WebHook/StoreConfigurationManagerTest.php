@@ -117,7 +117,7 @@ class StoreConfigurationManagerTest extends BoltTestCase
      */
     public function testRequestStoreConfigurationUpdated()
     {
-        $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
+        $apiHelper = $this->createPartialMockWithMethods(ApiHelper::class, ['sendRequest']);
         $apiHelper->expects(self::never())->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
         TestHelper::setProperty($this->storeConfigurationManager, 'apiHelper', $apiHelper);
         $this->config->setDataByPath(BoltConfig::XML_PATH_CATALOG_INGESTION_INSTANT_EVENT, 0);

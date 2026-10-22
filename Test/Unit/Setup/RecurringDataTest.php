@@ -76,15 +76,15 @@ class RecurringDataTest extends BoltTestCase
 
     protected function setUpInternal()
     {
-        $this->fsManager = $this->createPartialMock(Manager::class, ['updateSwitchesFromBolt']);
-        $this->integrationManagement = $this->createPartialMock(IntegrationManagement::class, ['syncExistingIntegrationAclResources']);
-        $this->logHelper = $this->createPartialMock(LogHelper::class, ['addInfoLog']);
-        $this->metricsClient = $this->createPartialMock(MetricsClient::class, ['getCurrentTime', 'processMetric']);
-        $this->errorResponse = $this->createPartialMock(ErrorResponse::class, ['prepareErrorMessage']);
+        $this->fsManager = $this->createPartialMockWithMethods(Manager::class, ['updateSwitchesFromBolt']);
+        $this->integrationManagement = $this->createPartialMockWithMethods(IntegrationManagement::class, ['syncExistingIntegrationAclResources']);
+        $this->logHelper = $this->createPartialMockWithMethods(LogHelper::class, ['addInfoLog']);
+        $this->metricsClient = $this->createPartialMockWithMethods(MetricsClient::class, ['getCurrentTime', 'processMetric']);
+        $this->errorResponse = $this->createPartialMockWithMethods(ErrorResponse::class, ['prepareErrorMessage']);
         $this->setup = $this->createMock(ModuleDataSetupInterface::class);
         $this->context = $this->createMock(ModuleContextInterface::class);
 
-        $this->currentMock = $this->getMockBuilder(RecurringData::class)
+        $this->currentMock = $this->getMockBuilderWithMethods(RecurringData::class, null)
             ->setConstructorArgs([
                 $this->fsManager,
                 $this->logHelper,
@@ -92,7 +92,6 @@ class RecurringDataTest extends BoltTestCase
                 $this->errorResponse,
                 $this->integrationManagement,
             ])
-            ->enableProxyingToOriginalMethods()
             ->getMock();
     }
 

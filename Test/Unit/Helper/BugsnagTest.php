@@ -72,13 +72,13 @@ class BugsnagTest extends BoltTestCase
     protected function setUpInternal()
     {
         $this->contextMock = $this->createMock(Context::class);
-        $this->configHelperMock = $this->createPartialMock(Config::class, ['getComposerVersion','isSandboxModeSet','isTestEnvSet','getModuleVersion']);
+        $this->configHelperMock = $this->createPartialMockWithMethods(Config::class, ['getComposerVersion','isSandboxModeSet','isTestEnvSet','getModuleVersion']);
         $this->directoryListMock = $this->createMock(DirectoryList::class);
-        $this->storeManagerMock = $this->createPartialMock(StoreManager::class, ['getStore', 'getBaseUrl']);
-        $this->boltLogger = $this->createPartialMock(BoltLogger::class, ['addErrorLog']);
+        $this->storeManagerMock = $this->createPartialMockWithMethods(StoreManager::class, ['getStore', 'getBaseUrl']);
+        $this->boltLogger = $this->createPartialMockWithMethods(BoltLogger::class, ['addErrorLog']);
         $this->bugsnagMock = $this->createMock(BugsnagClient::class);
 
-        $this->currentMock = $this->createPartialMock(Bugsnag::class, []);
+        $this->currentMock = $this->createPartialMockWithMethods(Bugsnag::class, []);
         TestHelper::setProperty($this->currentMock, 'bugsnag', $this->bugsnagMock);
         TestHelper::setProperty(
             $this->currentMock,
@@ -144,7 +144,7 @@ class BugsnagTest extends BoltTestCase
         /** @var BugsnagClient $bugsnag */
         $bugsnag = static::readAttribute($instance, 'bugsnag');
         $bugsnag->getPipeline()->execute(
-            $this->createPartialMock(Report::class, []),
+            $this->createPartialMockWithMethods(Report::class, []),
             function ($report) {
                 /** @var Report $report */
                 static::assertEquals(self::STORE_URL, $report->getMetaData()['META DATA']['store_url']);

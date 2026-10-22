@@ -412,7 +412,7 @@ class JsTest extends BoltTestCase
     ) {
 
         $block = $this->objectManager->create(Js::class);
-        $configHelper = $this->createPartialMock(Config::class,[
+        $configHelper = $this->createPartialMockWithMethods(Config::class,[
             'isPaymentOnlyCheckoutEnabled',
             'getPublishableKeyPayment',
             'getPublishableKeyCheckout',
@@ -423,7 +423,7 @@ class JsTest extends BoltTestCase
             ->willReturn($publishableKeyPayment);
         $configHelper->method('getPublishableKeyCheckout')
             ->willReturn($publishableKeyCheckout);
-        $requestMock = $this->createPartialMock(Request::class,['getFullActionName']);
+        $requestMock = $this->createPartialMockWithMethods(Request::class,['getFullActionName']);
         $requestMock->method('getFullActionName')->willReturn($requestAction);
         TestHelper::setInaccessibleProperty($block,'_request', $requestMock);
         TestHelper::setInaccessibleProperty($block,'configHelper', $configHelper);
@@ -512,7 +512,7 @@ class JsTest extends BoltTestCase
             ]
         ];
         TestUtils::setupBoltConfig($configData);
-        $requestMock = $this->createPartialMock(Http::class,['getFullActionName']);
+        $requestMock = $this->createPartialMockWithMethods(Http::class,['getFullActionName']);
         $requestMock->method('getFullActionName')->willReturn($requestActionName);
         TestHelper::setInaccessibleProperty($block,'_request', $requestMock);
         static::assertEquals($expectedResult, $block->getReplaceSelectors());
@@ -813,7 +813,7 @@ class JsTest extends BoltTestCase
     public function getAdditionalJavascript_always_returnsAdditionalJSCallback()
     {
         $block = $this->objectManager->create(Js::class);
-        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $eventsForThirdPartyModules = $this->createPartialMockWithMethods(EventsForThirdPartyModules::class, ['runFilter']);
         $eventsForThirdPartyModules->expects(static::once())
             ->method('runFilter')
             ->willReturn('test additional js');
@@ -831,7 +831,7 @@ class JsTest extends BoltTestCase
     public function getAdditionalHtml_returnsCorrectResult()
     {
         $block = $this->objectManager->create(Js::class);
-        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class,['runFilter']);
+        $eventsForThirdPartyModules = $this->createPartialMockWithMethods(EventsForThirdPartyModules::class,['runFilter']);
         $eventsForThirdPartyModules->expects(static::once())->method('runFilter')->with('getAdditionalHtml', null)->willReturn('<html></html>');
         TestHelper::setInaccessibleProperty($block,'eventsForThirdPartyModules', $eventsForThirdPartyModules);
         static::assertEquals('<html></html>', $block->getAdditionalHtml());
@@ -1006,11 +1006,10 @@ class JsTest extends BoltTestCase
             $configMap
         );
 
-        $scopeConfigMock = $this->getMockBuilder(ScopeConfigInterface::class)
-            ->setMethods(['getValue'])
-            ->getMockForAbstractClass();
+        $scopeConfigMock = $this->getMockBuilderWithMethods(ScopeConfigInterface::class, ['getValue'])
+            ->getMock();
 
-        $currentMock = $this->createPartialMock(Js::class, []);
+        $currentMock = $this->createPartialMockWithMethods(Js::class, []);
         TestHelper::setProperty($currentMock, '_scopeConfig', $scopeConfigMock);
         $scopeConfigMock->method('getValue')->willReturnMap($configMap);
 
@@ -1540,7 +1539,7 @@ JS;
 
         $block = $this->objectManager->create(Js::class);
 
-        $requestMock = $this->createPartialMock(Http::class,['getFullActionName']);
+        $requestMock = $this->createPartialMockWithMethods(Http::class,['getFullActionName']);
         $requestMock->method('getFullActionName')->willReturn($currentAction);
         TestHelper::setInaccessibleProperty($block,'_request', $requestMock);
 
@@ -1635,7 +1634,7 @@ JS;
         $expectedResult
     ) {
         $block = $this->objectManager->create(Js::class);
-        $httpContext = $this->createPartialMock(Context::class,['getValue']);
+        $httpContext = $this->createPartialMockWithMethods(Context::class,['getValue']);
         $httpContext->expects(static::once())->method('getValue')->with(\Magento\Customer\Model\Context::CONTEXT_AUTH)->willReturn($isLoggedIn);
         TestHelper::setInaccessibleProperty($block,'httpContext',$httpContext);
         static::assertEquals($expectedResult, $block->isLoggedIn());
@@ -1677,7 +1676,7 @@ JS;
 
         $block = $this->objectManager->create(Js::class);
 
-        $requestMock = $this->createPartialMock(Http::class,['getFullActionName']);
+        $requestMock = $this->createPartialMockWithMethods(Http::class,['getFullActionName']);
         $requestMock->method('getFullActionName')->willReturn($fullActionName);
         TestHelper::setInaccessibleProperty($block,'_request', $requestMock);
 
@@ -1895,7 +1894,7 @@ JS;
         $isIPRestricted,
         $isKeyMissing
     ) {
-        $currentMock = $this->createPartialMock(
+        $currentMock = $this->createPartialMockWithMethods(
             Js::class,
             [
                 'isEnabled',
@@ -1907,21 +1906,21 @@ JS;
                 'getFullActionName'
             ]
         );
-        $deciderMock = $this->createPartialMock(Decider::class, ['isBoltEnabled', 'isAllowDisablingBoltForCustomerGroup']);
+        $deciderMock = $this->createPartialMockWithMethods(Decider::class, ['isBoltEnabled', 'isAllowDisablingBoltForCustomerGroup']);
         $deciderMock->method('isBoltEnabled')->willReturn($isBoltFeatureEnabled);
         $deciderMock->method('isAllowDisablingBoltForCustomerGroup')->willReturn(false);
         TestHelper::setProperty($currentMock, 'featureSwitches', $deciderMock);
         $configHelper = $this->objectManager->create(Config::class);
         TestHelper::setProperty($currentMock, 'configHelper', $configHelper);
         $currentMock->method('isEnabled')->willReturn($isEnabled);
-        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
-        $eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
+        $eventsForThirdPartyModules = $this->createPartialMockWithMethods(EventsForThirdPartyModules::class, ['runFilter']);
+        $eventsForThirdPartyModules->method('runFilter')->willReturnArgument(1);
         TestHelper::setProperty($currentMock, 'eventsForThirdPartyModules', $eventsForThirdPartyModules);
-        $checkoutSession = $this->createPartialMock(\Magento\Framework\Session\SessionManager::class, ['getQuote']);
+        $checkoutSession = $this->createPartialMockWithMethods(\Magento\Framework\Session\SessionManager::class, ['getQuote']);
         $quote = TestUtils::createQuote();
         $checkoutSession->method('getQuote')->willReturn($quote);
         TestHelper::setProperty($currentMock, 'checkoutSession', $checkoutSession);
-        $httpContextMock = $this->createPartialMock(Context::class,['getValue']);
+        $httpContextMock = $this->createPartialMockWithMethods(Context::class,['getValue']);
         if ($isBoltFeatureEnabled){
             $httpContextMock->expects(static::once())->method('getValue')
                 ->with('customer_group_id')
@@ -2515,7 +2514,7 @@ function(arg) {
     public function getAdditionalInvalidateBoltCartJavascript_returnsCorrectResult()
     {
         $block = $this->objectManager->create(Js::class);
-        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $eventsForThirdPartyModules = $this->createPartialMockWithMethods(EventsForThirdPartyModules::class, ['runFilter']);
         $eventsForThirdPartyModules->expects(static::once())
             ->method('runFilter')
             ->willReturn('test additional js');
@@ -2530,7 +2529,7 @@ function(arg) {
     public function getAdditionalQuoteTotalsConditions_returnsCorrectResult()
     {
         $block = $this->objectManager->create(Js::class);
-        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter']);
+        $eventsForThirdPartyModules = $this->createPartialMockWithMethods(EventsForThirdPartyModules::class, ['runFilter']);
         $eventsForThirdPartyModules->expects(static::once())
             ->method('runFilter')
             ->with('getAdditionalQuoteTotalsConditions', null)
@@ -2584,7 +2583,7 @@ function(arg) {
 
         TestUtils::setupBoltConfig($configData);
         $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE, $isLoadConnectJsOnSpecificPageFeatureSwitchEnabled);
-        $requestMock = $this->createPartialMock(Http::class,['getFullActionName']);
+        $requestMock = $this->createPartialMockWithMethods(Http::class,['getFullActionName']);
         $requestMock->method('getFullActionName')->willReturn($fullActionName);
         TestHelper::setInaccessibleProperty($block,'_request', $requestMock);
 
@@ -2707,7 +2706,7 @@ function(arg) {
 
         TestUtils::setupBoltConfig($configData);
         $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_LOAD_CONNECT_JS_ON_SPECIFIC_PAGE, $isLoadConnectJsOnSpecificPageFeatureSwitchEnabled);
-        $requestMock = $this->createPartialMock(Http::class,['getFullActionName']);
+        $requestMock = $this->createPartialMockWithMethods(Http::class,['getFullActionName']);
         $requestMock->method('getFullActionName')->willReturn($fullActionName);
         TestHelper::setInaccessibleProperty($block,'_request', $requestMock);
 

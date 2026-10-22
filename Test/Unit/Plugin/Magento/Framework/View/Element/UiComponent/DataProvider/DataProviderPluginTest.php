@@ -59,14 +59,13 @@ class DataProviderPluginTest extends BoltTestCase
 
     protected function setUpInternal()
     {
-        $this->paymentCollectionFactoryMock = $this->createPartialMock(
+        $this->paymentCollectionFactoryMock = $this->createPartialMockWithMethods(
             \Magento\Sales\Model\ResourceModel\Order\Payment\CollectionFactory::class,
             ['create']
         );
         $this->configHelperMock = $this->createMock(\Bolt\Boltpay\Helper\Config::class);
-        $this->currentMock = $this->getMockBuilder(DataProviderPlugin::class)
+        $this->currentMock = $this->getMockBuilderWithMethods(DataProviderPlugin::class, null)
             ->setConstructorArgs([$this->paymentCollectionFactoryMock, $this->configHelperMock])
-            ->setMethods(null)
             ->getMock();
         $this->subjectMock = $this->createMock(
             \Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider::class
@@ -143,11 +142,19 @@ class DataProviderPluginTest extends BoltTestCase
                     return in_array($value, $expectedIds) ? $this->paymentMock : null;
                 }
             );
+        // array_shift() returns null once a list runs out, as willReturnOnConsecutiveCalls() did before
+        // PHPUnit 12 made running out an error
         $this->paymentMock->method('getData')->with('additional_information/processor')
-            ->willReturnOnConsecutiveCalls(...$processors);
+            ->willReturnCallback(function () use (&$processors) {
+                return array_shift($processors);
+            });
         $this->paymentMock->method('getAdditionalData')
-            ->willReturnOnConsecutiveCalls(...$additionalData);
-        $this->paymentMock->method('getCcType')->willReturnOnConsecutiveCalls(...$ccTypes);
+            ->willReturnCallback(function () use (&$additionalData) {
+                return array_shift($additionalData);
+            });
+        $this->paymentMock->method('getCcType')->willReturnCallback(function () use (&$ccTypes) {
+            return array_shift($ccTypes);
+        });
         $this->configHelperMock->method('getShowCcTypeInOrderGrid')->willReturn($showCcTypeInOrderGrid);
         $resultActual = $this->currentMock->afterGetData($this->subjectMock, $resultBefore);
         static::assertEquals($resultAfter, $resultActual);

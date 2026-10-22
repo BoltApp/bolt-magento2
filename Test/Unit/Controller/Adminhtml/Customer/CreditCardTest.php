@@ -208,7 +208,7 @@ class CreditCardTest extends BoltTestCase
         $this->resultJsonFactoryMock = $this->createMock(JsonFactory::class);
 
 
-        $this->currentMock = $this->getMockBuilder(CreditCard::class)
+        $this->currentMock = $this->getMockBuilderWithMethods(CreditCard::class, ['initCurrentCustomer'])
             ->setConstructorArgs([
                 $this->contextMock,
                 $this->coreRegistryMock,
@@ -236,7 +236,6 @@ class CreditCardTest extends BoltTestCase
                 $this->resultForwardFactoryMock,
                 $this->resultJsonFactoryMock,
             ])
-            ->setMethods(['initCurrentCustomer'])
             ->getMock();
     }
 

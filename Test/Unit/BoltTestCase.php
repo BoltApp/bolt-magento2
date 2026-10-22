@@ -18,8 +18,14 @@
 
 namespace Bolt\Boltpay\Test\Unit;
 
-use PHPUnit\Framework\Constraint\IsType;
+use PHPUnit\Framework\Constraint\Callback;
+use PHPUnit\Framework\Constraint\Constraint;
+use PHPUnit\Framework\ExpectationFailedException;
+use PHPUnit\Framework\MockObject\MockBuilder;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Rule\Parameters as ParametersRule;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use ReflectionException;
 use ReflectionObject;
 use ReflectionProperty;
@@ -145,33 +151,6 @@ class BoltTestCase extends TestCase
         );
     }
 
-    public static function assertInternalType($expected, $actual, $message = '')
-    {
-        if (!\is_string($expected)) {
-            throw InvalidArgumentHelper::factory(1, 'string');
-        }
-
-        $constraint = new IsType(
-            $expected
-        );
-
-        static::assertThat($actual, $constraint, $message);
-    }
-
-    /**
-     * @param string $messageRegExp
-     *
-     * @throws Exception
-     */
-    public function expectExceptionMessageRegExp($messageRegExp)
-    {
-        if (!\is_string($messageRegExp)) {
-            throw InvalidArgumentHelper::factory(1, 'string');
-        }
-
-        $this->expectedExceptionMessageRegExp = $messageRegExp;
-    }
-
     protected function setUpInternal()
     {
     }
@@ -180,15 +159,156 @@ class BoltTestCase extends TestCase
     {
     }
 
-    protected function createPartialMock($originalClassName, array $methods): \PHPUnit\Framework\MockObject\MockObject
+    /**
+     * PHPUnit 9's setMethods() for any PHPUnit from 9 to 12: getMockBuilder($type)->setMethods($methods)
+     *
+     * setMethods() was removed in PHPUnit 10, and its replacements do not cover how the suite uses it:
+     * onlyMethods() rejects methods the type does not declare (DataObject's magic getters and setters,
+     * extra methods on an interface), and addMethods(), which accepted them, was removed in PHPUnit 12.
+     *
+     * Abstract methods, including all of an interface's, are always doubled, since the double cannot be
+     * instantiated without them.
+     *
+     * @param string        $type
+     * @param string[]|null $methods as for setMethods(): null doubles none, [] doubles all
+     *
+     * @return MockBuilder
+     */
+    protected function getMockBuilderWithMethods($type, $methods = null)
     {
-        return $this->getMockBuilder($originalClassName)
+        if ($methods === []) {
+            return $this->getMockBuilder($type);
+        }
+        return $this->getMockBuilderForAbstractClass($type, (array)$methods);
+    }
+
+    /**
+     * Stand-in for getMockForAbstractClass(), removed in PHPUnit 12: doubles $type's abstract methods and $methods
+     *
+     * Like Magento 2.4.9's own MockCreationTrait::createPartialMockWithReflection(), this writes the method list
+     * onto the builder directly; PHPUnit's generator still doubles methods the type does not declare.
+     *
+     * @param string   $type
+     * @param string[] $methods
+     *
+     * @return MockBuilder
+     */
+    protected function getMockBuilderForAbstractClass($type, array $methods = [])
+    {
+        $builder = $this->getMockBuilder($type);
+        if (class_exists($type) || interface_exists($type)) {
+            foreach ((new ReflectionClass($type))->getMethods() as $method) {
+                if ($method->isAbstract()) {
+                    $methods[] = $method->getName();
+                }
+            }
+        }
+        if (!$methods) {
+            return $builder->onlyMethods([]);
+        }
+        $unique = [];
+        foreach ($methods as $method) {
+            $unique[strtolower($method)] = $method;
+        }
+        // declared on MockBuilder in PHPUnit 9, on its parent TestDoubleBuilder in PHPUnit 12
+        $property = new ReflectionProperty($builder, 'methods');
+        if (PHP_VERSION_ID < 80100) {
+            $property->setAccessible(true);
+        }
+        $property->setValue($builder, array_values($unique));
+        return $builder;
+    }
+
+    /**
+     * createPartialMock() that, like PHPUnit 9's, also accepts methods $type does not declare
+     *
+     * @param string   $type
+     * @param string[] $methods [] doubles none
+     *
+     * @return MockObject
+     */
+    protected function createPartialMockWithMethods($type, array $methods)
+    {
+        return $this->getMockBuilderWithMethods($type, $methods ?: null)
             ->disableOriginalConstructor()
             ->disableOriginalClone()
-            ->disableArgumentCloning()
-            ->disallowMockingUnknownTypes()
-            ->setMethods(empty($methods) ? null : $methods)
             ->getMock();
+    }
+
+    /**
+     * Stand-in for withConsecutive(), removed in PHPUnit 10
+     *
+     * `->with(...self::consecutiveArgs(['a'], ['b', 'c']))` expects ('a') on the first call and ('b', 'c') on the
+     * second. As with withConsecutive(), values that are not constraints are compared with equalTo(), and calls
+     * beyond the listed ones are not checked.
+     *
+     * PHPUnit 10.5+ hands a variadic callback every argument of a call. PHPUnit 9 hands a callback one argument
+     * and rejects calls with fewer arguments than with() has constraints, so there a single constraint, on the
+     * first argument, reads the rest of the call from the invocation PHPUnit is checking.
+     *
+     * @param array ...$calls the expected arguments of each call, in order
+     *
+     * @return Constraint[] for with()
+     */
+    public static function consecutiveArgs(array ...$calls)
+    {
+        if (!$calls || !max(array_map('count', $calls))) {
+            return [];
+        }
+        $call = 0;
+        $check = function (array $actualArgs) use ($calls, &$call) {
+            $expectedArgs = isset($calls[$call]) ? $calls[$call] : [];
+            $call++;
+            foreach ($expectedArgs as $position => $expected) {
+                if (!array_key_exists($position, $actualArgs)) {
+                    throw new ExpectationFailedException(sprintf('Call %d has no parameter %d.', $call, $position));
+                }
+                self::assertConsecutiveArg($expected, $actualArgs[$position], $position, $call);
+            }
+            return true;
+        };
+        if (method_exists(Callback::class, 'isVariadic')) {
+            return [
+                static::callback(function (...$actualArgs) use ($check) {
+                    return $check($actualArgs);
+                })
+            ];
+        }
+        return [
+            static::callback(function ($firstArg) use ($check) {
+                $actualArgs = self::argsOfInvocationUnderCheck();
+                return $check($actualArgs !== null ? $actualArgs : [$firstArg]);
+            })
+        ];
+    }
+
+    /**
+     * On PHPUnit 9, the arguments of the call whose parameters PHPUnit is checking, or null if not found
+     *
+     * @return array|null
+     */
+    private static function argsOfInvocationUnderCheck()
+    {
+        foreach (debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT) as $frame) {
+            if (isset($frame['object']) && $frame['object'] instanceof ParametersRule) {
+                $invocation = new ReflectionProperty($frame['object'], 'invocation');
+                $invocation->setAccessible(true);
+                return $invocation->getValue($frame['object'])->getParameters();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @param mixed $expected value or constraint
+     * @param mixed $actual
+     * @param int   $position
+     * @param int   $call
+     */
+    private static function assertConsecutiveArg($expected, $actual, $position, $call)
+    {
+        $constraint = $expected instanceof Constraint ? $expected : static::equalTo($expected);
+        $constraint->evaluate($actual, sprintf('Parameter %d of call %d does not match.', $position, $call));
     }
 }
 

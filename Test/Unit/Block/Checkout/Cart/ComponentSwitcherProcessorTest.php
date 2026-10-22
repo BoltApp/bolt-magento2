@@ -103,7 +103,7 @@ class ComponentSwitcherProcessorTest extends BoltTestCase
             ]
         ];
 
-        $eventThirdPartyModule = $this->createPartialMock(EventsForThirdPartyModules::class,['runFilter']);
+        $eventThirdPartyModule = $this->createPartialMockWithMethods(EventsForThirdPartyModules::class,['runFilter']);
         $eventThirdPartyModule->method('runFilter')->willReturn($filteredJsLayout);
 
         TestHelper::setProperty($this->componentSwitcherProcessor, 'eventsForThirdPartyModules', $eventThirdPartyModule);

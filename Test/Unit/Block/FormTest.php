@@ -219,7 +219,7 @@ class FormTest extends BoltTestCase
     #[Test]
     public function getPublishableKeyBackOfficeShouldReturnConfigValue()
     {
-        $configHelperMock = $this->createPartialMock(Config::class,['getPublishableKeyBackOffice']);
+        $configHelperMock = $this->createPartialMockWithMethods(Config::class,['getPublishableKeyBackOffice']);
         $configHelperMock
             ->method('getPublishableKeyBackOffice')
             ->with($this->quote->getStoreId())
@@ -234,7 +234,7 @@ class FormTest extends BoltTestCase
     #[Test]
     public function getPublishableKeyPaymentOnlyShouldReturnConfigValue()
     {
-        $configHelperMock = $this->createPartialMock(Config::class,['getPublishableKeyPayment']);
+        $configHelperMock = $this->createPartialMockWithMethods(Config::class,['getPublishableKeyPayment']);
         $configHelperMock
             ->method('getPublishableKeyPayment')
             ->with($this->quote->getStoreId())

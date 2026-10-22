@@ -134,8 +134,7 @@ class UpdateCartTest extends BoltTestCase
 
     protected function setUpInternal()
     {
-        $this->updateCartContext = $this->getMockBuilder(UpdateCartContext::class)
-            ->setMethods(['getCache', 'getEventsForThirdPartyModules'])
+        $this->updateCartContext = $this->getMockBuilderWithMethods(UpdateCartContext::class, ['getCache', 'getEventsForThirdPartyModules'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -153,13 +152,11 @@ class UpdateCartTest extends BoltTestCase
     /**
      * @param array $methods
      * @param bool $enableOriginalConstructor
-     * @param bool $enableProxyingToOriginalMethods
      */
     private function initCurrentMock(
         $methods = [],
         $cartDataFactory = null,
         $updateCartResultFactory = null,
-        $enableProxyingToOriginalMethods = false,
         $enableOriginalConstructor = true
     ) {
         if (!$cartDataFactory) {
@@ -169,26 +166,19 @@ class UpdateCartTest extends BoltTestCase
             $updateCartResultFactory = $this->updateCartResultFactory;
         }
 
-        $builder = $this->getMockBuilder(UpdateCart::class)
+        $builder = $this->getMockBuilderWithMethods(UpdateCart::class, $methods)
             ->setConstructorArgs(
                 [
                     $this->updateCartContext,
                     $cartDataFactory,
                     $updateCartResultFactory
                 ]
-            )
-            ->setMethods($methods);
+            );
 
         if ($enableOriginalConstructor) {
             $builder->enableOriginalConstructor();
         } else {
             $builder->disableOriginalConstructor();
-        }
-
-        if ($enableProxyingToOriginalMethods) {
-            $builder->enableProxyingToOriginalMethods();
-        } else {
-            $builder->disableProxyingToOriginalMethods();
         }
 
         $this->currentMock = $builder->getMock();
@@ -201,24 +191,19 @@ class UpdateCartTest extends BoltTestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->cartHelper = $this->getMockBuilder(CartHelper::class)
-            ->setMethods(
-                [
+        $this->cartHelper = $this->getMockBuilderWithMethods(CartHelper::class, [
                     'replicateQuoteData',
                     'resetCheckoutSession',
                     'getCartData',
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->bugsnag = $this->getMockBuilder(Bugsnag::class)
-            ->setMethods(['notifyException'])
+        $this->bugsnag = $this->getMockBuilderWithMethods(Bugsnag::class, ['notifyException'])
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->request = $this->getMockBuilder(Request::class)
-            ->setMethods(['getBodyParams'])
+        $this->request = $this->getMockBuilderWithMethods(Request::class, ['getBodyParams'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -250,16 +235,13 @@ class UpdateCartTest extends BoltTestCase
         $isVirtual = false,
         $couponCode = null
     ) {
-        $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
-            ->setMethods(['getSku', 'getQty'])
+        $quoteItem = $this->getMockBuilderWithMethods(\Magento\Quote\Model\Quote\Item::class, ['getSku', 'getQty'])
             ->disableOriginalConstructor()
             ->getMock();
         $quoteItem->method('getSku')->willReturn('TestProduct');
         $quoteItem->method('getQty')->willReturn(1);
 
-        $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods(
-                [
+        $quote = $this->getMockBuilderWithMethods(Quote::class, [
                     'getId',
                     'getBoltParentQuoteId',
                     'getSubtotal',
@@ -283,8 +265,7 @@ class UpdateCartTest extends BoltTestCase
                     'setCurrentCurrencyCode',
                     'setTotalsCollectedFlag',
                     'getIsVirtual'
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -518,10 +499,10 @@ class UpdateCartTest extends BoltTestCase
 
         $this->currentMock->expects($this->exactly(2))
             ->method('setShipment')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 [$requestCart['shipments'][0], $immutableQuoteMock],
                 [$requestCart['shipments'][0], $parentQuoteMock]
-            );
+            ));
 
         $this->currentMock->expects(self::once())->method('verifyCouponCode')
             ->with(self::COUPON_CODE, $parentQuoteMock)
@@ -533,10 +514,10 @@ class UpdateCartTest extends BoltTestCase
 
         $this->currentMock->expects($this->exactly(2))
             ->method('setShippingAssignments')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 [$immutableQuoteMock],
                 [$parentQuoteMock]
-            );
+            ));
 
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($parentQuoteMock, $immutableQuoteMock);
@@ -623,10 +604,10 @@ class UpdateCartTest extends BoltTestCase
 
         $this->currentMock->expects($this->exactly(2))
             ->method('setShipment')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 [$requestCart['shipments'][0], $immutableQuoteMock],
                 [$requestCart['shipments'][0], $parentQuoteMock]
-            );
+            ));
 
         $quoteDiscount = [
             [
@@ -650,10 +631,10 @@ class UpdateCartTest extends BoltTestCase
 
         $this->currentMock->expects($this->exactly(2))
             ->method('setShippingAssignments')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 [$immutableQuoteMock],
                 [$parentQuoteMock]
-            );
+            ));
 
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($parentQuoteMock, $immutableQuoteMock);
@@ -821,10 +802,10 @@ class UpdateCartTest extends BoltTestCase
 
         $this->currentMock->expects($this->exactly(2))
             ->method('setShipment')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 [$requestCart['shipments'][0], $immutableQuoteMock],
                 [$requestCart['shipments'][0], $parentQuoteMock]
-            );
+            ));
 
         $this->currentMock->expects(self::once())->method('validateQuote')
             ->with(self::IMMUTABLE_QUOTE_ID)
@@ -851,10 +832,10 @@ class UpdateCartTest extends BoltTestCase
 
         $this->currentMock->expects($this->exactly(2))
             ->method('setShippingAssignments')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 [$immutableQuoteMock],
                 [$parentQuoteMock]
-            );
+            ));
 
         $this->cartHelper->expects(self::once())->method('replicateQuoteData')
             ->with($parentQuoteMock, $immutableQuoteMock);
@@ -938,10 +919,10 @@ class UpdateCartTest extends BoltTestCase
 
         $this->currentMock->expects($this->exactly(2))
             ->method('setShipment')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 [$requestCart['shipments'][0], $immutableQuoteMock],
                 [$requestCart['shipments'][0], $parentQuoteMock]
-            );
+            ));
 
         $this->currentMock->expects(self::once())->method('validateQuote')
             ->with(self::IMMUTABLE_QUOTE_ID)
@@ -991,10 +972,10 @@ class UpdateCartTest extends BoltTestCase
 
         $this->currentMock->expects($this->exactly(2))
             ->method('setShippingAssignments')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 [$immutableQuoteMock],
                 [$parentQuoteMock]
-            );
+            ));
 
         $this->cacheMock->expects(static::once())
             ->method('clean')->with([\Bolt\Boltpay\Helper\Cart::BOLT_ORDER_TAG . '_' . self::PARENT_QUOTE_ID]);

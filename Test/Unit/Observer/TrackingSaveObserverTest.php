@@ -101,7 +101,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $orderItem1 = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
         $orderItem2 = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
         $orderItem3 = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
-        $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
+        $payment = $this->createMock(\Magento\Sales\Api\Data\OrderPaymentInterface::class);
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
         $orderItem1->expects($this->once())
@@ -118,7 +118,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         ];
         $payment->expects($this->once())
             ->method('getAdditionalInformation')
-            ->will($this->returnValueMap($map));
+            ->willReturnMap($map);
         $payment->expects($this->once())
             ->method('getMethod')
             ->willReturn(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
@@ -150,8 +150,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
-            ->setMethods(['getTrack'])
+        $event = $this->getMockBuilderWithMethods(\Magento\Framework\Event::class, ['getTrack'])
             ->disableOriginalConstructor()
             ->getMock();
         $eventObserver->expects($this->once())
@@ -249,7 +248,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $shipment = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment::class)->disableOriginalConstructor()->getMock();
         $shipmentItem1 = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
         $orderItem1 = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
-        $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
+        $payment = $this->createMock(\Magento\Sales\Api\Data\OrderPaymentInterface::class);
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
         $orderItem1->expects($this->once())
@@ -261,7 +260,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         ];
         $payment->expects($this->once())
             ->method('getAdditionalInformation')
-            ->will($this->returnValueMap($map));
+            ->willReturnMap($map);
         $payment->expects($this->once())
             ->method('getMethod')
             ->willReturn(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
@@ -289,8 +288,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
-            ->setMethods(['getTrack'])
+        $event = $this->getMockBuilderWithMethods(\Magento\Framework\Event::class, ['getTrack'])
             ->disableOriginalConstructor()
             ->getMock();
         $eventObserver->expects($this->once())
@@ -364,7 +362,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $shipment = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment::class)->disableOriginalConstructor()->getMock();
         $shipmentItem1 = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
         $orderItem1 = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
-        $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
+        $payment = $this->createMock(\Magento\Sales\Api\Data\OrderPaymentInterface::class);
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
         $orderItem1->expects($this->once())
@@ -376,7 +374,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         ];
         $payment->expects($this->once())
             ->method('getAdditionalInformation')
-            ->will($this->returnValueMap($map));
+            ->willReturnMap($map);
         $payment->expects($this->once())
             ->method('getMethod')
             ->willReturn(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
@@ -404,8 +402,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
-            ->setMethods(['getTrack'])
+        $event = $this->getMockBuilderWithMethods(\Magento\Framework\Event::class, ['getTrack'])
             ->disableOriginalConstructor()
             ->getMock();
         $eventObserver->expects($this->once())
@@ -448,9 +445,8 @@ class TrackingSaveObserverTest extends BoltTestCase
         $shipment = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment::class)->disableOriginalConstructor()->getMock();
         $shipmentItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
         $orderItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
-        $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
-        $order = $this->getMockBuilder('BoltOrder')
-            ->setMethods(['getPayment', 'getStoreId', 'getBoltTransactionReference'])
+        $payment = $this->createMock(\Magento\Sales\Api\Data\OrderPaymentInterface::class);
+        $order = $this->getMockBuilderWithMethods('BoltOrder', ['getPayment', 'getStoreId', 'getBoltTransactionReference'])
             ->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
         $orderItem->expects($this->once())
@@ -461,7 +457,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->willReturn('otherpay');
         $order->expects($this->once())
             ->method('getBoltTransactionReference')
-            ->will($this->returnValue('ABCD-EFGH-1234'));
+            ->willReturn('ABCD-EFGH-1234');
         $order->expects($this->once())
             ->method('getPayment')
             ->willReturn($payment);
@@ -486,8 +482,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
-            ->setMethods(['getTrack'])
+        $event = $this->getMockBuilderWithMethods(\Magento\Framework\Event::class, ['getTrack'])
             ->disableOriginalConstructor()
             ->getMock();
         $eventObserver->expects($this->once())
@@ -553,9 +548,8 @@ class TrackingSaveObserverTest extends BoltTestCase
         $shipment = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment::class)->disableOriginalConstructor()->getMock();
         $shipmentItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
         $orderItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
-        $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
-        $order = $this->getMockBuilder('BoltOrder')
-            ->setMethods(['getPayment', 'getBoltTransactionReference'])
+        $payment = $this->createMock(\Magento\Sales\Api\Data\OrderPaymentInterface::class);
+        $order = $this->getMockBuilderWithMethods('BoltOrder', ['getPayment', 'getBoltTransactionReference'])
             ->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
 
@@ -578,8 +572,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
-            ->setMethods(['getTrack'])
+        $event = $this->getMockBuilderWithMethods(\Magento\Framework\Event::class, ['getTrack'])
             ->disableOriginalConstructor()
             ->getMock();
         $eventObserver->expects($this->never())
@@ -612,9 +605,8 @@ class TrackingSaveObserverTest extends BoltTestCase
         $shipment = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment::class)->disableOriginalConstructor()->getMock();
         $shipmentItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
         $orderItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
-        $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
-        $order = $this->getMockBuilder('BoltOrder')
-            ->setMethods(['getPayment', 'getQuoteId', 'getBoltTransactionReference'])
+        $payment = $this->createMock(\Magento\Sales\Api\Data\OrderPaymentInterface::class);
+        $order = $this->getMockBuilderWithMethods('BoltOrder', ['getPayment', 'getQuoteId', 'getBoltTransactionReference'])
             ->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
 
@@ -623,7 +615,7 @@ class TrackingSaveObserverTest extends BoltTestCase
             ->willReturn('otherpay');
         $order->expects($this->once())
             ->method('getBoltTransactionReference')
-            ->will($this->returnValue(null));
+            ->willReturn(null);
         $order->expects($this->once())
             ->method('getPayment')
             ->willReturn($payment);
@@ -640,8 +632,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
-            ->setMethods(['getTrack'])
+        $event = $this->getMockBuilderWithMethods(\Magento\Framework\Event::class, ['getTrack'])
             ->disableOriginalConstructor()
             ->getMock();
         $eventObserver->expects($this->once())
@@ -694,8 +685,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
-            ->setMethods(['getTrack'])
+        $event = $this->getMockBuilderWithMethods(\Magento\Framework\Event::class, ['getTrack'])
             ->disableOriginalConstructor()
             ->getMock();
         $eventObserver->expects($this->once())
@@ -725,8 +715,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
-            ->setMethods(['getTrack'])
+        $event = $this->getMockBuilderWithMethods(\Magento\Framework\Event::class, ['getTrack'])
             ->disableOriginalConstructor()
             ->getMock();
         $eventObserver->expects($this->once())
@@ -753,7 +742,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $shipmentItem2 = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
         $orderItem1 = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
         $orderItem2 = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
-        $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
+        $payment = $this->createMock(\Magento\Sales\Api\Data\OrderPaymentInterface::class);
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
         $orderItem1->expects($this->once())
@@ -768,7 +757,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         ];
         $payment->expects($this->once())
             ->method('getAdditionalInformation')
-            ->will($this->returnValueMap($map));
+            ->willReturnMap($map);
         $payment->expects($this->once())
             ->method('getMethod')
             ->willReturn(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
@@ -796,8 +785,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
-            ->setMethods(['getTrack'])
+        $event = $this->getMockBuilderWithMethods(\Magento\Framework\Event::class, ['getTrack'])
             ->disableOriginalConstructor()
             ->getMock();
         $eventObserver->expects($this->once())
@@ -873,7 +861,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $shipmentItem2 = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
         $orderItem1 = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
         $orderItem2 = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
-        $payment = $this->getMockBuilder(\Magento\Sales\Api\Data\OrderPaymentInterface::class)->getMockForAbstractClass();
+        $payment = $this->createMock(\Magento\Sales\Api\Data\OrderPaymentInterface::class);
         $order = $this->getMockBuilder(\Magento\Sales\Model\Order::class)->disableOriginalConstructor()->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
         $orderItem1->expects($this->once())
@@ -888,7 +876,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         ];
         $payment->expects($this->once())
             ->method('getAdditionalInformation')
-            ->will($this->returnValueMap($map));
+            ->willReturnMap($map);
         $payment->expects($this->once())
             ->method('getMethod')
             ->willReturn(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
@@ -911,8 +899,7 @@ class TrackingSaveObserverTest extends BoltTestCase
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
-            ->setMethods(['getTrack'])
+        $event = $this->getMockBuilderWithMethods(\Magento\Framework\Event::class, ['getTrack'])
             ->disableOriginalConstructor()
             ->getMock();
         $eventObserver->expects($this->once())
@@ -965,8 +952,7 @@ class TrackingSaveObserverTest extends BoltTestCase
     private function initRequiredMocks()
     {
         $this->configHelper = $this->createMock(ConfigHelper::class);
-        $this->dataObject = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['setApiData'])
+        $this->dataObject = $this->getMockBuilderWithMethods(DataObject::class, ['setApiData'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);

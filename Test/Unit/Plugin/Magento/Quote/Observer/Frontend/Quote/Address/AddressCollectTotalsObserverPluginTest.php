@@ -83,12 +83,11 @@ class AddressCollectTotalsObserverPluginTest extends BoltTestCase
     protected function setUpInternal()
     {
         $this->vatValidatorMock = $this->createMock(VatValidator::class);
-        $this->currentMock = $this->getMockBuilder(AddressCollectTotalsObserverPlugin::class)
+        $this->currentMock = $this->getMockBuilderWithMethods(AddressCollectTotalsObserverPlugin::class, ['isEnabled'])
             ->enableOriginalConstructor()
             ->setConstructorArgs([$this->vatValidatorMock])
-            ->setMethods(['isEnabled'])
             ->getMock();
-        $this->quoteMock = $this->createPartialMock(
+        $this->quoteMock = $this->createPartialMockWithMethods(
             Quote::class,
             [
                 'getCustomer',
@@ -99,7 +98,7 @@ class AddressCollectTotalsObserverPluginTest extends BoltTestCase
         $this->customerMock = $this->createMock(\Magento\Customer\Model\Data\Customer::class);
         $this->quoteMock->method('getCustomer')->willReturn($this->customerMock);
         $this->subjectMock = $this->createMock(CollectTotalsObserver::class);
-        $this->observerMock = $this->createPartialMock(Observer::class, ['getQuote', 'getShippingAssignment']);
+        $this->observerMock = $this->createPartialMockWithMethods(Observer::class, ['getQuote', 'getShippingAssignment']);
         $this->observerMock->method('getQuote')->willReturn($this->quoteMock);
     }
 
@@ -157,7 +156,7 @@ class AddressCollectTotalsObserverPluginTest extends BoltTestCase
         $expectRestore
     ) {
         TestHelper::setProperty($this->currentMock, 'emailBefore', self::EMAIL);
-        $shippingAssignmentMock = $this->createPartialMock(
+        $shippingAssignmentMock = $this->createPartialMockWithMethods(
             ShippingAssignment::class,
             ['getShipping', 'getAddress']
         );

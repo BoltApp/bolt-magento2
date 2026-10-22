@@ -56,8 +56,7 @@ class ValidatorPluginTest extends BoltTestCase
         $this->plugin = $this->objectManager->create(ValidatorPlugin::class);
         $this->sessionManager = $this->objectManager->create(SessionManager::class);
         /** @var callable $callback */
-        $this->callback = $callback = $this->getMockBuilder(\stdClass::class)
-            ->setMethods(['__invoke'])->getMock();
+        $this->callback = $callback = $this->getMockBuilderWithMethods(\stdClass::class, ['__invoke'])->getMock();
         $this->proceed = function ($obsrvr) use ($callback) {
             return $callback($obsrvr);
         };

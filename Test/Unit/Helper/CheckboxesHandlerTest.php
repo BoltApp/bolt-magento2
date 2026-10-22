@@ -67,24 +67,21 @@ class CheckboxesHandlerTest extends BoltTestCase
     }
 
     /**
-     * @param array $methods
-     * @param bool  $enableOriginalConstructor
-     * @param bool  $enableProxyingToOriginalMethods
+     * @param array|null $methods as for getMockBuilderWithMethods(); null doubles none
+     * @param bool       $enableOriginalConstructor
      */
     private function initCurrentMock(
         $methods = [],
-        $enableOriginalConstructor = true,
-        $enableProxyingToOriginalMethods = false
+        $enableOriginalConstructor = true
     ) {
-        $builder = $this->getMockBuilder(CheckboxesHandler::class)
+        $builder = $this->getMockBuilderWithMethods(CheckboxesHandler::class, $methods)
             ->setConstructorArgs(
                 [
                     $this->context,
                     $this->bugsnag,
                     $this->subscriberFactory
                 ]
-            )
-            ->setMethods($methods);
+            );
 
         if ($enableOriginalConstructor) {
             $builder->enableOriginalConstructor();
@@ -92,18 +89,13 @@ class CheckboxesHandlerTest extends BoltTestCase
             $builder->disableOriginalConstructor();
         }
 
-        if ($enableProxyingToOriginalMethods) {
-            $builder->enableProxyingToOriginalMethods();
-        } else {
-            $builder->disableProxyingToOriginalMethods();
-        }
-
         $this->currentMock = $builder->getMock();
     }
 
     private function subscribeToNewsletter_setup()
     {
-        $this->initCurrentMock([], true, true);
+        // a real CheckboxesHandler; PHPUnit 9 got one by proxying every method to the original
+        $this->initCurrentMock(null);
         $this->orderMock = $this->createMock(Order::class);
         $this->subscriber = $this->createMock(\Magento\Newsletter\Model\Subscriber::class);
         $this->subscriberFactory->method('create')->willReturn($this->subscriber);
@@ -155,7 +147,7 @@ class CheckboxesHandlerTest extends BoltTestCase
     public function handle($checkboxes, $comment, $needSubscribe)
     {
         $this->initCurrentMock(['subscribeToNewsletter']);
-        $this->orderMock = $this->createPartialMock(
+        $this->orderMock = $this->createPartialMockWithMethods(
             Order::class,
             [
                 'save',
