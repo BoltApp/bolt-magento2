@@ -37,8 +37,9 @@ fi
 
 echo "Installing Magento..."
 mysql -uroot -h 127.0.0.1 -e "CREATE DATABASE magento2;"
-if [ "${MAGENTO_VERSION}" == "2.4.8" ]; then
-    # For Magento 2.4.8 — OpenSearch
+# `sort -V -C` succeeds when its input is already in version order, i.e. MAGENTO_VERSION >= 2.4.8
+if printf '%s\n' 2.4.8 "${MAGENTO_VERSION}" | sort -V -C; then
+    # For Magento 2.4.8 and later — OpenSearch
     php bin/magento setup:install -q \
         --language="en_US" \
         --timezone="UTC" \

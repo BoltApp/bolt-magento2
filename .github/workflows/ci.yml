@@ -143,3 +143,86 @@ jobs:
           name: artifacts-${{ matrix.php_version }}-${{ matrix.magento_version }}
           path: artifacts
           if-no-files-found: ignore
+
+  # ---------------------------------------------------------------------------
+  # Latest Magento on the latest PHP.
+  #
+  # No pre-built image: Magento is cloned from its GitHub release tag and
+  # installed with Composer 2 on the runner, so moving to a newer release means
+  # changing MAGENTO_VERSION and php-version below, nothing else. The GitHub
+  # monorepo resolves entirely from packagist.org, so no repo.magento.com keys
+  # are needed.
+  #
+  # continue-on-error: Magento 2.4.9 ships PHPUnit 12, and most of Test/Unit
+  # still targets PHPUnit 6-9 (@test annotations, setMethods(),
+  # withConsecutive(), ...). The job reports those failures without blocking
+  # merges until the suite is migrated.
+  # ---------------------------------------------------------------------------
+  integration-latest:
+    name: php85 / Magento 2.4.9
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      MAGENTO_VERSION: "2.4.9"
+    services:
+      mysql:
+        image: mysql:8.4
+        ports: ["3306:3306"]
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+      opensearch:
+        image: opensearchproject/opensearch:2
+        ports: ["9200:9200"]
+        env:
+          discovery.type: single-node
+          DISABLE_SECURITY_PLUGIN: "true"
+          OPENSEARCH_JAVA_OPTS: -Xms512m -Xmx512m
+        options: >-
+          --health-cmd="curl -fs http://localhost:9200"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+    steps:
+      # Test/scripts/* expect the plugin and Magento as sibling `project/` and
+      # `magento/` directories, as on CircleCI.
+      - uses: actions/checkout@v4
+        with:
+          path: project
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: bcmath, ftp, gd, intl, soap, sockets, sodium, xsl, zip, pdo_mysql
+          ini-values: memory_limit=-1
+          coverage: pcov
+          tools: composer:v2
+
+      - name: Cache Composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer
+          key: composer-magento-${{ env.MAGENTO_VERSION }}-php85
+
+      - name: Install Magento ${{ env.MAGENTO_VERSION }}
+        run: |
+          git clone --quiet --depth 1 --branch "$MAGENTO_VERSION" https://github.com/magento/magento2.git magento
+          cd magento
+          composer install --no-interaction --no-progress
+          # Plugin dependencies: it runs from app/code, not vendor/, so Composer
+          # does not pull these in by itself
+          composer require --no-interaction --no-progress bugsnag/bugsnag:^3.0 mikey179/vfsstream:^1.6
+
+      - name: Run Magento integration tests
+        working-directory: project
+        run: |
+          mkdir -p artifacts
+          Test/scripts/ci-magento-integration.sh
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-php85-${{ env.MAGENTO_VERSION }}
+          path: project/artifacts
+          if-no-files-found: ignore

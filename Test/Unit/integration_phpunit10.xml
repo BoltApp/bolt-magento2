@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * Bolt magento2 plugin
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ *
+ * @category   Bolt
+ * @package    Bolt_Boltpay
+ * @copyright  Copyright (c) 2026 Bolt Financial, Inc (https://www.boltapp.com)
+ * @license    http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
+-->
+<!--
+    PHPUnit 10 and later (Magento 2.4.8+). PHPUnit 10 dropped <filter>, <listeners> and
+    <logging>, so integration_phpunit.xml cannot be shared; Test/scripts/ci-magento-integration.sh
+    picks between the two by PHPUnit version.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.5/phpunit.xsd"
+         colors="true"
+         columns="max"
+         beStrictAboutTestsThatDoNotTestAnything="false"
+         bootstrap="./framework/bootstrap.php"
+         stderr="true"
+>
+    <!-- Test suites definition -->
+    <testsuites>
+        <testsuite name="Bolt Unit Tests">
+            <directory suffix="Test.php">../../../app/code/Bolt/Boltpay/Test/Unit</directory>
+        </testsuite>
+    </testsuites>
+    <!-- Code coverage filters -->
+    <source>
+        <include>
+            <directory suffix=".php">../../../app/code/Bolt</directory>
+        </include>
+        <exclude>
+            <directory>../../../app/code/Bolt/Boltpay/Test</directory>
+            <directory>../../../app/code/Bolt/Boltpay/Helper/JWT</directory>
+            <file>../../../app/code/Bolt/Boltpay/registration.php</file>
+        </exclude>
+    </source>
+    <!-- PHP INI settings and constants definition -->
+    <php>
+        <includePath>.</includePath>
+        <includePath>testsuite</includePath>
+        <ini name="date.timezone" value="America/Los_Angeles"/>
+        <!-- Local XML configuration file ('.dist' extension will be added, if the specified file doesn't exist) -->
+        <const name="TESTS_INSTALL_CONFIG_FILE" value="etc/install-config-mysql.php"/>
+        <!-- Local XML configuration file ('.dist' extension will be added, if the specified file doesn't exist) -->
+        <const name="TESTS_GLOBAL_CONFIG_FILE" value="etc/config-global.php"/>
+        <!-- Local XML post installation configuration file ('.dist' extension will be added, if the specified file doesn't exist) -->
+        <const name="TESTS_POST_INSTALL_SETUP_COMMAND_CONFIG_FILE" value="etc/post-install-setup-command-config.php"/>
+        <!-- Semicolon-separated 'glob' patterns, that match global XML configuration files -->
+        <const name="TESTS_GLOBAL_CONFIG_DIR" value="../../../app/etc"/>
+        <!-- Whether to cleanup the application before running tests or not -->
+        <const name="TESTS_CLEANUP" value="disabled"/>
+        <!-- Memory usage and estimated leaks thresholds -->
+        <const name="TESTS_MEM_LEAK_LIMIT" value=""/>
+        <!-- Whether to output all CLI commands executed by the bootstrap and tests -->
+        <const name="TESTS_EXTRA_VERBOSE_LOG" value="1"/>
+        <!-- Magento mode for tests execution. Possible values are "default", "developer" and "production". -->
+        <const name="TESTS_MAGENTO_MODE" value="developer"/>
+        <!-- Minimum error log level to listen for. Possible values: -1 ignore all errors, and level constants form http://tools.ietf.org/html/rfc5424 standard -->
+        <const name="TESTS_ERROR_LOG_LISTENER_LEVEL" value="-1"/>
+    </php>
+    <!-- Replaces the Magento\TestFramework listeners used before PHPUnit 10 -->
+    <extensions>
+        <bootstrap class="Magento\TestFramework\Event\Subscribers"/>
+    </extensions>
+</phpunit>
