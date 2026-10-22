@@ -8,6 +8,30 @@
 + **Magento 2.3.0 or greater**
 + **Composer PHP Dependency Manager**
 
+> #### PHP security update (October 2026)
+> [CVE-2026-109618](https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w)
+> and [CVE-2026-109619](https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp)
+> are critical remote code execution vulnerabilities in PHP itself. An attacker does not need
+> to log in to exploit them. The bugs are not in Magento or in this plugin, so no plugin
+> update can fix them. **Upgrading PHP is the only complete fix.**
+>
+> The patched releases are 8.2.35, 8.3.36, 8.4.27 and 8.5.12. PHP 8.1 and earlier will not
+> get a fix, so a store on Magento 2.4.5 or older has to move to Magento 2.4.6 or later before
+> it can run a patched PHP:
+>
+> | Magento | Patched PHP versions it supports |
+> |---|---|
+> | 2.4.6 | 8.2.35 or later |
+> | 2.4.7 | 8.2.35 or later, 8.3.36 or later |
+> | 2.4.8 | 8.3.36 or later, 8.4.27 or later |
+> | 2.4.9 | 8.5.12 or later |
+>
+> Until you can upgrade, set `session.upload_progress.enabled = 0` in `php.ini`. Magento does
+> not use PHP's upload progress tracking. On PHP 8.5, also set `fatal_error_backtraces = 0`.
+> Then restart every PHP worker, and check that no FPM pool, `.htaccess` or `.user.ini`
+> setting turns either option back on. These settings reduce the risk but do not remove it.
+> The two advisories linked above describe further mitigations.
+
 ### 2. Plugin installation
 
 + Open command prompt, go to `<MAGENTO_ROOT>` folder and run the following
