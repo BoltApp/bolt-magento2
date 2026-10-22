@@ -1,5 +1,5 @@
 # Dockerfile
-FROM cimg/php:8.4.7
+FROM cimg/php:8.4.27
 
 USER root
 ENV LANG=C.UTF-8
