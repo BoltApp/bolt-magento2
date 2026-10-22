@@ -189,7 +189,7 @@ class SessionTest extends BoltTestCase
         $quote = TestUtils::createQuote();
         $appState = $this->objectManager->create(State::class);
         $appState->setAreaCode(Area::AREA_WEBAPI_REST);
-        $cache = $this->createPartialMock(
+        $cache = $this->createPartialMockWithMethods(
             Cache::class,
             ['save', 'load']
         );
@@ -215,7 +215,7 @@ class SessionTest extends BoltTestCase
         $appState = $this->objectManager->create(State::class);
         $appState->setAreaCode(Area::AREA_WEBAPI_REST);
 
-        $cache = $this->createPartialMock(
+        $cache = $this->createPartialMockWithMethods(
             Cache::class,
             ['save', 'load']
         );
@@ -246,9 +246,9 @@ class SessionTest extends BoltTestCase
         $eventsForThirdPartyModules = $this->createMock(
             EventsForThirdPartyModules::class
         );
-        $eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
+        $eventsForThirdPartyModules->method('runFilter')->willReturnArgument(1);
 
-        $configHelper = $this->createPartialMock(
+        $configHelper = $this->createPartialMockWithMethods(
             ConfigHelper::class,
             ['isSessionEmulationEnabled', 'encrypt', 'decrypt']
         );
@@ -256,9 +256,9 @@ class SessionTest extends BoltTestCase
             ->willReturn(json_encode($sessionData));
         $eventsForThirdPartyModules->expects(static::exactly(2))
             ->method('dispatchEvent')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 ['restoreSessionData', $sessionData, $quote]
-            );
+            ));
 
         TestHelper::setInaccessibleProperty($this->session, 'eventsForThirdPartyModules', $eventsForThirdPartyModules);
         TestHelper::setInaccessibleProperty($this->session, 'appState', $appState);

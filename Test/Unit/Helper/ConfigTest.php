@@ -1251,7 +1251,7 @@ Room 4000',
     #[Test]
     public function getComposerVersion()
     {
-        $composerFactory = $this->createPartialMock(ComposerFactory::class, ['create', 'getLocker', 'getLockedRepository', 'findPackage', 'getVersion']);
+        $composerFactory = $this->createPartialMockWithMethods(ComposerFactory::class, ['create', 'getLocker', 'getLockedRepository', 'findPackage', 'getVersion']);
         $composerFactory->expects(self::once())->method('create')->willReturnSelf();
         $composerFactory->expects(self::once())->method('getLocker')->willReturnSelf();
         $composerFactory->expects(self::once())->method('getLockedRepository')->willReturnSelf();
@@ -1268,7 +1268,7 @@ Room 4000',
     #[Test]
     public function getComposerVersion_withException_returnNull()
     {
-        $composerFactory = $this->createPartialMock(ComposerFactory::class, ['create', 'getLocker', 'getLockedRepository', 'findPackage', 'getVersion']);
+        $composerFactory = $this->createPartialMockWithMethods(ComposerFactory::class, ['create', 'getLocker', 'getLockedRepository', 'findPackage', 'getVersion']);
         $composerFactory->expects(self::once())->method('create')->willReturnSelf();
         $composerFactory->expects(self::once())->method('getLocker')->willReturnSelf();
         $composerFactory->expects(self::once())->method('getLockedRepository')->willReturnSelf();
@@ -1364,7 +1364,7 @@ Room 4000',
     #[Test]
     public function getComposerVersion_withFindPackageWillReturnNull()
     {
-        $composerFactory = $this->createPartialMock(ComposerFactory::class, ['create', 'getLocker', 'getLockedRepository', 'findPackage', 'getVersion']);
+        $composerFactory = $this->createPartialMockWithMethods(ComposerFactory::class, ['create', 'getLocker', 'getLockedRepository', 'findPackage', 'getVersion']);
         $composerFactory->expects(self::once())->method('create')->willReturnSelf();
         $composerFactory->expects(self::once())->method('getLocker')->willReturnSelf();
         $composerFactory->expects(self::once())->method('getLockedRepository')->willReturnSelf();

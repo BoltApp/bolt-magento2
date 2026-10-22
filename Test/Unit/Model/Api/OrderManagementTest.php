@@ -784,9 +784,8 @@ class OrderManagementTest extends BoltTestCase
 
         $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
 
-        $featureSwitch = $this->getMockBuilder(Decider::class)
+        $featureSwitch = $this->getMockBuilderWithMethods(Decider::class, ['isIgnoreHookForInvoiceCreationEnabled', 'isAPIDrivenIntegrationEnabled'])
             ->disableOriginalConstructor()
-            ->setMethods(['isIgnoreHookForInvoiceCreationEnabled', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isIgnoreHookForInvoiceCreationEnabled')->willReturn(true);
         $featureSwitch->expects($this->any())->method('isAPIDrivenIntegrationEnabled')->willReturn(false);
@@ -963,9 +962,8 @@ class OrderManagementTest extends BoltTestCase
         $apiHelperProperty->setAccessible(true);
         $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
 
-        $featureSwitch = $this->getMockBuilder(Decider::class)
+        $featureSwitch = $this->getMockBuilderWithMethods(Decider::class, ['isCancelFailedPaymentOrderInsteadOfDeleting', 'isAPIDrivenIntegrationEnabled'])
             ->disableOriginalConstructor()
-            ->setMethods(['isCancelFailedPaymentOrderInsteadOfDeleting', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isCancelFailedPaymentOrderInsteadOfDeleting')->willReturn(true);
         $featureSwitch->expects($this->any())->method('isAPIDrivenIntegrationEnabled')->willReturn(false);
@@ -1053,9 +1051,8 @@ class OrderManagementTest extends BoltTestCase
         $boltOrderManagement = $this->createOrderHelperStubProperty($boltOrderManagement);
 
         $orderHelper = $this->objectManager->create(OrderHelper::class);
-        $featureSwitch = $this->getMockBuilder(Decider::class)
+        $featureSwitch = $this->getMockBuilderWithMethods(Decider::class, ['isCancelFailedPaymentOrderInsteadOfDeleting', 'isAPIDrivenIntegrationEnabled'])
             ->disableOriginalConstructor()
-            ->setMethods(['isCancelFailedPaymentOrderInsteadOfDeleting', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isCancelFailedPaymentOrderInsteadOfDeleting')->willReturn(true);
         $featureSwitch->expects($this->any())->method('isAPIDrivenIntegrationEnabled')->willReturn(false);
@@ -1292,9 +1289,8 @@ class OrderManagementTest extends BoltTestCase
         $apiHelperProperty->setAccessible(true);
         $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
 
-        $featureSwitch = $this->getMockBuilder(Decider::class)
+        $featureSwitch = $this->getMockBuilderWithMethods(Decider::class, ['isCreatingCreditMemoFromWebHookEnabled', 'isIgnoreHookForInvoiceCreationEnabled','isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled', 'isAPIDrivenIntegrationEnabled'])
             ->disableOriginalConstructor()
-            ->setMethods(['isCreatingCreditMemoFromWebHookEnabled', 'isIgnoreHookForInvoiceCreationEnabled','isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isCreatingCreditMemoFromWebHookEnabled')->willReturn(true);
         $featureSwitch->expects($this->any())->method('isIgnoreHookForInvoiceCreationEnabled')->willReturn(false);
@@ -1409,9 +1405,8 @@ class OrderManagementTest extends BoltTestCase
         $apiHelperProperty->setAccessible(true);
         $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
 
-        $featureSwitch = $this->getMockBuilder(Decider::class)
+        $featureSwitch = $this->getMockBuilderWithMethods(Decider::class, ['isIgnoreHookForCreditMemoCreationEnabled', 'isAPIDrivenIntegrationEnabled'])
             ->disableOriginalConstructor()
-            ->setMethods(['isIgnoreHookForCreditMemoCreationEnabled', 'isAPIDrivenIntegrationEnabled'])
             ->getMock();
         $featureSwitch->expects($this->any())->method('isIgnoreHookForCreditMemoCreationEnabled')->willReturn(true);
         $featureSwitch->expects($this->any())->method('isAPIDrivenIntegrationEnabled')->willReturn(false);

@@ -231,9 +231,7 @@ class ReceivedUrlTest extends BoltTestCase
             ->method('getFeatureSwitchDeciderHelper')
             ->willReturn($featureSwitchDeciderMock);
 
-        $checkoutSession = $this->getMockBuilder(CheckoutSession::class)
-            ->disableOriginalConstructor()
-            ->setMethods([
+        $checkoutSession = $this->getMockBuilderWithMethods(CheckoutSession::class, [
                 'setLastQuoteId',
                 'setLastSuccessQuoteId',
                 'clearHelperData',
@@ -242,6 +240,7 @@ class ReceivedUrlTest extends BoltTestCase
                 'setLastRealOrderId',
                 'setLastOrderStatus'
             ])
+            ->disableOriginalConstructor()
             ->getMock();
         //clearQuoteSession($quote)
         $checkoutSession->expects($this->once())
@@ -334,7 +333,7 @@ class ReceivedUrlTest extends BoltTestCase
         $request = $this->initRequest($this->defaultRequestMap);
 
         $order = $this->createOrderMock(Order::STATE_PENDING_PAYMENT);
-        $quote = $this->createPartialMock(Quote::class, [ 'getId', 'getStoreId', 'getBoltCheckoutType' ]);
+        $quote = $this->createPartialMockWithMethods(Quote::class, [ 'getId', 'getStoreId', 'getBoltCheckoutType' ]);
         $quote->method('getId')
               ->willReturn(self::QUOTE_ID);
         $quote->expects(self::once())->method('getBoltCheckoutType')
@@ -417,9 +416,7 @@ class ReceivedUrlTest extends BoltTestCase
             ->method('getFeatureSwitchDeciderHelper')
             ->willReturn($featureSwitchDeciderMock);
 
-        $checkoutSession = $this->getMockBuilder(CheckoutSession::class)
-            ->disableOriginalConstructor()
-            ->setMethods([
+        $checkoutSession = $this->getMockBuilderWithMethods(CheckoutSession::class, [
                 'setLastQuoteId',
                 'setLastSuccessQuoteId',
                 'clearHelperData',
@@ -428,6 +425,7 @@ class ReceivedUrlTest extends BoltTestCase
                 'setLastRealOrderId',
                 'setLastOrderStatus'
             ])
+            ->disableOriginalConstructor()
             ->getMock();
 
         //clearQuoteSession
@@ -511,7 +509,7 @@ class ReceivedUrlTest extends BoltTestCase
             ->method('registerCallback')
             ->wilLReturnCallback(
                 function (callable $callback) use ($request) {
-                    $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                    $reportMock = $this->createPartialMockWithMethods(\stdClass::class, ['setMetaData']);
                     $reportMock->expects($this->once())
                         ->method('setMetaData')
                         ->with([
@@ -587,7 +585,7 @@ class ReceivedUrlTest extends BoltTestCase
             ->method('registerCallback')
             ->willReturnCallback(
                 function (callable $callback) use ($request) {
-                    $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                    $reportMock = $this->createPartialMockWithMethods(\stdClass::class, ['setMetaData']);
                     $reportMock->expects($this->once())
                         ->method('setMetaData')
                         ->with([
@@ -655,7 +653,7 @@ class ReceivedUrlTest extends BoltTestCase
             ->method('registerCallback')
             ->willReturnCallback(
                 function (callable $callback) use ($request) {
-                    $reportMock = $this->createPartialMock(\stdClass::class, ['setMetaData']);
+                    $reportMock = $this->createPartialMockWithMethods(\stdClass::class, ['setMetaData']);
                     $reportMock->expects($this->once())
                         ->method('setMetaData')
                         ->with([
@@ -708,9 +706,7 @@ class ReceivedUrlTest extends BoltTestCase
 
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->logHelper = $this->createMock(LogHelper::class);
-        $this->checkoutSession = $this->getMockBuilder(CheckoutSession::class)
-            ->disableOriginalConstructor()
-            ->setMethods([
+        $this->checkoutSession = $this->getMockBuilderWithMethods(CheckoutSession::class, [
                 'setLastQuoteId',
                 'setLastSuccessQuoteId',
                 'clearHelperData',
@@ -719,6 +715,7 @@ class ReceivedUrlTest extends BoltTestCase
                 'setLastRealOrderId',
                 'setLastOrderStatus'
             ])
+            ->disableOriginalConstructor()
             ->getMock();
         $this->orderHelper = $this->createMock(OrderHelper::class);
         $this->backendUrl = $this->createMock(BackendUrl::class);
@@ -747,8 +744,7 @@ class ReceivedUrlTest extends BoltTestCase
 
     private function initReceivedUrlMock($context, $configHelper, $cartHelper, $bugsnag, $logHelper, $checkoutSession, $orderHelper)
     {
-        $receivedUrl = $this->getMockBuilder(ReceivedUrl::class)
-            ->setMethods([
+        $receivedUrl = $this->getMockBuilderWithMethods(ReceivedUrl::class, [
                 'getRequest',
                 '_redirect'
             ])
@@ -790,7 +786,7 @@ class ReceivedUrlTest extends BoltTestCase
         $request = $this->createMock(\Magento\Framework\App\Request\Http::class);
         $request->expects($this->exactly(3))
             ->method('getParam')
-            ->will($this->returnValueMap($requestMap));
+            ->willReturnMap($requestMap);
 
         return $request;
     }

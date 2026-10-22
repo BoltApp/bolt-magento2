@@ -163,9 +163,7 @@ class SaveTest extends BoltTestCase
 
         $this->orderHelper->method('saveUpdateOrder')->willReturn([$this->quoteMock, $this->orderMock]);
 
-        $checkoutSession = $this->getMockBuilder(Session::class)
-            ->disableOriginalConstructor()
-            ->setMethods([
+        $checkoutSession = $this->getMockBuilderWithMethods(Session::class, [
                 'setLastQuoteId',
                 'setLastSuccessQuoteId',
                 'clearHelperData',
@@ -176,6 +174,7 @@ class SaveTest extends BoltTestCase
                 'setLastOrderStatus',
                 'getQuote'
             ])
+            ->disableOriginalConstructor()
             ->getMock();
 
         //clearQuoteSession
@@ -200,8 +199,7 @@ class SaveTest extends BoltTestCase
             $checkoutSession->method('replaceQuote')->with($this->quoteMock);
         }
 
-        $save = $this->getMockBuilder(Save::class)
-            ->setMethods([
+        $save = $this->getMockBuilderWithMethods(Save::class, [
                 'getRequest',
                 'replaceQuote',
                 'clearQuoteSession',
@@ -259,8 +257,7 @@ class SaveTest extends BoltTestCase
             ->getMock();
         $jsonFactory->method('create')->willReturn($json);
 
-        $save = $this->getMockBuilder(Save::class)
-            ->setMethods(['getRequest'])
+        $save = $this->getMockBuilderWithMethods(Save::class, ['getRequest'])
             ->setConstructorArgs([
                 $this->context,
                 $jsonFactory,

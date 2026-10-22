@@ -231,7 +231,7 @@ class UpdateCartCommonTest extends BoltTestCase
         $this->stockStateInterface = $this->createMock(StockStateInterface::class);
         $this->featureSwitches = $this->createMock(Decider::class);
 
-        $this->updateCartContext = $this->getMockBuilder(UpdateCartContext::class)
+        $this->updateCartContext = $this->getMockBuilderWithMethods(UpdateCartContext::class, null)
             ->setConstructorArgs(
                 [
                     $this->request,
@@ -261,27 +261,14 @@ class UpdateCartCommonTest extends BoltTestCase
                     $this->cache
                 ]
             )
-            ->enableProxyingToOriginalMethods()
             ->getMock();
     }
 
-    private function initCurrentMock(
-        $mockedMethods = [],
-        $callOriginalConstructor = true,
-        $callOriginalClone = true,
-        $callAutoload = true,
-        $cloneArguments = false
-    ) {
-        $this->currentMock = $this->getMockForAbstractClass(
-            UpdateCartCommon::class,
-            [$this->updateCartContext],
-            '',
-            $callOriginalConstructor,
-            $callOriginalClone,
-            $callAutoload,
-            $mockedMethods,
-            $cloneArguments
-        );
+    private function initCurrentMock($mockedMethods = [])
+    {
+        $this->currentMock = $this->getMockBuilderForAbstractClass(UpdateCartCommon::class, $mockedMethods)
+            ->setConstructorArgs([$this->updateCartContext])
+            ->getMock();
     }
     
     /**
@@ -299,8 +286,7 @@ class UpdateCartCommonTest extends BoltTestCase
             'getId', 'getBoltParentQuoteId', 'getStoreId', 'getQuoteCurrencyCode'
         ], $methods);
 
-        $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods($quoteMethods)
+        $quote = $this->getMockBuilderWithMethods(Quote::class, $quoteMethods)
             ->disableOriginalConstructor()
             ->getMock();
         $quote->method('getId')
@@ -319,7 +305,7 @@ class UpdateCartCommonTest extends BoltTestCase
      */
     private function setAddressSetUp()
     {
-        $quoteAddressMock = $this->createPartialMock(
+        $quoteAddressMock = $this->createPartialMockWithMethods(
             Address::class,
             [
                 'setShouldIgnoreValidation',
@@ -708,8 +694,7 @@ class UpdateCartCommonTest extends BoltTestCase
     {
         $this->initCurrentMock();
         
-        $quoteItem = $this->getMockBuilder(\Magento\Quote\Model\Quote\Item::class)
-            ->setMethods(['getProductId', 'getQty', 'getId', 'getSku', 'getCalculationPrice', 'getProduct'])
+        $quoteItem = $this->getMockBuilderWithMethods(\Magento\Quote\Model\Quote\Item::class, ['getProductId', 'getQty', 'getId', 'getSku', 'getCalculationPrice', 'getProduct'])
             ->disableOriginalConstructor()
             ->getMock();
         $quoteItem->method('getProductId')->willReturn(100);

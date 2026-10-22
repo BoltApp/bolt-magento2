@@ -107,7 +107,7 @@ class ApiTest extends BoltTestCase
     protected function setUpInternal()
     {
         $this->initRequiredMocks();
-        $this->currentMock = $this->getMockBuilder(ApiHelper::class)
+        $this->currentMock = $this->getMockBuilderWithMethods(ApiHelper::class, null)
             ->setConstructorArgs(
                 [
                     $this->context,
@@ -119,7 +119,6 @@ class ApiTest extends BoltTestCase
                     $this->bugsnag
                 ]
             )
-            ->setMethods()
             ->getMock();
     }
 
@@ -129,12 +128,12 @@ class ApiTest extends BoltTestCase
     private function initRequiredMocks()
     {
         $this->context = $this->createMock(Context::class);
-        $this->httpClientAdapterFactory = $this->createPartialMock(
+        $this->httpClientAdapterFactory = $this->createPartialMockWithMethods(
             HttpClientAdapterFactory::class,
             ['create', 'setUri']
         );
         $this->configHelper = $this->createMock(ConfigHelper::class);
-        $this->request = $this->createPartialMock(
+        $this->request = $this->createPartialMockWithMethods(
             Request::class,
             [
                 'getApiData',
@@ -154,7 +153,7 @@ class ApiTest extends BoltTestCase
                 'setContentType'
             ]
         );
-        $this->responseFactory = $this->createPartialMock(ResponseFactory::class, ['create']);
+        $this->responseFactory = $this->createPartialMockWithMethods(ResponseFactory::class, ['create']);
         $this->requestFactory = $this->createMock(RequestFactory::class);
         $this->requestFactory->method('create')->willReturn($this->request);
         $this->logHelper = $this->createMock(LogHelper::class);
@@ -211,8 +210,8 @@ class ApiTest extends BoltTestCase
         );
         $client = $this->createMock(HttpClientAdapter::class);
 
-        $resultMock = $this->createPartialMock(Response::class, ['setResponse']);
-        $responseMock = $this->createPartialMock(Zend_Http_Response::class, ['getBody', 'getHeaders', 'getStatus']);
+        $resultMock = $this->createPartialMockWithMethods(Response::class, ['setResponse']);
+        $responseMock = $this->createPartialMockWithMethods(Zend_Http_Response::class, ['getBody', 'getHeaders', 'getStatus']);
 
         $this->httpClientAdapterFactory->expects(static::once())->method('create')->willReturn($client);
         $this->responseFactory->expects(static::once())->method('create')->willReturn($resultMock);
@@ -220,10 +219,10 @@ class ApiTest extends BoltTestCase
         $client->expects(static::once())->method('setUri')->with(self::API_URL);
         $client->expects(static::once())->method('setConfig')->with(['maxredirects' => 0, 'timeout' => 30]);
 
-        $reportMock = $this->createPartialMock(Report::class, ['setMetaData']);
+        $reportMock = $this->createPartialMockWithMethods(Report::class, ['setMetaData']);
         $dummyResponseBody = '{"data": {"logMerchantLogs": {"isSuccessful": true}}}';
 
-        $reportMock->expects(self::exactly(1))->method('setMetaData')->withConsecutive(
+        $reportMock->expects(self::exactly(1))->method('setMetaData')->with(...self::consecutiveArgs(
             [
                 [
                     'META DATA' => [
@@ -231,7 +230,7 @@ class ApiTest extends BoltTestCase
                     ]
                 ]
             ]
-        );
+        ));
         $this->bugsnag->expects(self::exactly(1))->method('registerCallback')->willReturnCallback(
             function (callable $callback) use ($reportMock) {
                 $callback($reportMock);
@@ -273,7 +272,7 @@ class ApiTest extends BoltTestCase
         );
         $client = $this->createMock(HttpClientAdapter::class);
 
-        $responseMock = $this->createPartialMock(Response::class, ['getStatus', 'getBody']);
+        $responseMock = $this->createPartialMockWithMethods(Response::class, ['getStatus', 'getBody']);
 
         $this->httpClientAdapterFactory->expects(static::once())->method('create')->willReturn($client);
         $this->responseFactory->expects(static::once())->method('create')->willReturn($responseMock);
@@ -340,8 +339,8 @@ class ApiTest extends BoltTestCase
         );
         $client = $this->createMock(HttpClientAdapter::class);
 
-        $resultMock = $this->createPartialMock(Response::class, ['setResponse']);
-        $responseMock = $this->createPartialMock(Zend_Http_Response::class, ['getBody', 'getHeaders', 'getStatus']);
+        $resultMock = $this->createPartialMockWithMethods(Response::class, ['setResponse']);
+        $responseMock = $this->createPartialMockWithMethods(Zend_Http_Response::class, ['getBody', 'getHeaders', 'getStatus']);
 
         $this->httpClientAdapterFactory->expects(static::once())->method('create')->willReturn($client);
         $this->responseFactory->expects(static::once())->method('create')->willReturn($resultMock);
@@ -349,10 +348,10 @@ class ApiTest extends BoltTestCase
         $client->expects(static::once())->method('setUri')->with(self::API_URL);
         $client->expects(static::once())->method('setConfig')->with(['maxredirects' => 0, 'timeout' => 30]);
 
-        $reportMock = $this->createPartialMock(Report::class, ['setMetaData']);
+        $reportMock = $this->createPartialMockWithMethods(Report::class, ['setMetaData']);
         $emptyResponseBody = '';
 
-        $reportMock->expects(self::exactly(1))->method('setMetaData')->withConsecutive(
+        $reportMock->expects(self::exactly(1))->method('setMetaData')->with(...self::consecutiveArgs(
             [
                 [
                     'META DATA' => [
@@ -360,7 +359,7 @@ class ApiTest extends BoltTestCase
                     ]
                 ]
             ]
-        );
+        ));
         $this->bugsnag->expects(self::exactly(1))->method('registerCallback')->willReturnCallback(
             function (callable $callback) use ($reportMock) {
                 $callback($reportMock);

@@ -64,14 +64,13 @@ class HintsTest extends BoltTestCase
 
     private function initCurrentMock()
     {
-        $this->currentMock = $this->getMockBuilder(Hints::class)
+        $this->currentMock = $this->getMockBuilderWithMethods(Hints::class, null)
             ->setConstructorArgs([
                 $this->context,
                 $this->resultJsonFactory,
                 $this->bugsnag,
                 $this->cartHelper
             ])
-            ->enableProxyingToOriginalMethods()
             ->getMock();
     }
 

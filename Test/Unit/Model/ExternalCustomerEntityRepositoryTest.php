@@ -59,8 +59,7 @@ class ExternalCustomerEntityRepositoryTest extends BoltTestCase
         $this->externalCustomerEntityFactoryMock = $this->createMock(ExternalCustomerEntityFactory::class);
         $this->externalCustomerEntityCollectionFactoryMock = $this->createMock(ExternalCustomerEntityCollectionFactory::class);
         $this->externalCustomerEntityResourceMock = $this->createMock(ExternalCustomerEntityResource::class);
-        $this->currentMock = $this->getMockBuilder(ExternalCustomerEntityRepository::class)
-            ->setMethods()
+        $this->currentMock = $this->getMockBuilderWithMethods(ExternalCustomerEntityRepository::class, null)
             ->setConstructorArgs([
                 $this->externalCustomerEntityFactoryMock,
                 $this->externalCustomerEntityCollectionFactoryMock,

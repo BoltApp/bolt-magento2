@@ -153,7 +153,7 @@ class EmailTest extends BoltTestCase
         $request->setParams(['email' => $invalidEmail]);
 
         $exception = new LocalizedException(__('Invalid email: %1', $invalidEmail));
-        $bugsnag = $this->createPartialMock(Bugsnag::class,['notifyException']);
+        $bugsnag = $this->createPartialMockWithMethods(Bugsnag::class,['notifyException']);
         $bugsnag->expects($this->once())->method('notifyException')->with($this->equalTo($exception));
 
         TestHelper::setProperty($this->email, 'bugsnag', $bugsnag);

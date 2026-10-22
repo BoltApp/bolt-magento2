@@ -45,7 +45,7 @@ class SelectPluginTest extends BoltTestCase
     {
         $this->subjectMock = $this->createMock(\Magento\Ui\Component\Form\Element\Select::class);
         $this->contextMock = $this->createMock(\Magento\Framework\View\Element\UiComponent\Context::class);
-        $this->currentMock = $this->createPartialMock(
+        $this->currentMock = $this->createPartialMockWithMethods(
             \Bolt\Boltpay\Plugin\Magento\Ui\Component\Form\Element\SelectPlugin::class,
             []
         );

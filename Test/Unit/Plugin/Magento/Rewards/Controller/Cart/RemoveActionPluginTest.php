@@ -55,8 +55,7 @@ class RemoveActionPluginTest extends BoltTestCase
      */
     protected function setUpInternal()
     {
-        $this->subject = $this->getMockBuilder('\Magento\Reward\Controller\Cart\Remove')
-            ->setMethods(['getRequest', 'getResponse','isAjax','clearHeader','setStatusHeader'])
+        $this->subject = $this->getMockBuilderWithMethods('\Magento\Reward\Controller\Cart\Remove', ['getRequest', 'getResponse','isAjax','clearHeader','setStatusHeader'])
             ->disableOriginalConstructor()
             ->getMock();
 

@@ -164,7 +164,7 @@ class AbstractLoginPluginTest extends BoltTestCase
     #[Test]
     public function notifyException()
     {
-        $bugsnag = $this->createPartialMock(
+        $bugsnag = $this->createPartialMockWithMethods(
             Bugsnag::class,
             ['notifyException']
         );

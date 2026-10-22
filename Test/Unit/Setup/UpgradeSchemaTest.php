@@ -64,9 +64,7 @@ class UpgradeSchemaTest extends BoltTestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->schemaSetup = $this->getMockBuilder(SchemaSetupInterface::class)
-            ->setMethods(
-                [
+        $this->schemaSetup = $this->getMockBuilderWithMethods(SchemaSetupInterface::class, [
                     'addColumn',
                     'dropColumn',
                     'addIndex',
@@ -75,10 +73,9 @@ class UpgradeSchemaTest extends BoltTestCase
                     'setComment',
                     'createTable',
                     'newTable',
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
-            ->getMockForAbstractClass();
+            ->getMock();
 
         $this->customTable = $this->getMockBuilder(Table::class)
             ->disableOriginalConstructor()
@@ -94,13 +91,7 @@ class UpgradeSchemaTest extends BoltTestCase
      */
     private function initCurrentMock($methods = [])
     {
-        $mockBuilder = $this->getMockBuilder(UpgradeSchema::class);
-        if ($methods) {
-            $mockBuilder->setMethods($methods);
-        } else {
-            $mockBuilder->enableProxyingToOriginalMethods();
-        }
-        $this->currentMock = $mockBuilder->getMock();
+        $this->currentMock = $this->getMockBuilderWithMethods(UpgradeSchema::class, $methods ?: null)->getMock();
     }
 
     /**
@@ -134,7 +125,7 @@ class UpgradeSchemaTest extends BoltTestCase
             }
         );
 
-        $this->schemaSetup->expects(static::atLeastOnce())->method('addColumn')->withConsecutive(
+        $this->schemaSetup->expects(static::atLeastOnce())->method('addColumn')->with(...self::consecutiveArgs(
             [
                 $quoteTable,
                 'bolt_parent_quote_id',
@@ -194,7 +185,7 @@ class UpgradeSchemaTest extends BoltTestCase
                     'comment' => 'Updated At'
                 ],
             ]
-        );
+        ));
 
         $this->schemaSetup->expects(static::once())
             ->method('dropColumn')
@@ -204,10 +195,10 @@ class UpgradeSchemaTest extends BoltTestCase
         $quoteUniqueHash = '98156307323252d52c6683671a73dff3';
         $this->schemaSetup->expects(static::exactly(2))
         ->method('getIdxName')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 ['quote', ['bolt_parent_quote_id']],
                 ['plugin_version_notification', ['latest_version'], 'primary']
-            )
+            ))
             ->willReturn(
                 $quoteUniqueHash,
                 'plugin_version_notification_latest_version_primary'
@@ -215,10 +206,10 @@ class UpgradeSchemaTest extends BoltTestCase
 
         $this->schemaSetup->expects(static::exactly(2))
             ->method('addIndex')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 ['quote', $quoteUniqueHash, ['bolt_parent_quote_id']],
                 ['plugin_version_notification', 'plugin_version_notification_latest_version_primary', ['latest_version'], 'primary']
-            )
+            ))
             ->willReturnSelf();
 
         $this->schemaSetup->expects(static::atLeastOnce())
@@ -310,7 +301,7 @@ class UpgradeSchemaTest extends BoltTestCase
             ->with('bolt_webhook_log')
             ->willReturn($boltWebhookTable);
         $this->schemaSetup->expects(static::once())->method('newTable')->with($boltWebhookTable)->willReturnSelf();
-        $this->schemaSetup->expects(static::exactly(4))->method('addColumn')->withConsecutive(
+        $this->schemaSetup->expects(static::exactly(4))->method('addColumn')->with(...self::consecutiveArgs(
             [
                 'id',
                 Table::TYPE_INTEGER,
@@ -339,7 +330,7 @@ class UpgradeSchemaTest extends BoltTestCase
                 ['nullable' => false, 'default' => '0'],
                 'number of the missing quote failed hooks',
             ]
-        )->willReturnSelf();
+        ))->willReturnSelf();
 
         $this->schemaSetup->expects(static::once())
             ->method('setComment')
@@ -402,7 +393,7 @@ class UpgradeSchemaTest extends BoltTestCase
         $this->schemaSetup->method('getTable')->willReturnArgument(0);
 
         $this->customTable->expects(static::once())->method('setComment')->with('Bolt customer credit cards')->willReturnSelf();
-        $this->customTable->expects(static::exactly(5))->method('addColumn')->withConsecutive(
+        $this->customTable->expects(static::exactly(5))->method('addColumn')->with(...self::consecutiveArgs(
             [
                 'id',
                 Table::TYPE_INTEGER,
@@ -438,7 +429,7 @@ class UpgradeSchemaTest extends BoltTestCase
                 ['nullable' => false],
                 'Credit Card ID'
             ]
-        )->willReturnSelf();
+        ))->willReturnSelf();
         $this->customTable->expects(static::once())->method('addForeignKey')->with(
             $this->schemaSetup->getFkName(
                 'bolt_customer_credit_cards',
@@ -501,7 +492,7 @@ class UpgradeSchemaTest extends BoltTestCase
             ->with('bolt_external_customer_entity')
             ->willReturn($boltExternalCustomerEntityTable);
         $this->schemaSetup->expects(static::once())->method('newTable')->with($boltExternalCustomerEntityTable)->willReturnSelf();
-        $this->schemaSetup->expects(static::exactly(3))->method('addColumn')->withConsecutive(
+        $this->schemaSetup->expects(static::exactly(3))->method('addColumn')->with(...self::consecutiveArgs(
             [
                 'id',
                 Table::TYPE_INTEGER,
@@ -523,7 +514,7 @@ class UpgradeSchemaTest extends BoltTestCase
                 ['nullable' => false],
                 'Customer ID',
             ]
-        )->willReturnSelf();
+        ))->willReturnSelf();
 
         $this->schemaSetup->expects(static::once())
             ->method('setComment')

@@ -59,18 +59,17 @@ class LogTest extends BoltTestCase
     public function setUpInternal()
     {
         $this->context = $this->createMock(Context::class);
-        $this->boltLoger = $this->createPartialMock(
+        $this->boltLoger = $this->createPartialMockWithMethods(
             BoltLogger::class,
             ['info']
         );
-        $this->configHelper = $this->createPartialMock(
+        $this->configHelper = $this->createPartialMockWithMethods(
             ConfigHelper::class,
             ['isDebugModeOn']
         );
 
 
-        $this->currentMock = $this->getMockBuilder(Log::class)
-            ->setMethods(['info', 'isDebugModeOn'])
+        $this->currentMock = $this->getMockBuilderWithMethods(Log::class, ['info', 'isDebugModeOn'])
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [

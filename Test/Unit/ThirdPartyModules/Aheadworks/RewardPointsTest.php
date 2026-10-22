@@ -99,7 +99,7 @@ class RewardPointsTest extends BoltTestCase
         $this->orderServiceMock = $this->createMock(OrderService::class);
         $this->configHelperMock = $this->createMock(Config::class);
         $this->customerSessionMock = $this->createMock(Session::class);
-        $this->currentMock = $this->getMockBuilder(\Bolt\Boltpay\ThirdPartyModules\Aheadworks\RewardPoints::class)
+        $this->currentMock = $this->getMockBuilderWithMethods(\Bolt\Boltpay\ThirdPartyModules\Aheadworks\RewardPoints::class, null)
             ->setConstructorArgs(
                 [
                     $this->bugsnagHelperMock,
@@ -109,21 +109,16 @@ class RewardPointsTest extends BoltTestCase
                     $this->orderServiceMock
                 ]
             )
-            ->setMethods(null)
             ->getMock();
-        $this->aheadworksCustomerRewardPointsManagementMock = $this->getMockBuilder(
+        $this->aheadworksCustomerRewardPointsManagementMock = $this->getMockBuilderWithMethods(
             '\Aheadworks\RewardPoints\Api\CustomerRewardPointsManagementInterface'
-        )
-            ->setMethods(['getCustomerRewardPointsBalanceBaseCurrency'])
-            ->disableAutoload()
+        , ['getCustomerRewardPointsBalanceBaseCurrency'])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->aheadworksConfigMock = $this->getMockBuilder('\Aheadworks\RewardPoints\Model\Config')
-            ->setMethods(['isApplyingPointsToShipping'])
-            ->disableAutoload()
+        $this->aheadworksConfigMock = $this->getMockBuilderWithMethods('\Aheadworks\RewardPoints\Model\Config', ['isApplyingPointsToShipping'])
             ->disableOriginalConstructor()
             ->getMock();
-        $this->quoteMock = $this->createPartialMock(
+        $this->quoteMock = $this->createPartialMockWithMethods(
             Quote::class,
             ['getStore', 'getData', 'getQuoteCurrencyCode', 'getCustomerId', 'collectTotals', 'setData']
         );
@@ -163,7 +158,7 @@ class RewardPointsTest extends BoltTestCase
     public function collectDiscounts_ifUseRewardPointsInQuoteAndAppliesToShipping_addsRewardPointsDiscountFromBalance()
     {
         $this->quoteMock->expects(static::exactly(1))->method('getData')
-            ->withConsecutive(['aw_use_reward_points'])
+            ->with(...self::consecutiveArgs(['aw_use_reward_points']))
             ->willReturnMap([['aw_use_reward_points', null, true]]);
         $storeMock = $this->createMock(Store::class);
         $storeMock->expects(static::once())->method('getWebsiteId')->willReturn(self::WEBSITE_ID);
@@ -216,7 +211,7 @@ class RewardPointsTest extends BoltTestCase
     {
         $rewardPointsTotal = 10;
         $this->quoteMock->expects(static::exactly(2))->method('getData')
-            ->withConsecutive(['aw_use_reward_points'], ['base_aw_reward_points_amount'])
+            ->with(...self::consecutiveArgs(['aw_use_reward_points'], ['base_aw_reward_points_amount']))
             ->willReturnMap(
                 [['aw_use_reward_points', null, true], ['base_aw_reward_points_amount', null, $rewardPointsTotal],]
             );
@@ -352,12 +347,10 @@ class RewardPointsTest extends BoltTestCase
     #[Test]
     public function beforeFailedPaymentOrderSave_always_executesThirdPartyPlugin()
     {
-        $aheadworksRewardPointsOrderServicePluginMock = $this->getMockBuilder(
+        $aheadworksRewardPointsOrderServicePluginMock = $this->getMockBuilderWithMethods(
             '\Aheadworks\RewardPoints\Plugin\Model\Service\OrderServicePlugin'
-        )
-            ->disableAutoload()
+        , ['aroundCancel'])
             ->disableOriginalConstructor()
-            ->setMethods(['aroundCancel'])
             ->getMock();
         $orderMock = $this->createMock(Order::class);
         $orderMock->expects(static::once())->method('getId')->willReturn(self::ORDER_ID);
@@ -397,18 +390,14 @@ class RewardPointsTest extends BoltTestCase
         $isCustomerRewardPointsSpendRateByGroup,
         $isCustomerRewardPointsSpendRate
     ) {
-        $customerRewardPointsManagementMock = $this->getMockBuilder(
+        $customerRewardPointsManagementMock = $this->getMockBuilderWithMethods(
             '\Aheadworks\RewardPoints\Api\CustomerRewardPointsManagementInterface'
-        )
-            ->disableOriginalConstructor()
-            ->disableAutoload()
-            ->setMethods(
-                [
+        , [
                     'getCustomerRewardPointsOnceMinBalance',
                     'isCustomerRewardPointsSpendRateByGroup',
                     'isCustomerRewardPointsSpendRate',
-                ]
-            )
+                ])
+            ->disableOriginalConstructor()
             ->getMock();
         $this->customerSessionMock->method('getCustomerId')->willReturn(self::CUSTOMER_ID);
         $this->customerSessionMock->method('isLoggedIn')->willReturn($isLoggedIn);

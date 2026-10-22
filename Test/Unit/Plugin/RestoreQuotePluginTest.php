@@ -72,30 +72,29 @@ class RestoreQuotePluginTest extends BoltTestCase
 
     public function setUpInternal()
     {
-        $this->checkoutSession = $this->createPartialMock(
+        $this->checkoutSession = $this->createPartialMockWithMethods(
             CheckoutSession::class,
             ['getLastRealOrder']
         );
 
-        $this->order = $this->createPartialMock(
+        $this->order = $this->createPartialMockWithMethods(
             Order::class,
             ['getPayment','getQuoteId']
         );
 
-        $this->payment = $this->createPartialMock(
+        $this->payment = $this->createPartialMockWithMethods(
             Order::class,
             ['getMethod']
         );
 
         /** @var callable $callback */
-        $this->callback = $callback = $this->getMockBuilder(\stdClass::class)
-            ->setMethods(['__invoke'])->getMock();
+        $this->callback = $callback = $this->getMockBuilderWithMethods(\stdClass::class, ['__invoke'])->getMock();
         $this->proceed = function () use ($callback) {
             return $callback();
         };
 
         $this->subject = $this->createMock(CheckoutSession::class);
-        $this->bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyError']);
+        $this->bugsnag = $this->createPartialMockWithMethods(Bugsnag::class, ['notifyError']);
 
         $objectManager = new ObjectManager($this);
         $this->plugin = $objectManager->getObject(

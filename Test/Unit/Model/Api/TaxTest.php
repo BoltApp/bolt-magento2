@@ -302,9 +302,8 @@ class TaxTest extends BoltTestCase
         $addressInformation->setShippingAmount(10);
         $addressInformation->setTaxAmount(10);
 
-        $totalsInformationManagementInterface = $this->getMockBuilder(\Magento\Checkout\Api\TotalsInformationManagementInterface::class)
+        $totalsInformationManagementInterface = $this->getMockBuilderWithMethods(\Magento\Checkout\Api\TotalsInformationManagementInterface::class, ['calculate'])
             ->disableOriginalConstructor()
-            ->setMethods(['calculate'])
             ->getMock();
         $totalsInformationManagementInterface->method('calculate')->willReturn($addressInformation);
 
@@ -366,9 +365,8 @@ class TaxTest extends BoltTestCase
         $addressInformation->setShippingAmount(0);
         $addressInformation->setTaxAmount(10);
 
-        $totalsInformationManagementInterface = $this->getMockBuilder(\Magento\Checkout\Api\TotalsInformationManagementInterface::class)
+        $totalsInformationManagementInterface = $this->getMockBuilderWithMethods(\Magento\Checkout\Api\TotalsInformationManagementInterface::class, ['calculate'])
             ->disableOriginalConstructor()
-            ->setMethods(['calculate'])
             ->getMock();
         $totalsInformationManagementInterface->method('calculate')->willReturn($addressInformation);
 

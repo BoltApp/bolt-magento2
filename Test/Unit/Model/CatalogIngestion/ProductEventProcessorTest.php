@@ -253,7 +253,7 @@ class ProductEventProcessorTest extends BoltTestCase
         $featureSwitches = $this->createMock(Decider::class);
         TestHelper::setProperty($this->productEventProcessor, 'featureSwitches', $featureSwitches);
         $featureSwitches->method('isCatalogIngestionEnabled')->willReturn(true);
-        $this->apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
+        $this->apiHelper = $this->createPartialMockWithMethods(ApiHelper::class, ['sendRequest']);
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $this->apiHelper);
         if ($this->moduleManger->isEnabled('Magento_InventoryCatalog')) {
             $decrementSourceItemQtyPlugin = $this->objectManager->get(DecrementSourceItemQtyPlugin::class);

@@ -70,8 +70,7 @@ class PurchasePluginTest extends BoltTestCase
             ->getMock();
 
         /** @var callable $callback */
-        $this->callback = $callback = $this->getMockBuilder(\stdClass::class)
-            ->setMethods(['__invoke'])->getMock();
+        $this->callback = $callback = $this->getMockBuilderWithMethods(\stdClass::class, ['__invoke'])->getMock();
         $this->proceed = function ($order) use ($callback) {
             return $callback($order);
         };

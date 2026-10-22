@@ -277,10 +277,10 @@ class ManagerTest extends BoltTestCase
 
         $this->fsRepo->expects($this->exactly(2))
                      ->method('upsertByName')
-                     ->withConsecutive(
+                     ->with(...self::consecutiveArgs(
                         ["thename", true, false, 37],
                         ["thename2", false, true, 100]
-                     );
+                     ));
         $this->fsRepo
             ->expects($this->exactly(2))
             ->method('upsertByName');

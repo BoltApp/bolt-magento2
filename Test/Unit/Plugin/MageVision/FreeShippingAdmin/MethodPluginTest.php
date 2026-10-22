@@ -62,9 +62,8 @@ class MethodPluginTest extends BoltTestCase
 
     public function setUpInternal()
     {
-        $this->subject = $this->getMockBuilder('\MageVision\FreeShippingAdmin\Model\Carrier\Method')
+        $this->subject = $this->getMockBuilderWithMethods('\MageVision\FreeShippingAdmin\Model\Carrier\Method', ['getConfigFlag', 'getConfigData'])
             ->disableOriginalConstructor()
-            ->setMethods(['getConfigFlag', 'getConfigData'])
             ->getMock();
 
         if (!class_exists('\Magento\TestFramework\Helper\Bootstrap')) {
@@ -155,10 +154,10 @@ class MethodPluginTest extends BoltTestCase
         $this->subject->expects(self::once())->method('getConfigFlag')->with('active')->willReturn(true);
 
         $this->subject->expects(self::any())->method('getConfigData')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 ['title'],
                 ['name']
-            )
+            ))
             ->willReturnOnConsecutiveCalls('title', 'name');
         TestHelper::setProperty($this->methodPlugin, '_appState', $this->appState);
         TestHelper::setProperty($this->methodPlugin, '_restRequest', $this->restRequest);

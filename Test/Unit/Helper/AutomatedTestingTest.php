@@ -203,8 +203,7 @@ class AutomatedTestingTest extends BoltTestCase
         $this->orderItemFactory = $this->createMock(OrderItemFactory::class);
         $this->addressFactory = $this->createMock(AddressFactory::class);
 
-        $this->currentMock = $this->getMockBuilder(AutomatedTestingHelper::class)
-            ->setMethods(['getAutomatedTestingConfig',
+        $this->currentMock = $this->getMockBuilderWithMethods(AutomatedTestingHelper::class, ['getAutomatedTestingConfig',
                 'getProduct',
                 'convertToStoreItem',
                 'createQuoteWithItem',
@@ -272,7 +271,7 @@ class AutomatedTestingTest extends BoltTestCase
     public function getAutomatedTestingConfig_noShippingMethodsFound_returnsErrorString()
     {
         $product = $this->createMock(Product::class);
-        $this->currentMock->expects(static::exactly(3))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
+        $this->currentMock->expects(static::exactly(3))->method('getProduct')->with(...self::consecutiveArgs(['simple'], ['virtual'], ['sale']))->willReturn($product);
         $this->currentMock->expects(static::exactly(3))->method('convertToStoreItem')->willReturn(null);
         $quote = $this->createMock(Quote::class);
         $this->currentMock->expects(static::once())->method('createQuoteWithItem')->willReturn($quote);
@@ -290,7 +289,7 @@ class AutomatedTestingTest extends BoltTestCase
     public function getAutomatedTestingConfig_noErrors_returnsSimpleVirtualAndSaleProducts()
     {
         $product = $this->createMock(Product::class);
-        $this->currentMock->expects(static::exactly(3))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
+        $this->currentMock->expects(static::exactly(3))->method('getProduct')->with(...self::consecutiveArgs(['simple'], ['virtual'], ['sale']))->willReturn($product);
         $storeItem = $this->createMock(StoreItem::class);
         $this->currentMock->expects(static::exactly(3))->method('convertToStoreItem')->willReturn($storeItem);
         $address = $this->createMock(Address::class);
@@ -338,7 +337,7 @@ class AutomatedTestingTest extends BoltTestCase
     public function getAutomatedTestingConfig_noErrorsButNoVirtualProducts_returnsOnlySimpleProduct()
     {
         $product = $this->createMock(Product::class);
-        $this->currentMock->expects(static::exactly(3))->method('getProduct')->withConsecutive(['simple'], ['virtual'], ['sale'])->willReturn($product);
+        $this->currentMock->expects(static::exactly(3))->method('getProduct')->with(...self::consecutiveArgs(['simple'], ['virtual'], ['sale']))->willReturn($product);
         $storeItem = $this->createMock(StoreItem::class);
         $this->currentMock->expects(static::exactly(3))->method('convertToStoreItem')->willReturnOnConsecutiveCalls($storeItem, null, null);
         $address = $this->createMock(Address::class);
@@ -385,11 +384,11 @@ class AutomatedTestingTest extends BoltTestCase
     #[Test]
     public function getProduct_returnsPhysicalProduct()
     {
-        $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->withConsecutive(
+        $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->with(...self::consecutiveArgs(
             ['status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED],
             ['visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq'],
             ['type_id', 'physical']
-        )->willReturnSelf();
+        ))->willReturnSelf();
         $searchCriteria = $this->createMock(SearchCriteria::class);
         $this->searchCriteriaBuilder->expects(static::once())->method('create')->willReturn($searchCriteria);
         $productSearchResults = $this->createMock(ProductSearchResultsInterface::class);
@@ -409,11 +408,11 @@ class AutomatedTestingTest extends BoltTestCase
     #[Test]
     public function getProduct_returnsSaleProduct()
     {
-        $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->withConsecutive(
+        $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->with(...self::consecutiveArgs(
             ['status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED],
             ['visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq'],
             ['type_id', [\Magento\Catalog\Model\Product\Type::TYPE_SIMPLE, \Magento\Catalog\Model\Product\Type::TYPE_VIRTUAL], 'in']
-        )->willReturnSelf();
+        ))->willReturnSelf();
         $searchCriteria = $this->createMock(SearchCriteria::class);
         $this->searchCriteriaBuilder->expects(static::once())->method('create')->willReturn($searchCriteria);
         $productSearchResults = $this->createMock(ProductSearchResultsInterface::class);
@@ -439,11 +438,11 @@ class AutomatedTestingTest extends BoltTestCase
     #[Test]
     public function getProduct_returnsNull_ifNoProductSatisfiesConditions()
     {
-        $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->withConsecutive(
+        $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->with(...self::consecutiveArgs(
             ['status', \Magento\Catalog\Model\Product\Attribute\Source\Status::STATUS_ENABLED],
             ['visibility', \Magento\Catalog\Model\Product\Visibility::VISIBILITY_NOT_VISIBLE, 'neq'],
             ['type_id', 'physical']
-        )->willReturnSelf();
+        ))->willReturnSelf();
         $searchCriteria = $this->createMock(SearchCriteria::class);
         $this->searchCriteriaBuilder->expects(static::once())->method('create')->willReturn($searchCriteria);
         $productSearchResults = $this->createMock(ProductSearchResultsInterface::class);
@@ -528,7 +527,7 @@ class AutomatedTestingTest extends BoltTestCase
     #[Test]
     public function getShippingMethods_returnsCorrectShippingMethods()
     {
-        $address = $this->createPartialMock(Address::class, ['getGroupedAllShippingRates', 'setCollectShippingRates', 'setShippingMethod', 'save']);
+        $address = $this->createPartialMockWithMethods(Address::class, ['getGroupedAllShippingRates', 'setCollectShippingRates', 'setShippingMethod', 'save']);
         $quote = $this->createMock(Quote::class);
         $quote->expects(static::once())->method('getShippingAddress')->willReturn($address);
         $rate = $this->createMock(Rate::class);
@@ -561,10 +560,10 @@ class AutomatedTestingTest extends BoltTestCase
         $this->sortOrderBuilder->expects(static::once())->method('setDirection')->with('DESC')->willReturnSelf();
         $this->sortOrderBuilder->expects(static::once())->method('create')->willReturn($sortOrder);
 
-        $this->searchCriteriaBuilder->expects(static::exactly(2))->method('addFilter')->withConsecutive(
+        $this->searchCriteriaBuilder->expects(static::exactly(2))->method('addFilter')->with(...self::consecutiveArgs(
             ['discount_amount', 0, 'lt'],
             ['tax_amount', 0, 'gt']
-        )->willReturnSelf();
+        ))->willReturnSelf();
 
         $searchCriteria = $this->createMock(SearchCriteria::class);
         $this->searchCriteriaBuilder->expects(static::exactly(2))->method('setPageSize')->with(1)->willReturnSelf();
@@ -590,10 +589,10 @@ class AutomatedTestingTest extends BoltTestCase
         $this->sortOrderBuilder->expects(static::once())->method('setDirection')->with('DESC')->willReturnSelf();
         $this->sortOrderBuilder->expects(static::once())->method('create')->willReturn($sortOrder);
 
-        $this->searchCriteriaBuilder->expects(static::exactly(2))->method('addFilter')->withConsecutive(
+        $this->searchCriteriaBuilder->expects(static::exactly(2))->method('addFilter')->with(...self::consecutiveArgs(
             ['discount_amount', 0, 'lt'],
             ['tax_amount', 0, 'gt']
-        )->willReturnSelf();
+        ))->willReturnSelf();
 
         $searchCriteria = $this->createMock(SearchCriteria::class);
         $this->searchCriteriaBuilder->expects(static::exactly(2))->method('setPageSize')->with(1)->willReturnSelf();

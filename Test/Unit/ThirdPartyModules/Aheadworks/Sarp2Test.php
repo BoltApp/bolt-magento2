@@ -72,9 +72,8 @@ class Sarp2Test extends BoltTestCase
                 [\Magento\Framework\App\Area::AREA_ADMINHTML, $adminConfig],
             ]
         );
-        $this->currentMock = $this->getMockBuilder(Sarp2::class)
+        $this->currentMock = $this->getMockBuilderWithMethods(Sarp2::class, null)
             ->setConstructorArgs([$this->objectManagerMock, $configLoader])
-            ->setMethods(null)
             ->getMock();
     }
 

@@ -333,9 +333,8 @@ class CreateOrderTest extends BoltTestCase
         $orderIncrementId = $order->getIncrementId();
 
         $hookHelper = $this->objectManager->create(Hook::class);
-        $orderHelper = $this->getMockBuilder(OrderHelper::class)
+        $orderHelper = $this->getMockBuilderWithMethods(OrderHelper::class, ['prepareQuote','processExistingOrder'])
             ->disableOriginalConstructor()
-            ->setMethods(['prepareQuote','processExistingOrder'])
             ->getMock();
         $orderHelper->expects($this->any())->method('prepareQuote')->willReturn($quote);
         $orderHelper->expects($this->any())->method('processExistingOrder')->willReturn($order);

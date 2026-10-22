@@ -380,8 +380,7 @@ class OrderTest extends BoltTestCase
     #[Test]
     public function createOrder_existingOrder()
     {
-        $orderHelper = $this->getMockBuilder(OrderHelper::class)
-            ->setMethods(['prepareQuote'])
+        $orderHelper = $this->getMockBuilderWithMethods(OrderHelper::class, ['prepareQuote'])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -412,8 +411,7 @@ class OrderTest extends BoltTestCase
     #[Test]
     public function createOrder_newOrderQuoteSubmitExceptionWithOrderCreated_returnsOrder()
     {
-        $orderHelper = $this->getMockBuilder(OrderHelper::class)
-            ->setMethods(['prepareQuote','getExistingOrder'])
+        $orderHelper = $this->getMockBuilderWithMethods(OrderHelper::class, ['prepareQuote','getExistingOrder'])
             ->disableOriginalConstructor()
             ->getMock();
         $quote = TestUtils::createQuote();
@@ -425,7 +423,7 @@ class OrderTest extends BoltTestCase
 
         $orderHelper->method('getExistingOrder')->willReturnOnConsecutiveCalls(null, $order);
 
-        $quoteManagement = $this->createPartialMock(QuoteManagement::class, ['submit']);
+        $quoteManagement = $this->createPartialMockWithMethods(QuoteManagement::class, ['submit']);
         $quoteManagement->expects(self::once())->method('submit')
             ->willThrowException(new Exception(''));
         TestHelper::setProperty($orderHelper, 'quoteManagement', $quoteManagement);
@@ -448,13 +446,12 @@ class OrderTest extends BoltTestCase
     #[Test]
     public function createOrder_newOrderQuoteSubmitExceptionWithOrderNotCreated_reThrowsException()
     {
-        $orderHelper = $this->getMockBuilder(OrderHelper::class)
-            ->setMethods(['prepareQuote'])
+        $orderHelper = $this->getMockBuilderWithMethods(OrderHelper::class, ['prepareQuote'])
             ->disableOriginalConstructor()
             ->getMock();
         $cartHelper = $this->objectManager->create(CartHelper::class);
         $bugsnag = $this->objectManager->create(Bugsnag::class);
-        $quoteManagement = $this->createPartialMock(QuoteManagement::class, ['submit']);
+        $quoteManagement = $this->createPartialMockWithMethods(QuoteManagement::class, ['submit']);
         TestHelper::setProperty($orderHelper, 'cartHelper', $cartHelper);
         TestHelper::setProperty($orderHelper, 'bugsnag', $bugsnag);
         TestHelper::setProperty($orderHelper, 'quoteManagement', $quoteManagement);
@@ -478,13 +475,12 @@ class OrderTest extends BoltTestCase
     #[Test]
     public function createOrder_newOrderNotCreated_throwsException()
     {
-        $orderHelper = $this->getMockBuilder(OrderHelper::class)
-            ->setMethods(['prepareQuote'])
+        $orderHelper = $this->getMockBuilderWithMethods(OrderHelper::class, ['prepareQuote'])
             ->disableOriginalConstructor()
             ->getMock();
         $cartHelper = $this->objectManager->create(CartHelper::class);
         $bugsnag = $this->objectManager->create(Bugsnag::class);
-        $quoteManagement = $this->createPartialMock(QuoteManagement::class, ['submit']);
+        $quoteManagement = $this->createPartialMockWithMethods(QuoteManagement::class, ['submit']);
         TestHelper::setProperty($orderHelper, 'cartHelper', $cartHelper);
         TestHelper::setProperty($orderHelper, 'bugsnag', $bugsnag);
         TestHelper::setProperty($orderHelper, 'quoteManagement', $quoteManagement);
@@ -508,12 +504,11 @@ class OrderTest extends BoltTestCase
     public function createOrder_newOrder_returnsOrder()
     {
         $transaction = [];
-        $orderHelper = $this->getMockBuilder(OrderHelper::class)
-            ->setMethods(['prepareQuote','orderPostprocess'])
+        $orderHelper = $this->getMockBuilderWithMethods(OrderHelper::class, ['prepareQuote','orderPostprocess'])
             ->disableOriginalConstructor()
             ->getMock();
         $cartHelper = $this->objectManager->create(CartHelper::class);
-        $quoteManagement = $this->createPartialMock(QuoteManagement::class, ['submit']);
+        $quoteManagement = $this->createPartialMockWithMethods(QuoteManagement::class, ['submit']);
 
         $quote = TestUtils::createQuote();
         $order = TestUtils::createDumpyOrder();
@@ -811,7 +806,7 @@ class OrderTest extends BoltTestCase
             \Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_LOG_MISSING_QUOTE_FAILED_HOOKS, false
         );
 
-        $bugsnag = $this->createPartialMock(Bugsnag::class,['notifyException','registerCallback']);
+        $bugsnag = $this->createPartialMockWithMethods(Bugsnag::class,['notifyException','registerCallback']);
         $bugsnag->expects(self::once())->method('registerCallback')->willReturnSelf();
         $bugsnag->expects(self::once())->method('notifyException')->with(new LocalizedException(__('Unknown quote id: %1', self::IMMUTABLE_QUOTE_ID)))->willReturnSelf();
         TestHelper::setInaccessibleProperty($orderHelper,'bugsnag', $bugsnag);
@@ -1032,7 +1027,7 @@ class OrderTest extends BoltTestCase
     #[Test]
     public function saveUpdateOrder_createOrderFromWebhook()
     {
-        $orderHelper = $this->createPartialMock(OrderHelper::class,
+        $orderHelper = $this->createPartialMockWithMethods(OrderHelper::class,
             [
                 'fetchTransactionInfo', 'getDataFromDisplayID', 'createOrder',
                 'resetOrderState', 'dispatchPostCheckoutEvents', 'getExistingOrder', 'updateOrderPayment',
@@ -1067,15 +1062,15 @@ class OrderTest extends BoltTestCase
         $immutablequoteMock = $this->createMock(Quote::class);
         $quoteMock = $this->createMock(Quote::class);
 
-        $cartHelper = $this->createPartialMock(CartHelper::class, ['getQuoteById']);
+        $cartHelper = $this->createPartialMockWithMethods(CartHelper::class, ['getQuoteById']);
         $cartHelper->expects(self::exactly(2))->method('getQuoteById')
             ->willReturnMap([
                 [self::IMMUTABLE_QUOTE_ID, $immutablequoteMock],
                 [self::QUOTE_ID, $quoteMock]
             ]);
 
-        $orderMock = $this->createPartialMock(Order::class, ['getId', 'getGrandTotal', 'getOrderCurrencyCode']);
-        $bugsnag = $this->createPartialMock(Bugsnag::class, ['registerCallback']);
+        $orderMock = $this->createPartialMockWithMethods(Order::class, ['getId', 'getGrandTotal', 'getOrderCurrencyCode']);
+        $bugsnag = $this->createPartialMockWithMethods(Bugsnag::class, ['registerCallback']);
 
         $bugsnag->expects(self::never())->method('registerCallback');
 
@@ -1090,12 +1085,12 @@ class OrderTest extends BoltTestCase
         $orderMock->expects(self::atLeastOnce())->method('getOrderCurrencyCode')->willReturn(self::CURRENCY_CODE);
         $orderHelper->expects(self::once())->method('updateOrderPayment')
             ->with($orderMock, $transaction, null, $type = 'pending')->willReturn($orderMock);
-        $featureSwitches = $this->createPartialMock(FeatureSwitch::class,['isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled']);
+        $featureSwitches = $this->createPartialMockWithMethods(FeatureSwitch::class,['isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled']);
 
         $featureSwitches->expects(self::once())->method('isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled')->willReturn(false);
-        $eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['dispatchEvent']);
+        $eventsForThirdPartyModules = $this->createPartialMockWithMethods(EventsForThirdPartyModules::class, ['dispatchEvent']);
         $eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
-        $resourceConnection = $this->createPartialMock(ResourceConnection::class, ['getConnection', 'getTableName','delete']);
+        $resourceConnection = $this->createPartialMockWithMethods(ResourceConnection::class, ['getConnection', 'getTableName','delete']);
         $resourceConnection->method('getConnection')->willReturnSelf();
         $resourceConnection->method('getTableName')->willReturnSelf();
         $resourceConnection->method('delete')->willReturnSelf();
@@ -1124,7 +1119,7 @@ class OrderTest extends BoltTestCase
     {
         /** @var Quote $quote */
         $quote = $this->objectManager->create(Quote::class);
-        $discountHelper = $this->createPartialMock(DiscountHelper::class,['applyExternalDiscountData']);
+        $discountHelper = $this->createPartialMockWithMethods(DiscountHelper::class,['applyExternalDiscountData']);
         $discountHelper->expects(static::once())->method('applyExternalDiscountData')->with($quote);
         TestHelper::setProperty($this->orderHelper, 'discountHelper', $discountHelper);
         $this->orderHelper->applyExternalQuoteData($quote);
@@ -1321,7 +1316,7 @@ class OrderTest extends BoltTestCase
     public function submitQuote_withSuccessfulSubmission_returnsCreatedOrder()
     {
         $orderHelper = $this->objectManager->create(OrderHelper::class);
-        $quoteManagement = $this->createPartialMock(QuoteManagement::class, ['submit']);
+        $quoteManagement = $this->createPartialMockWithMethods(QuoteManagement::class, ['submit']);
         $quote = $this->objectManager->create(Quote::class);
         $order = $this->objectManager->create(Order::class);
         $quoteManagement->expects(static::once())->method('submit')->with($quote, [])
@@ -1423,7 +1418,7 @@ class OrderTest extends BoltTestCase
         );
         $quote = TestUtils::createQuote();
         $orderHelper = $this->objectManager->create(OrderHelper::class);
-        $quoteManagement = $this->createPartialMock(QuoteManagement::class, ['submit']);
+        $quoteManagement = $this->createPartialMockWithMethods(QuoteManagement::class, ['submit']);
 
         $payment = $this->objectManager->create(OrderPayment::class);
         $payment->setMethod(Payment::METHOD_CODE);
@@ -1456,7 +1451,7 @@ class OrderTest extends BoltTestCase
         $transaction = new stdClass();
         $quote = TestUtils::createQuote();
         $orderHelper = $this->objectManager->create(OrderHelper::class);
-        $quoteManagement = $this->createPartialMock(QuoteManagement::class, ['submit']);
+        $quoteManagement = $this->createPartialMockWithMethods(QuoteManagement::class, ['submit']);
 
         $payment = $this->objectManager->create(OrderPayment::class);
         $payment->setMethod('paypal');
@@ -1713,7 +1708,7 @@ class OrderTest extends BoltTestCase
     #[Test]
     public function deleteOrderByIncrementId_noOrder()
     {
-        $bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyError']);
+        $bugsnag = $this->createPartialMockWithMethods(Bugsnag::class, ['notifyError']);
         $bugsnag->expects(self::once())->method('notifyError');
         TestHelper::setInaccessibleProperty($this->orderHelper,'bugsnag', $bugsnag);
         $this->orderHelper->deleteOrderByIncrementId(self::INCREMENT_ID, self::IMMUTABLE_QUOTE_ID);
@@ -2346,12 +2341,11 @@ class OrderTest extends BoltTestCase
             'total_amount' => 500
         ];
 
-        $cartHelper = $this->getMockBuilder(CartHelper::class)
-            ->disableOriginalConstructor()
-            ->setMethods([
+        $cartHelper = $this->getMockBuilderWithMethods(CartHelper::class, [
                 'getQuoteById',
                 'getCartData',
             ])
+            ->disableOriginalConstructor()
             ->getMock();
 
         $quoteMock = $this->createMock(Quote::class);
@@ -2375,7 +2369,7 @@ class OrderTest extends BoltTestCase
             )
         );
 
-        $bugsnag = $this->createPartialMock(Bugsnag::class, ['registerCallback']);
+        $bugsnag = $this->createPartialMockWithMethods(Bugsnag::class, ['registerCallback']);
         $bugsnag->expects(self::once())->method('registerCallback')->willReturnCallback(
             function ($callback) use ($cartData, $transaction, $order) {
                 $report = $this->createMock(Report::class);
@@ -2508,23 +2502,23 @@ class OrderTest extends BoltTestCase
     {
         $prevState = Order::STATE_PENDING_PAYMENT;
 
-        $orderMock = $this->createPartialMock(Order::class, [
+        $orderMock = $this->createPartialMockWithMethods(Order::class, [
             'getState','hold','setState','setStatus','save','getConfig'
         ]);
         $orderMock->expects(static::once())->method('getState')->willReturn($prevState);
         $orderMock->expects(static::once())->method('hold')->willThrowException(new Exception());
         $orderMock->expects(static::exactly(2))->method('setState')
-            ->withConsecutive([Order::STATE_PROCESSING], [Order::STATE_HOLDED]);
-        $orderConfigMock = $this->createPartialMock(Config::class,
+            ->with(...self::consecutiveArgs([Order::STATE_PROCESSING], [Order::STATE_HOLDED]));
+        $orderConfigMock = $this->createPartialMockWithMethods(Config::class,
             [
                 'getStateDefaultStatus',
             ]);
         $orderConfigMock->expects(static::exactly(2))->method('getStateDefaultStatus')
-            ->withConsecutive([Order::STATE_PROCESSING], [Order::STATE_HOLDED])
+            ->with(...self::consecutiveArgs([Order::STATE_PROCESSING], [Order::STATE_HOLDED]))
             ->willReturnArgument(0);
         $orderMock->method('getConfig')->willReturn($orderConfigMock);
         $orderMock->expects(static::exactly(2))->method('setStatus')
-            ->withConsecutive([Order::STATE_PROCESSING], [Order::STATE_HOLDED]);
+            ->with(...self::consecutiveArgs([Order::STATE_PROCESSING], [Order::STATE_HOLDED]));
         $orderMock->expects(static::once())->method('save');
         $this->orderHelper->setOrderState($orderMock, Order::STATE_HOLDED);
     }
@@ -2556,7 +2550,7 @@ class OrderTest extends BoltTestCase
     public function setOrderState_canceledOrderForRejectedIrreversibleHook()
     {
         $prevState = Order::STATE_PAYMENT_REVIEW;
-        $order = $this->createPartialMock(
+        $order = $this->createPartialMockWithMethods(
             Order::class,
             [
                 'getState',
@@ -2583,7 +2577,7 @@ class OrderTest extends BoltTestCase
     public function setOrderState_canceledOrderForRejectedIrreversibleHookWithException()
     {
         $prevState = Order::STATE_PAYMENT_REVIEW;
-        $order = $this->createPartialMock(
+        $order = $this->createPartialMockWithMethods(
             Order::class,
             [
                 'getState',
@@ -2595,7 +2589,7 @@ class OrderTest extends BoltTestCase
                 'getStateDefaultStatus',
             ]
         );
-        $orderConfigMock = $this->createPartialMock(
+        $orderConfigMock = $this->createPartialMockWithMethods(
             Config::class,
             [
                 'getStateDefaultStatus'
@@ -2661,7 +2655,7 @@ class OrderTest extends BoltTestCase
     {
         $exception = new Exception('');
 
-        $order = $this->createPartialMock(
+        $order = $this->createPartialMockWithMethods(
             Order::class,
             [
                 'cancel',
@@ -2671,7 +2665,7 @@ class OrderTest extends BoltTestCase
             ]
         );
 
-        $orderConfigMock = $this->createPartialMock(
+        $orderConfigMock = $this->createPartialMockWithMethods(
             Config::class,
             [
                 'getStateDefaultStatus'
@@ -2681,13 +2675,13 @@ class OrderTest extends BoltTestCase
         $orderConfigMock->expects(static::once())->method('getStateDefaultStatus')
             ->willReturn(OrderModel::STATE_CANCELED);
 
-        $orderManagementMock = $this->createPartialMock(OrderManagement::class, [
+        $orderManagementMock = $this->createPartialMockWithMethods(OrderManagement::class, [
             'cancel'
         ]);
         $orderManagementMock->expects(self::once())->method('cancel')->willThrowException($exception);
         TestHelper::setInaccessibleProperty($this->orderHelper,'orderManagement', $orderManagementMock);
 
-        $bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
+        $bugsnag = $this->createPartialMockWithMethods(Bugsnag::class, ['notifyException']);
         $bugsnag->expects(self::once())->method('notifyException')->with($exception);
         $order->expects(self::once())->method('setState')->with(Order::STATE_CANCELED);
         $order->expects(self::once())->method('save');
@@ -3499,7 +3493,7 @@ class OrderTest extends BoltTestCase
         $orderHelper = $this->objectManager->create(OrderHelper::class);
 
         $totalInvoiced = 0;
-        $invoice = $this->createPartialMock(
+        $invoice = $this->createPartialMockWithMethods(
             Invoice::class,
             [
                 'setRequestedCaptureCase', 'setTransactionId',
@@ -3507,7 +3501,7 @@ class OrderTest extends BoltTestCase
             ]
         );
 
-        $order = $this->createPartialMock(
+        $order = $this->createPartialMockWithMethods(
             Order::class,
             [
                 'getOrderCurrencyCode','getTotalInvoiced', 'getGrandTotal',
@@ -3520,7 +3514,7 @@ class OrderTest extends BoltTestCase
         $order->method('addStatusHistoryComment')->willReturn($order);
         $order->method('setIsCustomerNotified')->willReturn($order);
         $invoice->method('getEmailSent')->willReturn(true);
-        $invoiceService = $this->createPartialMock(
+        $invoiceService = $this->createPartialMockWithMethods(
             InvoiceService::class,
             ['prepareInvoice', 'prepareInvoiceWithoutItems']
         );
@@ -3570,7 +3564,7 @@ class OrderTest extends BoltTestCase
         $orderHelper = $this->objectManager->create(OrderHelper::class);
         $message = 'Expected exception message';
         $exception = new Exception($message);
-        $order = $this->createPartialMock(
+        $order = $this->createPartialMockWithMethods(
             Order::class,
             [
                 'getOrderCurrencyCode','getTotalInvoiced', 'getGrandTotal',
@@ -3581,14 +3575,14 @@ class OrderTest extends BoltTestCase
         $order->expects(static::once())->method('getTotalInvoiced')->willReturn(5);
         $order->expects(static::once())->method('getGrandTotal')->willReturn(5);
 
-        $invoiceService = $this->createPartialMock(
+        $invoiceService = $this->createPartialMockWithMethods(
             InvoiceService::class,
             ['prepareInvoice', 'prepareInvoiceWithoutItems']
         );
 
         $invoiceService->expects(static::once())->method('prepareInvoice')->willThrowException($exception);
 
-        $bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
+        $bugsnag = $this->createPartialMockWithMethods(Bugsnag::class, ['notifyException']);
         $bugsnag->expects(self::once())->method('notifyException')->with($exception);
         $this->expectException(Exception::class);
         $this->expectExceptionMessage($message);
@@ -3615,7 +3609,7 @@ class OrderTest extends BoltTestCase
     public function createOrderInvoice_ifInvoiceSenderThrowsException_notifiesException()
     {
         $orderHelper = $this->objectManager->create(OrderHelper::class);
-        $invoice = $this->createPartialMock(
+        $invoice = $this->createPartialMockWithMethods(
             Invoice::class,
             [
                 'setRequestedCaptureCase', 'setTransactionId', 'setBaseGrandTotal',
@@ -3623,7 +3617,7 @@ class OrderTest extends BoltTestCase
             ]
         );
 
-        $order = $this->createPartialMock(
+        $order = $this->createPartialMockWithMethods(
             Order::class,
             [
                 'getOrderCurrencyCode','getTotalInvoiced', 'getGrandTotal',
@@ -3636,23 +3630,23 @@ class OrderTest extends BoltTestCase
         $order->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
         $order->method('addStatusHistoryComment')->willReturn($order);
         $order->method('setIsCustomerNotified')->willReturn($order);
-        $invoiceService = $this->createPartialMock(
+        $invoiceService = $this->createPartialMockWithMethods(
             InvoiceService::class,
             ['prepareInvoice', 'prepareInvoiceWithoutItems']
         );
         $message = 'Expected exception message';
         $exception = new Exception($message);
         $invoiceService->expects(static::once())->method('prepareInvoice')->willReturn($invoice);
-        $scopeConfig = $this->createPartialMock(ScopeConfigInterface::class, ['isSetFlag','getValue']);
+        $scopeConfig = $this->createPartialMockWithMethods(ScopeConfigInterface::class, ['isSetFlag','getValue']);
         $scopeConfig->expects(static::once())->method('isSetFlag')
             ->with(InvoiceEmailIdentity::XML_PATH_EMAIL_ENABLED, ScopeInterface::SCOPE_STORE, self::STORE_ID)
             ->willReturn(true);
-        $invoiceSender= $this->createPartialMock(
+        $invoiceSender= $this->createPartialMockWithMethods(
             InvoiceSender::class,
             ['send']
         );
         $invoiceSender->expects(static::once())->method('send')->willThrowException($exception);
-        $bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
+        $bugsnag = $this->createPartialMockWithMethods(Bugsnag::class, ['notifyException']);
         $bugsnag->expects(self::once())->method('notifyException')->with($exception);
 
         TestHelper::setInaccessibleProperty($orderHelper, 'invoiceService', $invoiceService);
@@ -3754,7 +3748,7 @@ class OrderTest extends BoltTestCase
     public function createOrderInvoice_ifInvoiceEmailSendingIsDisabled_doesNotSendInvoiceEmail()
     {
         $orderHelper = $this->objectManager->create(OrderHelper::class);
-        $invoice = $this->createPartialMock(
+        $invoice = $this->createPartialMockWithMethods(
             Invoice::class,
             [
                 'setRequestedCaptureCase', 'setTransactionId', 'setBaseGrandTotal',
@@ -3762,7 +3756,7 @@ class OrderTest extends BoltTestCase
             ]
         );
 
-        $order = $this->createPartialMock(
+        $order = $this->createPartialMockWithMethods(
             Order::class,
             [
                 'getOrderCurrencyCode','getTotalInvoiced', 'getGrandTotal',
@@ -3776,23 +3770,23 @@ class OrderTest extends BoltTestCase
         $order->method('addStatusHistoryComment')->willReturn($order);
         $order->method('setIsCustomerNotified')->willReturn($order);
 
-        $invoiceService = $this->createPartialMock(
+        $invoiceService = $this->createPartialMockWithMethods(
             InvoiceService::class,
             ['prepareInvoice','prepareInvoiceWithoutItems']
         );
         $invoiceService->expects(static::once())->method('prepareInvoice')->willReturn($invoice);
 
-        $scopeConfig = $this->createPartialMock(ScopeConfigInterface::class, ['isSetFlag','getValue']);
+        $scopeConfig = $this->createPartialMockWithMethods(ScopeConfigInterface::class, ['isSetFlag','getValue']);
         $scopeConfig->expects(static::once())->method('isSetFlag')
             ->with(InvoiceEmailIdentity::XML_PATH_EMAIL_ENABLED, ScopeInterface::SCOPE_STORE, self::STORE_ID)
             ->willReturn(false);
 
-        $invoiceSender= $this->createPartialMock(
+        $invoiceSender= $this->createPartialMockWithMethods(
             InvoiceSender::class,
             ['send']
         );
         $invoiceSender->expects(static::never())->method('send');
-        $bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyException']);
+        $bugsnag = $this->createPartialMockWithMethods(Bugsnag::class, ['notifyException']);
         $bugsnag->expects(self::never())->method('notifyException');
 
         TestHelper::setInaccessibleProperty($orderHelper, 'invoiceService', $invoiceService);
@@ -4327,10 +4321,9 @@ class OrderTest extends BoltTestCase
     {
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
         $configHelper = $this->createMock(ConfigHelper::class);
-        $responseFactory = $this->createPartialMock(ResponseFactory::class, ['getResponse']);
-        $dataObjectFactory = $this->getMockBuilder(DataObjectFactory::class)
+        $responseFactory = $this->createPartialMockWithMethods(ResponseFactory::class, ['getResponse']);
+        $dataObjectFactory = $this->getMockBuilderWithMethods(DataObjectFactory::class, ['create','setApiData', 'setDynamicApiUrl','setApiKey'])
             ->disableOriginalConstructor()
-            ->setMethods(['create','setApiData', 'setDynamicApiUrl','setApiKey'])
             ->getMock();
         $apiHelper = $this->createMock(ApiHelper::class);
         $boltRequest = $this->createMock(ApiHelper::class);
@@ -4396,7 +4389,7 @@ class OrderTest extends BoltTestCase
         $this->mockFetchTransactionInfo($orderHelper, $data['transaction']);
         $quote = $this->objectManager->create(Quote::class);
         $quote->setCustomerId($data['customer_id']);
-        $cartHelper = $this->createPartialMock(CartHelper::class, ['getQuoteById']);
+        $cartHelper = $this->createPartialMockWithMethods(CartHelper::class, ['getQuoteById']);
         $cartHelper->expects(static::once())->method('getQuoteById')->withAnyParameters()
             ->willReturn($quote);
 
@@ -4445,10 +4438,9 @@ class OrderTest extends BoltTestCase
 
     private function mockFetchTransactionInfo($orderHelper, $transaction)
     {
-        $responseFactory = $this->createPartialMock(ResponseFactory::class, ['getResponse']);
-        $dataObjectFactory = $this->getMockBuilder(DataObjectFactory::class)
+        $responseFactory = $this->createPartialMockWithMethods(ResponseFactory::class, ['getResponse']);
+        $dataObjectFactory = $this->getMockBuilderWithMethods(DataObjectFactory::class, ['create','setRequestMethod', 'setDynamicApiUrl','setApiKey'])
             ->disableOriginalConstructor()
-            ->setMethods(['create','setRequestMethod', 'setDynamicApiUrl','setApiKey'])
             ->getMock();
         $apiHelper = $this->createMock(ApiHelper::class);
         $boltRequest = $this->createMock(Request::class);
@@ -4827,7 +4819,7 @@ class OrderTest extends BoltTestCase
     public function cancelFailedPaymentOrder_ifOrderDoesNotExist_doesNotCancel()
     {
         $orderHelper = Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class);
-        $orderManagementMock = $this->createPartialMock(OrderManagement::class, [
+        $orderManagementMock = $this->createPartialMockWithMethods(OrderManagement::class, [
             'cancel'
         ]);
         $orderManagementMock->expects(static::never())->method('cancel');

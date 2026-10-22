@@ -373,7 +373,7 @@ class CartTest extends BoltTestCase
             'getCouponCode',
             'setCustomerIsGuest',
         ];
-        $this->immutableQuoteMock = $this->createPartialMock(Quote::class, $quoteMethods);
+        $this->immutableQuoteMock = $this->createPartialMockWithMethods(Quote::class, $quoteMethods);
 
         $addressMethods = [
             'setCollectShippingRates',
@@ -391,13 +391,13 @@ class CartTest extends BoltTestCase
             'setShippingMethod',
             'save',
         ];
-        $this->quoteShippingAddress = $this->createPartialMock(Quote\Address::class, $addressMethods);
-        $this->quoteBillingAddress = $this->createPartialMock(Quote\Address::class, $addressMethods);
+        $this->quoteShippingAddress = $this->createPartialMockWithMethods(Quote\Address::class, $addressMethods);
+        $this->quoteBillingAddress = $this->createPartialMockWithMethods(Quote\Address::class, $addressMethods);
 
-        $this->productMock = $this->createPartialMock(Product::class, ['getDescription', 'getTypeInstance', 'getTypeId', 'isAvailable']);
+        $this->productMock = $this->createPartialMockWithMethods(Product::class, ['getDescription', 'getTypeInstance', 'getTypeId', 'isAvailable']);
         $this->productMock->method('getTypeInstance')->willReturnSelf();
         $this->contextHelper = $this->createMock(ContextHelper::class);
-        $this->quoteMock = $this->createPartialMock(Quote::class, [
+        $this->quoteMock = $this->createPartialMockWithMethods(Quote::class, [
             'getQuoteCurrencyCode','getAllVisibleItems',
             'getTotals','getStore','getStoreId',
             'getData','isVirtual','getId','getShippingAddress',
@@ -405,15 +405,15 @@ class CartTest extends BoltTestCase
             'assignCustomer','setIsActive','getGiftMessageId',
             'getGwId', 'getCustomerGroupId','setCustomerIsGuest',
         ]);
-        $this->checkoutSession = $this->createPartialMock(CheckoutSession::class, ['getQuote', 'getBoltCollectSaleRuleDiscounts', 'getOrderId']);
-        $this->productRepository = $this->createPartialMock(ProductRepository::class, ['get', 'getbyId']);
+        $this->checkoutSession = $this->createPartialMockWithMethods(CheckoutSession::class, ['getQuote', 'getBoltCollectSaleRuleDiscounts', 'getOrderId']);
+        $this->productRepository = $this->createPartialMockWithMethods(ProductRepository::class, ['get', 'getbyId']);
 
         $this->apiHelper = $this->createMock(ApiHelper::class);
         $this->configHelper = $this->createMock(ConfigHelper::class);
         $this->customerSession = $this->createMock(CustomerSession::class);
-        $this->logHelper = $this->createPartialMock(LogHelper::class, ['addInfoLog']);
+        $this->logHelper = $this->createPartialMockWithMethods(LogHelper::class, ['addInfoLog']);
         $this->logHelper->method('addInfoLog')->withAnyParameters()->willReturnSelf();
-        $this->bugsnag = $this->createPartialMock(
+        $this->bugsnag = $this->createPartialMockWithMethods(
             Bugsnag::class,
             ['notifyError', 'notifyException', 'registerCallback']
         );
@@ -423,21 +423,20 @@ class CartTest extends BoltTestCase
         $this->imageHelperFactory = $this->createMock(ImageFactory::class);
         $this->imageHelperFactory->method('create')->willReturn($this->imageHelper);
 
-        $this->appEmulation = $this->createPartialMock(
+        $this->appEmulation = $this->createPartialMockWithMethods(
             Emulation::class,
             ['stopEnvironmentEmulation', 'startEnvironmentEmulation']
         );
         $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);
-        $this->quoteFactory = $this->getMockBuilder(QuoteFactory::class)
-            ->setMethods(['create', 'load'])
+        $this->quoteFactory = $this->getMockBuilderWithMethods(QuoteFactory::class, ['create', 'load'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->totalsCollector = $this->createMock(TotalsCollector::class);
-        $this->quoteRepository = $this->createPartialMock(
+        $this->quoteRepository = $this->createPartialMockWithMethods(
             QuoteRepository::class,
             ['getList', 'getItems', 'getActive', 'save', 'delete']
         );
-        $this->orderRepository = $this->createPartialMock(OrderRepository::class, ['getList', 'getItems']);
+        $this->orderRepository = $this->createPartialMockWithMethods(OrderRepository::class, ['getList', 'getItems']);
         $this->searchCriteriaBuilder = $this->createMock(SearchCriteriaBuilder::class);
         $this->quoteResource = $this->createMock(QuoteResource::class);
         $this->sessionHelper = $this->createMock(SessionHelper::class);
@@ -445,16 +444,15 @@ class CartTest extends BoltTestCase
         $this->discountHelper = $this->createMock(DiscountHelper::class);
         $this->cache = $this->createMock(CacheInterface::class);
         $this->resourceConnection = $this->createMock(ResourceConnection::class);
-        $this->quoteAddressTotal = $this->createPartialMock(Total::class, ['getValue', 'setValue', 'getTitle']);
+        $this->quoteAddressTotal = $this->createPartialMockWithMethods(Total::class, ['getValue', 'setValue', 'getTitle']);
         $this->quoteManagement = $this->createMock(CartManagementInterface::class);
         $this->hookHelper = $this->createMock(HookHelper::class);
         $this->customerRepository = $this->createMock(CustomerRepository::class);
-        $this->objectManagerMock = $this->getMockBuilder(ObjectManagerInterface::class)
-            ->getMockForAbstractClass();
-        $this->customerMock = $this->createPartialMock(Customer::class, ['getEmail']);
+        $this->objectManagerMock = $this->createMock(ObjectManagerInterface::class);
+        $this->customerMock = $this->createPartialMockWithMethods(Customer::class, ['getEmail']);
         $this->metricsClient = $this->createMock(MetricsClient::class);
         $this->serialize = (new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this))->getObject(\Magento\Framework\Serialize\Serializer\Json::class);
-        $this->deciderHelper = $this->createPartialMock(
+        $this->deciderHelper = $this->createPartialMockWithMethods(
             DeciderHelper::class,
             ['ifShouldDisablePrefillAddressForLoggedInCustomer', 'handleVirtualProductsAsPhysical',
              'isIncludeUserGroupIntoCart', 'isAddSessionIdToCartMetadata', 'isCustomizableOptionsSupport',
@@ -465,15 +463,15 @@ class CartTest extends BoltTestCase
         $this->deciderHelper->method('isEnabledFetchCartViaApi')->willReturn(false);
         $this->deciderHelper->method('isMSRPPriceDisabled')->willReturn(false);
         $this->deciderHelper->method('isDefaultPhoneCountryHintEnabled')->willReturn(false);
-        $this->eventsForThirdPartyModules = $this->createPartialMock(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
-        $this->eventsForThirdPartyModules->method('runFilter')->will($this->returnArgument(1));
+        $this->eventsForThirdPartyModules = $this->createPartialMockWithMethods(EventsForThirdPartyModules::class, ['runFilter','dispatchEvent']);
+        $this->eventsForThirdPartyModules->method('runFilter')->willReturnArgument(1);
         $this->eventsForThirdPartyModules->method('dispatchEvent')->willReturnSelf();
-        $this->ruleRepository = $this->createPartialMock(
+        $this->ruleRepository = $this->createPartialMockWithMethods(
             RuleRepository::class,
             ['getById']
         );
-        $this->msrpHelper = $this->createPartialMock(MsrpHelper::class, ['canApplyMsrp']);
-        $this->priceHelper = $this->createPartialMock(PriceHelper::class, ['currency']);
+        $this->msrpHelper = $this->createPartialMockWithMethods(MsrpHelper::class, ['canApplyMsrp']);
+        $this->priceHelper = $this->createPartialMockWithMethods(PriceHelper::class, ['currency']);
         $this->store = $this->createMock(Store::class);
         $this->currentMock = $this->getCurrentMock(null);
         $this->objectsToClean = [];
@@ -494,8 +492,7 @@ class CartTest extends BoltTestCase
      */
     protected function getCurrentMock($methods = ['getLastImmutableQuote', 'getCalculationAddress', 'getQuoteById'])
     {
-        return $this->getMockBuilder(BoltHelperCart::class)
-            ->setMethods($methods)
+        return $this->getMockBuilderWithMethods(BoltHelperCart::class, $methods)
             ->setConstructorArgs(
                 [
                     $this->contextHelper,
@@ -600,8 +597,7 @@ class CartTest extends BoltTestCase
             'getData',
             'getCouponCode'
         ];
-        $quote = $this->getMockBuilder(Quote::class)
-            ->setMethods($quoteMethods)
+        $quote = $this->getMockBuilderWithMethods(Quote::class, $quoteMethods)
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -627,9 +623,7 @@ class CartTest extends BoltTestCase
      */
     private function getAddressMock()
     {
-        $addressMock = $this->getMockBuilder(Quote\Address::class)
-            ->setMethods(
-                [
+        $addressMock = $this->getMockBuilderWithMethods(Quote\Address::class, [
                     'getFirstname',
                     'getLastname',
                     'getCompany',
@@ -644,8 +638,7 @@ class CartTest extends BoltTestCase
                     'getCouponCode',
                     'getDiscountDescription',
                     'getAppliedRuleIds'
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
         $this->setUpAddressMock($addressMock);
@@ -1279,7 +1272,7 @@ class CartTest extends BoltTestCase
         $requestMock = $this->createMock(Request::class);
         $responseMock = $this->createMock(Response::class);
         $this->configHelper->expects(static::once())->method('getApiKey')->willReturn(self::API_KEY);
-        $requestDataMock = $this->createPartialMock(
+        $requestDataMock = $this->createPartialMockWithMethods(
             DataObject::class,
             ['setApiData', 'setDynamicApiUrl', 'setApiKey']
         );
@@ -1397,13 +1390,10 @@ class CartTest extends BoltTestCase
         $testCartData = $this->getTestCartData();
         $addressCacheIdentifier = 'Test_Test_Test';
 
-        $quoteItem = $this->getMockBuilder(Item::class)
-            ->setMethods(
-                [
+        $quoteItem = $this->getMockBuilderWithMethods(Item::class, [
                     'getItemId',
                     'getGwId'
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
 
@@ -1581,7 +1571,7 @@ class CartTest extends BoltTestCase
         $requestMock = $this->createMock(Request::class);
         $responseMock = $this->createMock(Response::class);
         $this->configHelper->expects(static::once())->method('getApiKey')->willReturn(self::API_KEY);
-        $requestDataMock = $this->createPartialMock(
+        $requestDataMock = $this->createPartialMockWithMethods(
             DataObject::class,
             ['setApiData', 'setDynamicApiUrl', 'setApiKey']
         );
@@ -1613,7 +1603,7 @@ class CartTest extends BoltTestCase
         $signRequest = ['merchant_user_id' => self::CUSTOMER_ID];
         $requestMock = $this->createMock(Request::class);
         $this->configHelper->expects(static::once())->method('getApiKey')->willReturn(self::API_KEY);
-        $requestDataMock = $this->createPartialMock(
+        $requestDataMock = $this->createPartialMockWithMethods(
             DataObject::class,
             ['setApiData', 'setDynamicApiUrl', 'setApiKey']
         );
@@ -1641,10 +1631,10 @@ class CartTest extends BoltTestCase
     #[Test]
     public function getHints_withApplePayRelatedData_skipsPreFill()
     {
-        $quoteMock = $this->createPartialMock(Quote::class, ['getCustomerEmail', 'isVirtual', 'getShippingAddress']);
+        $quoteMock = $this->createPartialMockWithMethods(Quote::class, ['getCustomerEmail', 'isVirtual', 'getShippingAddress']);
         $this->checkoutSession->expects(static::once())->method('getQuote')->willReturn($quoteMock);
         $quoteMock->expects(static::once())->method('isVirtual')->willReturn(false);
-        $shippingAddress = $this->createPartialMock(Quote\Address::class, ['getTelephone']);
+        $shippingAddress = $this->createPartialMockWithMethods(Quote\Address::class, ['getTelephone']);
         $shippingAddress->expects(static::once())->method('getTelephone')->willReturn('8005550111');
         $quoteMock->expects(static::once())->method('getCustomerEmail')->willReturn('na@bolt.com');
         $quoteMock->expects(static::once())->method('getShippingAddress')->willReturn($shippingAddress);
@@ -1714,19 +1704,19 @@ class CartTest extends BoltTestCase
 
         $citem = $this->getQuoteItemMock();
         $childQuoteMock = $this->createMock(Quote::class);
-        $childQuoteMock->expects(static::atLeastOnce())->method('setData')->withConsecutive(
+        $childQuoteMock->expects(static::atLeastOnce())->method('setData')->with(...self::consecutiveArgs(
             ['customer_firstname', 'Test'],
             ['customer_lastname', 'Test'],
             ['customer_email', self::EMAIL_ADDRESS],
             ['customer_id', self::CUSTOMER_ID],
             ['items', [$citem]]
-        );
+        ));
         $childQuoteMock->expects(static::once())->method('save');
         $childQuoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn([$citem]);
-        $currentMock->expects(static::exactly(2))->method('validateEmail')->withConsecutive(
+        $currentMock->expects(static::exactly(2))->method('validateEmail')->with(...self::consecutiveArgs(
             [self::EMAIL_ADDRESS],
             ['invalid.mail']
-        )->willReturnOnConsecutiveCalls(true, false);
+        ))->willReturnOnConsecutiveCalls(true, false);
 
         TestHelper::invokeMethod($currentMock, 'transferData', [$this->quoteMock, $childQuoteMock]);
     }
@@ -1760,7 +1750,7 @@ class CartTest extends BoltTestCase
 
         $addressChildShippingAddress = $this->createMock(Quote\Address::class);
 
-        $addressChildShippingAddress->expects(static::atLeastOnce())->method('setData')->withConsecutive(
+        $addressChildShippingAddress->expects(static::atLeastOnce())->method('setData')->with(...self::consecutiveArgs(
             ['email', $this->testAddressData['email']],
             ['firstname', $this->testAddressData['first_name']],
             ['lastname', $this->testAddressData['last_name']],
@@ -1768,7 +1758,7 @@ class CartTest extends BoltTestCase
             ['city', $this->testAddressData['locality']],
             ['region', $this->testAddressData['region']],
             ['postcode', $this->testAddressData['postal_code']]
-        );
+        ));
         $addressChildShippingAddress->expects(static::once())->method('save');
 
         $currentMock->expects(static::once())->method('validateEmail')->with($this->testAddressData['email'])->willReturn(true);
@@ -1835,22 +1825,16 @@ class CartTest extends BoltTestCase
         $destinationQuote->expects(self::atLeastOnce())->method('getId')->willReturn(self::IMMUTABLE_QUOTE_ID);
         $destinationQuote->expects(self::atLeastOnce())->method('getIsActive')->willReturn(true);
         $destinationQuote->expects(self::once())->method('removeAllItems');
-        $quoteItem = $this->getMockBuilder(Item::class)
-            ->setMethods(
-                [
+        $quoteItem = $this->getMockBuilderWithMethods(Item::class, [
                     'getHasChildren',
                     'getChildren'
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
         $quoteItem->expects(self::atLeastOnce())->method('getHasChildren')->willReturn(true);
-        $quoteChildItem = $this->getMockBuilder(Item::class)
-            ->setMethods(
-                [
+        $quoteChildItem = $this->getMockBuilderWithMethods(Item::class, [
                     'setParentItem'
-                ]
-            )
+                ])
             ->disableOriginalConstructor()
             ->getMock();
         $quoteChildItem->expects(self::atLeastOnce())->method('setParentItem')->willReturn($quoteChildItem);
@@ -1872,7 +1856,7 @@ class CartTest extends BoltTestCase
     private function reserveOrderIdSetUp()
     {
         $currentMock = $this->getCurrentMock(['quoteResourceSave']);
-        $immutableQuote = $this->createPartialMock(
+        $immutableQuote = $this->createPartialMockWithMethods(
             Quote::class,
             [
                 'getBoltReservedOrderId',
@@ -1881,7 +1865,7 @@ class CartTest extends BoltTestCase
                 'setBoltReservedOrderId'
             ]
         );
-        $parentQuote = $this->createPartialMock(Quote::class, ['setBoltReservedOrderId']);
+        $parentQuote = $this->createPartialMockWithMethods(Quote::class, ['setBoltReservedOrderId']);
         return [$currentMock, $immutableQuote, $parentQuote];
     }
 
@@ -1903,10 +1887,10 @@ class CartTest extends BoltTestCase
         $immutableQuote->expects(static::once())->method('getReservedOrderId')->willReturn(self::ORDER_INCREMENT_ID);
         $immutableQuote->expects(static::once())->method('setBoltReservedOrderId')->with(self::ORDER_INCREMENT_ID);
         $parentQuote->expects(static::once())->method('setBoltReservedOrderId')->with(self::ORDER_INCREMENT_ID);
-        $currentMock->expects(static::exactly(2))->method('quoteResourceSave')->withConsecutive(
+        $currentMock->expects(static::exactly(2))->method('quoteResourceSave')->with(...self::consecutiveArgs(
             [$parentQuote],
             [$immutableQuote]
-        );
+        ));
         TestHelper::invokeMethod($currentMock, 'reserveOrderId', [$immutableQuote, $parentQuote]);
     }
 
@@ -1943,7 +1927,7 @@ class CartTest extends BoltTestCase
     #[Test]
     public function createImmutableQuote_always_createsImmutableQuote()
     {
-        $quoteMock = $this->createPartialMock(
+        $quoteMock = $this->createPartialMockWithMethods(
             Quote::class,
             [
                 'setBoltCheckoutType',
@@ -2386,7 +2370,7 @@ class CartTest extends BoltTestCase
                 'itemRestrictionMethods'    => ['getIsRestricted']
             ]
         );
-        $quoteItemMock = $this->createPartialMock(Quote\Item::class, ['getIsRestricted']);
+        $quoteItemMock = $this->createPartialMockWithMethods(Quote\Item::class, ['getIsRestricted']);
         $quoteItemMock->expects(static::once())->method('getIsRestricted')->willReturn(true);
         $this->quoteMock->expects(static::once())->method('getAllVisibleItems')->willReturn([$quoteItemMock]);
         static::assertTrue($this->currentMock->hasProductRestrictions($this->quoteMock));
@@ -2410,7 +2394,7 @@ class CartTest extends BoltTestCase
                 'itemRestrictionMethods'    => []
             ]
         );
-        $productMock = $this->createPartialMock(Product::class, ['getIsRestricted']);
+        $productMock = $this->createPartialMockWithMethods(Product::class, ['getIsRestricted']);
         $quoteItemMock = $this->createMock(Quote\Item::class);
         $quoteItemMock->expects(static::once())->method('getSku')->willReturn(self::PRODUCT_SKU);
         $productMock->expects(static::once())->method('getIsRestricted')->willReturn(true);
@@ -3296,7 +3280,7 @@ ORDER
     #[Test]
     public function getCartData_fromBackendAndCustomerGroupIdNotInQuote_initializesRuleData()
     {
-        $this->checkoutSession = $this->createPartialMock(
+        $this->checkoutSession = $this->createPartialMockWithMethods(
             \Magento\Backend\Model\Session\Quote::class,
             ['getStore', 'getQuote', 'getOrderId']
         );
@@ -3384,7 +3368,7 @@ ORDER
     #[Test]
     public function getCartData_forEditedBackendOrders_addsOriginalOrderEntityIdToMetadata()
     {
-        $this->checkoutSession = $this->createPartialMock(
+        $this->checkoutSession = $this->createPartialMockWithMethods(
             \Magento\Backend\Model\Session\Quote::class,
             ['getStore', 'getQuote', 'getOrderId']
         );
@@ -3473,7 +3457,7 @@ ORDER
     #[Test]
     public function getCartData_fromBackendAndCustomerGroupIdInQuote_initializesRuleData()
     {
-        $this->checkoutSession = $this->createPartialMock(
+        $this->checkoutSession = $this->createPartialMockWithMethods(
             \Magento\Backend\Model\Session\Quote::class,
             ['getStore', 'getQuote', 'getOrderId']
         );
@@ -4052,8 +4036,7 @@ ORDER
 
         $quote->method('getAppliedRuleIds')->willReturn('2,3,4,5,6');
 
-        $rule2 = $this->getMockBuilder(DataObject::class)
-        ->setMethods(['getCouponType', 'getDescription', 'getSimpleAction', 'getRuleId'])
+        $rule2 = $this->getMockBuilderWithMethods(DataObject::class, ['getCouponType', 'getDescription', 'getSimpleAction', 'getRuleId'])
         ->disableOriginalConstructor()
         ->getMock();
         $rule2->expects(static::once())->method('getCouponType')
@@ -4064,8 +4047,7 @@ ORDER
             ->willReturn(2);
         $rule2->method('getSimpleAction')->willReturn('by_fixed');
 
-        $rule3 = $this->getMockBuilder(DataObject::class)
-        ->setMethods(['getCouponType', 'getDescription', 'getSimpleAction', 'getRuleId'])
+        $rule3 = $this->getMockBuilderWithMethods(DataObject::class, ['getCouponType', 'getDescription', 'getSimpleAction', 'getRuleId'])
         ->disableOriginalConstructor()
         ->getMock();
         $rule3->expects(static::once())->method('getCouponType')
@@ -4076,8 +4058,7 @@ ORDER
         $rule3->expects(static::once())->method('getRuleId')
             ->willReturn(3);
 
-        $rule4 = $this->getMockBuilder(DataObject::class)
-        ->setMethods(['getCouponType', 'getDescription', 'getSimpleAction', 'getRuleId'])
+        $rule4 = $this->getMockBuilderWithMethods(DataObject::class, ['getCouponType', 'getDescription', 'getSimpleAction', 'getRuleId'])
         ->disableOriginalConstructor()
         ->getMock();
         $rule4->expects(static::once())->method('getCouponType')
@@ -4088,8 +4069,7 @@ ORDER
         $rule4->expects(static::once())->method('getRuleId')
             ->willReturn(4);
 
-        $rule5 = $this->getMockBuilder(DataObject::class)
-        ->setMethods(['getCouponType', 'getDescription', 'getSimpleAction', 'getRuleId'])
+        $rule5 = $this->getMockBuilderWithMethods(DataObject::class, ['getCouponType', 'getDescription', 'getSimpleAction', 'getRuleId'])
         ->disableOriginalConstructor()
         ->getMock();
         $rule5->expects(static::once())->method('getCouponType')
@@ -4100,8 +4080,7 @@ ORDER
         $rule5->expects(static::once())->method('getRuleId')
             ->willReturn(5);
 
-        $rule6 = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['getCouponType', 'getDescription','getName','getSimpleAction', 'getRuleId'])
+        $rule6 = $this->getMockBuilderWithMethods(DataObject::class, ['getCouponType', 'getDescription','getName','getSimpleAction', 'getRuleId'])
             ->disableOriginalConstructor()
             ->getMock();
         $rule6->expects(static::once())->method('getCouponType')
@@ -4114,13 +4093,13 @@ ORDER
 
         $this->ruleRepository->expects(static::exactly(5))
         ->method('getById')
-        ->withConsecutive(
+        ->with(...self::consecutiveArgs(
             [2],
             [3],
             [4],
             [5],
             [6]
-        )
+        ))
         ->willReturnOnConsecutiveCalls($rule2, $rule3, $rule4, $rule5, $rule6);
 
         $currentMock->expects(static::once())
@@ -4267,9 +4246,8 @@ ORDER
         $this->immutableQuoteMock->expects(static::once())->method('getUseRewardPoints')->willReturn(false);
 
         ObjectManager::setInstance($this->objectManagerMock);
-        $customerBalanceMock = $this->getMockBuilder('Magento\CustomerBalance\Model\Balance')
+        $customerBalanceMock = $this->getMockBuilderWithMethods('Magento\CustomerBalance\Model\Balance', ['setCustomer', 'setWebsiteId', 'loadByCustomer', 'getAmount'])
         ->disableOriginalConstructor()
-        ->setMethods(['setCustomer', 'setWebsiteId', 'loadByCustomer', 'getAmount'])
         ->getMock();
         $this->objectManagerMock->expects(static::once())->method('create')
         ->with('Magento\CustomerBalance\Model\Balance')->willReturn($customerBalanceMock);
@@ -4345,9 +4323,8 @@ ORDER
         $this->immutableQuoteMock->expects(static::any())->method('getCouponCode')->willReturn(false);
 
         ObjectManager::setInstance($this->objectManagerMock);
-        $rewardModelMock = $this->getMockBuilder('Magento\Reward\Model\Reward')
+        $rewardModelMock = $this->getMockBuilderWithMethods('Magento\Reward\Model\Reward', ['setCustomer', 'setWebsiteId', 'loadByCustomer', 'getCurrencyAmount'])
         ->disableOriginalConstructor()
-        ->setMethods(['setCustomer', 'setWebsiteId', 'loadByCustomer', 'getCurrencyAmount'])
         ->getMock();
         $this->objectManagerMock->expects(static::once())->method('create')
         ->with('Magento\Reward\Model\Reward')->willReturn($rewardModelMock);
@@ -4522,8 +4499,7 @@ ORDER
 
         $quote->method('getAppliedRuleIds')->willReturn('2');
 
-        $rule2 = $this->getMockBuilder(DataObject::class)
-        ->setMethods(['getCouponType', 'getDescription','getSimpleAction', 'getRuleId'])
+        $rule2 = $this->getMockBuilderWithMethods(DataObject::class, ['getCouponType', 'getDescription','getSimpleAction', 'getRuleId'])
         ->disableOriginalConstructor()
         ->getMock();
         $rule2->expects(static::once())->method('getCouponType')
@@ -4641,14 +4617,12 @@ ORDER
             ['label' => 'Insurence', 'value' => $insurence],
         ]
         ];
-        $productTypeConfigurableMock = $this->getMockBuilder(Configurable::class)
-        ->setMethods(['getOrderOptions'])
+        $productTypeConfigurableMock = $this->getMockBuilderWithMethods(Configurable::class, ['getOrderOptions'])
         ->disableOriginalConstructor()
         ->getMock();
         $productTypeConfigurableMock->method('getOrderOptions')->willReturn($quoteItemOptions);
 
-        $this->productMock = $this->getMockBuilder(Product::class)
-        ->setMethods(['getId', 'getDescription', 'getTypeInstance', 'getCustomOption'])
+        $this->productMock = $this->getMockBuilderWithMethods(Product::class, ['getId', 'getDescription', 'getTypeInstance', 'getCustomOption'])
         ->disableOriginalConstructor()
         ->getMock();
 
@@ -4678,9 +4652,9 @@ ORDER
         static::assertCount(1, $products);
         static::assertArrayHasKey('properties', $products[0]);
         static::assertCount(3, $resultProductProperties);
-        static::assertInternalType('string', $resultProductProperties[0]->value);
-        static::assertInternalType('string', $resultProductProperties[1]->value);
-        static::assertInternalType('string', $resultProductProperties[2]->value);
+        static::assertIsString($resultProductProperties[0]->value);
+        static::assertIsString($resultProductProperties[1]->value);
+        static::assertIsString($resultProductProperties[2]->value);
         static::assertEquals(
             [
             (object)['name' => 'Size', 'value' => 'S'],
@@ -4711,14 +4685,12 @@ ORDER
                 ['label' => 'Size', 'value' => 'S'],
             ]
         ];
-        $productTypeConfigurableMock = $this->getMockBuilder(Configurable::class)
-                                            ->setMethods(['getOrderOptions'])
+        $productTypeConfigurableMock = $this->getMockBuilderWithMethods(Configurable::class, ['getOrderOptions'])
                                             ->disableOriginalConstructor()
                                             ->getMock();
         $productTypeConfigurableMock->method('getOrderOptions')->willReturn($quoteItemOptions);
 
-        $this->productMock = $this->getMockBuilder(Product::class)
-                                  ->setMethods(['getId', 'getDescription', 'getTypeInstance', 'getCustomOption'])
+        $this->productMock = $this->getMockBuilderWithMethods(Product::class, ['getId', 'getDescription', 'getTypeInstance', 'getCustomOption'])
                                   ->disableOriginalConstructor()
                                   ->getMock();
         $this->productMock->method('getDescription')->willReturn('Product Description');
@@ -4769,7 +4741,7 @@ ORDER
     {
         $this->appEmulation->expects(static::once())->method('startEnvironmentEmulation')
         ->with(self::STORE_ID, \Magento\Framework\App\Area::AREA_FRONTEND, true);
-        $quoteItem = $this->createPartialMock(
+        $quoteItem = $this->createPartialMockWithMethods(
             Item::class,
             [
             'getCalculationPrice',
@@ -4804,7 +4776,7 @@ ORDER
         $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
 
         $this->imageHelper->method('init')
-        ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
+        ->with(...self::consecutiveArgs([$productMock, 'product_small_image'], [$productMock, 'product_base_image']))
         ->willThrowException(new Exception());
 
         $this->bugsnag->expects(static::once())->method('registerCallback')->with(
@@ -4831,9 +4803,9 @@ ORDER
                 }
             )
         );
-        $this->bugsnag->expects(static::once())->method('notifyError')->withConsecutive(
+        $this->bugsnag->expects(static::once())->method('notifyError')->with(...self::consecutiveArgs(
             ['Item image missing', 'SKU: ' . self::PRODUCT_SKU]
-        );
+        ));
         $this->appEmulation->expects(static::once())->method('stopEnvironmentEmulation');
 
         $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItem]);
@@ -4875,7 +4847,7 @@ ORDER
     {
         $this->deciderHelper->expects(self::once())->method('handleVirtualProductsAsPhysical')->willReturn(true);
         $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
-        $quoteItem = $this->createPartialMock(
+        $quoteItem = $this->createPartialMockWithMethods(
             Item::class,
             [
                 'getCalculationPrice',
@@ -4904,7 +4876,7 @@ ORDER
         $this->msrpHelper->method('canApplyMsrp')->with($productMock)->willReturn(false);
 
         $this->imageHelper->method('init')
-        ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
+        ->with(...self::consecutiveArgs([$productMock, 'product_small_image'], [$productMock, 'product_base_image']))
         ->willThrowException(new Exception());
 
         $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItem]);
@@ -4946,7 +4918,7 @@ ORDER
         $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
         $this->appEmulation->expects(static::once())->method('startEnvironmentEmulation')
             ->with(self::STORE_ID, \Magento\Framework\App\Area::AREA_FRONTEND, true);
-        $quoteItem = $this->createPartialMock(
+        $quoteItem = $this->createPartialMockWithMethods(
             Item::class,
             [
                 'getCalculationPrice',
@@ -4975,7 +4947,7 @@ ORDER
         $this->msrpHelper->method('canApplyMsrp')->with($productMock)->willReturn(false);
 
         $this->imageHelper->method('init')
-            ->withConsecutive([$productMock, 'product_small_image'], [$productMock, 'product_base_image'])
+            ->with(...self::consecutiveArgs([$productMock, 'product_small_image'], [$productMock, 'product_base_image']))
             ->willThrowException(new Exception());
 
         $this->appEmulation->expects(static::once())->method('stopEnvironmentEmulation');
@@ -4983,14 +4955,12 @@ ORDER
         $this->quoteMock->method('getAllVisibleItems')->willReturn([$quoteItem]);
         $this->quoteMock->method('getQuoteCurrencyCode')->willReturn(self::CURRENCY_CODE);
 
-        $this->giftwrapping = $this->getMockBuilder('\Magento\GiftWrapping\Model\Total\Quote\Giftwrapping')
+        $this->giftwrapping = $this->getMockBuilderWithMethods('\Magento\GiftWrapping\Model\Total\Quote\Giftwrapping', ['getGwId','getGwItemsPrice','getGwCardPrice','getGwPrice','getText','getTitle','getCode','getGwItemIds'])
             ->disableOriginalConstructor()
-            ->setMethods(['getGwId','getGwItemsPrice','getGwCardPrice','getGwPrice','getText','getTitle','getCode','getGwItemIds'])
             ->getMock();
         ObjectManager::setInstance($this->objectManagerMock);
-        $giftWrappingModel = $this->getMockBuilder('Magento\GiftWrapping\Model\Wrapping')
+        $giftWrappingModel = $this->getMockBuilderWithMethods('Magento\GiftWrapping\Model\Wrapping', ['load','getImageUrl','getBasePrice', 'getDesign'])
             ->disableOriginalConstructor()
-            ->setMethods(['load','getImageUrl','getBasePrice', 'getDesign'])
             ->getMock();
         $giftWrappingModel->method('load')->willReturnSelf();
         $giftWrappingModel->method('getImageUrl')->willReturn('https://gift-wrap-image.url');
@@ -5101,7 +5071,7 @@ ORDER
     #[DataProvider('dataProvider_getProductToGetImageForQuoteItem_withConfigurableItem')]
     public function getProductToGetImageForQuoteItem_withConfigurableItem($imageConfig, $childThumbnail, $expectedProductName)
     {
-        $quoteItem = $this->createPartialMock(
+        $quoteItem = $this->createPartialMockWithMethods(
             Item::class,
             [
                 'getProduct',
@@ -5124,10 +5094,10 @@ ORDER
         $quoteItem->method('getProductType')->willReturn(\Magento\ConfigurableProduct\Model\Product\Type\Configurable::TYPE_CODE);
 
 
-        $childProductMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
+        $childProductMock = $this->createPartialMockWithMethods(Product::class, ['getName','getThumbnail']);
         $childProductMock->method('getName')->willReturn('Child Product Name');
         $childProductMock->method('getThumbnail')->willReturn($childThumbnail);
-        $quoteItemOption = $this->createPartialMock(\Magento\Quote\Model\Quote\Item\Option::class, ['getProduct']);
+        $quoteItemOption = $this->createPartialMockWithMethods(\Magento\Quote\Model\Quote\Item\Option::class, ['getProduct']);
         $quoteItemOption->method('getProduct')->willReturn($childProductMock);
         $quoteItem->method('getOptionByCode')->with('simple_product')->willReturn($quoteItemOption);
 
@@ -5156,7 +5126,7 @@ ORDER
     #[DataProvider('dataProvider_getProductToGetImageForQuoteItem_withGroupedItem')]
     public function getProductToGetImageForQuoteItem_withGroupedItem($imageConfig, $childThumbnail, $expectedProductName)
     {
-        $quoteItem = $this->createPartialMock(
+        $quoteItem = $this->createPartialMockWithMethods(
             Item::class,
             [
                 'getProduct',
@@ -5173,16 +5143,16 @@ ORDER
         )->willReturn($imageConfig);
         $this->configHelper->method('getScopeConfig')->willReturn($scopeConfigMock);
 
-        $productMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
+        $productMock = $this->createPartialMockWithMethods(Product::class, ['getName','getThumbnail']);
         $productMock->method('getName')->willReturn('Child Product Name');
         $productMock->method('getThumbnail')->willReturn($childThumbnail);
         $quoteItem->expects(self::once())->method('getProduct')->willReturn($productMock);
         $quoteItem->method('getProductType')->willReturn(\Magento\GroupedProduct\Model\Product\Type\Grouped::TYPE_CODE);
 
-        $groupedProductMock = $this->createPartialMock(Product::class, ['getName','getThumbnail']);
+        $groupedProductMock = $this->createPartialMockWithMethods(Product::class, ['getName','getThumbnail']);
         $groupedProductMock->method('getName')->willReturn('Grouped Product Name');
 
-        $quoteItemOption = $this->createPartialMock(\Magento\Quote\Model\Quote\Item\Option::class, ['getProduct']);
+        $quoteItemOption = $this->createPartialMockWithMethods(\Magento\Quote\Model\Quote\Item\Option::class, ['getProduct']);
         $quoteItemOption->method('getProduct')->willReturn($groupedProductMock);
         $quoteItem->method('getOptionByCode')->with('product_type')->willReturn($quoteItemOption);
 
@@ -5204,9 +5174,7 @@ ORDER
        */
     private function getQuoteItemMock()
     {
-        $quoteItem = $this->getMockBuilder(Item::class)
-          ->setMethods(
-              [
+        $quoteItem = $this->getMockBuilderWithMethods(Item::class, [
                   'getSku',
                   'getQty',
                   'getCalculationPrice',
@@ -5214,8 +5182,7 @@ ORDER
                   'getIsVirtual',
                   'getProductId',
                   'getProduct'
-              ]
-          )
+              ])
           ->disableOriginalConstructor()
           ->getMock();
         $quoteItem->method('getName')->willReturn('Test Product');
@@ -6226,7 +6193,7 @@ ORDER
     #[Test]
     public function getHints_whenCheckoutTypeIsProductAndCustomerLoggedIn_returnsHintsWithEncryptedUserId()
     {
-        $customerMock = $this->createPartialMock(
+        $customerMock = $this->createPartialMockWithMethods(
             Customer::class,
             [
             'getId',
@@ -6242,9 +6209,9 @@ ORDER
         $this->customerSession->expects(static::atLeastOnce())->method('getCustomer')->willReturn($customerMock);
         $signRequest = ['merchant_user_id' => self::CUSTOMER_ID];
         $requestMock = $this->createMock(Request::class);
-        $responseMock = $this->createPartialMock(Response::class, ['getResponse']);
+        $responseMock = $this->createPartialMockWithMethods(Response::class, ['getResponse']);
         $this->configHelper->expects(static::once())->method('getApiKey')->willReturn(self::API_KEY);
-        $requestDataMock = $this->createPartialMock(DataObject::class, ['setApiData', 'setDynamicApiUrl', 'setApiKey']);
+        $requestDataMock = $this->createPartialMockWithMethods(DataObject::class, ['setApiData', 'setDynamicApiUrl', 'setApiKey']);
         $this->dataObjectFactory->expects(static::once())->method('create')->willReturn($requestDataMock);
         $requestDataMock->expects(static::once())->method('setApiData')->with($signRequest);
         $requestDataMock->expects(static::once())->method('setDynamicApiUrl')->with(ApiHelper::API_SIGN);
@@ -6278,7 +6245,7 @@ ORDER
     #[DataProvider('provider_getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints')]
     public function getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints($ifShouldDisablePrefillAddressForLoggedInCustomer)
     {
-        $customerMock = $this->createPartialMock(
+        $customerMock = $this->createPartialMockWithMethods(
             Customer::class,
             [
             'getId',
@@ -6293,8 +6260,8 @@ ORDER
         $this->customerSession->expects(static::once())->method('isLoggedIn')->willReturn(true);
         $this->customerSession->expects(static::atLeastOnce())->method('getCustomer')->willReturn($customerMock);
         $requestMock = $this->createMock(Request::class);
-        $responseMock = $this->createPartialMock(Response::class, ['getResponse']);
-        $requestDataMock = $this->createPartialMock(DataObject::class, ['setApiData', 'setDynamicApiUrl', 'setApiKey']);
+        $responseMock = $this->createPartialMockWithMethods(Response::class, ['getResponse']);
+        $requestDataMock = $this->createPartialMockWithMethods(DataObject::class, ['setApiData', 'setDynamicApiUrl', 'setApiKey']);
         if (!$ifShouldDisablePrefillAddressForLoggedInCustomer) {
             $signRequest = ['merchant_user_id' => self::CUSTOMER_ID];
 
@@ -6316,7 +6283,7 @@ ORDER
         }
 
         if (!$ifShouldDisablePrefillAddressForLoggedInCustomer) {
-            $shippingAddressMock = $this->createPartialMock(
+            $shippingAddressMock = $this->createPartialMockWithMethods(
                 Address::class,
                 [
                     'getFirstname',
@@ -6389,7 +6356,7 @@ ORDER
     #[Test]
     public function getHints_withVirtualQuoteAndCustomerLoggedIn_willReturnCustomerBillingAddressHints()
     {
-        $customerMock = $this->createPartialMock(
+        $customerMock = $this->createPartialMockWithMethods(
             Customer::class,
             [
             'getId',
@@ -6405,9 +6372,9 @@ ORDER
         $this->customerSession->expects(static::atLeastOnce())->method('getCustomer')->willReturn($customerMock);
         $signRequest = ['merchant_user_id' => self::CUSTOMER_ID];
         $requestMock = $this->createMock(Request::class);
-        $responseMock = $this->createPartialMock(Response::class, ['getResponse']);
+        $responseMock = $this->createPartialMockWithMethods(Response::class, ['getResponse']);
         $this->configHelper->expects(static::once())->method('getApiKey')->willReturn(self::API_KEY);
-        $requestDataMock = $this->createPartialMock(DataObject::class, ['setApiData', 'setDynamicApiUrl', 'setApiKey']);
+        $requestDataMock = $this->createPartialMockWithMethods(DataObject::class, ['setApiData', 'setDynamicApiUrl', 'setApiKey']);
         $this->dataObjectFactory->expects(static::once())->method('create')->willReturn($requestDataMock);
         $requestDataMock->expects(static::once())->method('setApiData')->with($signRequest);
         $requestDataMock->expects(static::once())->method('setDynamicApiUrl')->with(ApiHelper::API_SIGN);
@@ -6421,7 +6388,7 @@ ORDER
         'nonce'            => 999999
         ];
         $responseMock->expects(static::once())->method('getResponse')->willReturn((object)$signedMerchantUserId);
-        $billingAddressMock = $this->createPartialMock(
+        $billingAddressMock = $this->createPartialMockWithMethods(
             Address::class,
             [
             'getFirstname',
@@ -6863,8 +6830,7 @@ ORDER
         'backUrl' => ''
         ];
 
-        $boltpayOrder = $this->getMockBuilder(Response::class)
-                               ->setMethods(['getResponse'])
+        $boltpayOrder = $this->getMockBuilderWithMethods(Response::class, ['getResponse'])
                                ->disableOriginalConstructor()
                                ->getMock();
         $boltpayOrder->method('getResponse')->willReturn($response);
@@ -6902,8 +6868,7 @@ ORDER
         'backUrl' => ''
         ];
 
-        $boltpayOrder = $this->getMockBuilder(Response::class)
-                         ->setMethods(['getResponse'])
+        $boltpayOrder = $this->getMockBuilderWithMethods(Response::class, ['getResponse'])
                          ->disableOriginalConstructor()
                          ->getMock();
         $boltpayOrder->method('getResponse')->willReturn($response);
@@ -6941,8 +6906,7 @@ ORDER
         'backUrl' => ''
         ];
 
-        $boltpayOrder = $this->getMockBuilder(Response::class)
-                         ->setMethods(['getResponse'])
+        $boltpayOrder = $this->getMockBuilderWithMethods(Response::class, ['getResponse'])
                          ->disableOriginalConstructor()
                          ->getMock();
         $boltpayOrder->method('getResponse')->willReturn($response);
@@ -6980,8 +6944,7 @@ ORDER
         'backUrl' => '',
         ];
 
-        $boltpayOrder = $this->getMockBuilder(Response::class)
-                         ->setMethods(['getResponse'])
+        $boltpayOrder = $this->getMockBuilderWithMethods(Response::class, ['getResponse'])
                          ->disableOriginalConstructor()
                          ->getMock();
         $boltpayOrder->method('getResponse')->willReturn($response);
@@ -7019,8 +6982,7 @@ ORDER
         'backUrl' => ''
         ];
 
-        $boltpayOrder = $this->getMockBuilder(Response::class)
-                         ->setMethods(['getResponse'])
+        $boltpayOrder = $this->getMockBuilderWithMethods(Response::class, ['getResponse'])
                          ->disableOriginalConstructor()
                          ->getMock();
         $boltpayOrder->method('getResponse')->willReturn($response);
@@ -7155,7 +7117,7 @@ ORDER
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
         $currentMock->expects(static::once())->method('isCollectDiscountsByPlugin')->with($quote)->willReturn(true);
 
-        $checkoutSession = $this->createPartialMock(
+        $checkoutSession = $this->createPartialMockWithMethods(
             CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts']
         );
@@ -7166,8 +7128,7 @@ ORDER
             ->method('getCheckoutSession')
             ->willReturn($checkoutSession);
 
-        $rule2 = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['getCouponType'])
+        $rule2 = $this->getMockBuilderWithMethods(DataObject::class, ['getCouponType'])
             ->disableOriginalConstructor()
             ->getMock();
         $rule2->expects(static::once())->method('getCouponType')
@@ -7202,7 +7163,7 @@ ORDER
         $currentMock->expects(static::once())->method('getCalculationAddress')->with($quote)->willReturn($shippingAddress);
         $currentMock->expects(static::once())->method('isCollectDiscountsByPlugin')->with($quote)->willReturn(true);
 
-        $checkoutSession = $this->createPartialMock(
+        $checkoutSession = $this->createPartialMockWithMethods(
             CheckoutSession::class,
             ['getBoltCollectSaleRuleDiscounts']
         );
@@ -7213,8 +7174,7 @@ ORDER
             ->method('getCheckoutSession')
             ->willReturn($checkoutSession);
 
-        $rule2 = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['getCouponType'])
+        $rule2 = $this->getMockBuilderWithMethods(DataObject::class, ['getCouponType'])
             ->disableOriginalConstructor()
             ->getMock();
         $rule2->expects(static::once())->method('getCouponType')
@@ -7237,7 +7197,7 @@ ORDER
     #[Test]
     public function getSkuFromQuoteItem_withBundleItem()
     {
-        $quoteItem = $this->createPartialMock(
+        $quoteItem = $this->createPartialMockWithMethods(
             Item::class,
             [
                 'getProduct',
@@ -7246,14 +7206,13 @@ ORDER
             ]
         );
 
-        $productMock = $this->createPartialMock(Product::class, ['getData','setData','getTypeInstance']);
+        $productMock = $this->createPartialMockWithMethods(Product::class, ['getData','setData','getTypeInstance']);
         $productMock->method('getData')->with('sku_type')->willReturn(1);
-        $productMock->expects(static::exactly(2))->method('setData')->withConsecutive(
+        $productMock->expects(static::exactly(2))->method('setData')->with(...self::consecutiveArgs(
             ['sku_type', 0],
             ['sku_type', 1]
-        );
-        $productTypeBundleMock = $this->getMockBuilder(\Magento\Bundle\Model\Product\Type::class)
-                                            ->setMethods(['getSku'])
+        ));
+        $productTypeBundleMock = $this->getMockBuilderWithMethods(\Magento\Bundle\Model\Product\Type::class, ['getSku'])
                                             ->disableOriginalConstructor()
                                             ->getMock();
         $productTypeBundleMock->method('getSku')->with($productMock)->willReturn('test-bundle-sku');

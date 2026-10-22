@@ -82,8 +82,7 @@ class GenerateGiftCardAccountsOrderPluginTest extends BoltTestCase
         $this->order = $this->objectManager->create(Order::class);
 
         /** @var callable $callback */
-        $this->callback = $callback = $this->getMockBuilder(\stdClass::class)
-            ->setMethods(['__invoke'])->getMock();
+        $this->callback = $callback = $this->getMockBuilderWithMethods(\stdClass::class, ['__invoke'])->getMock();
         $this->proceed = function ($obsrvr) use ($callback) {
             return $callback($obsrvr);
         };

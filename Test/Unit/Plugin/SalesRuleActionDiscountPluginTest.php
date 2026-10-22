@@ -56,15 +56,15 @@ class SalesRuleActionDiscountPluginTest extends BoltTestCase
     public function setUpInternal()
     {
         $this->subject = $this->createMock(AbstractDiscount::class);
-        $this->sessionHelper = $this->createPartialMock(
+        $this->sessionHelper = $this->createPartialMockWithMethods(
             SessionHelper::class,
             ['getCheckoutSession']
         );
-        $this->checkoutSession = $this->createPartialMock(
+        $this->checkoutSession = $this->createPartialMockWithMethods(
             CheckoutSession::class,
             ['setBoltNeedCollectSaleRuleDiscounts']
         );
-        $this->cartHelper = $this->createPartialMock(
+        $this->cartHelper = $this->createPartialMockWithMethods(
             CartHelper::class,
             ['isCollectDiscountsByPlugin']
         );
@@ -84,15 +84,13 @@ class SalesRuleActionDiscountPluginTest extends BoltTestCase
     #[Test]
     public function afterCalculate_saveSaleRuleIdToCheckoutSession()
     {
-        $rule = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['getId'])
+        $rule = $this->getMockBuilderWithMethods(DataObject::class, ['getId'])
             ->disableOriginalConstructor()
             ->getMock();
         $rule->expects(self::once())
             ->method('getId')
             ->willReturn(2);
-        $item = $this->getMockBuilder(Item::class)
-            ->setMethods(['getQuote'])
+        $item = $this->getMockBuilderWithMethods(Item::class, ['getQuote'])
             ->disableOriginalConstructor()
             ->getMock();
         $quote = $this->getMockBuilder(Quote::class)

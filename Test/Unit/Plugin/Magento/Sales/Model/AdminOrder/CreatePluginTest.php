@@ -72,9 +72,9 @@ Room 1111',
 
     protected function setUpInternal()
     {
-        $this->configHelper = $this->createPartialMock(ConfigHelper::class, ['isStorePickupFeatureEnabled', 'isPickupInStoreShippingMethodCode', 'getPickupAddressData']);
-        $this->adminCheckoutSession = $this->createPartialMock(AdminCheckoutSession::class, ['setData', 'getData', 'unsetData']);
-        $this->createModel = $this->createPartialMock(Create::class, [
+        $this->configHelper = $this->createPartialMockWithMethods(ConfigHelper::class, ['isStorePickupFeatureEnabled', 'isPickupInStoreShippingMethodCode', 'getPickupAddressData']);
+        $this->adminCheckoutSession = $this->createPartialMockWithMethods(AdminCheckoutSession::class, ['setData', 'getData', 'unsetData']);
+        $this->createModel = $this->createPartialMockWithMethods(Create::class, [
             'getShippingAddress',
             'getData',
             'addData'

@@ -107,8 +107,7 @@ class PrefetchTest extends BoltTestCase
 
     private function initCurrentMock()
     {
-        $this->currentMock = $this->getMockBuilder(Prefetch::class)
-            ->setMethods(null)
+        $this->currentMock = $this->getMockBuilderWithMethods(Prefetch::class, null)
             ->setConstructorArgs([
                 $this->context,
                 $this->shippingMethods,
@@ -157,8 +156,7 @@ class PrefetchTest extends BoltTestCase
         $this->configHelper->method('getPrefetchShipping')
             ->willReturn(false);
 
-        $prefetch = $this->getMockBuilder(Prefetch::class)
-            ->setMethods(['getRequest'])
+        $prefetch = $this->getMockBuilderWithMethods(Prefetch::class, ['getRequest'])
             ->setConstructorArgs([
                 $this->context,
                 $this->shippingMethods,
@@ -197,8 +195,7 @@ class PrefetchTest extends BoltTestCase
         $request->method('getParam')
             ->willReturn(self::QUOTE_ID);
 
-        $prefetch = $this->getMockBuilder(Prefetch::class)
-            ->setMethods(['getRequest'])
+        $prefetch = $this->getMockBuilderWithMethods(Prefetch::class, ['getRequest'])
             ->setConstructorArgs([
                 $this->context,
                 $this->shippingMethods,
@@ -245,10 +242,9 @@ class PrefetchTest extends BoltTestCase
         $this->configHelper->method('getPrefetchShipping')->willReturn(true);
 
         $this->cartHelper->method('getQuoteById')->willReturn($quote);
-        $request->method('getParam')->will($this->returnValueMap($map));
+        $request->method('getParam')->willReturnMap($map);
 
-        $prefetch = $this->getMockBuilder(Prefetch::class)
-            ->setMethods(['getRequest'])
+        $prefetch = $this->getMockBuilderWithMethods(Prefetch::class, ['getRequest'])
             ->setConstructorArgs([
                 $this->context,
                 $shippingMethods,
@@ -299,8 +295,7 @@ class PrefetchTest extends BoltTestCase
             ->method('shippingEstimation')
             ->with($this->equalTo($quote), $this->equalTo($expected));
 
-        $prefetch = $this->getMockBuilder(Prefetch::class)
-            ->setMethods(['getRequest'])
+        $prefetch = $this->getMockBuilderWithMethods(Prefetch::class, ['getRequest'])
             ->setConstructorArgs([
                 $this->context,
                 $this->shippingMethods,
@@ -349,8 +344,7 @@ class PrefetchTest extends BoltTestCase
             ->method('shippingEstimation')
             ->with($this->equalTo($quote), $this->equalTo($expected));
 
-        $prefetch = $this->getMockBuilder(Prefetch::class)
-            ->setMethods(['getRequest'])
+        $prefetch = $this->getMockBuilderWithMethods(Prefetch::class, ['getRequest'])
             ->setConstructorArgs([
                 $this->context,
                 $this->shippingMethods,
@@ -391,7 +385,7 @@ class PrefetchTest extends BoltTestCase
         $shippingAddress->method('getPostcode')->willReturn(self::POSTAL_CODE);
         $shippingAddress->method('getRegion')->willReturn(self::REGION);
         $shippingAddress->method('getCity')->willReturn(self::CITY);
-        $shippingAddress->method('getStreetLine')->will($this->returnValueMap($addressLineMap));
+        $shippingAddress->method('getStreetLine')->willReturnMap($addressLineMap);
 
         $request = $this->createMock(RequestInterface::class);
         $request->method('getParam')->willReturn(null);
@@ -406,8 +400,7 @@ class PrefetchTest extends BoltTestCase
             ->method('shippingEstimation')
             ->with($this->equalTo($quote), $this->equalTo($expected));
 
-        $prefetch = $this->getMockBuilder(Prefetch::class)
-            ->setMethods(['getRequest'])
+        $prefetch = $this->getMockBuilderWithMethods(Prefetch::class, ['getRequest'])
             ->setConstructorArgs([
                 $this->context,
                 $this->shippingMethods,

@@ -64,16 +64,16 @@ class RemoveBlocksObserverTest extends BoltTestCase
     #[Test]
     public function execute_unsetsElements_ifBoltSSOEnabled()
     {
-        $eventObserver = $this->createPartialMock(Observer::class, ['getLayout', 'getData']);
+        $eventObserver = $this->createPartialMockWithMethods(Observer::class, ['getLayout', 'getData']);
         $layout = $this->createMock(Layout::class);
         $eventObserver->expects(static::once())->method('getData')->with('full_action_name')->willReturn('customer_account_login');
         $eventObserver->expects(static::once())->method('getLayout')->willReturn($layout);
         $this->configHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
-        $layout->expects(static::exactly(3))->method('unsetElement')->withConsecutive(
+        $layout->expects(static::exactly(3))->method('unsetElement')->with(...self::consecutiveArgs(
             ['customer_form_login'],
             ['customer.new'],
             ['customer_form_register']
-        );
+        ));
         $this->currentMock->execute($eventObserver);
     }
 
@@ -83,7 +83,7 @@ class RemoveBlocksObserverTest extends BoltTestCase
     #[Test]
     public function execute_doesNotUnsetElements_ifNotLoginOrRegisterPage()
     {
-        $eventObserver = $this->createPartialMock(Observer::class, ['getLayout', 'getData']);
+        $eventObserver = $this->createPartialMockWithMethods(Observer::class, ['getLayout', 'getData']);
         $eventObserver->expects(static::once())->method('getData')->with('full_action_name')->willReturn('checkout_cart_index');
         $layout = $this->createMock(Layout::class);
         $eventObserver->expects(static::once())->method('getLayout');
@@ -97,15 +97,15 @@ class RemoveBlocksObserverTest extends BoltTestCase
     #[Test]
     public function execute_doesNotUnsetElements_ifBoltSSONotDisabled()
     {
-        $eventObserver = $this->createPartialMock(Observer::class, ['getLayout', 'getData']);
+        $eventObserver = $this->createPartialMockWithMethods(Observer::class, ['getLayout', 'getData']);
         $layout = $this->createMock(Layout::class);
         $eventObserver->expects(static::once())->method('getData')->with('full_action_name')->willReturn('customer_account_login');
         $eventObserver->expects(static::once())->method('getLayout')->willReturn($layout);
         $this->configHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(false);
-        $layout->expects(static::exactly(2))->method('unsetElement')->withConsecutive(
+        $layout->expects(static::exactly(2))->method('unsetElement')->with(...self::consecutiveArgs(
             ['bolt_sso_login'],
             ['bolt_sso_register']
-        );
+        ));
         $this->currentMock->execute($eventObserver);
     }
 
@@ -115,16 +115,16 @@ class RemoveBlocksObserverTest extends BoltTestCase
     #[Test]
     public function execute_doesNotUnsetElements_ifBoltSSOEnabledButUseGetShowNativeParam()
     {
-        $eventObserver = $this->createPartialMock(Observer::class, ['getLayout', 'getData']);
+        $eventObserver = $this->createPartialMockWithMethods(Observer::class, ['getLayout', 'getData']);
         $layout = $this->createMock(Layout::class);
         $eventObserver->expects(static::once())->method('getData')->with('full_action_name')->willReturn('customer_account_login');
         $eventObserver->expects(static::once())->method('getLayout')->willReturn($layout);
         $this->configHelper->expects(static::once())->method('isBoltSSOEnabled')->willReturn(true);
         $this->request->expects(static::once())->method('getParam')->willReturn('native');
-        $layout->expects(static::exactly(2))->method('unsetElement')->withConsecutive(
+        $layout->expects(static::exactly(2))->method('unsetElement')->with(...self::consecutiveArgs(
             ['bolt_sso_login'],
             ['bolt_sso_register']
-        );
+        ));
         $this->currentMock->execute($eventObserver);
     }
 
@@ -155,7 +155,7 @@ class RemoveBlocksObserverTest extends BoltTestCase
         $isBoltSsoConfigEnabled,
         $shouldUnsetLinks
     ) {
-        $eventObserver = $this->createPartialMock(Observer::class, ['getLayout', 'getData']);
+        $eventObserver = $this->createPartialMockWithMethods(Observer::class, ['getLayout', 'getData']);
         $layout = $this->createMock(Layout::class);
         $eventObserver->expects(static::once())->method('getData')->with('full_action_name')
             ->willReturn($fullActionName);
@@ -165,10 +165,10 @@ class RemoveBlocksObserverTest extends BoltTestCase
         $this->deciderMock->method('isPreventSSOCustomersFromEditingAccountInformation')
             ->willReturn($isPreventSsoCustomersFromEditingAccountInformation);
         $layout->expects($shouldUnsetLinks ? static::exactly(2) : static::never())->method('unsetElement')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 ['customer-account-navigation-address-link'],
                 ['customer-account-navigation-account-edit-link']
-            );
+            ));
         $this->currentMock->execute($eventObserver);
     }
 

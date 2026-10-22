@@ -103,9 +103,8 @@ class ShippingTest extends BoltTestCase
         $shippingMethodManagement->method('getCarrierCode')->willReturn('carrier_code');
         $shippingMethodManagement->method('getMethodCode')->willReturn('method_code');
         $shippingMethodManagement->method('getAmount')->willReturn(100);
-        $shipmentEstimationInterface = $this->getMockBuilder(\Magento\Quote\Api\ShipmentEstimationInterface::class)
+        $shipmentEstimationInterface = $this->getMockBuilderWithMethods(\Magento\Quote\Api\ShipmentEstimationInterface::class, ['estimateByExtendedAddress'])
             ->disableOriginalConstructor()
-            ->setMethods(['estimateByExtendedAddress'])
             ->getMock();
         $shipmentEstimationInterface->method('estimateByExtendedAddress')->willReturn([$shippingMethodManagement]);
         $shippingMethodManagement = new \ReflectionProperty(
@@ -249,9 +248,8 @@ class ShippingTest extends BoltTestCase
         $shippingMethodManagement->method('getCarrierCode')->willReturn('carrier_code');
         $shippingMethodManagement->method('getMethodCode')->willReturn('method_code');
         $shippingMethodManagement->method('getAmount')->willReturn(100);
-        $shipmentEstimationInterface = $this->getMockBuilder(\Magento\Quote\Api\ShipmentEstimationInterface::class)
+        $shipmentEstimationInterface = $this->getMockBuilderWithMethods(\Magento\Quote\Api\ShipmentEstimationInterface::class, ['estimateByExtendedAddress'])
             ->disableOriginalConstructor()
-            ->setMethods(['estimateByExtendedAddress'])
             ->getMock();
         $shipmentEstimationInterface->method('estimateByExtendedAddress')->willReturn([$shippingMethodManagement]);
         $shippingMethodManagement = new \ReflectionProperty(

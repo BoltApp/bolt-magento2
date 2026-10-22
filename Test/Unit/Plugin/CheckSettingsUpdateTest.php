@@ -78,17 +78,12 @@ class CheckSettingsUpdateTest extends BoltTestCase
         $this->bugsnag = $this->createMock(Bugsnag::class);
         $this->magentoConfig = $this->createMock(magentoConfig::class);
 
-        $this->initCurrentMock([]);
+        $this->initCurrentMock();
     }
 
-    /**
-     * @param array $methods
-     * @param bool $enableOriginalConstructor
-     * @param bool $enableProxyingToOriginalMethods
-     */
-    private function initCurrentMock($methods = [])
+    private function initCurrentMock()
     {
-        $builder = $this->getMockBuilder(CheckSettingsUpdate::class)
+        $builder = $this->getMockBuilderWithMethods(CheckSettingsUpdate::class, null)
             ->enableOriginalConstructor()
             ->setConstructorArgs(
                 [
@@ -97,9 +92,7 @@ class CheckSettingsUpdateTest extends BoltTestCase
                     $this->fsManager,
                     $this->bugsnag,
                 ]
-            )
-            ->setMethods($methods)
-            ->enableProxyingToOriginalMethods();
+            );
 
         $this->currentMock = $builder->getMock();
     }

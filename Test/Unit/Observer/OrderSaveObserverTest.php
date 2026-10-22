@@ -124,8 +124,7 @@ class OrderSaveObserverTest extends BoltTestCase
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
-            ->setMethods(['getOrder'])
+        $event = $this->getMockBuilderWithMethods(\Magento\Framework\Event::class, ['getOrder'])
             ->disableOriginalConstructor()
             ->getMock();
         $eventObserver->expects($this->once())
@@ -190,8 +189,7 @@ class OrderSaveObserverTest extends BoltTestCase
         $eventObserver = $this->getMockBuilder(\Magento\Framework\Event\Observer::class)
             ->disableOriginalConstructor()
             ->getMock();
-        $event = $this->getMockBuilder(\Magento\Framework\Event::class)
-            ->setMethods(['getOrder'])
+        $event = $this->getMockBuilderWithMethods(\Magento\Framework\Event::class, ['getOrder'])
             ->disableOriginalConstructor()
             ->getMock();
         $eventObserver->method('getEvent')->willReturn($event);
@@ -209,10 +207,10 @@ class OrderSaveObserverTest extends BoltTestCase
         $this->apiHelper->expects($this->once())->method('sendRequest')->willReturn(200);
 
         $this->metricsClient->expects($this->exactly(2))->method('getCurrentTime')->willReturn(5000);
-        $this->metricsClient->expects($this->exactly(2))->method('processMetric')->withConsecutive(
+        $this->metricsClient->expects($this->exactly(2))->method('processMetric')->with(...self::consecutiveArgs(
             ['order_update.success', 1, 'order_update.latency', 5000],
             ['order_update.cached', 1, 'order_update.latency', 5000]
-        );
+        ));
                 
         $this->observer->execute($eventObserver);
         $this->observer->execute($eventObserver);
@@ -228,8 +226,7 @@ class OrderSaveObserverTest extends BoltTestCase
         $this->cache = $this->createMock(CacheInterface::class);
         $this->configHelper = $this->createMock(ConfigHelper::class);
         
-        $this->dataObject = $this->getMockBuilder(DataObject::class)
-            ->setMethods(['setApiData'])
+        $this->dataObject = $this->getMockBuilderWithMethods(DataObject::class, ['setApiData'])
             ->disableOriginalConstructor()
             ->getMock();
         $this->dataObjectFactory = $this->createMock(DataObjectFactory::class);

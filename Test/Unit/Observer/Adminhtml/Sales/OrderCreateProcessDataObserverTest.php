@@ -76,7 +76,7 @@ class OrderCreateProcessDataObserverTest extends BoltTestCase
     public function execute_withVersionIsLessThan214()
     {
         $this->event->expects(self::exactly(2))->method('getData')
-            ->withConsecutive(['order_create_model'], ['account'])
+            ->with(...self::consecutiveArgs(['order_create_model'], ['account']))
             ->willReturnOnConsecutiveCalls($this->event, ['email' => 'email@gmail.com']);
         $this->event->expects(self::once())->method('getQuote')->willReturn($this->quote);
         $this->quote->expects(self::once())->method('setCustomerEmail')->with('email@gmail.com')->willReturn($this->quote);
@@ -88,19 +88,18 @@ class OrderCreateProcessDataObserverTest extends BoltTestCase
 
     protected function setUpInternal()
     {
-        $this->observer = $this->createPartialMock(
+        $this->observer = $this->createPartialMockWithMethods(
             Observer::class,
             ['getEvent', 'getData', 'getQuote']
         );
         $this->productMetadata = $this->createMock(ProductMetadataInterface::class);
 
-        $this->quote = $this->createPartialMock(Quote::class, ['setCustomerEmail']);
-        $this->event = $this->createPartialMock(Event::class, ['getData', 'getQuote']);
-        $this->orderCreateProcessDataObserverTest = $this->getMockBuilder(OrderCreateProcessDataObserver::class)
+        $this->quote = $this->createPartialMockWithMethods(Quote::class, ['setCustomerEmail']);
+        $this->event = $this->createPartialMockWithMethods(Event::class, ['getData', 'getQuote']);
+        $this->orderCreateProcessDataObserverTest = $this->getMockBuilderWithMethods(OrderCreateProcessDataObserver::class, ['_init'])
             ->setConstructorArgs([
                 $this->productMetadata
             ])
-            ->setMethods(['_init'])
             ->getMock();
     }
 }

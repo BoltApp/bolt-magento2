@@ -44,18 +44,13 @@ class ExtensionAttributesPersistencePluginPluginTest extends BoltTestCase
 
     protected function setUpInternal()
     {
-        $this->currentMock = $this->getMockBuilder(ExtensionAttributesPersistencePluginPlugin::class)
-            ->setMethods(null)
+        $this->currentMock = $this->getMockBuilderWithMethods(ExtensionAttributesPersistencePluginPlugin::class, null)
             ->getMock();
-        $this->subjectMock = $this->getMockBuilder(ExtensionAttributesPersistencePlugin::class)
+        $this->subjectMock = $this->getMockBuilderWithMethods(ExtensionAttributesPersistencePlugin::class, ['aroundSave'])
             ->disableOriginalConstructor()
-            ->disableAutoload()
-            ->setMethods(['aroundSave'])
             ->getMock();
-        $this->connectionMock = $this->getMockBuilder(\Magento\Framework\DB\Adapter\Pdo\Mysql::class)
+        $this->connectionMock = $this->getMockBuilderWithMethods(\Magento\Framework\DB\Adapter\Pdo\Mysql::class, ['select', 'from', 'where', 'getTable', 'fetchAll'])
             ->disableOriginalConstructor()
-            ->disableAutoload()
-            ->setMethods(['select', 'from', 'where', 'getTable', 'fetchAll'])
             ->getMock();
     }
 
@@ -64,8 +59,7 @@ class ExtensionAttributesPersistencePluginPluginTest extends BoltTestCase
      */
     private function createProceedMock()
     {
-        return $this->getMockBuilder(\stdClass::class)
-            ->setMethods(['proceed'])
+        return $this->getMockBuilderWithMethods(\stdClass::class, ['proceed'])
             ->getMock();
     }
 

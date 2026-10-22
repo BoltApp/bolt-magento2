@@ -232,7 +232,7 @@ class ProductEventManagerTest extends BoltTestCase
      */
     public function testSendProductEvent()
     {
-        $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
+        $apiHelper = $this->createPartialMockWithMethods(ApiHelper::class, ['sendRequest']);
         $apiHelper->expects(self::once())->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
         $product = $this->createProduct();
@@ -265,7 +265,7 @@ class ProductEventManagerTest extends BoltTestCase
         ];
         TestUtils::setupBoltConfig($configData);
 
-        $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
+        $apiHelper = $this->createPartialMockWithMethods(ApiHelper::class, ['sendRequest']);
         $apiHelper->expects(self::once())->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
         $product = $this->createProduct();
@@ -299,7 +299,7 @@ class ProductEventManagerTest extends BoltTestCase
         ];
         TestUtils::setupBoltConfig($configData);
 
-        $apiHelper = $this->createPartialMock(ApiHelper::class, ['sendRequest']);
+        $apiHelper = $this->createPartialMockWithMethods(ApiHelper::class, ['sendRequest']);
         $apiHelper->expects(self::once())->method('sendRequest')->willReturn(self::RESPONSE_SUCCESS_STATUS);
         TestHelper::setProperty($this->productEventManager, 'apiHelper', $apiHelper);
         $product = $this->createProduct();

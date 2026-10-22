@@ -81,9 +81,9 @@ class ActionPredispatchTest extends BoltTestCase
         $observer = new \Magento\Framework\Event\Observer(['request' => $request]);
         $this->eventsForThirdPartyModulesMock->expects(static::exactly(count($expectedThirdPartyEvents)))
             ->method('dispatchEvent')
-            ->withConsecutive(
+            ->with(...self::consecutiveArgs(
                 ...array_chunk($expectedThirdPartyEvents, 1)
-            );
+            ));
         $this->currentMock->execute($observer);
     }
 
@@ -134,8 +134,7 @@ class ActionPredispatchTest extends BoltTestCase
         $this->eventsForThirdPartyModulesMock = $this->createMock(
             \Bolt\Boltpay\Model\EventsForThirdPartyModules::class
         );
-        $this->currentMock = $this->getMockBuilder(ActionPredispatch::class)
-            ->setMethods(null)
+        $this->currentMock = $this->getMockBuilderWithMethods(ActionPredispatch::class, null)
             ->setConstructorArgs([$this->eventsForThirdPartyModulesMock])
             ->getMock();
     }

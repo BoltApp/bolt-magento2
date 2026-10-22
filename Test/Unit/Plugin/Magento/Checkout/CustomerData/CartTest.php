@@ -110,7 +110,7 @@ class CartTest extends BoltTestCase
         $this->checkoutSessionMock = $this->createMock(CheckoutSession::class);
         $this->boltHelperCartMock = $this->createMock(BoltHelperCart::class);
         $this->bugsnagMock = $this->createMock(Bugsnag::class);
-        $this->featureSwitchesMock = $this->createPartialMock(
+        $this->featureSwitchesMock = $this->createPartialMockWithMethods(
             Decider::class,
             ['isEnabledFetchCartViaApi', 'isEnabledPreFetchCartViaApi']
         );
