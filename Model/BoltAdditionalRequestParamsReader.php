@@ -74,6 +74,12 @@ class BoltAdditionalRequestParamsReader
      */
     public function getBoltAdditionalParams(): ?array {
         try {
+            // Nothing to read without the header. Checking it first also keeps the validator, and its database
+            // lookup, off requests that aren't from Bolt: RemoteAddressPlugin calls this on every remote address read
+            if (!$this->request->getHeader(self::BOLT_ADDITIONAL_PARAMS_HEADER_KEY)) {
+                return null;
+            }
+
             // skip if request is not from bolt
             if (!$this->boltRestApiRequestValidator->isValidBoltRequest($this->request)) {
                 return null;

@@ -379,6 +379,23 @@
     <type name="Magento\Framework\HTTP\PhpEnvironment\RemoteAddress">
         <plugin name="boltRequestRemoteAddress" type="Bolt\Boltpay\Plugin\Magento\Framework\HTTP\PhpEnvironment\RemoteAddressPlugin" />
     </type>
+    <!--
+        Session validation reads the remote address, so this plugin can be instantiated while a session is being
+        constructed. Its eager dependencies lead back to the admin session and locale resolver, a circular
+        dependency since Magento 2.4.9 validates sessions that are already started; keep them lazy.
+    -->
+    <type name="Bolt\Boltpay\Plugin\Magento\Framework\HTTP\PhpEnvironment\RemoteAddressPlugin">
+        <arguments>
+            <argument name="boltAdditionalRequestParamsReader" xsi:type="object">Bolt\Boltpay\Model\BoltAdditionalRequestParamsReader\Proxy</argument>
+            <argument name="bugsnag" xsi:type="object">Bolt\Boltpay\Helper\Bugsnag\Proxy</argument>
+        </arguments>
+    </type>
+    <type name="Bolt\Boltpay\Model\BoltAdditionalRequestParamsReader">
+        <arguments>
+            <argument name="boltRestApiRequestValidator" xsi:type="object">Bolt\Boltpay\Model\RestApiRequestValidator\Proxy</argument>
+            <argument name="bugsnag" xsi:type="object">Bolt\Boltpay\Helper\Bugsnag\Proxy</argument>
+        </arguments>
+    </type>
     <!--Customer_Balance module multiple amounts of store credit reverting fix for bolt orders-->
     <type name="Magento\CustomerBalance\Observer\RevertStoreCreditForOrder">
         <plugin name="boltRevertStoreCreditForOrder" type="Bolt\Boltpay\Plugin\Magento\CustomerBalance\Observer\RevertStoreCreditForOrderPlugin" sortOrder="1"/>
