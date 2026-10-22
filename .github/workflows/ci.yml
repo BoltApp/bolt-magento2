@@ -146,16 +146,10 @@ jobs:
   # changing MAGENTO_VERSION and php-version below, nothing else. The GitHub
   # monorepo resolves entirely from packagist.org, so no repo.magento.com keys
   # are needed.
-  #
-  # continue-on-error: Magento 2.4.9 ships PHPUnit 12, and most of Test/Unit
-  # still targets PHPUnit 6-9 (@test annotations, setMethods(),
-  # withConsecutive(), ...). The job reports those failures without blocking
-  # merges until the suite is migrated.
   # ---------------------------------------------------------------------------
   integration-latest:
     name: php85 / Magento 2.4.9
     runs-on: ubuntu-latest
-    continue-on-error: true
     env:
       MAGENTO_VERSION: "2.4.9"
     services:
