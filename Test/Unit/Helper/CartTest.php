@@ -410,6 +410,9 @@ class CartTest extends BoltTestCase
 
         $this->apiHelper = $this->createMock(ApiHelper::class);
         $this->configHelper = $this->createMock(ConfigHelper::class);
+        // what the real helper returns when Magento reports no version; a mock's default null is deprecated
+        // in version_compare() since PHP 8.1
+        $this->configHelper->method('getStoreVersion')->willReturn('');
         $this->customerSession = $this->createMock(CustomerSession::class);
         $this->logHelper = $this->createPartialMockWithMethods(LogHelper::class, ['addInfoLog']);
         $this->logHelper->method('addInfoLog')->withAnyParameters()->willReturnSelf();

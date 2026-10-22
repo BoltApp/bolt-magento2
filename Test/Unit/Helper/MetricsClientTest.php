@@ -37,6 +37,7 @@ use GuzzleHttp\Exception\RequestException;
 use org\bovigo\vfs\vfsStream;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use PHPUnit\Framework\Attributes\Test;
+use Bolt\Boltpay\Test\Unit\TestHelper;
 
 class MetricsClientTest extends BoltTestCase
 {
@@ -1095,7 +1096,7 @@ class MetricsClientTest extends BoltTestCase
         }
 
         $method = new \ReflectionMethod($class, $method);
-        $method->setAccessible(true);
+        TestHelper::makeAccessible($method);
 
         return $method->invokeArgs($object, $args);
     }

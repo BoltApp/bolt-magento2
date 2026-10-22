@@ -400,7 +400,7 @@ class HookTest extends BoltTestCase
         $this->configHelper->method('getStoreVersion')->willReturn('storeVersion');
         $this->configHelper->method('getModuleVersion')->willReturn('moduleVersion');
 
-        $headers = $this->createMock(\Zend\Http\Headers::class);
+        $headers = $this->createMock(\Laminas\Http\Headers::class);
         $this->response->method('getHeaders')->willReturn($headers);
         $headers->expects(static::once())->method('addHeaders')->with([
             'User-Agent' => 'BoltPay/Magento-storeVersion/moduleVersion',

@@ -195,14 +195,14 @@ class DebugTest extends BoltTestCase
             Hook::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
 
         $orderHelperProperty = new \ReflectionProperty(
             Debug::class,
             'hookHelper'
         );
-        $orderHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($orderHelperProperty);
         $orderHelperProperty->setValue($this->debug, $hookHelper);
         $this->debug->debug();
         $response = json_decode(TestHelper::getProperty($this->debug, 'response')->getBody(), true);

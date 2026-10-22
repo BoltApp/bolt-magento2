@@ -30,6 +30,8 @@ use ReflectionException;
 use ReflectionObject;
 use ReflectionProperty;
 
+require_once __DIR__ . '/_files/absent_types.php';
+
 // phpcs:ignore
 class BoltTestCase extends TestCase
 {
@@ -136,9 +138,7 @@ class BoltTestCase extends TestCase
                 return $object->$attributeName;
             }
 
-            $attribute->setAccessible(true);
-            $value = $attribute->getValue($object);
-            $attribute->setAccessible(false);
+            $value = TestHelper::makeAccessible($attribute)->getValue($object);
 
             return $value;
         }
@@ -211,11 +211,7 @@ class BoltTestCase extends TestCase
             $unique[strtolower($method)] = $method;
         }
         // declared on MockBuilder in PHPUnit 9, on its parent TestDoubleBuilder in PHPUnit 12
-        $property = new ReflectionProperty($builder, 'methods');
-        if (PHP_VERSION_ID < 80100) {
-            $property->setAccessible(true);
-        }
-        $property->setValue($builder, array_values($unique));
+        TestHelper::makeAccessible(new ReflectionProperty($builder, 'methods'))->setValue($builder, array_values($unique));
         return $builder;
     }
 
@@ -291,8 +287,7 @@ class BoltTestCase extends TestCase
     {
         foreach (debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT) as $frame) {
             if (isset($frame['object']) && $frame['object'] instanceof ParametersRule) {
-                $invocation = new ReflectionProperty($frame['object'], 'invocation');
-                $invocation->setAccessible(true);
+                $invocation = TestHelper::makeAccessible(new ReflectionProperty($frame['object'], 'invocation'));
                 return $invocation->getValue($frame['object'])->getParameters();
             }
         }

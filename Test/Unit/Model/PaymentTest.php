@@ -53,6 +53,7 @@ use Magento\Sales\Model\ResourceModel\Order\Collection;
 use Magento\Framework\Event\Manager;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use Bolt\Boltpay\Test\Unit\TestHelper;
 
 /**
  * Class PaymentTest
@@ -1082,7 +1083,7 @@ class PaymentTest extends BoltTestCase
     {
         $reflection = new \ReflectionClass($object);
         $reflection_property = $reflection->getProperty($property);
-        $reflection_property->setAccessible(true);
+        TestHelper::makeAccessible($reflection_property);
         $reflection_property->setValue($object, $value);
     }
 }

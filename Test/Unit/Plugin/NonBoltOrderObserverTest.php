@@ -157,7 +157,8 @@ class NonBoltOrderObserverTest extends BoltTestCase
      */
     public function testExecute()
     {
-        $order = $this->getMockBuilderWithMethods("BoltOrder", ['getPayment', 'getQuoteId', 'getStoreId', 'setBoltTransactionReference', 'save'])
+        $order = $this->getMockBuilderWithMethods(\Magento\Sales\Model\Order::class, ['getPayment', 'getQuoteId', 'getStoreId', 'setBoltTransactionReference', 'save'])
+            ->disableOriginalConstructor()
             ->getMock();
         $payment = $this->createMock(Payment::class);
         $item = $this->createMock(Item::class);
@@ -331,7 +332,8 @@ class NonBoltOrderObserverTest extends BoltTestCase
     public function testExecuteShipmentsNotSet()
     {
         $this->decider->expects($this->once())->method('isNonBoltTrackingEnabled')->willReturn(true);
-        $order = $this->getMockBuilderWithMethods("BoltOrder", ['getPayment', 'getQuoteId', 'getStoreId', 'setBoltTransactionReference', 'save'])
+        $order = $this->getMockBuilderWithMethods(\Magento\Sales\Model\Order::class, ['getPayment', 'getQuoteId', 'getStoreId', 'setBoltTransactionReference', 'save'])
+            ->disableOriginalConstructor()
             ->getMock();
         $payment = $this->createMock(Payment::class);
         $item = $this->createMock(Item::class);

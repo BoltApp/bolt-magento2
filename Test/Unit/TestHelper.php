@@ -37,16 +37,27 @@ class TestHelper extends TestCase
      */
     public static function invokeMethod($object, $methodName, array $parameters = [])
     {
-        try {
-            $reflectedMethod = self::getReflectedClass($object)->getMethod($methodName);
-            $reflectedMethod->setAccessible(true);
+        $reflectedMethod = self::makeAccessible(self::getReflectedClass($object)->getMethod($methodName));
 
-            return $reflectedMethod->invokeArgs(is_object($object) ? $object : null, $parameters);
-        } finally {
-            if ($reflectedMethod && ($reflectedMethod->isProtected() || $reflectedMethod->isPrivate())) {
-                $reflectedMethod->setAccessible(false);
-            }
+        return $reflectedMethod->invokeArgs(is_object($object) ? $object : null, $parameters);
+    }
+
+    /**
+     * Lets reflection reach a private or protected member
+     *
+     * PHP 8.1 made every member reachable through reflection, and PHP 8.5 deprecates setAccessible(), which
+     * Magento's test framework turns into an error; PHP 7.4 still needs the call.
+     *
+     * @param \ReflectionMethod|\ReflectionProperty $reflector
+     *
+     * @return \ReflectionMethod|\ReflectionProperty
+     */
+    public static function makeAccessible($reflector)
+    {
+        if (PHP_VERSION_ID < 80100) {
+            $reflector->setAccessible(true);
         }
+        return $reflector;
     }
 
     /**
@@ -61,19 +72,12 @@ class TestHelper extends TestCase
      */
     public static function setProperty($objectOrClassName, $propertyName, $value)
     {
-        try {
-            $reflectedProperty = self::getReflectedClass($objectOrClassName)->getProperty($propertyName);
-            $reflectedProperty->setAccessible(true);
+        $reflectedProperty = self::makeAccessible(self::getReflectedClass($objectOrClassName)->getProperty($propertyName));
 
-            if (is_object($objectOrClassName)) {
-                $reflectedProperty->setValue($objectOrClassName, $value);
-            } else {
-                $reflectedProperty->setValue($value);
-            }
-        } finally {
-            if ($reflectedProperty && ($reflectedProperty->isProtected() || $reflectedProperty->isPrivate())) {
-                $reflectedProperty->setAccessible(false);
-            }
+        if (is_object($objectOrClassName)) {
+            $reflectedProperty->setValue($objectOrClassName, $value);
+        } else {
+            $reflectedProperty->setValue($value);
         }
     }
 
@@ -88,19 +92,12 @@ class TestHelper extends TestCase
      */
     public static function getProperty($objectOrClassName, $propertyName)
     {
-        try {
-            $reflectedProperty = self::getReflectedClass($objectOrClassName)->getProperty($propertyName);
-            $reflectedProperty->setAccessible(true);
+        $reflectedProperty = self::makeAccessible(self::getReflectedClass($objectOrClassName)->getProperty($propertyName));
 
-            if (is_object($objectOrClassName)) {
-                return $reflectedProperty->getValue($objectOrClassName);
-            } else {
-                return $reflectedProperty->getValue();
-            }
-        } finally {
-            if ($reflectedProperty && ($reflectedProperty->isProtected() || $reflectedProperty->isPrivate())) {
-                $reflectedProperty->setAccessible(false);
-            }
+        if (is_object($objectOrClassName)) {
+            return $reflectedProperty->getValue($objectOrClassName);
+        } else {
+            return $reflectedProperty->getValue();
         }
     }
 
@@ -156,8 +153,7 @@ class TestHelper extends TestCase
     {
         $reflection = self::getReflectedClass($object);
 
-        $reflectionProperty = $reflection->getProperty($property);
-        $reflectionProperty->setAccessible(true);
+        $reflectionProperty = self::makeAccessible($reflection->getProperty($property));
         $reflectionProperty->setValue($object, $value);
     }
     

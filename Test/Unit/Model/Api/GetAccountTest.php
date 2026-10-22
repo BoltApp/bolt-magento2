@@ -203,13 +203,13 @@ class GetAccountTest extends BoltTestCase
             Hook::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
         $hookHelperProperty = new \ReflectionProperty(
             GetAccount::class,
             'hookHelper'
         );
-        $hookHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($hookHelperProperty);
         $hookHelperProperty->setValue($this->getAccount, $hookHelper);
         $this->expectException(WebApiException::class);
         $this->expectExceptionMessage('Missing email in the request body.');
@@ -230,13 +230,13 @@ class GetAccountTest extends BoltTestCase
             Hook::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
         $hookHelperProperty = new \ReflectionProperty(
             GetAccount::class,
             'hookHelper'
         );
-        $hookHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($hookHelperProperty);
         $hookHelperProperty->setValue($this->getAccount, $hookHelper);
         $this->expectException(NoSuchEntityException::class);
         $this->expectExceptionMessage('Customer not found with given email.');
@@ -258,13 +258,13 @@ class GetAccountTest extends BoltTestCase
             Hook::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
         $hookHelperProperty = new \ReflectionProperty(
             GetAccount::class,
             'hookHelper'
         );
-        $hookHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($hookHelperProperty);
         $hookHelperProperty->setValue($this->getAccount, $hookHelper);
 
         $customerRepository = $this->createMock(CustomerRepository::class);
@@ -273,7 +273,7 @@ class GetAccountTest extends BoltTestCase
             GetAccount::class,
             'customerRepository'
         );
-        $customerRepositoryProperty->setAccessible(true);
+        TestHelper::makeAccessible($customerRepositoryProperty);
         $customerRepositoryProperty->setValue($this->getAccount, $customerRepository);
 
         $this->expectException(WebApiException::class);
@@ -311,13 +311,13 @@ class GetAccountTest extends BoltTestCase
             Hook::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
         $hookHelperProperty = new \ReflectionProperty(
             GetAccount::class,
             'hookHelper'
         );
-        $hookHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($hookHelperProperty);
         $hookHelperProperty->setValue($this->getAccount, $hookHelper);
         $this->getAccount->execute('john@bolt.com');
         $response = json_decode(TestHelper::getProperty($this->getAccount, 'response')->getBody(), true);

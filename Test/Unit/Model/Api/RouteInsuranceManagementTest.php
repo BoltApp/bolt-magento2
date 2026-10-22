@@ -110,6 +110,11 @@ class RouteInsuranceManagementTest extends BoltTestCase
     private $currentMock;
 
     /**
+     * @var int
+     */
+    private $websiteId;
+
+    /**
      * @inheritdoc
      */
     protected function setUpInternal()

@@ -29,7 +29,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
-use Zend\Http\Response;
+use Laminas\Http\Response;
 use PHPUnit\Framework\Attributes\Test;
 
 /**

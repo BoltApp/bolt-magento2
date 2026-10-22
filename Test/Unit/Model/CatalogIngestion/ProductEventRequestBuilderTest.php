@@ -47,7 +47,7 @@ use Magento\Eav\Model\Config;
 use Magento\Eav\Setup\EavSetup;
 use Magento\Catalog\Setup\CategorySetup;
 use Magento\ConfigurableProduct\Helper\Product\Options\Factory;
-use Vertex\Tax\Model\ModuleManager;
+use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\Catalog\Api\Data\ProductCustomOptionInterfaceFactory;
 use Magento\Catalog\Api\Data\ProductCustomOptionInterface;
 

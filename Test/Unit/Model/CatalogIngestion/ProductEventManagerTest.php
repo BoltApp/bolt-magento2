@@ -38,6 +38,8 @@ use Magento\Framework\Module\Manager;
 use Magento\Framework\App\DeploymentConfig;
 use Magento\Framework\Encryption\EncryptorInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Bolt\Boltpay\Model\CatalogIngestion\ProductEventPublisher;
+use Magento\Framework\MessageQueue\Publisher\ConfigInterface as PublisherConfig;
 
 /**
  * Class ProductEventManagerTest
@@ -197,7 +199,9 @@ class ProductEventManagerTest extends BoltTestCase
             $amqpConfigExist = isset($queueConfig[AmqpConfig::AMQP_CONFIG]) ? true : false;
         }
 
-        if ($this->moduleManger->isEnabled('Magento_AsynchronousOperations') && !$amqpConfigExist) {
+        if ($this->moduleManger->isEnabled('Magento_AsynchronousOperations') && !$amqpConfigExist
+            && $this->isAsyncTopicBoundToAmqp()
+        ) {
             $this->expectExceptionMessage('Unknown connection name amqp');
         }
 
@@ -326,7 +330,9 @@ class ProductEventManagerTest extends BoltTestCase
             $amqpConfigExist = isset($queueConfig[AmqpConfig::AMQP_CONFIG])? true : false;
         }
 
-        if ($this->moduleManger->isEnabled('Magento_AsynchronousOperations') && !$amqpConfigExist) {
+        if ($this->moduleManger->isEnabled('Magento_AsynchronousOperations') && !$amqpConfigExist
+            && $this->isAsyncTopicBoundToAmqp()
+        ) {
             $this->expectExceptionMessage('Unknown connection name amqp');
         }
 
@@ -422,5 +428,22 @@ class ProductEventManagerTest extends BoltTestCase
             [ProductEventInterface::TYPE_UPDATE],
             [ProductEventInterface::TYPE_DELETE],
         ];
+    }
+
+    /**
+     * Whether the product event's async web API topic is published over AMQP
+     *
+     * Magento 2.4.2 bound async web API topics to the amqp connection, so publishing fails when AMQP is not
+     * configured. Later versions use the default connection, which is the database unless configured otherwise.
+     *
+     * @return bool
+     */
+    private function isAsyncTopicBoundToAmqp()
+    {
+        $topic = (new \ReflectionClassConstant(ProductEventPublisher::class, 'TOPIC_NAME'))->getValue();
+        return $this->objectManager->get(PublisherConfig::class)
+            ->getPublisher($topic)
+            ->getConnection()
+            ->getName() === 'amqp';
     }
 }

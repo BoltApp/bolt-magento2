@@ -111,7 +111,7 @@ class ShippingTest extends BoltTestCase
             Shipping::class,
             'shippingMethodManagement'
         );
-        $shippingMethodManagement->setAccessible(true);
+        TestHelper::makeAccessible($shippingMethodManagement);
         $shippingMethodManagement->setValue($this->shipping, $shipmentEstimationInterface);
 
         $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
@@ -256,7 +256,7 @@ class ShippingTest extends BoltTestCase
             Shipping::class,
             'shippingMethodManagement'
         );
-        $shippingMethodManagement->setAccessible(true);
+        TestHelper::makeAccessible($shippingMethodManagement);
         $shippingMethodManagement->setValue($this->shipping, $shipmentEstimationInterface);
 
         $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();

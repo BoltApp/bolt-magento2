@@ -337,14 +337,14 @@ class ShippingMethodsTest extends BoltTestCase
             HookHelper::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
 
         $hookHelperProperty = new \ReflectionProperty(
             ShippingMethods::class,
             'hookHelper'
         );
-        $hookHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($hookHelperProperty);
         $hookHelperProperty->setValue($this->shippingMethod, $hookHelper);
         $this->assertNull($this->shippingMethod->getShippingMethods($cart, $shipping_address));
         $response = json_decode(TestHelper::getProperty($this->shippingMethod, 'response')->getBody(), true);
@@ -411,7 +411,7 @@ class ShippingMethodsTest extends BoltTestCase
             ShippingMethods::class,
             'ruleFactory'
         );
-        $shippingMethod->setAccessible(true);
+        TestHelper::makeAccessible($shippingMethod);
         $shippingMethod->setValue($this->shippingMethod, $ruleFactory);
         $this->assertTrue(
             self::invokeInaccessibleMethod(
@@ -591,7 +591,7 @@ class ShippingMethodsTest extends BoltTestCase
         }
 
         $method = new \ReflectionMethod($class, $method);
-        $method->setAccessible(true);
+        TestHelper::makeAccessible($method);
 
         return $method->invokeArgs($object, $args);
     }
