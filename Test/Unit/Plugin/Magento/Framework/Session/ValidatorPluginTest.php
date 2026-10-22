@@ -25,6 +25,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\Session\Validator;
 use Magento\Framework\Session\SessionManager;
 use Magento\Store\Model\StoreManagerInterface;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ValidatorPluginTest
@@ -66,6 +67,7 @@ class ValidatorPluginTest extends BoltTestCase
      * @test
      * @covers ::aroundValidate
      */
+    #[Test]
     public function aroundValidate_callOriginalMethod()
     {
         $validatorObject = $this->objectManager->create(Validator::class);
@@ -77,6 +79,7 @@ class ValidatorPluginTest extends BoltTestCase
      * @test
      * @covers ::aroundValidate
      */
+    #[Test]
     public function aroundValidate_ifRequestIsNotFromBolt_callOriginalMethod()
     {
         Hook::$fromBolt = false;
@@ -100,6 +103,7 @@ class ValidatorPluginTest extends BoltTestCase
      * @test
      * @covers ::aroundValidate
      */
+    #[Test]
     public function aroundValidate_ifRequestIsNotFromBolt_NotCallOriginalMethod()
     {
         $validatorObject = $this->objectManager->create(Validator::class);

@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Block\Adminhtml\Customer\CreditCard\Tab\View;
 
 use Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View\DeleteAction;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class DeleteActionTest extends BoltTestCase
 {
@@ -39,6 +40,7 @@ class DeleteActionTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function render()
     {
         $row = new \Magento\Framework\DataObject();

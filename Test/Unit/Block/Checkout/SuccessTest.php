@@ -27,6 +27,8 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\ObjectManager;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class SuccessTest
@@ -81,6 +83,8 @@ class SuccessTest extends BoltTestCase
      * @param mixed $config
      * @param mixed $expected
      */
+    #[Test]
+    #[DataProvider('shouldTrackCheckoutFunnelData')]
     public function shouldTrackCheckoutFunnel_getValueFromConfig($config, $expected)
     {
         $configData = [
@@ -98,7 +102,7 @@ class SuccessTest extends BoltTestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function shouldTrackCheckoutFunnelData()
+    public static function shouldTrackCheckoutFunnelData()
     {
         return [
             [true, true],

@@ -24,6 +24,7 @@ use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Framework\DB\Ddl\Table;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class RecurringTest
@@ -89,6 +90,7 @@ class RecurringTest extends BoltTestCase
      * @test
      * @throws \ReflectionException
      */
+    #[Test]
     public function setupFeatureSwitchTable_withNonExistenceTable_createsTable()
     {
         $this->schemaSetup->expects(static::exactly(3))->method('getConnection')->willReturnSelf();
@@ -162,6 +164,7 @@ class RecurringTest extends BoltTestCase
      *
      * @throws \ReflectionException if $methodName method doesn't exist
      */
+    #[Test]
     public function setupFeatureSwitchTable_withExistenceTable_DoesNotCreateTable()
     {
         $this->schemaSetup->expects(static::once())->method('getConnection')->willReturnSelf();

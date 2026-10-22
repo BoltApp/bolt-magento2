@@ -32,6 +32,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class EmailTest
@@ -94,6 +95,7 @@ class EmailTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_quoteDoesNotExist()
     {
         $bugsnag = $this->createMock(Bugsnag::class);
@@ -106,6 +108,7 @@ class EmailTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_noQuoteId()
     {
         $bugsnag = $this->createMock(Bugsnag::class);
@@ -119,6 +122,7 @@ class EmailTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_noEmail()
     {
         $quote = TestUtils::createQuote();
@@ -136,6 +140,7 @@ class EmailTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_invalidEmail()
     {
         $invalidEmail = 'invalidemail';
@@ -160,6 +165,7 @@ class EmailTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_happyPath()
     {
         $validEmail = 'integration@bolt.com';

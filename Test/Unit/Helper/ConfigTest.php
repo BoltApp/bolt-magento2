@@ -27,6 +27,8 @@ use Magento\Framework\Composer\ComposerFactory;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ConfigTest
@@ -134,6 +136,7 @@ JSON;
      * @test
      * @covers ::getMerchantDashboardUrl
      */
+    #[Test]
     public function getMerchantDashboardUrl_returnMerchantDashSandbox()
     {
         $configData = [
@@ -153,6 +156,7 @@ JSON;
      * @test
      * @covers ::getMerchantDashboardUrl
      */
+    #[Test]
     public function getMerchantDashboardUrl_returnAdditionalConfigMerchantDashUrl()
     {
         $configData = [
@@ -178,6 +182,7 @@ JSON;
      * @test
      * @covers ::getMerchantDashboardUrl
      */
+    #[Test]
     public function getMerchantDashboardUrl_returnMerchantDashProduction()
     {
         $configData = [
@@ -196,6 +201,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getStoreVersion()
     {
         $magentoVersion = '2.2.3';
@@ -208,6 +214,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getTitle()
     {
         $expected = 'Bolt Pay';
@@ -229,6 +236,7 @@ JSON;
      * @test
      * @covers ::getCdnUrl
      */
+    #[Test]
     public function getCdnUrl_willReturnCdnUrlProduction()
     {
         $configData = [
@@ -248,6 +256,7 @@ JSON;
      * @test
      * @covers ::getCdnUrl
      */
+    #[Test]
     public function getCdnUrl_willReturnCdnUrlSandbox()
     {
         $configData = [
@@ -267,6 +276,7 @@ JSON;
      * @test
      * @covers ::getCdnUrl
      */
+    #[Test]
     public function getCdnUrl_setupAdditionalConfig_willReturnCdnUrlSandbox()
     {
         $configData = [
@@ -292,6 +302,7 @@ JSON;
      * @test
      * @covers ::getAccountUrl
      */
+    #[Test]
     public function getAccountUrl_willReturnCdnUrlProduction()
     {
         $configData = [
@@ -311,6 +322,7 @@ JSON;
      * @test
      * @covers ::getAccountUrl
      */
+    #[Test]
     public function getAccountUrl_willReturnAccountUrlSandbox()
     {
         $configData = [
@@ -330,6 +342,7 @@ JSON;
      * @test
      * @covers ::getAccountUrl
      */
+    #[Test]
     public function getAccountUrl_setupAdditionalConfig_willReturnAccountUrlSandbox()
     {
         $configData = [
@@ -355,6 +368,7 @@ JSON;
      * @covers ::getApiUrl
      * @test
      */
+    #[Test]
     public function getApiUrl_willReturnApiUrlProduction()
     {
         $configData = [
@@ -373,6 +387,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getApiUrl_willReturnApiUrlSandbox()
     {
         $configData = [
@@ -391,6 +406,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getApiUrl_setupAdditionalConfig_willReturnApiUrlSandbox()
     {
         $configData = [
@@ -420,6 +436,8 @@ JSON;
      * @param mixed $path
      * @param mixed $result
      */
+    #[Test]
+    #[DataProvider('isSetFlagMethodsProvider')]
     public function isSetFlagMethods($methodName, $path, $result = true)
     {
         $configData = [
@@ -439,7 +457,7 @@ JSON;
         }
     }
 
-    public function isSetFlagMethodsProvider()
+    public static function isSetFlagMethodsProvider()
     {
         return [
             ['isActive', BoltConfig::XML_PATH_ACTIVE],
@@ -477,6 +495,8 @@ JSON;
      * @param mixed $path
      * @param mixed $configValue
      */
+    #[Test]
+    #[DataProvider('getValueMethodsProvider')]
     public function getValueMethods($methodName, $path, $configValue = 'test config value')
     {
         $configData = [
@@ -492,7 +512,7 @@ JSON;
         $this->assertEquals($configValue, $result, "$methodName() method: not working properly");
     }
 
-    public function getValueMethodsProvider()
+    public static function getValueMethodsProvider()
     {
         return [
             ['getGlobalCSS', BoltConfig::XML_PATH_GLOBAL_CSS, '.replaceable-example-selector1 {color: black;}]'],
@@ -561,6 +581,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getIgnoredShippingAddressCoupons()
     {
         $expected = ['ignored_shipping_address_coupon'];
@@ -584,6 +605,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getIPWhitelistConfig()
     {
         $expected = self::TEST_IP[0] . ',' . self::TEST_IP[1];
@@ -604,6 +626,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getIPWhitelistArray()
     {
         $getIPWhitelistConfig = ' , ' . self::TEST_IP[0] . ' , ' . self::TEST_IP[1] . ' , ';
@@ -626,6 +649,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getAmastyGiftCardConfig()
     {
         $configData = [
@@ -644,6 +668,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function shouldAdjustTaxMismatch()
     {
         $configData = [
@@ -662,6 +687,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getPriceFaultTolerance()
     {
         $configData = [
@@ -680,6 +706,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getToggleCheckout()
     {
         $configData = [
@@ -716,6 +743,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getPageWhitelist()
     {
         $this->getPageFilters();
@@ -729,6 +757,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getPageWhitelistEmpty()
     {
         $this->getPageFilters('{"pageFilters": {}}');
@@ -742,6 +771,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getPageBlacklist()
     {
         $this->getPageFilters();
@@ -776,6 +806,8 @@ JSON;
      *
      * @param mixed $boolean_value
      */
+    #[Test]
+    #[DataProvider('providerTrueAndFalse')]
     public function isGuestCheckoutAllowed($boolean_value)
     {
         $configData = [
@@ -791,7 +823,7 @@ JSON;
         $this->assertEquals($boolean_value, $result);
     }
 
-    public function providerTrueAndFalse()
+    public static function providerTrueAndFalse()
     {
         return [
             [true],
@@ -805,6 +837,8 @@ JSON;
      *
      * @param $booleanValue
      */
+    #[Test]
+    #[DataProvider('providerTrueAndFalse')]
     public function isGuestCheckoutForDownloadableProductDisabled($booleanValue)
     {
         $configData = [
@@ -825,6 +859,7 @@ JSON;
      * @test
      * @covers ::getPickupStreetConfiguration
      */
+    #[Test]
     public function getPickupStreetConfiguration()
     {
         $configData = [
@@ -845,6 +880,7 @@ JSON;
      * @test
      * @covers ::getPickupCityConfiguration
      */
+    #[Test]
     public function getPickupCityConfiguration()
     {
         $configData = [
@@ -864,6 +900,7 @@ JSON;
      * @test
      * @covers ::getPickupZipCodeConfiguration
      */
+    #[Test]
     public function getPickupZipCodeConfiguration()
     {
         $configData = [
@@ -884,6 +921,7 @@ JSON;
      * @test
      * @covers ::getPickupCountryIdConfiguration
      */
+    #[Test]
     public function getPickupCountryIdConfiguration()
     {
         $configData = [
@@ -904,6 +942,7 @@ JSON;
      * @test
      * @covers ::getPickupRegionIdConfiguration
      */
+    #[Test]
     public function getPickupRegionIdConfiguration()
     {
         $configData = [
@@ -923,6 +962,7 @@ JSON;
      * @test
      * @covers ::getPickupShippingMethodCodeConfiguration
      */
+    #[Test]
     public function getPickupShippingMethodCodeConfiguration()
     {
 
@@ -944,6 +984,7 @@ JSON;
      * @test
      * @covers ::getPickupApartmentConfiguration
      */
+    #[Test]
     public function getPickupApartmentConfiguration()
     {
         $configData = [
@@ -968,6 +1009,8 @@ JSON;
      * @covers ::isPickupInStoreShippingMethodCode
      * @dataProvider providerGetPickupShippingMethodCode
      */
+    #[Test]
+    #[DataProvider('providerGetPickupShippingMethodCode')]
     public function isPickupInStoreShippingMethodCode($isStorePickFeatureEnabled, $method, $expected)
     {
         $configData = [
@@ -990,7 +1033,7 @@ JSON;
         $this->assertEquals($expected, $result);
     }
 
-    public function providerGetPickupShippingMethodCode()
+    public static function providerGetPickupShippingMethodCode()
     {
         return [
             [false, 'instorepickup_instorepickup', false],
@@ -1004,6 +1047,7 @@ JSON;
      * @test
      * @covers ::isStorePickupFeatureEnabled
      */
+    #[Test]
     public function isStorePickupFeatureEnabled()
     {
         $configData = [
@@ -1022,6 +1066,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getPickupAddressData_returnsNull_ifFieldIsEmpty()
     {
         $configData = [
@@ -1074,6 +1119,7 @@ JSON;
      * @test
      * @covers ::getPickupAddressData
      */
+    #[Test]
     public function getPickupAddressData()
     {
         $configData = [
@@ -1141,13 +1187,15 @@ Room 4000',
      *
      * @throws \ReflectionException
      */
+    #[Test]
+    #[DataProvider('providerValidateCustomUrl')]
     public function validateCustomUrl($url, $expected)
     {
         $result = TestHelper::invokeMethod($this->configHelper, 'validateCustomUrl', [$url]);
         $this->assertEquals($expected, $result);
     }
 
-    public function providerValidateCustomUrl()
+    public static function providerValidateCustomUrl()
     {
         return [
             ['https://test.bolt.me', true],
@@ -1170,6 +1218,8 @@ Room 4000',
      * @covers ::getProductAttributesList
      * @dataProvider providerGetProductAttributesList
      */
+    #[Test]
+    #[DataProvider('providerGetProductAttributesList')]
     public function getProductAttributesList($commaSeparatedList, $expected)
     {
         $configData = [
@@ -1185,7 +1235,7 @@ Room 4000',
         $this->assertEquals($expected, $result);
     }
 
-    public function providerGetProductAttributesList()
+    public static function providerGetProductAttributesList()
     {
         return [
             ['', []],
@@ -1198,6 +1248,7 @@ Room 4000',
      * @test
      * @covers ::getComposerVersion
      */
+    #[Test]
     public function getComposerVersion()
     {
         $composerFactory = $this->createPartialMock(ComposerFactory::class, ['create', 'getLocker', 'getLockedRepository', 'findPackage', 'getVersion']);
@@ -1214,6 +1265,7 @@ Room 4000',
      * @test
      * @covers ::getComposerVersion
      */
+    #[Test]
     public function getComposerVersion_withException_returnNull()
     {
         $composerFactory = $this->createPartialMock(ComposerFactory::class, ['create', 'getLocker', 'getLockedRepository', 'findPackage', 'getVersion']);
@@ -1239,6 +1291,8 @@ Room 4000',
      * @param string $additionalConfig string from config property
      * @param mixed $expectedResult from the tested method
      */
+    #[Test]
+    #[DataProvider('getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider')]
     public function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigs_returnsButtonAttributes(
         $additionalConfig,
         $expectedResult
@@ -1264,7 +1318,7 @@ Room 4000',
      *
      * @return array[] containing additional config values and expected result of the tested method
      */
-    public function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider()
+    public static function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider()
     {
         return [
             'Only attributes in initial config' => [
@@ -1307,6 +1361,7 @@ Room 4000',
      * @test
      * @covers ::getComposerVersion
      */
+    #[Test]
     public function getComposerVersion_withFindPackageWillReturnNull()
     {
         $composerFactory = $this->createPartialMock(ComposerFactory::class, ['create', 'getLocker', 'getLockedRepository', 'findPackage', 'getVersion']);
@@ -1325,6 +1380,7 @@ Room 4000',
      *
      * @covers ::getOrderCommentField
      */
+    #[Test]
     public function getOrderCommentField_ifSetInConfiguration_returnsCommentField()
     {
         $customCommentField = 'custom_comment_field';
@@ -1346,6 +1402,7 @@ Room 4000',
      *
      * @covers ::getOrderCommentField
      */
+    #[Test]
     public function getOrderCommentField_ifNotSetInConfiguration_returnsCustomerNote()
     {
         $configData = [
@@ -1364,6 +1421,7 @@ Room 4000',
      * @test
      * @covers ::getIntegrationBaseUrl
      */
+    #[Test]
     public function getIntegrationBaseUrl_returnIntegrationBaseUrlSandbox()
     {
         $configData = [
@@ -1383,6 +1441,7 @@ Room 4000',
      * @test
      * @covers ::getIntegrationBaseUrl
      */
+    #[Test]
     public function getIntegrationBaseUrl_returnAdditionalConfigIntegrationBaseUrl()
     {
         $configData = [
@@ -1408,6 +1467,7 @@ Room 4000',
      * @test
      * @covers ::getIntegrationBaseUrl
      */
+    #[Test]
     public function getIntegrationBaseUrl_returnIntegrationBaseUrlProduction()
     {
         $configData = [

@@ -24,6 +24,8 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Sales\Model\Order;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\ObjectManager\ObjectManager;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\GiftOptionsHandler
@@ -52,6 +54,8 @@ class GiftOptionsHandlerTest extends BoltTestCase
      * @dataProvider handleGiftOptionsDataProvider
      * @covers ::handle
      */
+    #[Test]
+    #[DataProvider('handleGiftOptionsDataProvider')]
     public function handle($transaction, $comment)
     {
         $order = TestUtils::createDumpyOrder();
@@ -65,7 +69,7 @@ class GiftOptionsHandlerTest extends BoltTestCase
         TestUtils::cleanupSharedFixtures([$order]);
     }
 
-    public function handleGiftOptionsDataProvider()
+    public static function handleGiftOptionsDataProvider()
     {
         $transaction1 = json_decode(
             json_encode(

@@ -25,6 +25,7 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Bolt\Boltpay\Model\Payment as BoltPayment;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Helper\Bugsnag;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\RestoreQuotePlugin
@@ -110,6 +111,7 @@ class RestoreQuotePluginTest extends BoltTestCase
      * @test
      * @covers ::aroundRestoreQuote
      */
+    #[Test]
     public function aroundRestoreQuote_ifOrderWithPaymentMethodIsBoltPay()
     {
         $this->checkoutSession->method('getLastRealOrder')->willReturn($this->order);
@@ -130,6 +132,7 @@ class RestoreQuotePluginTest extends BoltTestCase
      * @test
      * @covers ::aroundRestoreQuote
      */
+    #[Test]
     public function aroundRestoreQuote_ifOrderWithoutPayment()
     {
         $this->checkoutSession->method('getLastRealOrder')->willReturn($this->order);
@@ -142,6 +145,7 @@ class RestoreQuotePluginTest extends BoltTestCase
      * @test
      * @covers ::aroundRestoreQuote
      */
+    #[Test]
     public function aroundRestoreQuote_ifOrderWithPaymentMethodIsNotBoltPay()
     {
         $this->checkoutSession->method('getLastRealOrder')->willReturn($this->order);

@@ -24,6 +24,8 @@ use Bolt\Boltpay\ThirdPartyModules\Magento\Reward;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Store\Model\StoreManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\Magento\Reward
@@ -65,6 +67,7 @@ class RewardTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function __construct_always_setsInternalProperties()
     {
         $instance = new \Bolt\Boltpay\ThirdPartyModules\Magento\Reward($this->configHelper, $this->httpContext);
@@ -78,6 +81,7 @@ class RewardTest extends BoltTestCase
      *
      * @covers ::filterProcessLayout
      */
+    #[Test]
     public function filterProcessLayout_notEnabledInConfig_doesNotAddLayout()
     {
         static::assertEquals([], $this->reward->filterProcessLayout([]));
@@ -90,6 +94,7 @@ class RewardTest extends BoltTestCase
      *
      * @covers ::filterProcessLayout
      */
+    #[Test]
     public function filterProcessLayout_ifEnabledInConfig_addsModuleSpecificLayout()
     {
         $store = $this->objectManager->get(StoreManagerInterface::class);
@@ -124,6 +129,8 @@ class RewardTest extends BoltTestCase
      * @param bool $displayRewardPointsInMinicartConfig
      * @param bool $customerLoggedIn
      */
+    #[Test]
+    #[DataProvider('filterMinicartAddonsLayout_withVariousStatesProvider')]
     public function filterMinicartAddonsLayout_withVariousStates_appendsLayoutIfConditionsAreMet(
         $displayRewardPointsInMinicartConfig,
         $customerLoggedIn
@@ -177,7 +184,7 @@ class RewardTest extends BoltTestCase
      *
      * @return array
      */
-    public function filterMinicartAddonsLayout_withVariousStatesProvider()
+    public static function filterMinicartAddonsLayout_withVariousStatesProvider()
     {
         return [
             [true, false],

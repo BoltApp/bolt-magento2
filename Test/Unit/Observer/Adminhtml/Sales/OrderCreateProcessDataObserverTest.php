@@ -24,6 +24,7 @@ use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
 use Magento\Quote\Model\Quote;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class OrderCreateProcessDataObserverTest
@@ -60,6 +61,7 @@ class OrderCreateProcessDataObserverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_withVersionIsGreaterThan214()
     {
         $this->productMetadata->expects(self::once())->method('getVersion')->willReturn('2.1.5');
@@ -70,6 +72,7 @@ class OrderCreateProcessDataObserverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_withVersionIsLessThan214()
     {
         $this->event->expects(self::exactly(2))->method('getData')

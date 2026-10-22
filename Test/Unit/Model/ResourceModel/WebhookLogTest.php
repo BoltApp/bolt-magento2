@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel;
 use Bolt\Boltpay\Model\ResourceModel\WebhookLog;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 class WebhookLogTest extends BoltTestCase
 {
@@ -45,6 +46,7 @@ class WebhookLogTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function construct()
     {
         self::assertEquals('bolt_webhook_log', $this->webhookLog->getMainTable());

@@ -26,6 +26,8 @@ use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Sales\Model\Order;
 use Magento\Quote\Model\Quote\Address;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\CustomFieldsHandler
@@ -83,6 +85,7 @@ class CustomFieldsHandlerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function subscribeToNewsletter_guestUser()
     {
         $orderMock = $this->createMock(Order::class);
@@ -102,6 +105,7 @@ class CustomFieldsHandlerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function subscribeToNewsletter_loggedInUser()
     {
         $orderMock = $this->createMock(Order::class);
@@ -124,6 +128,8 @@ class CustomFieldsHandlerTest extends BoltTestCase
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \ReflectionException
      */
+    #[Test]
+    #[DataProvider('handleCustomFieldsDataProvider')]
     public function handle($customFields, $comment, $needSubscribe)
     {
         $subscriberFactory = $this->createPartialMock(SubscriberFactory::class,['create','subscribeCustomerById']);
@@ -147,7 +153,7 @@ class CustomFieldsHandlerTest extends BoltTestCase
         TestUtils::cleanupSharedFixtures([$order]);
     }
 
-    public function handleCustomFieldsDataProvider()
+    public static function handleCustomFieldsDataProvider()
     {
         $customField1 = ['label' => 'Gift', 'type' => 'CHECKBOX', 'is_custom_field' => true, 'value' => false];
         $comment1 = '<br>Gift: No';

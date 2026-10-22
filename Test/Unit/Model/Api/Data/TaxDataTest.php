@@ -23,6 +23,7 @@ use Bolt\Boltpay\Model\Api\Data\ShipToStoreOption;
 use Bolt\Boltpay\Model\Api\Data\TaxData;
 use Bolt\Boltpay\Model\Api\Data\TaxResult;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class TaxDataTest
@@ -68,6 +69,7 @@ class TaxDataTest extends BoltTestCase
      *
      * @covers ::getTaxResult
      */
+    #[Test]
     public function getTaxResult()
     {
         $this->assertEquals($this->taxResult, $this->taxData->getTaxResult());
@@ -79,6 +81,7 @@ class TaxDataTest extends BoltTestCase
      *
      * @covers ::setTaxResult
      */
+    #[Test]
     public function setTaxResult()
     {
         $result = $this->taxData->setTaxResult($this->taxResult);
@@ -91,6 +94,7 @@ class TaxDataTest extends BoltTestCase
      *
      * @covers ::getShippingOption
      */
+    #[Test]
     public function getShippingOption()
     {
         $this->assertEquals($this->shippingOption, $this->taxData->getShippingOption());
@@ -102,6 +106,7 @@ class TaxDataTest extends BoltTestCase
      *
      * @covers ::setShippingOption
      */
+    #[Test]
     public function setShippingOption()
     {
         $result = $this->taxData->setShippingOption($this->shippingOption);
@@ -114,6 +119,7 @@ class TaxDataTest extends BoltTestCase
      *
      * @covers ::getShipToStoreOption
      */
+    #[Test]
     public function getShipToStoreOption()
     {
         $this->assertEquals($this->shipToStoreOption, $this->taxData->getShipToStoreOption());
@@ -125,6 +131,7 @@ class TaxDataTest extends BoltTestCase
      *
      * @covers ::setShipToStoreOption
      */
+    #[Test]
     public function setShipToStoreOption()
     {
         $result = $this->taxData->setShipToStoreOption($this->shipToStoreOption);
@@ -137,6 +144,7 @@ class TaxDataTest extends BoltTestCase
      *
      * @covers ::jsonSerialize
      */
+    #[Test]
     public function jsonSerialize()
     {
         $result = $this->taxData->jsonSerialize();

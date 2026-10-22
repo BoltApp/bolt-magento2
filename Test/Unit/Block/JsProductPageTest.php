@@ -39,6 +39,8 @@ use Magento\Framework\App\Http\Context as HttpContext;
 use Magento\Framework\App\Request\Http;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\Module\Manager;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class JsTest
@@ -71,6 +73,7 @@ class JsProductPageTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getProduct()
     {
         $simpleProduct = TestUtils::getSimpleProduct();
@@ -86,6 +89,8 @@ class JsProductPageTest extends BoltTestCase
      * @param $expected_result
      * @throws \ReflectionException
      */
+    #[Test]
+    #[DataProvider('providerIsSupportableType')]
     public function isSupportableType($typeId, $expected_result)
     {
         /** @var Product $product */
@@ -96,7 +101,7 @@ class JsProductPageTest extends BoltTestCase
         $this->assertEquals($expected_result, $result);
     }
 
-    public function providerIsSupportableType()
+    public static function providerIsSupportableType()
     {
         return [
             ['simple', true],
@@ -111,6 +116,7 @@ class JsProductPageTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function isConfigurable()
     {
         $product = TestUtils::createConfigurableProduct();
@@ -123,6 +129,7 @@ class JsProductPageTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function isDownloadable()
     {
         $product = TestUtils::createDownloadableProduct();
@@ -134,6 +141,7 @@ class JsProductPageTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function isGrouped()
     {
         $product = TestUtils::createGroupProduct();
@@ -163,6 +171,8 @@ class JsProductPageTest extends BoltTestCase
      * @param $expectedResult
      * @param $productType
      */
+    #[Test]
+    #[DataProvider('providerIsGuestCheckoutAllowed')]
     public function isGuestCheckoutAllowed($isGuestCheckoutAllowed, $isGuestCheckoutForDownloadableProductDisabled, $expectedResult, $productType = 'simple')
     {
         $store = $this->objectManager->get(\Magento\Store\Model\StoreManagerInterface::class);
@@ -200,7 +210,7 @@ class JsProductPageTest extends BoltTestCase
         TestUtils::cleanupSharedFixtures([$product]);
     }
 
-    public function providerIsGuestCheckoutAllowed()
+    public static function providerIsGuestCheckoutAllowed()
     {
         return [
             [true, true, 0, 'downloadable'],
@@ -212,6 +222,7 @@ class JsProductPageTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getStoreCurrencyCode()
     {
         $result = $this->block->getStoreCurrencyCode();
@@ -224,6 +235,8 @@ class JsProductPageTest extends BoltTestCase
      *
      * @param mixed $flag
      */
+    #[Test]
+    #[DataProvider('providerIsSaveHintsInSections')]
     public function isSaveHintsInSections($flag)
     {
         $featureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_SAVE_HINTS_IN_SECTIONS, $flag);
@@ -232,7 +245,7 @@ class JsProductPageTest extends BoltTestCase
         TestUtils::cleanupFeatureSwitch($featureSwitch);
     }
 
-    public function providerIsSaveHintsInSections()
+    public static function providerIsSaveHintsInSections()
     {
         return [
             [true],
@@ -244,6 +257,7 @@ class JsProductPageTest extends BoltTestCase
      * @test
      * @throws \ReflectionException
      */
+    #[Test]
     public function isBoltProductPage_returnsFalse()
     {
         $this->assertEquals(false, $this->block->isBoltProductPage());
@@ -253,6 +267,7 @@ class JsProductPageTest extends BoltTestCase
      * @covers ::isBoltProductPage
      * @test
      */
+    #[Test]
     public function isBoltProductPage_returnsTrue_ifFlagEnabledParentReturnsTrueAndAttributeFound()
     {
         $contextMock = $this->createMock(\Magento\Framework\View\Element\Template\Context::class);

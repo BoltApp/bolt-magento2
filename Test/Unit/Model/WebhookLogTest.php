@@ -22,6 +22,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\ResourceModel\WebhookLog\CollectionFactory;
 use Bolt\Boltpay\Model\WebhookLogFactory;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 class WebhookLogTest extends BoltTestCase
 {
@@ -55,6 +56,7 @@ class WebhookLogTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function recordAttempt()
     {
         self::assertEquals(1, $this->collectionFactory->create()->addFilter('transaction_id', self::TRANSACTION_ID)->getSize());
@@ -63,6 +65,7 @@ class WebhookLogTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function incrementAttemptCount()
     {
         $webhookLogFactory = $this->collectionFactory->create()

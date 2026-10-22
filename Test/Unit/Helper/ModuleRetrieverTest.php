@@ -27,6 +27,7 @@ use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 class ModuleRetrieverTest extends BoltTestCase
 {
@@ -52,6 +53,7 @@ class ModuleRetrieverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getInstalledModules_success_using_core_methods()
     {
         $actual = $this->moduleRetriever->getInstalledModules();
@@ -61,6 +63,7 @@ class ModuleRetrieverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getInstalledModules_success_using_database()
     {
         TestUtils::saveFeatureSwitch(Definitions::M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE, true);
@@ -71,6 +74,7 @@ class ModuleRetrieverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getInstalledModules_fail_using_database()
     {
         TestUtils::saveFeatureSwitch(Definitions::M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE, true);

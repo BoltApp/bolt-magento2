@@ -29,6 +29,8 @@ use Magento\Quote\Observer\Frontend\Quote\Address\VatValidator;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use ReflectionException;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Magento\Quote\Observer\Frontend\Quote\Address\AddressCollectTotalsObserverPlugin
@@ -106,6 +108,7 @@ class AddressCollectTotalsObserverPluginTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function __construct_always_setsProperty()
     {
         $instance = new AddressCollectTotalsObserverPlugin($this->vatValidatorMock);
@@ -118,6 +121,7 @@ class AddressCollectTotalsObserverPluginTest extends BoltTestCase
      *
      * @covers ::beforeExecute
      */
+    #[Test]
     public function beforeExecute_ifEmailIsNotCollected_collectsCustomerEmail()
     {
         $this->observerMock->method('getQuote')->willReturn($this->quoteMock);
@@ -144,6 +148,8 @@ class AddressCollectTotalsObserverPluginTest extends BoltTestCase
      *
      * @throws ReflectionException if emailBefore property is not set
      */
+    #[Test]
+    #[DataProvider('afterExecute_ifPreconditionsAreMet_restoresQuoteCustomerEmailProvider')]
     public function afterExecute_ifPreconditionsAreMet_restoresQuoteCustomerEmail(
         $customerDisableAutoGroupChange,
         $vatValidatorIsEnabledForAddress,
@@ -178,7 +184,7 @@ class AddressCollectTotalsObserverPluginTest extends BoltTestCase
      *
      * @return array[]
      */
-    public function afterExecute_ifPreconditionsAreMet_restoresQuoteCustomerEmailProvider()
+    public static function afterExecute_ifPreconditionsAreMet_restoresQuoteCustomerEmailProvider()
     {
         return [
             [

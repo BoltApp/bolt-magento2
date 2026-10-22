@@ -45,6 +45,7 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class UpdateCartContextTest
@@ -252,6 +253,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new UpdateCartContext(
@@ -315,6 +317,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getRequest
      */
+    #[Test]
     public function getRequest_always_returnsRequest()
     {
         $this->assertEquals($this->request, $this->currentMock->getRequest());
@@ -326,6 +329,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getResponse
      */
+    #[Test]
     public function getResponse_always_returnsResponse()
     {
         $this->assertEquals($this->response, $this->currentMock->getResponse());
@@ -337,6 +341,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getHookHelper
      */
+    #[Test]
     public function getHookHelper_always_returnsHookHelper()
     {
         $this->assertEquals($this->hookHelper, $this->currentMock->getHookHelper());
@@ -348,6 +353,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getBoltErrorResponse
      */
+    #[Test]
     public function getBoltErrorResponse_always_returnsBoltErrorResponse()
     {
         $this->assertEquals($this->errorResponse, $this->currentMock->getBoltErrorResponse());
@@ -359,6 +365,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getLogHelper
      */
+    #[Test]
     public function getLogHelper_always_returnsLogHelper()
     {
         $this->assertEquals($this->logHelper, $this->currentMock->getLogHelper());
@@ -370,6 +377,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getBugsnag
      */
+    #[Test]
     public function getBugsnag_always_returnsBugsnag()
     {
         $this->assertEquals($this->bugsnag, $this->currentMock->getBugsnag());
@@ -381,6 +389,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getRegionModel
      */
+    #[Test]
     public function getRegionModel_always_returnsRegionModel()
     {
         $this->assertEquals($this->regionModel, $this->currentMock->getRegionModel());
@@ -392,6 +401,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getOrderHelper
      */
+    #[Test]
     public function getOrderHelper_always_returnsOrderHelper()
     {
         $this->assertEquals($this->orderHelper, $this->currentMock->getOrderHelper());
@@ -403,6 +413,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getCartHelper
      */
+    #[Test]
     public function getCartHelper_always_returnsCartHelper()
     {
         $this->assertEquals($this->cartHelper, $this->currentMock->getCartHelper());
@@ -414,6 +425,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getRuleRepository
      */
+    #[Test]
     public function getRuleRepository_always_returnsRuleRepository()
     {
         $this->assertEquals($this->ruleRepository, $this->currentMock->getRuleRepository());
@@ -425,6 +437,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getUsageFactory
      */
+    #[Test]
     public function getUsageFactory_always_returnsUsageFactory()
     {
         $this->assertEquals($this->usageFactory, $this->currentMock->getUsageFactory());
@@ -436,6 +449,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getObjectFactory
      */
+    #[Test]
     public function getObjectFactory_always_returnsDataObjectFactory()
     {
         $this->assertEquals($this->objectFactory, $this->currentMock->getObjectFactory());
@@ -447,6 +461,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getTimezone
      */
+    #[Test]
     public function getTimezone_always_returnsTimezoneInterface()
     {
         $this->assertEquals($this->timezone, $this->currentMock->getTimezone());
@@ -458,6 +473,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getCustomerFactory
      */
+    #[Test]
     public function getCustomerFactory_always_returnsCustomerFactory()
     {
         $this->assertEquals($this->customerFactory, $this->currentMock->getCustomerFactory());
@@ -469,6 +485,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getConfigHelper
      */
+    #[Test]
     public function getConfigHelper_always_returnsConfigHelper()
     {
         $this->assertEquals($this->configHelper, $this->currentMock->getConfigHelper());
@@ -480,6 +497,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getCheckoutSession
      */
+    #[Test]
     public function getCheckoutSession_always_returnsCheckoutSession()
     {
         $this->assertEquals($this->checkoutSession, $this->currentMock->getCheckoutSession());
@@ -491,6 +509,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getDiscountHelper
      */
+    #[Test]
     public function getDiscountHelper_always_returnsDiscountHelper()
     {
         $this->assertEquals($this->discountHelper, $this->currentMock->getDiscountHelper());
@@ -502,6 +521,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getTotalsCollector
      */
+    #[Test]
     public function getTotalsCollector_always_returnsTotalsCollector()
     {
         $this->assertEquals($this->totalsCollector, $this->currentMock->getTotalsCollector());
@@ -513,6 +533,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getSessionHelper
      */
+    #[Test]
     public function getSessionHelper_always_returnsSessionHelper()
     {
         $this->assertEquals($this->sessionHelper, $this->currentMock->getSessionHelper());
@@ -524,6 +545,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getCache
      */
+    #[Test]
     public function getCache_always_returnsCache()
     {
         $this->assertEquals($this->cache, $this->currentMock->getCache());
@@ -535,6 +557,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getEventsForThirdPartyModules
      */
+    #[Test]
     public function getEventsForThirdPartyModules_always_returnsEventsForThirdPartyModules()
     {
         $this->assertEquals($this->eventsForThirdPartyModules, $this->currentMock->getEventsForThirdPartyModules());
@@ -546,6 +569,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getProductRepositoryInterface
      */
+    #[Test]
     public function getProductRepositoryInterface_always_returnsProductRepositoryInterface()
     {
         $this->assertEquals($this->productRepositoryInterface, $this->currentMock->getProductRepositoryInterface());
@@ -557,6 +581,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getStockStateInterface
      */
+    #[Test]
     public function getStockStateInterface_always_returnsStockStateInterface()
     {
         $this->assertEquals($this->stockStateInterface, $this->currentMock->getStockStateInterface());
@@ -568,6 +593,7 @@ class UpdateCartContextTest extends BoltTestCase
      *
      * @covers ::getCartRepositoryInterface
      */
+    #[Test]
     public function getCartRepositoryInterface_always_returnsCartRepositoryInterface()
     {
         $this->assertEquals($this->cartRepositoryInterface, $this->currentMock->getCartRepositoryInterface());

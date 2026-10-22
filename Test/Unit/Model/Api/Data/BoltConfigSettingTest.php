@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\BoltConfigSetting;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class BoltConfigSettingTest
@@ -39,6 +40,7 @@ class BoltConfigSettingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetValue()
     {
         $this->boltConfigSetting->setValue('value');
@@ -48,6 +50,7 @@ class BoltConfigSettingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetName()
     {
         $this->boltConfigSetting->setName('name');
@@ -57,6 +60,7 @@ class BoltConfigSettingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function jsonSerialize()
     {
         $this->boltConfigSetting->setName('test');

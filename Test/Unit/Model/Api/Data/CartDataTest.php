@@ -22,6 +22,8 @@ use Bolt\Boltpay\Model\Api\Data\CartData;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\Reflection\TypeProcessor;
 use Zend\Code\Reflection\ClassReflection;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class CartDataTest
@@ -69,6 +71,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::getDisplayId
      */
+    #[Test]
     public function getDisplayId()
     {
         $this->assertEquals(self::DISPLAYID, $this->cartData->getDisplayId());
@@ -80,6 +83,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::setDisplayId
      */
+    #[Test]
     public function setDisplayId()
     {
         $result = $this->cartData->setDisplayId(self::DISPLAYID);
@@ -92,6 +96,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::getCurrency
      */
+    #[Test]
     public function getCurrency()
     {
         $this->assertEquals(self::CURRENCY, $this->cartData->getCurrency());
@@ -103,6 +108,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::setCurrency
      */
+    #[Test]
     public function setCurrency()
     {
         $result = $this->cartData->setCurrency(self::CURRENCY);
@@ -115,6 +121,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::getItems
      */
+    #[Test]
     public function getItems()
     {
         $this->assertEquals(self::ITEMS, $this->cartData->getItems());
@@ -126,6 +133,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::setItems
      */
+    #[Test]
     public function setItems()
     {
         $result = $this->cartData->setItems(self::ITEMS);
@@ -138,6 +146,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::getDiscounts
      */
+    #[Test]
     public function getDiscounts()
     {
         $this->assertEquals(self::DISCOUNTS, $this->cartData->getDiscounts());
@@ -149,6 +158,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::setDiscounts
      */
+    #[Test]
     public function setDiscounts()
     {
         $result = $this->cartData->setDiscounts(self::DISCOUNTS);
@@ -161,6 +171,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::getTotalAmount
      */
+    #[Test]
     public function getTotalAmount()
     {
         $this->assertEquals(self::TOTALAMOUNT, $this->cartData->getTotalAmount());
@@ -172,6 +183,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::setTotalAmount
      */
+    #[Test]
     public function setTotalAmount()
     {
         $result = $this->cartData->setTotalAmount(self::TOTALAMOUNT);
@@ -184,6 +196,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::getTaxAmount
      */
+    #[Test]
     public function getTaxAmount()
     {
         $this->assertEquals(self::TAXAMOUNT, $this->cartData->getTaxAmount());
@@ -195,6 +208,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::setTaxAmount
      */
+    #[Test]
     public function setTaxAmount()
     {
         $result = $this->cartData->setTaxAmount(self::TAXAMOUNT);
@@ -207,6 +221,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::getOrderReference
      */
+    #[Test]
     public function getOrderReference()
     {
         $this->assertEquals(self::ORDERREFERENCE, $this->cartData->getOrderReference());
@@ -218,6 +233,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::setOrderReference
      */
+    #[Test]
     public function setOrderReference()
     {
         $result = $this->cartData->setOrderReference(self::ORDERREFERENCE);
@@ -230,6 +246,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::getShipments
      */
+    #[Test]
     public function getShipments()
     {
         $this->assertEquals(self::SHIPMENTS, $this->cartData->getShipments());
@@ -241,6 +258,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::setShipments
      */
+    #[Test]
     public function setShipments()
     {
         $result = $this->cartData->setShipments(self::SHIPMENTS);
@@ -253,6 +271,7 @@ class CartDataTest extends BoltTestCase
      *
      * @covers ::getCartData
      */
+    #[Test]
     public function getCartData()
     {
         $result = $this->cartData->getCartData();
@@ -279,6 +298,8 @@ class CartDataTest extends BoltTestCase
      * @param $methodName
      * @throws \ReflectionException
      */
+    #[Test]
+    #[DataProvider('processTypeNameDataProvider')]
     public function processTypeName($methodName)
     {
         $classReflection = new ClassReflection(CartDataInterface::class);
@@ -287,7 +308,7 @@ class CartDataTest extends BoltTestCase
         self::assertEquals('mixed[]', $this->typeProcessor->register($this->typeProcessor->getGetterReturnType($methodReflection)['type']));
     }
 
-    public function processTypeNameDataProvider()
+    public static function processTypeNameDataProvider()
     {
         return [
             ['getItems'],

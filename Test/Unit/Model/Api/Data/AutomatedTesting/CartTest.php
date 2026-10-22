@@ -21,6 +21,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Cart;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\PriceProperty;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\CartItem;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class CartItemTest
@@ -65,6 +66,7 @@ class CartTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetExpectedShippingMethods()
     {
         $this->assertEquals(['bolt_shipping'], $this->cart->getExpectedShippingMethods());
@@ -73,6 +75,7 @@ class CartTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetTax()
     {
         $this->assertEquals('4.00', $this->cart->getTax());
@@ -81,6 +84,7 @@ class CartTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetShipping()
     {
         $this->assertEquals($this->priceProperty, $this->cart->getShipping());
@@ -89,6 +93,7 @@ class CartTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetItems()
     {
         $this->assertEquals([$this->cartItem], $this->cart->getItems());
@@ -97,6 +102,7 @@ class CartTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetSubTotal()
     {
         $this->assertEquals('100', $this->cart->getSubTotal());
@@ -105,6 +111,7 @@ class CartTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function jsonSerialize()
     {
         $result = $this->cart->jsonSerialize();

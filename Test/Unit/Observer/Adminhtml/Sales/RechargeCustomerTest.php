@@ -28,6 +28,7 @@ use Magento\Framework\App\Request\Http;
 use Magento\Framework\Event\Observer;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class RechargeCustomerTest
@@ -89,6 +90,7 @@ class RechargeCustomerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute()
     {
         $this->paymentMock->expects(self::any())->method('getMethod')->willReturn(\Bolt\Boltpay\Model\Payment::METHOD_CODE);
@@ -116,6 +118,7 @@ class RechargeCustomerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_withoutPayment()
     {
         $this->orderMock->expects(self::once())->method('getPayment')->willReturn(null);
@@ -127,6 +130,7 @@ class RechargeCustomerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_withInvalidPaymentMethod()
     {
         $this->paymentMock->expects(self::any())->method('getMethod')->willReturn('is_not_boltpay');
@@ -141,6 +145,7 @@ class RechargeCustomerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_withException()
     {
         $this->paymentMock->expects(self::any())->method('getMethod')->willReturn(\Bolt\Boltpay\Model\Payment::METHOD_CODE);

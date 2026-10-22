@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Block\Adminhtml\Customer\CreditCard\Tab\View;
 
 use Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View\CreditCard;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class CreditCardTest extends BoltTestCase
 {
@@ -35,6 +36,7 @@ class CreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function _prepareColumns()
     {
         $this->block->expects(self::exactly(4))

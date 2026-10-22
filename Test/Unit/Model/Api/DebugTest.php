@@ -30,6 +30,7 @@ use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class DebugTest
@@ -183,6 +184,7 @@ class DebugTest extends BoltTestCase
      *
      * @covers ::debug
      */
+    #[Test]
     public function debug_successful()
     {
         $this->createRequest([]);

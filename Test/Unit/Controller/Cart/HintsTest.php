@@ -24,6 +24,7 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class HintsTest
@@ -80,6 +81,7 @@ class HintsTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new Hints(
@@ -98,6 +100,7 @@ class HintsTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function hintsExecute()
     {
         $hints = [
@@ -139,6 +142,7 @@ class HintsTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function hintsExecute_throwException()
     {
         $expected = [

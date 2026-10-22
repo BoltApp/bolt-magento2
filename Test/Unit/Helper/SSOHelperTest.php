@@ -32,6 +32,8 @@ use Magento\Framework\DataObjectFactory;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\SSOHelper
@@ -95,6 +97,7 @@ class SSOHelperTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new SSOHelper(
@@ -116,6 +119,7 @@ class SSOHelperTest extends BoltTestCase
      *
      * @covers ::getOAuthConfiguration
      */
+    #[Test]
     public function getOAuthConfiguration_returnsCorrectValue()
     {
         $store = $this->createMock(Store::class);
@@ -135,6 +139,7 @@ class SSOHelperTest extends BoltTestCase
      *
      * @covers ::exchangeToken
      */
+    #[Test]
     public function exchangeToken_returnsExceptionMessage_ifExceptionIsThrown()
     {
         $this->storeManager->expects(static::once())->method('getStore')->willThrowException(new Exception('test exception'));
@@ -151,6 +156,8 @@ class SSOHelperTest extends BoltTestCase
      * @param mixed        $responseBody
      * @param mixed|string $expected
      */
+    #[Test]
+    #[DataProvider('exchangeTokenProvider')]
     public function exchangeToken_returnsCorrectValue_forAllCases($responseBody, $expected)
     {
         $store = $this->createMock(Store::class);
@@ -176,7 +183,7 @@ class SSOHelperTest extends BoltTestCase
      *
      * @return array
      */
-    public function exchangeTokenProvider()
+    public static function exchangeTokenProvider()
     {
         return [
             ['responseBody' => [], 'expected' => 'empty response'],
@@ -192,6 +199,7 @@ class SSOHelperTest extends BoltTestCase
      *
      * @covers ::parseAndValidateJWT
      */
+    #[Test]
     public function parseAndValidateJWT_returnsCorrectValue_ifJWTParseThrowsException()
     {
         $this->currentMock->expects(static::once())->method('getPayload')->willThrowException(new Exception('test exception'));
@@ -211,6 +219,8 @@ class SSOHelperTest extends BoltTestCase
      * @param mixed        $payload
      * @param mixed|string $expected
      */
+    #[Test]
+    #[DataProvider('parseAndValidateJWTProvider')]
     public function parseAndValidateJWT_returnsCorrectValue_forAllCases($payload, $expected)
     {
         $this->currentMock->expects(static::once())->method('getPayload')->willReturn($payload);
@@ -225,7 +235,7 @@ class SSOHelperTest extends BoltTestCase
      *
      * @return array
      */
-    public function parseAndValidateJWTProvider()
+    public static function parseAndValidateJWTProvider()
     {
         return [
             [

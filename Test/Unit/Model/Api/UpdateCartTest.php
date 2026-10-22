@@ -43,6 +43,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class UpdateCartTest
@@ -434,6 +435,7 @@ class UpdateCartTest extends BoltTestCase
      * that sets internal properties
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $this->initCurrentMock();
@@ -456,6 +458,7 @@ class UpdateCartTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_validateQuoteFail_returnFalse()
     {
         $this->initCurrentMock(['validateQuote']);
@@ -479,6 +482,7 @@ class UpdateCartTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_addCoupon_sendSuccessResponse_returnTrue()
     {
         $requestCart = $this->getRequestCart();
@@ -573,6 +577,7 @@ class UpdateCartTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_removeCoupon_sendSuccessResponse_returnTrue()
     {
         $requestCart = $this->getRequestCart();
@@ -679,6 +684,7 @@ class UpdateCartTest extends BoltTestCase
      *
      * @covers ::discountHandler
      */
+    #[Test]
     public function discountHandler_applyDiscount_sendSuccessResponse()
     {
         $requestCart = $this->getRequestCart();
@@ -757,6 +763,7 @@ class UpdateCartTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_addItem_sendSuccessResponse_returnTrue()
     {
         $requestCart = $this->getRequestCart();
@@ -889,6 +896,7 @@ class UpdateCartTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_removeItem_sendSuccessResponse_returnTrue()
     {
         $requestCart = $this->getRequestCart();
@@ -1013,6 +1021,7 @@ class UpdateCartTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_preProcessWebhook_throwLocalizedException()
     {
         $requestCart = $this->getRequestCart();
@@ -1049,6 +1058,7 @@ class UpdateCartTest extends BoltTestCase
      *
      * @covers ::generateResult
      */
+    #[Test]
     public function generateResult()
     {
         $immutableQuoteMock = $this->getQuoteMock();
@@ -1104,6 +1114,7 @@ class UpdateCartTest extends BoltTestCase
      *
      * @covers ::getQuoteCart
      */
+    #[Test]
     public function getQuoteCart()
     {
         $this->initCurrentMock();
@@ -1133,6 +1144,7 @@ class UpdateCartTest extends BoltTestCase
      *
      * @covers ::getQuoteCart
      */
+    #[Test]
     public function getQuoteCart_throwException()
     {
         $this->initCurrentMock();

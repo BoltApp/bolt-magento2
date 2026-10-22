@@ -21,6 +21,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\Action\Context;
 use Bolt\Boltpay\Controller\Customer\CreditCard;
 use Magento\Framework\App\ViewInterface;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class CreditCardTest
@@ -69,6 +70,7 @@ class CreditCardTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute()
     {
         $this->_view->expects(self::once())->method('loadLayout')->willReturnSelf();

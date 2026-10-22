@@ -23,6 +23,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\App\ObjectManager;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 class ExternalCustomerEntityTest extends BoltTestCase
 {
@@ -61,6 +62,7 @@ class ExternalCustomerEntityTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetExternalID()
     {
         $this->externalCustomerEntity->setExternalID('test_external_id');
@@ -70,6 +72,7 @@ class ExternalCustomerEntityTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetCustomerID()
     {
         $this->externalCustomerEntity->setCustomerID(123);

@@ -37,6 +37,7 @@ use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Framework\Module\Manager;
 use Magento\Framework\App\DeploymentConfig;
 use Magento\Framework\Encryption\EncryptorInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Class ProductEventManagerTest
@@ -162,6 +163,7 @@ class ProductEventManagerTest extends BoltTestCase
      * @test
      * @dataProvider productEventTypes
      */
+    #[DataProvider('productEventTypes')]
     public function testPublishProductEvent($productEventType)
     {
         $this->productEventManager->publishProductEvent(self::PRODUCT_ID, $productEventType);
@@ -175,6 +177,7 @@ class ProductEventManagerTest extends BoltTestCase
      * @test
      * @dataProvider productEventTypes
      */
+    #[DataProvider('productEventTypes')]
     public function testDeleteProductEvent($productEventType)
     {
         $this->productEventManager->publishProductEvent(self::PRODUCT_ID, $productEventType);
@@ -412,7 +415,7 @@ class ProductEventManagerTest extends BoltTestCase
      *
      * @return array
      */
-    public function productEventTypes(): array
+    public static function productEventTypes(): array
     {
         return [
             [ProductEventInterface::TYPE_CREATE],

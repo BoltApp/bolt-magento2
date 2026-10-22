@@ -21,6 +21,7 @@ use Bolt\Boltpay\Model\ResourceModel\WebhookLog\Collection;
 use Bolt\Boltpay\Model\WebhookLogFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 class CollectionTest extends BoltTestCase
 {
@@ -56,6 +57,7 @@ class CollectionTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getWebhookLogByTransactionId_returnNoItems()
     {
         $result = $this->webhookLogCollection->getWebhookLogByTransactionId(self::TRANSACTION_ID, 'notfound');
@@ -65,6 +67,7 @@ class CollectionTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getWebhookLogByTransactionId()
     {
         $webhookFactory = $this->webhookLogFactory->create()->recordAttempt(self::TRANSACTION_ID, self::HOOK_TYPE);;

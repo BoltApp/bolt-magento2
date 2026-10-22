@@ -31,6 +31,8 @@ use Magento\Customer\Model\Session;
 use Bolt\Boltpay\Helper\Config;
 use Magento\Customer\Controller\Ajax\Login;
 use Zend\Stdlib\Parameters;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\AbstractLoginPlugin
@@ -106,6 +108,8 @@ class AbstractLoginPluginTest extends BoltTestCase
      * @param $isLoggedIn
      * @throws \ReflectionException
      */
+    #[Test]
+    #[DataProvider('dataProvider_isCustomerLoggedIn')]
     public function isCustomerLoggedIn($isLoggedIn)
     {
         if ($isLoggedIn) {
@@ -114,7 +118,7 @@ class AbstractLoginPluginTest extends BoltTestCase
         $this->assertEquals($isLoggedIn, TestHelper::invokeMethod($this->abstractLoginPlugin, 'isCustomerLoggedIn'));
     }
 
-    public function dataProvider_isCustomerLoggedIn()
+    public static function dataProvider_isCustomerLoggedIn()
     {
         return [
             [false], [true]
@@ -125,6 +129,7 @@ class AbstractLoginPluginTest extends BoltTestCase
      * @test
      * @throws \ReflectionException
      */
+    #[Test]
     public function hasCart_withQuoteItems()
     {
         $quote = TestUtils::createQuote();
@@ -145,6 +150,7 @@ class AbstractLoginPluginTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setBoltInitiateCheckout()
     {
         TestHelper::invokeMethod($this->abstractLoginPlugin, 'setBoltInitiateCheckout');
@@ -155,6 +161,7 @@ class AbstractLoginPluginTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function notifyException()
     {
         $bugsnag = $this->createPartialMock(
@@ -172,6 +179,7 @@ class AbstractLoginPluginTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function shouldRedirectToCartPage_ifShouldDisableRedirectCustomerToCartPageAfterTheyLogInIsFalse_willReturnFalse()
     {
         $login = $this->objectManager->create(Login::class);
@@ -183,6 +191,7 @@ class AbstractLoginPluginTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function shouldRedirectToCartPage_willReturnTrue()
     {
         $login = $this->objectManager->create(Login::class);

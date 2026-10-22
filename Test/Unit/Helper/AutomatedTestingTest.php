@@ -65,6 +65,7 @@ use Magento\Sales\Model\Order as ModelOrder;
 use Magento\Sales\Model\Order\Address as ModelOrderAddress;
 use Magento\Sales\Model\Order\Item as ModelOrderItem;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\AutomatedTesting
@@ -240,6 +241,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getAutomatedTestingConfig_exceptionThrown_returnsErrorString()
     {
         $this->currentMock->expects(static::once())->method('getProduct')->willThrowException(new Exception('test error'));
@@ -253,6 +255,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getAutomatedTestingConfig_noSimpleProductsFound_returnsErrorString()
     {
         $this->currentMock->expects(static::once())->method('getProduct')->with('simple')->willReturn(null);
@@ -265,6 +268,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getAutomatedTestingConfig_noShippingMethodsFound_returnsErrorString()
     {
         $product = $this->createMock(Product::class);
@@ -282,6 +286,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getAutomatedTestingConfig_noErrors_returnsSimpleVirtualAndSaleProducts()
     {
         $product = $this->createMock(Product::class);
@@ -329,6 +334,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getAutomatedTestingConfig_noErrorsButNoVirtualProducts_returnsOnlySimpleProduct()
     {
         $product = $this->createMock(Product::class);
@@ -376,6 +382,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getProduct_returnsPhysicalProduct()
     {
         $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->withConsecutive(
@@ -399,6 +406,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getProduct_returnsSaleProduct()
     {
         $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->withConsecutive(
@@ -428,6 +436,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getProduct_returnsNull_ifNoProductSatisfiesConditions()
     {
         $this->searchCriteriaBuilder->expects(static::exactly(3))->method('addFilter')->withConsecutive(
@@ -446,6 +455,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function convertToStoreItem_returnsNull_ifProductIsNull()
     {
         static::assertEquals(null, TestHelper::invokeMethod($this->currentMock, 'convertToStoreItem', [null, 'virtual']));
@@ -454,6 +464,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function convertToStoreItem_returnsStoreItem_ifProductIsNotNull()
     {
         $product = $this->createMock(Product::class);
@@ -472,6 +483,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function createQuoteWithItem_returnsQuote()
     {
         $this->quoteManagement->expects(static::once())->method('createEmptyCart')->willReturn(1);
@@ -500,6 +512,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getShippingMethods_returnsEmptyArray_ifNoShippingMethods()
     {
         $address = $this->createMock(Address::class);
@@ -512,6 +525,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getShippingMethods_returnsCorrectShippingMethods()
     {
         $address = $this->createPartialMock(Address::class, ['getGroupedAllShippingRates', 'setCollectShippingRates', 'setShippingMethod', 'save']);
@@ -539,6 +553,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getPastOrder_returnsOrderWithNonZeroTaxAndDiscount()
     {
         $sortOrder = $this->createMock(SortOrder::class);
@@ -567,6 +582,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getPastOrder_returnsDefaultOrder()
     {
         $sortOrder = $this->createMock(SortOrder::class);
@@ -595,6 +611,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function convertToAddress_returnsNull_ifAddressIsNull()
     {
         static::assertEquals(null, TestHelper::invokeMethod($this->currentMock, 'convertToAddress', [null]));
@@ -603,6 +620,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function convertToOrder_returnsNull_ifOrderIsNull()
     {
         static::assertEquals(null, TestHelper::invokeMethod($this->currentMock, 'convertToOrder', [null]));
@@ -611,6 +629,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function convertToAddress_returnsAddress_ifAddressIsNotNull()
     {
         $addressIn = $this->createMock(ModelOrderAddress::class);
@@ -638,6 +657,7 @@ class AutomatedTestingTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function convertToOrder_returnsOrder_ifOrderIsNotNull()
     {
         $orderIn = $this->createMock(ModelOrder::class);

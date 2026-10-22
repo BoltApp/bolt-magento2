@@ -34,6 +34,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Exception;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\GetAccount
@@ -180,6 +181,7 @@ class GetAccountTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_throwsException_ifVerifySignatureFails()
     {
         $this->expectException(WebApiException::class);
@@ -191,6 +193,7 @@ class GetAccountTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_throwsException_ifEmailIsEmpty()
     {
         $this->createRequest([]);
@@ -217,6 +220,7 @@ class GetAccountTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_throwsException_ifEmailNotFound()
     {
         $this->createRequest([]);
@@ -243,6 +247,7 @@ class GetAccountTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_throwsException_ifExceptionIsThrown()
     {
         $exception = new Exception();
@@ -280,6 +285,7 @@ class GetAccountTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_returnsCustomerId_ifEverythingSucceeds()
     {
         $customer = TestUtils::createCustomer($this->websiteId, $this->storeId, [

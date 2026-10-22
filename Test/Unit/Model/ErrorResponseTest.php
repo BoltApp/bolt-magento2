@@ -19,6 +19,8 @@ namespace Bolt\Boltpay\Test\Unit\Model;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\ErrorResponse;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ErrorResponseTest
@@ -49,6 +51,8 @@ class ErrorResponseTest extends BoltTestCase
      * @param  $additionalData
      * @param  $expected
      */
+    #[Test]
+    #[DataProvider('providerPrepareErrorMessage')]
     public function prepareErrorMessage($errCode, $message, $additionalData, $expected)
     {
         $result = $this->currentMock->prepareErrorMessage($errCode, $message, $additionalData);
@@ -58,7 +62,7 @@ class ErrorResponseTest extends BoltTestCase
     /**
      * Data provider for {@see prepareErrorMessage}
      */
-    public function providerPrepareErrorMessage()
+    public static function providerPrepareErrorMessage()
     {
         return [
             [
@@ -88,6 +92,8 @@ class ErrorResponseTest extends BoltTestCase
      * @param  $additionalData
      * @param  $expected
      */
+    #[Test]
+    #[DataProvider('providerPrepareUpdateCartErrorMessage')]
     public function prepareUpdateCartErrorMessage($errCode, $message, $additionalData, $expected)
     {
         $result = $this->currentMock->prepareErrorMessage($errCode, $message, $additionalData);
@@ -97,7 +103,7 @@ class ErrorResponseTest extends BoltTestCase
     /**
      * Data provider for {@see prepareUpdateCartErrorMessage}
      */
-    public function providerPrepareUpdateCartErrorMessage()
+    public static function providerPrepareUpdateCartErrorMessage()
     {
         return [
             [

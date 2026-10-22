@@ -27,6 +27,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\Exception\NoSuchEntityException;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\Attributes\Test;
 
 class ExternalCustomerEntityRepositoryTest extends BoltTestCase
 {
@@ -71,6 +72,7 @@ class ExternalCustomerEntityRepositoryTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getByExternalID_throwsNoSuchEntityException_ifNotFound()
     {
         $externalCustomerEntityCollectionMock = $this->createMock(ExternalCustomerEntityCollection::class);
@@ -83,6 +85,7 @@ class ExternalCustomerEntityRepositoryTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getByExternalID_returnsCorrectResult_ifFound()
     {
         $externalCustomerEntityCollectionMock = $this->createMock(ExternalCustomerEntityCollection::class);
@@ -100,6 +103,7 @@ class ExternalCustomerEntityRepositoryTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function upsert_createsNewEntry_ifNotFound()
     {
         $externalCustomerEntityCollectionMock = $this->createMock(ExternalCustomerEntityCollection::class);
@@ -123,6 +127,7 @@ class ExternalCustomerEntityRepositoryTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function upsert_updatesEntry_ifFound()
     {
         $externalCustomerEntityCollectionMock = $this->createMock(ExternalCustomerEntityCollection::class);

@@ -32,6 +32,8 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use ReflectionException;
 use Bolt\Boltpay\Helper\Log as BoltLogger;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Bugsnag
@@ -110,6 +112,8 @@ class BugsnagTest extends BoltTestCase
      * @param string $releaseStage expected to be set to Bugsnag client
      * @param bool   $testEnv to mock env variable or not
      */
+    #[Test]
+    #[DataProvider('__construct_inVariousSandboxStates_setsAppropriateReleaseStageProvider')]
     public function __construct_inVariousSandboxStates_setsAppropriateReleaseStage($isSandboxModeSet, $releaseStage, $testEnv)
     {
         $this->configHelperMock->expects(static::any())->method('isSandboxModeSet')->willReturn($isSandboxModeSet);
@@ -156,7 +160,7 @@ class BugsnagTest extends BoltTestCase
      *
      * @return array containing sandbox mode flag and appropriate release stage
      */
-    public function __construct_inVariousSandboxStates_setsAppropriateReleaseStageProvider()
+    public static function __construct_inVariousSandboxStates_setsAppropriateReleaseStageProvider()
     {
         return [
             ['isSandboxModeSet' => true, 'releaseStage' => Bugsnag::STAGE_DEVELOPMENT, 'testEnv' => false],
@@ -171,6 +175,7 @@ class BugsnagTest extends BoltTestCase
      *
      * @covers ::notifyException
      */
+    #[Test]
     public function notifyException_always_executesBugsnagNotifyException()
     {
         $exception = new Exception('Expected exception message');
@@ -186,6 +191,7 @@ class BugsnagTest extends BoltTestCase
      *
      * @covers ::notifyError
      */
+    #[Test]
     public function notifyError_always_callsBugsnagNotifyError()
     {
         $name = 'LocalizedException: ';
@@ -202,6 +208,7 @@ class BugsnagTest extends BoltTestCase
      *
      * @covers ::registerCallback
      */
+    #[Test]
     public function registerCallback_always_callsBugsnagRegisterCallback()
     {
         $callback = function () {
@@ -218,6 +225,7 @@ class BugsnagTest extends BoltTestCase
      *
      * @throws ReflectionException if addCommonMetaData method is not defined
      */
+    #[Test]
     public function addCommonMetaData_always_registersBugsnagCallback()
     {
         $this->storeManagerMock->expects(static::once())->method('getStore')->willReturnSelf();

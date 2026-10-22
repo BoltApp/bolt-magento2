@@ -28,6 +28,8 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Model\ScopeInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class BlockTraitTest
@@ -102,6 +104,8 @@ JSON;
      * @param $isInstantCheckoutButton
      * @param $expected
      */
+    #[Test]
+    #[DataProvider('dataProvider_isInstantCheckoutButton')]
     public function isInstantCheckoutButton($isInstantCheckoutButton, $expected)
     {
         $featureSwitch = TestUtils::saveFeatureSwitch(Definitions::M2_INSTANT_BOLT_CHECKOUT_BUTTON, $isInstantCheckoutButton);
@@ -110,7 +114,7 @@ JSON;
 
     }
 
-    public function dataProvider_isInstantCheckoutButton()
+    public static function dataProvider_isInstantCheckoutButton()
     {
         return [
             [true, true],
@@ -121,6 +125,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getCheckoutCdnUrl()
     {
         $this->assertEquals(self::CDN_URL, $this->block->getCheckoutCdnUrl());
@@ -133,6 +138,8 @@ JSON;
      * @param $shouldTrackCheckoutFunnel
      * @param $expected
      */
+    #[Test]
+    #[DataProvider('dataProvider_shouldTrackCheckoutFunnel')]
     public function shouldTrackCheckoutFunnel($shouldTrackCheckoutFunnel, $expected)
     {
         $configData = [
@@ -148,7 +155,7 @@ JSON;
         $this->assertEquals($expected, $this->block->shouldTrackCheckoutFunnel());
     }
 
-    public function dataProvider_shouldTrackCheckoutFunnel()
+    public static function dataProvider_shouldTrackCheckoutFunnel()
     {
         return [
             [true, true],
@@ -165,6 +172,8 @@ JSON;
      * @param $signingSecretKey
      * @param $expected
      */
+    #[Test]
+    #[DataProvider('dataProvider_isKeyMissing')]
     public function isKeyMissing($checkoutKey, $apiKey, $signingSecretKey, $expected)
     {
         $configData = [
@@ -192,7 +201,7 @@ JSON;
         $this->assertEquals($expected, $this->block->isKeyMissing());
     }
 
-    public function dataProvider_isKeyMissing()
+    public static function dataProvider_isKeyMissing()
     {
         return [
             ['checkout_key', 'api_key', 'signing_secret_key', false],
@@ -205,6 +214,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getPageBlacklist()
     {
         $this->getPageFilters();
@@ -228,6 +238,7 @@ JSON;
     /**
      * @test
      */
+    #[Test]
     public function getPageWhitelist()
     {
         $this->getPageFilters();

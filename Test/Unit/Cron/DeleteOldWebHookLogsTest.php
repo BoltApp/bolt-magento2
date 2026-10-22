@@ -26,6 +26,7 @@ use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Stdlib\DateTime\DateTime;
 use Bolt\Boltpay\Model\ResourceModel\WebhookLog\CollectionFactory;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class DeleteOldWebHookLogsTest
@@ -76,6 +77,7 @@ class DeleteOldWebHookLogsTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute()
     {
         $this->featureSwitches->method('isAPIDrivenIntegrationEnabled')->willReturn(false);

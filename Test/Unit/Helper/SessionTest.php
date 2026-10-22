@@ -29,6 +29,8 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\App\Cache;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class SessionTest
@@ -74,6 +76,8 @@ class SessionTest extends BoltTestCase
      * @test
      * @dataProvider getCheckoutSession_withAreaIsNotAdminProvider
      */
+    #[Test]
+    #[DataProvider('getCheckoutSession_withAreaIsNotAdminProvider')]
     public function getCheckoutSession_withAreaIsNotAdmin($data)
     {
         $appState = $this->objectManager->create(State::class);
@@ -83,7 +87,7 @@ class SessionTest extends BoltTestCase
         self::assertEquals($this->checkoutSession, $result);
     }
 
-    public function getCheckoutSession_withAreaIsNotAdminProvider()
+    public static function getCheckoutSession_withAreaIsNotAdminProvider()
     {
         return [
             ['data' => ['area' => Area::AREA_GLOBAL]],
@@ -98,6 +102,7 @@ class SessionTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function saveSession()
     {
         $this->session->saveSession(self::QUOTE_ID, $this->checkoutSession);
@@ -116,6 +121,7 @@ class SessionTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setSession_withSessionEmulationIsDisabled()
     {
         $result = TestHelper::invokeMethod($this->session, 'setSession', [$this->checkoutSession, self::SESSION_ID, self::STORE_ID]);
@@ -126,6 +132,7 @@ class SessionTest extends BoltTestCase
      * @covers ::setSession
      * @test
      */
+    #[Test]
     public function setSession_withSessionEmulationIsEnabled()
     {
         $store = $this->objectManager->get(\Magento\Store\Model\StoreManagerInterface::class);
@@ -147,6 +154,7 @@ class SessionTest extends BoltTestCase
      * @test
      * @covers ::replaceQuote
      */
+    #[Test]
     public function replaceQuote()
     {
         $quote = TestUtils::createQuote();
@@ -159,6 +167,7 @@ class SessionTest extends BoltTestCase
      * @test
      * @covers ::loadSession
      */
+    #[Test]
     public function loadSession_withAreaCodeIsNotWebApiRest()
     {
         $quote = TestUtils::createQuote();
@@ -174,6 +183,7 @@ class SessionTest extends BoltTestCase
      * @test
      * @covers ::loadSession
      */
+    #[Test]
     public function loadSession_withCacheIdentifierIsLoaded()
     {
         $quote = TestUtils::createQuote();
@@ -197,6 +207,7 @@ class SessionTest extends BoltTestCase
      * @test
      * @covers ::loadSession
      */
+    #[Test]
     public function loadSession_withCacheIdentifierIsNotLoaded()
     {
         $quote = TestUtils::createQuote();
@@ -223,6 +234,7 @@ class SessionTest extends BoltTestCase
      *
      * @covers ::loadSession
      */
+    #[Test]
     public function loadSession_withEncryptedSessionDataInMetadata_dispatchesRestoreSessionDataThirdPartyEvent()
     {
         $quote = TestUtils::createQuote();
@@ -264,6 +276,7 @@ class SessionTest extends BoltTestCase
      * @test
      * @covers ::setFormKey
      */
+    #[Test]
     public function setFormKey()
     {
         $expected = 'Formkey';
@@ -278,6 +291,7 @@ class SessionTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function cacheFormKey()
     {
         $quote = TestUtils::createQuote();
@@ -291,6 +305,7 @@ class SessionTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getCheckoutSession_withAreaIsAdmin()
     {
         $appState = $this->objectManager->create(State::class);

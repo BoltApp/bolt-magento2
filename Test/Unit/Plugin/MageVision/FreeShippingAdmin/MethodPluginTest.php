@@ -25,6 +25,8 @@ use Magento\Framework\Webapi\Rest\Request;
 use Bolt\Boltpay\Plugin\MageVision\FreeShippingAdmin\MethodPlugin;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\ObjectManager;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\MageVision\FreeShippingAdmin\MethodPlugin
@@ -85,6 +87,8 @@ class MethodPluginTest extends BoltTestCase
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \ReflectionException
      */
+    #[Test]
+    #[DataProvider('dataProvider_isBoltCalculation')]
     public function isBoltCalculation($appState, $content, $expected)
     {
         $this->restRequest->setContent($content);
@@ -94,7 +98,7 @@ class MethodPluginTest extends BoltTestCase
         $this->assertEquals($expected, TestHelper::invokeMethod($this->methodPlugin, 'isBoltCalculation'));
     }
 
-    public function dataProvider_isBoltCalculation()
+    public static function dataProvider_isBoltCalculation()
     {
         return [
             ['webapi_rest', '{"order":{"cart":{"shipments":[{"reference":"freeshippingadmin_freeshippingadmin"}]}}}', true],
@@ -107,6 +111,7 @@ class MethodPluginTest extends BoltTestCase
      * @test
      * @covers ::afterCollectRates
      */
+    #[Test]
     public function afterCollectRates_withResultIsTrue_returnResultObject()
     {
         $this->assertTrue($this->methodPlugin->afterCollectRates($this->subject, true));
@@ -116,6 +121,7 @@ class MethodPluginTest extends BoltTestCase
      * @test
      * @covers ::afterCollectRates
      */
+    #[Test]
     public function afterCollectRates_withSubjectConfigFlagIsFalse_returnFalse()
     {
         $this->subject->expects(self::once())->method('getConfigFlag')->with('active')->willReturn(false);
@@ -126,6 +132,7 @@ class MethodPluginTest extends BoltTestCase
      * @test
      * @covers ::afterCollectRates
      */
+    #[Test]
     public function afterCollectRates_withBoltCalculationIsFalse_returnFalse()
     {
         $this->restRequest->setContent('{"order":{"cart":{"shipments":[{"reference":"freeshippingadmin_freeshippingadmin"}]}}}');
@@ -140,6 +147,7 @@ class MethodPluginTest extends BoltTestCase
      * @test
      * @covers ::afterCollectRates
      */
+    #[Test]
     public function afterCollectRates_willResetRateResult()
     {
         $this->restRequest->setContent('{"order":{"cart":{"shipments":[{"reference":"freeshippingadmin_freeshippingadmin"}]}}}');

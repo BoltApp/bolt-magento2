@@ -27,6 +27,7 @@ use Magento\TestFramework\ObjectManager;
 use Magento\TestFramework\Helper\Bootstrap;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Store\Model\ScopeInterface;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ShippingTest
@@ -83,6 +84,7 @@ class ShippingTest extends BoltTestCase
      *
      * @covers ::generateResult
      */
+    #[Test]
     public function generateResult()
     {
         $addressData = [
@@ -134,6 +136,7 @@ class ShippingTest extends BoltTestCase
      *
      * @covers ::generateResult
      */
+    #[Test]
     public function generateResult_virtualQuote()
     {
         $addressData = [
@@ -170,6 +173,7 @@ class ShippingTest extends BoltTestCase
      *
      * @covers ::formatResult
      */
+    #[Test]
     public function formatResult()
     {
         $shippingMethodError = $this->createMock(ShippingMethodInterface::class);
@@ -226,6 +230,7 @@ class ShippingTest extends BoltTestCase
      *
      * @covers ::getShippingOptions
      */
+    #[Test]
     public function getShippingOptions_happyPath()
     {
         $addressData = [
@@ -277,6 +282,7 @@ class ShippingTest extends BoltTestCase
      *
      * @covers ::getShippingOptions
      */
+    #[Test]
     public function getShippingOptions_noShippingOptions()
     {
         $addressData = [

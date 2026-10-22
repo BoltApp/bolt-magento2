@@ -29,6 +29,7 @@ use Magento\Store\Model\StoreManagerInterface as StoreManager;
 use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 use Zend\Stdlib\Parameters;
+use PHPUnit\Framework\Attributes\Test;
 /**
  * Class LoginPostPluginTest
  * @package Bolt\Boltpay\Test\Unit\Plugin\Magento\GiftCard
@@ -110,6 +111,7 @@ class LoginPostPluginTest extends BoltTestCase
      * @test
      * @covers ::afterExecute
      */
+    #[Test]
     public function afterExecute_ifShouldRedirectToCartPageIsFalse()
     {
         $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->with($this->loginPost)->willReturn(false);
@@ -121,6 +123,7 @@ class LoginPostPluginTest extends BoltTestCase
      * @test
      * @covers ::afterExecute
      */
+    #[Test]
     public function afterExecute_ifShouldRedirectToCartPageIsTrue()
     {
         $this->plugin->expects(self::once())->method('shouldRedirectToCartPage')->with($this->loginPost)->willReturn(true);
@@ -141,6 +144,7 @@ class LoginPostPluginTest extends BoltTestCase
      * @test
      * @covers ::afterExecute
      */
+    #[Test]
     public function afterExecute_throwException()
     {
         $expected = new \Exception('General Exception');

@@ -24,6 +24,8 @@ use Magento\Newsletter\Model\SubscriberFactory;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Sales\Model\Order;
 use Magento\Quote\Model\Quote\Address;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\CheckboxesHandler
@@ -111,6 +113,7 @@ class CheckboxesHandlerTest extends BoltTestCase
      * @test
      * @covers ::subscribeToNewsletter
      */
+    #[Test]
     public function subscribeToNewsletter_guestUser()
     {
         $this->subscribeToNewsletter_setup();
@@ -130,6 +133,7 @@ class CheckboxesHandlerTest extends BoltTestCase
      *
      * @covers ::subscribeToNewsletter
      */
+    #[Test]
     public function subscribeToNewsletter_loggedInUser()
     {
         $this->subscribeToNewsletter_setup();
@@ -146,6 +150,8 @@ class CheckboxesHandlerTest extends BoltTestCase
      * @dataProvider handleCheckboxesDataProvider
      * @covers ::handle
      */
+    #[Test]
+    #[DataProvider('handleCheckboxesDataProvider')]
     public function handle($checkboxes, $comment, $needSubscribe)
     {
         $this->initCurrentMock(['subscribeToNewsletter']);
@@ -175,7 +181,7 @@ class CheckboxesHandlerTest extends BoltTestCase
         $this->currentMock->handle($this->orderMock, $checkboxes);
     }
 
-    public function handleCheckboxesDataProvider()
+    public static function handleCheckboxesDataProvider()
     {
         $checkbox1 = ['text'=>'Subscribe for our newsletter','category'=>'NEWSLETTER','is_custom_field'=>false,
                       'value'=>true,'features'=>['unknown']];

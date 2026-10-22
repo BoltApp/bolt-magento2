@@ -28,6 +28,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\ObjectManager;
 use Bolt\Boltpay\Model\ErrorResponse;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class UniversalApiTest
@@ -64,6 +65,7 @@ class UniversalApiTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function invalidRequestEvent_sendsErrorResponse()
     {
         $invalidType = "invalid_hook_type";
@@ -85,6 +87,7 @@ class UniversalApiTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function orderCreation_returnsTrue()
     {
         $event = "order.create";
@@ -103,6 +106,7 @@ class UniversalApiTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function updateCart_returnsTrue()
     {
         $event = "cart.update";
@@ -131,6 +135,7 @@ class UniversalApiTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getShippingMethods_returnsTrue()
     {
         $event = "order.shipping_and_tax";
@@ -153,6 +158,7 @@ class UniversalApiTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function shippingOptions_returnsTrue()
     {
         $event = "order.shipping";
@@ -179,6 +185,7 @@ class UniversalApiTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function debug_returnsTrue()
     {
         $event = "debug";

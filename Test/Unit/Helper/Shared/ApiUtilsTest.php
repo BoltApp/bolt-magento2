@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Helper\Shared;
 use Bolt\Boltpay\Helper\Shared\ApiUtils;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\Exception\LocalizedException;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ApiUtilsTest
@@ -31,6 +32,7 @@ class ApiUtilsTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getJSONFromResponseBody_success()
     {
         $body = '{"status":"ok"}';
@@ -42,6 +44,7 @@ class ApiUtilsTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getJSONFromResponseBody_badJSON()
     {
         $body = '{"status": notok}';
@@ -54,6 +57,7 @@ class ApiUtilsTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getJSONFromResponseBody_errorFromBolt()
     {
         $body = '{"error": {"something": "here"}}';
@@ -66,6 +70,7 @@ class ApiUtilsTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getJSONFromResponseBody_errorFromBoltWithMsg()
     {
         $body = '{"errors": [{"message": "here"}]}';
@@ -78,6 +83,7 @@ class ApiUtilsTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function constructRequestHeaders_basic()
     {
         $headers = ApiUtils::constructRequestHeaders(
@@ -100,6 +106,7 @@ class ApiUtilsTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function constructRequestHeaders_skipsOverwritingWithAdditional()
     {
         $headers = ApiUtils::constructRequestHeaders(

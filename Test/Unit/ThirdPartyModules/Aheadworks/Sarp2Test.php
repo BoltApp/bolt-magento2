@@ -6,6 +6,8 @@ use Bolt\Boltpay\ThirdPartyModules\Aheadworks\Sarp2;
 use Magento\Framework\ObjectManager\ConfigLoaderInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 class Sarp2Test extends BoltTestCase
 {
@@ -46,6 +48,7 @@ class Sarp2Test extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function __construct_always_setsInternalProperties()
     {
         $instance = new Sarp2($this->objectManagerMock, $this->configLoaderMock);
@@ -87,6 +90,8 @@ class Sarp2Test extends BoltTestCase
      * @param bool  $isProductionMode
      * @param array $mergedConfiguration
      */
+    #[Test]
+    #[DataProvider('adminhtmlControllerActionPredispatchSalesOrderCreateIndexProvider')]
     public function adminhtmlControllerActionPredispatchSalesOrderCreateIndex_withVariousModesAndConfigurations_reconfiguresDI(
         $globalConfig,
         $adminConfig,
@@ -108,7 +113,7 @@ class Sarp2Test extends BoltTestCase
      * @return array[] containing global and admin DI config arrays, whether the production mode is set
      * and the expected result
      */
-    public function adminhtmlControllerActionPredispatchSalesOrderCreateIndexProvider()
+    public static function adminhtmlControllerActionPredispatchSalesOrderCreateIndexProvider()
     {
         return [
             [

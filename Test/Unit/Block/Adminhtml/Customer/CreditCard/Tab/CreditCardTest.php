@@ -24,6 +24,7 @@ use Magento\Customer\Controller\RegistryConstants;
 use Magento\Framework\Registry;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class CreditCardTest
@@ -61,6 +62,7 @@ class CreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getCustomerId()
     {
         $this->registry->register(RegistryConstants::CURRENT_CUSTOMER_ID, self::CUSTOMER_ID);
@@ -72,6 +74,7 @@ class CreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getTabLabel()
     {
         $expected = __('Bolt Credit Cards');
@@ -82,6 +85,7 @@ class CreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getTabTitle()
     {
         $expected = __('Bolt Credit Cards');
@@ -92,6 +96,7 @@ class CreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function canShowTab_withLoggedInCustomer()
     {
         $this->registry->register(RegistryConstants::CURRENT_CUSTOMER_ID, self::CUSTOMER_ID);
@@ -103,6 +108,7 @@ class CreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function canShowTab_withGuestCustomer()
     {
         $this->registry->register(RegistryConstants::CURRENT_CUSTOMER_ID, null);
@@ -114,6 +120,7 @@ class CreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function isHidden_withLoggedInCustomer()
     {
         $this->registry->register(RegistryConstants::CURRENT_CUSTOMER_ID, self::CUSTOMER_ID);
@@ -125,6 +132,7 @@ class CreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function isHidden_withGuestCustomer()
     {
         $this->registry->register(RegistryConstants::CURRENT_CUSTOMER_ID, null);
@@ -136,6 +144,7 @@ class CreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getTabClass()
     {
         $result = $this->block->getTabClass();
@@ -145,6 +154,7 @@ class CreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getTabUrl()
     {
         $url = $this->block->getUrl('boltpay/customer/creditcard', ['_current' => true]);
@@ -155,6 +165,7 @@ class CreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function isAjaxLoaded()
     {
         $result = $this->block->isAjaxLoaded();

@@ -36,6 +36,7 @@ use Bolt\Boltpay\Model\HttpClientAdapterFactory;
 use Bolt\Boltpay\Model\HttpClientAdapter;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Zend_Http_Response;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Api
@@ -166,6 +167,7 @@ class ApiTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new ApiHelper(
@@ -195,6 +197,7 @@ class ApiTest extends BoltTestCase
      * @throws LocalizedException          from tested method
      * @throws \Zend_Http_Client_Exception from tested method
      */
+    #[Test]
     public function sendRequest_withRegularRequest_returnsResultResponse()
     {
         $request = new Request(
@@ -256,6 +259,7 @@ class ApiTest extends BoltTestCase
      * @throws LocalizedException          from tested method
      * @throws \Zend_Http_Client_Exception from tested method
      */
+    #[Test]
     public function sendRequest_withStatusOnlyRequest_returnsResponseStatus()
     {
         $request = new Request(
@@ -295,6 +299,7 @@ class ApiTest extends BoltTestCase
      * @throws LocalizedException          from tested method
      * @throws \Zend_Http_Client_Exception from tested method
      */
+    #[Test]
     public function sendRequest_exceptionDuringRequest_rethrowsAsLocalizedException()
     {
         $request = new Request(
@@ -322,6 +327,7 @@ class ApiTest extends BoltTestCase
      *
      * @throws \Zend_Http_Client_Exception from tested method
      */
+    #[Test]
     public function sendRequest_withRegularRequest_returnsLocalizedException()
     {
         $request = new Request(
@@ -380,6 +386,7 @@ class ApiTest extends BoltTestCase
      *
      * @covers ::buildRequest
      */
+    #[Test]
     public function buildRequest_always_buildsRequestFromProvidedData()
     {
         $apiData = [

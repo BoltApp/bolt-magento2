@@ -29,6 +29,7 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class PrefetchTest
@@ -128,6 +129,7 @@ class PrefetchTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new Prefetch(
@@ -149,6 +151,7 @@ class PrefetchTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_PrefetchFalse()
     {
         $this->configHelper->method('getPrefetchShipping')
@@ -175,6 +178,7 @@ class PrefetchTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_noQuote()
     {
         $this->configHelper->method('getPrefetchShipping')
@@ -214,6 +218,7 @@ class PrefetchTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_noGeoLocation()
     {
         $expected = [
@@ -262,6 +267,7 @@ class PrefetchTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_geoLocation()
     {
         $expected = [
@@ -313,6 +319,7 @@ class PrefetchTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_geoLocationMissingElements()
     {
         $expected = [
@@ -362,6 +369,7 @@ class PrefetchTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_storedShippingAddress()
     {
         $expected = [

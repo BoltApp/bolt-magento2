@@ -38,6 +38,7 @@ use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\QuoteRepository;
 use PHPUnit\Framework\MockObject\MockObject;
 use Magento\Checkout\Model\Session as CheckoutSession;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\RouteInsuranceManagement
@@ -218,6 +219,7 @@ class RouteInsuranceManagementTest extends BoltTestCase
      * @covers ::execute
      * @throws WebapiException
      */
+    #[Test]
     public function execute_willReturnHttpNotFoundCode_ifRouteModuleIsNotInstalled()
     {
         $this->createRequest([]);
@@ -244,6 +246,7 @@ class RouteInsuranceManagementTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_willThroughException_ifQuoteIsNotFound()
     {
         $this->createRequest([]);
@@ -260,6 +263,7 @@ class RouteInsuranceManagementTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_returnsSuccessMessageWithGrandTotal_ifEverythingSucceeds()
     {
         $quote = TestUtils::createQuote();

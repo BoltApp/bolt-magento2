@@ -27,6 +27,7 @@ use Bolt\Boltpay\Helper\MetricsClient;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Bolt\Boltpay\Helper\IntegrationManagement;
+use PHPUnit\Framework\Attributes\Test;
 /**
  * Class RecurringDataTest
  * @coversDefaultClass \Bolt\Boltpay\Setup\RecurringData
@@ -99,6 +100,7 @@ class RecurringDataTest extends BoltTestCase
      * @covers ::install
      * @test
      */
+    #[Test]
     public function install()
     {
         $this->metricsClient->expects(self::once())->method('getCurrentTime')->willReturnSelf();
@@ -111,6 +113,7 @@ class RecurringDataTest extends BoltTestCase
      * @covers ::install
      * @test
      */
+    #[Test]
     public function install_throwException()
     {
         $this->fsManager->expects(self::once())->method('updateSwitchesFromBolt')->willThrowException(new \Exception('Exception Message'));

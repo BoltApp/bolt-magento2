@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ShippingTaxTest
@@ -40,6 +41,7 @@ class ShippingTaxTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetAmount()
     {
         $this->shippingTax->setAmount(self::TAX_AMOUNT);

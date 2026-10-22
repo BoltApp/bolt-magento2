@@ -27,6 +27,7 @@ use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Quote\Model\Quote;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class SalesRuleActionDiscountPluginTest
@@ -80,6 +81,7 @@ class SalesRuleActionDiscountPluginTest extends BoltTestCase
      * @test
      * @covers ::afterCalculate
      */
+    #[Test]
     public function afterCalculate_saveSaleRuleIdToCheckoutSession()
     {
         $rule = $this->getMockBuilder(DataObject::class)

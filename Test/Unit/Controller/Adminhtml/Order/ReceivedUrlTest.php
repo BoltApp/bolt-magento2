@@ -34,6 +34,7 @@ use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Serialize\SerializerInterface as Serialize;
 use Bolt\Boltpay\Controller\ReceivedUrlInterface;
 use PHPUnit_Framework_MockObject_MockObject;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Controller\Adminhtml\Order\ReceivedUrl
@@ -133,6 +134,7 @@ class ReceivedUrlTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getErrorRedirectUrl()
     {
         $this->backendUrl->expects(self::once())->method('getUrl')
@@ -143,6 +145,7 @@ class ReceivedUrlTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getRedirectUrl_isUseStoreInUrlDisabled()
     {
         $this->backendUrl->expects(self::once())->method('getUrl')->with('sales/order/view', [
@@ -163,6 +166,7 @@ class ReceivedUrlTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getRedirectUrl_isUseStoreInUrlEnabled()
     {
         $this->backendUrl->expects(self::once())->method('getUrl')->with('sales/order/view', [
@@ -186,6 +190,7 @@ class ReceivedUrlTest extends BoltTestCase
      *
      * @covers ::_processUrlKeys
      */
+    #[Test]
     public function _processUrlKeys_always_returnsTrue()
     {
         /** @var PHPUnit_Framework_MockObject_MockObject|ReceivedUrl $currentMock */

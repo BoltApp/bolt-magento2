@@ -27,6 +27,8 @@ use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use ReflectionException;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Setup\UpgradeSchema
@@ -117,6 +119,7 @@ class UpgradeSchemaTest extends BoltTestCase
      *
      * @throws ReflectionException if unable to create ModuleContextInterface mock
      */
+    #[Test]
     public function upgrade_always_upgradesDatabase()
     {
         $moduleContextMock = $this->createMock(ModuleContextInterface::class);
@@ -234,7 +237,7 @@ class UpgradeSchemaTest extends BoltTestCase
      *
      * @return array[] containing tested method name and table name associated to the method
      */
-    public function setupMethods_withTablesAlreadyCreatedProvider()
+    public static function setupMethods_withTablesAlreadyCreatedProvider()
     {
         return [
             [
@@ -269,6 +272,8 @@ class UpgradeSchemaTest extends BoltTestCase
      *
      * @throws ReflectionException if $methodName method doesn't exist
      */
+    #[Test]
+    #[DataProvider('setupMethods_withTablesAlreadyCreatedProvider')]
     public function setupMethods_withTablesAlreadyCreated_doNotAlterTheDatabase($methodName, $tableName)
     {
         $this->schemaSetup->expects(static::once())->method('getConnection')->willReturnSelf();
@@ -290,6 +295,7 @@ class UpgradeSchemaTest extends BoltTestCase
      *
      * @throws ReflectionException if setupWebhookLogTable method doesn't exist
      */
+    #[Test]
     public function setupWebhookLogTable_ifBoltWebhookLogTableDoesNotExist_createsTable()
     {
         $this->schemaSetup->expects(static::exactly(3))->method('getConnection')->willReturnSelf();
@@ -353,6 +359,7 @@ class UpgradeSchemaTest extends BoltTestCase
      *
      * @throws ReflectionException if updateWebhookLogTable method doesn't exist
      */
+    #[Test]
     public function updateWebhookLogTable_ifBoltWebhookLogTableExists_updatesWebhookLogTable()
     {
         $this->schemaSetup->expects(static::exactly(2))->method('getConnection')->willReturnSelf();
@@ -383,6 +390,7 @@ class UpgradeSchemaTest extends BoltTestCase
      *
      * @throws ReflectionException if setupFeatureBoltCustomerCreditCardsTable method doesn't exist
      */
+    #[Test]
     public function setupFeatureBoltCustomerCreditCardsTable_ifTableDoesNotExist_createsTheTable()
     {
         $this->dbAdapter
@@ -455,6 +463,7 @@ class UpgradeSchemaTest extends BoltTestCase
      *
      * @throws ReflectionException if updateWebhookLogTable method doesn't exist
      */
+    #[Test]
     public function updateWebhookLogTable_ifTableDoesNotExist_doesNotAlterTheDatabase()
     {
         $this->schemaSetup->expects(static::once())->method('getConnection')->willReturnSelf();
@@ -477,6 +486,7 @@ class UpgradeSchemaTest extends BoltTestCase
      *
      * @throws ReflectionException if setupExternalCustomerEntityTable method doesn't exist
      */
+    #[Test]
     public function setupExternalCustomerEntityTable_ifBoltExternalCustomerEntityTableDoesNotExist_createsTable()
     {
         $this->schemaSetup->expects(static::exactly(3))->method('getConnection')->willReturnSelf();

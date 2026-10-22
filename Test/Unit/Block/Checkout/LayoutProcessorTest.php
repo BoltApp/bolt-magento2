@@ -23,6 +23,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\ObjectManager;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class LayoutProcessorTest
@@ -48,6 +49,7 @@ class LayoutProcessorTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = $this->objectManager->create(LayoutProcessor::class);

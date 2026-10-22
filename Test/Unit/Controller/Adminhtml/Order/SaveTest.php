@@ -32,6 +32,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderInterface;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ManagerTest
@@ -95,6 +96,7 @@ class SaveTest extends BoltTestCase
       *
       * @covers ::__construct
       */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new Save(
@@ -118,6 +120,7 @@ class SaveTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_HappyPath()
     {
         $map = [
@@ -204,6 +207,7 @@ class SaveTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_Exception()
     {
         $expectedData = [

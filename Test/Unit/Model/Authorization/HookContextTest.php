@@ -22,6 +22,7 @@ use Bolt\Boltpay\Model\Authorization\HookContext;
 use Magento\Framework\App\ObjectManager;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Authorization\Model\UserContextInterface;
+use PHPUnit\Framework\Attributes\Test;
 
 class HookContextTest extends BoltTestCase
 {
@@ -47,6 +48,7 @@ class HookContextTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getUserId()
     {
         $this->assertEquals(0, $this->hookContext->getUserId());
@@ -55,6 +57,7 @@ class HookContextTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getUserType()
     {
         $this->assertEquals(UserContextInterface::USER_TYPE_INTEGRATION, $this->hookContext->getUserType());

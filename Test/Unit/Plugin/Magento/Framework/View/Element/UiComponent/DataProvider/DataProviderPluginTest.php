@@ -19,6 +19,8 @@ namespace Bolt\Boltpay\Test\Unit\Plugin\Magento\Framework\View\Element\UiCompone
 
 use Bolt\Boltpay\Plugin\Magento\Framework\View\Element\UiComponent\DataProvider\DataProviderPlugin;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Magento\Framework\View\Element\UiComponent\DataProvider\DataProviderPlugin
@@ -80,6 +82,7 @@ class DataProviderPluginTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function __construct_always_setsProperty()
     {
         $instance = new DataProviderPlugin($this->paymentCollectionFactoryMock, $this->configHelperMock);
@@ -116,6 +119,8 @@ class DataProviderPluginTest extends BoltTestCase
      * @param array  $ccTypes
      * @param bool   $showCcTypeInOrderGrid
      */
+    #[Test]
+    #[DataProvider('afterGetData_withVariousOrderGridDataProvider')]
     public function afterGetData_withVariousOrderGridData_appendsProcessorToPaymentMethod(
         $name,
         $resultBefore,
@@ -153,11 +158,11 @@ class DataProviderPluginTest extends BoltTestCase
      *
      * @return array[]
      */
-    public function afterGetData_withVariousOrderGridDataProvider()
+    public static function afterGetData_withVariousOrderGridDataProvider()
     {
         return [
             [
-                'dataSourceName' => 'sales_order_grid_data_source',
+                'name'           => 'sales_order_grid_data_source',
                 'resultBefore'   => [
                     'items'        => [
                         ['entity_id' => '1', 'payment_method' => 'checkmo'],
@@ -199,7 +204,7 @@ class DataProviderPluginTest extends BoltTestCase
                 ]
             ],
             [
-                'dataSourceName' => 'sales_order_invoice_grid_data_source',
+                'name'           => 'sales_order_invoice_grid_data_source',
                 'resultBefore'   => [
                     'items'        => [
                         ['order_id' => '1', 'payment_method' => 'checkmo'],
@@ -232,7 +237,7 @@ class DataProviderPluginTest extends BoltTestCase
                 ]
             ],
             [
-                'dataSourceName' => 'sales_order_creditmemo_grid_data_source',
+                'name'           => 'sales_order_creditmemo_grid_data_source',
                 'resultBefore'   => [
                     'items'        => [
                         ['order_id' => '1', 'payment_method' => 'checkmo'],
@@ -265,7 +270,7 @@ class DataProviderPluginTest extends BoltTestCase
                 ]
             ],
             [
-                'dataSourceName' => 'sales_order_shipment_grid_data_source',
+                'name'           => 'sales_order_shipment_grid_data_source',
                 'resultBefore'   => [
                     'items'        => [
                         ['order_id' => '1', 'payment_method' => 'checkmo'],
@@ -298,7 +303,7 @@ class DataProviderPluginTest extends BoltTestCase
                 ]
             ],
             [
-                'dataSourceName' => 'sales_order_transaction_grid_data_source',
+                'name'           => 'sales_order_transaction_grid_data_source',
                 'resultBefore'   => [
                     'items'        => [
                         ['order_id' => '1', 'payment_method' => 'checkmo'],
@@ -326,7 +331,7 @@ class DataProviderPluginTest extends BoltTestCase
                 ]
             ],
             'Valid CC Types but disabled in configuration - does not append' => [
-                'dataSourceName'        => 'sales_order_grid_data_source',
+                'name'                  => 'sales_order_grid_data_source',
                 'resultBefore'          => [
                     'items'        => [
                         ['order_id' => '1', 'payment_method' => 'checkmo'],
@@ -375,7 +380,7 @@ class DataProviderPluginTest extends BoltTestCase
                 'showCcTypeInOrderGrid' => false,
             ],
             'Valid CC Types and enabled in configuration - does append'  => [
-                'dataSourceName'        => 'sales_order_grid_data_source',
+                'name'                  => 'sales_order_grid_data_source',
                 'resultBefore'          => [
                     'items'        => [
                         ['order_id' => '1', 'payment_method' => 'checkmo'],
@@ -420,7 +425,7 @@ class DataProviderPluginTest extends BoltTestCase
                 'showCcTypeInOrderGrid' => true,
             ],
             'Empty result set, show cc - no change'  => [
-                'dataSourceName'        => 'sales_order_grid_data_source',
+                'name'                  => 'sales_order_grid_data_source',
                 'resultBefore'          => [
                     'items'        => [],
                     'totalRecords' => 0,
@@ -436,7 +441,7 @@ class DataProviderPluginTest extends BoltTestCase
                 'showCcTypeInOrderGrid' => true,
             ],
             'Empty result set, do not show cc - no change'  => [
-                'dataSourceName'        => 'sales_order_grid_data_source',
+                'name'                  => 'sales_order_grid_data_source',
                 'resultBefore'          => [
                     'items'        => [],
                     'totalRecords' => 0,

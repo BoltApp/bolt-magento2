@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\ShipToStoreOption;
 use Bolt\Boltpay\Model\Api\Data\StoreAddress;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ShipToStoreOptionTest
@@ -65,6 +66,7 @@ class ShipToStoreOptionTest extends BoltTestCase
      * that getReference would return reference
      * @covers ::getReference
      */
+    #[Test]
     public function getReference_always_returnsReference()
     {
         $this->assertEquals(self::REFERENCE, $this->shipToStoreOption->getReference());
@@ -75,6 +77,7 @@ class ShipToStoreOptionTest extends BoltTestCase
      * that getCost would return cost
      * @covers ::getCost
      */
+    #[Test]
     public function getCost_always_returnsCost()
     {
         $this->assertEquals(self::COST, $this->shipToStoreOption->getCost());
@@ -85,6 +88,7 @@ class ShipToStoreOptionTest extends BoltTestCase
      * that getStoreName would return store name
      * @covers ::getStoreName
      */
+    #[Test]
     public function getStoreName_always_returnsStoreName()
     {
         $this->assertEquals(self::STORE_NAME, $this->shipToStoreOption->getStoreName());
@@ -95,6 +99,7 @@ class ShipToStoreOptionTest extends BoltTestCase
      * that getAddress would return store address
      * @covers ::getAddress
      */
+    #[Test]
     public function getAddress_always_returnsAddress()
     {
         $this->assertEquals($this->storeAddress, $this->shipToStoreOption->getAddress());
@@ -105,6 +110,7 @@ class ShipToStoreOptionTest extends BoltTestCase
      * that getDistance would return distance
      * @covers ::getDistance
      */
+    #[Test]
     public function getDistance_always_returnsDistance()
     {
         $this->assertEquals(self::DISTANCE, $this->shipToStoreOption->getDistance());
@@ -115,6 +121,7 @@ class ShipToStoreOptionTest extends BoltTestCase
      * that getDistanceUnit would return distance unit
      * @covers ::getDistanceUnit
      */
+    #[Test]
     public function getDistanceUnit_always_returnsDistanceUnit()
     {
         $this->assertEquals(self::DISTANCE_UNIT, $this->shipToStoreOption->getDistanceUnit());
@@ -125,6 +132,7 @@ class ShipToStoreOptionTest extends BoltTestCase
      * that getTaxAmount would return tax amount
      * @covers ::getTaxAmount
      */
+    #[Test]
     public function getTaxAmount_always_returnsTaxAmount()
     {
         $this->assertEquals(self::TAX_AMOUNT, $this->shipToStoreOption->getTaxAmount());
@@ -135,6 +143,7 @@ class ShipToStoreOptionTest extends BoltTestCase
      * that getTaxAmount would return tax amount
      * @covers ::getDescription
      */
+    #[Test]
     public function getDescription_always_returnsDescription()
     {
         $this->assertEquals(self::DESCRIPTION, $this->shipToStoreOption->getDescription());
@@ -145,6 +154,7 @@ class ShipToStoreOptionTest extends BoltTestCase
      * that jsonSerialize would return an associative array of values
      * @covers ::jsonSerialize
      */
+    #[Test]
     public function jsonSerialize_always_returnsValues()
     {
         $result = $this->shipToStoreOption->jsonSerialize();

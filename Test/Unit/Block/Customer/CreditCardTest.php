@@ -28,6 +28,7 @@ use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\Data\Form\FormKey;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class CreditCardTest
@@ -103,6 +104,7 @@ class CreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getCreditCardCollection()
     {
         $this->assertSame(1, $this->block->getCreditCardCollection()->getSize());
@@ -111,6 +113,7 @@ class CreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getFormKey()
     {
         $formKey = $this->createPartialMock(FormKey::class, ['getFormKey']);

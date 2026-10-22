@@ -22,6 +22,8 @@ use Bolt\Boltpay\Plugin\Magento\Rewards\Controller\Cart\RemoveActionPlugin;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Magento\Rewards\Controller\Cart\RemoveActionPlugin
  */
@@ -80,6 +82,8 @@ class RemoveActionPluginTest extends BoltTestCase
      * @param bool $isAjax current request flag
      * @param bool $expectRemoveRedirect whether or not to expect response alteration
      */
+    #[Test]
+    #[DataProvider('afterExecute_withVariousStatesProvider')]
     public function afterExecute_withVariousStates_removesRedirectIfFeatureEnabledAndRequestIsAjax(
         $displayRewardPointsInMinicartConfig,
         $isAjax,
@@ -114,7 +118,7 @@ class RemoveActionPluginTest extends BoltTestCase
     /**
      * Data provider for {@see afterExecute_withVariousStates_removesRedirectIfFeatureEnabledAndRequestIsAjax}
      */
-    public function afterExecute_withVariousStatesProvider()
+    public static function afterExecute_withVariousStatesProvider()
     {
         return [
             ['displayRewardPointsInMinicartConfig' => true, 'isAjax' => true, 'expectRemoveRedirect' => true],
@@ -130,6 +134,7 @@ class RemoveActionPluginTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function __construct_always_setsProperty()
     {
         $instance = new \Bolt\Boltpay\Plugin\Magento\Rewards\Controller\Cart\RemoveActionPlugin($this->configHelper);

@@ -23,6 +23,8 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Plugin\QuotePlugin;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class QuotePluginTest
@@ -65,10 +67,12 @@ class QuotePluginTest extends BoltTestCase
      * @covers ::aroundAfterSave
      * @dataProvider dataProviderAroundAfterSave
      *
-     * @param $isSameId
-     * @param $expectedCall
+     * @param bool $isSameId
+     * @param int  $expectedCalls of the original method
      */
-    public function aroundAfterSave($isSameId, $expectedCall)
+    #[Test]
+    #[DataProvider('dataProviderAroundAfterSave')]
+    public function aroundAfterSave($isSameId, $expectedCalls)
     {
         /** @var callable $callback */
         $callback = $callback = $this->getMockBuilder(\stdClass::class)
@@ -78,16 +82,16 @@ class QuotePluginTest extends BoltTestCase
         };
         $subject = TestUtils::createQuote();
         $subject->setBoltParentQuoteId(($isSameId) ? $subject->getId() : 100);
-        $callback->expects($expectedCall)->method('__invoke');
+        $callback->expects(self::exactly($expectedCalls))->method('__invoke');
         $this->plugin->aroundAfterSave($subject, $proceed);
 
     }
 
-    public function dataProviderAroundAfterSave()
+    public static function dataProviderAroundAfterSave()
     {
         return [
-            [true, self::once()],
-            [false, self::never()],
+            [true, 1],
+            [false, 0],
 
         ];
     }
@@ -105,6 +109,8 @@ class QuotePluginTest extends BoltTestCase
      * @param bool $originalResult of the validateMinimumAmount method call
      * @param bool $expectedResult after the plugin method call
      */
+    #[Test]
+    #[DataProvider('afterValidateMinimumAmount_withVariousQuoteStates')]
     public function afterValidateMinimumAmount_withVariousQuoteStates_overridesResultForBoltBackendOrders(
         $boltCheckoutType,
         $paymentMethod,
@@ -127,7 +133,7 @@ class QuotePluginTest extends BoltTestCase
      *
      * @return array[] containing checkout type, payment method, original and expected result
      */
-    public function afterValidateMinimumAmount_withVariousQuoteStates()
+    public static function afterValidateMinimumAmount_withVariousQuoteStates()
     {
         return [
             'Bolt backoffice quote with invalid minimum amount returns true' => [
@@ -154,6 +160,7 @@ class QuotePluginTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function afterGetIsActive_returnTrue()
     {
         $subject = TestUtils::createQuote();
@@ -164,6 +171,7 @@ class QuotePluginTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function afterGetIsActive_returnFalse()
     {
         $subject = TestUtils::createQuote();

@@ -92,6 +92,8 @@ use Magento\SalesRule\Model\RuleRepository;
 use Bolt\Boltpay\Helper\FeatureSwitch\Definitions;
 use Magento\Msrp\Helper\Data as MsrpHelper;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Cart
@@ -701,6 +703,7 @@ class CartTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function __construct_always_assignsParametersToProperties()
     {
         $instance = new BoltHelperCart(
@@ -776,6 +779,7 @@ class CartTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function __construct_always_objectManagerProvidesExpectedClassInstances()
     {
         $om = new \Magento\Framework\TestFramework\Unit\Helper\ObjectManager($this);
@@ -818,6 +822,8 @@ class CartTest extends BoltTestCase
      * @param bool $isAllowedGuestCheckout flag
      * @param bool $expectedResult of the method call
      */
+    #[Test]
+    #[DataProvider('isCheckoutAllowed_withVariousSessionStatesProvider')]
     public function isCheckoutAllowed_withVariousSessionStates_determinesIfCheckoutIsAllowed(
         $isLoggedIn,
         $isAllowedGuestCheckout,
@@ -835,7 +841,7 @@ class CartTest extends BoltTestCase
      *
      * @return array containing flags for logged in, is allowed guest checkout and excpected result
      */
-    public function isCheckoutAllowed_withVariousSessionStatesProvider()
+    public static function isCheckoutAllowed_withVariousSessionStatesProvider()
     {
         return [
             ['isLoggedIn' => false, 'isAllowedGuestCheckout' => false, 'expectedResult' => false],
@@ -854,6 +860,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if $quotes property doesn't exist
      */
+    #[Test]
     public function getQuoteById_withQuoteIdNotCached_loadsQuoteById()
     {
 
@@ -871,6 +878,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if $quotes property doesn't exist
      */
+    #[Test]
     public function getQuoteById_withQuoteIdNotCachedAndNotLoaded_returnsFalse()
     {
 
@@ -886,6 +894,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if $quotes property doesn't exist
      */
+    #[Test]
     public function getQuoteById_withQuoteIdCached_returnsFromPropertyCache()
     {
 
@@ -908,6 +917,7 @@ class CartTest extends BoltTestCase
      *
      * @throws NoSuchEntityException if active quote cannot be found
      */
+    #[Test]
     public function getActiveQuoteById_always_getsActiveQuoteFromRepository()
     {
 
@@ -926,6 +936,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if orderData property does not exist
      */
+    #[Test]
     public function getOrderByIncrementId_whenOrderCachedAndForceLoadTrue_loadsOrderByIncrementId()
     {
 
@@ -946,6 +957,7 @@ class CartTest extends BoltTestCase
      *
      * @covers ::saveQuote
      */
+    #[Test]
     public function saveQuote_always_savesQuoteUsingQuoteRepository()
     {
 
@@ -966,6 +978,7 @@ class CartTest extends BoltTestCase
      *
      * @covers ::deleteQuote
      */
+    #[Test]
     public function deleteQuote_always_deletesQuoteUsingQuoteRepository()
     {
 
@@ -986,6 +999,7 @@ class CartTest extends BoltTestCase
      *
      * @throws AlreadyExistsException if unable to save quote
      */
+    #[Test]
     public function quoteResourceSave_always_savesQuoteUsingResource()
     {
 
@@ -1009,6 +1023,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if isBoltOrderCachingEnabled method doesn't exist
      */
+    #[Test]
     public function isBoltOrderCachingEnabled_always_returnsValueFromConfigHelper()
     {
 
@@ -1036,6 +1051,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if loadFromCache method is not defined
      */
+    #[Test]
     public function loadFromCache_whenIdentifierNotFoundInCache_returnsFalse()
     {
 
@@ -1055,6 +1071,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if loadFromCache method is not defined
      */
+    #[Test]
     public function loadFromCache_whenIdentifierIsFoundInCacheAndUnserializeFalse_returnsValue()
     {
 
@@ -1082,6 +1099,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if loadFromCache method is not defined
      */
+    #[Test]
     public function loadFromCache_whenIdentifierIsFoundInCacheAndUnserializeTrue_returnsUnserializedValue()
     {
 
@@ -1107,6 +1125,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if saveToCache method is not defined
      */
+    #[Test]
     public function saveToCache_whenSerializeParameterIsTrue_savesSerializedDataToCache()
     {
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -1129,6 +1148,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if saveToCache method is not defined
      */
+    #[Test]
     public function saveToCache_whenSerializeParameterIsFalse_savesNonSerializedDataToCache()
     {
         $this->cache->expects(static::once())->method('save')->with(
@@ -1152,6 +1172,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if setLastImmutableQuote method is not defined
      */
+    #[Test]
     public function setLastImmutableQuote_always_setsLastImmutableQuoteProperty()
     {
 
@@ -1177,6 +1198,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if getLastImmutableQuote method is not defined
      */
+    #[Test]
     public function getLastImmutableQuote_always_returnsLastImmutableQuoteProperty()
     {
 
@@ -1202,6 +1224,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if saveSession method is not defined
      */
+    #[Test]
     public function saveCartSession_always_savesCartSession()
     {
         $this->sessionHelper->expects(static::once())->method('saveSession')
@@ -1215,6 +1238,7 @@ class CartTest extends BoltTestCase
      *
      * @covers ::getSessionQuoteStoreId
      */
+    #[Test]
     public function getSessionQuoteStoreId_withSessionQuote_returnsSessionQuoteStoreId()
     {
 
@@ -1232,6 +1256,7 @@ class CartTest extends BoltTestCase
      *
      * @covers ::getSessionQuoteStoreId
      */
+    #[Test]
     public function getSessionQuoteStoreId_withoutSessionQuote_returnsNull()
     {
 
@@ -1247,6 +1272,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if boltCreateOrder method is not defined
      */
+    #[Test]
     public function boltCreateOrder_always_sendsApiRequest()
     {
         $cartData = $this->getTestCartData();
@@ -1279,6 +1305,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if getCartCacheIdentifier method doesn't exist
      */
+    #[Test]
     public function getCartCacheIdentifier_always_returnsCartCacheIdentifier()
     {
 
@@ -1295,6 +1322,7 @@ class CartTest extends BoltTestCase
      * @covers ::getCartCacheIdentifier
      * @throws ReflectionException
      */
+    #[Test]
     public function getCartCacheIdentifier_withGiftMessageID_returnsCartCacheIdentifier()
     {
 
@@ -1326,6 +1354,7 @@ class CartTest extends BoltTestCase
      * @covers ::getCartCacheIdentifier
      * @throws ReflectionException
      */
+    #[Test]
     public function getCartCacheIdentifier_withGiftWrappingId_returnsCartCacheIdentifier()
     {
 
@@ -1356,6 +1385,7 @@ class CartTest extends BoltTestCase
      * @covers ::getCartCacheIdentifier
      * @throws ReflectionException
      */
+    #[Test]
     public function getCartCacheIdentifier_withGiftWrappingItemIds_returnsCartCacheIdentifier()
     {
         $currentMock = $this->getCurrentMock(
@@ -1397,6 +1427,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if getCustomAddressFieldsPascalCaseArray method is not defined
      */
+    #[Test]
     public function getCustomAddressFieldsPascalCaseArray_always_returnsCustomAddressFieldsInPascalCaseArray()
     {
         $this->configHelper->expects(static::once())->method('getPrefetchAddressFields')->with(self::STORE_ID)
@@ -1423,6 +1454,7 @@ class CartTest extends BoltTestCase
      *
      * @covers ::convertCustomAddressFieldsToCacheIdentifier
      */
+    #[Test]
     public function convertCustomAddressFieldsToCacheIdentifier_always_returnsCacheIdentifier()
     {
         $this->quoteMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);
@@ -1445,6 +1477,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if getImmutableQuoteIdFromBoltOrder method is not defined
      */
+    #[Test]
     public function getImmutableQuoteIdFromBoltOrder_always_returnsImmutableQuote()
     {
 
@@ -1474,6 +1507,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if isQuoteAvailable method is not defined
      */
+    #[Test]
     public function isQuoteAvailable_always_determinesIfQuoteIsAvailable()
     {
 
@@ -1491,6 +1525,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if updateQuoteTimestamp method does not exist
      */
+    #[Test]
     public function updateQuoteTimestamp_always_updatesQuoteTimestamp()
     {
 
@@ -1510,6 +1545,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if updateQuoteTimestamp method does not exist
      */
+    #[Test]
     public function updateQuoteTimestamp_ifDBExceptionOccurs_notifiesExceptionAndRollsBack()
     {
         $connectionMock = $this->createMock(Mysql::class);
@@ -1538,6 +1574,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if getSignResponse method doesn't exist
      */
+    #[Test]
     public function getSignResponse_withSuccessfullRequest_returnsSignResponse()
     {
         $signRequest = ['merchant_user_id' => self::CUSTOMER_ID];
@@ -1570,6 +1607,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if getSignResponse method doesn't exist
      */
+    #[Test]
     public function getSignResponse_withExceptionDuringRequest_returnsNull()
     {
         $signRequest = ['merchant_user_id' => self::CUSTOMER_ID];
@@ -1600,6 +1638,7 @@ class CartTest extends BoltTestCase
      *
      * @throws NoSuchEntityException from tested method
      */
+    #[Test]
     public function getHints_withApplePayRelatedData_skipsPreFill()
     {
         $quoteMock = $this->createPartialMock(Quote::class, ['getCustomerEmail', 'isVirtual', 'getShippingAddress']);
@@ -1621,6 +1660,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if getEncodeUserId method is not defined
      */
+    #[Test]
     public function getEncodeUserId_always_returnsSignedCustomerIdJSON()
     {
         $customerMock = $this->createMock(Customer::class);
@@ -1652,6 +1692,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if transferData method is not defined
      */
+    #[Test]
     public function transferData_withDefaultFields_transfersDataFromParentToChildAndSavesTheChild()
     {
         $currentMock = $this->getCurrentMock(['validateEmail']);
@@ -1698,6 +1739,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if transferData method is not defined
      */
+    #[Test]
     public function transferData_withDefaultFields_transfersDataFromParentAddressToChildAddressAndSavesTheChild()
     {
         $currentMock = $this->getCurrentMock(['validateEmail']);
@@ -1764,6 +1806,7 @@ class CartTest extends BoltTestCase
      * @throws AlreadyExistsException from tested method
      * @throws Zend_Validate_Exception from tested method
      */
+    #[Test]
     public function replicateQuoteData_withSourceAndDestinationHavingSameId_skipsReplicatingQuoteData()
     {
         list($sourceQuote, $destinationQuote, $currentMock) = $this->replicateQuoteDataSetUp();
@@ -1784,6 +1827,7 @@ class CartTest extends BoltTestCase
      * @throws AlreadyExistsException from method tested
      * @throws Zend_Validate_Exception from method tested
      */
+    #[Test]
     public function replicateQuoteData_withValidQuotes_replicatesQuoteData()
     {
         list($sourceQuote, $destinationQuote, $currentMock) = $this->replicateQuoteDataSetUp();
@@ -1850,6 +1894,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if reserveOrderId method is not defined
      */
+    #[Test]
     public function reserveOrderId_whenOrderIdNotReserved_reservesOrderId()
     {
         list($currentMock, $immutableQuote, $parentQuote) = $this->reserveOrderIdSetUp();
@@ -1873,6 +1918,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if reserveOrderId method is not defined
      */
+    #[Test]
     public function reserveOrderId_whenOrderIdIsReserved_setsReservedOrderIdToImmutableQuote()
     {
         list($currentMock, $immutableQuote, $parentQuote) = $this->reserveOrderIdSetUp();
@@ -1894,6 +1940,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if createImmutableQuote method is not defined
      */
+    #[Test]
     public function createImmutableQuote_always_createsImmutableQuote()
     {
         $quoteMock = $this->createPartialMock(
@@ -1935,6 +1982,8 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if isAddressComplete method is undefined
      */
+    #[Test]
+    #[DataProvider('isAddressComplete_withVariousAddressesProvider')]
     public function isAddressComplete_withVariousAddresses_determinesIfAddressIsComplete($address, $expectedResult)
     {
 
@@ -1951,7 +2000,7 @@ class CartTest extends BoltTestCase
      *
      * @return array containing address data and expected method result
      */
-    public function isAddressComplete_withVariousAddressesProvider()
+    public static function isAddressComplete_withVariousAddressesProvider()
     {
         $completeAddress = self::COMPLETE_ADDRESS_DATA;
         return array_reduce(
@@ -1977,6 +2026,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if logAddressData method is not defined
      */
+    #[Test]
     public function logAddressData_always_registersBugsnagCallback()
     {
         $this->bugsnag->expects(static::once())->method('registerCallback')->with(
@@ -2007,6 +2057,8 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if isBackendSession method is not available
      */
+    #[Test]
+    #[DataProvider('isBackendSession_withVariousSessionObjectsProvider')]
     public function isBackendSession_withVariousSessionObjects_determinesIfCheckoutSessionIsBackend(
         $sessionObject,
         $expectedResult
@@ -2022,7 +2074,7 @@ class CartTest extends BoltTestCase
      *
      * @return array containing session object
      */
-    public function isBackendSession_withVariousSessionObjectsProvider()
+    public static function isBackendSession_withVariousSessionObjectsProvider()
     {
 
         return [
@@ -2045,6 +2097,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if getCalculationAddress method is not defined
      */
+    #[Test]
     public function getCalculationAddress_withQuoteIsVirtual_returnBillingAddress()
     {
         $shippingAddress = [
@@ -2105,6 +2158,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if getCalculationAddress method is not defined
      */
+    #[Test]
     public function getCalculationAddress_withQuoteIsNotVirtual_returnShippingAddress()
     {
         $shippingAddress = [
@@ -2179,6 +2233,8 @@ class CartTest extends BoltTestCase
      *
      * @throws Zend_Validate_Exception if validation class is not found
      */
+    #[Test]
+    #[DataProvider('validateEmail_withVarousEmailAddressesProvider')]
     public function validateEmail_withVarousEmailAddresses_determinesIfEmailIsValid($email, $expectedResult)
     {
 
@@ -2191,7 +2247,7 @@ class CartTest extends BoltTestCase
      *
      * @return array containing email and expected result
      */
-    public function validateEmail_withVarousEmailAddressesProvider()
+    public static function validateEmail_withVarousEmailAddressesProvider()
     {
         return [
             ['email' => self::EMAIL_ADDRESS, 'expectedResult' => true],
@@ -2210,6 +2266,7 @@ class CartTest extends BoltTestCase
      *
      * @throws ReflectionException if getWebsiteId method is not defined
      */
+    #[Test]
     public function getWebsiteId_always_returnsWebsiteIdFromSessionQuote()
     {
 
@@ -2229,6 +2286,7 @@ class CartTest extends BoltTestCase
      * @covers ::handleSpecialAddressCases
      * @covers ::handlePuertoRico
      */
+    #[Test]
     public function handleSpecialAddressCases_withPuertoRicoAddress_handlessPuertoRicoAddressSpecialCase()
     {
 
@@ -2249,6 +2307,7 @@ class CartTest extends BoltTestCase
      *
      * @throws NoSuchEntityException if getToggleCheckout method is not defined
      */
+    #[Test]
     public function hasProductRestrictions_withToggleCheckoutEmpty_returnsFalse()
     {
 
@@ -2265,6 +2324,7 @@ class CartTest extends BoltTestCase
      *
      * @throws NoSuchEntityException if getToggleCheckout method is not defined
      */
+    #[Test]
     public function hasProductRestrictions_withNoProductAndItemRestrictionMethods_returnsFalse()
     {
 
@@ -2287,6 +2347,7 @@ class CartTest extends BoltTestCase
      *
      * @throws NoSuchEntityException if getToggleCheckout method is not defined
      */
+    #[Test]
     public function hasProductRestrictions_withNoQuoteItems_returnsFalse()
     {
 
@@ -2315,6 +2376,7 @@ class CartTest extends BoltTestCase
      *
      * @throws NoSuchEntityException if getToggleCheckout method is not defined
      */
+    #[Test]
     public function hasProductRestrictions_whenQuoteItemReturnsTrueForRestrictedMethod_returnsTrue()
     {
         $this->configHelper->expects(static::once())->method('getToggleCheckout')->willReturn(
@@ -2338,6 +2400,7 @@ class CartTest extends BoltTestCase
      *
      * @throws NoSuchEntityException if getToggleCheckout method is not defined
      */
+    #[Test]
     public function hasProductRestrictions_whenQuoteItemProductReturnsTrueForRestrictedMethod_returnsTrue()
     {
         $this->configHelper->expects(static::once())->method('getToggleCheckout')->willReturn(
@@ -2475,6 +2538,7 @@ ORDER
          * @throws LocalizedException from tested method
          * @throws Zend_Http_Client_Exception from tested method
          */
+    #[Test]
     public function getBoltpayOrder_withCachingDisabled_createsBoltOrder()
     {
         list($currentMock, $cart, $boltOrder) = $this->getBoltpayOrderSetUp();
@@ -2506,6 +2570,7 @@ ORDER
          * @throws LocalizedException from tested method
          * @throws Zend_Http_Client_Exception from tested method
          */
+    #[Test]
     public function getBoltpayOrder_ifOrderExists_deactivatesSessionQuote()
     {
         $this->currentMock = $this->getCurrentMock(
@@ -2536,6 +2601,7 @@ ORDER
          *
          * @covers ::deactivateSessionQuote
          */
+    #[Test]
     public function deactivateSessionQuote_ifQuoteIsActive_deactivatesQuote()
     {
 
@@ -2552,6 +2618,7 @@ ORDER
          *
          * @covers ::doesOrderExist
          */
+    #[Test]
     public function doesOrderExist_withExistingOrder_basedOnGetOrderByIncrementId_returnsOrder()
     {
 
@@ -2571,6 +2638,7 @@ ORDER
          *
          * @covers ::doesOrderExist
          */
+    #[Test]
     public function doesOrderExist_withExistingOrder_basedOnGetOrderByQuoteId_returnsOrder()
     {
 
@@ -2592,6 +2660,7 @@ ORDER
          *
          * @covers ::doesOrderExist
          */
+    #[Test]
     public function doesOrderExist_getOrderByIncrementIdReturnsFalse_getOrderByQuoteIdReturnsFalse_returnsFalse()
     {
 
@@ -2607,6 +2676,7 @@ ORDER
         /**
          * @test
          */
+    #[Test]
     public function getOrderByQuoteId()
     {
 
@@ -2619,6 +2689,7 @@ ORDER
         /**
          * @test
          */
+    #[Test]
     public function getOrderById()
     {
 
@@ -2638,6 +2709,7 @@ ORDER
          * @throws LocalizedException from tested method
          * @throws Zend_Http_Client_Exception from tested method
          */
+    #[Test]
     public function getBoltpayOrder_whenCacheEnabledAndEmpty_createsBoltOrderAndSavesToCache()
     {
         list($currentMock, $cart, $boltOrder) = $this->getBoltpayOrderSetUp();
@@ -2673,6 +2745,7 @@ ORDER
          * @throws LocalizedException from tested method
          * @throws Zend_Http_Client_Exception from tested method
          */
+    #[Test]
     public function getBoltpayOrder_whenInCacheAndQuoteIsAvailable_returnsFromCache()
     {
         list($currentMock, $cart, $boltOrder) = $this->getBoltpayOrderSetUp();
@@ -2709,6 +2782,7 @@ ORDER
          * @throws LocalizedException from tested method
          * @throws Zend_Http_Client_Exception from tested method
          */
+    #[Test]
     public function getBoltpayOrder_whenInCacheAndQuoteIsNotAvailable_createsNewOrder()
     {
         list($currentMock, $cart, $boltOrder) = $this->getBoltpayOrderSetUp();
@@ -2750,6 +2824,7 @@ ORDER
          * @throws LocalizedException from tested method
          * @throws Zend_Http_Client_Exception from tested method
          */
+    #[Test]
     public function getBoltpayOrder_withEmptyCartData_returnsWithoutCreatingOrder()
     {
         $currentMock = $this->getCurrentMock(['getCartData', 'boltCreateOrder']);
@@ -2763,6 +2838,8 @@ ORDER
      * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
      * @covers ::getCartData
      */
+    #[Test]
+    #[DataProvider('dataProvider_sessionIdToCartMetadataSwitch')]
     public function getCartData_inMultistepWithNoDiscount_returnsCartData(
         $addSessionIdToMetadataValue,
         $metadataSessionIdAssertMethod
@@ -2830,6 +2907,7 @@ ORDER
      * @test
      * @covers ::getCartData
      */
+    #[Test]
     public function getCartData_inAPIDrivenFlowAndMultistepWithNoDiscount_returnsCartData() {
         $boltHelperCart = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
         $quote = TestUtils::createQuote();
@@ -2879,7 +2957,7 @@ ORDER
         static::assertEquals($expected, $result);
     }
 
-    public function dataProvider_sessionIdToCartMetadataSwitch()
+    public static function dataProvider_sessionIdToCartMetadataSwitch()
     {
         return [
             [true, 'assertNotEmpty'],
@@ -2895,6 +2973,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function getCartData_withParentQuoteEmptyAndNoImmutableQuote_returnsEmptyArray()
     {
 
@@ -2911,6 +2990,7 @@ ORDER
      *
      * @throws Exception from tested method
      */
+    #[Test]
     public function getCartData_withQuoteErrorAndFSEnabled_returnsEmptyArray()
     {
 
@@ -2931,6 +3011,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function getCartData_withEmptyImmutableQuote_returnsEmptyArray()
     {
 
@@ -2950,6 +3031,8 @@ ORDER
          * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
          * @throws Exception from tested method
          */
+    #[Test]
+    #[DataProvider('dataProvider_sessionIdToCartMetadataSwitch')]
     public function getCartData_whenPaymentOnlyAndHasOrderPayload_returnsCartData(
         $addSessionIdToMetadataValue,
         $metadataSessionIdAssertMethod
@@ -3068,6 +3151,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function getCartData_withVirtualQuoteAndInsufficientBillingAddressData_notifiesErrorAndReturnsEmptyArray()
     {
 
@@ -3107,6 +3191,8 @@ ORDER
          * @dataProvider dataProvider_sessionIdToCartMetadataSwitch
          * @throws Exception from tested method
          */
+    #[Test]
+    #[DataProvider('dataProvider_sessionIdToCartMetadataSwitch')]
     public function getCartData_whenPaymentOnlyAndVirtualQuote_returnsCartData(
         $addSessionIdToMetadataValue,
         $metadataSessionIdAssertMethod
@@ -3207,6 +3293,7 @@ ORDER
          *
          * @covers ::getCartData
          */
+    #[Test]
     public function getCartData_fromBackendAndCustomerGroupIdNotInQuote_initializesRuleData()
     {
         $this->checkoutSession = $this->createPartialMock(
@@ -3294,6 +3381,7 @@ ORDER
      * @covers ::getCartData
      * @covers ::buildCartFromQuote
      */
+    #[Test]
     public function getCartData_forEditedBackendOrders_addsOriginalOrderEntityIdToMetadata()
     {
         $this->checkoutSession = $this->createPartialMock(
@@ -3382,6 +3470,7 @@ ORDER
          *
          * @covers ::getCartData
          */
+    #[Test]
     public function getCartData_fromBackendAndCustomerGroupIdInQuote_initializesRuleData()
     {
         $this->checkoutSession = $this->createPartialMock(
@@ -3514,6 +3603,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function getCartData_withDiffAboveThreshold_diffIsAddedToFirstItem()
     {
         $testItem = [
@@ -3621,6 +3711,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function getCartData_withNegativeTotalAmount_returnsZeroTotalAndAppliesFixedAmountTypeToDiscounts()
     {
         $testItem = [
@@ -3720,6 +3811,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function getCartData_paymentOnlyAndShippingMethodMissing_notifiesErrorAndReturnsEmptyArray()
     {
 
@@ -3769,6 +3861,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function getCartData_paymentOnlyAndShippingAddressIncomplete_returnsEmptyArrayAndNotifiesError()
     {
         $testItem = [
@@ -3835,6 +3928,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function getCartData_withEmptyAddressEmail_retrievesAddressFromSessionCustom()
     {
         $currentMock = $this->getCurrentMock(
@@ -3905,6 +3999,7 @@ ORDER
          * @throws LocalizedException  from tested method
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function collectDiscounts_withNoDiscounts_returnsParametersUnchanged()
     {
 
@@ -3936,6 +4031,7 @@ ORDER
          *
          * @throws NoSuchEntityException from method tested
          */
+    #[Test]
     public function collectDiscounts_withCouponCode_collectsCouponCodeDiscount()
     {
         $currentMock = $this->getCurrentMock(['getLastImmutableQuote', 'getQuoteById', 'getSaleRuleDiscounts']);
@@ -4102,6 +4198,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function collectDiscounts_withStoreCreditAndPaymentOnly_collectsDiscountFromQuote()
     {
 
@@ -4145,6 +4242,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function collectDiscounts_withStoreCreditAndNotPaymentOnly_loadsCustomerBalanceUsingModel()
     {
         $currentMock = $this->getCurrentMock(
@@ -4222,6 +4320,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function collectDiscounts_withRewardPointsAndNotPaymentOnly_loadsRewardPointsUsingModel()
     {
         $currentMock = $this->getCurrentMock(
@@ -4298,6 +4397,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function collectDiscounts_withRewardPointsAndPaymentOnly_collectsRewardPointsFromQuote()
     {
         $totalAmount = 10000; // cents
@@ -4343,6 +4443,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function collectDiscounts_withUnirgyGiftcert_collectsUnirgyGiftcert()
     {
         $mock = $this->getCurrentMock();
@@ -4397,6 +4498,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function collectDiscounts_withGiftVoucher_collectsGiftVoucher()
     {
         $mock = $this->getCurrentMock(['getLastImmutableQuote', 'getQuoteById', 'getSaleRuleDiscounts']);
@@ -4482,6 +4584,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function collectDiscounts_withOtherDiscount_collectsOtherDiscount()
     {
         $currentMock = $this->getCurrentMock();
@@ -4525,6 +4628,7 @@ ORDER
          *
          * @covers ::getCartItems
          */
+    #[Test]
     public function getCartItems_withBooleanItemOption_convertsOptionValueToString()
     {
         $color = 'Blue';
@@ -4595,6 +4699,7 @@ ORDER
      *
      * @covers ::getCartItems
      */
+    #[Test]
     public function getCartItems_withAdditionalAttributes_returnPropertiesAndAttributes()
     {
         $attributeName = 'test_attribute';
@@ -4659,6 +4764,7 @@ ORDER
          *
          * @covers ::getCartItems
          */
+    #[Test]
     public function getCartItems_withExceptionsRetrievingProductAndImages_notifiesErrors()
     {
         $this->appEmulation->expects(static::once())->method('startEnvironmentEmulation')
@@ -4764,6 +4870,7 @@ ORDER
      *
      * @covers ::getCartItems
      */
+    #[Test]
     public function getCartItems_withFeatureSwitchHandleVirtualProductsAsPhysical_returnPhysicalCart()
     {
         $this->deciderHelper->expects(self::once())->method('handleVirtualProductsAsPhysical')->willReturn(true);
@@ -4833,6 +4940,7 @@ ORDER
        *
        * @covers ::getCartItems
        */
+    #[Test]
     public function getCartItems_withGiftWrapping()
     {
         $this->deciderHelper->expects(self::exactly(2))->method('isCustomizableOptionsSupport')->willReturn(true);
@@ -4937,6 +5045,7 @@ ORDER
      *
      * @covers ::getCartItemsForOrder
      */
+    #[Test]
     public function getCartItemsForOrder()
     {
         $product = TestUtils::getSimpleProduct();
@@ -4966,6 +5075,7 @@ ORDER
      *
      * @covers ::getCartItemsForOrder
      */
+    #[Test]
     public function getCartItemsForOrder_WithDeletedProduct()
     {
         $product = TestUtils::createSimpleProduct();
@@ -4987,6 +5097,8 @@ ORDER
          * @param $childThumbnail
          * @param $expectedProductName
          */
+    #[Test]
+    #[DataProvider('dataProvider_getProductToGetImageForQuoteItem_withConfigurableItem')]
     public function getProductToGetImageForQuoteItem_withConfigurableItem($imageConfig, $childThumbnail, $expectedProductName)
     {
         $quoteItem = $this->createPartialMock(
@@ -5023,7 +5135,7 @@ ORDER
         self::assertEquals($expectedProductName, $this->currentMock->getProductToGetImageForQuoteItem($quoteItem)->getName());
     }
 
-    public function dataProvider_getProductToGetImageForQuoteItem_withConfigurableItem()
+    public static function dataProvider_getProductToGetImageForQuoteItem_withConfigurableItem()
     {
         return [
             [ThumbnailSource::OPTION_USE_OWN_IMAGE, 'Child Image URL', 'Child Product Name'],
@@ -5040,6 +5152,8 @@ ORDER
          * @param $childThumbnail
          * @param $expectedProductName
          */
+    #[Test]
+    #[DataProvider('dataProvider_getProductToGetImageForQuoteItem_withGroupedItem')]
     public function getProductToGetImageForQuoteItem_withGroupedItem($imageConfig, $childThumbnail, $expectedProductName)
     {
         $quoteItem = $this->createPartialMock(
@@ -5076,7 +5190,7 @@ ORDER
         self::assertEquals($expectedProductName, $this->currentMock->getProductToGetImageForQuoteItem($quoteItem)->getName());
     }
 
-    public function dataProvider_getProductToGetImageForQuoteItem_withGroupedItem()
+    public static function dataProvider_getProductToGetImageForQuoteItem_withGroupedItem()
     {
         return [
             [ThumbnailSource::OPTION_USE_OWN_IMAGE, 'Child Image URL', 'Child Product Name'],
@@ -5206,6 +5320,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function createCartByRequest_withGuestUserAndSimpleProduct_returnsExpectedCartData()
     {
         $request = [
@@ -5298,6 +5413,7 @@ ORDER
      *
      * @throws Exception from tested method
      */
+    #[Test]
     public function createCartByRequest_withGroupedProductChildren_returnsExpectedCartData()
     {
         $request = [
@@ -5419,6 +5535,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function createCartByRequest_withGuestUserAndConfigurableProduct_returnsExpectedCartData()
     {
         $request = [
@@ -5502,6 +5619,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function createCartByRequest_withEncryptedUserIdInRequest_assignsCustomerToQuote()
     {
         list($request, $payload, $expectedCartData, $currentMock) = $this->createCartByRequestSetUp();
@@ -5530,6 +5648,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function createCartByRequest_withOutOfStockException_throwsBoltExceptionWithOutOfStockCode()
     {
         list($request, $payload, $expectedCartData, $currentMock) = $this->createCartByRequestSetUp();
@@ -5556,6 +5675,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function createCartByRequest_withExceptionWhenAddingProductToCart_throwsBoltException()
     {
         list($request, $payload, $expectedCartData, $currentMock) = $this->createCartByRequestSetUp();
@@ -5579,6 +5699,7 @@ ORDER
      *
      * @covers ::createCartByRequest
      */
+    #[Test]
     public function createCartByRequest_withOrderCachingAndCartInCache_returnsCartFromCache()
     {
 
@@ -5649,6 +5770,7 @@ ORDER
      *
      * @covers ::createCartByRequest
      */
+    #[Test]
     public function createCartByRequest_withOrderCaching_savesCartToCache()
     {
 
@@ -5726,6 +5848,7 @@ ORDER
      *
      * @throws Exception from tested method
      */
+    #[Test]
     public function createCart_withGuestUserAndSimpleProduct_returnsExpectedCartData()
     {
         $items = [
@@ -5808,6 +5931,7 @@ ORDER
      *
      * @throws Exception from tested method
      */
+    #[Test]
     public function createCart_withGroupedProductChildren_returnsExpectedCartData()
     {
         $items = [
@@ -5923,6 +6047,7 @@ ORDER
      *
      * @throws Exception from tested method
      */
+    #[Test]
     public function createCart_withGuestUserAndConfigurableProduct_returnsExpectedCartData()
     {
         $items = [
@@ -6002,6 +6127,7 @@ ORDER
      *
      * @throws Exception from tested method
      */
+    #[Test]
     public function createCart_withEncryptedUserIdInRequest_assignsCustomerToQuote()
     {
         list($request, $payload, $expectedCartData, $currentMock) = $this->createCartByRequestSetUp();
@@ -6031,6 +6157,7 @@ ORDER
      *
      * @throws Exception from tested method
      */
+    #[Test]
     public function createCart_withOutOfStockException_throwsBoltExceptionWithOutOfStockCode()
     {
         list($request, $payload, $expectedCartData, $currentMock) = $this->createCartByRequestSetUp();
@@ -6055,6 +6182,7 @@ ORDER
      *
      * @throws Exception from tested method
      */
+    #[Test]
     public function createCart_withExceptionWhenAddingProductToCart_throwsBoltException()
     {
         list($request, $payload, $expectedCartData, $currentMock) = $this->createCartByRequestSetUp();
@@ -6079,6 +6207,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function getHints_whenCheckoutTypeIsAdmin_setsVirtualTerminalModeToTrue()
     {
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -6094,6 +6223,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function getHints_whenCheckoutTypeIsProductAndCustomerLoggedIn_returnsHintsWithEncryptedUserId()
     {
         $customerMock = $this->createPartialMock(
@@ -6144,6 +6274,8 @@ ORDER
          * @param bool $ifShouldDisablePrefillAddressForLoggedInCustomer
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
+    #[DataProvider('provider_getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints')]
     public function getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints($ifShouldDisablePrefillAddressForLoggedInCustomer)
     {
         $customerMock = $this->createPartialMock(
@@ -6238,7 +6370,7 @@ ORDER
         self::assertEquals(self::CUSTOMER_ID, $encryptedUserId['user_id']);
     }
 
-    public function provider_getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints()
+    public static function provider_getHints_withNonVirtualQuoteAndCustomerLoggedIn_willReturnCustomerShippingAddressHints()
     {
         return [
             [true],
@@ -6254,6 +6386,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function getHints_withVirtualQuoteAndCustomerLoggedIn_willReturnCustomerBillingAddressHints()
     {
         $customerMock = $this->createPartialMock(
@@ -6341,6 +6474,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function getHints_withNonProductCheckoutTypeAndVirtualQuote_returnsHintsForQuoteBillingAddress()
     {
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -6379,6 +6513,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function getHints_withNonProductCheckoutTypeAndNonVirtualQuote_returnsHintsForQuoteShippingAddress()
     {
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -6414,6 +6549,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function getHints_withApplePayRelatedDataPhone_skipsPreFill()
     {
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -6447,6 +6583,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function getHints_withApplePayRelatedDataEmail_skipsPreFill()
     {
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -6480,6 +6617,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function getHints_withApplePayRelatedDataAddressLine_skipsPreFill()
     {
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -6518,6 +6656,8 @@ ORDER
          *
          * @throws ReflectionException if assignQuoteCustomerByEncryptedUserId method doesn't exist
          */
+    #[Test]
+    #[DataProvider('assignQuoteCustomerByEncryptedUserId_withInvalidEncryptedUserIdProvider')]
     public function assignQuoteCustomerByEncryptedUserId_withInvalidEncryptedUserId_throwsException($encryptedUserId)
     {
 
@@ -6538,7 +6678,7 @@ ORDER
          *
          * @return array containing incomplete encrypted user ids
          */
-    public function assignQuoteCustomerByEncryptedUserId_withInvalidEncryptedUserIdProvider()
+    public static function assignQuoteCustomerByEncryptedUserId_withInvalidEncryptedUserIdProvider()
     {
         return [
         'Not defined'       => ['encryptedUserId' => null],
@@ -6561,6 +6701,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function assignQuoteCustomerByEncryptedUserId_withInvalidSignature_throwsException()
     {
 
@@ -6587,6 +6728,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function assignQuoteCustomerByEncryptedUserId_withOutdatedTimestamp_throwsException()
     {
         $this->expectExceptionMessage("Outdated encrypted_user_id");
@@ -6611,6 +6753,7 @@ ORDER
          *
          * @throws Exception from tested method
          */
+    #[Test]
     public function assignQuoteCustomerByEncryptedUserId_withNonExistingUserIdInRequest_throwsException()
     {
         $this->expectExceptionMessage("Incorrect user_id");
@@ -6637,6 +6780,7 @@ ORDER
          *
          * @throws ReflectionException if assignQuoteCustomerByEncryptedUserId method is not defined
          */
+    #[Test]
     public function assignQuoteCustomerByEncryptedUserId_withValidEncryptedUserId_assignsCustomerToQuote()
     {
         $payload = ['user_id' => 1, 'timestamp' => time()];
@@ -6708,6 +6852,7 @@ ORDER
         /**
          * @test
          */
+    #[Test]
     public function calculateCartAndHints_happyPath()
     {
         list($response,$expectedCart) = $this->calculateCartAndHints_initResponseData();
@@ -6745,6 +6890,7 @@ ORDER
         /**
          * @test
          */
+    #[Test]
     public function calculateCartAndHints_HasProductRestrictions()
     {
         list($response,$expectedCart) = $this->calculateCartAndHints_initResponseData();
@@ -6784,6 +6930,7 @@ ORDER
         /**
          * @test
          */
+    #[Test]
     public function calculateCartAndHints_DisallowedCheckout()
     {
         list($response,$expectedCart) = $this->calculateCartAndHints_initResponseData();
@@ -6821,6 +6968,7 @@ ORDER
         /**
          * @test
          */
+    #[Test]
     public function calculateCartAndHints_GeneralException()
     {
         $exceptionMessage = 'Test exception message';
@@ -6857,6 +7005,7 @@ ORDER
         /**
          * @test
          */
+    #[Test]
     public function calculateCartAndHints_NullResponse()
     {
         list($response,$expectedCart) = $this->calculateCartAndHints_initResponseData();
@@ -6897,6 +7046,7 @@ ORDER
      *
      * @covers ::getCustomerByEmail
      */
+    #[Test]
     public function getCustomerByEmail_withExistingCustomerEmail_returnsCustomerModel()
     {
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -6938,6 +7088,7 @@ ORDER
      *
      * @covers ::getCustomerByEmail
      */
+    #[Test]
     public function getCustomerByEmail_withExceptionOnGettingTheCustomer_returnsFalse()
     {
         $cartHelper = Bootstrap::getObjectManager()->create(BoltHelperCart::class);
@@ -6952,6 +7103,7 @@ ORDER
      *
      * @covers ::convertExternalFieldsToCacheIdentifier
      */
+    #[Test]
     public function convertExternalFieldsToCacheIdentifier_always_appendsCustomerGroupIdToCacheIdentifier()
     {
         $groupId = random_int(1,10000);
@@ -6970,6 +7122,7 @@ ORDER
      *
      * @covers ::convertExternalFieldsToCacheIdentifier
      */
+    #[Test]
     public function convertExternalFieldsToCacheIdentifier_always_appendsCustomerIdToCacheIdentifier()
     {
         $customerId = random_int(1,10000);
@@ -6990,6 +7143,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function getSaleRuleDiscounts_withFreeShippingCouponSpecificCoupon_collectsCoupon()
     {
         $currentMock = $this->getCurrentMock(['getCalculationAddress', 'isCollectDiscountsByPlugin']);
@@ -7036,6 +7190,7 @@ ORDER
          *
          * @throws NoSuchEntityException from tested method
          */
+    #[Test]
     public function getSaleRuleDiscounts_withFreeShippingCouponNoCoupon_collectsCoupon()
     {
         $currentMock = $this->getCurrentMock(['getCalculationAddress', 'isCollectDiscountsByPlugin']);
@@ -7079,6 +7234,7 @@ ORDER
      *
      * @covers ::getSkuFromQuoteItem
      */
+    #[Test]
     public function getSkuFromQuoteItem_withBundleItem()
     {
         $quoteItem = $this->createPartialMock(

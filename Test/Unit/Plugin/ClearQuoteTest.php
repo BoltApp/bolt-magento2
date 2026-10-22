@@ -25,6 +25,8 @@ use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Store\Model\ScopeInterface;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class QuotePluginTest
@@ -51,6 +53,7 @@ class ClearQuoteTest extends BoltTestCase
      * @covers ::beforeClearQuote
      * @throws \Exception
      */
+    #[Test]
     public function afterClearQuote()
     {
         TestUtils::setupBoltConfig(
@@ -78,6 +81,8 @@ class ClearQuoteTest extends BoltTestCase
      * @param $orderQuoteId
      * @throws \Exception
      */
+    #[Test]
+    #[DataProvider('provider_beforeClearQuote_returnNull')]
     public function beforeClearQuote_withGetQuoteByIdIsNotCalled_returnNull($currentQuoteId, $orderQuoteId)
     {
         TestUtils::setupBoltConfig(
@@ -99,7 +104,7 @@ class ClearQuoteTest extends BoltTestCase
         $this->assertNull( TestHelper::getProperty($this->plugin,'quoteToRestore'));
     }
 
-    public function provider_beforeClearQuote_returnNull()
+    public static function provider_beforeClearQuote_returnNull()
     {
         return [
             ['1', null],
@@ -113,6 +118,7 @@ class ClearQuoteTest extends BoltTestCase
      * @covers ::beforeClearQuote
      * @throws \Exception
      */
+    #[Test]
     public function beforeClearQuote_withGetQuoteByIdIsCalled_returnNull()
     {
         TestUtils::setupBoltConfig(
@@ -143,6 +149,7 @@ class ClearQuoteTest extends BoltTestCase
      * @test
      * @covers ::beforeClearQuote
      */
+    #[Test]
     public function beforeClearQuote_ifPpcIsDisabled_returnNull()
     {
         TestUtils::setupBoltConfig(

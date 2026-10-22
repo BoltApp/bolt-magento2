@@ -51,6 +51,8 @@ use \Magento\Sales\Model\Order\Payment\Transaction;
 use Magento\Sales\Model\Order\Invoice;
 use Magento\Sales\Model\ResourceModel\Order\Collection;
 use Magento\Framework\Event\Manager;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class PaymentTest
@@ -183,6 +185,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function canReviewPayment()
     {
         $this->paymentInfo->method('getAdditionalInformation')
@@ -195,6 +198,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function cannotReviewPayment()
     {
         $this->paymentInfo->method('getAdditionalInformation')
@@ -207,6 +211,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function cancel()
     {
         $this->mockApiResponse(
@@ -223,6 +228,8 @@ class PaymentTest extends BoltTestCase
      * @param $responseStatus
      * @throws \Exception
      */
+    #[Test]
+    #[DataProvider('provider_voidPayment_success')]
     public function voidPayment_success($responseStatus)
     {
         $this->mockApiResponse(
@@ -234,7 +241,7 @@ class PaymentTest extends BoltTestCase
         $this->currentMock->void($this->paymentMock);
     }
 
-    public function provider_voidPayment_success()
+    public static function provider_voidPayment_success()
     {
         return [
             ['cancelled'],
@@ -245,6 +252,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function voidPayment_skipHookNotification()
     {
         $this->mockApiResponse(
@@ -265,6 +273,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function voidPayment_throwExceptionWhenBoltRespondWithError()
     {
         $this->expectException(LocalizedException::class);
@@ -281,6 +290,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function voidPayment_noTransaction()
     {
         $this->expectException(LocalizedException::class);
@@ -298,6 +308,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function voidPayment_noReponse()
     {
         $this->expectException(LocalizedException::class);
@@ -311,6 +322,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function capturePayment_success()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
@@ -338,6 +350,8 @@ class PaymentTest extends BoltTestCase
      *
      * @dataProvider provider_capture_withAmountsLessThanOneCent_doesNotCallBoltApi
      */
+    #[Test]
+    #[DataProvider('provider_capture_withAmountsLessThanOneCent_doesNotCallBoltApi')]
     public function capture_withAmountsLessThanOneCent_doesNotCallBoltApi($amount)
     {
         $this->orderMock->expects($this->once())->method('getOrderCurrencyCode')->willReturn('USD');
@@ -352,7 +366,7 @@ class PaymentTest extends BoltTestCase
         $this->currentMock->capture($paymentMock, $amount);
     }
 
-    public function provider_capture_withAmountsLessThanOneCent_doesNotCallBoltApi()
+    public static function provider_capture_withAmountsLessThanOneCent_doesNotCallBoltApi()
     {
         return [
             ['amount' => 0],
@@ -365,6 +379,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function capturePayment_withDifferentCurrency_success()
     {
         $this->orderMock->method("getOrderCurrencyCode")->willReturn("CAD");
@@ -392,6 +407,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function capturePayment_skipHookNotification()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
@@ -413,6 +429,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function capturePayment_success_multicapture()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
@@ -429,6 +446,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function capturePayment_throwExceptionWhenBoltRespondWithError()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
@@ -446,6 +464,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function capturePayment_invalidAmount()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
@@ -457,6 +476,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function capturePayment_noTransactionId()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
@@ -475,6 +495,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function capturePayment_noResponse()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
@@ -489,6 +510,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function refundPayment_success()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
@@ -504,6 +526,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function refundPayment_transactionInProgress_Success()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
@@ -519,6 +542,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function refundPayment_mustRoundingAmountBeforeCallingRefundApi()
     {
         $orderMock = $this->getMockBuilder(Order::class)->disableOriginalConstructor()->getMock();
@@ -559,6 +583,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function refundPayment_skipHookNotification()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
@@ -580,6 +605,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function refundPayment_withDifferentCurrency_success()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('CAD');
@@ -602,6 +628,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function refundPayment_throwExceptionWhenBoltRespondWithError()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
@@ -619,6 +646,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function refundPayment_invalidAmount()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
@@ -639,6 +667,8 @@ class PaymentTest extends BoltTestCase
      *
      * @throws \Exception
      */
+    #[Test]
+    #[DataProvider('refund_withAmountsLessThanOneCentProvider')]
     public function refund_withAmountsLessThanOneCent_refundsWithoutCallingTheBoltApi($amount)
     {
         $this->orderMock->expects($this->once())->method('getOrderCurrencyCode')->willReturn('USD');
@@ -659,7 +689,7 @@ class PaymentTest extends BoltTestCase
      *
      * @return array containing zero or negative values for which to avoid calling Bolt API refund
      */
-    public function refund_withAmountsLessThanOneCentProvider()
+    public static function refund_withAmountsLessThanOneCentProvider()
     {
         return [
             ['amount' => 0.004],
@@ -672,6 +702,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function refundPayment_noTransactionId()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
@@ -691,6 +722,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function refundPayment_noResponse()
     {
         $this->orderMock->method('getOrderCurrencyCode')->willReturn('USD');
@@ -706,6 +738,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validate()
     {
         $this->assertEquals(
@@ -717,6 +750,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function isAvailable_hasProductRestrictions()
     {
         $quoteMock = $this->createMock(Quote::class);
@@ -729,6 +763,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function isAvailable_noProductRestrictions()
     {
         $quoteMock = $this->createMock(Quote::class);
@@ -741,6 +776,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function isAvailable_notActive()
     {
         global $boltPaymentTestActive;
@@ -755,6 +791,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getTitle_parent()
     {
         $this->scopeConfig->expects($this->once())->method('getValue')
@@ -770,6 +807,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getTitle_adminhtml_noStore()
     {
         $this->setObjectProtectedProperty($this->currentMock, 'areaCode', AppArea::AREA_ADMINHTML);
@@ -782,6 +820,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getTitle_adminhtml_storeFromData()
     {
         $this->setObjectProtectedProperty($this->currentMock, 'areaCode', AppArea::AREA_ADMINHTML);
@@ -795,6 +834,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getTitle_adminhtml_storeFromRegistry()
     {
         $this->setObjectProtectedProperty($this->currentMock, 'areaCode', AppArea::AREA_ADMINHTML);
@@ -809,6 +849,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function acceptPayment_success()
     {
         $this->mockApiResponse(
@@ -823,6 +864,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function acceptPayment_throwExceptionWhenBoltRespondWithError()
     {
         $this->mockApiResponse(
@@ -835,6 +877,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function reviewPayment_noTransaction()
     {
         $paymentInfoMock =  $this->getMockBuilder(InfoInterface::class)->setMethods(['getId', 'getOrder', 'getCcTransId'])
@@ -850,6 +893,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function reviewPayment_noReference()
     {
         $this->mockApiResponse("merchant/transactions/review", '{"reference": null}');
@@ -861,6 +905,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function rejectPayment_success()
     {
         $this->mockApiResponse(
@@ -875,6 +920,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function rejectPayment_throwExceptionWhenBoltRespondWithError()
     {
         $this->mockApiResponse(
@@ -888,6 +934,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function fetchTransactionInfo_success()
     {
         $magentoTxnMock = $this->createMock(Transaction::class);
@@ -904,6 +951,7 @@ class PaymentTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function fetchTransactionInfo_exception()
     {
         $exception = new \Magento\Framework\Exception\InputException(__('Identifying Fields required'));

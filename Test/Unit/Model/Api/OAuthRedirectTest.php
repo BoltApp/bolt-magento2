@@ -28,6 +28,7 @@ use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Exception as WebapiException;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\OAuthRedirect
@@ -56,6 +57,7 @@ class OAuthRedirectTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function login_throwsNoSuchEntityException_ifSSONotEnabled()
     {
         TestUtils::saveFeatureSwitch(
@@ -70,6 +72,7 @@ class OAuthRedirectTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function login_throwsWebapiException_ifCodeIsEmpty()
     {
         TestUtils::saveFeatureSwitch(
@@ -84,6 +87,7 @@ class OAuthRedirectTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function login_throwsWebapiException_ifScopeIsEmpty()
     {
         TestUtils::saveFeatureSwitch(
@@ -98,6 +102,7 @@ class OAuthRedirectTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function login_throwsWebapiException_ifStateIsEmpty()
     {
         TestUtils::saveFeatureSwitch(
@@ -112,6 +117,7 @@ class OAuthRedirectTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function login_throwsWebapiException_ifTokenExchangeReturnsString()
     {
         TestUtils::saveFeatureSwitch(
@@ -126,6 +132,7 @@ class OAuthRedirectTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function login_throwsWebapiException_ifParseAndValidateTokenFailed()
     {
         TestUtils::saveFeatureSwitch(
@@ -146,6 +153,7 @@ class OAuthRedirectTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function login_isSuccessful()
     {
         TestUtils::saveFeatureSwitch(

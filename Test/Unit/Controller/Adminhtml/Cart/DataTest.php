@@ -37,6 +37,7 @@ use Magento\Framework\Registry;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class DataTest
@@ -315,6 +316,7 @@ class DataTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new Data(
@@ -344,6 +346,7 @@ class DataTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_NoBoltpayOrder()
     {
         $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
@@ -394,6 +397,7 @@ class DataTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_HappyPath()
     {
         $storeMock = $this->createMock(\Magento\Store\Model\Store::class);
@@ -452,6 +456,7 @@ class DataTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_ThrowsException()
     {
         $this->expectException(\Exception::class);
@@ -508,6 +513,7 @@ class DataTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_withSessionStoreIdNotSet_returnsErrorResponse()
     {
         $this->sessionMock->expects(static::once())->method('getStoreId')->willReturn(null);
@@ -535,6 +541,7 @@ class DataTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_withAlreadyUsedCustomerEmail_returnsErrorResponse()
     {
         $this->sessionMock->expects(static::once())->method('getStoreId')->willReturn(self::STORE_ID);

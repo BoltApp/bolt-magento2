@@ -28,6 +28,7 @@ use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class BoltCartTest
@@ -68,6 +69,7 @@ class BoltCartTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getSectionData()
     {
         $configData = [
@@ -87,6 +89,7 @@ class BoltCartTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getSectionData_returnEmptyArray()
     {
         $configData = [

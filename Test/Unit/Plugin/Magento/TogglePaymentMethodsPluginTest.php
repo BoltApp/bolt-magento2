@@ -26,6 +26,7 @@ use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Quote\Api\Data\PaymentMethodInterface;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class TogglePaymentMethodsPluginTest
@@ -85,6 +86,7 @@ class TogglePaymentMethodsPluginTest extends BoltTestCase
      * @test
      * @covers ::aroundExecute
      */
+    #[Test]
     public function aroundExecute_ifNonBoltPayment_return()
     {
         $this->callback->expects(self::once())->method('__invoke')->with($this->observer);
@@ -97,6 +99,7 @@ class TogglePaymentMethodsPluginTest extends BoltTestCase
      * @test
      * @covers ::aroundExecute
      */
+    #[Test]
     public function aroundExecute_ifBoltPaymentAndResultIsAvailable_return()
     {
         $this->callback->expects(self::once())->method('__invoke')->with($this->observer);
@@ -113,6 +116,7 @@ class TogglePaymentMethodsPluginTest extends BoltTestCase
      * @test
      * @covers ::aroundExecute
      */
+    #[Test]
     public function aroundExecute_ifBoltPaymentAndNotResultIsAvailableAndNoQuote_return()
     {
         $this->callback->expects(self::once())->method('__invoke')->with($this->observer);
@@ -130,6 +134,7 @@ class TogglePaymentMethodsPluginTest extends BoltTestCase
      * @test
      * @covers ::aroundExecute
      */
+    #[Test]
     public function aroundExecute_ifBoltPaymentAndNotResultIsAvailableAndQuoteZeroTotal_setIsAvailable()
     {
         $this->callback->expects(self::once())->method('__invoke')->with($this->observer);

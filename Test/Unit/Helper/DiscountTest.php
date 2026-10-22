@@ -44,6 +44,8 @@ use Magento\SalesRule\Model\RuleRepository;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class DiscountTest
@@ -205,6 +207,7 @@ class DiscountTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new Discount(
@@ -246,6 +249,7 @@ class DiscountTest extends BoltTestCase
      *
      * @throws ReflectionException if updateTotals method doesn't exist
      */
+    #[Test]
     public function updateTotals_always_collectsTotalsAndSavesTheQuote()
     {
         $this->initCurrentMock();
@@ -283,6 +287,8 @@ class DiscountTest extends BoltTestCase
      * @param bool $payForEverything Amasty Gift Card config value
      * @param bool $expectedResult of the method call
      */
+    #[Test]
+    #[DataProvider('getAmastyPayForEverything_withVariousPayConfigsProvider')]
     public function getAmastyPayForEverything_withVariousPayConfigs_returnsPayForEverythingState(
         $hasGiftCardConfig,
         $payForEverything,
@@ -309,7 +315,7 @@ class DiscountTest extends BoltTestCase
      * @return array[] containing whether Amasty Gift Card config is present flag, payForEverything config value
      * and expectedResult of the method call
      */
-    public function getAmastyPayForEverything_withVariousPayConfigsProvider()
+    public static function getAmastyPayForEverything_withVariousPayConfigsProvider()
     {
         return [
             ['hasGiftCardConfig' => false, 'payForEverything' => false, 'expectedResult' => true],
@@ -322,6 +328,7 @@ class DiscountTest extends BoltTestCase
      * @test
      * @covers ::loadUnirgyGiftCertData
      */
+    #[Test]
     public function loadUnirgyGiftCertData()
     {
         $storeId = 11;
@@ -354,6 +361,7 @@ class DiscountTest extends BoltTestCase
      * @test
      * @covers ::loadUnirgyGiftCertData
      */
+    #[Test]
     public function loadUnirgyGiftCertData_noGiftCert()
     {
         $storeId = 11;
@@ -382,6 +390,7 @@ class DiscountTest extends BoltTestCase
      *
      * @throws \Magento\Framework\Exception\NoSuchEntityException from tested method
      */
+    #[Test]
     public function getUnirgyGiftCertBalanceByCode_withGiftcertCodeList_returnsSummedBalances()
     {
         $this->initCurrentMock();
@@ -418,6 +427,7 @@ class DiscountTest extends BoltTestCase
      *
      * @throws ReflectionException if unable to set internal mock properties
      */
+    #[Test]
     public function loadCouponCodeData_withCouponCode_returnCouponObject()
     {
         $this->initCurrentMock();
@@ -447,6 +457,7 @@ class DiscountTest extends BoltTestCase
      * @covers ::convertToBoltDiscountType
      *
      */
+    #[Test]
     public function convertToBoltDiscountType_withEmptyCouponCode_returnEmptyString()
     {
         $this->initCurrentMock();
@@ -460,6 +471,7 @@ class DiscountTest extends BoltTestCase
      * @covers ::convertToBoltDiscountType
      *
      */
+    #[Test]
     public function convertToBoltDiscountType_loadCouponCodeDataThrowsException_notifyException()
     {
         $this->initCurrentMock(['loadCouponCodeData']);
@@ -476,6 +488,7 @@ class DiscountTest extends BoltTestCase
      * @test
      * @covers ::convertToBoltDiscountType
      */
+    #[Test]
     public function convertToBoltDiscountType_withEmptyDiscountCode_returnsDefaultValue()
     {
         $this->initCurrentMock();
@@ -494,6 +507,8 @@ class DiscountTest extends BoltTestCase
      * @param string $types
      * @param bool $expectedResult of the method call
      */
+    #[Test]
+    #[DataProvider('convertToBoltDiscountType_withVariousTypesProvider')]
     public function convertToBoltDiscountType_withVariousTypes_returnsBoltDiscountTypeValue(
         $types,
         $expectedResult
@@ -517,7 +532,7 @@ class DiscountTest extends BoltTestCase
      *
      * @return array[] containing Magento discount type and expected result of the method call
      */
-    public function convertToBoltDiscountType_withVariousTypesProvider()
+    public static function convertToBoltDiscountType_withVariousTypesProvider()
     {
         return [
             ['types' => 'by_fixed', 'expectedResult' => 'fixed_amount'],
@@ -535,6 +550,7 @@ class DiscountTest extends BoltTestCase
      * @covers ::convertToBoltDiscountType
      *
      */
+    #[Test]
     public function convertToBoltDiscountType_withFreeShippintCoupon_returnsBoltDiscountTypeValue()
     {
         $objectManager = Bootstrap::getObjectManager();
@@ -559,6 +575,7 @@ class DiscountTest extends BoltTestCase
      *
      * @throws ReflectionException if unable to set internal mock properties
      */
+    #[Test]
     public function setCouponCode_savesProperly()
     {
         $this->initCurrentMock();

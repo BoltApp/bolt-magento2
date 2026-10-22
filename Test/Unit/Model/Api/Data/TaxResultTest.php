@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 use Bolt\Boltpay\Api\Data\TaxResultInterface;
 use Bolt\Boltpay\Model\Api\Data\TaxResult;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class TaxResultTest
@@ -47,6 +48,7 @@ class TaxResultTest extends BoltTestCase
      *
      * @covers ::getSubtotalAmount
      */
+    #[Test]
     public function getSubtotalAmount()
     {
         $this->assertEquals(self::SUBTOTAL_AMOUNT, $this->taxResult->getSubtotalAmount());
@@ -58,6 +60,7 @@ class TaxResultTest extends BoltTestCase
      *
      * @covers ::setSubtotalAmount
      */
+    #[Test]
     public function setSubtotalAmount()
     {
         $result = $this->taxResult->setSubtotalAmount(self::SUBTOTAL_AMOUNT);
@@ -70,6 +73,7 @@ class TaxResultTest extends BoltTestCase
      *
      * @covers ::jsonSerialize
      */
+    #[Test]
     public function jsonSerialize()
     {
         $result = $this->taxResult->jsonSerialize();

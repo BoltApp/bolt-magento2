@@ -31,6 +31,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Magento\TestFramework\ObjectManager;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\Pricing\Helper\Data as PriceHelper;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class TaxTest
@@ -109,6 +111,8 @@ class TaxTest extends BoltTestCase
      * @param $methodCode
      *
      */
+    #[Test]
+    #[DataProvider('provider_setAddressInformation_happyPath')]
     public function setAddressInformation_happyPath($shippingReference, $carrierCode, $methodCode)
     {
         $addressData = [
@@ -135,7 +139,7 @@ class TaxTest extends BoltTestCase
         self::assertEquals($methodCode, TestHelper::getProperty($this->tax, 'addressInformation')->getShippingMethodCode());
     }
 
-    public function provider_setAddressInformation_happyPath()
+    public static function provider_setAddressInformation_happyPath()
     {
         return [
             ['carrierCode_methodCode', 'carrierCode', 'methodCode'],
@@ -149,6 +153,7 @@ class TaxTest extends BoltTestCase
      *
      * @covers ::setAddressInformation
      */
+    #[Test]
     public function setAddressInformation_noShippingOption()
     {
         $addressData = [
@@ -177,6 +182,7 @@ class TaxTest extends BoltTestCase
      *
      * @covers ::createTaxResult
      */
+    #[Test]
     public function createTaxResult()
     {
         $addressInformation = $this->objectManager->create(TotalsInformationInterface::class);
@@ -196,6 +202,7 @@ class TaxTest extends BoltTestCase
      *
      * @covers ::createShippingOption
      */
+    #[Test]
     public function createShippingOption()
     {
         $addressInformation = $this->objectManager->create(TotalsInformationInterface::class);
@@ -239,6 +246,7 @@ class TaxTest extends BoltTestCase
      *
      * @covers ::createShippingOption
      */
+    #[Test]
     public function createShippingOption_noShippingOption()
     {
         $addressInformation = $this->objectManager->create(TotalsInformationInterface::class);
@@ -271,6 +279,7 @@ class TaxTest extends BoltTestCase
      *
      * @covers ::generateResult
      */
+    #[Test]
     public function generateResult()
     {
         $addressData = [
@@ -334,6 +343,7 @@ class TaxTest extends BoltTestCase
      *
      * @covers ::generateResult
      */
+    #[Test]
     public function generateResult_virtualQuote()
     {
         $addressData = [

@@ -24,6 +24,7 @@ use Bolt\Boltpay\Model\Response as BoltResponse;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ManagerTest
@@ -78,6 +79,7 @@ class ManagerTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new Manager(
@@ -93,6 +95,7 @@ class ManagerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function updateSwitchesFromBolt_EmptyResponse()
     {
         $this->gql
@@ -110,6 +113,7 @@ class ManagerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function updateSwitchesFromBolt_ResponseWithOnlyResponse()
     {
         $response = new BoltResponse();
@@ -130,6 +134,7 @@ class ManagerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function updateSwitchesFromBolt_ResponseUptoData()
     {
         $response = new BoltResponse();
@@ -150,6 +155,7 @@ class ManagerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function updateSwitchesFromBolt_ResponseUptoPlugin()
     {
         $response = new BoltResponse();
@@ -174,6 +180,7 @@ class ManagerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function updateSwitchesFromBolt_ResponseUptoFeatures()
     {
         $response = new BoltResponse();
@@ -199,6 +206,7 @@ class ManagerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function updateSwitchesFromBolt_ResponseWithSwitches()
     {
         $response = new BoltResponse();
@@ -235,6 +243,7 @@ class ManagerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function updateSwitchesFromBolt_ResponseWithMultipleSwitches()
     {
         $response = new BoltResponse();

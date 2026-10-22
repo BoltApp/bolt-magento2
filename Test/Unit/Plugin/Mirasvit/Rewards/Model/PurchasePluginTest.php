@@ -22,6 +22,8 @@ use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin;
 use Magento\Framework\UrlInterface;
 use Bolt\Boltpay\Helper\Bugsnag;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Mirasvit\Rewards\Model\PurchasePlugin
@@ -92,6 +94,8 @@ class PurchasePluginTest extends BoltTestCase
      * @param $expectedCall
      * @throws \Exception
      */
+    #[Test]
+    #[DataProvider('dataProvider_aroundRefreshPointsNumber')]
     public function aroundRefreshPointsNumber($url, $expectedCall)
     {
         $this->urlInterface->method('getCurrentUrl')->willReturn($url);
@@ -99,7 +103,7 @@ class PurchasePluginTest extends BoltTestCase
         $this->plugin->aroundRefreshPointsNumber($this->subject, $this->proceed, true);
     }
 
-    public function dataProvider_aroundRefreshPointsNumber()
+    public static function dataProvider_aroundRefreshPointsNumber()
     {
         return [
             [null, 1],

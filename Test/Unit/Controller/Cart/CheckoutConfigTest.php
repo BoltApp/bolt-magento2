@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Controller\Cart;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Controller\Cart\CheckoutConfig
@@ -70,6 +71,7 @@ class CheckoutConfigTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function __construct_always_setsProperties()
     {
         $instance = new \Bolt\Boltpay\Controller\Cart\CheckoutConfig(
@@ -88,6 +90,7 @@ class CheckoutConfigTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_withEmptySessionQuoteId_returnsEmptyResponse()
     {
         $this->checkoutSession->expects(static::once())->method('getQuoteId')->willReturn(null);
@@ -107,6 +110,7 @@ class CheckoutConfigTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_withVariousConfigProviders_returnsConfigJSONResponse()
     {
         $this->checkoutSession->expects(static::once())->method('getQuoteId')->willReturn(10001);

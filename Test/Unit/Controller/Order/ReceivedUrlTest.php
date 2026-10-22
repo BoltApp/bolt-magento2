@@ -40,6 +40,8 @@ use Magento\Framework\App\Response\RedirectInterface;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Serialize\SerializerInterface as Serialize;
 use Bolt\Boltpay\Controller\ReceivedUrlInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Controller\Order\ReceivedUrl
@@ -148,6 +150,8 @@ class ReceivedUrlTest extends BoltTestCase
      *
      * @throws \ReflectionException if class tested doesn't have _request property or hasAdminUrlReferer method
      */
+    #[Test]
+    #[DataProvider('hasBoltUrlReferer_withVariousHttpReferrersProvider')]
     public function hasBoltUrlReferer_withVariousHttpReferrers_determinesIfUrlReferIsBoltCDN(
         $referrerUrl,
         $isBoltCDNReferrer
@@ -167,7 +171,7 @@ class ReceivedUrlTest extends BoltTestCase
      *
      * @return array[] containing referrer url and expected result of the method tested
      */
-    public function hasBoltUrlReferer_withVariousHttpReferrersProvider()
+    public static function hasBoltUrlReferer_withVariousHttpReferrersProvider()
     {
         return [
             [
@@ -196,6 +200,7 @@ class ReceivedUrlTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_HappyPath()
     {
         $request = $this->initRequest($this->defaultRequestMap);
@@ -323,6 +328,7 @@ class ReceivedUrlTest extends BoltTestCase
      * @covers ::hasBoltUrlReferer
      * @covers ::redirectToAdminIfNeeded
      */
+    #[Test]
     public function execute_ifBackofficeOrderPlacedByAdmin_redirectsToAdminReceivedUrl()
     {
         $request = $this->initRequest($this->defaultRequestMap);
@@ -389,6 +395,7 @@ class ReceivedUrlTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_IncorrectOrderState()
     {
         $request = $this->initRequest($this->defaultRequestMap);
@@ -492,6 +499,7 @@ class ReceivedUrlTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_SignatureAndHashUnequal()
     {
         $request = $this->initRequest($this->defaultRequestMap);
@@ -551,6 +559,7 @@ class ReceivedUrlTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_NoSuchEntityException()
     {
         $request = $this->initRequest($this->defaultRequestMap);
@@ -614,6 +623,7 @@ class ReceivedUrlTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_LocalizedException()
     {
         $request = $this->initRequest($this->defaultRequestMap);

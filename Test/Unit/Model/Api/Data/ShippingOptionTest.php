@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\ShippingOption;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ShippingOptionTest
@@ -51,6 +52,7 @@ class ShippingOptionTest extends BoltTestCase
      * that getReference would return reference
      * @covers ::getReference
      */
+    #[Test]
     public function getReference_always_returnsReference()
     {
         $this->assertEquals(self::REFERENCE, $this->shippingOption->getReference());
@@ -61,6 +63,7 @@ class ShippingOptionTest extends BoltTestCase
      * that getService would return service
      * @covers ::getService
      */
+    #[Test]
     public function getService_always_returnsService()
     {
         $this->assertEquals(self::SERVICE, $this->shippingOption->getService());
@@ -71,6 +74,7 @@ class ShippingOptionTest extends BoltTestCase
      * that getCost would return cost
      * @covers ::getCost
      */
+    #[Test]
     public function getCost_always_returnsCost()
     {
         $this->assertEquals(self::COST, $this->shippingOption->getCost());
@@ -81,6 +85,7 @@ class ShippingOptionTest extends BoltTestCase
      * that getTaxAmount would return tax amount
      * @covers ::getTaxAmount
      */
+    #[Test]
     public function getTaxAmount_always_returnsTaxAmount()
     {
         $this->assertEquals(self::TAX_AMOUNT, $this->shippingOption->getTaxAmount());
@@ -91,6 +96,7 @@ class ShippingOptionTest extends BoltTestCase
      * that jsonSerialize would return array containing service, cost, reference and tax amount
      * @covers ::jsonSerialize
      */
+    #[Test]
     public function jsonSerialize_always_returnsServiceCostReferenceAndTaxAmount()
     {
         $result = $this->shippingOption->jsonSerialize();

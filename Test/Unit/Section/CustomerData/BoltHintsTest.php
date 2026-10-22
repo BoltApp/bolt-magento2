@@ -27,6 +27,7 @@ use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class BoltHintsTest
@@ -68,6 +69,7 @@ class BoltHintsTest extends BoltTestCase
      * @test
      * @covers ::getSectionData
      */
+    #[Test]
     public function getSectionData_returnEmptyIfPPCdisabled()
     {
         $result = $this->boltHints->getSectionData();
@@ -78,6 +80,7 @@ class BoltHintsTest extends BoltTestCase
      * @test
      * @covers ::getSectionData
      */
+    #[Test]
     public function getSectionData_returnHints()
     {
         $this->cartHelper->expects($this->once())->method('getHints')->with(null, 'product')->willReturn('testHints');
@@ -108,6 +111,7 @@ class BoltHintsTest extends BoltTestCase
      * @test
      * @covers ::getSectionData
      */
+    #[Test]
     public function getSectionData_returnEmptyArray()
     {
         $configData = [

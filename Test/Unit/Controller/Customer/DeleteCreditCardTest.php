@@ -27,6 +27,8 @@ use Magento\Framework\Message\Manager;
 use Magento\Store\App\Response\Redirect;
 use Magento\Framework\Data\Form\FormKey\Validator;
 use Magento\Customer\Model\Session;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 class DeleteCreditCardTest extends BoltTestCase
 {
@@ -134,6 +136,7 @@ class DeleteCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_success()
     {
         $this->validatorMock->expects(self::once())->method('validate')->with($this->requestMock)->willReturn(true);
@@ -159,7 +162,7 @@ class DeleteCreditCardTest extends BoltTestCase
         $this->assertSame($this->redirectMock, $this->currentMock->execute());
     }
 
-    public function dataProvider_execute_withInvalidIdParameter()
+    public static function dataProvider_execute_withInvalidIdParameter()
     {
         return [
             [self::ID, 'test', self::CUSTOMER_ID],
@@ -174,6 +177,8 @@ class DeleteCreditCardTest extends BoltTestCase
      * @dataProvider dataProvider_execute_withInvalidIdParameter
      * @test
      */
+    #[Test]
+    #[DataProvider('dataProvider_execute_withInvalidIdParameter')]
     public function execute_withInvalidIdParameter($id, $customerId, $customerSessionId)
     {
         $this->validatorMock->expects(self::once())->method('validate')->with($this->requestMock)->willReturn(true);
@@ -201,6 +206,7 @@ class DeleteCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_withMissingIdParameter()
     {
         $this->validatorMock->expects(self::once())->method('validate')->with($this->requestMock)->willReturn(true);
@@ -220,6 +226,7 @@ class DeleteCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_withException()
     {
         $this->validatorMock->expects(self::once())->method('validate')->with($this->requestMock)->willReturn(true);
@@ -246,6 +253,7 @@ class DeleteCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_withInvalidFormKey()
     {
         $this->validatorMock->expects(self::once())->method('validate')->with($this->requestMock)->willReturn(false);

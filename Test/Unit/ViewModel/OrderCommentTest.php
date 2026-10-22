@@ -31,6 +31,8 @@ use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Store\Model\ScopeInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class OrderCommentTest
@@ -82,6 +84,7 @@ class OrderCommentTest extends BoltTestCase
      *
      * @return void
      */
+    #[Test]
     public function __construct_always_populatesInternalProperties()
     {
         $instance = new OrderComment($this->configHelper, $this->featureSwitches);
@@ -94,6 +97,7 @@ class OrderCommentTest extends BoltTestCase
      * that getCommentForOrder returns order data stored under the field configured to be used for comment storage
      * @see \Bolt\Boltpay\Helper\Config::getOrderCommentField
      */
+    #[Test]
     public function getCommentForOrder_withCommentFieldSet_returnsOrderCommentFromTheConfiguredField()
     {
         $storeId = $this->objectManager->get(StoreManagerInterface::class)->getStore()->getId();
@@ -123,6 +127,8 @@ class OrderCommentTest extends BoltTestCase
      *
      * @return void
      */
+    #[Test]
+    #[DataProvider('shouldDisplayForOrder_withVariousStatesProvider')]
     public function shouldDisplayForOrder_withVariousStates_determinesIfCommentBlockShouldBeDisplayed(
         $isShowOrderCommentInAdmin,
         $orderComment,
@@ -158,7 +164,7 @@ class OrderCommentTest extends BoltTestCase
      *
      * @return array
      */
-    public function shouldDisplayForOrder_withVariousStatesProvider()
+    public static function shouldDisplayForOrder_withVariousStatesProvider()
     {
         return [
             [

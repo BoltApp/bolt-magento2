@@ -22,6 +22,7 @@ use Magento\Quote\Model\Quote\Address\Total;
 use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Quote\Model\Quote;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\Magecomp\Extrafee
@@ -59,6 +60,7 @@ class ExtrafeeTest extends BoltTestCase
      *
      * @covers ::filterCartItems
      */
+    #[Test]
     public function filterCartItems_ifExtraFeeInQuoteTotals_addsDummyItemToProductsMatchingTheTotal()
     {
         $this->quoteMock->expects(static::once())->method('getTotals')
@@ -93,6 +95,7 @@ class ExtrafeeTest extends BoltTestCase
      *
      * @covers ::filterTransactionBeforeOrderCreateValidation
      */
+    #[Test]
     public function filterTransactionBeforeOrderCreateValidation_always_filtersOutExtraFeeDummyItem()
     {
         $regularItem = (object)([
@@ -211,6 +214,7 @@ class ExtrafeeTest extends BoltTestCase
      *
      * @covers ::filterCartBeforeLegacyShippingAndTax
      */
+    #[Test]
     public function filterCartBeforeLegacyShippingAndTax_always_filtersOutExtraFeeDummyItem()
     {
         $cart = [

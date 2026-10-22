@@ -18,6 +18,7 @@
 namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ShippingOptionsTest
@@ -45,6 +46,7 @@ class ShippingOptionsTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetShippingOptions()
     {
         $shippingOption = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
@@ -55,6 +57,7 @@ class ShippingOptionsTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetTaxResult()
     {
         $this->shippingOptions->setTaxResult(self::TAX_RESULT);
@@ -64,6 +67,7 @@ class ShippingOptionsTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function addAmountToShippingOptions()
     {
         $shippingOption = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();

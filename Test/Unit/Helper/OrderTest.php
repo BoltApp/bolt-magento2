@@ -97,6 +97,8 @@ use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard\Collection as CustomerCreditCardCollection;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Helper\Order
@@ -186,6 +188,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::fetchTransactionInfo
      */
+    #[Test]
     public function fetchTransactionInfo()
     {
         $response = (object)['display_id' => static::DISPLAY_ID];
@@ -211,6 +214,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function setShippingMethod_withVirtualQuote_doesNothing()
     {
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -235,6 +239,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function setShippingMethod_withPhysicalQuote()
     {
         $quote = TestUtils::createQuote();
@@ -267,6 +272,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function setAddress()
     {
         $addressObject = (object) self::ADDRESS_DATA;
@@ -288,6 +294,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function adjustTaxMismatch()
     {
         $orderModel = $this->objectManager->create(Order::class);
@@ -326,6 +333,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function checkExistingOrder_orderAlreadyExists_notifiesError()
     {
         $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
@@ -348,6 +356,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function checkExistingOrder_orderDoesntExist_returnsFalse()
     {
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
@@ -368,6 +377,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function createOrder_existingOrder()
     {
         $orderHelper = $this->getMockBuilder(OrderHelper::class)
@@ -399,6 +409,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function createOrder_newOrderQuoteSubmitExceptionWithOrderCreated_returnsOrder()
     {
         $orderHelper = $this->getMockBuilder(OrderHelper::class)
@@ -434,6 +445,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function createOrder_newOrderQuoteSubmitExceptionWithOrderNotCreated_reThrowsException()
     {
         $orderHelper = $this->getMockBuilder(OrderHelper::class)
@@ -463,6 +475,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function createOrder_newOrderNotCreated_throwsException()
     {
         $orderHelper = $this->getMockBuilder(OrderHelper::class)
@@ -491,6 +504,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function createOrder_newOrder_returnsOrder()
     {
         $transaction = [];
@@ -533,6 +547,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException if orderPostprocess method doesn't exist
      */
+    #[Test]
     public function orderPostprocess_withVariousBoltCheckoutTypes_savesAdditionalOrderData()
     {
         $order = TestUtils::createDumpyOrder();
@@ -575,6 +590,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException if quoteResourceSave method is not defined
      */
+    #[Test]
     public function orderPostprocess_ifQuoteCheckoutTypeIsPPC_setsQuoteCheckoutTypeToPPCComplete()
     {
         $order = TestUtils::createDumpyOrder();
@@ -613,6 +629,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException if setOrderPaymentInfoData method is not defined
      */
+    #[Test]
     public function setOrderPaymentInfoData_ifPaymentHasExistingCardData_cardDataIsNotUpdatedAndPaymentIsSaved()
     {
         $order = TestUtils::createDumpyOrder();
@@ -644,6 +661,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException if setOrderPaymentInfoData method is not defined
      */
+    #[Test]
     public function setOrderPaymentInfoData_ifPaymentIsMissingLastFourOrType_theyAreUpdated()
     {
 
@@ -669,6 +687,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::resetOrderState
      */
+    #[Test]
     public function resetOrderState()
     {
         $order = TestUtils::createDumpyOrder();
@@ -687,6 +706,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::getOrderByQuoteId
      */
+    #[Test]
     public function getOrderByQuoteId()
     {
         $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
@@ -699,6 +719,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::saveUpdateOrder
      */
+    #[Test]
     public function saveUpdateOrder()
     {
         $quote = TestUtils::createQuote();
@@ -758,6 +779,7 @@ class OrderTest extends BoltTestCase
      * @throws ReflectionException from the initCurrentMock method
      * @throws Zend_Http_Client_Exception from the tested method
      */
+    #[Test]
     public function saveUpdateOrder_ifHookDoesntFindOrderAndLogDisabled_willNotifyBugsnagWithoutWebhookLogging()
     {
         Hook::$fromBolt = true;
@@ -805,6 +827,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::saveUpdateOrder
      */
+    #[Test]
     public function saveUpdateOrder_noOrderNoQuote()
     {
         Hook::$fromBolt = false;
@@ -848,6 +871,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::saveUpdateOrder
      */
+    #[Test]
     public function saveUpdateOrder_noOrderNoQuote_fromWebhook_recordAttempt_throwException()
     {
         Hook::$fromBolt = true;
@@ -896,6 +920,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::saveUpdateOrder
      */
+    #[Test]
     public function saveUpdateOrder_noOrderNoQuote_fromWebhook_incrementAttemptCount_throwException()
     {
         Hook::$fromBolt = true;
@@ -949,6 +974,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::saveUpdateOrder
      */
+    #[Test]
     public function saveUpdateOrder_noOrderNoQuote_fromWebhook_returnThis()
     {
         Hook::$fromBolt = true;
@@ -1003,6 +1029,7 @@ class OrderTest extends BoltTestCase
      * @covers ::saveUpdateOrder
      * @covers ::holdOnTotalsMismatch
      */
+    #[Test]
     public function saveUpdateOrder_createOrderFromWebhook()
     {
         $orderHelper = $this->createPartialMock(OrderHelper::class,
@@ -1092,6 +1119,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::applyExternalQuoteData
      */
+    #[Test]
     public function applyExternalQuoteData()
     {
         /** @var Quote $quote */
@@ -1107,6 +1135,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::dispatchPostCheckoutEvents
      */
+    #[Test]
     public function dispatchPostCheckoutEvents()
     {
         $orderModel = $this->objectManager->create(Order::class);
@@ -1122,6 +1151,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::dispatchPostCheckoutEvents
      */
+    #[Test]
     public function dispatchPostCheckoutEvents_whenAlreadyDispatched_returnsNull()
     {
         $orderModel = $this->objectManager->create(Order::class);
@@ -1136,6 +1166,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws Exception
      */
+    #[Test]
     public function processExistingOrder_noOrder()
     {
         $quote = TestUtils::createQuote();
@@ -1149,6 +1180,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws Exception
      */
+    #[Test]
     public function processExistingOrder_withCanceledOrder_throwsException()
     {
         $quote = TestUtils::createQuote();
@@ -1181,6 +1213,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws Exception
      */
+    #[Test]
     public function processExistingOrder_pendingOrder()
     {
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -1210,6 +1243,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws Exception
      */
+    #[Test]
     public function processExistingOrder_samePriceOrder()
     {
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -1247,6 +1281,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws Exception
      */
+    #[Test]
     public function processExistingOrder_deleteOrder()
     {
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -1282,6 +1317,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::submitQuote
      */
+    #[Test]
     public function submitQuote_withSuccessfulSubmission_returnsCreatedOrder()
     {
         $orderHelper = $this->objectManager->create(OrderHelper::class);
@@ -1301,6 +1337,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::submitQuote
      */
+    #[Test]
     public function submitQuote_withExceptionDuringOrderCreationAndOrderCreated_returnsCreatedOrder()
     {
         $quote = TestUtils::createQuote();
@@ -1327,6 +1364,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::submitQuote
      */
+    #[Test]
     public function submitQuote_withExceptionDuringOrderCreationAndOrderNotCreated_reThrowsException()
     {
         $quote = TestUtils::createQuote();
@@ -1346,6 +1384,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::processNewOrder
      */
+    #[Test]
     public function processNewOrder_fail()
     {
         $transaction = new stdClass();
@@ -1366,6 +1405,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::processNewOrder
      */
+    #[Test]
     public function processNewOrder_success()
     {
         $transaction = json_decode(
@@ -1410,6 +1450,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::processNewOrder
      */
+    #[Test]
     public function processNewOrder_withNonBoltOrder()
     {
         $transaction = new stdClass();
@@ -1453,6 +1494,8 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
+    #[DataProvider('hasSamePriceProvider')]
     public function hasSamePrice($orderTax, $orderShipping, $orderTotal, $txTax, $txShipping, $txTotal, $expectedResult)
     {
         $order = $this->objectManager->create(Order::class);
@@ -1490,7 +1533,7 @@ class OrderTest extends BoltTestCase
     /**
      * Data provider for {@see hasSamePrice}
      */
-    public function hasSamePriceProvider()
+    public static function hasSamePriceProvider()
     {
         return [
             "All totals zero"                      => [
@@ -1575,6 +1618,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function deleteOrder()
     {
         $quote = TestUtils::createQuote();
@@ -1591,6 +1635,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws BoltException
      */
+    #[Test]
     public function tryDeclinedPaymentCancelation_noOrder()
     {
         $this->expectException(BoltException::class);
@@ -1612,6 +1657,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws BoltException
      */
+    #[Test]
     public function tryDeclinedPaymentCancelation_pendingOrder()
     {
         $order = TestUtils::createDumpyOrder();
@@ -1628,6 +1674,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws BoltException
      */
+    #[Test]
     public function tryDeclinedPaymentCancelation_canceledOrder()
     {
         $order = TestUtils::createDumpyOrder(
@@ -1645,6 +1692,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws BoltException
      */
+    #[Test]
     public function tryDeclinedPaymentCancelation_completeOrder()
     {
         $order = TestUtils::createDumpyOrder(
@@ -1662,6 +1710,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws Exception
      */
+    #[Test]
     public function deleteOrderByIncrementId_noOrder()
     {
         $bugsnag = $this->createPartialMock(Bugsnag::class, ['notifyError']);
@@ -1677,6 +1726,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws Exception
      */
+    #[Test]
     public function deleteOrderByIncrementId_invalidState()
     {
         $state = Order::STATE_CANCELED;
@@ -1710,6 +1760,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws Exception
      */
+    #[Test]
     public function deleteOrderByIncrementId_ifParentQuoteIdIsNotEqualToImmutableQuoteId_reactivateSessionQuote()
     {
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -1730,6 +1781,7 @@ class OrderTest extends BoltTestCase
      * @test
      * @throws LocalizedException
      */
+    #[Test]
     public function deleteOrderByIncrementId_ifBoltCheckoutTypeIsComplete_changesCheckoutTypeToPPC()
     {
         $quote = Bootstrap::getObjectManager()->create(Quote::class);
@@ -1754,6 +1806,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function getExistingOrder()
     {
 
@@ -1774,6 +1827,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function quoteAfterChange()
     {
         $quote = TestUtils::createQuote();
@@ -1797,6 +1851,8 @@ class OrderTest extends BoltTestCase
      *
      * @dataProvider setOrderUserNote_withVariousCommentFieldsConfiguredProvider
      */
+    #[Test]
+    #[DataProvider('setOrderUserNote_withVariousCommentFieldsConfiguredProvider')]
     public function setOrderUserNote_withVariousCommentFieldsConfigured_setsOrderFieldAndAddsStatusHistory(
         $configuredField,
         $expectedField
@@ -1819,7 +1875,7 @@ class OrderTest extends BoltTestCase
         TestUtils::cleanupSharedFixtures([$order]);
     }
 
-    public function setOrderUserNote_withVariousCommentFieldsConfiguredProvider()
+    public static function setOrderUserNote_withVariousCommentFieldsConfiguredProvider()
     {
         return [
             'Not configured - defaults to `customer_note`' => [
@@ -1838,6 +1894,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::formatReferenceUrl
      */
+    #[Test]
     public function formatReferenceUrl()
     {
         static::assertEquals(
@@ -1862,6 +1919,8 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
+    #[DataProvider('getProcessedItems_withVariousItemTypes_returnsFromPaymentAdditionalInformationProvider')]
     public function getProcessedItems_withVariousItemTypes_returnsFromPaymentAdditionalInformation(
         $itemType,
         $itemTypeAdditionalInformation,
@@ -1880,7 +1939,7 @@ class OrderTest extends BoltTestCase
         );
     }
 
-    public function getProcessedItems_withVariousItemTypes_returnsFromPaymentAdditionalInformationProvider()
+    public static function getProcessedItems_withVariousItemTypes_returnsFromPaymentAdditionalInformationProvider()
     {
         return [
             'Empty value'                   => [
@@ -1913,6 +1972,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function getProcessedRefunds()
     {
         $payment = Bootstrap::getObjectManager()->create(Payment::class);
@@ -1938,6 +1998,7 @@ class OrderTest extends BoltTestCase
      * @covers ::getTransactionState
      * @covers ::getProcessedCaptures
      */
+    #[Test]
     public function getTransactionState_CreditCardAuthorize()
     {
         $payment = Bootstrap::getObjectManager()->create(Payment::class);
@@ -1968,6 +2029,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::getTransactionState
      */
+    #[Test]
     public function getTransactionState_PaypalCompleted()
     {
         $payment = Bootstrap::getObjectManager()->create(Payment::class);
@@ -1994,6 +2056,7 @@ class OrderTest extends BoltTestCase
      * @test
      * @covers ::getTransactionState
      */
+    #[Test]
     public function getTransactionState_APMInitialAuthorized()
     {
 
@@ -2048,6 +2111,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::getTransactionState
      */
+    #[Test]
     public function getTransactionState_TSCreditCompleted()
     {
 
@@ -2068,6 +2132,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::getTransactionState
      */
+    #[Test]
     public function getTransactionState_TSAuthorized()
     {
 
@@ -2089,6 +2154,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::getTransactionState
      */
+    #[Test]
     public function getTransactionState_TSAuthorizedFromPending()
     {
 
@@ -2110,6 +2176,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::getTransactionState
      */
+    #[Test]
     public function getTransactionState_TSCaptured()
     {
 
@@ -2131,6 +2198,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::getTransactionState
      */
+    #[Test]
     public function getTransactionState_TSCapturedFromAuthorized()
     {
 
@@ -2152,6 +2220,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::getTransactionState
      */
+    #[Test]
     public function getTransactionState_TSCapturedFromACompleted()
     {
 
@@ -2173,6 +2242,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::getTransactionState
      */
+    #[Test]
     public function getTransactionState_TSPartialVoided()
     {
 
@@ -2196,6 +2266,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function holdOnTotalsMismatch_withTotalsMismatch_throwsLocalizedException()
     {
         $order = TestUtils::createDumpyOrder(
@@ -2246,6 +2317,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function holdOnTotalsMismatch_cartFromQuoteId()
     {
         $orderHelper = $this->objectManager->create(OrderHelper::class);
@@ -2344,6 +2416,8 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
+    #[DataProvider('getBoltTransactionStatus_withVariousStates_returnsExpectedStatusProvider')]
     public function getBoltTransactionStatus_withVariousStates_returnsExpectedStatus(
         $transactionState,
         $orderState,
@@ -2359,7 +2433,7 @@ class OrderTest extends BoltTestCase
     /**
      * Data provider for {@see getBoltTransactionStatus_withVariousStates_returnsExpectedStatus}
      */
-    public function getBoltTransactionStatus_withVariousStates_returnsExpectedStatusProvider()
+    public static function getBoltTransactionStatus_withVariousStates_returnsExpectedStatusProvider()
     {
         return [
             [OrderHelper::TS_ZERO_AMOUNT, 'ZERO AMOUNT COMPLETED'],
@@ -2382,6 +2456,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function formatTransactionData()
     {
         $order = TestUtils::createDumpyOrder();
@@ -2414,6 +2489,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::setOrderState
      */
+    #[Test]
     public function setOrderState_holdedOrder()
     {
         $order = TestUtils::createDumpyOrder();
@@ -2427,6 +2503,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::setOrderState
      */
+    #[Test]
     public function setOrderState_holdedOrderWithException()
     {
         $prevState = Order::STATE_PENDING_PAYMENT;
@@ -2457,6 +2534,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::setOrderState
      */
+    #[Test]
     public function setOrderState_canceledOrder()
     {
 
@@ -2474,6 +2552,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::setOrderState
      */
+    #[Test]
     public function setOrderState_canceledOrderForRejectedIrreversibleHook()
     {
         $prevState = Order::STATE_PAYMENT_REVIEW;
@@ -2500,6 +2579,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::setOrderState
      */
+    #[Test]
     public function setOrderState_canceledOrderForRejectedIrreversibleHookWithException()
     {
         $prevState = Order::STATE_PAYMENT_REVIEW;
@@ -2539,6 +2619,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::setOrderState
      */
+    #[Test]
     public function setOrderState_nonSpecialStateOrder()
     {
 
@@ -2557,6 +2638,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function cancelOrder()
     {
 
@@ -2574,6 +2656,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function cancelOrder_cancelThrowsException_notifiesExceptionAndSetsStatusAndState()
     {
         $exception = new Exception('');
@@ -2622,6 +2705,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function checkPaymentMethod()
     {
 
@@ -2639,6 +2723,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function checkPaymentMethod_notBolt_throwsException()
     {
 
@@ -2666,6 +2751,8 @@ class OrderTest extends BoltTestCase
      * @param int $orderTotalPaid
      * @param bool $orderCanShip
      */
+    #[Test]
+    #[DataProvider('transactionToOrderStateProvider')]
     public function transactionToOrderState($transactionState, $orderState, $isHookFromBolt = false, $isCreatingCreditMemoFromWebHookEnabled = false, $orderTotalRefunded = 0, $orderGrandTotal = 10, $orderTotalPaid = 10, $orderCanShip = false)
     {
         Hook::$fromBolt = $isHookFromBolt;
@@ -2711,7 +2798,7 @@ class OrderTest extends BoltTestCase
     /**
      * Data provider for @see transactionToOrderState
      */
-    public function transactionToOrderStateProvider()
+    public static function transactionToOrderStateProvider()
     {
         return [
             [OrderHelper::TS_ZERO_AMOUNT, OrderModel::STATE_PROCESSING],
@@ -2736,6 +2823,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::updateOrderPayment
      */
+    #[Test]
     public function updateOrderPayment_sameState()
     {
         Hook::$fromBolt = false;
@@ -2794,6 +2882,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::updateOrderPayment
      */
+    #[Test]
     public function updateOrderPayment_handleCheckboxes()
     {
 
@@ -2867,6 +2956,7 @@ class OrderTest extends BoltTestCase
          *
          * @covers ::updateOrderPayment
          */
+    #[Test]
     public function updateOrderPayment_handleCustomFields()
     {
 
@@ -2938,6 +3028,7 @@ class OrderTest extends BoltTestCase
      * @test
      * @covers ::updateOrderPayment
      */
+    #[Test]
     public function updateOrderPayment_sameState_withAuthHookAndOrderStatusIsPaymentReview()
     {
         Hook::$fromBolt = true;
@@ -2998,6 +3089,7 @@ class OrderTest extends BoltTestCase
      * @test
      * @covers ::updateOrderPayment
      */
+    #[Test]
     public function updateOrderPayment_sameState_withPendingHookAndOrderStatusIsPendingPayment()
     {
         Hook::$fromBolt = true;
@@ -3059,6 +3151,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::updateOrderPayment
      */
+    #[Test]
     public function updateOrderPayment_rejectedIrreversible()
     {
         Hook::$fromBolt = false;
@@ -3117,6 +3210,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::updateOrderPayment
      */
+    #[Test]
     public function updateOrderPayment_withUnhandledState_throwsException()
     {
         Hook::$fromBolt = false;
@@ -3185,6 +3279,7 @@ class OrderTest extends BoltTestCase
      * @throws Zend_Http_Client_Exception from the tested method
      * @throws ReflectionException if unable to create one of the required mocks
      */
+    #[Test]
     public function updateOrderPayment_whenTransactionStateIsCreditCompleted_()
     {
         $transaction = json_decode(
@@ -3241,6 +3336,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::updateOrderPayment
      */
+    #[Test]
     public function updateOrderPayment_createInvoice()
     {
         Hook::$fromBolt = true;
@@ -3305,6 +3401,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::updateOrderPayment
      */
+    #[Test]
     public function updateOrderPayment_withIgnoreInvoiceCreationEnabled_DoesNotCreateInvoice()
     {
         Hook::$fromBolt = true;
@@ -3395,6 +3492,8 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
+    #[DataProvider('createOrderInvoice_amountWithDifferentDecimalsProvider')]
     public function createOrderInvoice_amountWithDifferentDecimals($amount, $grandTotal, $isSame)
     {
         $orderHelper = $this->objectManager->create(OrderHelper::class);
@@ -3443,7 +3542,7 @@ class OrderTest extends BoltTestCase
     /**
      * @return array
      */
-    public function createOrderInvoice_amountWithDifferentDecimalsProvider()
+    public static function createOrderInvoice_amountWithDifferentDecimalsProvider()
     {
         return [
             ['amount' => 12.25, 'grandTotal' => 12.25, 'isSame' => true],
@@ -3465,6 +3564,7 @@ class OrderTest extends BoltTestCase
      * @covers ::createOrderInvoice
      * @throws ReflectionException
      */
+    #[Test]
     public function createOrderInvoice_prepareInvoiceThrowsException_logAndRethrowException()
     {
         $orderHelper = $this->objectManager->create(OrderHelper::class);
@@ -3511,6 +3611,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException if createOrderInvoice method doesn't exist
      */
+    #[Test]
     public function createOrderInvoice_ifInvoiceSenderThrowsException_notifiesException()
     {
         $orderHelper = $this->objectManager->create(OrderHelper::class);
@@ -3573,6 +3674,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws Exception from {@see CurrencyUtils::toMajor} method when unknown currency code is passed
      */
+    #[Test]
     public function createCreditMemoForHookRequest_ifFullRefund_createsCreditMemoWithAdjustmentPositive()
     {
         $transaction = (object)[
@@ -3610,6 +3712,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws Exception from {@see CurrencyUtils::toMajor} method when unknown currency code is passed
      */
+    #[Test]
     public function createCreditMemoForHookRequest_ifPartialRefund_createsCreditMemoWithAdjustmentPositive()
     {
         $transaction = (object)[
@@ -3647,6 +3750,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException if createOrderInvoice method doesn't exist
      */
+    #[Test]
     public function createOrderInvoice_ifInvoiceEmailSendingIsDisabled_doesNotSendInvoiceEmail()
     {
         $orderHelper = $this->objectManager->create(OrderHelper::class);
@@ -3713,6 +3817,8 @@ class OrderTest extends BoltTestCase
      * @param string $transactionState
      * @param bool   $expectedResult
      */
+    #[Test]
+    #[DataProvider('isZeroAmountHook_withVariousTransactionStates_returnsExpectedResultProvider')]
     public function isZeroAmountHook_withVariousTransactionStates_returnsExpectedResult(
         $isHookFromBolt,
         $transactionState,
@@ -3726,7 +3832,7 @@ class OrderTest extends BoltTestCase
     /**
      * Data provider for {@see isZeroAmountHook_withVariousTransactionStates_returnsExpectedResult}
      */
-    public function isZeroAmountHook_withVariousTransactionStates_returnsExpectedResultProvider()
+    public static function isZeroAmountHook_withVariousTransactionStates_returnsExpectedResultProvider()
     {
         return [
             ['isHookFromBolt' => true, 'transactionState' => OrderHelper::TS_ZERO_AMOUNT, 'expectedResult' => true],
@@ -3749,6 +3855,8 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
+    #[DataProvider('isCaptureHookRequestDataProvider')]
     public function isCaptureHookRequest($isHookFromBolt, $newCapture, $expectedResult)
     {
         Hook::$fromBolt = $isHookFromBolt;
@@ -3761,7 +3869,7 @@ class OrderTest extends BoltTestCase
     /**
      * Data provider for {@see isCaptureHookRequest}
      */
-    public function isCaptureHookRequestDataProvider()
+    public static function isCaptureHookRequestDataProvider()
     {
         return [
             ['isHookFromBolt' => true, 'newCapture' => true, 'expectedResult' => true],
@@ -3778,6 +3886,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function validateCaptureAmount_invalidCaptureAmount_throwsException()
     {
         $order = TestUtils::createDumpyOrder(
@@ -3795,6 +3904,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function validateCaptureAmount_captureAmountAndGrandTotalMatch_doesNothing()
     {
 
@@ -3821,6 +3931,8 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
+    #[DataProvider('isAnAllowedUpdateFromAdminPanel_withVariousParameters_returnsExpectedResultProvider')]
     public function isAnAllowedUpdateFromAdminPanel_withVariousParameters_returnsExpectedResult(
         $isHookFromBolt,
         $txState,
@@ -3847,7 +3959,7 @@ class OrderTest extends BoltTestCase
     /**
      * Data provider for {@see isAnAllowedUpdateFromAdminPanel_withVariousParameters_returnsExpectedResult}
      */
-    public function isAnAllowedUpdateFromAdminPanel_withVariousParameters_returnsExpectedResultProvider()
+    public static function isAnAllowedUpdateFromAdminPanel_withVariousParameters_returnsExpectedResultProvider()
     {
         return [
             [
@@ -3888,6 +4000,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::formatAmountForDisplay
      */
+    #[Test]
     public function formatAmountForDisplay_withValidAmount_returnsFormattedAmount()
     {
 
@@ -3902,6 +4015,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::getStoreIdByQuoteId
      */
+    #[Test]
     public function getStoreIdByQuoteId_withValidQuote_returnsStoreIdFromQuote()
     {
 
@@ -3915,6 +4029,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::getStoreIdByQuoteId
      */
+    #[Test]
     public function getStoreIdByQuoteId_withEmptyQuoteId_returnsNull()
     {
         static::assertNull($this->orderHelper->getStoreIdByQuoteId(''));
@@ -3925,6 +4040,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::getOrderStoreIdByDisplayId
      */
+    #[Test]
     public function getOrderStoreIdByDisplayId_withEmptyDisplayId_returnsNull()
     {
         static::assertNull($this->orderHelper->getOrderStoreIdByDisplayId(''));
@@ -3935,6 +4051,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::getOrderStoreIdByDisplayId
      */
+    #[Test]
     public function getOrderStoreIdByDisplayId_withInvalidDisplayId_returnsNull()
     {
 
@@ -3947,6 +4064,7 @@ class OrderTest extends BoltTestCase
      * @covers ::getOrderStoreIdByDisplayId
      * @covers ::getDataFromDisplayID
      */
+    #[Test]
     public function getOrderStoreIdByDisplayId_withValidDisplayId_returnsStoreId()
     {
 
@@ -3961,6 +4079,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::setBillingAddress
      */
+    #[Test]
     public function setBillingAddress()
     {
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
@@ -3994,6 +4113,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::setShippingAddress
      */
+    #[Test]
     public function setShippingAddress()
     {
 
@@ -4034,6 +4154,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException if unable to create one of the required mocks
      */
+    #[Test]
     public function setShippingAddress_forInStorePickups_usesInStorePickupAddress()
     {
         $orderHelper = $this->objectManager->create(OrderHelper::class);
@@ -4127,6 +4248,8 @@ class OrderTest extends BoltTestCase
      *
      * @throws BoltException from tested method
      */
+    #[Test]
+    #[DataProvider('verifyOrderCreationHookType_withVariousHookTypesProvider')]
     public function verifyOrderCreationHookType_withVariousHookTypes_throwsExceptionIfHookIsInvalidForCreatingMissingOrder(
         $hookFromBolt,
         $hookType,
@@ -4153,7 +4276,7 @@ class OrderTest extends BoltTestCase
      *
      * @return array[] containing hook from bolt flag, hook type and expect the exception flag
      */
-    public function verifyOrderCreationHookType_withVariousHookTypesProvider()
+    public static function verifyOrderCreationHookType_withVariousHookTypesProvider()
     {
         return [
             ['hookFromBolt' => true, 'hookType' => Hook::HT_PENDING, 'expectException' => false],
@@ -4179,6 +4302,7 @@ class OrderTest extends BoltTestCase
      * @param mixed $order value from {@see \Bolt\Boltpay\Helper\Cart::getOrderByQuoteId}
      * @param mixed $expectedResult of the tested method call
      */
+    #[Test]
     public function getOrderByQuoteId_withVariousQuoteIds_returnsOrder()
     {
 
@@ -4197,6 +4321,8 @@ class OrderTest extends BoltTestCase
      * @throws LocalizedException
      * @throws Zend_Http_Client_Exception
      */
+    #[Test]
+    #[DataProvider('voidTransactionOnBolt_dataProvider')]
     public function voidTransactionOnBolt($data)
     {
         $boltHelperOrder = Bootstrap::getObjectManager()->create(OrderHelper::class);
@@ -4231,7 +4357,7 @@ class OrderTest extends BoltTestCase
         $boltHelperOrder->voidTransactionOnBolt(self::TRANSACTION_ID, self::STORE_ID);
     }
 
-    public function voidTransactionOnBolt_dataProvider()
+    public static function voidTransactionOnBolt_dataProvider()
     {
         return [
             ['data' => [
@@ -4263,6 +4389,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException from initCurrentMock method
      */
+    #[DataProvider('providerTestSaveCustomerCreditCard_invalidData')]
     public function testSaveCustomerCreditCard_invalidData($data)
     {
         $orderHelper = $this->objectManager->create(OrderHelper::class);
@@ -4278,7 +4405,7 @@ class OrderTest extends BoltTestCase
         $this->assertFalse($result);
     }
 
-    public function providerTestSaveCustomerCreditCard_invalidData()
+    public static function providerTestSaveCustomerCreditCard_invalidData()
     {
         return [
             ['data' => [
@@ -4509,6 +4636,8 @@ class OrderTest extends BoltTestCase
      * @dataProvider refundAmount_Provider
      * @throws ReflectionException
      */
+    #[Test]
+    #[DataProvider('refundAmount_Provider')]
     public function validateRefundAmount_withInvalidRefundAmount($refundAmount)
     {
         $order = Bootstrap::getObjectManager()->create(OrderModel::class);
@@ -4517,7 +4646,7 @@ class OrderTest extends BoltTestCase
         TestHelper::invokeMethod($this->orderHelper, 'validateRefundAmount', [$order, $refundAmount]);
     }
 
-    public function refundAmount_Provider()
+    public static function refundAmount_Provider()
     {
         return [
             ['refundAmount' => -1],
@@ -4531,6 +4660,7 @@ class OrderTest extends BoltTestCase
      * @covers ::validateRefundAmount
      * @throws ReflectionException
      */
+    #[Test]
     public function validateRefundAmount_withRefundAmountIsMoreThanAvailableRefund()
     {
 
@@ -4560,6 +4690,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException if validateRefundAmount method doesn't exist
      */
+    #[Test]
     public function validateRefundAmount_withRefundAmountValidAndLowerThanAvailable_succeeds()
     {
 
@@ -4592,6 +4723,8 @@ class OrderTest extends BoltTestCase
      * @throws ReflectionException if adjustPriceMismatch method is not defined
      * @throws Exception from {@see \Bolt\Boltpay\Helper\Shared\CurrencyUtils::toMinor} when unknown currency code is passed
      */
+    #[Test]
+    #[DataProvider('adjustPriceMismatch_withVariousAmountsProvider')]
     public function adjustPriceMismatch_withVariousAmounts_recordsMismatch(
         $cartTotalAmount,
         $grandTotal,
@@ -4656,7 +4789,7 @@ class OrderTest extends BoltTestCase
      * 2. grand total amount from order
      * 3. price fault tolerance configuration value
      */
-    public function adjustPriceMismatch_withVariousAmountsProvider()
+    public static function adjustPriceMismatch_withVariousAmountsProvider()
     {
         return [
             ['cartTotalAmount' => 10000, 'grandTotal' => 99.99, 'priceFaultTolerance' => 2],
@@ -4671,6 +4804,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws ReflectionException
      */
+    #[Test]
     public function getExistingOrder_byParenQuoteId()
     {
         $order = TestUtils::createDumpyOrder(['quote_id' => self::QUOTE_ID]);
@@ -4689,6 +4823,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::cancelFailedPaymentOrder
      */
+    #[Test]
     public function cancelFailedPaymentOrder_ifOrderDoesNotExist_doesNotCancel()
     {
         $orderHelper = Bootstrap::getObjectManager()->create(\Bolt\Boltpay\Helper\Order::class);
@@ -4705,6 +4840,7 @@ class OrderTest extends BoltTestCase
      * @test
      * @covers ::deleteOrCancelFailedPaymentOrder
      */
+    #[Test]
     public function deleteOrCancelFailedPaymentOrder_deleteOrderByIncrementId()
     {
 
@@ -4727,6 +4863,7 @@ class OrderTest extends BoltTestCase
      * @test
      * @covers ::deleteOrCancelFailedPaymentOrder
      */
+    #[Test]
     public function deleteOrCancelFailedPaymentOrder_cancelFailedPaymentOrder()
     {
         $featureSwitch = TestUtils::saveFeatureSwitch(
@@ -4759,6 +4896,7 @@ class OrderTest extends BoltTestCase
      *
      * @throws AlreadyExistsException from the tested method
      */
+    #[Test]
     public function cancelFailedPaymentOrder_ifOrderStateIsNotPendingPayment_throwsBoltException()
     {
         $order = TestUtils::createDumpyOrder(['state' => OrderModel::STATE_PROCESSING]);
@@ -4784,6 +4922,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::addCustomerDetails
      */
+    #[Test]
     public function addCustomerDetails_ifNoCustomerId_assignsFirstAndLastNameFromTransaction()
     {
         $quote = TestUtils::createQuote();
@@ -4816,6 +4955,7 @@ class OrderTest extends BoltTestCase
      *
      * @covers ::addCustomerDetails
      */
+    #[Test]
     public function addCustomerDetails_ifNoCustomerIdAndCheckoutTypeIsNotBackOffice_assignAdditionalInfo()
     {
         $quote = TestUtils::createQuote();

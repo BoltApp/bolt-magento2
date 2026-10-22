@@ -22,6 +22,8 @@ use Bolt\Boltpay\Plugin\OrderSenderPlugin;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Sender\OrderSender;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\OrderSenderPlugin
@@ -62,6 +64,7 @@ class OrderSenderPluginTest extends BoltTestCase
      * @test
      * @covers ::aroundSend
      */
+    #[Test]
     public function aroundSend_withPaymentMethodIsNotBoltPay()
     {
         $order = $this->objectManager->create(Order::class);
@@ -78,6 +81,8 @@ class OrderSenderPluginTest extends BoltTestCase
      * @dataProvider dataProvider_aroundSend_withPaymentMethodIsBoltPay
      * @param $orderState
      */
+    #[Test]
+    #[DataProvider('dataProvider_aroundSend_withPaymentMethodIsBoltPay')]
     public function aroundSend_withPaymentMethodIsBoltPay($orderState)
     {
         $order = $this->objectManager->create(Order::class);
@@ -89,7 +94,7 @@ class OrderSenderPluginTest extends BoltTestCase
         $this->assertFalse($result);
     }
 
-    public function dataProvider_aroundSend_withPaymentMethodIsBoltPay()
+    public static function dataProvider_aroundSend_withPaymentMethodIsBoltPay()
     {
         return [
             [Order::STATE_PENDING_PAYMENT],

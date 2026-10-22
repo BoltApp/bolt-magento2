@@ -25,6 +25,7 @@ use Magento\Framework\Controller\Result\Json;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class DataTest
@@ -142,6 +143,7 @@ class DataTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new Data(
@@ -173,6 +175,7 @@ class DataTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_happyPath()
     {
         $expected = [

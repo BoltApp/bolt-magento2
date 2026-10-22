@@ -32,6 +32,8 @@ use Magento\Sales\Model\Order;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class HintsTest
@@ -105,6 +107,7 @@ class SaveTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new Save(
@@ -131,6 +134,8 @@ class SaveTest extends BoltTestCase
      *
      * @dataProvider executeProvider
      */
+    #[Test]
+    #[DataProvider('executeProvider')]
     public function execute_HappyPath($isPPCCase)
     {
         $result = [
@@ -218,7 +223,7 @@ class SaveTest extends BoltTestCase
         $save->execute();
     }
 
-    public function executeProvider()
+    public static function executeProvider()
     {
         return [[true], [false]];
     }
@@ -226,6 +231,7 @@ class SaveTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_Exception()
     {
         $expected = [

@@ -28,6 +28,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\Amasty\GiftCardAccount
@@ -220,6 +221,7 @@ class GiftCardAccountTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function __construct_always_setsProperties()
     {
         $instance = new GiftCardAccount(
@@ -237,6 +239,7 @@ class GiftCardAccountTest extends BoltTestCase
      *
      * @covers ::beforeFailedPaymentOrderSave
      */
+    #[Test]
     public function beforeFailedPaymentOrderSave_withNoGiftcardsOnOrder_doesNotRestoreBalance()
     {
         $this->giftcardOrderRepositoryMock->expects(static::once())->method('getByOrderId')
@@ -255,6 +258,7 @@ class GiftCardAccountTest extends BoltTestCase
      *
      * @covers ::beforeFailedPaymentOrderSave
      */
+    #[Test]
     public function beforeFailedPaymentOrderSave_withGiftcardsAppliedToOrder_restoresGiftcardBalance()
     {
         $this->giftcardOrderRepositoryMock->expects(static::once())->method('getByOrderId')
@@ -305,6 +309,7 @@ class GiftCardAccountTest extends BoltTestCase
      *
      * @covers ::collectDiscounts
      */
+    #[Test]
     public function collectDiscounts_withAmastyGiftcard_collectsAmastyGiftcard()
     {
         $currentMock = $this->currentMock;

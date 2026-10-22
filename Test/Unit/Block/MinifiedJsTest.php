@@ -21,6 +21,7 @@ use Bolt\Boltpay\Block\MinifiedJs;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider as DeciderHelper;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class MinifiedJsTest
@@ -57,6 +58,7 @@ class MinifiedJsTest extends BoltTestCase
      *
      * @covers ::toHtml
      */
+    #[Test]
     public function toHtml()
     {
         $this->block->expects(self::once())->method('minifyJs')->withAnyParameters()->willReturn(self::MINIFY_HTML);

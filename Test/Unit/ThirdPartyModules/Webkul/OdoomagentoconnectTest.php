@@ -23,6 +23,8 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\QuoteRepository;
 use Magento\Sales\Model\Order;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\Webkul\Odoomagentoconnect
@@ -85,6 +87,7 @@ class OdoomagentoconnectTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function __construct_always_setsInternalProperties()
     {
         $instance = new Odoomagentoconnect($this->quoteRepositoryMock);
@@ -101,15 +104,18 @@ class OdoomagentoconnectTest extends BoltTestCase
      *
      * @param string      $transactionState
      * @param string      $prevTransactionState
-     * @param Quote|false $quote
+     * @param bool        $hasQuote
      * @param bool        $executesObserver
      */
+    #[Test]
+    #[DataProvider('afterUpdateOrderPayment_onlyForAuthorizedState_executesOdooObserverProvider')]
     public function afterUpdateOrderPayment_onlyForAuthorizedState_executesOdooObserver(
         $transactionState,
         $prevTransactionState,
-        $quote,
+        $hasQuote,
         $executesObserver
     ) {
+        $quote = $hasQuote ? $this->quoteMock : null;
         $this->orderMock->expects($executesObserver ? static::once() : static::never())
             ->method('getQuoteId')->willReturn(self::QUOTE_ID);
         if ($quote) {
@@ -135,26 +141,26 @@ class OdoomagentoconnectTest extends BoltTestCase
     /**
      * Data provider for {@see afterUpdateOrderPayment_onlyForAuthorizedState_executesOdooObserver}
      */
-    public function afterUpdateOrderPayment_onlyForAuthorizedState_executesOdooObserverProvider()
+    public static function afterUpdateOrderPayment_onlyForAuthorizedState_executesOdooObserverProvider()
     {
         return [
             'Authorized from Pending, without quote, calls observer' => [
-                'transactionState'    => \Bolt\Boltpay\Helper\Order::TS_AUTHORIZED,
-                'preTransactionState' => \Bolt\Boltpay\Helper\Order::TS_PENDING,
-                'quote'               => false,
-                'executesObserver'    => true
+                'transactionState'      => \Bolt\Boltpay\Helper\Order::TS_AUTHORIZED,
+                'prevTransactionState'  => \Bolt\Boltpay\Helper\Order::TS_PENDING,
+                'hasQuote'              => false,
+                'executesObserver'      => true
             ],
             'Authorized from Pending, calls observer'                => [
-                'transactionState'    => \Bolt\Boltpay\Helper\Order::TS_AUTHORIZED,
-                'preTransactionState' => \Bolt\Boltpay\Helper\Order::TS_PENDING,
-                'quote'               => $this->quoteMock,
-                'executesObserver'    => true
+                'transactionState'      => \Bolt\Boltpay\Helper\Order::TS_AUTHORIZED,
+                'prevTransactionState'  => \Bolt\Boltpay\Helper\Order::TS_PENDING,
+                'hasQuote'              => true,
+                'executesObserver'      => true
             ],
             'Canceled from Pending, does not call observer'          => [
-                'transactionState'    => \Bolt\Boltpay\Helper\Order::TS_CANCELED,
-                'preTransactionState' => \Bolt\Boltpay\Helper\Order::TS_PENDING,
-                'quote'               => $this->quoteMock,
-                'executesObserver'    => false
+                'transactionState'      => \Bolt\Boltpay\Helper\Order::TS_CANCELED,
+                'prevTransactionState'  => \Bolt\Boltpay\Helper\Order::TS_PENDING,
+                'hasQuote'              => true,
+                'executesObserver'      => false
             ],
         ];
     }

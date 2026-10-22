@@ -36,6 +36,7 @@ use Magento\Framework\Encryption\EncryptorInterface;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Model\ErrorResponse;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ShippingMethodsTest
@@ -191,6 +192,7 @@ class ShippingMethodsTest extends BoltTestCase
      * @covers ::getShippingMethods
      * @test
      */
+    #[Test]
     public function getShippingMethods_emptyQuote()
     {
         $cart = [
@@ -211,6 +213,7 @@ class ShippingMethodsTest extends BoltTestCase
      * @test
      * @covers ::getShippingMethods
      */
+    #[Test]
     public function getShippingMethods_fullAddressData()
     {
         $shippingMethodMock = $this->createPartialMock(
@@ -271,6 +274,7 @@ class ShippingMethodsTest extends BoltTestCase
      * @test
      * @covers ::getShippingMethods
      */
+    #[Test]
     public function getShippingMethods_webApiException()
     {
         $quote = TestUtils::createQuote();
@@ -298,6 +302,7 @@ class ShippingMethodsTest extends BoltTestCase
      * @covers ::getShippingMethods
      * @test
      */
+    #[Test]
     public function getShippingMethods_mismatch()
     {
         $this->createRequest([]);
@@ -358,6 +363,7 @@ class ShippingMethodsTest extends BoltTestCase
      * @test
      * @covers ::throwUnknownQuoteIdException
      */
+    #[Test]
     public function throwUnknownQuoteIdException()
     {
         $this->expectException(LocalizedException::class);
@@ -373,6 +379,7 @@ class ShippingMethodsTest extends BoltTestCase
      * @test
      * @covers ::applyExternalQuoteData
      */
+    #[Test]
     public function applyExternalQuoteData_thirdPartyRewards()
     {
         $amRewardsPoint = 100;
@@ -389,6 +396,7 @@ class ShippingMethodsTest extends BoltTestCase
      * @covers ::doesDiscountApplyToShipping
      * @throws \ReflectionException
      */
+    #[Test]
     public function doesDiscountApplyToShipping()
     {
         $quote = TestUtils::createQuote();
@@ -419,6 +427,7 @@ class ShippingMethodsTest extends BoltTestCase
      * @test
      * @covers ::getShippingOptions
      */
+    #[Test]
     public function getShippingOptions_error()
     {
         $quote = TestUtils::createQuote();
@@ -447,6 +456,7 @@ class ShippingMethodsTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getShippingOptions_virtual()
     {
         $quote = TestUtils::createQuote();
@@ -474,6 +484,7 @@ class ShippingMethodsTest extends BoltTestCase
      * @test
      * @covers ::checkCartItems
      */
+    #[Test]
     public function checkCartItems_noQuoteItems()
     {
         $quote = TestUtils::createQuote();
@@ -498,6 +509,7 @@ class ShippingMethodsTest extends BoltTestCase
      * @test
      * @covers ::checkCartItems
      */
+    #[Test]
     public function checkCartItems_totalsMismatch()
     {
         $quote = TestUtils::createQuote();
@@ -532,6 +544,7 @@ class ShippingMethodsTest extends BoltTestCase
      * @test
      * @covers ::checkCartItems
      */
+    #[Test]
     public function checkCartItems_quantityMismatch()
     {
         $quote = TestUtils::createQuote();

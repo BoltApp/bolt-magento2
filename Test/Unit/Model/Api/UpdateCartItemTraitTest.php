@@ -26,6 +26,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Quote\Model\Quote;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\ObjectManager;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class UpdateCartItemTraitTest
@@ -56,6 +57,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getProduct_withNoSuchEntityException_returnFalse()
     {
         $result = TestHelper::invokeMethod($this->updateCartItemTrait, 'getProduct', [100, 1]);
@@ -65,6 +67,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getProduct_returnProduct()
     {
         $product = TestUtils::getSimpleProduct();
@@ -77,6 +80,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function verifyItemData_outofStock_returnFalse()
     {
         $itemToAdd = [
@@ -107,6 +111,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function verifyItemData_priceMismatch_returnFalse()
     {
         $product = TestUtils::getSimpleProduct();
@@ -143,6 +148,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function verifyItemData_invalidItemQty_returnFalse()
     {
         $product = TestUtils::getSimpleProduct();
@@ -182,6 +188,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function verifyItemData_returnTrue()
     {
         $product = TestUtils::getSimpleProduct();
@@ -205,6 +212,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function addItemToQuote_returnTrue()
     {
         $product = TestUtils::getSimpleProduct();
@@ -226,6 +234,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function addItemToQuote_throwException_returnFalse()
     {
         $itemToAdd = [
@@ -245,6 +254,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function removeItemFromQuote_qtyGreaterThan_returnTrue()
     {
         /** @var Quote $quote */
@@ -275,6 +285,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function removeItemFromQuote_qtyEqual_returnTrue()
     {
         /** @var Quote $quote */
@@ -306,6 +317,7 @@ class UpdateCartItemTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function removeItemFromQuote_qtyLessThan_returnFalse()
     {
         /** @var Quote $quote */
