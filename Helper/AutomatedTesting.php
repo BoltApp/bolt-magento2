@@ -512,6 +512,6 @@ class AutomatedTesting extends AbstractHelper
      */
     private function formatPrice($price, $isShipping = false)
     {
-        return $price === 0.0 && $isShipping ? 'Free' : '$' . number_format($price, 2, '.', '');
+        return $price === 0.0 && $isShipping ? 'Free' : '$' . number_format((float)$price, 2, '.', '');
     }
 }

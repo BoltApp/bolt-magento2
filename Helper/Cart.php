@@ -473,7 +473,9 @@ class Cart extends AbstractHelper
      */
     public function getOrderByIncrementId($incrementId, $forceLoad = false)
     {
-        if ($forceLoad || !isset($this->orderData[$incrementId])) {
+        // a null offset is deprecated as of PHP 8.5; PHP has always stored it under ''
+        $cacheKey = (string)$incrementId;
+        if ($forceLoad || !isset($this->orderData[$cacheKey])) {
             $searchCriteria = $this->searchCriteriaBuilder
                 ->addFilter('increment_id', $incrementId, 'eq')
                 ->create();
@@ -481,9 +483,9 @@ class Cart extends AbstractHelper
                 ->getList($searchCriteria)
                 ->getItems();
 
-            $this->orderData[$incrementId] = reset($collection);
+            $this->orderData[$cacheKey] = reset($collection);
         }
-        return $this->orderData[$incrementId];
+        return $this->orderData[$cacheKey];
     }
 
     /**
