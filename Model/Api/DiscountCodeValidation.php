@@ -139,7 +139,7 @@ class DiscountCodeValidation extends UpdateCartCommon implements DiscountCodeVal
 
         // Get the coupon code
         $discount_code = $requestArray['discount_code'] ?? $requestArray['cart']['discount_code'] ?? null;
-        $couponCode = trim($discount_code);
+        $couponCode = trim((string)$discount_code);
 
         // Check if empty coupon was sent
         if ($couponCode === '') {
