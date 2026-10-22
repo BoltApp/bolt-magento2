@@ -90,6 +90,16 @@ class OrderSaveObserverTest extends BoltTestCase
     private $decider;
 
     /**
+     * @var \Magento\Framework\App\CacheInterface|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $cache;
+
+    /**
+     * @var \Bolt\Boltpay\Helper\Cart|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $cartHelper;
+
+    /**
      * @test
      * that OrderSaveObserver::execute works as intended
      *

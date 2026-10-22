@@ -53,6 +53,11 @@ class CheckboxesHandlerTest extends BoltTestCase
     private $orderMock;
     private $subscriber;
 
+    /**
+     * @var CheckboxesHandler|\PHPUnit\Framework\MockObject\MockObject
+     */
+    private $currentMock;
+
 
     public function setUpInternal()
     {

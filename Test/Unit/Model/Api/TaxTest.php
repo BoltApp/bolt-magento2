@@ -311,7 +311,7 @@ class TaxTest extends BoltTestCase
             Tax::class,
             'totalsInformationManagement'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($this->tax, $totalsInformationManagementInterface);
 
         $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();
@@ -374,7 +374,7 @@ class TaxTest extends BoltTestCase
             Tax::class,
             'totalsInformationManagement'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($this->tax, $totalsInformationManagementInterface);
 
         $shippingOptionData = new \Bolt\Boltpay\Model\Api\Data\ShippingOption();

@@ -410,14 +410,14 @@ class ShippingTaxTest extends BoltTestCase
             HookHelper::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
 
         $hookHelperProperty = new \ReflectionProperty(
             ShippingTax::class,
             'hookHelper'
         );
-        $hookHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($hookHelperProperty);
         $hookHelperProperty->setValue($this->shippingTax, $hookHelper);
         $this->assertNull($this->shippingTax->execute($cart, $shipping_address));
         $response = json_decode(TestHelper::getProperty($this->shippingTax, 'response')->getBody(), true);
@@ -537,14 +537,14 @@ class ShippingTaxTest extends BoltTestCase
             HookHelper::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
 
         $hookHelperProperty = new \ReflectionProperty(
             Shipping::class,
             'hookHelper'
         );
-        $hookHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($hookHelperProperty);
         $hookHelperProperty->setValue($this->shippingTax, $hookHelper);
 
         $shippingMethodManagement = $this->getMockBuilderWithMethods(\Magento\Quote\Api\Data\ShippingMethodInterface::class, [
@@ -586,7 +586,7 @@ class ShippingTaxTest extends BoltTestCase
             Shipping::class,
             'shippingMethodManagement'
         );
-        $shippingMethodManagement->setAccessible(true);
+        TestHelper::makeAccessible($shippingMethodManagement);
         $shippingMethodManagement->setValue($this->shippingTax, $shipmentEstimationInterface);
 
         $result = $this->shippingTax->execute($cart, $shipping_address, ['some' => 'result']);
@@ -637,14 +637,14 @@ class ShippingTaxTest extends BoltTestCase
             HookHelper::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
 
         $hookHelperProperty = new \ReflectionProperty(
             Shipping::class,
             'hookHelper'
         );
-        $hookHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($hookHelperProperty);
         $hookHelperProperty->setValue($this->shippingTax, $hookHelper);
 
         $shippingMethodManagement = $this->getMockBuilderWithMethods(\Magento\Quote\Api\Data\ShippingMethodInterface::class, [
@@ -686,7 +686,7 @@ class ShippingTaxTest extends BoltTestCase
             Shipping::class,
             'shippingMethodManagement'
         );
-        $shippingMethodManagement->setAccessible(true);
+        TestHelper::makeAccessible($shippingMethodManagement);
         $shippingMethodManagement->setValue($this->shippingTax, $shipmentEstimationInterface);
 
         $result = $this->shippingTax->execute($cart, $shipping_address, ['some' => 'result']);

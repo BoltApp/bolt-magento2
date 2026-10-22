@@ -44,6 +44,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use PHPUnit\Framework\Attributes\Test;
+use Magento\Quote\Model\Quote;
 
 /**
  * Class UpdateCartTest

@@ -68,7 +68,11 @@ class ModuleRetrieverTest extends BoltTestCase
     {
         TestUtils::saveFeatureSwitch(Definitions::M2_ENABLE_MODULE_RETRIEVER_FROM_SETUP_MODULE_TABLE, true);
         $actual = $this->moduleRetriever->getInstalledModules();
-        $this->assertGreaterThan(1, count($actual));
+        // setup_module only lists modules that declare a setup_version. Magento 2.4.2 bundles third-party
+        // extensions that do (Vertex, for one); a bare 2.4.9 install has none besides this plugin
+        $this->assertContains('Bolt_Boltpay', array_map(function ($module) {
+            return $module->getName();
+        }, $actual));
     }
 
     /**

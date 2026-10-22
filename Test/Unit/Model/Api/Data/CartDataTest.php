@@ -21,7 +21,7 @@ use Bolt\Boltpay\Api\Data\CartDataInterface;
 use Bolt\Boltpay\Model\Api\Data\CartData;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\Reflection\TypeProcessor;
-use Zend\Code\Reflection\ClassReflection;
+use Laminas\Code\Reflection\ClassReflection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 

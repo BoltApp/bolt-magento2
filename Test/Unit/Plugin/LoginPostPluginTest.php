@@ -28,7 +28,7 @@ use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
 use Magento\Store\Model\StoreManagerInterface as StoreManager;
 use Bolt\Boltpay\Helper\Config;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
-use Zend\Stdlib\Parameters;
+use Laminas\Stdlib\Parameters;
 use PHPUnit\Framework\Attributes\Test;
 /**
  * Class LoginPostPluginTest

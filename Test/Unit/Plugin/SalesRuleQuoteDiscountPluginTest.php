@@ -29,6 +29,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\ShippingAssignment;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit\Framework\Attributes\Test;
+use Magento\Quote\Model\Quote\Item;
 
 /**
  * Class SalesRuleQuoteDiscountPluginTest
@@ -60,6 +61,11 @@ class SalesRuleQuoteDiscountPluginTest extends BoltTestCase
      * @var ObjectManager
      */
     protected $objectManager;
+
+    /**
+     * @var \Bolt\Boltpay\Helper\Session|\PHPUnit\Framework\MockObject\MockObject
+     */
+    protected $sessionHelper;
 
     public function setUpInternal()
     {

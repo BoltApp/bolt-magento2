@@ -30,7 +30,7 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Customer\Model\Session;
 use Bolt\Boltpay\Helper\Config;
 use Magento\Customer\Controller\Ajax\Login;
-use Zend\Stdlib\Parameters;
+use Laminas\Stdlib\Parameters;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 
@@ -140,7 +140,7 @@ class AbstractLoginPluginTest extends BoltTestCase
 
         $reflection = TestHelper::getReflectedClass(get_parent_class($this->abstractLoginPlugin));
         $reflectionProperty = $reflection->getProperty('checkoutSession');
-        $reflectionProperty->setAccessible(true);
+        TestHelper::makeAccessible($reflectionProperty);
         $reflectionProperty->setValue($this->abstractLoginPlugin, $this->checkoutSession);
 
         $result = TestHelper::invokeMethod($this->abstractLoginPlugin, 'hasCart');
@@ -171,7 +171,7 @@ class AbstractLoginPluginTest extends BoltTestCase
         $bugsnag->expects(self::once())->method('notifyException')->with(new \Exception('test'))->willReturnSelf();
         $reflection = TestHelper::getReflectedClass(get_parent_class($this->abstractLoginPlugin));
         $reflectionProperty = $reflection->getProperty('bugsnag');
-        $reflectionProperty->setAccessible(true);
+        TestHelper::makeAccessible($reflectionProperty);
         $reflectionProperty->setValue($this->abstractLoginPlugin, $bugsnag);
         TestHelper::invokeMethod($this->abstractLoginPlugin, 'notifyException', [new \Exception('test')]);
     }
@@ -220,7 +220,7 @@ class AbstractLoginPluginTest extends BoltTestCase
 
         $reflection = TestHelper::getReflectedClass(get_parent_class($this->abstractLoginPlugin));
         $reflectionProperty = $reflection->getProperty('checkoutSession');
-        $reflectionProperty->setAccessible(true);
+        TestHelper::makeAccessible($reflectionProperty);
         $reflectionProperty->setValue($this->abstractLoginPlugin, $this->checkoutSession);
         $this->assertTrue(TestHelper::invokeMethod($this->abstractLoginPlugin, 'shouldRedirectToCartPage', [$login]));
 

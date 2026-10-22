@@ -343,21 +343,21 @@ class CreateOrderTest extends BoltTestCase
             Hook::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
 
         $hookHelperProperty = new \ReflectionProperty(
             CreateOrder::class,
             'hookHelper'
         );
-        $hookHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($hookHelperProperty);
         $hookHelperProperty->setValue($this->createOrder, $hookHelper);
 
         $orderHelperProperty = new \ReflectionProperty(
             CreateOrder::class,
             'orderHelper'
         );
-        $orderHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($orderHelperProperty);
         $orderHelperProperty->setValue($this->createOrder, $orderHelper);
 
         $this->createOrder->execute(

@@ -446,7 +446,8 @@ class TrackingSaveObserverTest extends BoltTestCase
         $shipmentItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
         $orderItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
         $payment = $this->createMock(\Magento\Sales\Api\Data\OrderPaymentInterface::class);
-        $order = $this->getMockBuilderWithMethods('BoltOrder', ['getPayment', 'getStoreId', 'getBoltTransactionReference'])
+        $order = $this->getMockBuilderWithMethods(\Magento\Sales\Model\Order::class, ['getPayment', 'getStoreId', 'getBoltTransactionReference'])
+            ->disableOriginalConstructor()
             ->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
         $orderItem->expects($this->once())
@@ -549,7 +550,8 @@ class TrackingSaveObserverTest extends BoltTestCase
         $shipmentItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
         $orderItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
         $payment = $this->createMock(\Magento\Sales\Api\Data\OrderPaymentInterface::class);
-        $order = $this->getMockBuilderWithMethods('BoltOrder', ['getPayment', 'getBoltTransactionReference'])
+        $order = $this->getMockBuilderWithMethods(\Magento\Sales\Model\Order::class, ['getPayment', 'getBoltTransactionReference'])
+            ->disableOriginalConstructor()
             ->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
 
@@ -606,7 +608,8 @@ class TrackingSaveObserverTest extends BoltTestCase
         $shipmentItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Item::class)->disableOriginalConstructor()->getMock();
         $orderItem = $this->getMockBuilder(\Magento\Sales\Model\Order\Item::class)->disableOriginalConstructor()->getMock();
         $payment = $this->createMock(\Magento\Sales\Api\Data\OrderPaymentInterface::class);
-        $order = $this->getMockBuilderWithMethods('BoltOrder', ['getPayment', 'getQuoteId', 'getBoltTransactionReference'])
+        $order = $this->getMockBuilderWithMethods(\Magento\Sales\Model\Order::class, ['getPayment', 'getQuoteId', 'getBoltTransactionReference'])
+            ->disableOriginalConstructor()
             ->getMock();
         $track = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment\Track::class)->disableOriginalConstructor()->getMock();
 

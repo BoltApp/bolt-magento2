@@ -487,14 +487,14 @@ class OrderManagementTest extends BoltTestCase
             OrderHelper::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
 
         $orderHelperProperty = new \ReflectionProperty(
             BoltOrderManagement::class,
             'orderHelper'
         );
-        $orderHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($orderHelperProperty);
         $orderHelperProperty->setValue($boltOrderManagement, $orderHelper);
 
         return $boltOrderManagement;
@@ -794,7 +794,7 @@ class OrderManagementTest extends BoltTestCase
             BoltOrderManagement::class,
             'decider'
         );
-        $featureSwitchProperty->setAccessible(true);
+        TestHelper::makeAccessible($featureSwitchProperty);
         $featureSwitchProperty->setValue($boltOrderManagement, $featureSwitch);
 
         $captures = [
@@ -959,7 +959,7 @@ class OrderManagementTest extends BoltTestCase
             OrderHelper::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
 
         $featureSwitch = $this->getMockBuilderWithMethods(Decider::class, ['isCancelFailedPaymentOrderInsteadOfDeleting', 'isAPIDrivenIntegrationEnabled'])
@@ -972,14 +972,14 @@ class OrderManagementTest extends BoltTestCase
             OrderHelper::class,
             'featureSwitches'
         );
-        $featureSwitchProperty->setAccessible(true);
+        TestHelper::makeAccessible($featureSwitchProperty);
         $featureSwitchProperty->setValue($orderHelper, $featureSwitch);
 
         $orderHelperProperty = new \ReflectionProperty(
             BoltOrderManagement::class,
             'orderHelper'
         );
-        $orderHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($orderHelperProperty);
         $orderHelperProperty->setValue($boltOrderManagement, $orderHelper);
 
         $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'failed', self::ORDER_INCREMENTID);
@@ -1061,7 +1061,7 @@ class OrderManagementTest extends BoltTestCase
             OrderHelper::class,
             'featureSwitches'
         );
-        $featureSwitchProperty->setAccessible(true);
+        TestHelper::makeAccessible($featureSwitchProperty);
         $featureSwitchProperty->setValue($orderHelper, $featureSwitch);
 
         $requetData = $this->createRequestData($quoteId, $immutableQuoteId, 'failed', self::ORDER_INCREMENTID);
@@ -1286,7 +1286,7 @@ class OrderManagementTest extends BoltTestCase
             OrderHelper::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
 
         $featureSwitch = $this->getMockBuilderWithMethods(Decider::class, ['isCreatingCreditMemoFromWebHookEnabled', 'isIgnoreHookForInvoiceCreationEnabled','isIgnoreTotalValidationWhenCreditHookIsSentToMagentoEnabled', 'isAPIDrivenIntegrationEnabled'])
@@ -1301,14 +1301,14 @@ class OrderManagementTest extends BoltTestCase
             OrderHelper::class,
             'featureSwitches'
         );
-        $featureSwitchProperty->setAccessible(true);
+        TestHelper::makeAccessible($featureSwitchProperty);
         $featureSwitchProperty->setValue($orderHelper, $featureSwitch);
 
         $orderHelperProperty = new \ReflectionProperty(
             BoltOrderManagement::class,
             'orderHelper'
         );
-        $orderHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($orderHelperProperty);
         $orderHelperProperty->setValue($boltOrderManagement, $orderHelper);
 
         $requetData = $this->createRequestData($quoteId, $quoteId, 'completed', self::ORDER_INCREMENTID, null, self::TT_CREDIT);
@@ -1402,7 +1402,7 @@ class OrderManagementTest extends BoltTestCase
             OrderHelper::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($orderHelper, $stubApiHelper);
 
         $featureSwitch = $this->getMockBuilderWithMethods(Decider::class, ['isIgnoreHookForCreditMemoCreationEnabled', 'isAPIDrivenIntegrationEnabled'])
@@ -1415,14 +1415,14 @@ class OrderManagementTest extends BoltTestCase
             BoltOrderManagement::class,
             'decider'
         );
-        $featureSwitchProperty->setAccessible(true);
+        TestHelper::makeAccessible($featureSwitchProperty);
         $featureSwitchProperty->setValue($boltOrderManagement, $featureSwitch);
 
         $orderHelperProperty = new \ReflectionProperty(
             BoltOrderManagement::class,
             'orderHelper'
         );
-        $orderHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($orderHelperProperty);
         $orderHelperProperty->setValue($boltOrderManagement, $orderHelper);
 
         $requetData = $this->createRequestData($quoteId, $quoteId, 'completed', self::ORDER_INCREMENTID, null, self::TT_CREDIT);
@@ -1775,14 +1775,14 @@ class OrderManagementTest extends BoltTestCase
             HookHelper::class,
             'apiHelper'
         );
-        $apiHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($apiHelperProperty);
         $apiHelperProperty->setValue($hookHelper, $stubApiHelper);
 
         $orderHelperProperty = new \ReflectionProperty(
             BoltOrderManagement::class,
             'hookHelper'
         );
-        $orderHelperProperty->setAccessible(true);
+        TestHelper::makeAccessible($orderHelperProperty);
         $orderHelperProperty->setValue($boltOrderManagement, $hookHelper);
 
         $boltOrderManagement->manage(

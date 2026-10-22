@@ -1279,7 +1279,7 @@ class DiscountCodeValidationTest extends BoltTestCase
     {
         $reflectionClass = new \ReflectionClass(BoltDiscountCodeValidation::class);
         $method = $reflectionClass->getMethod($method);
-        $method->setAccessible(true);
+        TestHelper::makeAccessible($method);
 
         return $method->invokeArgs(
             $this->currentMock,

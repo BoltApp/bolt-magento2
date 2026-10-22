@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Block\Adminhtml\Customer\CreditCard\Tab\View;
 use Bolt\Boltpay\Block\Adminhtml\Customer\CreditCard\Tab\View\CreditCard;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit\Framework\Attributes\Test;
+use Bolt\Boltpay\Test\Unit\TestHelper;
 
 class CreditCardTest extends BoltTestCase
 {
@@ -45,7 +46,7 @@ class CreditCardTest extends BoltTestCase
             ->willReturnSelf();
 
         $testMethod = new \ReflectionMethod(CreditCard::class, '_prepareColumns');
-        $testMethod->setAccessible(true);
+        TestHelper::makeAccessible($testMethod);
         $testMethod->invokeArgs($this->block, []);
     }
 }
