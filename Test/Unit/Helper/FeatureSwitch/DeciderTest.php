@@ -31,6 +31,8 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Session\SessionManagerInterface as CoreSession;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class DeciderTest
@@ -122,6 +124,7 @@ class DeciderTest extends BoltTestCase
       *
       * @covers ::__construct
       */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new Decider(
@@ -144,6 +147,7 @@ class DeciderTest extends BoltTestCase
      * @test
      * @covers ::isSwitchEnabled
      */
+    #[Test]
     public function isSwitchEnabled_nothingInDbNoRollout()
     {
         $this->fsRepo
@@ -160,6 +164,7 @@ class DeciderTest extends BoltTestCase
      * @test
      * @covers ::isSwitchEnabled
      */
+    #[Test]
     public function isSwitchEnabled_ValInDbNoRollout()
     {
         $fs = $this->createMock(FeatureSwitch::class);
@@ -179,6 +184,7 @@ class DeciderTest extends BoltTestCase
      * @test
      * @covers ::isSwitchEnabled
      */
+    #[Test]
     public function isSwitchEnabled_ValInDbFullRollout()
     {
         $fs = $this->createMock(FeatureSwitch::class);
@@ -200,6 +206,7 @@ class DeciderTest extends BoltTestCase
      * @test
      * @covers ::isSwitchEnabled
      */
+    #[Test]
     public function isSwitchEnabled_ValInDbPartialRollout()
     {
         $fs = $this->createMock(FeatureSwitch::class);
@@ -221,6 +228,7 @@ class DeciderTest extends BoltTestCase
      * @test
      * @covers ::isSwitchEnabled
      */
+    #[Test]
     public function isSwitchEnabled_throwsIfBadSwitchName()
     {
         $this->expectException(LocalizedException::class);
@@ -238,6 +246,8 @@ class DeciderTest extends BoltTestCase
      * @param $expected
      * @throws LocalizedException
      */
+    #[Test]
+    #[DataProvider('dataProvider_isSwitchEnabled_willReturnBoolean')]
     public function isSwitchEnabled_willReturnBoolean($result, $expected)
     {
         $fs = $this->createMock(FeatureSwitch::class);
@@ -255,7 +265,7 @@ class DeciderTest extends BoltTestCase
         $this->assertEquals($expected, $fsVal);
     }
 
-    public function dataProvider_isSwitchEnabled_willReturnBoolean()
+    public static function dataProvider_isSwitchEnabled_willReturnBoolean()
     {
         return [
             ['0', false],

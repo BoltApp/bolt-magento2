@@ -24,6 +24,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Bolt\Boltpay\Helper\FeatureSwitch\Manager as FeatureSwitchManager;
 use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Plugin\CheckSettingsUpdate;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\CheckSettingsUpdate
@@ -114,6 +115,7 @@ class CheckSettingsUpdateTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function callBeforeSaveAndAfterSave_whenKeyNotChanged_doNothing()
     {
         $this->configHelper->expects($this->exactly(2))
@@ -126,6 +128,7 @@ class CheckSettingsUpdateTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function callBeforeSaveAndAfterSave_whenKeyChanged_updateSwitches()
     {
         $this->configHelper->expects($this->exactly(2))
@@ -142,6 +145,7 @@ class CheckSettingsUpdateTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function callBeforeSaveAndAfterSave_whenKeyChangedToEmpty_doNothing()
     {
         $this->configHelper->expects($this->exactly(2))
@@ -158,6 +162,7 @@ class CheckSettingsUpdateTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function callBeforeSaveAndAfterSave_whenKeyChangedAnfUpdateSwitchesThrowException_callBugsnag()
     {
         $this->configHelper->expects($this->exactly(2))

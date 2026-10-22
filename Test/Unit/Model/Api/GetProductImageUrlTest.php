@@ -28,6 +28,7 @@ use Magento\Catalog\Model\Product\Media\Config;
 use Magento\Framework\Filesystem\Directory\WriteInterface;
 use Magento\Framework\Filesystem;
 use Magento\Framework\App\Filesystem\DirectoryList;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Model\Api\GetProductImageUrl
@@ -98,6 +99,7 @@ class GetProductImageUrlTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_successProductImageUrl()
     {
         $product = $this->createSimpleProductWithImage();
@@ -113,6 +115,7 @@ class GetProductImageUrlTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_exceptionWrongProductId()
     {
         $this->expectExceptionMessage('Product not found with given identifier.');
@@ -123,6 +126,7 @@ class GetProductImageUrlTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_exceptionWrongImageId()
     {
         $product = $this->createSimpleProductWithImage();

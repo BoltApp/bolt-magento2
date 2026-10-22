@@ -25,6 +25,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Message\Manager;
 use Magento\Store\App\Response\Redirect;
+use PHPUnit\Framework\Attributes\Test;
 
 class DeleteCreditCardTest extends BoltTestCase
 {
@@ -110,6 +111,7 @@ class DeleteCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_success()
     {
         $this->requestMock->expects(self::once())->method('getParam')->willReturn(self::ID);
@@ -133,6 +135,7 @@ class DeleteCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_withInvalidIdParameter()
     {
         $this->requestMock->expects(self::once())->method('getParam')->willReturn(self::ID);
@@ -154,6 +157,7 @@ class DeleteCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_withMissingIdParameter()
     {
         $this->requestMock->expects(self::once())->method('getParam')->willReturn(null);
@@ -172,6 +176,7 @@ class DeleteCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_withException()
     {
         $this->requestMock->expects(self::once())->method('getParam')->willReturn(self::ID);

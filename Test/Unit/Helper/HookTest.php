@@ -20,7 +20,6 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 use Bolt\Boltpay\Helper\Hook as BoltHook;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\TestFramework\Inspection\Exception;
 use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\Helper\Context;
@@ -35,6 +34,8 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Magento\Framework\DataObject;
 use Bolt\Boltpay\Model\Request as BoltRequest;
 use ReflectionException;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class HookTest
@@ -123,6 +124,7 @@ class HookTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new BoltHook(
@@ -160,6 +162,8 @@ class HookTest extends BoltTestCase
      *
      * @throws ReflectionException if verifyWebhookApi method doesn't exist
      */
+    #[Test]
+    #[DataProvider('verifyWebhookApi_withVariousResponsesProvider')]
     public function verifyWebhookApi_withVariousResponses_returnsVerifiedState(
         $hmacHeader,
         $response,
@@ -202,7 +206,7 @@ class HookTest extends BoltTestCase
      *
      * @throws ReflectionException from {@see \PHPUnit\Framework\TestCase::createMock} method
      */
-    public function verifyWebhookApi_withVariousResponsesProvider()
+    public static function verifyWebhookApi_withVariousResponsesProvider()
     {
         return [
             [
@@ -213,7 +217,7 @@ class HookTest extends BoltTestCase
             ],
             [
                 'hmacHeader' => self::INCORRECT_HMAC,
-                'response' => $this->createMock(Exception::class),
+                'response' => new \Exception(),
                 'expectException' => true,
                 'expectedResult' => false,
             ],
@@ -231,6 +235,8 @@ class HookTest extends BoltTestCase
      * @param string $hmacHeader value
      * @param bool $expectedResult of the tested method
      */
+    #[Test]
+    #[DataProvider('verifySignature_withVariousHmacHeadersProvider')]
     public function verifySignature_withVariousHmacHeaders_returnsSignatureState($hmacHeader, $expectedResult)
     {
         $this->initCurrentMock(['computeSignature']);
@@ -243,7 +249,7 @@ class HookTest extends BoltTestCase
      *
      * @return array[] containing HMAC header value and expected result of the tested method
      */
-    public function verifySignature_withVariousHmacHeadersProvider()
+    public static function verifySignature_withVariousHmacHeadersProvider()
     {
         return [
             ['hmacHeader' => self::CORRECT_HMAC, 'expectedResult' => true],
@@ -257,6 +263,7 @@ class HookTest extends BoltTestCase
      *
      * @covers ::computeSignature
      */
+    #[Test]
     public function computeSignature_always_returnsSignature()
     {
         $this->initCurrentMock(['getStoreId']);
@@ -279,6 +286,7 @@ class HookTest extends BoltTestCase
      *
      * @covers ::verifyWebhook
      */
+    #[Test]
     public function verifyWebhook_whenSignatureIsVerified_proceedsRequest()
     {
         $this->initCurrentMock(['verifySignature']);
@@ -301,6 +309,8 @@ class HookTest extends BoltTestCase
      * @throws LocalizedException from verifyWebhookApi method
      * @throws ReflectionException from {@see \PHPUnit\Framework\TestCase::createMock} method
      */
+    #[Test]
+    #[DataProvider('verifyWebhook_withVariousResponseCodesProvider')]
     public function verifyWebhook_withVariousResponseCodes_returnsHookRequest($responseCode)
     {
         $this->initCurrentMock(['verifySignature', 'getStoreId']);
@@ -341,7 +351,7 @@ class HookTest extends BoltTestCase
      *
      * @return array[] containing HTTP response code
      */
-    public function verifyWebhook_withVariousResponseCodesProvider()
+    public static function verifyWebhook_withVariousResponseCodesProvider()
     {
         return [
             ['responseCode' => 200],
@@ -355,6 +365,7 @@ class HookTest extends BoltTestCase
      *
      * @covers ::setCommonMetaData
      */
+    #[Test]
     public function setCommonMetaData_requestHasBoltTraceIdHeader_registersBugsnagCallback()
     {
         $this->initCurrentMock(null);
@@ -382,6 +393,7 @@ class HookTest extends BoltTestCase
      *
      * @throws ReflectionException from {@see \PHPUnit\Framework\TestCase::createMock} method
      */
+    #[Test]
     public function setHeaders_always_setsAdditionalResponseHeaders()
     {
         $this->initCurrentMock(['addHeaders']);
@@ -406,6 +418,7 @@ class HookTest extends BoltTestCase
      *
      * @throws ReflectionException if {@see \Bolt\Boltpay\Helper\Hook::$storeId} property doesn't exist
      */
+    #[Test]
     public function getStoreId_always_returnsStoreId()
     {
         $this->initCurrentMock(null);
@@ -419,6 +432,7 @@ class HookTest extends BoltTestCase
      *
      * @covers ::setStoreId
      */
+    #[Test]
     public function setStoreId_always_setsStoreId()
     {
         $this->initCurrentMock(null);
@@ -438,6 +452,7 @@ class HookTest extends BoltTestCase
      *
      * @throws LocalizedException from the tested method
      */
+    #[Test]
     public function preProcessWebhook_always_verifiesHook()
     {
         $this->initCurrentMock(['setStoreId','setCommonMetaData','setHeaders','verifyWebhook']);
@@ -455,6 +470,7 @@ class HookTest extends BoltTestCase
      *
      * @covers ::verifyRequest
      */
+    #[Test]
     public function verifyRequest_returnsFalse_ifSignatureVerificationFails()
     {
         $this->initCurrentMock(null);
@@ -469,6 +485,7 @@ class HookTest extends BoltTestCase
      *
      * @covers ::verifyRequest
      */
+    #[Test]
     public function verifyRequest_returnsTrue_ifSignatureVerificationSucceeds()
     {
         $this->initCurrentMock(null);

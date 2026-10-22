@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data\AutomatedTesting;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Address;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class AddressTest
@@ -47,6 +48,7 @@ class AddressTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetFirstName()
     {
         $this->assertEquals('firstName', $this->address->getFirstName());
@@ -55,6 +57,7 @@ class AddressTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetLastName()
     {
         $this->assertEquals('lastName', $this->address->getLastName());
@@ -63,6 +66,7 @@ class AddressTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetStreet()
     {
         $this->assertEquals('street', $this->address->getStreet());
@@ -71,6 +75,7 @@ class AddressTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetCity()
     {
         $this->assertEquals('city', $this->address->getCity());
@@ -79,6 +84,7 @@ class AddressTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetPostalCode()
     {
         $this->assertEquals('11111', $this->address->getPostalCode());
@@ -87,6 +93,7 @@ class AddressTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetCountry()
     {
         $this->assertEquals('US', $this->address->getCountry());
@@ -95,6 +102,7 @@ class AddressTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetTelephone()
     {
         $this->assertEquals('111111', $this->address->getTelephone());
@@ -103,6 +111,7 @@ class AddressTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function jsonSerialize()
     {
         $result = $this->address->jsonSerialize();

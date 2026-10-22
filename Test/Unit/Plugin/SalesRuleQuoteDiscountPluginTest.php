@@ -28,6 +28,7 @@ use Magento\Store\Model\Store;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\ShippingAssignment;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class SalesRuleQuoteDiscountPluginTest
@@ -88,6 +89,7 @@ class SalesRuleQuoteDiscountPluginTest extends BoltTestCase
      * @test
      * @covers ::beforeCollect
      */
+    #[Test]
     public function beforeCollect_resetSaleRuleDiscountsToCheckoutSession()
     {
         $quote = $this->getMockBuilder(Quote::class)
@@ -120,6 +122,7 @@ class SalesRuleQuoteDiscountPluginTest extends BoltTestCase
      * @test
      * @covers ::beforeCollect
      */
+    #[Test]
     public function beforeCollect_noItemInShippingAssignment_doNothing()
     {
         $quote = $this->getMockBuilder(Quote::class)

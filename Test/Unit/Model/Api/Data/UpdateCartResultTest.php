@@ -23,6 +23,7 @@ use Bolt\Boltpay\Model\Api\Data\UpdateCartResult;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\Reflection\TypeProcessor;
 use Zend\Code\Reflection\ClassReflection;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class CartDataTest
@@ -84,6 +85,7 @@ class UpdateCartResultTest extends BoltTestCase
      *
      * @covers ::getOrderCreate
      */
+    #[Test]
     public function getOrderCreate()
     {
         $this->assertEquals($this->orderCreate, $this->updateCartResult->getOrderCreate());
@@ -95,6 +97,7 @@ class UpdateCartResultTest extends BoltTestCase
      *
      * @covers ::setOrderCreate
      */
+    #[Test]
     public function setOrderCreate()
     {
         $result = $this->updateCartResult->setOrderCreate($this->orderCreate);
@@ -107,6 +110,7 @@ class UpdateCartResultTest extends BoltTestCase
      *
      * @covers ::getStatus
      */
+    #[Test]
     public function getCartResultStatus()
     {
         $this->assertEquals(self::STATUS, $this->updateCartResult->getStatus());
@@ -118,6 +122,7 @@ class UpdateCartResultTest extends BoltTestCase
      *
      * @covers ::setStatus
      */
+    #[Test]
     public function setStatus()
     {
         $result = $this->updateCartResult->setStatus(self::STATUS);
@@ -130,6 +135,7 @@ class UpdateCartResultTest extends BoltTestCase
      *
      * @covers ::getOrderReference
      */
+    #[Test]
     public function getOrderReference()
     {
         $this->assertEquals(self::ORDERREFERENCE, $this->updateCartResult->getOrderReference());
@@ -141,6 +147,7 @@ class UpdateCartResultTest extends BoltTestCase
      *
      * @covers ::setOrderReference
      */
+    #[Test]
     public function setOrderReference()
     {
         $result = $this->updateCartResult->setOrderReference(self::ORDERREFERENCE);
@@ -153,6 +160,7 @@ class UpdateCartResultTest extends BoltTestCase
      *
      * @covers ::getCartResult
      */
+    #[Test]
     public function getCartResult()
     {
         $result = $this->updateCartResult->getCartResult();
@@ -179,6 +187,7 @@ class UpdateCartResultTest extends BoltTestCase
      * to ensure the return type annotation of method {getCartResult}
      * in class Bolt\Boltpay\Api\Data\UpdateCartResultInterface is correct
      */
+    #[Test]
     public function processTypeName()
     {
         $classReflection = new ClassReflection(UpdateCartResultInterface::class);

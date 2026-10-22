@@ -22,6 +22,7 @@ use Bolt\Boltpay\Test\Unit\TestUtils;
 use Bolt\Boltpay\ThirdPartyModules\Magento\CustomerBalance;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\Magento\CustomerBalance
@@ -53,6 +54,7 @@ class CustomerBalanceTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function __construct_always_setsInternalProperties()
     {
         $instance = new CustomerBalance($this->configHelper);
@@ -66,6 +68,7 @@ class CustomerBalanceTest extends BoltTestCase
      *
      * @covers ::filterProcessLayout
      */
+    #[Test]
     public function filterProcessLayout_notEnabledInConfig_doesNotAddLayout()
     {
         static::assertEquals([], $this->customerBalance->filterProcessLayout([]));
@@ -78,6 +81,7 @@ class CustomerBalanceTest extends BoltTestCase
      *
      * @covers ::filterProcessLayout
      */
+    #[Test]
     public function filterProcessLayout_ifEnabledInConfig_addsModuleSpecificLayout()
     {
         $store = $this->objectManager->get(\Magento\Store\Model\StoreManagerInterface::class);

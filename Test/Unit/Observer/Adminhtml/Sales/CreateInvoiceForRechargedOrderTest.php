@@ -29,6 +29,7 @@ use Magento\Framework\Event\Observer;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Email\Sender\InvoiceSender;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class CreateInvoiceForRechargedOrderTest
@@ -60,6 +61,7 @@ class CreateInvoiceForRechargedOrderTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_withoutRechargeOrder()
     {
         $order = TestUtils::createDumpyOrder();
@@ -76,6 +78,7 @@ class CreateInvoiceForRechargedOrderTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_withRechargeOrder()
     {
         $order = TestUtils::createDumpyOrder();
@@ -95,6 +98,7 @@ class CreateInvoiceForRechargedOrderTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_throwsException()
     {
         $e = new Exception('test exception');

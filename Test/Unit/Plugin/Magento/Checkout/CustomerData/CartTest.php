@@ -32,6 +32,8 @@ use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Serialize\SerializerInterface as Serializer;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Item as QuoteItem;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class CartTest
@@ -138,6 +140,7 @@ class CartTest extends BoltTestCase
      * @covers ::preFetchCart
      * that preFetchCart skips pre-fetch request when feature switch is disabled
      */
+    #[Test]
     public function preFetchCart_featureDisabled_skipPreFetch()
     {
         $this->featureSwitchesMock->method('isEnabledPreFetchCartViaApi')->willReturn(false);
@@ -162,6 +165,7 @@ class CartTest extends BoltTestCase
      * @covers ::preFetchCart
      * that preFetchCart skips pre-fetch request when quote has no ID
      */
+    #[Test]
     public function preFetchCart_quoteHasNoId_skipPreFetch()
     {
         $this->featureSwitchesMock->method('isEnabledPreFetchCartViaApi')->willReturn(true);
@@ -186,6 +190,7 @@ class CartTest extends BoltTestCase
      * @covers ::preFetchCart
      * that preFetchCart skips pre-fetch request when quote has no items
      */
+    #[Test]
     public function preFetchCart_quoteHasNoItems_skipPreFetch()
     {
         $this->featureSwitchesMock->method('isEnabledPreFetchCartViaApi')->willReturn(true);
@@ -210,15 +215,18 @@ class CartTest extends BoltTestCase
      *
      * @param bool $featureEnabled
      * @param int|null $quoteId
-     * @param array $quoteItems
+     * @param int $quoteItemCount
      * @param bool $expectSkip
      */
+    #[Test]
+    #[DataProvider('dataProvider_preFetchCart_skipConditions')]
     public function preFetchCart_variousConditions_skipOrProceed(
         bool $featureEnabled,
         $quoteId,
-        array $quoteItems,
+        int $quoteItemCount,
         bool $expectSkip
     ) {
+        $quoteItems = $quoteItemCount ? [$this->createMock(QuoteItem::class)] : [];
         $this->featureSwitchesMock->method('isEnabledPreFetchCartViaApi')->willReturn($featureEnabled);
         $this->quoteMock->method('getId')->willReturn($quoteId);
         $this->quoteMock->method('getAllItems')->willReturn($quoteItems);
@@ -243,35 +251,33 @@ class CartTest extends BoltTestCase
     /**
      * Data provider for preFetchCart_variousConditions_skipOrProceed
      *
-     * @return array[] containing featureEnabled, quoteId, quoteItems, expectSkip
+     * @return array[] containing featureEnabled, quoteId, quoteItemCount, expectSkip
      */
-    public function dataProvider_preFetchCart_skipConditions(): array
+    public static function dataProvider_preFetchCart_skipConditions(): array
     {
-        $mockQuoteItem = $this->createMock(QuoteItem::class);
-
         return [
             'Feature disabled - skip' => [
                 'featureEnabled' => false,
                 'quoteId' => 123,
-                'quoteItems' => [$mockQuoteItem],
+                'quoteItemCount' => 1,
                 'expectSkip' => true,
             ],
             'Quote has no ID - skip' => [
                 'featureEnabled' => true,
                 'quoteId' => null,
-                'quoteItems' => [$mockQuoteItem],
+                'quoteItemCount' => 1,
                 'expectSkip' => true,
             ],
             'Quote has no items - skip' => [
                 'featureEnabled' => true,
                 'quoteId' => 123,
-                'quoteItems' => [],
+                'quoteItemCount' => 0,
                 'expectSkip' => true,
             ],
             'All conditions met - proceed' => [
                 'featureEnabled' => true,
                 'quoteId' => 123,
-                'quoteItems' => [$mockQuoteItem],
+                'quoteItemCount' => 1,
                 'expectSkip' => false,
             ],
         ];

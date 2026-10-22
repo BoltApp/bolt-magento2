@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Metric;
+use PHPUnit\Framework\Attributes\Test;
 
 class MetricTest extends BoltTestCase
 {
@@ -38,6 +39,7 @@ class MetricTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getMetricJson()
     {
         $this->assertEquals('{"key":{"value":"2222"}}', $this->metric->getMetricJson());
@@ -46,6 +48,7 @@ class MetricTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function jsonSerialize()
     {
         $this->assertEquals(['key' => ['value' => '2222']], $this->metric->jsonSerialize());

@@ -36,6 +36,7 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Exception\RequestException;
 use org\bovigo\vfs\vfsStream;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use PHPUnit\Framework\Attributes\Test;
 
 class MetricsClientTest extends BoltTestCase
 {
@@ -187,6 +188,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function formatCountMetric()
     {
         $data = [
@@ -204,6 +206,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function addMetricLatency()
     {
         $data = [
@@ -221,6 +224,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validWaitForFile()
     {
         $structure = [
@@ -261,6 +265,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function inValidWaitForFile()
     {
         $structure = [
@@ -301,6 +306,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function emptyWaitForFile()
     {
         $structure = [
@@ -340,6 +346,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validWriteMetricToFile()
     {
         $structure = [
@@ -379,6 +386,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function noFileWriteMetricToFile()
     {
         $structure = [
@@ -417,6 +425,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validProcessCountMetric()
     {
         $this->configHelper->expects($this->once())
@@ -436,6 +445,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validProcessLatencyMetric()
     {
         $this->configHelper->expects($this->once())
@@ -455,6 +465,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function flagOffProcessCountMetric()
     {
         $this->configHelper->method('shouldCaptureMetrics')
@@ -471,6 +482,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function flagOffProcessLatencyMetric()
     {
         $this->configHelper->method('shouldCaptureMetrics')
@@ -487,6 +499,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function postValidMetrics()
     {
 
@@ -531,6 +544,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function postMetrics_noWorkingFile()
     {
 
@@ -568,6 +582,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function postNoCacheBatchMetrics()
     {
 
@@ -613,6 +628,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function postOldBatchMetrics()
     {
 
@@ -658,6 +674,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function postRecentBatchMetrics()
     {
 
@@ -699,6 +716,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function postInValidMetrics()
     {
         $unSuccessfulEndpoint = new MockHandler([
@@ -747,6 +765,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function postMetricsBadEndpoint()
     {
 
@@ -797,6 +816,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function flagOffPostMetrics()
     {
         $this->initPostMetrics();
@@ -819,6 +839,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getFilePath()
     {
         $filePath = self::invokeInaccessibleMethod($this->currentMock, 'getFilePath');
@@ -828,6 +849,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function loadFromCache_notCached()
     {
         $this->cache
@@ -847,6 +869,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function loadFromCache_cached_decode()
     {
         $cachedValue = '{"key":"value"}';
@@ -868,6 +891,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function loadFromCache_cached_noDecode()
     {
         $cachedValue = '{"key":"value"}';
@@ -889,6 +913,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function processMetric()
     {
         $this->deciderMock->expects($this->once())->method('isMerchantMetricsEnabled')
@@ -927,6 +952,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function processMetric_disabledFeature()
     {
         $this->deciderMock->expects($this->once())->method('isMerchantMetricsEnabled')
@@ -963,6 +989,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setClient()
     {
         $result = self::invokeInaccessibleMethod(
@@ -975,6 +1002,7 @@ class MetricsClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getCurrentTime()
     {
         $this->currentMock = $this->getMockBuilder(MetricsClient::class)

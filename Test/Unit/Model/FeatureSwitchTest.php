@@ -23,6 +23,7 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\Model\ResourceModel;
 use Magento\Framework\App\ObjectManager;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 class FeatureSwitchTest extends BoltTestCase
 {
@@ -60,6 +61,7 @@ class FeatureSwitchTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetName()
     {
         $this->featureSwitch->setName('name');
@@ -69,6 +71,7 @@ class FeatureSwitchTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetValue()
     {
         $this->featureSwitch->setValue(true);
@@ -78,6 +81,7 @@ class FeatureSwitchTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetDefaultValue()
     {
         $this->featureSwitch->setDefaultValue(false);
@@ -87,6 +91,7 @@ class FeatureSwitchTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetRolloutPercentage()
     {
         $this->featureSwitch->setRolloutPercentage('rolloutPercentage');

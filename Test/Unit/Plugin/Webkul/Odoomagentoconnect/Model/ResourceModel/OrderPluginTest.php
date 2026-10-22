@@ -22,6 +22,7 @@ use Bolt\Boltpay\Plugin\Webkul\Odoomagentoconnect\Model\ResourceModel\OrderPlugi
 use Magento\Sales\Model\Order;
 use Magento\TestFramework\ObjectManager;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class OrderPluginTest
@@ -83,6 +84,7 @@ class OrderPluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
      *
      * @covers ::aroundExportOrder
      */
+    #[Test]
     public function aroundExportOrder_withBoltOrderAndPendingPaymentState_doesNotProceed()
     {
         $this->payment->setMethod('checkmo');
@@ -104,6 +106,7 @@ class OrderPluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
      *
      * @covers ::aroundExportOrder
      */
+    #[Test]
     public function aroundExportOrder_withNonBoltOrder_proceedsToOriginal()
     {
         $odooId = random_int(1,10000);
@@ -126,6 +129,7 @@ class OrderPluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
      *
      * @covers ::aroundExportOrder
      */
+    #[Test]
     public function aroundExportOrder_withNonPendingBoltOrder_proceedsToOriginal()
     {
         $odooId = random_int(1,10000);

@@ -38,6 +38,7 @@ use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterfaceFactory;
 use Bolt\Boltpay\Api\Data\StoreAddressInterfaceFactory;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\Quote\Api\CartRepositoryInterface;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ShippingTaxContextTest
@@ -68,6 +69,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getHookHelper
      */
+    #[Test]
     public function getHookHelper_always_returnsHookHelper()
     {
         $this->assertEquals($this->objectManager->create(HookHelper::class), $this->shippingTaxContext->getHookHelper());
@@ -79,6 +81,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getCartHelper
      */
+    #[Test]
     public function getCartHelper_always_returnsCartHelper()
     {
         $this->assertEquals($this->objectManager->create(CartHelper::class), $this->shippingTaxContext->getCartHelper());
@@ -90,6 +93,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getLogHelper
      */
+    #[Test]
     public function getLogHelper_always_returnsLogHelper()
     {
         $this->assertEquals($this->objectManager->create(LogHelper::class), $this->shippingTaxContext->getLogHelper());
@@ -101,6 +105,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getConfigHelper
      */
+    #[Test]
     public function getConfigHelper_always_returnsConfigHelper()
     {
         $this->assertEquals($this->objectManager->create(ConfigHelper::class), $this->shippingTaxContext->getConfigHelper());
@@ -112,6 +117,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getSessionHelper
      */
+    #[Test]
     public function getSessionHelper_always_returnsSessionHelper()
     {
         $this->assertEquals($this->objectManager->create(SessionHelper::class), $this->shippingTaxContext->getSessionHelper());
@@ -123,6 +129,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getDiscountHelper
      */
+    #[Test]
     public function getDiscountHelper_always_returnsDiscountHelper()
     {
         $this->assertEquals($this->objectManager->create(DiscountHelper::class), $this->shippingTaxContext->getDiscountHelper());
@@ -134,6 +141,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getBugsnag
      */
+    #[Test]
     public function getBugsnag_always_returnsBugsnag()
     {
         $this->assertEquals($this->objectManager->create(Bugsnag::class), $this->shippingTaxContext->getBugsnag());
@@ -145,6 +153,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getMetricsClient
      */
+    #[Test]
     public function getMetricsClient_always_returnsMetricsClient()
     {
         $this->assertEquals($this->objectManager->create(MetricsClient::class), $this->shippingTaxContext->getMetricsClient());
@@ -156,6 +165,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getErrorResponse
      */
+    #[Test]
     public function getErrorResponse_always_returnsErrorResponse()
     {
         $this->assertEquals($this->objectManager->create(ErrorResponse::class), $this->shippingTaxContext->getErrorResponse());
@@ -167,6 +177,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getRegionModel
      */
+    #[Test]
     public function getRegionModel_always_returnsRegionModel()
     {
         $this->assertEquals($this->objectManager->create(RegionModel::class), $this->shippingTaxContext->getRegionModel());
@@ -178,6 +189,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getResponse
      */
+    #[Test]
     public function getResponse_always_returnsResponse()
     {
         $this->assertEquals($this->objectManager->create(Response::class), $this->shippingTaxContext->getResponse());
@@ -189,6 +201,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getShippingOptionFactory
      */
+    #[Test]
     public function getShippingOptionFactory_always_returnsShippingOptionFactory()
     {
         $this->assertEquals(
@@ -203,6 +216,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getShipToStoreOptionFactory
      */
+    #[Test]
     public function getShipToStoreOptionFactory_always_returnsShipToStoreOptionFactory()
     {
         $this->assertEquals(
@@ -217,6 +231,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getStoreAddressFactory
      */
+    #[Test]
     public function getStoreAddressFactory_always_returnsStoreAddressFactory()
     {
         $this->assertEquals(
@@ -231,6 +246,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getEventsForThirdPartyModules
      */
+    #[Test]
     public function getEventsForThirdPartyModules_always_returnsEventsForThirdPartyModules()
     {
         $this->assertEquals(
@@ -245,6 +261,7 @@ class ShippingTaxContextTest extends BoltTestCase
      *
      * @covers ::getCartRepository
      */
+    #[Test]
     public function getCartRepository_always_returnsCartRepositoryInterface()
     {
         $this->assertEquals(

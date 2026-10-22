@@ -23,6 +23,7 @@ use Bolt\Boltpay\Plugin\Magento\Sales\Model\AdminOrder\CreatePlugin;
 use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Backend\Model\Session\Quote as AdminCheckoutSession;
 use Magento\Sales\Model\AdminOrder\Create;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class CreatePlugin
@@ -93,6 +94,7 @@ Room 1111',
      * @test
      * @covers ::beforeImportPostData
      */
+    #[Test]
     public function beforeImportPostData_ifStorePickupFeatureIsDisabled()
     {
         $this->configHelper->expects(self::once())->method('isStorePickupFeatureEnabled')->willReturn(false);
@@ -105,6 +107,7 @@ Room 1111',
      * @test
      * @covers ::beforeImportPostData
      */
+    #[Test]
     public function beforeImportPostData_ifCustomerChooseStorePickUpMethod()
     {
         $this->configHelper->expects(self::once())->method('isStorePickupFeatureEnabled')->willReturn(true);
@@ -124,6 +127,7 @@ Room 1111',
      * @test
      * @covers ::beforeImportPostData
      */
+    #[Test]
     public function beforeImportPostData_ifCustomerChooseShippingMethodIsStorePickup()
     {
         $this->configHelper->expects(self::once())->method('isStorePickupFeatureEnabled')->willReturn(true);
@@ -139,6 +143,7 @@ Room 1111',
      * @test
      * @covers ::beforeImportPostData
      */
+    #[Test]
     public function beforeImportPostData_ifCustomerChooseStorePickupMethodThenChooseAnotherMethod()
     {
         $this->configHelper->expects(self::once())->method('isStorePickupFeatureEnabled')->willReturn(true);

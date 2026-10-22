@@ -24,6 +24,7 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 class FeatureSwitchesHookTest extends BoltTestCase
 {
@@ -58,6 +59,7 @@ class FeatureSwitchesHookTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function workingUpdateFromBolt()
     {
         $fsManager = $this->createMock(Manager::class);
@@ -74,6 +76,7 @@ class FeatureSwitchesHookTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function notWorkingUpdatesFromBolt()
     {
         $this->fsHook->notifyChanged();

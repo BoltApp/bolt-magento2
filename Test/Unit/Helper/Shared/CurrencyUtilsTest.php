@@ -19,6 +19,8 @@ namespace Bolt\Boltpay\Test\Unit\Helper\Shared;
 
 use Bolt\Boltpay\Helper\Shared\CurrencyUtils;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class CurrencyUtilsTest
@@ -34,6 +36,8 @@ class CurrencyUtilsTest extends BoltTestCase
      * @dataProvider currencyAndPrecisions
      * @throws \Exception
      */
+    #[Test]
+    #[DataProvider('currencyAndPrecisions')]
     public function precisionCurrenciesForKnownCurrency($code, $precision)
     {
         $this->assertEquals($precision, CurrencyUtils::getPrecisionForCurrencyCode($code));
@@ -43,6 +47,7 @@ class CurrencyUtilsTest extends BoltTestCase
      * @test
      * @throws \Exception
      */
+    #[Test]
     public function precisionForUnknown()
     {
         $this->expectException(\Exception::class);
@@ -54,6 +59,8 @@ class CurrencyUtilsTest extends BoltTestCase
      * @test
      * @dataProvider toMinorData
      */
+    #[Test]
+    #[DataProvider('toMinorData')]
     public function toMinor($code, $amount, $expected, $unused)
     {
         $this->assertEquals($expected, CurrencyUtils::toMinor($amount, $code));
@@ -63,6 +70,8 @@ class CurrencyUtilsTest extends BoltTestCase
      * @test
      * @dataProvider toMinorData
      */
+    #[Test]
+    #[DataProvider('toMinorData')]
     public function toMinorWithoutRounding($code, $amount, $unused, $expected)
     {
         $this->assertEquals($expected, CurrencyUtils::toMinorWithoutRounding($amount, $code));
@@ -72,12 +81,14 @@ class CurrencyUtilsTest extends BoltTestCase
      * @test
      * @dataProvider toMajorData
      */
+    #[Test]
+    #[DataProvider('toMajorData')]
     public function toMajor($code, $amount, $expected)
     {
         $this->assertEquals($expected, CurrencyUtils::toMajor($amount, $code));
     }
 
-    public function currencyAndPrecisions()
+    public static function currencyAndPrecisions()
     {
         return [
             [ "USD", 2 ],
@@ -87,7 +98,7 @@ class CurrencyUtilsTest extends BoltTestCase
         ];
     }
 
-    public function toMinorData()
+    public static function toMinorData()
     {
         return [
             // code, amount, toMinor, toMinorWithoutRounding
@@ -100,7 +111,7 @@ class CurrencyUtilsTest extends BoltTestCase
         ];
     }
 
-    public function toMajorData()
+    public static function toMajorData()
     {
         return [
             [ "USD", 1234, 12.34 ],

@@ -16,6 +16,9 @@
  */
 namespace Bolt\Boltpay\Test\Unit\Plugin\WebapiRest\Magento\Quote\Model;
 
+
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 /**
  * Test for {@see \Bolt\Boltpay\Plugin\WebapiRest\Magento\Quote\Model\QuotePlugin}
  *
@@ -52,6 +55,8 @@ class QuotePluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
      *
      * @dataProvider beforeSetData_ifPreconditionsAreMetProvider
      */
+    #[Test]
+    #[DataProvider('beforeSetData_ifPreconditionsAreMetProvider')]
     public function beforeSetData_ifPreconditionsAreMet_preventsSettingBoltIP(
         $key,
         $value,
@@ -92,7 +97,7 @@ class QuotePluginTest extends \Bolt\Boltpay\Test\Unit\BoltTestCase
      *
      * @return array[]
      */
-    public function beforeSetData_ifPreconditionsAreMetProvider()
+    public static function beforeSetData_ifPreconditionsAreMetProvider()
     {
         $boltIP = '52.53.112.98';
         $customerIP1 = '127.0.0.1';

@@ -20,6 +20,8 @@ namespace Bolt\Boltpay\Test\Unit\Observer\Adminhtml;
 
 use Bolt\Boltpay\Observer\Adminhtml\ActionPredispatch;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Observer\Adminhtml\ActionPredispatch
@@ -42,6 +44,7 @@ class ActionPredispatchTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function __construct_always_setsInternalProperty()
     {
         $instance = new ActionPredispatch($this->eventsForThirdPartyModulesMock);
@@ -62,6 +65,8 @@ class ActionPredispatchTest extends BoltTestCase
      * @param string $action
      * @param array  $expectedThirdPartyEvents
      */
+    #[Test]
+    #[DataProvider('execute_withVariousActionProvider')]
     public function execute_withVariousActions_dispatchesThirdPartyEvents(
         $route,
         $controller,
@@ -85,7 +90,7 @@ class ActionPredispatchTest extends BoltTestCase
     /**
      * Data provider for {@see execute_withVariousActions_dispatchesThirdPartyEvents}
      */
-    public function execute_withVariousActionProvider()
+    public static function execute_withVariousActionProvider()
     {
         return [
             [

@@ -29,6 +29,7 @@ use Magento\Quote\Model\Quote\Item;
 use Magento\SalesRule\Model\RuleRepository;
 use Bolt\Boltpay\Helper\Cart as CartHelper;
 use Magento\Quote\Model\Quote;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class SalesRuleModelUtilityPluginTest
@@ -95,6 +96,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
      * @test
      * @covers ::beforeMinFix
      */
+    #[Test]
     public function beforeMinFix_validSaleRule_saveDiscountBreakdownToCheckoutSession()
     {
         $this->checkoutSession->expects(self::once())
@@ -127,6 +129,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
      * @test
      * @covers ::afterMinFix
      */
+    #[Test]
     public function afterMinFix_saveSaleRuleDiscountsToCheckoutSession_sessionExists()
     {
         $item = $this->getMockBuilder(Item::class)
@@ -177,6 +180,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
      * @test
      * @covers ::afterMinFix
      */
+    #[Test]
     public function afterMinFix_doNotSaveUselessSaleRuleDiscountsToCheckoutSession_sessionExists()
     {
         $item = $this->getMockBuilder(Item::class)
@@ -234,6 +238,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
      * @test
      * @covers ::afterMinFix
      */
+    #[Test]
     public function afterMinFix_saveSaleRuleDiscountsToCheckoutSession_sessionNotExists()
     {
         $item = $this->getMockBuilder(Item::class)
@@ -272,6 +277,7 @@ class SalesRuleModelUtilityPluginTest extends BoltTestCase
      * @test
      * @covers ::afterMinFix
      */
+    #[Test]
     public function afterMinFix_FreeShippingRule_saveDiscountBreakdownToCheckoutSession()
     {
         $item = $this->getMockBuilder(Item::class)

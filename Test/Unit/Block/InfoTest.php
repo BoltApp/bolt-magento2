@@ -23,6 +23,7 @@ use Bolt\Boltpay\Model\Payment as BoltPayment;
 use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class InfoTest
@@ -58,6 +59,7 @@ class InfoTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function prepareSpecificInformationCreditCard()
     {
         $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
@@ -77,6 +79,7 @@ class InfoTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function prepareSpecificInformationPaypal()
     {
         $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
@@ -93,6 +96,7 @@ class InfoTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function displayPaymentMethodTitleCreditCard()
     {
         $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
@@ -123,6 +127,7 @@ class InfoTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function displayPaymentMethodTitlePayPal()
     {
         $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
@@ -137,6 +142,7 @@ class InfoTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function displayPaymentMethodTitleApplePay()
     {
         $this->mock->expects(self::once())->method('getInfo')->willReturnSelf();
@@ -154,6 +160,7 @@ class InfoTest extends BoltTestCase
      *
      * @covers ::toPdf
      */
+    #[Test]
     public function toPdf_always_setsTemplateAndRendersHTML()
     {
         $testHTML = <<<'HTML'

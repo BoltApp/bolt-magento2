@@ -30,6 +30,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Zend\Http\Response;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ClientTest
@@ -114,6 +115,7 @@ class ClientTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new Client(
@@ -137,6 +139,7 @@ class ClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getFeatureSwitches_success()
     {
         $httpClient = $this->createMock(HttpClientAdapter::class);
@@ -164,6 +167,7 @@ class ClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getFeatureSwitches_fail()
     {
         $httpClient = $this->createMock(HttpClientAdapter::class);
@@ -191,6 +195,7 @@ class ClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function sendLogs_success()
     {
         $httpClient = $this->createMock(HttpClientAdapter::class);
@@ -218,6 +223,7 @@ class ClientTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function sendLogs_fail()
     {
         $httpClient = $this->createMock(HttpClientAdapter::class);

@@ -33,6 +33,7 @@ use Magento\Framework\DataObjectFactory;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\Catalog\Model\ProductRepository;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class TrackingSaveObserverTest
@@ -242,6 +243,7 @@ class TrackingSaveObserverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_incrementsMetric_ifResultNot200()
     {
         $shipment = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment::class)->disableOriginalConstructor()->getMock();
@@ -356,6 +358,7 @@ class TrackingSaveObserverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_notifiesError_ifTrackNumberSuccessButCarrierCodeFail()
     {
         $shipment = $this->getMockBuilder(\Magento\Sales\Model\Order\Shipment::class)->disableOriginalConstructor()->getMock();

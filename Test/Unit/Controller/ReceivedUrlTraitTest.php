@@ -30,6 +30,8 @@ use Magento\Sales\Model\Order;
 use Bolt\Boltpay\Controller\ReceivedUrlInterface;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\Serialize\SerializerInterface as Serialize;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ReceivedUrlTraitTest
@@ -142,6 +144,7 @@ class ReceivedUrlTraitTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getQuoteById()
     {
         $this->cartHelper->expects(self::once())->method('getQuoteById')->with(self::QUOTE_ID)->willReturn($this->quote);
@@ -152,6 +155,7 @@ class ReceivedUrlTraitTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function clearQuoteSession()
     {
         $this->quote->expects(self::any())->method('getId')->willReturn(self::QUOTE_ID);
@@ -165,6 +169,7 @@ class ReceivedUrlTraitTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function clearOrderSession()
     {
         $this->order->expects(self::any())->method('getId')->willReturn(self::ORDER_ID);
@@ -181,6 +186,7 @@ class ReceivedUrlTraitTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getOrderByIncrementId()
     {
         $this->orderHelper->expects(self::once())->method('getExistingOrder')->with(self::INCREMENT_ID)->willReturn([$this->order]);
@@ -190,6 +196,7 @@ class ReceivedUrlTraitTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getOrderByIncrementId_throwException()
     {
         $this->orderHelper->expects(self::once())->method('getExistingOrder')->with(self::INCREMENT_ID)->willReturn(null);
@@ -202,6 +209,7 @@ class ReceivedUrlTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function getReferenceFromPayload()
     {
         $payload = [
@@ -233,6 +241,8 @@ class ReceivedUrlTraitTest extends BoltTestCase
      *      
      * @dataProvider execute_ifFeatureSwitchIsEnabled_setsPaymentInfoDataProvider
      */
+    #[Test]
+    #[DataProvider('execute_ifFeatureSwitchIsEnabled_setsPaymentInfoDataProvider')]
     public function execute_ifFeatureSwitchIsEnabled_setsPaymentInfoData(
         $isSetOrderPaymentInfoDataOnSuccessPage,
         $isPaymentAvailable,
@@ -271,7 +281,7 @@ class ReceivedUrlTraitTest extends BoltTestCase
      *
      * @return \bool[][]
      */
-    public function execute_ifFeatureSwitchIsEnabled_setsPaymentInfoDataProvider()
+    public static function execute_ifFeatureSwitchIsEnabled_setsPaymentInfoDataProvider()
     {
         return TestHelper::getAllBooleanCombinations(3);
     }

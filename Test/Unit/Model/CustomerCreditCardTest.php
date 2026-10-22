@@ -29,6 +29,7 @@ use Magento\Framework\App\ObjectManager;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use PHPUnit\Framework\Attributes\Test;
 
 class CustomerCreditCardTest extends BoltTestCase
 {
@@ -115,6 +116,7 @@ class CustomerCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function recharge_withException()
     {
         $exceptionMsg = "Authentication error. Authorization required.";
@@ -133,6 +135,7 @@ class CustomerCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function recharge_withEmptyResponse()
     {
         $apiHelper = $this->createPartialMock(ApiHelper::class, ['buildRequest', 'sendRequest']);
@@ -148,6 +151,7 @@ class CustomerCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function recharge()
     {
         $apiHelper = $this->createPartialMock(ApiHelper::class, ['buildRequest', 'sendRequest']);
@@ -161,6 +165,7 @@ class CustomerCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getCardInfoObject()
     {
         $cartInfo = $this->dataObjectFactory->create();
@@ -176,6 +181,7 @@ class CustomerCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getCardType()
     {
         $result = $this->customerCreditCardFactory->getCardType();
@@ -185,6 +191,7 @@ class CustomerCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getCardLast4Digit()
     {
         $result = $this->customerCreditCardFactory->getCardLast4Digit();
@@ -194,6 +201,7 @@ class CustomerCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getIdentities()
     {
         $result = $this->customerCreditCardFactory->getIdentities();
@@ -203,6 +211,7 @@ class CustomerCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function saveCreditCard()
     {
         $customerCreditCard = $this->objectManager->create(CustomerCreditCardFactory::class)->create()

@@ -23,6 +23,7 @@ use ClassyLlama\AvaTax\Plugin\Model\ResourceModel\ExtensionAttributesPersistence
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\ClassyLlama\AvaTax\Plugin\Model\ResourceModel\ExtensionAttributesPersistencePluginPlugin
@@ -72,6 +73,7 @@ class ExtensionAttributesPersistencePluginPluginTest extends BoltTestCase
      * @test
      * that the plugin will not prevent the plugged method if the object saved (nextObject) is not an order
      */
+    #[Test]
     public function aroundAroundSave_nextObjectNotOrder_callsAndReturnsProceed()
     {
         $proceed = $this->createProceedMock();
@@ -100,6 +102,7 @@ class ExtensionAttributesPersistencePluginPluginTest extends BoltTestCase
      * that the plugin will not prevent the plugged method if the object saved (nextObject) is an order
      * but there are no previous responses for it
      */
+    #[Test]
     public function aroundAroundSave_nextIsOrderButNoOldResponses_callsAndReturnsProceed()
     {
         $proceed = $this->createProceedMock();
@@ -134,6 +137,7 @@ class ExtensionAttributesPersistencePluginPluginTest extends BoltTestCase
      * and there are already one or more avatax responses associated with it
      * it will instead execute the next callback in line
      */
+    #[Test]
     public function aroundAroundSave_nextIsOrderWithOldResponses_callsNextCallbackInLine()
     {
         $proceed = $this->createProceedMock();

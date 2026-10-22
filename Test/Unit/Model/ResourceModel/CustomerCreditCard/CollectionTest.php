@@ -23,6 +23,7 @@ use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Store\Api\WebsiteRepositoryInterface;
+use PHPUnit\Framework\Attributes\Test;
 
 class CollectionTest extends BoltTestCase
 {
@@ -69,6 +70,7 @@ class CollectionTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getCreditCardInfosByCustomerId()
     {
         $customer = TestUtils::createCustomer($this->websiteId, $this->storeId, [

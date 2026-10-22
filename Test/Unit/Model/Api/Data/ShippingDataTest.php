@@ -23,6 +23,7 @@ use Bolt\Boltpay\Model\Api\Data\ShipToStoreOption;
 use Bolt\Boltpay\Api\Data\ShippingDataInterface;
 use Bolt\Boltpay\Api\Data\ShipToStoreOptionInterface;
 use Bolt\Boltpay\Model\Api\Data\ShippingData;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ShippingDataTest
@@ -60,6 +61,7 @@ class ShippingDataTest extends BoltTestCase
      * that getShippingOptions would return shipping options
      * @covers ::getShippingOptions
      */
+    #[Test]
     public function getShippingOptions()
     {
         $this->assertEquals($this->shippingOptions, $this->shippingData->getShippingOptions());
@@ -70,6 +72,7 @@ class ShippingDataTest extends BoltTestCase
      * that setShippingOptions would set instance of shipping option
      * @covers ::setShippingOptions
      */
+    #[Test]
     public function setShippingOptions()
     {
         $result = $this->shippingData->setShippingOptions($this->shippingOptions);
@@ -81,6 +84,7 @@ class ShippingDataTest extends BoltTestCase
      * that getShipToStoreOptions would return ship to store options
      * @covers ::getShipToStoreOptions
      */
+    #[Test]
     public function getShipToStoreOptions()
     {
         $this->assertEquals($this->shipToStoreOptions, $this->shippingData->getShipToStoreOptions());
@@ -91,6 +95,7 @@ class ShippingDataTest extends BoltTestCase
      * that setShipToStoreOptions would set instances of ship to store options
      * @covers ::setShipToStoreOptions
      */
+    #[Test]
     public function setShipToStoreOptions()
     {
         $result = $this->shippingData->setShipToStoreOptions($this->shipToStoreOptions);
@@ -102,6 +107,7 @@ class ShippingDataTest extends BoltTestCase
      * that jsonSerialize result would include shipping options
      * @covers ::jsonSerialize
      */
+    #[Test]
     public function jsonSerialize()
     {
         $result = $this->shippingData->jsonSerialize();

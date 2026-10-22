@@ -22,6 +22,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use org\bovigo\vfs\vfsStream;
 use Magento\Framework\Filesystem\Driver\File;
 use Bolt\Boltpay\Helper\Bugsnag;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class LogRetrieverTest
@@ -77,6 +78,7 @@ class LogRetrieverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getLogWithoutSpecifiedLines()
     {
         $expected = ['Line 1 of log', 'Line 2 of log', 'Line 3 of log'];
@@ -90,6 +92,7 @@ class LogRetrieverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getOneLineOfLog()
     {
         $expected = ['Line 3 of log'];
@@ -104,6 +107,7 @@ class LogRetrieverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function noLogFound()
     {
         $invalidPath = "invalid/path";

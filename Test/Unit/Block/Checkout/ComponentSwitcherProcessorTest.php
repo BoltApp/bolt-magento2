@@ -22,6 +22,7 @@ use Bolt\Boltpay\Block\Checkout\ComponentSwitcherProcessor;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\ObjectManager;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Block\Checkout\ComponentSwitcherProcessor
@@ -56,6 +57,7 @@ class ComponentSwitcherProcessorTest extends BoltTestCase
      * @test
      * @covers ::process
      */
+    #[Test]
     public function process()
     {
         $jsLayout = $this->componentSwitcherProcessor->process([]);

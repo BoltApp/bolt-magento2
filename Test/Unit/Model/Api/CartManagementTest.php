@@ -25,6 +25,7 @@ use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use Bolt\Boltpay\Helper\Cart as BoltHelperCart;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class CartManagementTest
@@ -73,6 +74,7 @@ class CartManagementTest extends BoltTestCase
      * @test
      * @covers ::getMaskedId
      */
+    #[Test]
     public function getMaskedId_happyPath()
     {
         $quote = TestUtils::createQuote();
@@ -100,6 +102,7 @@ class CartManagementTest extends BoltTestCase
      * @test
      * @covers ::getMaskedId
      */
+    #[Test]
     public function getMaskedId_maskedQuoteIDDoesNotCreated_reGenerateMaskQuoteId()
     {
         $quote = TestUtils::createQuote();
@@ -111,6 +114,7 @@ class CartManagementTest extends BoltTestCase
      * @test
      * @covers ::update
      */
+    #[Test]
     public function update_active_to_true_happy_path()
     {
         $quote = TestUtils::createQuote();
@@ -127,6 +131,7 @@ class CartManagementTest extends BoltTestCase
      * @test
      * @covers ::update
      */
+    #[Test]
     public function update_active_to_false_happy_path()
     {
         $quote = TestUtils::createQuote();
@@ -143,6 +148,7 @@ class CartManagementTest extends BoltTestCase
      * @test
      * @covers ::update
      */
+    #[Test]
     public function setActive_success_if_active_is_already_true()
     {
         $quote = TestUtils::createQuote();
@@ -159,6 +165,7 @@ class CartManagementTest extends BoltTestCase
      * @test
      * @covers ::update
      */
+    #[Test]
     public function setActive_returns_404_if_quote_does_not_exist()
     {
         $quote = TestUtils::createQuote();

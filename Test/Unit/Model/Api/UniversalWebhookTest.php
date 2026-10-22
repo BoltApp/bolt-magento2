@@ -23,6 +23,7 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\TestFramework\Helper\Bootstrap;
 use Bolt\Boltpay\Api\OrderManagementInterface;
 use Bolt\Boltpay\Exception\BoltException;
+use PHPUnit\Framework\Attributes\Test;
 
 class UniversalWebhookTest extends BoltTestCase
 {
@@ -54,6 +55,7 @@ class UniversalWebhookTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function updateOrder_returnsTrue()
     {
         $type = 'testType';
@@ -88,6 +90,7 @@ class UniversalWebhookTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function updateOrder_returnsFalse()
     {
         $type = 'testType';

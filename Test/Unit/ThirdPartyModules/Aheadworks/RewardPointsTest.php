@@ -30,6 +30,8 @@ use Magento\Sales\Model\Service\OrderService;
 use Magento\Store\Model\Store;
 use PHPUnit\Framework\MockObject\MockObject;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\ThirdPartyModules\Aheadworks\RewardPoints
@@ -133,6 +135,7 @@ class RewardPointsTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function __construct_always_setsInternalProperties()
     {
         $instance = new \Bolt\Boltpay\ThirdPartyModules\Aheadworks\RewardPoints(
@@ -156,6 +159,7 @@ class RewardPointsTest extends BoltTestCase
      *
      * @covers ::collectDiscounts
      */
+    #[Test]
     public function collectDiscounts_ifUseRewardPointsInQuoteAndAppliesToShipping_addsRewardPointsDiscountFromBalance()
     {
         $this->quoteMock->expects(static::exactly(1))->method('getData')
@@ -207,6 +211,7 @@ class RewardPointsTest extends BoltTestCase
      *
      * @covers ::collectDiscounts
      */
+    #[Test]
     public function collectDiscounts_ifUseRewardPointsDontApplyToShipping_addsRewardPointsDiscountFromQuoteTotal()
     {
         $rewardPointsTotal = 10;
@@ -261,6 +266,7 @@ class RewardPointsTest extends BoltTestCase
      *
      * @covers ::filterVerifyAppliedStoreCredit
      */
+    #[Test]
     public function filterVerifyAppliedStoreCredit_ifCodeDoesNotMatchAWRewardPoints_doesNotAppendTheCode()
     {
         $result = $this->currentMock->filterVerifyAppliedStoreCredit([], '11235813', $this->quoteMock);
@@ -274,6 +280,7 @@ class RewardPointsTest extends BoltTestCase
      *
      * @covers ::filterVerifyAppliedStoreCredit
      */
+    #[Test]
     public function filterVerifyAppliedStoreCredit_ifCodeMatchesAWRewardPoints_appendsTheCode()
     {
         $this->quoteMock->expects(static::once())->method('getData')->with('aw_use_reward_points')->willReturn(true);
@@ -294,6 +301,7 @@ class RewardPointsTest extends BoltTestCase
      *
      * @covers ::removeAppliedStoreCredit
      */
+    #[Test]
     public function removeAppliedStoreCredit_ifCodeMatchesAndRewardPointsAreApplied_removesRewardPointsFromQuote()
     {
         $this->quoteMock->expects(static::once())->method('getData')->with('aw_use_reward_points')->willReturn(true);
@@ -314,6 +322,7 @@ class RewardPointsTest extends BoltTestCase
      *
      * @covers ::removeAppliedStoreCredit
      */
+    #[Test]
     public function removeAppliedStoreCredit_onException_onlyNotifiesToBugsnag()
     {
         $this->quoteMock->expects(static::once())->method('getData')->with('aw_use_reward_points')->willReturn(true);
@@ -340,6 +349,7 @@ class RewardPointsTest extends BoltTestCase
      *
      * @covers ::beforeFailedPaymentOrderSave
      */
+    #[Test]
     public function beforeFailedPaymentOrderSave_always_executesThirdPartyPlugin()
     {
         $aheadworksRewardPointsOrderServicePluginMock = $this->getMockBuilder(
@@ -378,6 +388,8 @@ class RewardPointsTest extends BoltTestCase
      * @param bool $isCustomerRewardPointsSpendRateByGroup
      * @param bool $isCustomerRewardPointsSpendRate
      */
+    #[Test]
+    #[DataProvider('collectCartDiscountJsLayout_ifPreconditionsAreMet_addsAWRewardPointsJSLayoutProvider')]
     public function collectCartDiscountJsLayout_ifPreconditionsAreMet_addsAWRewardPointsJSLayout(
         $isLoggedIn,
         $getUseAheadworksRewardPointsConfig,
@@ -442,7 +454,7 @@ class RewardPointsTest extends BoltTestCase
     /**
      * Data provider for {@see collectCartDiscountJsLayout_ifPreconditionsAreMet_addsAWRewardPointsJSLayout}
      */
-    public function collectCartDiscountJsLayout_ifPreconditionsAreMet_addsAWRewardPointsJSLayoutProvider()
+    public static function collectCartDiscountJsLayout_ifPreconditionsAreMet_addsAWRewardPointsJSLayoutProvider()
     {
         return TestHelper::getAllBooleanCombinations(5);
     }

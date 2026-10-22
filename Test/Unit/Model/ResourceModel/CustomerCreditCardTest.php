@@ -20,6 +20,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\ResourceModel;
 use Bolt\Boltpay\Model\ResourceModel\CustomerCreditCard;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 class CustomerCreditCardTest extends BoltTestCase
 {
@@ -45,6 +46,7 @@ class CustomerCreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function construct()
     {
         self::assertEquals('bolt_customer_credit_cards',$this->customerCreditCard->getMainTable());

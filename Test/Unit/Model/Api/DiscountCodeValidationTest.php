@@ -55,6 +55,7 @@ use Bolt\Boltpay\Model\Api\UpdateCartCommon;
 use Bolt\Boltpay\Model\Api\UpdateCartContext;
 use Bolt\Boltpay\Model\Api\UpdateDiscountTrait;
 use Bolt\Boltpay\Test\Unit\TestHelper;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class DiscountCodeValidationTest
@@ -315,6 +316,7 @@ class DiscountCodeValidationTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validate_simpleCoupon()
     {
         $this->initCurrentMock(['validateQuote','verifyCouponCode','applyingCouponCode','updateSession']);
@@ -414,6 +416,7 @@ class DiscountCodeValidationTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validateWithShippingOnlyCoupon()
     {
         $this->initCurrentMock(['validateQuote','verifyCouponCode','setShipment','updateSession','applyingCouponCode','shouldUseParentQuoteShippingAddressDiscount','setShippingAssignments']);
@@ -555,6 +558,7 @@ class DiscountCodeValidationTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validate_noOrderReference()
     {
         $this->initCurrentMock();
@@ -578,6 +582,7 @@ class DiscountCodeValidationTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validate_emptyCoupon()
     {
         $this->initCurrentMock();
@@ -612,6 +617,7 @@ class DiscountCodeValidationTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validate_coupon_useParentQuoteShippingAddressDiscount()
     {
         $this->initCurrentMock(['validateQuote','verifyCouponCode','applyingCouponCode','updateSession']);
@@ -705,6 +711,7 @@ class DiscountCodeValidationTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validate_neitherCouponNorGiftcard()
     {
         $this->initCurrentMock(['validateQuote','verifyCouponCode','updateSession']);
@@ -758,6 +765,7 @@ class DiscountCodeValidationTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validate_webhookPreProcessException()
     {
         $this->initCurrentMock(['validateQuote']);
@@ -807,6 +815,7 @@ class DiscountCodeValidationTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validate_validationException()
     {
         $this->initCurrentMock(['validateQuote']);
@@ -857,6 +866,7 @@ class DiscountCodeValidationTest extends BoltTestCase
      * @test
      * @covers ::getParentQuoteDiscountResult
      */
+    #[Test]
     public function getParentQuoteDiscountResult_couponNotFound()
     {
         $this->initCurrentMock();
@@ -880,6 +890,7 @@ class DiscountCodeValidationTest extends BoltTestCase
      * @test
      * @covers ::getParentQuoteDiscountResult
      */
+    #[Test]
     public function getParentQuoteDiscountResult_storeLabel()
     {
         $this->initCurrentMock();
@@ -926,6 +937,7 @@ class DiscountCodeValidationTest extends BoltTestCase
      * @test
      * @covers ::getCartTotals
      */
+    #[Test]
     public function getCartTotals()
     {
         $this->initCurrentMock();
@@ -949,6 +961,7 @@ class DiscountCodeValidationTest extends BoltTestCase
      * @test
      * @covers ::getCartTotals
      */
+    #[Test]
     public function getCartTotals_throwException()
     {
         $this->initCurrentMock();

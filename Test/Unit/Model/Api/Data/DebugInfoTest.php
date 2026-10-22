@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
 use Bolt\Boltpay\Model\Api\Data\DebugInfo;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class DebugInfoTest
@@ -45,6 +46,7 @@ class DebugInfoTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetPhpVersion()
     {
         $this->assertEquals('7.1', $this->debugInfo->getPhpVersion());
@@ -53,6 +55,7 @@ class DebugInfoTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetComposerVersion()
     {
         $this->assertEquals('composer_version', $this->debugInfo->getComposerVersion());
@@ -61,6 +64,7 @@ class DebugInfoTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetPlatformVersion()
     {
         $this->assertEquals('magento231', $this->debugInfo->getPlatformVersion());
@@ -69,6 +73,7 @@ class DebugInfoTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetOtherPluginVersions()
     {
         $this->assertEquals('other', $this->debugInfo->getOtherPluginVersions());
@@ -77,6 +82,7 @@ class DebugInfoTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetBoltConfigSettings()
     {
         $this->assertEquals('boltConfigSetting', $this->debugInfo->getBoltConfigSettings());
@@ -85,6 +91,7 @@ class DebugInfoTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetLogs()
     {
         $this->assertEquals([], $this->debugInfo->getLogs());
@@ -93,6 +100,7 @@ class DebugInfoTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function jsonSerialize()
     {
         $this->assertEquals(

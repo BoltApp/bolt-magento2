@@ -42,6 +42,7 @@ use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Bolt\Boltpay\Helper\Session as SessionHelper;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class UpdateDiscountTraitTest
@@ -435,6 +436,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * that verifyCouponCode will throw an exception if the code string is empty
      *
      */
+    #[Test]
     public function verifyCouponCode_withEmptyCode_throwsException()
     {
         $this->expectExceptionMessage('No coupon code provided');
@@ -449,6 +451,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function verifyCouponCode_returnMagentoGiftCardAccount()
     {
         global $ifRunFilter;
@@ -467,6 +470,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function verifyCouponCode_returnAmastyGiftCard()
     {
         global $ifRunFilter;
@@ -488,6 +492,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function verifyCouponCode_loadGiftcard_returnException()
     {
         global $ifRunFilter;
@@ -512,6 +517,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * that verifyCouponCode throws an exception if the coupon is not found.
      *
      */
+    #[Test]
     public function verifyCouponCode_couponObjNull_throwsException()
     {
         $this->expectExceptionMessage(sprintf('The coupon code %s is not found', self::COUPON_CODE));
@@ -534,6 +540,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * that verifyCouponCode will throw an exception if the coupon object is new.
      *
      */
+    #[Test]
     public function verifyCouponCode_couponObjNew_throwsException()
     {
         $coupon = $this->getCouponMock([
@@ -562,6 +569,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function verifyCouponCode_success_returnCoupon()
     {
         $coupon = $this->getCouponMock([
@@ -587,6 +595,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function applyDiscount_applyCoupon_returnTrue()
     {
         $quote = $this->getQuoteMock();
@@ -624,6 +633,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function applyDiscount_applyCoupon_throwException()
     {
         $quote = $this->getQuoteMock();
@@ -645,6 +655,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function applyingCouponCode()
     {
         $coupon = $this->getCouponMock([
@@ -696,6 +707,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function applyingCouponCode_noSuchEntity()
     {
         $coupon = $this->getCouponMock([
@@ -719,6 +731,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function applyingCouponCode_couponInactive()
     {
         $coupon = $this->getCouponMock([
@@ -745,6 +758,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function applyingCouponCode_invalidToDate()
     {
         $coupon = $this->getCouponMock([
@@ -777,6 +791,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      *
      * @covers ::applyingCouponCode
      */
+    #[Test]
     public function applyingCouponCode_invalidDateAndVerifyRuleTimeFrameDisabled_skipsDateValidation()
     {
         $coupon = $this->getCouponMock(
@@ -841,6 +856,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function applyingCouponCode_invalidFromDate()
     {
         $coupon = $this->getCouponMock([
@@ -880,6 +896,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function applyingCouponCode_exceededUsageLimit()
     {
         $coupon = $this->getCouponMock([
@@ -920,6 +937,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function applyingCouponCode_perRuleCustomerUsage_exceededUsageLimit()
     {
         $coupon = $this->getCouponMock([
@@ -958,6 +976,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function applyingCouponCode_perCustomerUsage_exceededUsageLimit()
     {
         $coupon = $this->getCouponMock([
@@ -995,6 +1014,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function applyingCouponCode_codeRequiresLogin()
     {
         $coupon = $this->getCouponMock([
@@ -1028,6 +1048,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function applyingCouponCode_virtualImmutableQuote()
     {
         $coupon = $this->getCouponMock([
@@ -1069,6 +1090,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function applyingCouponCode_couponCodeNotSet()
     {
         $coupon = $this->getCouponMock([
@@ -1107,6 +1129,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function applyingCouponCode_couponCodeNotEqual()
     {
         $coupon = $this->getCouponMock([
@@ -1146,6 +1169,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      *
      * @covers \Bolt\Boltpay\Model\Api\UpdateDiscountTrait::applyGiftCardCode
      */
+    #[Test]
     public function applyGiftCardCode_amastyGiftCard()
     {
         global $ifRunFilter;
@@ -1167,6 +1191,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function removeDiscount_removeCoupon()
     {
         $discounts = [
@@ -1186,6 +1211,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function removeDiscount_removeStoreCredit()
     {
         $discounts = [
@@ -1202,6 +1228,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function removeDiscount_codeNotExist()
     {
         $discounts = [
@@ -1220,6 +1247,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function removeCouponCode()
     {
         $quote = $this->getQuoteMock();
@@ -1236,6 +1264,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function removeCouponCode_throwException()
     {
         $quote = $this->getQuoteMock();
@@ -1256,6 +1285,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function removeGiftCardCode_amastyGiftCard()
     {
         global $ifRunFilter;
@@ -1277,6 +1307,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function getAppliedStoreCredit_returnArray()
     {
         global $ifRunFilter;
@@ -1299,6 +1330,7 @@ class UpdateDiscountTraitTest extends BoltTestCase
      * @test
      *
      */
+    #[Test]
     public function getAppliedStoreCredit_returnFalse()
     {
         $quote = $this->getQuoteMock();

@@ -22,6 +22,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Framework\App\ObjectManager;
 use Magento\TestFramework\Helper\Bootstrap;
 use Bolt\Boltpay\Model\Service\InvoiceService;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class InvoiceServiceTest
@@ -55,6 +56,7 @@ class InvoiceServiceTest extends BoltTestCase
      * @covers ::prepareInvoiceWithoutItems
      * @test
      */
+    #[Test]
     public function prepareInvoiceWithoutItems()
     {
         $order = TestUtils::createDumpyOrder();

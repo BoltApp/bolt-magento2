@@ -22,6 +22,7 @@ use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Config;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Cart;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Order;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\StoreItem;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class CartItemTest
@@ -71,6 +72,7 @@ class ConfigTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetStoreItems()
     {
         $this->assertEquals([$this->storeItem], $this->config->getStoreItems());
@@ -79,6 +81,7 @@ class ConfigTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetCart()
     {
         $this->assertEquals($this->cart, $this->config->getCart());
@@ -87,6 +90,7 @@ class ConfigTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetOrder()
     {
         $this->assertEquals($this->order, $this->config->getPastOrder());
@@ -95,6 +99,7 @@ class ConfigTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function jsonSerialize()
     {
         $result = $this->config->jsonSerialize();

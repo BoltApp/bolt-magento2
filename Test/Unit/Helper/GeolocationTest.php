@@ -25,6 +25,7 @@ use Bolt\Boltpay\Helper\Bugsnag;
 use Bolt\Boltpay\Model\HttpClientAdapterFactory;
 use Bolt\Boltpay\Model\HttpClientAdapter;
 use Magento\Framework\App\CacheInterface;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class GeolocationTest
@@ -97,6 +98,7 @@ class GeolocationTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new Geolocation(
@@ -116,6 +118,7 @@ class GeolocationTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getLocationJson_withEmptyApiKey()
     {
         $this->configHelper->expects(self::once())->method('getGeolocationApiKey')->willReturn(null);
@@ -125,6 +128,7 @@ class GeolocationTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getLocationJson_withLocationIsGetFromCache()
     {
         $this->configHelper->expects(self::once())->method('getGeolocationApiKey')->willReturn(self::API_KEY);
@@ -136,6 +140,7 @@ class GeolocationTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getLocationJson_withLocationIsNotGetFromCache()
     {
         $this->configHelper->expects(self::once())->method('getGeolocationApiKey')->willReturn(self::API_KEY);
@@ -158,6 +163,7 @@ class GeolocationTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getLocationJson_throwException()
     {
         $this->configHelper->expects(self::once())->method('getGeolocationApiKey')->willReturn(self::API_KEY);

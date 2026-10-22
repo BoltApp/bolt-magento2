@@ -22,6 +22,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\ObjectManagerInterface;
 use Bolt\Boltpay\Model\ExternalCustomerEntityFactory;
+use PHPUnit\Framework\Attributes\Test;
 
 class CollectionTest extends BoltTestCase
 {
@@ -59,6 +60,7 @@ class CollectionTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getExternalCustomerEntityByExternalID_returnsCorrectObject_ifCollectionIsNotEmpty()
     {
         $externalCustomerEntityFactory = $this->externalCustomerEntityFactory->create()
@@ -77,6 +79,7 @@ class CollectionTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getExternalCustomerEntityByExternalID_returnsNull_ifNoItemsFound()
     {
         $this->assertNull($this->externalCustomerEntityCollection->getExternalCustomerEntityByExternalID('test_external_id'));

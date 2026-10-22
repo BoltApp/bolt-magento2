@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data\AutomatedTesting;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\CartItem;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class CartItemTest
@@ -42,6 +43,7 @@ class CartItemTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetName()
     {
         $this->assertEquals('name', $this->cartItem->getName());
@@ -50,6 +52,7 @@ class CartItemTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetPrice()
     {
         $this->assertEquals('10.000', $this->cartItem->getPrice());
@@ -58,6 +61,7 @@ class CartItemTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetQuantity()
     {
         $this->assertEquals(1, $this->cartItem->getQuantity());
@@ -66,6 +70,7 @@ class CartItemTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function jsonSerialize()
     {
         $result = $this->cartItem->jsonSerialize();

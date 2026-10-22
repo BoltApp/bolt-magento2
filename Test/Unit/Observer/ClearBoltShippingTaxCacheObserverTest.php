@@ -25,6 +25,7 @@ use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Event\Observer;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\App\CacheInterface;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ClearBoltShippingTaxCacheObserver
@@ -67,6 +68,7 @@ class ClearBoltShippingTaxCacheObserverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute()
     {
         $this->cache->save('test', 'test', [ShippingMethods::BOLT_SHIPPING_TAX_CACHE_TAG]);

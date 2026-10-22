@@ -18,6 +18,8 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\ArrayHelper;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ArrayHelperTest
@@ -31,12 +33,14 @@ class ArrayHelperTest extends BoltTestCase
      * @dataProvider arrayCases
      * @group ArrayHelper
      */
+    #[Test]
+    #[DataProvider('arrayCases')]
     public function getValueFromArray($array, $key, $default, $expect)
     {
         $this->assertEquals($expect, ArrayHelper::getValueFromArray($array, $key, $default));
     }
 
-    public function arrayCases()
+    public static function arrayCases()
     {
         return [
             [

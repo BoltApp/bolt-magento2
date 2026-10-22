@@ -26,6 +26,8 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class FormTest
@@ -116,6 +118,7 @@ class FormTest extends BoltTestCase
      * @test
      * @param $data
      */
+    #[Test]
     public function getCustomerCreditCardInfo()
     {
         $result = $this->blockForm->getCustomerCreditCardInfo();
@@ -133,6 +136,8 @@ class FormTest extends BoltTestCase
      * @param string $additionalConfig string from config property
      * @param mixed $expectedResult from the tested method
      */
+    #[Test]
+    #[DataProvider('getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider')]
     public function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigs_returnsButtonAttributes(
         $additionalConfig,
         $expectedResult
@@ -158,7 +163,7 @@ class FormTest extends BoltTestCase
      *
      * @return array[] containing additional config values and expected result of the tested method
      */
-    public function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider()
+    public static function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider()
     {
         return [
             'Only attributes in initial config' => [
@@ -200,6 +205,7 @@ class FormTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function isAdminReorderForLoggedInCustomerFeatureEnabled()
     {
         $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_BOLT_ADMIN_REORDER_FOR_LOGGED_IN_CUSTOMER, true);
@@ -210,6 +216,7 @@ class FormTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getPublishableKeyBackOfficeShouldReturnConfigValue()
     {
         $configHelperMock = $this->createPartialMock(Config::class,['getPublishableKeyBackOffice']);
@@ -224,6 +231,7 @@ class FormTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getPublishableKeyPaymentOnlyShouldReturnConfigValue()
     {
         $configHelperMock = $this->createPartialMock(Config::class,['getPublishableKeyPayment']);

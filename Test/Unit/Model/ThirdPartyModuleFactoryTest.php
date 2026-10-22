@@ -23,6 +23,7 @@ use Bolt\Boltpay\Model\ThirdPartyModuleFactory;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ThirdPartyModuleFactoryTest
@@ -62,6 +63,7 @@ class ThirdPartyModuleFactoryTest extends BoltTestCase
      * @test
      * @covers ::getInstance
      */
+    #[Test]
     public function getInstance_withModuleIsNotAvailable_returnNull()
     {
         $this->assertNull($this->thirdPartyModuleFactory->getInstance());
@@ -71,6 +73,7 @@ class ThirdPartyModuleFactoryTest extends BoltTestCase
      * @test
      * @covers ::getInstance
      */
+    #[Test]
     public function getInstance_withModuleIsAvailable_returnObjectManagerObject()
     {
         TestHelper::setInaccessibleProperty($this->thirdPartyModuleFactory, 'moduleName', self::MODULE_NAME);
@@ -83,6 +86,7 @@ class ThirdPartyModuleFactoryTest extends BoltTestCase
      * @test
      * @covers ::isAvailable
      */
+    #[Test]
     public function isAvailable()
     {
         TestHelper::setInaccessibleProperty($this->thirdPartyModuleFactory, 'moduleName', self::MODULE_NAME);
@@ -93,6 +97,7 @@ class ThirdPartyModuleFactoryTest extends BoltTestCase
      * @test
      * @covers ::isExists
      */
+    #[Test]
     public function isExists_withClass_returnTrue()
     {
         TestHelper::setInaccessibleProperty($this->thirdPartyModuleFactory, 'className', self::CLASS_NAME);
@@ -103,6 +108,7 @@ class ThirdPartyModuleFactoryTest extends BoltTestCase
      * @test
      * @covers ::isExists
      */
+    #[Test]
     public function isExists_withInterface_returnTrue()
     {
         TestHelper::setInaccessibleProperty($this->thirdPartyModuleFactory, 'className', 'Bolt\Boltpay\Api\CreateOrderInterface');

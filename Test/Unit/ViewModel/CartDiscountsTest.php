@@ -23,6 +23,7 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Bolt\Boltpay\ViewModel\CartDiscounts;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\Serialize\SerializerInterface;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\ViewModel\CartDiscounts
@@ -89,6 +90,7 @@ class CartDiscountsTest extends BoltTestCase
      * @covers ::getJsLayout
      * @throws \ReflectionException
      */
+    #[Test]
     public function getJsLayout_returnObject()
     {
         $this->eventsForThirdPartyModules = $this->createMock(EventsForThirdPartyModules::class, ['runFilter']);
@@ -113,6 +115,7 @@ class CartDiscountsTest extends BoltTestCase
      * @test
      * @covers ::getId
      */
+    #[Test]
     public function getId()
     {
         self::assertEquals('bolt-checkout-cart-discounts', $this->cartDiscounts->getId());

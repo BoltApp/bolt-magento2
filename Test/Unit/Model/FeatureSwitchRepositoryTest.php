@@ -22,6 +22,7 @@ use Bolt\Boltpay\Model\FeatureSwitch;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\Framework\Exception\NoSuchEntityException;
+use PHPUnit\Framework\Attributes\Test;
 
 class FeatureSwitchRepositoryTest extends BoltTestCase
 {
@@ -36,6 +37,7 @@ class FeatureSwitchRepositoryTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getByName_switchExists()
     {
         
@@ -48,6 +50,7 @@ class FeatureSwitchRepositoryTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getByName_switchDoesNotExists()
     {
         
@@ -64,6 +67,7 @@ class FeatureSwitchRepositoryTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function upsertByName_shouldOverrideData()
     {
         

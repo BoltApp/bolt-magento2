@@ -26,6 +26,8 @@ use Bolt\Boltpay\ViewModel\MinicartAddons;
 use Magento\Framework\TestFramework\Unit\Helper\ObjectManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 /**
  * @coversDefaultClass \Bolt\Boltpay\ViewModel\MinicartAddons
  */
@@ -108,6 +110,7 @@ class MinicartAddonsTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function __construct_always_setsInternalProperties()
     {
         $instance = new \Bolt\Boltpay\ViewModel\MinicartAddons(
@@ -130,6 +133,7 @@ class MinicartAddonsTest extends BoltTestCase
      *
      * @throws \ReflectionException if getLayout method is not defined
      */
+    #[Test]
     public function getLayout_withVariousStates_returnsLayout()
     {
         $this->eventsForThirdPartyModulesMock->expects(static::once())->method('runFilter')
@@ -149,6 +153,7 @@ class MinicartAddonsTest extends BoltTestCase
      *
      * @throws \ReflectionException if getLayout method is not defined
      */
+    #[Test]
     public function getLayout_withLayoutPropertyExist_returnsLayout()
     {
         TestHelper::setInaccessibleProperty($this->minicartAddons, '_layout', self::DEFAULT_LAYOUT);
@@ -164,6 +169,7 @@ class MinicartAddonsTest extends BoltTestCase
      *
      * @covers ::getLayoutJSON
      */
+    #[Test]
     public function getLayoutJSON()
     {
         TestHelper::setInaccessibleProperty($this->minicartAddons, '_layout', self::DEFAULT_LAYOUT);
@@ -186,6 +192,8 @@ class MinicartAddonsTest extends BoltTestCase
      *
      * @throws \ReflectionException if configHelper property is undefined
      */
+    #[Test]
+    #[DataProvider('shouldShow_withVariousStatesProvider')]
     public function shouldShow_withVariousStates_determinesIfAddonsShouldBeRendered(
         $minicartSupport,
         $layout,
@@ -212,7 +220,7 @@ class MinicartAddonsTest extends BoltTestCase
      *
      * @return array[] containing minicart support config value, subbed result of getLayout and expected result
      */
-    public function shouldShow_withVariousStatesProvider()
+    public static function shouldShow_withVariousStatesProvider()
     {
         return [
             [

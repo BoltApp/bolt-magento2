@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\StoreAddress;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class StoreAddressTest
@@ -57,6 +58,7 @@ class StoreAddressTest extends BoltTestCase
      * that getStreetAddress1 would return region.
      * @covers ::getStreetAddress1
      */
+    #[Test]
     public function getStreetAddress1_always_returnsStreetAddress1()
     {
         $this->assertEquals(self::STREET_ADDRESS_1, $this->storeAddress->getStreetAddress1());
@@ -67,6 +69,7 @@ class StoreAddressTest extends BoltTestCase
      * that getStreetAddress2 would return region.
      * @covers ::getStreetAddress2
      */
+    #[Test]
     public function getStreetAddress2_always_returnsStreetAddress2()
     {
         $this->assertEquals(self::STREET_ADDRESS_2, $this->storeAddress->getStreetAddress2());
@@ -77,6 +80,7 @@ class StoreAddressTest extends BoltTestCase
      * that getLocality would return region.
      * @covers ::getLocality
      */
+    #[Test]
     public function getLocality_always_returnsLocality()
     {
         $this->assertEquals(self::LOCALITY, $this->storeAddress->getLocality());
@@ -87,6 +91,7 @@ class StoreAddressTest extends BoltTestCase
      * that getRegion would return region.
      * @covers ::getRegion
      */
+    #[Test]
     public function getRegion_always_returnsRegion()
     {
         $this->assertEquals(self::REGION, $this->storeAddress->getRegion());
@@ -97,6 +102,7 @@ class StoreAddressTest extends BoltTestCase
      * that getPostalCode would return postal code.
      * @covers ::getPostalCode
      */
+    #[Test]
     public function getPostalCode_always_returnsPostalCode()
     {
         $this->assertEquals(self::POSTALCODE, $this->storeAddress->getPostalCode());
@@ -107,6 +113,7 @@ class StoreAddressTest extends BoltTestCase
      * that getCountryCode would return country code
      * @covers ::getCountryCode
      */
+    #[Test]
     public function getCountryCode_always_returnsCountryCode()
     {
         $this->assertEquals(self::COUNTRYCODE, $this->storeAddress->getCountryCode());
@@ -117,6 +124,7 @@ class StoreAddressTest extends BoltTestCase
      * that getPhone would return phone
      * @covers ::getPhone
      */
+    #[Test]
     public function getPhone_always_returnsPhone()
     {
         $this->assertEquals(self::PHONE, $this->storeAddress->getPhone());
@@ -127,6 +135,7 @@ class StoreAddressTest extends BoltTestCase
      * that jsonSerialize would return an associative array of values
      * @covers ::jsonSerialize
      */
+    #[Test]
     public function jsonSerialize_always_returnsValues()
     {
         $result = $this->storeAddress->jsonSerialize();

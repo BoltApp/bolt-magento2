@@ -18,6 +18,8 @@
 namespace Bolt\Boltpay\Test\Unit\Plugin\Magento\Ui\Component\Form\Element;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\Magento\Ui\Component\Form\Element\SelectPlugin
@@ -62,6 +64,8 @@ class SelectPluginTest extends BoltTestCase
      * @param array  $configBefore
      * @param array  $configAfter
      */
+    #[Test]
+    #[DataProvider('afterPrepareDataProvider')]
     public function afterPrepare($namespace, $name, $configBefore, $configAfter)
     {
         $this->subjectMock->expects(static::once())->method('getContext')->willReturn($this->contextMock);
@@ -77,7 +81,7 @@ class SelectPluginTest extends BoltTestCase
     /**
      * Data provider for @see afterPrepare
      */
-    public function afterPrepareDataProvider()
+    public static function afterPrepareDataProvider()
     {
         $appendedOptions = [
             [

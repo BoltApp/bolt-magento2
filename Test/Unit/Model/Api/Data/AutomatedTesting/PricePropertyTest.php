@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api\Data\AutomatedTesting;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\PriceProperty;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class PricePropertyTest
@@ -41,6 +42,7 @@ class PricePropertyTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetName()
     {
         $this->assertEquals('name', $this->priceProperty->getName());
@@ -49,6 +51,7 @@ class PricePropertyTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetPrice()
     {
         $this->assertEquals('10.000', $this->priceProperty->getPrice());
@@ -57,6 +60,7 @@ class PricePropertyTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function jsonSerialize()
     {
         $result = $this->priceProperty->jsonSerialize();

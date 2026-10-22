@@ -20,12 +20,13 @@ namespace Bolt\Boltpay\Test\Unit\Model;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ThirdPartyModuleFactoryTest
  * @package Bolt\Boltpay\Test\Unit\Model
  */
-class EventsForThirdPartyModuleTest extends BoltTestCase
+class EventsForThirdPartyModulesTest extends BoltTestCase
 {
 
     private function configCheckOneConst($eventsListeners)
@@ -46,6 +47,7 @@ class EventsForThirdPartyModuleTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function configTest()
     {
         
@@ -56,6 +58,7 @@ class EventsForThirdPartyModuleTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function dispatchEventTest()
     {
         
@@ -75,6 +78,7 @@ class EventsForThirdPartyModuleTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function runFilterTest()
     {
         

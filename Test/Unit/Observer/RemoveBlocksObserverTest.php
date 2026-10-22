@@ -27,6 +27,8 @@ use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\View\Layout;
 use Magento\Framework\App\RequestInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class RemoveBlocksObserver
@@ -59,6 +61,7 @@ class RemoveBlocksObserverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_unsetsElements_ifBoltSSOEnabled()
     {
         $eventObserver = $this->createPartialMock(Observer::class, ['getLayout', 'getData']);
@@ -77,6 +80,7 @@ class RemoveBlocksObserverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_doesNotUnsetElements_ifNotLoginOrRegisterPage()
     {
         $eventObserver = $this->createPartialMock(Observer::class, ['getLayout', 'getData']);
@@ -90,6 +94,7 @@ class RemoveBlocksObserverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_doesNotUnsetElements_ifBoltSSONotDisabled()
     {
         $eventObserver = $this->createPartialMock(Observer::class, ['getLayout', 'getData']);
@@ -107,6 +112,7 @@ class RemoveBlocksObserverTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute_doesNotUnsetElements_ifBoltSSOEnabledButUseGetShowNativeParam()
     {
         $eventObserver = $this->createPartialMock(Observer::class, ['getLayout', 'getData']);
@@ -140,6 +146,8 @@ class RemoveBlocksObserverTest extends BoltTestCase
      * @dataProvider execute_ifPreconditionsAreMet_unsetsNavigationLinksProvider
      * @covers ::execute
      */
+    #[Test]
+    #[DataProvider('execute_ifPreconditionsAreMet_unsetsNavigationLinksProvider')]
     public function execute_ifPreconditionsAreMet_unsetsNavigationLinks(
         $fullActionName,
         $isPreventSsoCustomersFromEditingAccountInformation,
@@ -167,54 +175,54 @@ class RemoveBlocksObserverTest extends BoltTestCase
     /**
      * @return \bool[][]|\string[][]
      */
-    public function execute_ifPreconditionsAreMet_unsetsNavigationLinksProvider()
+    public static function execute_ifPreconditionsAreMet_unsetsNavigationLinksProvider()
     {
         return array_merge(
             [
                 'Happy path - all prerequisites fulfilled' => [
-                    'full_action_name' => 'customer_account',
-                    'is_prevent_sso_customers_from_editing_account_information' => true,
-                    'is_bolt_sso_fs_enabled' => true,
-                    'is_bolt_sso_config_enabled' => true,
-                    'should_unset_links' => true
+                    'fullActionName' => 'customer_account',
+                    'isPreventSsoCustomersFromEditingAccountInformation' => true,
+                    'isBoltSsoFsEnabled' => true,
+                    'isBoltSsoConfigEnabled' => true,
+                    'shouldUnsetLinks' => true
                 ],
                 'SSO feature switch disabled' => [
-                    'full_action_name' => 'customer_account',
-                    'is_prevent_sso_customers_from_editing_account_information' => true,
-                    'is_bolt_sso_fs_enabled' => false,
-                    'is_bolt_sso_config_enabled' => true,
-                    'should_unset_links' => false
+                    'fullActionName' => 'customer_account',
+                    'isPreventSsoCustomersFromEditingAccountInformation' => true,
+                    'isBoltSsoFsEnabled' => false,
+                    'isBoltSsoConfigEnabled' => true,
+                    'shouldUnsetLinks' => false
                 ],
                 'SSO config disabled' => [
-                    'full_action_name' => 'customer_account',
-                    'is_prevent_sso_customers_from_editing_account_information' => true,
-                    'is_bolt_sso_fs_enabled' => true,
-                    'is_bolt_sso_config_enabled' => false,
-                    'should_unset_links' => false
+                    'fullActionName' => 'customer_account',
+                    'isPreventSsoCustomersFromEditingAccountInformation' => true,
+                    'isBoltSsoFsEnabled' => true,
+                    'isBoltSsoConfigEnabled' => false,
+                    'shouldUnsetLinks' => false
                 ],
                 'SSO customers should be prevented from editing their account and address data feature switch disabled' => [
-                    'full_action_name' => 'customer_account',
-                    'is_prevent_sso_customers_from_editing_account_information' => false,
-                    'is_bolt_sso_fs_enabled' => true,
-                    'is_bolt_sso_config_enabled' => true,
-                    'should_unset_links' => false
+                    'fullActionName' => 'customer_account',
+                    'isPreventSsoCustomersFromEditingAccountInformation' => false,
+                    'isBoltSsoFsEnabled' => true,
+                    'isBoltSsoConfigEnabled' => true,
+                    'shouldUnsetLinks' => false
                 ],
                 'On checkout page' => [
-                    'full_action_name' => 'checkout_index_index',
-                    'is_prevent_sso_customers_from_editing_account_information' => true,
-                    'is_bolt_sso_fs_enabled' => true,
-                    'is_bolt_sso_config_enabled' => true,
-                    'should_unset_links' => false
+                    'fullActionName' => 'checkout_index_index',
+                    'isPreventSsoCustomersFromEditingAccountInformation' => true,
+                    'isBoltSsoFsEnabled' => true,
+                    'isBoltSsoConfigEnabled' => true,
+                    'shouldUnsetLinks' => false
                 ],
             ],
             array_map(
                 function ($route) {
                     return [
-                        'full_action_name' => $route,
-                        'is_prevent_sso_customers_from_editing_account_information' => true,
-                        'is_bolt_sso_fs_enabled' => true,
-                        'is_bolt_sso_config_enabled' => true,
-                        'should_unset_links' => false
+                        'fullActionName' => $route,
+                        'isPreventSsoCustomersFromEditingAccountInformation' => true,
+                        'isBoltSsoFsEnabled' => true,
+                        'isBoltSsoConfigEnabled' => true,
+                        'shouldUnsetLinks' => false
                     ];
                 },
                 ['checkout_cart_index', 'catalog_product_view', 'catalog_category_view', 'checkout_cart_index']
@@ -223,11 +231,11 @@ class RemoveBlocksObserverTest extends BoltTestCase
                 array_map(
                     function ($flags) {
                         return [
-                            'full_action_name' => 'customer_account',
-                            'is_prevent_sso_customers_from_editing_account_information' => $flags[0],
-                            'is_bolt_sso_fs_enabled' => $flags[1],
-                            'is_bolt_sso_config_enabled' => $flags[2],
-                            'should_unset_links' => $flags[0] && $flags[1] && $flags[2]
+                            'fullActionName' => 'customer_account',
+                            'isPreventSsoCustomersFromEditingAccountInformation' => $flags[0],
+                            'isBoltSsoFsEnabled' => $flags[1],
+                            'isBoltSsoConfigEnabled' => $flags[2],
+                            'shouldUnsetLinks' => $flags[0] && $flags[1] && $flags[2]
                         ];
                     },
                     TestHelper::getAllBooleanCombinations(3)

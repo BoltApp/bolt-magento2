@@ -54,6 +54,8 @@ use ReflectionException;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class JsTest
@@ -175,6 +177,8 @@ class JsTest extends BoltTestCase
      * @param bool $sandboxMode    configuration flag
      * @param bool $expectedResult of the tested method call
      */
+    #[Test]
+    #[DataProvider('getTrackJsUrl_withVariousConfigurationModesProvider')]
     public function getTrackJsUrl_withVariousConfigurationModes_returnsCheckoutUrl($sandboxMode, $expectedResult)
     {
         $this->setSandboxMode($sandboxMode);
@@ -186,7 +190,7 @@ class JsTest extends BoltTestCase
      *
      * @return array[] containing sandbox configuration mode and expected result of the tested method call
      */
-    public function getTrackJsUrl_withVariousConfigurationModesProvider()
+    public static function getTrackJsUrl_withVariousConfigurationModesProvider()
     {
         return [
             [
@@ -244,6 +248,8 @@ class JsTest extends BoltTestCase
      * @param bool $sandboxMode    configuration flag
      * @param bool $expectedResult of the tested method call
      */
+    #[Test]
+    #[DataProvider('getConnectJsUrl_withVariousConfigurationModesProvider')]
     public function getConnectJsUrl_withVariousConfigurationModes_returnsCheckoutUrl($sandboxMode, $expectedResult)
     {
         $this->setSandboxMode($sandboxMode);
@@ -255,7 +261,7 @@ class JsTest extends BoltTestCase
      *
      * @return array[] containing sandbox configuration mode and expected result of tested method
      */
-    public function getConnectJsUrl_withVariousConfigurationModesProvider()
+    public static function getConnectJsUrl_withVariousConfigurationModesProvider()
     {
         return [
             [
@@ -280,6 +286,8 @@ class JsTest extends BoltTestCase
      * @param bool $sandboxMode    configuration flag
      * @param bool $expectedResult of the tested method call
      */
+    #[Test]
+    #[DataProvider('getPayByLinkUrl_withVariousConfigurationModesProvider')]
     public function getPayByLinkUrl_withVariousConfigurationModes_returnsCheckoutUrl(
         $sandboxMode, $customValue, $featureSwitch, $expectedResult)
     {
@@ -297,7 +305,7 @@ class JsTest extends BoltTestCase
      *
      * @return array[] containing sandbox configuration mode and expected result of tested method
      */
-    public function getPayByLinkUrl_withVariousConfigurationModesProvider()
+    public static function getPayByLinkUrl_withVariousConfigurationModesProvider()
     {
         return [
             [
@@ -350,6 +358,8 @@ class JsTest extends BoltTestCase
      * @param bool $sandboxMode    configuration flag
      * @param bool $expectedResult of the tested method call
      */
+    #[Test]
+    #[DataProvider('getAccountJsUrl_withVariousConfigurationModesProvider')]
     public function getAccountJsUrl_withVariousSandboxConfigurationModes_returnsAccountUrl($sandboxMode, $expectedResult)
     {
         $this->setSandboxMode($sandboxMode);
@@ -361,7 +371,7 @@ class JsTest extends BoltTestCase
      *
      * @return array[] containing sandbox configuration mode and expected result of the tested method call
      */
-    public function getAccountJsUrl_withVariousConfigurationModesProvider()
+    public static function getAccountJsUrl_withVariousConfigurationModesProvider()
     {
         return [
             [
@@ -391,6 +401,8 @@ class JsTest extends BoltTestCase
      * @param string $requestAction                current request name, stubbed result of {@see \Magento\Framework\App\Request\Http::getFullActionName}
      * @param string $expectedResult               of the tested method call
      */
+    #[Test]
+    #[DataProvider('getCheckoutKey_withVariousStatesProvider')]
     public function getCheckoutKey_withVariousStates_returnsCheckoutKey(
         $isPaymentOnlyCheckoutEnabled,
         $publishableKeyPayment,
@@ -427,34 +439,34 @@ class JsTest extends BoltTestCase
      *
      * @return array[]
      */
-    public function getCheckoutKey_withVariousStatesProvider()
+    public static function getCheckoutKey_withVariousStatesProvider()
     {
         return [
             [
-                'is_payment_only_checkout_enabled' => true,
-                'publishable_key_payment'          => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCHECKOUTPAGE',
-                'publishable_key_checkout'         => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCARTPAGE',
+                'isPaymentOnlyCheckoutEnabled'     => true,
+                'publishableKeyPayment'            => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCHECKOUTPAGE',
+                'publishableKeyCheckout'           => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCARTPAGE',
                 'requestAction'                    => HelperConfig::CHECKOUT_PAGE_ACTION,
                 'expectedResult'                   => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCHECKOUTPAGE'
             ],
             [
-                'is_payment_only_checkout_enabled' => true,
-                'publishable_key_payment'          => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCHECKOUTPAGE',
-                'publishable_key_checkout'         => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCARTPAGE',
+                'isPaymentOnlyCheckoutEnabled'     => true,
+                'publishableKeyPayment'            => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCHECKOUTPAGE',
+                'publishableKeyCheckout'           => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCARTPAGE',
                 'requestAction'                    => HelperConfig::SHOPPING_CART_PAGE_ACTION,
                 'expectedResult'                   => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCARTPAGE'
             ],
             [
-                'is_payment_only_checkout_enabled' => true,
-                'publishable_key_payment'          => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCHECKOUTPAGE',
-                'publishable_key_checkout'         => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTOTHERPAGES',
+                'isPaymentOnlyCheckoutEnabled'     => true,
+                'publishableKeyPayment'            => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCHECKOUTPAGE',
+                'publishableKeyCheckout'           => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTOTHERPAGES',
                 'requestAction'                    => 'other_requests',
                 'expectedResult'                   => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTOTHERPAGES'
             ],
             [
-                'is_payment_only_checkout_enabled' => false,
-                'publishable_key_payment'          => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCHECKOUTPAGE',
-                'publishable_key_checkout'         => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTMINICART',
+                'isPaymentOnlyCheckoutEnabled'     => false,
+                'publishableKeyPayment'            => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTCHECKOUTPAGE',
+                'publishableKeyCheckout'           => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTMINICART',
                 'requestAction'                    => HelperConfig::CHECKOUT_PAGE_ACTION,
                 'expectedResult'                   => 'pKv_pOzRTEST.TESTkEIjTEST.TEST01f0d15501cd7548c1953f6666b2689f2e5a20198c5d7f886c004913TESTMINICART'
             ],
@@ -476,6 +488,8 @@ class JsTest extends BoltTestCase
      * @param string $replaceSelectors             value in configuration
      * @param mixed  $expectedResult               of the tested method call
      */
+    #[Test]
+    #[DataProvider('getReplaceSelectors_withVariousConfigPropertiesProvider')]
     public function getReplaceSelectors_withVariousConfigProperties_returnsReplaceSelectorsArray(
         $isPaymentOnlyCheckoutEnabled,
         $requestActionName,
@@ -513,7 +527,7 @@ class JsTest extends BoltTestCase
      *                 config selector value
      *                 expected result of the tested method call
      */
-    public function getReplaceSelectors_withVariousConfigPropertiesProvider()
+    public static function getReplaceSelectors_withVariousConfigPropertiesProvider()
     {
         return [
             [
@@ -557,6 +571,8 @@ class JsTest extends BoltTestCase
      * @param string $selectors      from the config helper
      * @param string $expectedResult of the tested method call
      */
+    #[Test]
+    #[DataProvider('getTotalsChangeSelectors_withVariousSelectorsProvider')]
     public function getTotalsChangeSelectors_withVariousSelectors_returnsFilteredSelectors($selectors, $expectedResult)
     {
         $configData = [
@@ -577,7 +593,7 @@ class JsTest extends BoltTestCase
      *
      * @return array[] containing totals change selectors config value   and expected result of tested method
      */
-    public function getTotalsChangeSelectors_withVariousSelectorsProvider()
+    public static function getTotalsChangeSelectors_withVariousSelectorsProvider()
     {
         return [
             [
@@ -608,6 +624,8 @@ class JsTest extends BoltTestCase
      * @param string $additionalConfig string from config property
      * @param mixed $expectedResult from the tested method
      */
+    #[Test]
+    #[DataProvider('getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider')]
     public function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigs_returnsButtonAttributes(
         $additionalConfig,
         $expectedResult
@@ -633,7 +651,7 @@ class JsTest extends BoltTestCase
      *
      * @return array[] containing additional config values and expected result of the tested method
      */
-    public function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider()
+    public static function getAdditionalCheckoutButtonAttributes_withVariousAdditionalConfigsProvider()
     {
         return [
             'Only attributes in initial config' => [
@@ -680,6 +698,7 @@ class JsTest extends BoltTestCase
      *
      * @covers ::getAdditionalCheckoutButtonClass
      */
+    #[Test]
     public function getAdditionalCheckoutButtonClass_always_returnsTrimmedButtonClass()
     {
         $configValue = ' .btn-green ';
@@ -705,6 +724,7 @@ class JsTest extends BoltTestCase
      *
      * @covers ::getGlobalCSS
      */
+    #[Test]
     public function getGlobalCSS_always_returnsCssCode()
     {
         $value = '.replaceable-example-selector1 {
@@ -734,6 +754,7 @@ class JsTest extends BoltTestCase
      *
      * @covers ::getGlobalJS
      */
+    #[Test]
     public function getGlobalJS_always_returnsJSCode()
     {
         $value = 'require([
@@ -762,6 +783,7 @@ class JsTest extends BoltTestCase
      *
      * @covers ::getJavascriptSuccess
      */
+    #[Test]
     public function getJavascriptSuccess_always_returnsCallback()
     {
         $configData = [
@@ -787,6 +809,7 @@ class JsTest extends BoltTestCase
      *
      * @covers ::getAdditionalJavascript
      */
+    #[Test]
     public function getAdditionalJavascript_always_returnsAdditionalJSCallback()
     {
         $block = $this->objectManager->create(Js::class);
@@ -804,6 +827,7 @@ class JsTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function getAdditionalHtml_returnsCorrectResult()
     {
         $block = $this->objectManager->create(Js::class);
@@ -819,6 +843,7 @@ class JsTest extends BoltTestCase
      *
      * @covers ::getSettings
      */
+    #[Test]
     public function getSettings_always_returnsJsonSettings()
     {
         TestUtils::saveFeatureSwitch(Definitions::M2_PAY_BY_LINK, true);
@@ -874,6 +899,7 @@ class JsTest extends BoltTestCase
      *
      * @covers ::getSettings
      */
+    #[Test]
     public function getSettings_ifPayByLinkFeatureIsDisabled_returnsSettingWithPayByLinkSetToNull()
     {
         $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_PAY_BY_LINK, false);
@@ -889,6 +915,7 @@ class JsTest extends BoltTestCase
      *
      * @covers ::getSettings
      */
+    #[Test]
     public function getSettings_ifPayByLinkUrlIsEnabled_returnsSettingsWithPayByLink()
     {
         $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_PAY_BY_LINK, true);
@@ -914,6 +941,8 @@ class JsTest extends BoltTestCase
      *
      * @throws ReflectionException from isVirtual method
      */
+    #[Test]
+    #[DataProvider('getQuoteIsVirtual_withVariousQuotesProvider')]
     public function getQuoteIsVirtual_withVariousQuotes_returnsIsQuoteVirtual($isQuoteVirtual, $expectedResult)
     {
         $checkoutSession = $this->objectManager->create(\Magento\Framework\Session\SessionManager::class);
@@ -940,7 +969,7 @@ class JsTest extends BoltTestCase
      *
      * @return array[] containing flags for virtual quote and expected result
      */
-    public function getQuoteIsVirtual_withVariousQuotesProvider()
+    public static function getQuoteIsVirtual_withVariousQuotesProvider()
     {
         return [
             ['isQuoteVirtual' => true, 'expectedResult' => true],
@@ -962,6 +991,8 @@ class JsTest extends BoltTestCase
      *
      * @throws ReflectionException if _scopeConfig property doesn't exist
      */
+    #[Test]
+    #[DataProvider('getBoltPopupErrorMessage_withVariousConfigurationsProvider')]
     public function getBoltPopupErrorMessage_withVariousConfigurations_returnsBoltPopupErrorMessage(
         $configMap,
         $expectedContactEmail
@@ -998,7 +1029,7 @@ class JsTest extends BoltTestCase
      * @see \Magento\Framework\App\Config\ScopeConfigInterface::getValue
      * and expected contact email to be contained in the error message
      */
-    public function getBoltPopupErrorMessage_withVariousConfigurationsProvider()
+    public static function getBoltPopupErrorMessage_withVariousConfigurationsProvider()
     {
         return [
             [
@@ -1039,6 +1070,7 @@ class JsTest extends BoltTestCase
      *
      * @covers ::getTrackCallbacks
      */
+    #[Test]
     public function getTrackCallbacks_always_returnsTrackCallbacksValue()
     {
 
@@ -1129,6 +1161,7 @@ class JsTest extends BoltTestCase
      *
      * @throws ReflectionException if getOnCheckoutStart method is not defined
      */
+    #[Test]
     public function getOnCheckoutStart_always_returnsCheckoutStart()
     {
         $checkoutStartCallback = "dataLayer.push({'event': 'checkout_start'});";
@@ -1156,6 +1189,7 @@ class JsTest extends BoltTestCase
      *
      * @throws ReflectionException if getOnEmailEnter method is not defined
      */
+    #[Test]
     public function getOnEmailEnter_always_returnsEmailEntered()
     {
         $emailEntered = "dataLayer.push({'event': 'email_enter'});";
@@ -1181,6 +1215,7 @@ class JsTest extends BoltTestCase
      *
      * @throws ReflectionException if getOnShippingDetailsComplete method is not defined
      */
+    #[Test]
     public function getOnShippingDetailsComplete_always_returnsShippingDetailsCallback()
     {
         $shippingDetails = "dataLayer.push({'event': 'on_shipping_details_complete'});";
@@ -1209,6 +1244,7 @@ class JsTest extends BoltTestCase
      *
      * @throws ReflectionException if getOnShippingOptionsComplete method is not defined
      */
+    #[Test]
     public function getOnShippingOptionsComplete_always_returnsShippingOptionsCompleteCallback()
     {
         $shippingOptions = "dataLayer.push({'event': 'on_shipping_options_complete'});";
@@ -1237,6 +1273,7 @@ class JsTest extends BoltTestCase
      *
      * @throws ReflectionException if getOnPaymentSubmit method is not defined
      */
+    #[Test]
     public function getOnPaymentSubmit_always_returnsOnPaymentSubmitCallback()
     {
 
@@ -1263,6 +1300,7 @@ class JsTest extends BoltTestCase
      *
      * @throws ReflectionException if getOnSuccess method is not defined
      */
+    #[Test]
     public function getOnSuccess_always_returnsOnSuccessCallback()
     {
         $success = "dataLayer.push({'event': 'on_success'});";
@@ -1288,6 +1326,7 @@ class JsTest extends BoltTestCase
      *
      * @throws ReflectionException if getOnClose method is not defined
      */
+    #[Test]
     public function getOnClose_always_returnsOnClosedCallback()
     {
         $closed = "dataLayer.push({'event': 'on_close'});";
@@ -1314,6 +1353,7 @@ class JsTest extends BoltTestCase
      *
      * @throws ReflectionException if getToggleCheckout method is not defined
      */
+    #[Test]
     public function getToggleCheckout_withVariousToggleCheckoutStates_returnsToggleCheckoutConfiguration() {
         $configData = [
             [
@@ -1347,6 +1387,8 @@ class JsTest extends BoltTestCase
      *
      * @throws ReflectionException if getIsPreAuth method is not defined
      */
+    #[Test]
+    #[DataProvider('getIsPreAuth_withVariousPreAuthConfigurationsProvider')]
     public function getIsPreAuth_withVariousPreAuthConfigurations_returnsPreAuthConfiguration(
        $isPreAuth,
         $expectedResult
@@ -1368,7 +1410,7 @@ class JsTest extends BoltTestCase
      *
      * @return array[] containing current store id, preauth configuration and expected result of the tested method call
      */
-    public function getIsPreAuth_withVariousPreAuthConfigurationsProvider()
+    public static function getIsPreAuth_withVariousPreAuthConfigurationsProvider()
     {
         return [
 
@@ -1388,6 +1430,7 @@ class JsTest extends BoltTestCase
      *
      * @throws ReflectionException if getQuoteFromCheckoutSession method is undefined
      */
+    #[Test]
     public function getQuoteFromCheckoutSession_always_returnsQuote()
     {
         $checkoutSession = $this->objectManager->create(\Magento\Framework\Session\SessionManager::class);
@@ -1408,6 +1451,7 @@ class JsTest extends BoltTestCase
      *
      * @covers ::getModuleVersion
      */
+    #[Test]
     public function getModuleVersion_always_returnsModuleVersion()
     {
         $moduleVersion = '3.0.0';
@@ -1424,6 +1468,7 @@ class JsTest extends BoltTestCase
      *
      * @throws Exception from Minifier::minify method
      */
+    #[Test]
     public function minifyJs_whenMinifyJavascriptIsUnset_returnsUnalteredJs()
     {
         $jsCode = 'var helpers = [];';
@@ -1450,6 +1495,7 @@ class JsTest extends BoltTestCase
      *
      * @throws Exception from Minifier::minify method
      */
+    #[Test]
     public function minifyJs_whenMinifyJavascriptIsSet_returnsMinifiedJs()
     {
         $jsCode = <<<'JS'
@@ -1487,6 +1533,8 @@ JS;
      *
      * @throws ReflectionException if isOnPageFromWhiteList method is not defined
      */
+    #[Test]
+    #[DataProvider('isOnPageFromWhiteList_withVariousActionsProvider')]
     public function isOnPageFromWhiteList_withVariousActions_returnsWhitelistedState($currentAction, $expectedResult)
     {
 
@@ -1514,7 +1562,7 @@ JS;
      *
      * @return array[] containing current currentAction and expected result of the tested method call
      */
-    public function isOnPageFromWhiteList_withVariousActionsProvider()
+    public static function isOnPageFromWhiteList_withVariousActionsProvider()
     {
         return [
             ['currentAction' => HelperConfig::SHOPPING_CART_PAGE_ACTION, 'expectedResult' => true],
@@ -1540,6 +1588,8 @@ JS;
      * @param bool $minicartSupport configuration flag, stubbed result of {@see \Bolt\Boltpay\Helper\Config::getMinicartSupport}
      * @param bool $expectedResult  of the tested method call
      */
+    #[Test]
+    #[DataProvider('isMinicartEnabled_withVariousMinicartSupportStatesProvider')]
     public function isMinicartEnabled_withVariousMinicartSupportStates_returnsMinicartState(
         $minicartSupport,
         $expectedResult
@@ -1562,7 +1612,7 @@ JS;
      *
      * @return array[] containing flags for minicart support config and expected result of the tested method call
      */
-    public function isMinicartEnabled_withVariousMinicartSupportStatesProvider()
+    public static function isMinicartEnabled_withVariousMinicartSupportStatesProvider()
     {
         return [
             ['minicartSupport' => true, 'expectedResult' => true],
@@ -1578,6 +1628,8 @@ JS;
      * @param int  $isLoggedIn
      * @param bool $expectedResult
      */
+    #[Test]
+    #[DataProvider('isLoggedIn_withVariousConfigsProvider')]
     public function isLoggedIn_withVariousConfigs_returnsCorrectResult(
         $isLoggedIn,
         $expectedResult
@@ -1594,7 +1646,7 @@ JS;
      *
      * @return array
      */
-    public function isLoggedIn_withVariousConfigsProvider()
+    public static function isLoggedIn_withVariousConfigsProvider()
     {
         return [
             ['isLoggedIn' => 1, 'expectedResult' => true],
@@ -1615,6 +1667,8 @@ JS;
      * @param string $fullActionName          of the current request
      * @param bool   $expectedResult          of the tested method call
      */
+    #[Test]
+    #[DataProvider('isBoltProductPage_withVariousProductCheckoutStatesAndVariousPagesProvider')]
     public function isBoltProductPage_withVariousProductCheckoutStatesAndVariousPages_returnsProductPageState(
         $productPageCheckoutFlag,
         $fullActionName,
@@ -1648,7 +1702,7 @@ JS;
      * @return array[] containing current page names and flag for product page checkout and
      *                 expected result of the tested method call
      */
-    public function isBoltProductPage_withVariousProductCheckoutStatesAndVariousPagesProvider()
+    public static function isBoltProductPage_withVariousProductCheckoutStatesAndVariousPagesProvider()
     {
         return [
             [
@@ -1692,6 +1746,8 @@ JS;
      * @param bool $isActive       configuration flag for the current store, stubbed result of {@see \Bolt\Boltpay\Helper\Config::isActive}
      * @param bool $expectedResult of the tested method call
      */
+    #[Test]
+    #[DataProvider('isEnabled_withVariousConfigActiveStatesProvider')]
     public function isEnabled_withVariousConfigActiveStates_returnsBoltPaymentModuleIsActive(
         $isActive,
         $areaCode,
@@ -1720,7 +1776,7 @@ JS;
      *
      * @return array[] containing flag for config active state and expected result of the tested method call
      */
-    public function isEnabled_withVariousConfigActiveStatesProvider()
+    public static function isEnabled_withVariousConfigActiveStatesProvider()
     {
         return [
             ['isActive' => false, 'areaCode' => Area::AREA_WEBAPI_SOAP, 'expectedResult' => false],
@@ -1741,6 +1797,8 @@ JS;
      * @param bool $boltInitiateCheckout session property flag
      * @param bool $expectedResult       of the tested method call
      */
+    #[Test]
+    #[DataProvider('getInitiateCheckout_withVariousInitiateStatesProvider')]
     public function getInitiateCheckout_withVariousSessionStates_determinesIfCheckoutShouldBeInitiatedAutomatically(
         $boltInitiateCheckout,
         $expectedResult
@@ -1757,7 +1815,7 @@ JS;
      *
      * @return array[] containing boltInitiateCheckout session property flag and expected result of the tested method call
      */
-    public function getInitiateCheckout_withVariousInitiateStatesProvider()
+    public static function getInitiateCheckout_withVariousInitiateStatesProvider()
     {
         return [
             ['boltInitiateCheckout' => true, 'expectedResult' => true],
@@ -1777,6 +1835,8 @@ JS;
      * @param bool $instantCheckoutButton feature switcher flag
      * @param bool $expectedResult        of the tested method call
      */
+    #[Test]
+    #[DataProvider('getIsInstantCheckoutButton_withVariousInstantCheckoutButtonStateProvider')]
     public function getIsInstantCheckoutButton_withVariousInstantCheckoutFeatureStates_returnsButtonState(
         $instantCheckoutButton,
         $expectedResult
@@ -1792,7 +1852,7 @@ JS;
      * @return array[] containing configuration flag for instant checkout button and
      *                 expected result of the tested method call
      */
-    public function getIsInstantCheckoutButton_withVariousInstantCheckoutButtonStateProvider()
+    public static function getIsInstantCheckoutButton_withVariousInstantCheckoutButtonStateProvider()
     {
         return [
             ['instantCheckoutButton' => true, 'expectedResult' => true],
@@ -1826,6 +1886,8 @@ JS;
      *
      * @throws ReflectionException
      */
+    #[Test]
+    #[DataProvider('shouldDisableBoltCheckout_withVariousConfigurationsProvider')]
     public function shouldDisableBoltCheckout_withVariousConfigurations_determinesIfBoltShouldBeDisabled(
         $isBoltFeatureEnabled,
         $isEnabled,
@@ -1892,7 +1954,7 @@ JS;
      *                  isIPRestricted - whether the client IP is restricted
      *                  isKeyMissing - whether one of the required keys is missing in configuration
      */
-    public function shouldDisableBoltCheckout_withVariousConfigurationsProvider()
+    public static function shouldDisableBoltCheckout_withVariousConfigurationsProvider()
     {
         return TestHelper::getAllBooleanCombinations(5);
     }
@@ -1910,6 +1972,8 @@ JS;
      * @param bool $shouldTrackCheckout flag
      * @param bool $expectedResult      of the tested method call
      */
+    #[Test]
+    #[DataProvider('shouldTrackCheckoutFunnel_withVariousConfigStatesProvider')]
     public function shouldTrackCheckoutFunnel_withVariousConfigStates_returnsTrackCheckoutState(
         $shouldTrackCheckout,
         $expectedResult
@@ -1932,7 +1996,7 @@ JS;
      *
      * @return array[] containing should track checkout flag and excepted result of the tested method call
      */
-    public function shouldTrackCheckoutFunnel_withVariousConfigStatesProvider()
+    public static function shouldTrackCheckoutFunnel_withVariousConfigStatesProvider()
     {
         return [
             ['shouldTrackCheckout' => false, 'expectedResult' => false],
@@ -1956,6 +2020,8 @@ JS;
      * @param bool $isAlwaysPresentCheckoutFeatureSwitchEnabled flag
      * @param bool $expectedResult                              of the tested method call
      */
+    #[Test]
+    #[DataProvider('enableAlwaysPresentCheckoutButton_withVariousConfigAndDeciderStatesProvider')]
     public function enableAlwaysPresentCheckoutButton_withVariousConfigAndDeciderStates_returnsPluginSettings(
         $isAlwaysPresentCheckoutConfigurationEnabled,
         $isAlwaysPresentCheckoutFeatureSwitchEnabled,
@@ -1986,7 +2052,7 @@ JS;
      * @return array[] containing flags is config checkout enabled, is decider switch enabled and
      *                 expected result of the tested method call
      */
-    public function enableAlwaysPresentCheckoutButton_withVariousConfigAndDeciderStatesProvider()
+    public static function enableAlwaysPresentCheckoutButton_withVariousConfigAndDeciderStatesProvider()
     {
         return [
             [
@@ -2023,6 +2089,8 @@ JS;
      * @param bool $isPrefetchShippingFeatureSwitchEnabled flag
      * @param bool $expectedResult                         of the tested method call
      */
+    #[Test]
+    #[DataProvider('getPrefetchShipping_withVariousConfigAndDeciderStatesProvider')]
     public function getPrefetchShipping_withVariousConfigAndDeciderStates_returnsPluginSettings(
         $isPrefetchShippingConfigurationEnabled,
         $isPrefetchShippingFeatureSwitchEnabled,
@@ -2053,7 +2121,7 @@ JS;
      * @return array[] containing flags is config checkout enabled, is decider switch enabled and
      *                 expected result of the tested method call
      */
-    public function getPrefetchShipping_withVariousConfigAndDeciderStatesProvider()
+    public static function getPrefetchShipping_withVariousConfigAndDeciderStatesProvider()
     {
         return [
             [
@@ -2085,6 +2153,8 @@ JS;
      * @param string $configButtonColor from the config helper
      * @param string $expectedResult    of the tested method call
      */
+    #[Test]
+    #[DataProvider('getButtonCssStyles_withVariousConfigButtonColorsProvider')]
     public function getButtonCssStyles_withVariousConfigButtonColors_returnsBoltButtonStyle(
         $configButtonColor,
         $expectedResult
@@ -2113,7 +2183,7 @@ JS;
      *
      * @return array[] containing config button css style and expected result of the tested method call
      */
-    public function getButtonCssStyles_withVariousConfigButtonColorsProvider()
+    public static function getButtonCssStyles_withVariousConfigButtonColorsProvider()
     {
         return [
             ['configButtonColor' => '', 'expectedResult' => ''],
@@ -2136,6 +2206,8 @@ JS;
      * @param bool $isOrderManagementFeatureSwitchEnabled   flag
      * @param bool $expectedResult                          of the tested method call
      */
+    #[Test]
+    #[DataProvider('isOrderManagementEnabled_withVariousOrderManagementAvailabilityProvider')]
     public function isOrderManagementEnabled_withVariousOrderManagementAvailability_returnsOrderManagementAvailability(
         $isOrderManagementEnabledInConfiguration,
         $isOrderManagementFeatureSwitchEnabled,
@@ -2169,7 +2241,7 @@ JS;
      * @return array[] containing order management status in configuration and feature switcher
      *                 and expected result of the method call
      */
-    public function isOrderManagementEnabled_withVariousOrderManagementAvailabilityProvider()
+    public static function isOrderManagementEnabled_withVariousOrderManagementAvailabilityProvider()
     {
         return [
             [
@@ -2204,6 +2276,8 @@ JS;
      * @param bool $isBoltSSOFeatureSwitchEnabled
      * @param bool $expectedResult
      */
+    #[Test]
+    #[DataProvider('isBoltSSOEnabled_withVariousConfigsProvider')]
     public function isBoltSSOEnabled_withVariousConfigs_returnsCorrectResult(
         $isBoltSSOInConfig,
         $isBoltSSOFeatureSwitchEnabled,
@@ -2235,7 +2309,7 @@ JS;
      *
      * @return array
      */
-    public function isBoltSSOEnabled_withVariousConfigsProvider()
+    public static function isBoltSSOEnabled_withVariousConfigsProvider()
     {
         return [
             [
@@ -2276,6 +2350,8 @@ JS;
      * @param string $orderManagementSelector      value from {@see \Bolt\Boltpay\Helper\Config::getOrderManagementSelector}
      * @param mixed  $expectedResult               of the tested method call
      */
+    #[Test]
+    #[DataProvider('getOrderManagementSelector_withVariousOrderManagementAvailabilitiesProvider')]
     public function getOrderManagementSelector_withVariousOrderManagementAvailabilities_returnsOrderManagementSelector(
         $configOrderManagementEnabled,
         $fsOrderManagementEnabled,
@@ -2316,7 +2392,7 @@ JS;
      *                 2. feature switch order management enabled flag
      *                 3. expected result of the tested method call
      */
-    public function getOrderManagementSelector_withVariousOrderManagementAvailabilitiesProvider()
+    public static function getOrderManagementSelector_withVariousOrderManagementAvailabilitiesProvider()
     {
         return [
             [
@@ -2360,6 +2436,8 @@ JS;
      *
      * @throws ReflectionException if unable to set internal mock properties
      */
+    #[Test]
+    #[DataProvider('isBlockAlreadyShown_withVariousBlockTypeStatesProvider')]
     public function isBlockAlreadyShown_withVariousBlockTypeStates_returnsBlockTypeShownState(
         $blockType,
         $blockAlreadyShownProperty,
@@ -2376,7 +2454,7 @@ JS;
      *
      * @return array[] containing block type, block type shown flag and expected result of the tested method call
      */
-    public function isBlockAlreadyShown_withVariousBlockTypeStatesProvider()
+    public static function isBlockAlreadyShown_withVariousBlockTypeStatesProvider()
     {
         return [
             ['blockType' => 'account', 'blockAlreadyShownProperty' => [], 'expectedResult' => false],
@@ -2394,6 +2472,7 @@ JS;
      *
      * @covers ::isBoltOrderCachingEnabled
      */
+    #[Test]
     public function isBoltOrderCachingEnabled()
     {
 
@@ -2414,6 +2493,7 @@ JS;
     /**
      * @test
      */
+    #[Test]
     public function wrapWithCatch_returnsCorrectResult()
     {
         $expectedResult = '
@@ -2431,6 +2511,7 @@ function(arg) {
      * @test
      * @covers ::getAdditionalInvalidateBoltCartJavascript
      */
+    #[Test]
     public function getAdditionalInvalidateBoltCartJavascript_returnsCorrectResult()
     {
         $block = $this->objectManager->create(Js::class);
@@ -2445,6 +2526,7 @@ function(arg) {
     /**
      * @test
      */
+    #[Test]
     public function getAdditionalQuoteTotalsConditions_returnsCorrectResult()
     {
         $block = $this->objectManager->create(Js::class);
@@ -2481,6 +2563,8 @@ function(arg) {
      * @param bool $isLoadConnectJsOnSpecificPageFeatureSwitchEnabled
      * @param bool $expectedResult
      */
+    #[Test]
+    #[DataProvider('isLoadConnectJs_withVariousConfigsProvider')]
     public function isLoadConnectJs_withVariousConfigs_returnsCorrectResult(
         $fullActionName,
         $productPageCheckoutFlag,
@@ -2515,7 +2599,7 @@ function(arg) {
      *
      * @return array
      */
-    public function isLoadConnectJs_withVariousConfigsProvider()
+    public static function isLoadConnectJs_withVariousConfigsProvider()
     {
         return [
             [
@@ -2594,6 +2678,8 @@ function(arg) {
      * @param bool $isLoadConnectJsOnSpecificPageFeatureSwitchEnabled
      * @param bool $expectedResult
      */
+    #[Test]
+    #[DataProvider('isLoadConnectJsDynamic_withVariousConfigsProvider')]
     public function isLoadConnectJsDynamic_withVariousConfigs_returnsCorrectResult(
         $fullActionName,
         $minicartSupport,
@@ -2636,7 +2722,7 @@ function(arg) {
      *
      * @return array
      */
-    public function isLoadConnectJsDynamic_withVariousConfigsProvider()
+    public static function isLoadConnectJsDynamic_withVariousConfigsProvider()
     {
         return [
             [
@@ -2734,6 +2820,8 @@ function(arg) {
      * @param bool $isDisableTrackJsOnHomePage
      * @param bool $expectedResult
      */
+    #[Test]
+    #[DataProvider('isDisableTrackJsOnHomePage_withVariousConfigsProvider')]
     public function isDisableTrackJsOnHomePage_withVariousConfigs_returnsCorrectResult($isDisableTrackJsOnHomePage, $expectedResult)
     {
         $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_DISABLE_TRACK_ON_HOME_PAGE, $isDisableTrackJsOnHomePage);
@@ -2748,7 +2836,7 @@ function(arg) {
      *
      * @return array
      */
-    public function isDisableTrackJsOnHomePage_withVariousConfigsProvider()
+    public static function isDisableTrackJsOnHomePage_withVariousConfigsProvider()
     {
         return [
             [
@@ -2770,6 +2858,8 @@ function(arg) {
      * @param bool $isDisableTrackJsOnNonBoltPages
      * @param bool $expectedResult
      */
+    #[Test]
+    #[DataProvider('isDisableTrackJsOnNonBoltPages_withVariousConfigsProvider')]
     public function isDisableTrackJsOnNonBoltPages_withVariousConfigs_returnsCorrectResult($isDisableTrackJsOnNonBoltPages, $expectedResult)
     {
         $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_DISABLE_TRACK_ON_NON_BOLT_PAGES, $isDisableTrackJsOnNonBoltPages);
@@ -2784,7 +2874,7 @@ function(arg) {
      *
      * @return array
      */
-    public function isDisableTrackJsOnNonBoltPages_withVariousConfigsProvider()
+    public static function isDisableTrackJsOnNonBoltPages_withVariousConfigsProvider()
     {
         return [
             [
@@ -2806,6 +2896,8 @@ function(arg) {
      * @param bool $isDisableOpenReplayJs
      * @param bool $expectedResult
      */
+    #[Test]
+    #[DataProvider('isDisableOpenReplayJs_withVariousConfigsProvider')]
     public function isDisableOpenReplayJs_withVariousConfigs_returnsCorrectResult($isDisableOpenReplayJs, $expectedResult)
     {
         $featureSwitch = TestUtils::saveFeatureSwitch(\Bolt\Boltpay\Helper\FeatureSwitch\Definitions::M2_DISABLE_OPENREPLAY, $isDisableOpenReplayJs);
@@ -2820,7 +2912,7 @@ function(arg) {
      *
      * @return array
      */
-    public function isDisableOpenReplayJs_withVariousConfigsProvider()
+    public static function isDisableOpenReplayJs_withVariousConfigsProvider()
     {
         return [
             [
@@ -2838,6 +2930,8 @@ function(arg) {
      *
      * @covers ::getCustomSSOSelectors
      */
+    #[Test]
+    #[DataProvider('getCustomSSOSelectors_withVariousAdditionalConfigsProvider')]
     public function getCustomSSOSelectors_withVariousAdditionalConfigs_returnsCustomSSOSelectors(
         $additionalConfig,
         $expectedCustomSSOSelectors
@@ -2859,7 +2953,7 @@ function(arg) {
     /**
      * Data provider for @see getCustomSSOSelectors
      */
-    public function getCustomSSOSelectors_withVariousAdditionalConfigsProvider()
+    public static function getCustomSSOSelectors_withVariousAdditionalConfigsProvider()
     {
         return [
             'No additional config, default case' => [
@@ -2937,6 +3031,8 @@ function(arg) {
      * @param string $variantPPC from the config helper
      * @param string $expectedResult of the tested method call
      */
+    #[Test]
+    #[DataProvider('getVariantForInstantButton_withVariantAddedConfigsProvider')]
     public function getVariantForInstantButton_withVariantAdded_returnsVariantName(
         $variant,
         $variantPPC,
@@ -2969,7 +3065,7 @@ function(arg) {
     /**
      * Data provider for @see getVariantForInstantButton
      */
-    public function getVariantForInstantButton_withVariantAddedConfigsProvider()
+    public static function getVariantForInstantButton_withVariantAddedConfigsProvider()
     {
         return [
             'No Variants Case' => [

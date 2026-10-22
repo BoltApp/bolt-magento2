@@ -53,6 +53,7 @@ use Magento\Framework\App\CacheInterface;
 use Bolt\Boltpay\Model\EventsForThirdPartyModules;
 use Magento\Catalog\Model\Product;
 use Bolt\Boltpay\Helper\FeatureSwitch\Decider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class UpdateCartCommonTest
@@ -352,6 +353,7 @@ class UpdateCartCommonTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $this->initCurrentMock();
@@ -419,6 +421,7 @@ class UpdateCartCommonTest extends BoltTestCase
      *
      * @covers ::preProcessWebhook
      */
+    #[Test]
     public function preProcessWebhook()
     {
         $this->initCurrentMock();
@@ -437,6 +440,7 @@ class UpdateCartCommonTest extends BoltTestCase
      *
      * @covers ::validateQuote
      */
+    #[Test]
     public function validateQuote_parentQuoteIdEmpty_throwsException()
     {
         $this->initCurrentMock();
@@ -460,6 +464,7 @@ class UpdateCartCommonTest extends BoltTestCase
      *
      * @covers ::validateQuote
      */
+    #[Test]
     public function validateQuote_orderAlreadyCreated_throwsException()
     {
         $this->initCurrentMock();
@@ -494,6 +499,7 @@ class UpdateCartCommonTest extends BoltTestCase
      *
      * @covers ::validateQuote
      */
+    #[Test]
     public function validateQuote_immutableQuoteNotExist_throwsException()
     {
         $this->initCurrentMock();
@@ -514,6 +520,7 @@ class UpdateCartCommonTest extends BoltTestCase
      *
      * @covers ::validateQuote
      */
+    #[Test]
     public function validateQuote_immutableQuoteNoItem_throwsException()
     {
         $this->initCurrentMock();
@@ -553,6 +560,7 @@ class UpdateCartCommonTest extends BoltTestCase
      *
      * @covers ::validateQuote
      */
+    #[Test]
     public function validateQuote_allWork_returnQuotes()
     {
         $this->initCurrentMock();
@@ -588,6 +596,7 @@ class UpdateCartCommonTest extends BoltTestCase
      *
      * @covers ::validateQuote
      */
+    #[Test]
     public function validateQuote_hasException_throwsException()
     {
         $this->initCurrentMock();
@@ -605,6 +614,7 @@ class UpdateCartCommonTest extends BoltTestCase
      *
      * @covers ::setShipment
      */
+    #[Test]
     public function setShipment()
     {
         $this->initCurrentMock();
@@ -663,6 +673,7 @@ class UpdateCartCommonTest extends BoltTestCase
      * @covers ::updateTotals
      *
      */
+    #[Test]
     public function updateTotals_always_collectsTotalsAndSavesTheQuote()
     {
         $this->initCurrentMock();
@@ -692,6 +703,7 @@ class UpdateCartCommonTest extends BoltTestCase
      * @covers ::getCartItems
      *
      */
+    #[Test]
     public function getCartItems_returnItemsWithProperties()
     {
         $this->initCurrentMock();
@@ -758,6 +770,7 @@ class UpdateCartCommonTest extends BoltTestCase
      * @covers ::updateSession
      *
      */
+    #[Test]
     public function updateSession()
     {
         $this->initCurrentMock();
@@ -785,6 +798,7 @@ class UpdateCartCommonTest extends BoltTestCase
      * @covers ::createPayloadForVirtualQuote
      *
      */
+    #[Test]
     public function createPayloadForVirtualQuote()
     {
         $this->initCurrentMock();

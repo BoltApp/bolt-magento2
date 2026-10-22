@@ -21,6 +21,7 @@ use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\OrderItem;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Order;
 use Bolt\Boltpay\Model\Api\Data\AutomatedTesting\Address;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class OrderItemTest
@@ -64,6 +65,7 @@ class OrderTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetBillingAddress()
     {
         $this->assertEquals($this->billingAddress, $this->order->getBillingAddress());
@@ -72,6 +74,7 @@ class OrderTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetShippingAddress()
     {
         $this->assertEquals($this->shippingAddress, $this->order->getShippingAddress());
@@ -80,6 +83,7 @@ class OrderTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetShippingMethod()
     {
         $this->assertEquals(self::SHIPPING_METHOD, $this->order->getShippingMethod());
@@ -88,6 +92,7 @@ class OrderTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetShippingAmount()
     {
         $this->assertEquals(self::SHIPPING_AMOUNT, $this->order->getShippingAmount());
@@ -96,6 +101,7 @@ class OrderTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetOrderItems()
     {
         $this->assertEquals([$this->orderItem], $this->order->getOrderItems());
@@ -104,6 +110,7 @@ class OrderTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetSubtotal()
     {
         $this->assertEquals(self::SUBTOTAL, $this->order->getSubtotal());
@@ -112,6 +119,7 @@ class OrderTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetTax()
     {
         $this->assertEquals(self::TAX, $this->order->getTax());
@@ -120,6 +128,7 @@ class OrderTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetDiscount()
     {
         $this->assertEquals(self::DISCOUNT, $this->order->getDiscount());
@@ -128,6 +137,7 @@ class OrderTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetGrandTotal()
     {
         $this->assertEquals(self::GRAND_TOTAL, $this->order->getGrandTotal());
@@ -136,6 +146,7 @@ class OrderTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function jsonSerialize()
     {
         $result = $this->order->jsonSerialize();

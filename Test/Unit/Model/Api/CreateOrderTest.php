@@ -39,6 +39,7 @@ use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Quote\Model\Quote\Item as QuoteItem;
 use Magento\CatalogInventory\Helper\Data as CatalogInventoryData;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class CreateOrderTest
@@ -172,6 +173,7 @@ class CreateOrderTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validateMinimumAmount_valid()
     {
         $quote = TestUtils::createQuote();
@@ -186,6 +188,7 @@ class CreateOrderTest extends BoltTestCase
      *
      * @throws BoltException from tested method
      */
+    #[Test]
     public function validateMinimumAmount_withBackofficeCheckoutType_skipsValidation()
     {
         $quote = TestUtils::createQuote();
@@ -196,6 +199,7 @@ class CreateOrderTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validateTotalAmount_valid()
     {
         $quote = TestUtils::createQuote(['grand_total' => 74]);
@@ -205,6 +209,7 @@ class CreateOrderTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function validateTotalAmount_invalid()
     {
         $quote = TestUtils::createQuote(['grand_total' => 7402]);
@@ -218,6 +223,7 @@ class CreateOrderTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_invalidHookType()
     {
         $this->createOrder->execute(
@@ -246,6 +252,7 @@ class CreateOrderTest extends BoltTestCase
      * @test
      * @covers ::execute
      */
+    #[Test]
     public function execute_emptyOrder()
     {
         $this->createOrder->execute(
@@ -313,6 +320,7 @@ class CreateOrderTest extends BoltTestCase
      * @covers ::validateShippingCost
      * @covers ::validateTotalAmount
      */
+    #[Test]
     public function execute_processNewOrder()
     {
         $this->createRequest([]);
@@ -441,6 +449,7 @@ class CreateOrderTest extends BoltTestCase
      * @covers ::execute
      * @covers ::createOrder
      */
+    #[Test]
     public function execute_webApiException()
     {
         $quote = TestUtils::createQuote();
@@ -544,6 +553,7 @@ class CreateOrderTest extends BoltTestCase
      * @test
      * @covers ::getOrderReference
      */
+    #[Test]
     public function getOrderReference_exception()
     {
         $this->expectException(LocalizedException::class);
@@ -555,6 +565,7 @@ class CreateOrderTest extends BoltTestCase
      * @test
      * @covers ::getDisplayId
      */
+    #[Test]
     public function getDisplayId_exception()
     {
         $this->expectException(LocalizedException::class);
@@ -566,6 +577,7 @@ class CreateOrderTest extends BoltTestCase
      * @test
      * @covers ::getReceivedUrl
      */
+    #[Test]
     public function getReceivedUrl()
     {
         $urlInterface = Bootstrap::getObjectManager()->create(UrlInterface::class);
@@ -581,6 +593,7 @@ class CreateOrderTest extends BoltTestCase
      * @test
      * @covers ::isBackOfficeOrder
      */
+    #[Test]
     public function isBackOfficeOrder_true()
     {
         $quote = TestUtils::createQuote();
@@ -592,6 +605,7 @@ class CreateOrderTest extends BoltTestCase
      * @test
      * @covers ::isBackOfficeOrder
      */
+    #[Test]
     public function isBackOfficeOrder_false()
     {
         $quote = TestUtils::createQuote();
@@ -603,6 +617,7 @@ class CreateOrderTest extends BoltTestCase
      * @test
      * @covers ::loadQuoteData
      */
+    #[Test]
     public function loadQuoteData()
     {
         $quote = TestUtils::createQuote();
@@ -616,6 +631,7 @@ class CreateOrderTest extends BoltTestCase
      * @covers ::getCartItemsFromTransaction
      * @covers ::arrayDiff
      */
+    #[Test]
     public function validateCartItems_exception()
     {
         $quote = TestUtils::createQuote();
@@ -633,6 +649,7 @@ class CreateOrderTest extends BoltTestCase
      * @test
      * @covers ::hasItemErrors
      */
+    #[Test]
     public function hasItemErrors_exception()
     {
         $quoteItem = $this->objectManager->create(QuoteItem::class);
@@ -653,6 +670,7 @@ class CreateOrderTest extends BoltTestCase
      * @covers ::getUnitPriceFromTransaction
      * @covers ::getSkuFromTransaction
      */
+    #[Test]
     public function validateItemPrice_exception()
     {
         $itemSku = self::PRODUCT_SKU;
@@ -673,6 +691,7 @@ class CreateOrderTest extends BoltTestCase
      * @covers ::validateTax
      * @covers ::getTaxAmountFromTransaction
      */
+    #[Test]
     public function validateTax_exception()
     {
         $quote = TestUtils::createQuote();
@@ -690,6 +709,7 @@ class CreateOrderTest extends BoltTestCase
      * @covers ::validateShippingCost
      * @covers ::getShippingAmountFromTransaction
      */
+    #[Test]
     public function validateShippingCost_exception()
     {
         $storeCost = 0;
@@ -711,6 +731,7 @@ class CreateOrderTest extends BoltTestCase
      * @covers ::validateShippingCost
      * @covers ::getShippingAmountFromTransaction
      */
+    #[Test]
     public function validateShippingCost_virtual()
     {
         $quote = TestUtils::createQuote();
@@ -732,6 +753,7 @@ class CreateOrderTest extends BoltTestCase
      * @covers ::validateShippingCost
      * @covers ::getShippingAmountFromTransaction
      */
+    #[Test]
     public function validateShippingCost_virtual_exception()
     {
         $storeCost = 0;

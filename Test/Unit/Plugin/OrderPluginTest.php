@@ -24,6 +24,8 @@ use Bolt\Boltpay\Helper\Order as OrderHelper;
 use Bolt\Boltpay\Model\Payment as BoltPayment;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Plugin\OrderPlugin
@@ -75,6 +77,7 @@ class OrderPluginTest extends BoltTestCase
      * @test
      * @covers ::beforeSetState
      */
+    #[Test]
     public function beforeSetState_withoutPayment()
     {
         $order = $this->objectManager->create(Order::class);
@@ -86,6 +89,7 @@ class OrderPluginTest extends BoltTestCase
      * @test
      * @covers ::beforeSetState
      */
+    #[Test]
     public function beforeSetState_withPaymentMethodIsNotBoltPay()
     {
         $order = $this->objectManager->create(Order::class);
@@ -106,6 +110,8 @@ class OrderPluginTest extends BoltTestCase
      * @param $stateParameter
      * @param $expected
      */
+    #[Test]
+    #[DataProvider('dataProvider_beforeSetState_withPaymentMethodIsBoltPay')]
     public function beforeSetState_withPaymentMethodIsBoltPay($orderState, $stateParameter, $expected)
     {
         $order = $this->objectManager->create(Order::class);
@@ -117,7 +123,7 @@ class OrderPluginTest extends BoltTestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function dataProvider_beforeSetState_withPaymentMethodIsBoltPay()
+    public static function dataProvider_beforeSetState_withPaymentMethodIsBoltPay()
     {
         return [
             ['', OrderHelper::BOLT_ORDER_STATE_NEW, [Order::STATE_NEW]],
@@ -132,6 +138,7 @@ class OrderPluginTest extends BoltTestCase
      * @test
      * @covers ::beforeSetState
      */
+    #[Test]
     public function beforeSetState_withRechargedOrder()
     {
         $order = $this->objectManager->create(Order::class);
@@ -148,6 +155,7 @@ class OrderPluginTest extends BoltTestCase
      * @test
      * @covers ::beforeSetStatus
      */
+    #[Test]
     public function beforeSetStatus_withoutPayment()
     {
         $order = $this->objectManager->create(Order::class);
@@ -159,6 +167,7 @@ class OrderPluginTest extends BoltTestCase
      * @test
      * @covers ::beforeSetStatus
      */
+    #[Test]
     public function beforeSetStatus_withPaymentMethodIsNotBoltPay()
     {
         $order = $this->objectManager->create(Order::class);
@@ -179,6 +188,8 @@ class OrderPluginTest extends BoltTestCase
      * @param $orderStatus
      * @param $expected
      */
+    #[Test]
+    #[DataProvider('dataProvider_beforeSetStatus_withPaymentMethodIsBoltPay')]
     public function beforeSetStatus_withPaymentMethodIsBoltPay($stateDefaultStatus, $statusParameter, $orderStatus, $expected)
     {
         $order = $this->createPartialMock(Order::class, [
@@ -194,7 +205,7 @@ class OrderPluginTest extends BoltTestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function dataProvider_beforeSetStatus_withPaymentMethodIsBoltPay()
+    public static function dataProvider_beforeSetStatus_withPaymentMethodIsBoltPay()
     {
         return [
             [Order::STATE_NEW, OrderHelper::BOLT_ORDER_STATUS_PENDING, '', [Order::STATE_NEW]],
@@ -211,6 +222,8 @@ class OrderPluginTest extends BoltTestCase
      * @dataProvider dataProvider_aroundPlace_noProceedCallbackCalled
      * @covers ::aroundPlace
      */
+    #[Test]
+    #[DataProvider('dataProvider_aroundPlace_noProceedCallbackCalled')]
     public function aroundPlace_ifPaymentMethodIsBoltPayAndNoAppropriateOrderState_noProceedCallbackCalled($orderState)
     {
         $order = $this->objectManager->create(Order::class);
@@ -224,7 +237,7 @@ class OrderPluginTest extends BoltTestCase
 
     }
 
-    public function dataProvider_aroundPlace_noProceedCallbackCalled()
+    public static function dataProvider_aroundPlace_noProceedCallbackCalled()
     {
         return [
             [null],
@@ -237,6 +250,8 @@ class OrderPluginTest extends BoltTestCase
      * @dataProvider dataProvider_aroundPlace_noBoltPayment
      * @covers ::aroundPlace
      */
+    #[Test]
+    #[DataProvider('dataProvider_aroundPlace_noBoltPayment')]
     public function aroundPlace_ifNotBoltPayment_proceedCallbackCalled($paymentMethod)
     {
         $order = $this->objectManager->create(Order::class);
@@ -248,7 +263,7 @@ class OrderPluginTest extends BoltTestCase
         $this->plugin->aroundPlace($order, $this->proceed);
     }
 
-    public function dataProvider_aroundPlace_noBoltPayment()
+    public static function dataProvider_aroundPlace_noBoltPayment()
     {
         return [
             [null],
@@ -260,6 +275,7 @@ class OrderPluginTest extends BoltTestCase
      * @test
      * @covers ::aroundPlace
      */
+    #[Test]
     public function aroundPlace_ifBoltPaymentAndStateNew_proceedCallbackCalled()
     {
         $order = $this->createPartialMock(Order::class, ['getPayment', 'getState']);
@@ -275,6 +291,7 @@ class OrderPluginTest extends BoltTestCase
      * @test
      * @covers ::afterPlace
      */
+    #[Test]
     public function afterPlace_ifNotBoltPayment_setStateNotCalled()
     {
         $subjectParameter = $this->objectManager->create(Order::class);
@@ -292,6 +309,7 @@ class OrderPluginTest extends BoltTestCase
      * @test
      * @covers ::afterPlace
      */
+    #[Test]
     public function afterPlace_ifBoltPaymentAndNoStateSet_setStateIsCalled()
     {
         $subjectParameter = $this->objectManager->create(Order::class);
@@ -309,6 +327,7 @@ class OrderPluginTest extends BoltTestCase
      * @test
      * @covers ::afterSetState
      */
+    #[Test]
     public function afterSetState_ifNotBoltPayment_orderPlaceNotCalled()
     {
         $order = $this->createPartialMock(Order::class, ['getPayment', 'getState', 'place',]);
@@ -326,6 +345,7 @@ class OrderPluginTest extends BoltTestCase
      * @test
      * @covers ::afterSetState
      */
+    #[Test]
     public function afterSetState_ifBoltPaymentAndOrderStateNotNew_orderPlaceNotCalled()
     {
         $order = $this->createPartialMock(Order::class, ['getPayment', 'getState', 'place',]);
@@ -343,6 +363,7 @@ class OrderPluginTest extends BoltTestCase
      * @test
      * @covers ::afterSetState
      */
+    #[Test]
     public function afterSetState_ifBoltPaymentAndOrderStateNewAndOldOrderStateNotPendingPayment_orderPlaceNotCalled()
     {
         $order = $this->createPartialMock(Order::class, ['getPayment', 'getState', 'place',]);
@@ -361,6 +382,7 @@ class OrderPluginTest extends BoltTestCase
      * @test
      * @covers ::afterSetState
      */
+    #[Test]
     public function afterSetState_ifBoltPaymentAndOrderStateNewAndOldOrderStatePendingPayment_orderPlaceCalled()
     {
         $order = $this->createPartialMock(Order::class, ['getPayment', 'getState', 'place',]);
@@ -378,6 +400,7 @@ class OrderPluginTest extends BoltTestCase
      * @test
      * @covers ::beforeSetStatus
      */
+    #[Test]
     public function beforeSetStatus_withRechargedOrder()
     {
         $order = $this->objectManager->create(Order::class);

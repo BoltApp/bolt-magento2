@@ -23,6 +23,7 @@ use Bolt\Boltpay\Test\Unit\TestUtils;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Payment;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class DeactivateQuoteTest
@@ -45,6 +46,7 @@ class DeactivateQuoteTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute()
     {
         $quote = TestUtils::createQuote(['is_active' => true]);

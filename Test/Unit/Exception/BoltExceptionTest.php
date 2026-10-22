@@ -19,6 +19,8 @@ namespace Bolt\Boltpay\Test\Unit\Exception;
 
 use Bolt\Boltpay\Exception\BoltException;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * BoltExceptionTest
@@ -40,6 +42,8 @@ class BoltExceptionTest extends BoltTestCase
      * @param $phrase
      * @param $code
      */
+    #[Test]
+    #[DataProvider('provider_construct')]
     public function construct($phrase, $code)
     {
         $exception = new BoltException(
@@ -52,7 +56,7 @@ class BoltExceptionTest extends BoltTestCase
         $this->assertEquals($phrase, $exception->getMessage());
     }
 
-    public function provider_construct()
+    public static function provider_construct()
     {
         return [
             ['test', null],

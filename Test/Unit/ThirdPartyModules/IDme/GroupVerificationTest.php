@@ -23,6 +23,7 @@ use Magento\Quote\Model\Quote;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Magento\Customer\Model\Session;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class GroupVerificationTest
@@ -71,6 +72,7 @@ class GroupVerificationTest extends BoltTestCase
      * @test
      * @covers ::beforeApplyDiscount
      */
+    #[Test]
     public function beforeApplyDiscount()
     {
         $this->quote->setIdmeUuid(self::IDME_UUID);
@@ -90,6 +92,7 @@ class GroupVerificationTest extends BoltTestCase
      *
      * @covers ::collectSessionData
      */
+    #[Test]
     public function collectSessionData_withIDMeDataInSession_appendsTheDataToCollectedSessionData()
     {
         $idmeUuid = sha1('idme_uuid');
@@ -118,6 +121,7 @@ class GroupVerificationTest extends BoltTestCase
      *
      * @covers ::restoreSessionData
      */
+    #[Test]
     public function restoreSessionData_withIDMeDataInSession_appendsTheDataToRestoredSessionData()
     {
         $idmeUuid = sha1('idme_uuid');

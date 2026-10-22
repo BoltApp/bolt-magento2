@@ -40,6 +40,7 @@ use Bolt\Boltpay\Model\RequestFactory as BoltRequestFactory;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Bolt\Boltpay\Model\ErrorResponse;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class ShippingTaxTest
@@ -195,6 +196,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::throwUnknownQuoteIdException
      */
+    #[Test]
     public function throwUnknownQuoteIdException()
     {
         $this->expectException(LocalizedException::class);
@@ -212,6 +214,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::getQuoteById
      */
+    #[Test]
     public function getQuoteById()
     {
         $quote = TestUtils::createQuote();
@@ -225,6 +228,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::reformatAddressData
      */
+    #[Test]
     public function reformatAddressData()
     {
         $addressData = [
@@ -256,6 +260,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::validateAddressData
      */
+    #[Test]
     public function validateAddressData()
     {
         $addressData = [
@@ -270,6 +275,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::validateEmail
      */
+    #[Test]
     public function validateEmail_valid()
     {
         $this->shippingTax->validateEmail(self::EMAIL);
@@ -281,6 +287,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::validateEmail
      */
+    #[Test]
     public function validateEmail_invalid()
     {
         $invalidEmail = 'invalid email';
@@ -297,6 +304,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::loadQuote
      */
+    #[Test]
     public function loadQuote_happyPath()
     {
         $quote = TestUtils::createQuote();
@@ -310,6 +318,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::loadQuote
      */
+    #[Test]
     public function loadQuote_throwUnknownQuoteIdException()
     {
         $this->expectException(LocalizedException::class);
@@ -323,6 +332,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_WebApiException()
     {
         $quote = TestUtils::createQuote();
@@ -352,6 +362,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::handleRequest
      */
+    #[Test]
     public function handleRequest_WebApiException()
     {
         $quote = TestUtils::createQuote();
@@ -375,6 +386,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_BoltException()
     {
         $this->createRequest([]);
@@ -426,6 +438,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::handleRequest
      */
+    #[Test]
     public function handleRequest_BoltException()
     {
         $quote = TestUtils::createQuote(['store_id' => $this->storeId]);
@@ -453,6 +466,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_Exception()
     {
         $cart = [
@@ -470,6 +484,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::handleRequest
      */
+    #[Test]
     public function handleRequest_Exception()
     {
         $cart = [
@@ -492,6 +507,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::execute
      */
+    #[Test]
     public function execute_happyPath()
     {
         $this->createRequest([]);
@@ -593,6 +609,7 @@ class ShippingTaxTest extends BoltTestCase
      * @test
      * @throws \ReflectionException
      */
+    #[Test]
     public function handleRequest_happyPath()
     {
         $this->createRequest([]);
@@ -696,6 +713,7 @@ class ShippingTaxTest extends BoltTestCase
      *
      * @covers ::populateAddress
      */
+    #[Test]
     public function populateAddress()
     {
         $addressData = [

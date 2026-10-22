@@ -19,6 +19,7 @@ namespace Bolt\Boltpay\Test\Unit\Model\Api;
 
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Model\Api\Data\PluginVersion;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class PluginVersionTest
@@ -39,6 +40,7 @@ class PluginVersionTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetVersion()
     {
         $this->pluginVersion->setVersion('version');
@@ -48,6 +50,7 @@ class PluginVersionTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function setAndGetName()
     {
         $this->pluginVersion->setName('name');
@@ -57,6 +60,7 @@ class PluginVersionTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function jsonSerialize()
     {
         $this->pluginVersion->setName('test');

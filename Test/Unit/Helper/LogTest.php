@@ -22,6 +22,7 @@ use Bolt\Boltpay\Helper\Config as ConfigHelper;
 use Magento\Framework\App\Helper\Context;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Helper\Log;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class LogTest
@@ -87,6 +88,7 @@ class LogTest extends BoltTestCase
      *
      * @covers ::__construct
      */
+    #[Test]
     public function constructor_always_setsInternalProperties()
     {
         $instance = new Log(
@@ -102,6 +104,7 @@ class LogTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function addInfoLog_success()
     {
         $this->configHelper->expects(self::once())->method('isDebugModeOn')->willReturn(true);
@@ -113,6 +116,7 @@ class LogTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function addInfoLog_fail()
     {
         $this->configHelper->expects(self::once())->method('isDebugModeOn')->willReturn(false);

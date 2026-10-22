@@ -24,6 +24,7 @@ use Bolt\Boltpay\Test\Unit\BoltTestCase;
 use Bolt\Boltpay\Test\Unit\TestHelper;
 use Magento\TestFramework\Helper\Bootstrap;
 use Magento\TestFramework\ObjectManager;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * @coversDefaultClass \Bolt\Boltpay\Block\Checkout\Cart\ComponentSwitcherProcessor
@@ -58,6 +59,7 @@ class ComponentSwitcherProcessorTest extends BoltTestCase
      * @test
      * @covers ::process
      */
+    #[Test]
     public function process()
     {
         $filteredJsLayout = [
@@ -83,6 +85,7 @@ class ComponentSwitcherProcessorTest extends BoltTestCase
      * @covers ::process
      * Test process method filters the provided JS layout using the third party filter "filterProcessLayout"
      */
+    #[Test]
     public function process_withVariousConfigurationStates_returnsModifiedJsLayout()
     {
         $filteredJsLayout = [

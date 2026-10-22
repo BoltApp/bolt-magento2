@@ -27,6 +27,8 @@ use Magento\Sales\Model\Order;
 use Magento\Framework\Event;
 use PHPUnit_Framework_MockObject_MockObject as MockObject;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Class GenerateGiftCardAccountsOrderPluginTest
@@ -97,6 +99,7 @@ class GenerateGiftCardAccountsOrderPluginTest extends BoltTestCase
      * @param $orderStatus
      * @param $expects
      */
+    #[DataProvider('methodStatusExpects')]
     public function aroundExecute($paymentMethod, $orderStatus, $expects)
     {
         $this->payment->setMethod($paymentMethod);
@@ -116,6 +119,7 @@ class GenerateGiftCardAccountsOrderPluginTest extends BoltTestCase
      * @test
      * @covers ::aroundExecute
      */
+    #[Test]
     public function aroundExecute_withoutPayment()
     {
         $this->order->setPayment(null);
@@ -126,7 +130,7 @@ class GenerateGiftCardAccountsOrderPluginTest extends BoltTestCase
         $this->plugin->aroundExecute($this->subject, $this->proceed, $this->observer);
     }
 
-    public function methodStatusExpects()
+    public static function methodStatusExpects()
     {
         return [
             [self::OTHER_METHOD, Order::STATE_PENDING_PAYMENT, self::EXPECTS_ONCE],

@@ -19,12 +19,14 @@ namespace Bolt\Boltpay\Test\Unit\Helper;
 
 use Bolt\Boltpay\Helper\SecretObscurer;
 use Bolt\Boltpay\Test\Unit\BoltTestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class SecretObscurerTest extends BoltTestCase
 {
     /**
      * @test
      */
+    #[Test]
     public function obscure_empty()
     {
         $this->assertEquals('', SecretObscurer::obscure(''));
@@ -33,6 +35,7 @@ class SecretObscurerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function obscure_short_string()
     {
         $this->assertEquals('***', SecretObscurer::obscure('abcde'));
@@ -41,6 +44,7 @@ class SecretObscurerTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function obscure_long_string()
     {
         $this->assertEquals('aaa***bbb', SecretObscurer::obscure('aaaabbbb'));

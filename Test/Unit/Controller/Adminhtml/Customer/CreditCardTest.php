@@ -45,6 +45,7 @@ use Magento\Framework\View\Result\LayoutFactory as ResultLayoutFactory;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Backend\Model\View\Result\ForwardFactory;
 use Magento\Framework\Controller\Result\JsonFactory;
+use PHPUnit\Framework\Attributes\Test;
 
 class CreditCardTest extends BoltTestCase
 {
@@ -243,6 +244,7 @@ class CreditCardTest extends BoltTestCase
     /**
      * @test
      */
+    #[Test]
     public function execute()
     {
         $this->currentMock->expects(self::once())->method('initCurrentCustomer')->willReturnSelf();
