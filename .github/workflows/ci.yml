@@ -85,6 +85,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      # Magento 2.2.8 (PHPUnit 6.2) and 2.3.0 (PHPUnit 6.5) were dropped from
+      # this matrix: the suite now has to run on PHPUnit 12 for Magento 2.4.9,
+      # and spanning PHPUnit 6 to 12 needs shims for APIs PHPUnit 6 lacks
+      # (onlyMethods(), attributes). 2.4.2 on PHPUnit 9.1 is the oldest kept.
       matrix:
         include:
           - name: php74 / Magento 2.4.2
@@ -92,16 +96,6 @@ jobs:
             php_version: php74
             magento_version: "2.4.2"
             mysql_image: cimg/mysql:8.0
-          - name: php72 / Magento 2.3.0
-            image: boltdev/m2-installed-plugin-ci-php72:2.3.0-v1
-            php_version: php72
-            magento_version: "2.3.0"
-            mysql_image: cimg/mysql:5.7
-          - name: php71 / Magento 2.2.8
-            image: boltdev/m2-installed-plugin-ci-php71:2.2.8
-            php_version: php71
-            magento_version: "2.2.8"
-            mysql_image: cimg/mysql:5.7
     services:
       mysql:
         image: ${{ matrix.mysql_image }}

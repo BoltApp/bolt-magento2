@@ -19,218 +19,176 @@
 namespace Bolt\Boltpay\Test\Unit;
 
 use PHPUnit\Framework\Constraint\IsType;
-use PHPUnit\Framework\Constraint\StringContains;
 use PHPUnit\Framework\TestCase;
-use PHPUnit\Runner\Version as PHPUnitVersion;
 use ReflectionException;
 use ReflectionObject;
 use ReflectionProperty;
 
-if (version_compare(PHPUnitVersion::id(), '9.0.0', '<')) {
-    // phpcs:ignore
-    class BoltTestCase extends TestCase
+// phpcs:ignore
+class BoltTestCase extends TestCase
+{
+    protected function setUp(): void
     {
-        protected function setUp()
-        {
-            $this->setUpInternal();
-        }
-
-        protected function tearDown()
-        {
-            parent::tearDown();
-            $this->tearDownInternal();
-        }
-
-        public static function assertMatchesRegularExpression(string $pattern, string $string, string $message = '')
-        {
-            static::assertRegExp($pattern, $string, $message);
-        }
-
-        /**
-         * @throws \PHPUnit\Framework\ExpectationFailedException
-         * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
-         */
-        public static function assertStringContainsString(string $needle, string $haystack, string $message = '')
-        {
-            $constraint = new StringContains($needle, false);
-            static::assertThat($haystack, $constraint, $message);
-        }
-
-        protected function setUpInternal()
-        {
-        }
-
-        protected function tearDownInternal()
-        {
-        }
+        $this->setUpInternal();
     }
-} else {
-    // phpcs:ignore
-    class BoltTestCase extends TestCase
+
+    protected function tearDown(): void
     {
-        protected function setUp(): void
-        {
-            $this->setUpInternal();
+        parent::tearDown();
+        $this->tearDownInternal();
+    }
+
+    public static function assertAttributeInstanceOf($expected, $attributeName, $classOrObject, $message = '')
+    {
+        static::assertInstanceOf(
+            $expected,
+            static::readAttribute($classOrObject, $attributeName),
+            $message
+        );
+    }
+
+    public static function assertAttributeEquals($expected, $actualAttributeName, $actualClassOrObject, $message = '', $delta = 0.0, $maxDepth = 10, $canonicalize = false, $ignoreCase = false)
+    {
+        static::assertEquals(
+            $expected,
+            static::readAttribute($actualClassOrObject, $actualAttributeName),
+            $message,
+            $delta,
+            $maxDepth,
+            $canonicalize,
+            $ignoreCase
+        );
+    }
+
+    public static function readAttribute($classOrObject, $attributeName)
+    {
+        if (!\is_string($attributeName)) {
+            throw InvalidArgumentHelper::factory(2, 'string');
         }
 
-        protected function tearDown(): void
-        {
-            parent::tearDown();
-            $this->tearDownInternal();
+        if (!\preg_match('/[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*/', $attributeName)) {
+            throw InvalidArgumentHelper::factory(2, 'valid attribute name');
         }
 
-        public static function assertAttributeInstanceOf($expected, $attributeName, $classOrObject, $message = '')
-        {
-            static::assertInstanceOf(
-                $expected,
-                static::readAttribute($classOrObject, $attributeName),
-                $message
-            );
-        }
-
-        public static function assertAttributeEquals($expected, $actualAttributeName, $actualClassOrObject, $message = '', $delta = 0.0, $maxDepth = 10, $canonicalize = false, $ignoreCase = false)
-        {
-            static::assertEquals(
-                $expected,
-                static::readAttribute($actualClassOrObject, $actualAttributeName),
-                $message,
-                $delta,
-                $maxDepth,
-                $canonicalize,
-                $ignoreCase
-            );
-        }
-
-        public static function readAttribute($classOrObject, $attributeName)
-        {
-            if (!\is_string($attributeName)) {
-                throw InvalidArgumentHelper::factory(2, 'string');
-            }
-
-            if (!\preg_match('/[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*/', $attributeName)) {
-                throw InvalidArgumentHelper::factory(2, 'valid attribute name');
-            }
-
-            if (\is_string($classOrObject)) {
-                if (!\class_exists($classOrObject)) {
-                    throw InvalidArgumentHelper::factory(
-                        1,
-                        'class name'
-                    );
-                }
-
-                return static::getStaticAttribute(
-                    $classOrObject,
-                    $attributeName
+        if (\is_string($classOrObject)) {
+            if (!\class_exists($classOrObject)) {
+                throw InvalidArgumentHelper::factory(
+                    1,
+                    'class name'
                 );
             }
 
-            if (\is_object($classOrObject)) {
-                return static::getObjectAttribute(
-                    $classOrObject,
-                    $attributeName
-                );
-            }
-
-            throw InvalidArgumentHelper::factory(
-                1,
-                'class name or object'
+            return static::getStaticAttribute(
+                $classOrObject,
+                $attributeName
             );
         }
 
-        public static function getObjectAttribute($object, $attributeName)
-        {
-            if (!\is_object($object)) {
-                throw InvalidArgumentHelper::factory(1, 'object');
-            }
+        if (\is_object($classOrObject)) {
+            return static::getObjectAttribute(
+                $classOrObject,
+                $attributeName
+            );
+        }
 
-            if (!\is_string($attributeName)) {
-                throw InvalidArgumentHelper::factory(2, 'string');
-            }
+        throw InvalidArgumentHelper::factory(
+            1,
+            'class name or object'
+        );
+    }
 
-            if (!\preg_match('/[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*/', $attributeName)) {
-                throw InvalidArgumentHelper::factory(2, 'valid attribute name');
-            }
+    public static function getObjectAttribute($object, $attributeName)
+    {
+        if (!\is_object($object)) {
+            throw InvalidArgumentHelper::factory(1, 'object');
+        }
 
-            try {
-                $attribute = new ReflectionProperty($object, $attributeName);
-            } catch (ReflectionException $e) {
-                $reflector = new ReflectionObject($object);
+        if (!\is_string($attributeName)) {
+            throw InvalidArgumentHelper::factory(2, 'string');
+        }
 
-                while ($reflector = $reflector->getParentClass()) {
-                    try {
-                        $attribute = $reflector->getProperty($attributeName);
-                        break;
-                    } catch (ReflectionException $e) {
-                    }
+        if (!\preg_match('/[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*/', $attributeName)) {
+            throw InvalidArgumentHelper::factory(2, 'valid attribute name');
+        }
+
+        try {
+            $attribute = new ReflectionProperty($object, $attributeName);
+        } catch (ReflectionException $e) {
+            $reflector = new ReflectionObject($object);
+
+            while ($reflector = $reflector->getParentClass()) {
+                try {
+                    $attribute = $reflector->getProperty($attributeName);
+                    break;
+                } catch (ReflectionException $e) {
                 }
             }
+        }
 
-            if (isset($attribute)) {
-                if (!$attribute || $attribute->isPublic()) {
-                    return $object->$attributeName;
-                }
-
-                $attribute->setAccessible(true);
-                $value = $attribute->getValue($object);
-                $attribute->setAccessible(false);
-
-                return $value;
+        if (isset($attribute)) {
+            if (!$attribute || $attribute->isPublic()) {
+                return $object->$attributeName;
             }
 
-            throw new Exception(
-                \sprintf(
-                    'Attribute "%s" not found in object.',
-                    $attributeName
-                )
-            );
+            $attribute->setAccessible(true);
+            $value = $attribute->getValue($object);
+            $attribute->setAccessible(false);
+
+            return $value;
         }
 
-        public static function assertInternalType($expected, $actual, $message = '')
-        {
-            if (!\is_string($expected)) {
-                throw InvalidArgumentHelper::factory(1, 'string');
-            }
+        throw new Exception(
+            \sprintf(
+                'Attribute "%s" not found in object.',
+                $attributeName
+            )
+        );
+    }
 
-            $constraint = new IsType(
-                $expected
-            );
-
-            static::assertThat($actual, $constraint, $message);
+    public static function assertInternalType($expected, $actual, $message = '')
+    {
+        if (!\is_string($expected)) {
+            throw InvalidArgumentHelper::factory(1, 'string');
         }
 
-        /**
-         * @param string $messageRegExp
-         *
-         * @throws Exception
-         */
-        public function expectExceptionMessageRegExp($messageRegExp)
-        {
-            if (!\is_string($messageRegExp)) {
-                throw InvalidArgumentHelper::factory(1, 'string');
-            }
+        $constraint = new IsType(
+            $expected
+        );
 
-            $this->expectedExceptionMessageRegExp = $messageRegExp;
+        static::assertThat($actual, $constraint, $message);
+    }
+
+    /**
+     * @param string $messageRegExp
+     *
+     * @throws Exception
+     */
+    public function expectExceptionMessageRegExp($messageRegExp)
+    {
+        if (!\is_string($messageRegExp)) {
+            throw InvalidArgumentHelper::factory(1, 'string');
         }
 
-        protected function setUpInternal()
-        {
-        }
+        $this->expectedExceptionMessageRegExp = $messageRegExp;
+    }
 
-        protected function tearDownInternal()
-        {
-        }
+    protected function setUpInternal()
+    {
+    }
 
-        protected function createPartialMock($originalClassName, array $methods): \PHPUnit\Framework\MockObject\MockObject
-        {
-            return $this->getMockBuilder($originalClassName)
-                ->disableOriginalConstructor()
-                ->disableOriginalClone()
-                ->disableArgumentCloning()
-                ->disallowMockingUnknownTypes()
-                ->setMethods(empty($methods) ? null : $methods)
-                ->getMock();
-        }
+    protected function tearDownInternal()
+    {
+    }
+
+    protected function createPartialMock($originalClassName, array $methods): \PHPUnit\Framework\MockObject\MockObject
+    {
+        return $this->getMockBuilder($originalClassName)
+            ->disableOriginalConstructor()
+            ->disableOriginalClone()
+            ->disableArgumentCloning()
+            ->disallowMockingUnknownTypes()
+            ->setMethods(empty($methods) ? null : $methods)
+            ->getMock();
     }
 }
 
