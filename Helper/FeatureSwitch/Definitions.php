@@ -213,6 +213,12 @@ class Definitions
     const M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR = 'M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR';
 
     /**
+     * Payment-only: when a carrier cannot quote the cloned (immutable) quote and leaves it with a $0
+     * shipping amount, reuse the parent quote's already-validated shipping rate.
+     */
+    const M2_RESTORE_PARENT_SHIPPING_RATE_FOR_IMMUTABLE_QUOTE = 'M2_RESTORE_PARENT_SHIPPING_RATE_FOR_IMMUTABLE_QUOTE';
+
+    /**
      * Save customer credit card
      */
     const M2_SAVE_CUSTOMER_CREDIT_CARD = 'M2_SAVE_CUSTOMER_CREDIT_CARD';
@@ -563,6 +569,12 @@ class Definitions
             self::VAL_KEY         => true,
             self::DEFAULT_VAL_KEY => false,
             self::ROLLOUT_KEY     => 100
+        ],
+        self::M2_RESTORE_PARENT_SHIPPING_RATE_FOR_IMMUTABLE_QUOTE => [
+            self::NAME_KEY        => self::M2_RESTORE_PARENT_SHIPPING_RATE_FOR_IMMUTABLE_QUOTE,
+            self::VAL_KEY         => true,
+            self::DEFAULT_VAL_KEY => false,
+            self::ROLLOUT_KEY     => 0
         ],
         self::M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR => [
             self::NAME_KEY        => self::M2_PREVENT_BOLT_CART_FOR_QUOTES_WITH_ERROR,
