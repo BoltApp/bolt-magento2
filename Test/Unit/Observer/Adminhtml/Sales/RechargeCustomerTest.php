@@ -39,7 +39,7 @@ class RechargeCustomerTest extends BoltTestCase
     const ID = '111';
     const QUOTE_ID = '112';
     const REFERENCE = 'DBT9-RL78-TTMM';
-    const REFERENCE_URL = 'https://merchant-sandbox.bolt.com/transaction/8NLY-4NJQ-KFH6';
+    const REFERENCE_URL = 'https://merchant-sandbox.boltapp.com/transaction/8NLY-4NJQ-KFH6';
 
     /**
      * @var \Bolt\Boltpay\Observer\Adminhtml\Sales\RechargeCustomer

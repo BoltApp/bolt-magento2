@@ -53,8 +53,8 @@ class DataTest extends BoltTestCase
     const HINT = 'hint!';
     const RESPONSE_TOKEN = 'response_token';
     const CUSTOMER_EMAIL = 'test@bolt.com';
-    const CDN_URL_SANDBOX = 'https://connect-sandbox.bolt.com';
-    const CDN_URL_SANDBOX_JS = 'https://connect-sandbox.bolt.com/connect.js';
+    const CDN_URL_SANDBOX = 'https://connect-sandbox.boltapp.com';
+    const CDN_URL_SANDBOX_JS = 'https://connect-sandbox.boltapp.com/connect.js';
 
     /**
      * @var Context

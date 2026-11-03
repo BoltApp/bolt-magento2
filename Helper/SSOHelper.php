@@ -145,11 +145,16 @@ class SSOHelper extends AbstractHelper
             return $e->getMessage();
         }
 
-        // Issuing authority should be https://bolt.com
+        // Issuing authority should be https://bolt.com or https://boltapp.com
         if (!isset($payload['iss'])) {
             return 'iss must be set';
         }
-        if ($payload['iss'] !== 'https://bolt.com' && $payload['iss'] !== 'https://api.bolt.com') {
+        if (
+            $payload['iss'] !== 'https://bolt.com'
+            && $payload['iss'] !== 'https://api.bolt.com'
+            && $payload['iss'] !== 'https://boltapp.com'
+            && $payload['iss'] !== 'https://api.boltapp.com'
+        ) {
             return 'incorrect iss ' . $payload['iss'];
         }
 
