@@ -47,7 +47,7 @@ class ApiTest extends TestCase
 {
 
     /** @var string Dummy API url */
-    const API_URL = "https://api.bolt.com/";
+    const API_URL = "https://api.boltapp.com/";
     /** @var string Dummy API key */
     const API_KEY = '60c47bdb25b0b133840808ce5fd2879d6295c53d0265c70e311552fb2028b00b';
     /** @var string Dummy dynamic part of the API url */
@@ -484,7 +484,7 @@ class ApiTest extends TestCase
         $this->configHelper->method('getApiUrl')->willReturn(self::API_URL);
 
         $this->request->expects(self::once())->method('setApiData')->with($apiData);
-        $this->request->expects(self::once())->method('setApiUrl')->with('https://api.bolt.com/v1/merchant/orders');
+        $this->request->expects(self::once())->method('setApiUrl')->with('https://api.boltapp.com/v1/merchant/orders');
         $this->request->expects(self::once())->method('setApiKey')->with(self::API_KEY);
         $this->request->expects(self::once())->method('setRequestMethod')->with($requestMethod);
         $this->request->expects(self::once())->method('setHeaders')->with($headers);

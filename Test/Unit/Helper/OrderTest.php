@@ -1019,13 +1019,13 @@ class OrderTest extends TestCase
             ->willReturnOnConsecutiveCalls(1, 1);
 
         $this->configHelper->expects(self::once())->method('getMerchantDashboardUrl')
-            ->willReturn('https://merchant-sandbox.bolt.com');
+            ->willReturn('https://merchant-sandbox.boltapp.com');
         $this->orderMock->expects(self::once())->method('addStatusHistoryComment')
             ->with(
                 __(
                     'Bolt transaction: %1',
                     sprintf(
-                        '<a href="https://merchant-sandbox.bolt.com/transaction/%1$s">%1$s</a>',
+                        '<a href="https://merchant-sandbox.boltapp.com/transaction/%1$s">%1$s</a>',
                         self::REFERENCE_ID
                     )
                 )
@@ -2438,10 +2438,10 @@ class OrderTest extends TestCase
     public function formatReferenceUrl()
     {
         $this->configHelper->expects(self::once())->method('getMerchantDashboardUrl')
-            ->willReturn('https://merchant-sandbox.bolt.com');
+            ->willReturn('https://merchant-sandbox.boltapp.com');
         static::assertEquals(
             sprintf(
-                '<a href="https://merchant-sandbox.bolt.com/transaction/%1$s">%1$s</a>',
+                '<a href="https://merchant-sandbox.boltapp.com/transaction/%1$s">%1$s</a>',
                 self::REFERENCE_ID
             ),
             $this->currentMock->formatReferenceUrl(self::REFERENCE_ID)
