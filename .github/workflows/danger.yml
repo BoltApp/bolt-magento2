@@ -1,4 +1,4 @@
-# Runs the PR rules in .github/dangerfile.ts.
+# Runs the PR rules in .github/danger/.
 # pull_request_target runs the base branch's dangerfile, so a PR cannot loosen its
 # own rules; nothing from the PR is checked out or executed.
 name: Danger
@@ -28,13 +28,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          sparse-checkout: .github/dangerfile.ts
+          sparse-checkout: .github/danger
           sparse-checkout-cone-mode: false
           persist-credentials: false
       - uses: actions/setup-node@v6
         with:
           node-version: 22
       # typescript is a separate package; Danger only transpiles .ts when it can resolve it
-      - run: npx --yes -p danger@14.1.0 -p typescript@5.9.3 danger ci --dangerfile .github/dangerfile.ts
+      - run: npx --yes -p danger@14.1.0 -p typescript@5.9.3 danger ci --dangerfile .github/danger/dangerfile.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
