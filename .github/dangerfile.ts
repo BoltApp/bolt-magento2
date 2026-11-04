@@ -1,4 +1,4 @@
-// PR rules ported from the retired Peril service (BoltApp/peril).
+// PR rules for this repo, run by .github/workflows/danger.yml.
 import { danger, fail, warn, schedule } from "danger";
 
 const pr = danger.github.pr;

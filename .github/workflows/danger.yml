@@ -1,4 +1,4 @@
-# Runs .github/dangerfile.ts, the PR rules that used to live in the Peril service.
+# Runs the PR rules in .github/dangerfile.ts.
 # pull_request_target runs the base branch's dangerfile, so a PR cannot loosen its
 # own rules; nothing from the PR is checked out or executed.
 name: Danger
@@ -22,8 +22,7 @@ concurrency:
 
 jobs:
   danger:
-    # Branch protection requires a check named "Peril"
-    name: Peril
+    name: Danger
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -36,6 +35,6 @@ jobs:
         with:
           node-version: 22
       # typescript is a separate package; Danger only transpiles .ts when it can resolve it
-      - run: npx --yes -p danger@14.1.0 -p typescript@5.9.3 danger ci --dangerfile .github/dangerfile.ts --id Peril
+      - run: npx --yes -p danger@14.1.0 -p typescript@5.9.3 danger ci --dangerfile .github/dangerfile.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
