@@ -35,6 +35,6 @@ jobs:
         with:
           node-version: 22
       # typescript is a separate package; Danger only transpiles .ts when it can resolve it
-      - run: npx --yes -p danger@14.1.0 -p typescript@5.9.3 danger ci --dangerfile .github/danger/dangerfile.ts
+      - run: npx --yes -p danger@14.1.0 -p typescript@5.9.3 danger ci --failOnErrors --dangerfile .github/danger/dangerfile.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
