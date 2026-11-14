@@ -359,6 +359,15 @@ class Decider extends AbstractHelper
     }
 
     /**
+     * @return bool
+     * @throws LocalizedException
+     */
+    public function isRestoreParentShippingRateForImmutableQuote()
+    {
+        return $this->isSwitchEnabled(Definitions::M2_RESTORE_PARENT_SHIPPING_RATE_FOR_IMMUTABLE_QUOTE);
+    }
+
+    /**
      * Checks whether the feature switch for setting order payment info data on success page is enabled
      *
      * @return bool
